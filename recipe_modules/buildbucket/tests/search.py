@@ -68,4 +68,5 @@ def GenTests(api):
           'buildbucket.search',
           api.raw_io.stream_output_text('there was a problem'),
           retcode=1),
+      status='INFRA_FAILURE',
   )

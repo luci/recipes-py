@@ -24,8 +24,9 @@ def RunSteps(api):
 
 def GenTests(api):
   yield api.test('basic')
-  yield (
-      api.test('failure')
-      + api.step_data('read_json',
-          api.file.read_json(errno_name='JSON READ FAILURE'))
+  yield api.test(
+      'failure',
+      api.step_data('read_json',
+          api.file.read_json(errno_name='JSON READ FAILURE')),
+      status='FAILURE',
   )

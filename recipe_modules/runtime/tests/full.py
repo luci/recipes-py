@@ -1,6 +1,6 @@
-# Copyright 2017 The Chromium Authors. All rights reserved.
-# Use of this source code is governed by a BSD-style license that can be
-# found in the LICENSE file.
+# Copyright 2023 The LUCI Authors. All rights reserved.
+# Use of this source code is governed under the Apache License, Version 2.0
+# that can be found in the LICENSE file.
 
 import json
 
@@ -32,10 +32,12 @@ def GenTests(api):
       'basic',
       api.runtime(is_experimental=False),
       api.runtime.global_shutdown_on_step('compile'),
+      status='CANCELED',
   )
 
   yield api.test(
       'shutdown-before',
       api.runtime(is_experimental=False),
       api.runtime.global_shutdown_on_step('compile', 'before'),
+      status='CANCELED',
   )

@@ -22,7 +22,8 @@ def RunSteps(api):
 def GenTests(api):
   yield api.test('basic')
 
-  yield (
-      api.test('one_fail') +
-      api.step_data('testa', retcode=1)
-    )
+  yield api.test(
+      'one_fail',
+      api.step_data('testa', retcode=1),
+      status='FAILURE',
+  )

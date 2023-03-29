@@ -55,102 +55,116 @@ def RunSteps(api, props):
 
 
 def GenTests(api):
-  yield (
-    api.test('basic') +
-    api.properties(properties_pb2.SubBuildInputProps(
-      expected_sub_build=build_pb2.Build(id=11111, status=common_pb2.SUCCESS),
-    ))
+  yield api.test(
+      'basic',
+      api.properties(properties_pb2.SubBuildInputProps(
+          expected_sub_build=build_pb2.Build(
+              id=11111, status=common_pb2.SUCCESS),
+      )),
   )
 
-  yield (
-    api.test('legacy') +
-    api.properties(properties_pb2.SubBuildInputProps(
-      expected_sub_build=build_pb2.Build(id=11111, status=common_pb2.SUCCESS),
-      legacy=True,
-    ))
+  yield api.test(
+      'legacy',
+      api.properties(properties_pb2.SubBuildInputProps(
+          expected_sub_build=build_pb2.Build(
+              id=11111, status=common_pb2.SUCCESS),
+          legacy=True,
+      )),
   )
 
-  yield (
-    api.test('output') +
-    api.properties(properties_pb2.SubBuildInputProps(
-      output_path=properties_pb2.SubBuildInputProps.Path(
-        base='start_dir',
-        file='sub_build.json'),
-      expected_sub_build=build_pb2.Build(id=45678, status=common_pb2.SUCCESS),
-    )) +
-    api.step_data('launch sub build', api.step.sub_build(
-      build_pb2.Build(id=45678, status=common_pb2.SUCCESS))
-    )
+  yield api.test(
+      'output',
+      api.properties(properties_pb2.SubBuildInputProps(
+          output_path=properties_pb2.SubBuildInputProps.Path(
+              base='start_dir',
+              file='sub_build.json'),
+          expected_sub_build=build_pb2.Build(
+              id=45678, status=common_pb2.SUCCESS),
+      )),
+      api.step_data(
+          'launch sub build',
+          api.step.sub_build(
+              build_pb2.Build(id=45678, status=common_pb2.SUCCESS))
+      ),
   )
 
-  yield (
-    api.test('output_file_exists') +
-    api.properties(
-      output_path=properties_pb2.SubBuildInputProps.Path(
-        base='start_dir',
-        file='sub_build.json'),
-    ) +
-    api.path.exists(api.path['start_dir'].join('sub_build.json')) +
-    api.expect_exception('ValueError') +
-    api.post_process(post_process.StatusException) +
-    api.post_process(
-      post_process.SummaryMarkdownRE,
-      r'.*expected non-existent output path') +
-    api.post_process(post_process.DropExpectation)
+  yield api.test(
+      'output_file_exists',
+      api.properties(
+          output_path=properties_pb2.SubBuildInputProps.Path(
+              base='start_dir',
+              file='sub_build.json'),
+      ),
+      api.path.exists(api.path['start_dir'].join('sub_build.json')),
+      api.expect_exception('ValueError'),
+      api.post_process(post_process.StatusException),
+      api.post_process(
+          post_process.SummaryMarkdownRE,
+          r'.*expected non-existent output path'),
+      api.post_process(post_process.DropExpectation),
   )
 
-  yield (
-    api.test('invalid_extension') +
-    api.properties(properties_pb2.SubBuildInputProps(
-      output_path=properties_pb2.SubBuildInputProps.Path(
-        base='start_dir',
-        file='sub_build.yaml'),
-    )) +
-    api.expect_exception('ValueError') +
-    api.post_process(post_process.StatusException) +
-    api.post_process(
-      post_process.SummaryMarkdownRE,
-      r'.*expected extension of output path to be one of') +
-    api.post_process(post_process.DropExpectation)
+  yield api.test(
+      'invalid_extension',
+      api.properties(properties_pb2.SubBuildInputProps(
+          output_path=properties_pb2.SubBuildInputProps.Path(
+              base='start_dir',
+              file='sub_build.yaml'),
+      )),
+      api.expect_exception('ValueError'),
+      api.post_process(post_process.StatusException),
+      api.post_process(
+          post_process.SummaryMarkdownRE,
+          r'.*expected extension of output path to be one of'),
+      api.post_process(post_process.DropExpectation),
   )
 
-  yield (
-    api.test('failure_status') +
-    api.step_data('launch sub build', api.step.sub_build(
-      build_pb2.Build(id=1, status=common_pb2.FAILURE))
-    ) +
-    api.post_process(post_process.StepFailure, 'launch sub build') +
-    api.post_process(post_process.DropExpectation)
+  yield api.test(
+      'failure_status',
+      api.step_data(
+          'launch sub build',
+          api.step.sub_build(
+              build_pb2.Build(id=1, status=common_pb2.FAILURE)),
+      ),
+      api.post_process(post_process.StepFailure, 'launch sub build'),
+      api.post_process(post_process.DropExpectation),
+      status='FAILURE',
   )
 
-  yield (
-    api.test('infra_failure_status') +
-    api.step_data('launch sub build', api.step.sub_build(
-      build_pb2.Build(id=1, status=common_pb2.INFRA_FAILURE))
-    ) +
-    api.post_process(post_process.StepException, 'launch sub build') +
-    api.post_process(post_process.DropExpectation)
+  yield api.test(
+      'infra_failure_status',
+      api.step_data(
+          'launch sub build', api.step.sub_build(
+              build_pb2.Build(id=1, status=common_pb2.INFRA_FAILURE))
+      ),
+      api.post_process(post_process.StepException, 'launch sub build'),
+      api.post_process(post_process.DropExpectation),
+      status='INFRA_FAILURE',
   )
 
-  yield (
-    api.test('infra_step') +
-    api.step_data('launch sub build', api.step.sub_build(
-      build_pb2.Build(id=1, status=common_pb2.FAILURE))
-    ) +
-    api.properties(properties_pb2.SubBuildInputProps(infra_step=True)) +
-    api.post_process(post_process.StepException, 'launch sub build') +
-    api.post_process(post_process.DropExpectation)
+  yield api.test(
+      'infra_step',
+      api.step_data(
+          'launch sub build', api.step.sub_build(
+              build_pb2.Build(id=1, status=common_pb2.FAILURE))
+      ),
+      api.properties(properties_pb2.SubBuildInputProps(infra_step=True)),
+      api.post_process(post_process.StepException, 'launch sub build'),
+      api.post_process(post_process.DropExpectation),
+      status='INFRA_FAILURE',
   )
 
-  yield (
-    api.test('output_summary_markdown') +
-    api.step_data('launch sub build', api.step.sub_build(
-      build_pb2.Build(id=1, status=common_pb2.SUCCESS,
-                      summary_markdown='This is the summary of sub build'))
-    ) +
-    api.post_process(post_process.StepTextEquals, 'launch sub build',
-      'This is the summary of sub build')+
-    api.post_process(post_process.DropExpectation)
+  yield api.test(
+      'output_summary_markdown',
+      api.step_data(
+          'launch sub build', api.step.sub_build(
+              build_pb2.Build(
+                  id=1, status=common_pb2.SUCCESS,
+                  summary_markdown='This is the summary of sub build'))
+      ),
+      api.post_process(post_process.StepTextEquals, 'launch sub build',
+                       'This is the summary of sub build'),
+      api.post_process(post_process.DropExpectation),
   )
 
   build = build_pb2.Build(id=1234, status=common_pb2.SUCCESS)
@@ -164,30 +178,35 @@ def GenTests(api):
       url='some/awesome',
     )
   ])
-  yield (
-    api.test('merge_output_logs') +
-    api.step_data('launch sub build', api.step.sub_build(build))
+  yield api.test(
+      'merge_output_logs',
+      api.step_data('launch sub build', api.step.sub_build(build)),
   )
 
-  yield (
-    api.test('non_terminal_status') +
-    api.step_data('launch sub build', api.step.sub_build(
-      build_pb2.Build(id=1, status=common_pb2.STARTED))
-    ) +
-    api.post_process(post_process.StepException, 'launch sub build') +
-    api.post_process(post_process.StepTextEquals, 'launch sub build',
-      'Merge Step Error: expected terminal build status of sub build; '
-      'got status: STARTED.')+
-    api.post_process(post_process.DropExpectation)
+  yield api.test(
+      'non_terminal_status',
+      api.step_data(
+          'launch sub build', api.step.sub_build(
+              build_pb2.Build(id=1, status=common_pb2.STARTED))
+      ),
+      api.post_process(post_process.StepException, 'launch sub build'),
+      api.post_process(
+          post_process.StepTextEquals, 'launch sub build',
+          'Merge Step Error: expected terminal build status of sub build; '
+          'got status: STARTED.'),
+      api.post_process(post_process.DropExpectation),
+      status='INFRA_FAILURE',
   )
 
-  yield (
-    api.test('output_missing') +
-    api.step_data('launch sub build', api.step.sub_build(None)) +
-    api.post_process(post_process.StepException, 'launch sub build') +
-    api.post_process(post_process.StepTextEquals, 'launch sub build',
-      "Merge Step Error: Can't find the final build output for luciexe.") +
-    api.post_process(post_process.DropExpectation)
+  yield api.test(
+      'output_missing',
+      api.step_data('launch sub build', api.step.sub_build(None)),
+      api.post_process(post_process.StepException, 'launch sub build'),
+      api.post_process(
+          post_process.StepTextEquals, 'launch sub build',
+          "Merge Step Error: Can't find the final build output for luciexe."),
+      api.post_process(post_process.DropExpectation),
+      status='INFRA_FAILURE',
   )
 
   input_build=build_pb2.Build(
@@ -228,13 +247,13 @@ def GenTests(api):
       check(not initial_build.steps)
       check(not initial_build.HasField('output'))
 
-  yield (
-    api.test('clear_fields_of_input_build') +
-    api.properties(properties_pb2.SubBuildInputProps(
-        input_build=input_build,
-    )) +
-    api.step.initial_build_create_time(1677836800) +
-    api.step.initial_build_start_time(1677836801) +
-    api.post_check(check_luciexe_initial_build) +
-    api.post_process(post_process.DropExpectation)
+  yield api.test(
+      'clear_fields_of_input_build',
+      api.properties(properties_pb2.SubBuildInputProps(
+          input_build=input_build,
+      )),
+      api.step.initial_build_create_time(1677836800),
+      api.step.initial_build_start_time(1677836801),
+      api.post_check(check_luciexe_initial_build),
+      api.post_process(post_process.DropExpectation),
   )

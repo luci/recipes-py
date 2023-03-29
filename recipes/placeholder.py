@@ -177,16 +177,18 @@ def GenTests(api):
             )
           ],
           status=Status.INFRA_FAILURE,
-      ))
+      )),
+      status='INFRA_FAILURE',
   )
 
-  yield (
-    api.test('missing final status')
-    + api.properties(InputProps())
-    + api.post_process(post_process.StatusFailure)
-    + api.post_process(post_process.SummaryMarkdownRE,
-        "must provide a final status in input properties; got")
-    + api.post_process(post_process.DropExpectation)
+  yield api.test(
+      'missing final status',
+      api.properties(InputProps()),
+      api.post_process(
+          post_process.SummaryMarkdownRE,
+          "must provide a final status in input properties; got"),
+      api.post_process(post_process.DropExpectation),
+      status='FAILURE',
   )
 
   child_build_prop = InputProps(
@@ -322,7 +324,8 @@ def GenTests(api):
               ),
           ],
           status=Status.SUCCESS,
-      ))
+      )),
+      status='FAILURE',
   )
 
   yield api.test(
@@ -351,12 +354,14 @@ def GenTests(api):
               ),
           ],
           status=Status.SUCCESS,
-      ))
-  ) + api.buildbucket.try_build(
-      project='proj',
-      builder='try-builder',
-      git_repo='https://chrome-internal.googlesource.com/a/repo.git',
-      revision='a' * 40,
-      build_number=123,
-      experiments=['luci.buildbucket.parent_tracking']
+      )),
+      api.buildbucket.try_build(
+          project='proj',
+          builder='try-builder',
+          git_repo='https://chrome-internal.googlesource.com/a/repo.git',
+          revision='a' * 40,
+          build_number=123,
+          experiments=['luci.buildbucket.parent_tracking']
+      ),
+      status='INFRA_FAILURE',
   )

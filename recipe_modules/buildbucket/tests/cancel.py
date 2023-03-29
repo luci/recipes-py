@@ -35,33 +35,34 @@ def GenTests(api):
       ]
     )
 
-  yield (
-      api.test('basic') +
+  yield api.test(
+      'basic',
       api.buildbucket.simulated_cancel_output(
-        construct_batch_response(build_id=1785294945718829,
-                                 status=common_pb2.CANCELED),
-        step_name='cancel_without_reason') +
+          construct_batch_response(build_id=1785294945718829,
+                                   status=common_pb2.CANCELED),
+          step_name='cancel_without_reason'),
       api.buildbucket.simulated_cancel_output(
-        construct_batch_response(build_id=6838835292664158,
-                                 status=common_pb2.CANCELED),
-        step_name='cancel_with_reason')
+          construct_batch_response(build_id=6838835292664158,
+                                   status=common_pb2.CANCELED),
+          step_name='cancel_with_reason'),
   )
 
   error_batch_response = builds_service_pb2.BatchResponse(
-    responses=[
-      dict(error=dict(
-        code=123,
-        message='some error message'
-      ))
-    ]
+      responses=[
+        dict(error=dict(
+            code=123,
+            message='some error message'
+        ))
+      ]
   )
-  yield (
-      api.test('error') +
+  yield api.test(
+      'error',
       api.buildbucket.simulated_cancel_output(
-        construct_batch_response(build_id=1785294945718829,
-                                 status=common_pb2.CANCELED),
-        step_name='cancel_without_reason') +
+          construct_batch_response(build_id=1785294945718829,
+                                   status=common_pb2.CANCELED),
+          step_name='cancel_without_reason'),
       api.buildbucket.simulated_cancel_output(
-        error_batch_response,
-        step_name='cancel_with_reason')
+          error_batch_response,
+          step_name='cancel_with_reason'),
+      status='INFRA_FAILURE',
   )

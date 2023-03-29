@@ -133,10 +133,10 @@ def RunSteps(api, bad_return, access_invalid_data, access_deep_invalid_data,
 
 
 def GenTests(api):
-  yield (
-      api.test('basic') +
-      api.step_data('anything is cool', retcode=3)
-    )
+  yield api.test(
+      'basic',
+      api.step_data('anything is cool', retcode=3),
+  )
 
   # If you don't have the expect_exception in this test, you will get something
   # like this output.
@@ -151,88 +151,91 @@ def GenTests(api):
   #     raise ValueError('goodbye must exit 0!')
   # ValueError: goodbye must exit 0!
 
-  yield (
-      api.test('exceptional') +
-      api.step_data('goodbye (2)', retcode=1) +
-      api.expect_exception('ValueError') +
-      api.post_process(post_process.StatusException) +
+  yield api.test(
+      'exceptional',
+      api.step_data('goodbye (2)', retcode=1),
+      api.expect_exception('ValueError'),
       api.post_process(
           post_process.SummaryMarkdownRE,
-          "goodbye must exit 0!") +
-      api.post_process(post_process.DropExpectation)
-    )
+          "goodbye must exit 0!"),
+      api.post_process(post_process.DropExpectation),
+      status='INFRA_FAILURE',
+  )
 
-  yield (
-      api.test('warning') +
-      api.step_data('warning', retcode=1)
-    )
+  yield api.test(
+      'warning',
+      api.step_data('warning', retcode=1),
+      status='FAILURE',
+  )
 
-  yield (
-      api.test('defer_results') +
-      api.step_data('testa', retcode=1)
-    )
+  yield api.test(
+      'defer_results',
+      api.step_data('testa', retcode=1),
+      status='FAILURE',
+  )
 
-  yield (
-      api.test('defer_results_with_infra_failure') +
-      api.step_data('testa', retcode=1) +
-      api.step_data('testb', retcode=1)
-    )
+  yield api.test(
+      'defer_results_with_infra_failure',
+      api.step_data('testa', retcode=1),
+      api.step_data('testb', retcode=1),
+      status='INFRA_FAILURE',
+  )
 
-  yield (
-      api.test('invalid_access') +
-      api.properties(access_invalid_data=True) +
-      api.expect_exception('AttributeError') +
-      api.post_process(post_process.StatusException) +
+  yield api.test(
+      'invalid_access',
+      api.properties(access_invalid_data=True),
+      api.expect_exception('AttributeError'),
+      api.post_process(post_process.StatusException),
       api.post_process(
           post_process.SummaryMarkdownRE,
-          "StepData from step 'no-op' has no attribute 'json'") +
-      api.post_process(post_process.DropExpectation)
-    )
+          "StepData from step 'no-op' has no attribute 'json'"),
+      api.post_process(post_process.DropExpectation),
+  )
 
-  yield (
-      api.test('deep_invalid_access') +
-      api.properties(access_deep_invalid_data=True) +
-      api.expect_exception('AttributeError') +
-      api.post_process(post_process.StatusException) +
+  yield api.test(
+      'deep_invalid_access',
+      api.properties(access_deep_invalid_data=True),
+      api.expect_exception('AttributeError'),
+      api.post_process(post_process.StatusException),
       api.post_process(
           post_process.SummaryMarkdownRE,
-          "StepData\('no-op'\)\.json has no attribute 'outpurt'") +
-      api.post_process(post_process.DropExpectation)
-    )
+          r"StepData\('no-op'\)\.json has no attribute 'outpurt'"),
+      api.post_process(post_process.DropExpectation),
+  )
 
-  yield (
-      api.test('extra_junk') +
-      api.properties(assign_extra_junk=True) +
-      api.expect_exception('ValueError') +
-      api.post_process(post_process.StatusException) +
+  yield api.test(
+      'extra_junk',
+      api.properties(assign_extra_junk=True),
+      api.expect_exception('ValueError'),
+      api.post_process(post_process.StatusException),
       api.post_process(
           post_process.SummaryMarkdownRE,
-          "Cannot assign to 'json' on finalized StepData from step 'no-op'") +
-      api.post_process(post_process.DropExpectation)
-    )
+          "Cannot assign to 'json' on finalized StepData from step 'no-op'"),
+      api.post_process(post_process.DropExpectation),
+  )
 
-  yield (
-      api.test('infra_failure') +
-      api.step_data('cleanup', retcode=1)
-    )
+  yield api.test(
+      'infra_failure',
+      api.step_data('cleanup', retcode=1),
+  )
 
-  yield (
-      api.test('timeout') +
-      api.properties(timeout=1) +
-      api.step_data('timeout', times_out_after=20)
-    )
+  yield api.test(
+      'timeout',
+      api.properties(timeout=1),
+      api.step_data('timeout', times_out_after=20),
+      status='FAILURE',
+  )
 
-  yield (
-      api.test('catch_timeout') +
-      api.properties(timeout=2) +
-      api.step_data('caught timeout', times_out_after=20)
-    )
+  yield api.test(
+      'catch_timeout',
+      api.properties(timeout=2),
+      api.step_data('caught timeout', times_out_after=20),
+  )
 
-  # Test to see if tags were added to your step(s)
-  yield (
-    api.test('hello again') +
-    api.post_check(lambda check, steps: check(
-      steps['hello again']
-        .tags[u'hello.step_classification'] == u'PRINT_MESSAGE'
-      ))
+  yield api.test(
+      'tagged-steps',
+      api.post_check(lambda check, steps: check(
+          steps['hello again']
+          .tags[u'hello.step_classification'] == u'PRINT_MESSAGE'
+      )),
   )

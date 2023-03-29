@@ -222,10 +222,11 @@ def GenTests(api):
   for name, value in iteritems(states):
 
     result = api.swarming.task_result(
-      id='0', name='recipes-go', state=value, outputs=('out.tar'),
+        id='0', name='recipes-go', state=value, outputs=('out.tar'),
     )
-    yield (api.test('collect_with_state_%s' % name) +
-      api.override_step_data('collect', api.swarming.collect([result]))
+    yield api.test(
+        'collect_with_state_%s' % name,
+        api.override_step_data('collect', api.swarming.collect([result])),
     )
 
   timeout_result = api.swarming.task_result(
@@ -233,16 +234,19 @@ def GenTests(api):
       state=api.swarming.TaskState.TIMED_OUT,
       output='Dying\n' * 500,
   )
-  yield (api.test('collect_with_state_TIMED_OUT') +
-    api.override_step_data('collect', api.swarming.collect([timeout_result]))
+  yield api.test(
+      'collect_with_state_TIMED_OUT',
+      api.override_step_data('collect', api.swarming.collect([timeout_result])),
   )
 
   io_timeout_result = api.swarming.task_result(
       id='0', name='recipes-go', duration=EXECUTION_TIMEOUT_SECS - 1,
       state=api.swarming.TaskState.TIMED_OUT,
   )
-  yield (api.test('collect_with_state_TIMED_OUT_by_io') +
-    api.override_step_data('collect', api.swarming.collect([io_timeout_result]))
+  yield api.test(
+      'collect_with_state_TIMED_OUT_by_io',
+      api.override_step_data(
+          'collect', api.swarming.collect([io_timeout_result])),
   )
 
   execution_timeout_result = api.swarming.task_result(
@@ -251,9 +255,10 @@ def GenTests(api):
       duration=EXECUTION_TIMEOUT_SECS + 1,
       state=api.swarming.TaskState.TIMED_OUT,
   )
-  yield (api.test('collect_with_state_TIMED_OUT_by_execution') +
-    api.override_step_data(
-      'collect', api.swarming.collect([execution_timeout_result]))
+  yield api.test(
+      'collect_with_state_TIMED_OUT_by_execution',
+      api.override_step_data(
+          'collect', api.swarming.collect([execution_timeout_result])),
   )
 
   failed_result = api.swarming.task_result(
@@ -261,8 +266,9 @@ def GenTests(api):
       failure=True, outputs=('out.tar'),
       output='AAA'*500,
   )
-  yield (api.test('collect_with_state_COMPLETED_and_failed') +
-    api.override_step_data('collect', api.swarming.collect([failed_result]))
+  yield api.test(
+      'collect_with_state_COMPLETED_and_failed',
+      api.override_step_data('collect', api.swarming.collect([failed_result])),
   )
 
   no_output_result = api.swarming.task_result(
@@ -272,22 +278,38 @@ def GenTests(api):
       failure=True,
       output=None,
   )
-  yield (api.test('collect_with_no_output') + api.override_step_data(
-      'collect', api.swarming.collect([no_output_result])) +
-         api.post_process(DropExpectation))
+  yield api.test(
+      'collect_with_no_output',
+      api.override_step_data(
+          'collect', api.swarming.collect([no_output_result])),
+      api.post_process(DropExpectation),
+  )
 
-  yield (api.test('check_triggered_request') + api.post_check(
-      api.swarming.check_triggered_request,
-      'trigger 1 task', lambda check, request: check(request[0].dimensions == {
-          'os': 'Debian',
-          'pool': 'example.pool'
-      }), lambda check, request: check(request[0].env_vars[
-          'SOME_VARNAME'] == 'stuff'), lambda check, request: check(request[
-              0].wait_for_capacity)) + api.post_process(DropExpectation))
+  yield api.test(
+      'check_triggered_request',
+      api.post_check(
+          api.swarming.check_triggered_request,
+          'trigger 1 task',
+          lambda check, request: check(request[0].dimensions == {
+            'os': 'Debian',
+            'pool': 'example.pool'
+          })),
+      api.post_check(
+          api.swarming.check_triggered_request,
+          'trigger 1 task',
+          lambda check, request: check(request[0].env_vars[
+            'SOME_VARNAME'] == 'stuff'), lambda check, request: check(request[
+              0].wait_for_capacity)),
+      api.post_process(DropExpectation),
+  )
 
-  yield (api.test('show_request_invalid_key') + api.override_step_data(
-      'show-request',
-      stdout=api.json.invalid(
-          'swarming: failed to get task request. task ID = 0: failed to call'
-          ' TaskRequest: googleapi: Error 400: 0 is an invalid key.'),
-      retcode=1))
+  yield api.test(
+      'show_request_invalid_key',
+      api.override_step_data(
+          'show-request',
+          stdout=api.json.invalid(
+              'swarming: failed to get task request. task ID = 0: failed to '
+              'call TaskRequest: googleapi: Error 400: 0 is an invalid key.'),
+          retcode=1),
+      status='INFRA_FAILURE',
+  )

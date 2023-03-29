@@ -45,6 +45,7 @@ def GenTests(api):
       api.post_process(post_process.StepFailure, 'non-raising step'),
       api.post_process(post_process.StatusFailure),
       api.post_process(post_process.DropExpectation),
+      status='FAILURE',
   )
 
   yield api.test(
@@ -54,6 +55,7 @@ def GenTests(api):
       api.post_process(post_process.StepException, 'non-raising step'),
       api.post_process(post_process.StatusException),
       api.post_process(post_process.DropExpectation),
+      status='INFRA_FAILURE',
   )
 
   yield api.test(
@@ -63,4 +65,5 @@ def GenTests(api):
       api.post_process(post_process.StepException, 'non-raising step'),
       api.post_process(post_process.StatusFailure),
       api.post_process(post_process.DropExpectation),
+      status='FAILURE',
   )

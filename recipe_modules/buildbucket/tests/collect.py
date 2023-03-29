@@ -23,35 +23,36 @@ def RunSteps(api):
 def GenTests(api):
   yield api.test('basic')
 
-  yield (
-      api.test('with mocking') +
+  yield api.test(
+      'with mocking',
       api.buildbucket.simulated_collect_output(
         [
           api.buildbucket.ci_build_message(
               build_id=9016911228971028736, status='INFRA_FAILURE'),
         ],
-        step_name='collect1') +
+        step_name='collect1'),
       api.buildbucket.simulated_collect_output([
         api.buildbucket.try_build_message(
             build_id=9016911228971028737, status='SUCCESS'),
         api.buildbucket.ci_build_message(
             build_id=123456789012345678, status='FAILURE'),
-      ])
+      ]),
   )
 
-  yield (
-      api.test('with mocking and failure raising') +
-      api.properties(raise_if_unsuccessful=True) +
+  yield api.test(
+      'with mocking and failure raising',
+      api.properties(raise_if_unsuccessful=True),
       api.buildbucket.simulated_collect_output(
         [
           api.buildbucket.ci_build_message(
               build_id=9016911228971028736, status='INFRA_FAILURE'),
         ],
-        step_name='collect1') +
+        step_name='collect1'),
       api.buildbucket.simulated_collect_output([
         api.buildbucket.try_build_message(
             build_id=9016911228971028737, status='SUCCESS'),
         api.buildbucket.ci_build_message(
             build_id=123456789012345678, status='FAILURE'),
-      ])
+      ]),
+      status = 'INFRA_FAILURE',
   )

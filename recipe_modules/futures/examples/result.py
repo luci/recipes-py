@@ -27,20 +27,21 @@ def RunSteps(api):
   api.step('run if success', cmd=None)
 
 def GenTests(api):
-  yield (
-    api.test('success')
-    + api.post_check(lambda check, steps: check(
-        'run if success' in steps
-    ))
+  yield api.test(
+      'success',
+      api.post_check(lambda check, steps: check(
+          'run if success' in steps
+      )),
   )
 
-  yield (
-    api.test('failure')
-    + api.step_data('do work', retcode=1)
-    + api.post_check(lambda check, steps: check(
-        steps['do work'].status == 'FAILURE'
-    ))
-    + api.post_check(lambda check, steps: check(
-        'run if success' not in steps
-    ))
+  yield api.test(
+      'failure',
+      api.step_data('do work', retcode=1),
+      api.post_check(lambda check, steps: check(
+          steps['do work'].status == 'FAILURE'
+      )),
+      api.post_check(lambda check, steps: check(
+          'run if success' not in steps
+      )),
+      status='FAILURE',
   )

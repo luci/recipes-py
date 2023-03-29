@@ -35,24 +35,34 @@ def GenTests(api):
         key_path=key_path,
         scopes=scopes)
 
-  yield (
-      api.test('default') +
-      api.platform('linux', 64) +
-      props())
-  yield (
-      api.test('windows') +
-      api.platform('win', 64) +
-      props())
-  yield (
-      api.test('json_key') +
-      api.platform('linux', 64) +
-      props(key_path=api.path['start_dir'].join('key_name.json')))
-  yield (
-      api.test('custom_scopes') +
-      api.platform('linux', 64) +
-      props(scopes=['B', 'A']))
-  yield (
-      api.test('no_authutil') +
-      api.platform('linux', 64) +
-      props() +
-      api.step_data('get access token for default account', retcode=1))
+  yield api.test(
+      'default',
+      api.platform('linux', 64),
+      props(),
+  )
+
+  yield api.test(
+      'windows',
+      api.platform('win', 64),
+      props(),
+  )
+
+  yield api.test(
+      'json_key',
+      api.platform('linux', 64),
+      props(key_path=api.path['start_dir'].join('key_name.json')),
+  )
+
+  yield api.test(
+      'custom_scopes',
+      api.platform('linux', 64),
+      props(scopes=['B', 'A']),
+  )
+
+  yield api.test(
+      'no_authutil',
+      api.platform('linux', 64),
+      props(),
+      api.step_data('get access token for default account', retcode=1),
+      status='INFRA_FAILURE',
+  )

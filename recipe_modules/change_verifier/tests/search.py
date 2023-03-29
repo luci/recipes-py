@@ -42,25 +42,27 @@ def make_runs(count=1):
 
 
 def GenTests(api):
-  yield (
-      api.test('basic')
-      + api.step_data('search1cl.request page 1',
-                      stdout=api.proto.output(
-                          service_runs_pb.SearchRunsResponse(runs=make_runs())))
-      + api.step_data('search2cls.request page 1',
-                      stdout=api.proto.output(
-                          service_runs_pb.SearchRunsResponse(runs=make_runs())))
-      + api.step_data('search-project.request page 1',
-                      stdout=api.proto.output(
-                          service_runs_pb.SearchRunsResponse(
-                              runs=make_runs(32),
-                              next_page_token='abcd')))
-      + api.step_data('search-project.request page 2',
-                      stdout=api.proto.output(
-                          service_runs_pb.SearchRunsResponse(
-                              runs=make_runs(32))))
+  yield api.test(
+      'basic',
+      api.step_data('search1cl.request page 1',
+                    stdout=api.proto.output(
+                        service_runs_pb.SearchRunsResponse(runs=make_runs()))),
+      api.step_data('search2cls.request page 1',
+                    stdout=api.proto.output(
+                        service_runs_pb.SearchRunsResponse(runs=make_runs()))),
+      api.step_data('search-project.request page 1',
+                    stdout=api.proto.output(
+                        service_runs_pb.SearchRunsResponse(
+                            runs=make_runs(32),
+                            next_page_token='abcd'))),
+      api.step_data('search-project.request page 2',
+                    stdout=api.proto.output(
+                        service_runs_pb.SearchRunsResponse(
+                            runs=make_runs(32)))),
   )
-  yield (
-      api.test('error')
-      + api.step_data('search1cl.request page 1', retcode=1)
+
+  yield api.test(
+      'error',
+      api.step_data('search1cl.request page 1', retcode=1),
+      status='INFRA_FAILURE',
   )

@@ -111,59 +111,68 @@ def RunSteps(api):
 
 
 def GenTests(api):
-  yield (api.test('basic-try') +
-         api.buildbucket.try_build(
-             project='proj',
-             builder='try-builder',
-             git_repo='https://chrome-internal.googlesource.com/a/repo.git',
-             revision='a' * 40,
-             build_number=123) +
-         api.buildbucket.simulated_get(build_pb2.Build(id=8922054662172514000)))
+  yield api.test(
+      'basic-try',
+      api.buildbucket.try_build(
+          project='proj',
+          builder='try-builder',
+          git_repo='https://chrome-internal.googlesource.com/a/repo.git',
+          revision='a' * 40,
+          build_number=123),
+      api.buildbucket.simulated_get(build_pb2.Build(id=8922054662172514000))
+  )
 
-  yield (api.test('basic-ci-win') +
-         api.buildbucket.ci_build(
-             project='proj-internal',
-             bucket='ci',
-             builder='ci-builder',
-             git_repo='https://chrome-internal.googlesource.com/a/repo.git',
-             build_number=0,
-             tags=api.buildbucket.tags(user_agent=['cq', 'recipe']),
-             exe=api.buildbucket.exe(cipd_pkg='path/to/cipd/pkg')) +
-         api.buildbucket.simulated_get(build_pb2.Build(id=8922054662172514000)) +
-         api.platform('win', 32))
+  yield api.test(
+      'basic-ci-win',
+      api.platform('win', 32),
+      api.buildbucket.ci_build(
+          project='proj-internal',
+          bucket='ci',
+          builder='ci-builder',
+          git_repo='https://chrome-internal.googlesource.com/a/repo.git',
+          build_number=0,
+          tags=api.buildbucket.tags(user_agent=['cq', 'recipe']),
+          exe=api.buildbucket.exe(cipd_pkg='path/to/cipd/pkg')),
+      api.buildbucket.simulated_get(build_pb2.Build(id=8922054662172514000)),
+  )
 
-  yield (api.test('basic-try-bad-get') +
-         api.buildbucket.try_build(
-             project='proj',
-             builder='try-builder',
-             git_repo='https://chrome-internal.googlesource.com/a/repo.git',
-             revision='a' * 40,
-             build_number=123) +
-         api.step_data('buildbucket.get', api.json.output_stream({
-           'responses': [{'error': {'code': 7}}],
-         }, retcode=1)) +
-         api.post_process(DropExpectation))
+  yield api.test(
+      'basic-try-bad-get',
+      api.buildbucket.try_build(
+          project='proj',
+          builder='try-builder',
+          git_repo='https://chrome-internal.googlesource.com/a/repo.git',
+          revision='a' * 40,
+          build_number=123),
+      api.step_data('buildbucket.get', api.json.output_stream({
+        'responses': [{'error': {'code': 7}}],
+      }, retcode=1)),
+      api.post_process(DropExpectation),
+      status = 'INFRA_FAILURE',
+  )
 
-  yield (api.test('basic-generic') +
-         api.buildbucket.generic_build(
-             project='project',
-             bucket='cron',
-             builder='cron-builder') +
-         api.post_process(DropExpectation))
+  yield api.test(
+      'basic-generic',
+      api.buildbucket.generic_build(
+          project='project',
+          bucket='cron',
+          builder='cron-builder'),
+      api.post_process(DropExpectation),
+  )
 
-  yield (api.test('no_properties'))
+  yield api.test('no_properties')
 
-  yield (
-      api.test(
-          'cancel_step',
-          api.runtime.global_shutdown_on_step('buildbucket.get', 'before'),
-      ) + api.buildbucket.try_build(
+  yield api.test(
+      'cancel_step',
+      api.runtime.global_shutdown_on_step('buildbucket.get', 'before'),
+      api.buildbucket.try_build(
           project='proj',
           builder='try-builder',
           git_repo='https://chrome-internal.googlesource.com/a/repo.git',
           revision='a' * 40,
           build_number=123,
           experiments=['luci.buildbucket.parent_tracking']
-      ) +
-      api.properties(swarming_parent_run_id='1234')
- )
+      ),
+      api.properties(swarming_parent_run_id='1234'),
+      status='CANCELED',
+  )

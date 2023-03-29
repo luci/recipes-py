@@ -33,42 +33,45 @@ def GenTests(api):
   props['str_prop'] = 'hello str'
   props.get_or_create_struct('obj_prop')['hello'] = 'dict'
   props.get_or_create_list('list_prop').extend(['hello', 'list'])
-  yield (
-    api.test('basic') +
-    api.step_data('run annotation script', api.step.sub_build(sub_build))
+  yield api.test(
+      'basic',
+      api.step_data('run annotation script', api.step.sub_build(sub_build)),
   )
 
-  yield (
-    api.test('default step_test_data') +
-    api.post_process(post_process.StepSuccess, 'run annotation script') +
-    api.post_process(post_process.DropExpectation)
+  yield api.test(
+      'default step_test_data',
+      api.post_process(post_process.StepSuccess, 'run annotation script'),
+      api.post_process(post_process.DropExpectation),
   )
 
-  yield (
-    api.test('failure') +
-    api.step_data('run annotation script',
-                  api.legacy_annotation.failure_step) +
-    api.post_process(post_process.StepFailure, 'run annotation script') +
-    api.post_process(post_process.DropExpectation)
+  yield api.test(
+      'failure',
+      api.step_data('run annotation script',
+                    api.legacy_annotation.failure_step),
+      api.post_process(post_process.StepFailure, 'run annotation script'),
+      api.post_process(post_process.DropExpectation),
+      status = 'FAILURE',
   )
 
-  yield (
-    api.test('infra failure') +
-    api.step_data('run annotation script',
-                  api.legacy_annotation.infra_failure_step) +
-    api.post_process(post_process.StepException, 'run annotation script') +
-    api.post_process(post_process.DropExpectation)
+  yield api.test(
+      'infra failure',
+      api.step_data('run annotation script',
+                    api.legacy_annotation.infra_failure_step),
+      api.post_process(post_process.StepException, 'run annotation script'),
+      api.post_process(post_process.DropExpectation),
+      status = 'INFRA_FAILURE',
   )
 
-  yield (
-    api.test('kitchen basic') +
-    api.legacy_annotation.simulate_kitchen()
+  yield api.test(
+      'kitchen basic',
+      api.legacy_annotation.simulate_kitchen(),
   )
 
-  yield (
-    api.test('kitchen failure') +
-    api.legacy_annotation.simulate_kitchen() +
-    api.step_data('run annotation script', retcode=1) +
-    api.post_process(post_process.StepFailure, 'run annotation script') +
-    api.post_process(post_process.DropExpectation)
+  yield api.test(
+      'kitchen failure',
+      api.legacy_annotation.simulate_kitchen(),
+      api.step_data('run annotation script', retcode=1),
+      api.post_process(post_process.StepFailure, 'run annotation script'),
+      api.post_process(post_process.DropExpectation),
+      status='FAILURE',
   )

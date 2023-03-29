@@ -19,34 +19,33 @@ DEPS = [
 
 PROPERTIES = InputProps
 
-def RunSteps(api, props):
-    if props.use_result_type:
-      return result_pb2.Result()
 
-    return {'summary': 'test'}
+def RunSteps(api, props):
+  if props.use_result_type:
+    return result_pb2.Result()
+
+  return {'summary': 'test'}
+
 
 def GenTests(api):
-    yield (
-        api.test('incorrect_object_returned') +
-        api.properties(
-          InputProps(use_result_type=False)
-        ) +
-        api.post_process(post_process.StatusFailure) +
-        api.post_process(post_process.SummaryMarkdownRE,
-        ('"<(class|type) \'dict\'>" is not a valid return type for recipes\.'
-         ' Did you mean to use "RawResult"\?')) +
-        api.post_process(post_process.DropExpectation)
-    )
+  yield api.test(
+      'incorrect_object_returned',
+      api.properties(InputProps(use_result_type=False)),
+      api.post_process(
+          post_process.SummaryMarkdownRE,
+          ('"<(class|type) \'dict\'>" is not a valid return type for recipes\.'
+           ' Did you mean to use "RawResult"\?')),
+      api.post_process(post_process.DropExpectation),
+      status='FAILURE',
+  )
 
-    yield (
-        api.test('result_object_returned') +
-        api.properties(
-          InputProps(use_result_type=True)
-        ) +
-        api.post_process(post_process.StatusFailure) +
-        api.post_process(post_process.SummaryMarkdown,
-        ('"<class \'recipe_engine.result_pb2.Result\'>"'
-          ' is not a valid return type for recipes.'
-          ' Did you mean to use "RawResult"?')) +
-        api.post_process(post_process.DropExpectation)
-    )
+  yield api.test(
+      'result_object_returned',
+      api.properties(InputProps(use_result_type=True)),
+      api.post_process(post_process.SummaryMarkdown,
+                       ('"<class \'recipe_engine.result_pb2.Result\'>"'
+                        ' is not a valid return type for recipes.'
+                        ' Did you mean to use "RawResult"?')),
+      api.post_process(post_process.DropExpectation),
+      status='FAILURE',
+  )

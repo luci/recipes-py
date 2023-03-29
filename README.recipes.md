@@ -4918,7 +4918,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Tests that engine.py can handle unknown recipe results.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/incorrect_recipe_result.py#22)(api, props):**
+&mdash; **def [RunSteps](/recipes/engine_tests/incorrect_recipe_result.py#23)(api, props):**
 ### *recipes* / [engine\_tests/long\_sleep](/recipes/engine_tests/long_sleep.py)
 
 [DEPS](/recipes/engine_tests/long_sleep.py#8): [futures](#recipe_modules-futures), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
@@ -5146,11 +5146,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/futures/examples/background_helper.py#86)(api):**
+&mdash; **def [RunSteps](/recipe_modules/futures/examples/background_helper.py#87)(api):**
 
 &mdash; **def [manage\_helper](/recipe_modules/futures/examples/background_helper.py#21)(api, chn):**
 
-&emsp; **@contextmanager**<br>&mdash; **def [run\_helper](/recipe_modules/futures/examples/background_helper.py#59)(api):**
+&emsp; **@contextmanager**<br>&mdash; **def [run\_helper](/recipe_modules/futures/examples/background_helper.py#60)(api):**
 
 Runs the background helper.
 

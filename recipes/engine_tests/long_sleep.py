@@ -44,7 +44,9 @@ def GenTests(api):
       api.step_data('sleep a bit', times_out_after=10),
       api.step_data('sleep forever', cancel=True),
       api.post_process(DropExpectation),
+      status = 'INFRA_FAILURE',
   )
+
   yield api.test(
       'recover',
       api.properties(recover=True),
@@ -52,5 +54,3 @@ def GenTests(api):
       api.step_data('sleep forever', cancel=True),
       api.post_process(DropExpectation),
   )
-
-

@@ -77,13 +77,18 @@ def RunSteps(api):
 def GenTests(api):
   yield api.test('defaults')
 
-  yield api.test('seed_and_step') + api.time.seed(123) + api.time.step(2)
+  yield api.test(
+      'seed_and_step',
+      api.time.seed(123),
+      api.time.step(2),
+  )
 
   yield api.test(
       'cancel_sleep',
       api.time.seed(123),
       api.time.step(2),
       api.runtime.global_shutdown_on_step('sleep 5', 'after'),
+      status='CANCELED',
   )
 
   yield api.test(

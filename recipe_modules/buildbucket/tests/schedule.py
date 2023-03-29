@@ -121,7 +121,8 @@ def GenTests(api):
   )
   yield (
       test(test_name='error') +
-      api.buildbucket.simulated_schedule_output(err_batch_res)
+      api.buildbucket.simulated_schedule_output(err_batch_res) +
+      api.expect_status('INFRA_FAILURE')
   )
   yield (
       test(test_name='mirror_failure') +
@@ -129,7 +130,8 @@ def GenTests(api):
       api.buildbucket.simulated_collect_output([
         api.buildbucket.ci_build_message(
             build_id=8922054662172514001, status='FAILURE'),
-      ], step_name='buildbucket.run.collect')
+      ], step_name='buildbucket.run.collect') +
+      api.expect_status('INFRA_FAILURE')
   )
 
   yield (
@@ -144,7 +146,8 @@ def GenTests(api):
           post_process.SummaryMarkdownRE,
           r'Buildbucket Internal Error'
       ) +
-      api.post_process(post_process.DropExpectation)
+      api.post_process(post_process.DropExpectation) +
+      api.expect_status('INFRA_FAILURE')
   )
 
   res_with_rdb = builds_service_pb2.BatchResponse(

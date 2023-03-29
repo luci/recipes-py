@@ -22,7 +22,8 @@ def manage_helper(api, chn):
   with api.step.nest('helper'):
     pid_file = api.path['cleanup'].join('pid_file')
     helper_future = api.futures.spawn_immediate(
-        api.step, 'helper loop', ['python', api.resource('helper.py'), pid_file],
+        api.step, 'helper loop',
+        ['python', api.resource('helper.py'), pid_file],
         cost=None, # always run this background thread.
         __name='background process',
     )
@@ -91,14 +92,15 @@ def RunSteps(api):
 
 
 def GenTests(api):
-  yield (
-    api.test('basic')
-    + api.step_data('helper.wait for it', api.json.output({
-      'pid': 12345,
-    }))
+  yield api.test(
+      'basic',
+      api.step_data('helper.wait for it', api.json.output({
+        'pid': 12345,
+      })),
   )
 
-  yield (
-    api.test('wait times out')
-    + api.step_data('helper.wait for it', times_out_after=100)
+  yield api.test(
+      'wait times out',
+      api.step_data('helper.wait for it', times_out_after=100),
+      status='FAILURE',
   )

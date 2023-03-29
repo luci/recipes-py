@@ -190,136 +190,139 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
 
 
 def GenTests(api):
-  yield (
-    # This is very common dev workstation, but not all devs are on it.
-    api.test('basic')
-    + api.platform('linux', 64)
+  yield api.test('basic', api.platform('linux', 64))
+
+  yield api.test('mac64', api.platform('mac', 64))
+
+  yield api.test('win64', api.platform('win', 64))
+
+  yield api.test(
+      'max-threads',
+      api.platform('linux', 64),
+      api.properties(max_threads=2),
   )
 
-  yield (
-    api.test('mac64')
-    + api.platform('mac', 64)
+  yield api.test(
+      'describe-failed',
+      api.platform('linux', 64),
+      api.override_step_data(
+          'cipd describe public/package/${platform}',
+          api.cipd.example_error(
+              'package "public/package/linux-amd64-ubuntu14_04" not registered',
+          )),
+      status='FAILURE',
   )
 
-  yield (
-    api.test('win64')
-    + api.platform('win', 64)
+  yield api.test(
+      'describe-many-instances',
+      api.platform('linux', 64),
+      api.override_step_data(
+          'cipd search fake-package/${platform} dead:beaf',
+          api.cipd.example_search(
+              'public/package/linux-amd64-ubuntu14_04',
+              instances=3
+          )),
   )
 
-  yield (
-    api.test('max-threads')
-    + api.platform('linux', 64)
-    + api.properties(max_threads=2)
+  yield api.test(
+      'search-empty-result',
+      api.platform('linux', 64),
+      api.override_step_data(
+          'cipd search fake-package/${platform} dead:beaf',
+          api.json.output({'result': None})
+      ),
   )
 
-  yield (
-    api.test('describe-failed')
-    + api.platform('linux', 64)
-    + api.override_step_data(
-      'cipd describe public/package/${platform}',
-      api.cipd.example_error(
-        'package "public/package/linux-amd64-ubuntu14_04" not registered',
-      ))
+  yield api.test(
+      'basic_pkg',
+      api.properties(
+          use_pkg=True,
+          pkg_files=[
+            '[START_DIR]/some_subdir/a/path/to/file.py',
+            '[START_DIR]/some_subdir/some_config.cfg',
+          ],
+          pkg_dirs=[
+            {
+              'path': '[START_DIR]/some_subdir/directory',
+            },
+            {
+              'path': '[START_DIR]/some_subdir/other_dir',
+              'exclusions': [
+                r'.*\.pyc',
+              ]
+            },
+          ],
+          ver_file=['.versions/file.cipd_version'],
+      ),
   )
 
-  yield (
-    api.test('describe-many-instances')
-    + api.platform('linux', 64)
-    + api.override_step_data(
-      'cipd search fake-package/${platform} dead:beaf',
-      api.cipd.example_search(
-        'public/package/linux-amd64-ubuntu14_04',
-        instances=3
-      ))
+  yield api.test(
+      'pkg_bad_verfile',
+      api.properties(
+          use_pkg=True,
+          ver_files=['a', 'b'],
+      ),
+      api.expect_exception('ValueError'),
+      api.post_process(post_process.StatusException),
+      api.post_process(
+          post_process.SummaryMarkdownRE,
+          r"add_version_file\(\) may only be used once.",
+      ),
+      api.post_process(post_process.DropExpectation))
+
+  yield api.test(
+      'pkg_bad_mode',
+      api.properties(
+          use_pkg=True,
+          install_mode='',
+      ),
+      api.expect_exception('ValueError'),
+      api.post_process(post_process.StatusException),
+      api.post_process(
+          # SummaryMarkdownRE for py2/3 compatibility to be flexible about a
+          # trailing comma in repr() for exceptions:
+          # https://bugs.python.org/issue30399.
+          post_process.SummaryMarkdownRE,
+          r"invalid value for install_mode: ''",
+      ),
+      api.post_process(post_process.DropExpectation))
+
+  yield api.test(
+      'pkg_bad_file',
+      api.properties(
+          use_pkg=True,
+          pkg_files=[
+            '[START_DIR]/a/path/to/file.py',
+          ],
+      ),
+      api.expect_exception('ValueError'),
+      api.post_process(post_process.StatusException),
+      api.post_process(
+          # SummaryMarkdownRE for py2/3 compatibility to be flexible about a
+          # trailing comma in repr() for exceptions:
+          # https://bugs.python.org/issue30399.
+          post_process.SummaryMarkdownRE,
+          r"path Path\(\[START_DIR\], 'a', 'path', 'to', 'file.py'\) is not "
+          r"the package root Path\(\[START_DIR\], 'some_subdir'\) and not a "
+          r"child thereof",
+      ),
+      api.post_process(post_process.DropExpectation))
+
+  yield api.test(
+      'basic_with_pkg_vars',
+      api.properties(
+          pkg_vars = {
+            'pkg_var_1': 'pkg_val_1',
+            'pkg_var_2': 'pkg_val_2',
+          }
+      )
   )
 
-  yield (
-    api.test('search-empty-result')
-    + api.platform('linux', 64)
-    + api.override_step_data(
-      'cipd search fake-package/${platform} dead:beaf',
-      api.json.output({'result': None})
-    )
-  )
-
-  yield (
-    api.test('basic_pkg')
-    + api.properties(
-      use_pkg=True,
-      pkg_files=[
-        '[START_DIR]/some_subdir/a/path/to/file.py',
-        '[START_DIR]/some_subdir/some_config.cfg',
-      ],
-      pkg_dirs=[
-        {
-          'path': '[START_DIR]/some_subdir/directory',
-        },
-        {
-          'path': '[START_DIR]/some_subdir/other_dir',
-          'exclusions': [
-            r'.*\.pyc',
-          ]
-        },
-      ],
-      ver_file=['.versions/file.cipd_version'],
-    )
-  )
-
-  yield (api.test('pkg_bad_verfile') + api.properties(
-      use_pkg=True,
-      ver_files=['a', 'b'],
-  ) + api.expect_exception('ValueError')
-    + api.post_process(post_process.StatusException)
-    + api.post_process(
-      post_process.SummaryMarkdownRE,
-      r"add_version_file\(\) may only be used once.",
-  ) + api.post_process(post_process.DropExpectation))
-
-  yield (api.test('pkg_bad_mode') + api.properties(
-      use_pkg=True,
-      install_mode='',
-  ) + api.expect_exception('ValueError')
-    + api.post_process(post_process.StatusException)
-    + api.post_process(
-      # SummaryMarkdownRE for py2/3 compatibility to be flexible about a
-      # trailing comma in repr() for exceptions:
-      # https://bugs.python.org/issue30399.
-      post_process.SummaryMarkdownRE,
-      r"invalid value for install_mode: ''",
-  ) + api.post_process(post_process.DropExpectation))
-
-  yield (api.test('pkg_bad_file') + api.properties(
-      use_pkg=True,
-      pkg_files=[
-          '[START_DIR]/a/path/to/file.py',
-      ],
-  ) + api.expect_exception('ValueError')
-    + api.post_process(post_process.StatusException)
-    + api.post_process(
-      # SummaryMarkdownRE for py2/3 compatibility to be flexible about a
-      # trailing comma in repr() for exceptions:
-      # https://bugs.python.org/issue30399.
-      post_process.SummaryMarkdownRE,
-      r"path Path\(\[START_DIR\], 'a', 'path', 'to', 'file.py'\) is not "
-      r"the package root Path\(\[START_DIR\], 'some_subdir'\) and not a "
-      r"child thereof",
-  ) + api.post_process(post_process.DropExpectation))
-
-  yield (
-    api.test('basic_with_pkg_vars')
-    + api.properties(
-      pkg_vars = {
-        'pkg_var_1': 'pkg_val_1',
-        'pkg_var_2': 'pkg_val_2',
-      }
-    )
-  )
-
-  yield (
-    api.test('basic_with_no_refs_or_tags_or_md')
-    + api.properties(
-      refs=[],
-      tags={},
-      metadata=[],
-    )
+  yield api.test(
+      'basic_with_no_refs_or_tags_or_md',
+      api.properties(
+          refs=[],
+          tags={},
+          metadata=[],
+      ),
   )
