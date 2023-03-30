@@ -200,6 +200,14 @@ class Path(RecipeConfigType):
         sorted(self.platform_ext.items()) < sorted(other.platform_ext.items())
     )
 
+  def __truediv__(self, piece):
+    """Adds the shorthand '/'-operator for .join(), returning a new path."""
+    return self.join(piece)
+
+  def __div__(self, piece):
+    # Same as __truediv__, but for python 2.
+    return self.__truediv__(piece)
+
   def join(self, *pieces, **kwargs):
     """Appends *pieces to this Path, returning a new Path.
 
