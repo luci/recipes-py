@@ -47,7 +47,7 @@ def CheckChangeOnCommit(input_api, output_api):
     input_api.canned_checks.CheckVPythonSpec(input_api, output_api) + [
       input_api.Command(
           'Compile recipe protos',
-          ['python', recipes_py, 'fetch'],
+          ['python3', recipes_py, 'fetch'],
           {},
           output_api.PresubmitError,
       ),
