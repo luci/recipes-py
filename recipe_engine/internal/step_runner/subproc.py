@@ -330,7 +330,10 @@ class SubprocessStepRunner(StepRunner):
     # with a `try/except GreenletExit` to handle this and return an
     # ExecutionResult(was_cancelled=True) in that case.
     try:
-      debug_log.write_line('Waiting for process.')
+      extra_log = ''
+      if timeout is not None:
+        extra_log = ' (timeout=%fs)' % (timeout,)
+      debug_log.write_line('Waiting for process%s.' % (extra_log,))
       gevent.wait([GLOBAL_SHUTDOWN, proc], timeout=timeout, count=1)
       if GLOBAL_SHUTDOWN.ready():
         debug_log.write_line('Interrupted by GLOBAL_SHUTDOWN')
