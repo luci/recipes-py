@@ -89,15 +89,12 @@ def RunSteps(api, properties):
       else:
         swarming_parent_run_id = api.swarming.task_id
 
-    debug_exp = 'luci.debug.dump_buildsecret_for_manual_debugging'
     req = api.buildbucket.schedule_request(
         builder=builder.builder,
         project=builder.project,
         bucket=builder.bucket,
         can_outlive_parent=can_outlive_parent,
         swarming_parent_run_id=swarming_parent_run_id,
-        experiments={
-            debug_exp: debug_exp in api.buildbucket.build.input.experiments},
     )
     return api.buildbucket.schedule([req], step_name=step_name)[0]
 
@@ -280,8 +277,7 @@ def GenTests(api):
       git_repo='https://chrome-internal.googlesource.com/a/repo.git',
       revision='a' * 40,
       build_number=123,
-      experiments=['luci.buildbucket.parent_tracking',
-      'luci.debug.dump_buildsecret_for_manual_debugging']
+      experiments=['luci.buildbucket.parent_tracking']
   )
 
   yield api.test(
