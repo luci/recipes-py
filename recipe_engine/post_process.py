@@ -324,6 +324,18 @@ def StepCommandDoesNotContain(check, step_odict, step, argument_sequence):
       (step, argument_sequence), argument_sequence not in step_odict[step].cmd)
 
 
+def StepCommandEmpty(check, step_odict, step):
+  """Assert that a step ran no command.
+
+  Args:
+    step (str) - The name of the step to check the command of.
+
+  Usage:
+    yield (TEST + api.post_process(StepCommandEmpty, 'step-name')
+  """
+  check(not step_odict[step].cmd)
+
+
 def StepTextEquals(check, step_odict, step, expected):
   """Assert that a step's step_text is equal to a given string.
 

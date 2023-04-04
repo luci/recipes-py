@@ -5571,11 +5571,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/step/tests/defer.py#11)(api):**
 ### *recipes* / [step:tests/empty](/recipe_modules/step/tests/empty.py)
 
-[DEPS](/recipe_modules/step/tests/empty.py#11): [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/empty.py#12): [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/empty.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/empty.py#17)(api):**
 ### *recipes* / [step:tests/inject\_paths](/recipe_modules/step/tests/inject_paths.py)
 
 [DEPS](/recipe_modules/step/tests/inject_paths.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
