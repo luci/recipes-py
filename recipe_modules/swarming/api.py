@@ -24,7 +24,7 @@ from recipe_engine import recipe_api
 DEFAULT_CIPD_VERSION = 'git_revision:25effe8824d4e5ecff43e310290bb668aa995359'
 
 # The mandatory fields to include when calling the API list_bots with fields.
-LIST_BOTS_MANDATORY_FIELDS = 'items(bot_id,is_dead,quarantined)'
+LIST_BOTS_MANDATORY_FIELDS = 'items(bot_id,is_dead,quarantined,maintenance_msg)'
 
 
 class TaskRequest(object):
@@ -1154,6 +1154,16 @@ class BotMetadata(object):
   def quarantined(self):
     """True if the bot is quarantined (bool)."""
     return self._bot_json.get('quarantined', False)
+
+  @property
+  def maintenance_msg(self):
+    """The maintenance message for the bot (None|str)."""
+    return self._bot_json.get('maintenance_msg')
+
+  @property
+  def in_maintenance(self):
+    """True if the bot is in maintenance mode (bool)."""
+    return bool(self.maintenance_msg)
 
   @property
   def dimensions(self):

@@ -14,11 +14,11 @@ DEPS = [
 
 
 def RunSteps(api):
-  # list_bots from test_api returns 3 bots which is dead, quarantined,
-  # and alive respectively.
+  # list_bots from test_api returns 4 bots which is dead, quarantined,
+  # in_maintenance, and alive respectively.
   bots = api.swarming.list_bots(
       'List Bots', dimensions={'os': 'Android'}, fields=['items/external_ip'])
-  api.assertions.assertEqual(len(bots), 3)
+  api.assertions.assertEqual(len(bots), 4)
 
   bot_dead = bots[0]
   api.assertions.assertTrue(bot_dead.is_dead)
@@ -28,7 +28,11 @@ def RunSteps(api):
   api.assertions.assertTrue(bot_quarantined.quarantined)
   api.assertions.assertEqual(bot_quarantined.dimensions.get('os'), 'Android')
 
-  bot_alive = bots[2]
+  bot_quarantined = bots[2]
+  api.assertions.assertTrue(bot_quarantined.in_maintenance)
+  api.assertions.assertEqual(bot_quarantined.dimensions.get('os'), 'Android')
+
+  bot_alive = bots[3]
   api.assertions.assertFalse(bot_alive.is_dead)
   api.assertions.assertFalse(bot_alive.quarantined)
   api.assertions.assertEqual(bot_alive.dimensions.get('os'), 'Android')

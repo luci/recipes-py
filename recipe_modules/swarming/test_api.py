@@ -229,6 +229,7 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
                         bot_id,
                         is_dead=False,
                         quarantined=False,
+                        maintenance_msg=None,
                         dimensions=None,
                         state=None):
     bot = {'bot_id': bot_id}
@@ -236,6 +237,8 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
       bot['is_dead'] = True
     if quarantined:
       bot['quarantined'] = True
+    if maintenance_msg:
+      bot['maintenance_msg'] = maintenance_msg
     if dimensions:
       bot['dimensions'] = [{
           'key': k,
@@ -262,7 +265,11 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
             quarantined=True,
             dimensions=dimensions),
         self.generate_bot_json(
-            'build13-alive--device1',
+            'build13-maintenance--device1',
+            maintenance_msg='In maintenance mode',
+            dimensions=dimensions),
+        self.generate_bot_json(
+            'build14-alive--device1',
             dimensions=dimensions,
             state={'devices': {
                 'build13-alive-1-serial': {
