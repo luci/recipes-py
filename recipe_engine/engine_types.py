@@ -7,6 +7,12 @@ import copy
 import json
 import operator
 
+try:
+  from collections import UserList
+except ImportError:
+  # TODO: python2 import
+  from UserList import UserList
+
 from functools import reduce
 
 from builtins import str as text
@@ -114,7 +120,235 @@ class FrozenDict(collections.Mapping):
     return 'FrozenDict(%r)' % (list(iteritems(self._d)),)
 
 
+def _fix_stringlike(value):
+  """_fix_stringlike will decode `bytes` with backslashreplace and return
+  the decoded value.
+
+  If `value` is a text or str, returns it unchanged.
+
+  Otherwise rases ValueError.
+  """
+  if isinstance(value, (text, str)):
+    return value
+
+  if isinstance(value, bytes):
+    return value.decode('utf-8', errors='backslashreplace')
+
+  raise ValueError(
+      "Expected object of (str, bytes) but got %s" % (type(value),))
+
+
+class _StringSequence(UserList):
+  # NOTE: it could potentially be more efficient to implement the __add__ family
+  # of operators to avoid re-fix_stringlike'ing `items` here, but not worth the
+  # implementation complexity.
+  def __init__(self, initlist=None):
+    super(_StringSequence, self).__init__()
+    if initlist is not None:
+      self.data = [_fix_stringlike(i) for i in initlist]
+
+  def __iadd__(self, other):
+    """__iadd__ is called for `_StringSequence() += ...`
+
+    We want to make sure `other` is properly fixed first.
+    """
+    if isinstance(other, _StringSequence):
+      # other.data is already validated (unless the user is doing something
+      # REALLY weird).
+      self.data.extend(other.data)
+    else:
+      self.extend(other)
+    return self
+
+  def __setitem__(self, i, item):
+    self.data[i] = _fix_stringlike(item)
+
+  def __setslice__(self, i, j, other):
+    i = max(i, 0)
+    j = max(j, 0)
+    if isinstance(other, _StringSequence):
+      self.data[i:j] = other.data
+    else:
+      self.data[i:j] = [_fix_stringlike(i) for i in other]
+
+  def append(self, item):
+    self.data.append(_fix_stringlike(item))
+
+  def insert(self, i, item):
+    self.data.insert(i, _fix_stringlike(item))
+
+  def extend(self, other):
+    self.data.extend(_fix_stringlike(l) for l in other)
+
+
+class _OrderedDictString(collections.OrderedDict):
+  """_OrderedDictString implements some sort of constraints on the insane
+  StepPresentation.logs type.
+
+  In particular, it attempts to make sure that the value of entries in this dict
+  are either common_pb2.Log, str, or _StringSequence, without exception.
+
+  _StringSequence, in turn, emulates a strict list(str) type, converting bytes
+  to str with _fix_stringlike.
+  """
+
+  def __setitem__(self, key, value):
+    # late proto import
+    from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
+    if isinstance(value, (common_pb2.Log, text, str, _StringSequence)):
+      # these values are fine
+      pass
+    elif isinstance(value, bytes):
+      value = _fix_stringlike(value)
+    elif isinstance(value, collections.Iterable):
+      value = _StringSequence(value)
+    else:
+      raise ValueError(
+          "Attempted to assign non-(bytes/str or sequence(bytes/str)) "
+          "data as log value: %r" % (type(value),)
+      )
+
+    return super(_OrderedDictString, self).__setitem__(key, value)
+
+  def setdefault(self, key, default):
+    if key in self:
+      return self[key]
+    self[key] = default
+    return self[key]  # __setitem__ can replace a list with a _StringSequence.
+
+
 class StepPresentation(object):
+  """StepPresentation allows recipes to alter the presentation of their recipe
+  step in both the Buildbucket Build message, as well as it's visual
+  presentation on e.g. ci.chromium.org (i.e. 'milo' UI service).
+
+  You can obtain a StepPresentation object after running as step like:
+
+     result = api.step(step_name, ['program', ...])
+     presentation = result.presentation  # StepPresentation
+
+  Your code has read/write access to the properties of this StepPresentation
+  until it is `finalized`. Finalization happens when either the next step in the
+  same greenlet (aka "Future") is started, or when the current greenlet or 'nest
+  step' (i.e. `with api.step.nest(...):`) exits.
+
+  The following step properties are available:
+
+  # logs
+  Logs are line-based text (utf-8) data. Steps, by default, have a `stdout` log
+  which contains the combined stdout+stderr of the subprocess run in the step.
+  Steps which use `stdout=(...)` or `stderr=(...)` will not see this information
+  present on the step (that is: the recipe engine does not `tee` these outputs,
+  just redirects them to the placeholder files).
+
+  Logs is a map of `log name` (str) to `log data`. Log data can be a str, bytes,
+  or a list of str or bytes. If given in list form, the items in the list are
+  treated as lines separated by "\n". So, `'hello\nworld'` and
+  `['hello', 'world']` are identical log data.
+
+  If log data is bytes (or a list containing bytes entries), the bytes entries
+  will be formatted as utf-8 using `errors='backslashreplace'`. We use
+  backslashreplace as the most useful scheme. It will not let the reader
+  distinguish between '\x1b' and r'\x1b', but typically this is the output from
+  e.g. test commands where it is possible to distinguish based on context.
+
+  If users want to use a different utf-8 encoding of the raw data, they
+  can do so in their recipe.
+
+  # status
+  Status represents the overall status of this step, which directly impacts how
+  it is rendered on the UI. For legacy reasons, there is currently a mismatch
+  between the values of `status` and the values that Buildbucket uses in the
+  Build message.
+
+  The mapping is (status value, Buildbucket enum, default UI color):
+    * 'SUCCESS'    SUCCESS        green
+    * 'WARNING'    SUCCESS        green   # see crbug.com/854099
+    * 'FAILURE'    FAILURE        red
+    * 'EXCEPTION'  INFRA_FAILURE  purple
+    * 'CANCELED'   CANCELED       blue
+
+  NOTE: 'WARNING' is a valid value, but does not do anything differently than
+  'SUCCESS'. The best way to implement warnings, currently, is to use
+  `step_text` or `step_summary_text` to describe what is wrong.
+
+  # had_timeout
+  If True, indicates that this step timed out in some way.
+  Has no functional effect on the presentation of the step, but can be used by
+  your recipe code to see if the step ended due to a timeout.
+
+  # was_cancelled
+  If True, indicates that this step was canceled (i.e. an external non-timeout
+  event happened which caused the recipe engine to terminate the step). This can
+  happen when your recipe code explicitly uses the `Future.cancel()` function
+  from the `futures` module, or if an external process sent the recipe engine
+  SIGTERM/CTRL-BREAK while the step was running.
+
+  # properties
+  Properties are a way to export structured data from the OVERALL recipe. For
+  very legacy reasons, these are attached to StepPresentation, rather than
+  having a singular API for the overall exported data. See crbug.com/1409983.
+
+  Recipes stream their output properties; Buildbucket users who observe the
+  Build will see properties show up on the overall Build roughly as soon as the
+  StepPresentation finalizes.
+
+  Property keys here correspond to the TOP LEVEL output property key of the
+  whole Build. If multiple steps emit the same output property key, only the
+  lastmost step (i.e. the step which was finalized last) will have its value
+  preserved. There is no merging or combining of values.
+
+  For example:
+
+      api.step('one', ...).presentation.properties['propname'] = [1000]
+      api.step('two', ...).presentation.properties['propname'] = ["hi"]
+
+  An observer of this build would see the Build output properties look like:
+
+      {"propname": [1000]}  # after `one` finalized
+      {"propname": ["hi"]}  # after `two` finalized
+
+  Effectively, output properties are "write only". This was a (likely
+  misguided) attempt to prevent recipes from using output properties as a way to
+  pass state in-between otherwise unrelated pieces of code as a sort of global
+  variable.
+
+  # tags
+  Tags are arbitrary key/value string pairs which can be set that will apply to
+  THIS step only, are rendered in the UI, and are also exported via the
+  Buildbucket API. They are intended as a way for EngProd teams to annotate
+  individual steps with stable identifiers and/or to report a bit more
+  information about this specific step, without needing to resort to parsing the
+  summary_markdown field.
+
+  Tag keys should indicate the domain or system which interprets them. For
+  example:
+
+     my_service.category    = "COMPILE" - good
+     other_service.critical = "1"       - good
+
+     important = "1"                    - bad; important to who/what system?
+     is_compile = "yes"                 - bad; what will interpret this?
+                                        - should other recipes copy this key?
+
+  The "luci." prefix is reserved for LUCI's own use.
+  The key and value must be utf-8 and not exceed 256/1024 bytes each.
+  Neither key nor value can be empty.
+
+  # step_summary_text, step_text and links
+  These three properties are combined to populate the `summary_markdown` field
+  of the Buildbucket Step.
+
+  `step_summary_text` and `step_text` are used, verbatim, as the first and/or
+  second paragraphs of the markdown.
+
+  Links are a simple mapping of link name to a URL. This implementation will
+  replace spaces in links with '%20', but does no other URL processing. Links
+  are added to the `summary_markdown` by turning them into the final paragraph
+  as a bullet list.
+  """
+
+
   _RAW_STATUSES = (
     None, 'SUCCESS', 'WARNING', 'FAILURE', 'EXCEPTION', 'CANCELED')
   STATUSES = frozenset(status for status in _RAW_STATUSES if status)
@@ -136,7 +370,7 @@ class StepPresentation(object):
     self._name = step_name
     self._finalized = False
 
-    self._logs = collections.OrderedDict()
+    self._logs = _OrderedDictString()
     self._links = collections.OrderedDict()
     self._status = None
     self._had_timeout = False
@@ -256,9 +490,12 @@ class StepPresentation(object):
           else:
             raise ValueError('log %r has unknown log type %s: %r' %
                              (name, type(log), log))
-    for label, url in iteritems(self.links):
+    for label, url in iteritems(self._links):
       # We fix spaces in urls; It's an extremely common mistake to make, and
       # easy to remedy here.
+      #
+      # TODO(iannucci) - This seems simultaneously beneficial (?) and woefully
+      # insufficient.
       step_stream.add_step_link(text(label), text(url).replace(" ", "%20"))
     for key, value in sorted(iteritems(self._properties)):
       if isinstance(value, message.Message):

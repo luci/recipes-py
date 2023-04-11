@@ -88,7 +88,19 @@
     "name": "Just print stuff",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@more@More stuff@@@",
-      "@@@STEP_LOG_END@more@@@"
+      "@@@STEP_LOG_END@more@@@",
+      "@@@STEP_LOG_LINE@raw@\u001b[31mI am red!@@@",
+      "@@@STEP_LOG_END@raw@@@",
+      "@@@STEP_LOG_LINE@raw_lines@\u001b[31mI am red!@@@",
+      "@@@STEP_LOG_LINE@raw_lines@\u001b[32mI am green!@@@",
+      "@@@STEP_LOG_LINE@raw_lines@\u001b[0mReset.@@@",
+      "@@@STEP_LOG_LINE@raw_lines@I am normal@@@",
+      "@@@STEP_LOG_END@raw_lines@@@",
+      "@@@STEP_LOG_LINE@weird@\u001b[31mmore@@@",
+      "@@@STEP_LOG_LINE@weird@\u001b[31mmore@@@",
+      "@@@STEP_LOG_LINE@weird@lines@@@",
+      "@@@STEP_LOG_LINE@weird@strange@@@",
+      "@@@STEP_LOG_END@weird@@@"
     ]
   },
   {

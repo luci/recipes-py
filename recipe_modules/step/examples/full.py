@@ -80,6 +80,24 @@ def RunSteps(api, bad_return, access_invalid_data, access_deep_invalid_data,
   step_result = api.step('Just print stuff', cmd=None)
   step_result.presentation.logs['more'] = ['More stuff']
 
+  # If you shove `bytes` in, you'll also get the non-UTF-8 encoded with
+  # backslashreplace.
+  step_result.presentation.logs['raw'] = bytes(b'\x1b[31mI am red!')
+  step_result.presentation.logs['raw_lines'] = [
+    bytes(b'\x1b[31mI am red!'),
+    bytes(b'\x1b[32mI am green!'),
+    bytes(b'\x1b[0mReset.'),
+    bytes(b'I am normal'),
+  ]
+
+  # Some downstream recipes use `logs` in this way.
+  # Please do not do this :(
+  step_result.presentation.logs.setdefault('weird', []).append('stuff')
+  step_result.presentation.logs['weird'] += [bytes(b'\x1b[31mmore'), 'lines']
+  step_result.presentation.logs['weird'] = (
+    step_result.presentation.logs['weird'] + ['strange'])
+  step_result.presentation.logs['weird'][0] = bytes(b'\x1b[31mmore')
+
   try:
     api.step('goodbye', ['echo', 'goodbye'])
     # Modifying step_result now would raise an AssertionError.
