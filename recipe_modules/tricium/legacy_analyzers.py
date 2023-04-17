@@ -60,8 +60,9 @@ class Analyzers(object):
 
   COPYRIGHT = LegacyAnalyzer(
       name='Copyright',
-      package='infra/tricium/function/copyright',
+      package='infra/tricium/legacy_functions/copyright/linux-amd64',
       executable='copyright',
+      version='latest',
       path_filters=[
           '*.c',
           '*.cc',
