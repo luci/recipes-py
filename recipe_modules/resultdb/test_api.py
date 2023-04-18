@@ -46,16 +46,6 @@ class ResultDBTestApi(recipe_test_api.RecipeTestApi):
 
     return self._proto_step_result(inv, step_name)
 
-  def get_test_result_history(self, res, step_name='get_test_result_history'):
-    """Emulates get_test_result_history() return value.
-
-    Args:
-        res (proto.v1.resultdb.GetTestResultHistoryResponse object): the
-          response to simulate.
-        step_name (str): the name of the step to simulate.
-    """
-    return self._proto_step_result(res, step_name)
-
   def query_test_result_statistics(self, res,
                                    step_name='query_test_result_statistics'):
     """Emulates query_test_result_statistics() return value.

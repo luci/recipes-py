@@ -163,7 +163,6 @@
   * [resultdb:examples/query](#recipes-resultdb_examples_query) (Python3 ✅)
   * [resultdb:examples/query_test_result_statistics](#recipes-resultdb_examples_query_test_result_statistics) (Python3 ✅)
   * [resultdb:examples/query_test_results](#recipes-resultdb_examples_query_test_results) (Python3 ✅)
-  * [resultdb:examples/result_history](#recipes-resultdb_examples_result_history) (Python3 ✅)
   * [resultdb:examples/resultsink](#recipes-resultdb_examples_resultsink) (Python3 ✅)
   * [resultdb:examples/test_presentation](#recipes-resultdb_examples_test_presentation) (Python3 ✅)
   * [resultdb:examples/test_presentation_default](#recipes-resultdb_examples_test_presentation_default) (Python3 ✅)
@@ -3292,7 +3291,7 @@ A module for interacting with ResultDB.
 
 &mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#53)(self):**
 
-&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#651)(self, column_keys=(), grouping_keys=('status',)):**
+&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#581)(self, column_keys=(), grouping_keys=('status',)):**
 
 Specifies how the test results should be rendered.
 
@@ -3341,40 +3340,6 @@ Args:
 
 Returns:
   A list of invocation name strs.
-
-&mdash; **def [get\_test\_result\_history](/recipe_modules/resultdb/api.py#262)(self, realm, test_id_regexp, variant_predicate=None, time_range=None, page_size=10, page_token=None, step_name=None):**
-
-Receive test results for a given configuration.
-
-Makes a call to GetTestResultHistory rpc. Allows for test retrieval for
-all invocations with the specified configurations.
-
-Args:
-  realm (str): the realm that the data being queried exists in.
-    Example: "chromium:ci".
-  test_id_regexp (str): the subset of test IDs to request history for.
-  variant_predicate (resultdb.proto.v1.predicate.VariantPredicate):
-    the subset of test variants to request history for. Defaults to None,
-    but specifying will improve runtime.
-  time_range (common_v1.TimeRange): a range of timestamps in which to
-    request history from. If no time_range is specified, it defaults to the
-    past day.
-  page_size (int): the number of results per page in the response. If the
-    number of results satisfying the given configuration exceeds this
-    number, only the page_size results will be available in the response.
-    Defaults to 10 results.
-  page_token (str): for instances in which the results span multiple pages,
-    each response will contain a page token for the next page, which can be
-    passed in to the next request. Defaults to None, which returns the first
-    page.
-  step_name (str): name of the step.
-
-Returns:
-  A GetTestResultHistoryResponse proto message with entries for each test
-  matching the configuration.
-
-  For value format, see [`GetTestResultHistoryResponse` message]
-  (https://bit.ly/3bSXxU1)
 
 &mdash; **def [include\_invocations](/recipe_modules/resultdb/api.py#59)(self, invocations, step_name=None):**
 
@@ -3428,7 +3393,7 @@ Args:
 Returns:
   A dict {invocation_id: api.Invocation}.
 
-&mdash; **def [query\_test\_result\_statistics](/recipe_modules/resultdb/api.py#332)(self, invocations=None, step_name=None):**
+&mdash; **def [query\_test\_result\_statistics](/recipe_modules/resultdb/api.py#262)(self, invocations=None, step_name=None):**
 
 Retrieve stats of test results for the given invocations.
 
@@ -3444,7 +3409,7 @@ Returns:
   A QueryTestResultStatisticsResponse proto message with statistics for the
   queried invocations.
 
-&mdash; **def [query\_test\_results](/recipe_modules/resultdb/api.py#411)(self, invocations, test_id_regexp=None, variant_predicate=None, field_mask_paths=None, page_size=100, page_token=None, step_name=None):**
+&mdash; **def [query\_test\_results](/recipe_modules/resultdb/api.py#341)(self, invocations, test_id_regexp=None, variant_predicate=None, field_mask_paths=None, page_size=100, page_token=None, step_name=None):**
 
 Retrieve test results from an invocation, recursively.
 
@@ -3490,7 +3455,7 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
-&mdash; **def [upload\_invocation\_artifacts](/recipe_modules/resultdb/api.py#365)(self, artifacts, parent_inv=None, step_name=None):**
+&mdash; **def [upload\_invocation\_artifacts](/recipe_modules/resultdb/api.py#295)(self, artifacts, parent_inv=None, step_name=None):**
 
 Create artifacts with the given content type and contents or gcs_uri.
 
@@ -3510,7 +3475,7 @@ Returns:
   A BatchCreateArtifactsResponse proto message listing the artifacts that
   were created.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#534)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file=''):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#464)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file=''):**
 
 Wraps the command with ResultSink.
 
@@ -5472,13 +5437,6 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_test_results.py#22)(api, invocation, test_id_regexp):**
-### *recipes* / [resultdb:examples/result\_history](/recipe_modules/resultdb/examples/result_history.py)
-
-[DEPS](/recipe_modules/resultdb/examples/result_history.py#13): [resultdb](#recipe_modules-resultdb)
-
-PYTHON_VERSION_COMPATIBILITY: PY2+3
-
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/result_history.py#18)(api):**
 ### *recipes* / [resultdb:examples/resultsink](/recipe_modules/resultdb/examples/resultsink.py)
 
 [DEPS](/recipe_modules/resultdb/examples/resultsink.py#10): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
