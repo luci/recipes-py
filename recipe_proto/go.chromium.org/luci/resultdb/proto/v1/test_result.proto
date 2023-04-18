@@ -18,6 +18,7 @@ package luci.resultdb.v1;
 
 import "google/api/field_behavior.proto";
 import "google/protobuf/duration.proto";
+import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/common.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/test_metadata.proto";
@@ -33,6 +34,8 @@ option go_package = "go.chromium.org/luci/resultdb/proto/v1;resultpb";
 //
 // This message does not specify the test id.
 // It should be available in the message that embeds this message.
+//
+// Next id: 17.
 message TestResult {
   reserved 11;  // test_location
 
@@ -136,6 +139,27 @@ message TestResult {
 
   // Information about the test failure. Only present if the test failed.
   FailureReason failure_reason = 14;
+
+  // Arbitrary JSON object that contains structured, domain-specific properties
+  // of the test result.
+  //
+  // The serialized size must be <= 4096 bytes.
+  google.protobuf.Struct properties = 15;
+
+  // Whether the test result has been masked so that it includes only metadata.
+  // The metadata fields for a TestResult are:
+  // * name
+  // * test_id
+  // * result_id
+  // * expected
+  // * status
+  // * start_time
+  // * duration
+  // * variant_hash
+  // * failure_reason.primary_error_message (truncated to 140 characters)
+  //
+  // Output only.
+  bool is_masked = 16 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Machine-readable status of a test result.
@@ -218,6 +242,18 @@ message TestExoneration {
   // This allow detection of e.g. critical tests failing in presubmit,
   // even if they are being exonerated because they fail on other CLs.
   ExonerationReason reason = 7 [(google.api.field_behavior) = IMMUTABLE];
+
+  // Whether the test exoneration has been masked so that it includes only
+  // metadata. The metadata fields for a TestExoneration are:
+  // * name
+  // * test_id
+  // * exoneration_id
+  // * variant_hash
+  // * explanation_html
+  // * reason
+  //
+  // Output only.
+  bool is_masked = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Reason why a test variant was exonerated.

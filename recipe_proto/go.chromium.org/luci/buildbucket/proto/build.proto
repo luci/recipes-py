@@ -144,7 +144,7 @@ message Build {
   //
   // The info captures the state of the builder at creation time.
   // If any information is updated, all future builds will have the new
-  // information, while the the historical builds persist the old infromation.
+  // information, while the historical builds persist the old information.
   message BuilderInfo {
     string description = 1;
 
@@ -775,8 +775,7 @@ message BuildInfra {
     // tables, or to support multiple test result predicates.
     repeated luci.resultdb.v1.BigQueryExport bq_exports = 4;
 
-    // Specifies if and how to index this build's test results for historical
-    // queries.
+    // Deprecated. Any values specified here are ignored.
     luci.resultdb.v1.HistoryOptions history_options = 5;
   }
 

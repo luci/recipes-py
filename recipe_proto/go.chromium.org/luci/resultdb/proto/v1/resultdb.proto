@@ -18,14 +18,11 @@ package luci.resultdb.v1;
 
 import "google/api/field_behavior.proto";
 import "google/protobuf/field_mask.proto";
-import "google/protobuf/timestamp.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/artifact.proto";
-import "go.chromium.org/luci/resultdb/proto/v1/common.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/invocation.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/predicate.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/test_result.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/test_variant.proto";
-import "go.chromium.org/luci/resultdb/proto/v1/unique_test_variant.proto";
 
 option go_package = "go.chromium.org/luci/resultdb/proto/v1;resultpb";
 
@@ -93,16 +90,6 @@ service ResultDB {
   // Supports invocation inclusions.
   rpc QueryArtifacts(QueryArtifactsRequest) returns (QueryArtifactsResponse) {};
 
-  // Retrieves test results in a given range of either time or commit position.
-  // Accepts test variant predicate to filter the results.
-  //
-  // Note, testIdRegexp and variantPredicate SHOULD be specified to get the
-  // results in a timely manner. Queries without either of the predicates will
-  // be slow.
-  // Examples: go/resultdb-rpc#gettestresultshistory
-  rpc GetTestResultHistory (GetTestResultHistoryRequest) returns (
-    GetTestResultHistoryResponse) {};
-
   // Retrieves test variants from an invocation, recursively.
   // Supports invocation inclusions.
   rpc QueryTestVariants(QueryTestVariantsRequest) returns (QueryTestVariantsResponse) {};
@@ -110,9 +97,6 @@ service ResultDB {
   // Retrieves test variants from a single invocation, matching the specified
   // test IDs and hashes.
   rpc BatchGetTestVariants(BatchGetTestVariantsRequest) returns (BatchGetTestVariantsResponse) {};
-
-  // Reterives unique variants for a given test ID in a given realm.
-  rpc QueryUniqueTestVariants(QueryUniqueTestVariantsRequest) returns (QueryUniqueTestVariantsResponse) {};
 }
 
 // A request message for GetInvocation RPC.
@@ -385,72 +369,6 @@ message QueryArtifactsResponse {
   string next_page_token = 2;
 }
 
-// A request message for GetTestResultHistory RPC.
-message GetTestResultHistoryRequest {
-  // Required. This needs to match the realm that the data being queried exists
-  // in.
-  // I.e. For a result to be part of the history, it needs to be contained
-  // transitively by an invocation in this realm.
-  string realm = 1;
-
-  // Specify the subset of test ids to request history for.
-  //
-  // Performance tip: to speed up the query, please use the regexp with a literal
-  // prefix. For example, please use "ninja://chrome/test:browser_tests.*" instead of
-  // ".*browser_tests.*".
-  string test_id_regexp = 2;
-
-  // Specify the subset of test variants to request history for.
-  VariantPredicate variant_predicate = 3;
-
-  // Specify a range of commit positions or a range of timestamps.
-  // This is required for the service to know which index to query.
-  //
-  // Whether the test results are indexed by commit position and/or timestamp is
-  // determined according to invocation.history_options.
-  oneof range {
-    // A range of commit positions.
-    CommitPositionRange commit_position_range = 4;
-
-    // A range of time.
-    TimeRange time_range = 5;
-  }
-
-  // Specifies the number of results per page.
-  int64 page_size = 6;
-
-  // Populate this field to get subsequent pages if the original response
-  // contained a next page token.
-  // A request for the next page of the results must be identical to the
-  // original one except for this field.
-  string page_token = 101;
-}
-
-// A response message for GetTestResultHistory RPC.
-message GetTestResultHistoryResponse {
-  message Entry {
-    // Commit position of the invocation that contains the result, if available.
-    CommitPosition commit_position = 1;
-
-    // Creation time of the invocation that contains the result.
-    google.protobuf.Timestamp invocation_timestamp = 2;
-
-    // The result itself. Masked by the `fields` field of
-    // `GetResultHistoryRequest`.
-    TestResult result = 3;
-  }
-
-  // The actual results, the order will match the requested range.
-  // If multiple entries exist for the same commit position/timestamp they will
-  // be internally ordered by TestId, and then by VariantHash.
-  repeated Entry entries = 1;
-
-  // This field will be set if there are more results to return.
-  // To get the next page of data, send the same request again, but include this
-  // token.
-  string next_page_token = 2;
-}
-
 // A request message for QueryTestVariants RPC.
 // Next id: 9.
 message QueryTestVariantsRequest {
@@ -476,7 +394,7 @@ message QueryTestVariantsRequest {
   //
   // The service may return fewer than this value.
   // If unspecified, at most 100 test variants will be returned.
-  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  // The maximum value is 10,000; values above 10,000 will be coerced to 10,000.
   int32 page_size = 4;
 
   // A page token, received from a previous `QueryTestVariants` call.
@@ -514,6 +432,15 @@ message QueryTestVariantsResponse {
   // If this field is omitted, there were no subsequent pages at the time of
   // request.
   string next_page_token = 2;
+
+  // The code sources tested by the returned test variants. The sources are keyed
+  // by an ID which allows them to be cross-referenced from TestVariant.sources_id.
+  //
+  // The sources are returned via this map instead of directly on the TestVariant
+  // to avoid excessive response size. Each source message could be up to a few
+  // kilobytes and there are usually no more than a handful of different sources
+  // tested in an invocation, so deduplicating them here reduces response size.
+  map<string, Sources> sources = 3;
 }
 
 // A request message for BatchGetTestVariants RPC.
@@ -551,38 +478,13 @@ message BatchGetTestVariantsResponse {
   // omitted from the response. Clients shouldn't rely on the ordering of this
   // field, as no particular order is guaranteed.
   repeated TestVariant test_variants = 1;
-}
 
-// A request message for the `QueryUniqueTestVariants` RPC.
-message QueryUniqueTestVariantsRequest {
-  // Required. The realm to query the variants from.
-  string realm = 1;
-
-  // Required. The test ID that the variants belongs to.
-  string test_id = 2;
-
-  // The maximum number of variants to return.
+  // The code sources tested by the returned test variants. The sources are keyed
+  // by an ID which allows them to be cross-referenced from TestVariant.sources_id.
   //
-  // The service may return fewer than this value.
-  // If unspecified, at most 100 variants will be returned.
-  // The maximum value is 1000; values above 1000 will be coerced to 1000.
-  int32 page_size = 3;
-
-  // A page token, received from a previous `QueryUniqueTestVariants` call.
-  // Provide this to retrieve the subsequent page.
-  //
-  // When paginating, all other parameters provided to `ListVariant` MUST
-  // match the call that provided the page token.
-  string page_token = 4;
-}
-
-// A response message for the `QueryUniqueTestVariants` RPC.
-message QueryUniqueTestVariantsResponse {
-  // A list of unique test variants. Ordered by variant hash.
-  repeated UniqueTestVariant variants = 1;
-
-  // A token, which can be sent as `page_token` to retrieve the next page.
-  // If this field is omitted, there were no subsequent pages at the time of
-  // request.
-  string next_page_token = 2;
+  // The sources are returned via this map instead of directly on the TestVariant
+  // to avoid excessive response size. Each source message could be up to a few
+  // kilobytes and there are usually no more than a handful of different sources
+  // tested in an invocation, so deduplicating them here reduces response size.
+  map<string, Sources> sources = 2;
 }

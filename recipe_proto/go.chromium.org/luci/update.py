@@ -29,6 +29,7 @@ SUB_PATHS = [
   'cv/api/config/v2',
   'cv/api/recipe/v1',
   'cv/api/v0',
+  'cv/api/v1',
   'gce/api/config/v1',
   'led/job',
   'lucictx',
