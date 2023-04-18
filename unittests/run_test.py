@@ -153,9 +153,13 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
 
     # Test has a daemon that holds on to stdout for 30s, but the daemon's parent
     # process (e.g. the one that recipe engine actually runs) quits immediately.
-    # If this takes longer than 10 seconds to run (there can be overhead in
+    # If this takes longer than 20 seconds to run (there can be overhead in
     # running the engine/cipd/protoc/etc.), we consider it failed.
-    self.assertLess(after - now, 10)
+    #
+    # 20 seconds is because the trybots typically peg all processors, leading to
+    # bugs like crbug.com/1434371. 20 should (in theory) be enough to avoid
+    # timing issues like this, but sill effectively test this functionality.
+    self.assertLess(after - now, 20)
 
   def test_shell_quote(self):
     # For regular-looking commands we shouldn't need any specialness.
