@@ -55,7 +55,8 @@ class Analyzers(object):
   """
   COMMITCHECK = LegacyAnalyzer(
       name='Commitcheck',
-      package='infra/tricium/function/commitcheck',
+      package='infra/tricium/legacy_functions/commitcheck/linux-amd64',
+      version='latest',
       executable='commitcheck')
 
   COPYRIGHT = LegacyAnalyzer(
@@ -96,23 +97,27 @@ class Analyzers(object):
 
   HTTPS_CHECK = LegacyAnalyzer(
       name='HttpsCheck',
-      package='infra/tricium/function/https-check',
+      package='infra/tricium/legacy_functions/https-check/linux-amd64',
+      version='latest',
       executable='https-check')
 
   INCLUSIVE_LANGUAGE_CHECK = LegacyAnalyzer(
       name='InclusiveLanguageCheck',
-      package='infra/tricium/function/inclusive',
+      package='infra/tricium/legacy_functions/inclusive/linux-amd64',
+      version='latest',
       executable='inclusive')
 
   MOJOM_COMMENTATOR = LegacyAnalyzer(
       name='MojomCommentator',
-      package='infra/tricium/function/mojom-commentator',
+      package='infra/tricium/legacy_functions/mojom-commentator/linux-amd64',
+      version='latest',
       executable='mojom-commentator',
       path_filters=['*.mojom'])
 
   OBJECTIVE_C_STYLE = LegacyAnalyzer(
       name='ObjectiveCStyle',
-      package='infra/tricium/function/objective-c-style',
+      package='infra/tricium/legacy_functions/objective-c-style/linux-amd64',
+      version='latest',
       executable='objective-c-style',
       path_filters=['*.m', '*.mm'])
 
@@ -129,7 +134,8 @@ class Analyzers(object):
 
   SPACEY = LegacyAnalyzer(
       name='Spacey',
-      package='infra/tricium/function/spacey',
+      package='infra/tricium/legacy_functions/spacey/linux-amd64',
+      version='latest',
       executable='spacey')
 
   @classmethod
