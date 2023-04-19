@@ -262,7 +262,7 @@ class TriciumApi(recipe_api.RecipeApi):
       * analyzer (LegacyAnalyzer): Analyzer package to fetch.
     """
     ensure_file = self.m.cipd.EnsureFile()
-    ensure_file.add_package(analyzer.package, version='live')
+    ensure_file.add_package(analyzer.package, version=analyzer.version)
     self.m.cipd.ensure(package_dir, ensure_file)
 
   def _run_legacy_analyzer(self, package_dir, analyzer, input_dir, output_dir):
