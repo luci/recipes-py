@@ -129,7 +129,8 @@ class Analyzers(object):
 
   SPELLCHECKER = LegacyAnalyzer(
       name='Spellchecker',
-      package='infra/tricium/function/spellchecker',
+      package='infra/tricium/legacy_functions/spellchecker/linux-amd64',
+      version='latest',
       executable='spellchecker')
 
   SPACEY = LegacyAnalyzer(
