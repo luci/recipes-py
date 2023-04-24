@@ -2641,8 +2641,8 @@ information.
 
 &mdash; **def [abs\_to\_path](/recipe_modules/path/api.py#391)(self, abs_string_path):**
 
-Converts an absolute path string `string_path` to a real Path object,
-using the most appropriate known base path.
+Converts an absolute path string `abs_string_path` to a real Path
+object, using the most appropriate known base path.
 
   * abs_string_path MUST be an absolute path
   * abs_string_path MUST be rooted in one of the configured base paths known

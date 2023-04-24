@@ -389,8 +389,8 @@ class PathApi(recipe_api.RecipeApi):
     return temp_file
 
   def abs_to_path(self, abs_string_path):
-    """Converts an absolute path string `string_path` to a real Path object,
-    using the most appropriate known base path.
+    """Converts an absolute path string `abs_string_path` to a real Path
+    object, using the most appropriate known base path.
 
       * abs_string_path MUST be an absolute path
       * abs_string_path MUST be rooted in one of the configured base paths known
