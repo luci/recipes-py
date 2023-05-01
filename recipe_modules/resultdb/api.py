@@ -400,6 +400,34 @@ class ResultDBAPI(recipe_api.RecipeApi):
         # Do not fail the build because recipe's proto copy is stale.
         ignore_unknown_fields=True)
 
+  def update_invocation(self, parent_inv='', step_name=None, source_spec=None):
+    """Makes a call to the UpdateInvocation API to update the invocation
+
+    Args:
+      parent_inv (str): the name of the invocation to be updated.
+      step_name (str): name of the step.
+      source_spec (SourceSpec): The source information to apply to the given
+        invocation name
+    """
+    field_mask_paths = []
+    if source_spec:
+      field_mask_paths.append('source_spec')
+
+    req = recorder.UpdateInvocationRequest(
+        invocation=invocation_pb2.Invocation(
+            name=parent_inv or self.current_invocation,
+            source_spec=source_spec),
+        update_mask=field_mask_pb2.FieldMask(paths=field_mask_paths),
+    )
+    self._rpc(
+        step_name or 'update_invocations',
+        'luci.resultdb.v1.Recorder',
+        'UpdateInvocation',
+        req=json_format.MessageToDict(req),
+        include_update_token=True,
+        step_test_data=lambda: self.m.json.test_api.output_stream({}))
+
+
   ##############################################################################
   # Implementation details.
 
@@ -461,20 +489,22 @@ class ResultDBAPI(recipe_api.RecipeApi):
         timeout=timeout,
     )
 
-  def wrap(self,
-           cmd,
-           test_id_prefix='',
-           base_variant=None,
-           test_location_base='',
-           base_tags=None,
-           coerce_negative_duration=False,
-           include=False,
-           realm='',
-           location_tags_file='',
-           require_build_inv=True,
-           exonerate_unexpected_pass=False,
-           inv_properties='',
-           inv_properties_file='',
+  def wrap(
+      self,
+      cmd,
+      test_id_prefix='',
+      base_variant=None,
+      test_location_base='',
+      base_tags=None,
+      coerce_negative_duration=False,
+      include=False,
+      realm='',
+      location_tags_file='',
+      require_build_inv=True,
+      exonerate_unexpected_pass=False,
+      inv_properties='',
+      inv_properties_file='',
+      inherit_sources=False,
   ):
     """Wraps the command with ResultSink.
 
@@ -519,6 +549,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
       inv_properties_file(string): Similar to inv_properties but takes a path
         to the file that contains the JSON object. Cannot be used when
         inv_properties is specified.
+      inherit_sources(bool): flag to enable inheriting sources from the parent
+        invocation
     """
     if require_build_inv:
       self.assert_enabled()
@@ -574,6 +606,9 @@ class ResultDBAPI(recipe_api.RecipeApi):
 
     if inv_properties_file:
       ret += ['-inv-properties-file', inv_properties_file]
+
+    if inherit_sources:
+      ret += ['-inherit-sources']
 
     ret += ['--'] + list(cmd)
     return ret

@@ -166,6 +166,7 @@
   * [resultdb:examples/resultsink](#recipes-resultdb_examples_resultsink) (Python3 ✅)
   * [resultdb:examples/test_presentation](#recipes-resultdb_examples_test_presentation) (Python3 ✅)
   * [resultdb:examples/test_presentation_default](#recipes-resultdb_examples_test_presentation_default) (Python3 ✅)
+  * [resultdb:examples/update_invocation](#recipes-resultdb_examples_update_invocation) (Python3 ✅)
   * [resultdb:examples/upload_invocation_artifacts](#recipes-resultdb_examples_upload_invocation_artifacts) (Python3 ✅)
   * [runtime:tests/full](#recipes-runtime_tests_full) (Python3 ✅)
   * [scheduler:examples/emit_triggers](#recipes-scheduler_examples_emit_triggers) (Python3 ✅) &mdash; This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
@@ -3291,7 +3292,7 @@ A module for interacting with ResultDB.
 
 &mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#53)(self):**
 
-&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#581)(self, column_keys=(), grouping_keys=('status',)):**
+&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#616)(self, column_keys=(), grouping_keys=('status',)):**
 
 Specifies how the test results should be rendered.
 
@@ -3455,6 +3456,16 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
+&mdash; **def [update\_invocation](/recipe_modules/resultdb/api.py#403)(self, parent_inv='', step_name=None, source_spec=None):**
+
+Makes a call to the UpdateInvocation API to update the invocation
+
+Args:
+  parent_inv (str): the name of the invocation to be updated.
+  step_name (str): name of the step.
+  source_spec (SourceSpec): The source information to apply to the given
+    invocation name
+
 &mdash; **def [upload\_invocation\_artifacts](/recipe_modules/resultdb/api.py#295)(self, artifacts, parent_inv=None, step_name=None):**
 
 Create artifacts with the given content type and contents or gcs_uri.
@@ -3475,7 +3486,7 @@ Returns:
   A BatchCreateArtifactsResponse proto message listing the artifacts that
   were created.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#464)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file=''):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#492)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file='', inherit_sources=False):**
 
 Wraps the command with ResultSink.
 
@@ -3520,6 +3531,8 @@ Args:
   inv_properties_file(string): Similar to inv_properties but takes a path
     to the file that contains the JSON object. Cannot be used when
     inv_properties is specified.
+  inherit_sources(bool): flag to enable inheriting sources from the parent
+    invocation
 ### *recipe_modules* / [runtime](/recipe_modules/runtime)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
@@ -5458,6 +5471,13 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/test_presentation_default.py#11)(api):**
+### *recipes* / [resultdb:examples/update\_invocation](/recipe_modules/resultdb/examples/update_invocation.py)
+
+[DEPS](/recipe_modules/resultdb/examples/update_invocation.py#14): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
+
+PYTHON_VERSION_COMPATIBILITY: PY2+3
+
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/update_invocation.py#26)(api, invocation, gitiles_commit, gerrit_changes):**
 ### *recipes* / [resultdb:examples/upload\_invocation\_artifacts](/recipe_modules/resultdb/examples/upload_invocation_artifacts.py)
 
 [DEPS](/recipe_modules/resultdb/examples/upload_invocation_artifacts.py#12): [resultdb](#recipe_modules-resultdb)

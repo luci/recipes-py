@@ -79,6 +79,11 @@ def RunSteps(api):
     inv_properties_file="properties.json",
   ))
 
+  api.step(
+      'test with inherit_sources',
+      api.resultdb.wrap(['echo', 'suppose its a test'], inherit_sources=True))
+
+
 def GenTests(api):
   yield api.test(
       'basic',
