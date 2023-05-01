@@ -9,6 +9,7 @@ import io
 import os
 import requests
 import sys
+import tempfile
 import unittest
 from unittest import mock
 
@@ -63,6 +64,18 @@ class PyCurlTest(unittest.TestCase):
     code, total = pycurl._download('https://test/', os.devnull, None, 0, '')
     self.assertTrue(code == requests.codes.ok)
     self.assertTrue(total == 8)
+
+  def testStripPrefix(self):
+    r = requests.Session().get()
+    r.status_code = requests.codes.ok
+    r.headers = {}
+    r.raw = io.BytesIO(b")]}'\nok")
+    r.iter_content.return_value = r.raw
+
+    outfile = tempfile.NamedTemporaryFile()
+    code, total = pycurl._download('https://test/', outfile.name, None, 0,
+                                   ")]}'\n")
+    self.assertTrue(outfile.read(), b'ok')
 
 
 if __name__ == '__main__':

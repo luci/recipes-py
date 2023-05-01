@@ -61,7 +61,7 @@ def _download(url, outfile, headers, transient_retry, strip_prefix):
 
       if strip_prefix:
         remaining_prefix = strip_prefix[len(loaded_prefix):]
-        round_prefix = chunk[:len(remaining_prefix)]
+        round_prefix = chunk[:len(remaining_prefix)].decode()
         loaded_prefix += round_prefix
         if round_prefix != remaining_prefix[:len(round_prefix)]:
           raise ValueError(
@@ -78,8 +78,8 @@ def _download(url, outfile, headers, transient_retry, strip_prefix):
   # See https://github.com/psf/requests/issues/4956
   length_str = r.headers.get('Content-Length')
   if length_str and int(length_str) != r.raw.tell():
-      raise ValueError('Expected content length: %s, downloaded: %d' %
-                       (length_str, r.raw.tell()))
+    raise ValueError('Expected content length: %s, downloaded: %d' %
+                     (length_str, r.raw.tell()))
 
   return r.status_code, total
 
