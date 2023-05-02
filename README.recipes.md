@@ -192,6 +192,7 @@
   * [swarming:tests/realms](#recipes-swarming_tests_realms) (Python3 ✅)
   * [swarming:tests/task_request_from_jsonish](#recipes-swarming_tests_task_request_from_jsonish) (Python3 ✅)
   * [time:examples/full](#recipes-time_examples_full) (Python3 ✅)
+  * [time:examples/jitter](#recipes-time_examples_jitter) (Python3 ✅)
   * [tricium:examples/add_comment](#recipes-tricium_examples_add_comment) (Python3 ✅)
   * [tricium:examples/wrapper](#recipes-tricium_examples_wrapper) (Python3 ✅) &mdash; An example of a recipe wrapping legacy analyzers.
   * [tricium:tests/add_comment_validation](#recipes-tricium_tests_add_comment_validation) (Python3 ✅)
@@ -5661,6 +5662,13 @@ PYTHON_VERSION_COMPATIBILITY: PY3
 &mdash; **def [RunSteps](/recipe_modules/time/examples/full.py#37)(api):**
 
 &emsp; **@exponential_retry(5, datetime.timedelta(seconds=1))**<br>&mdash; **def [helper\_fn\_that\_needs\_retries](/recipe_modules/time/examples/full.py#31)(api):**
+### *recipes* / [time:examples/jitter](/recipe_modules/time/examples/jitter.py)
+
+[DEPS](/recipe_modules/time/examples/jitter.py#12): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [time](#recipe_modules-time)
+
+PYTHON_VERSION_COMPATIBILITY: PY3
+
+&mdash; **def [RunSteps](/recipe_modules/time/examples/jitter.py#22)(api, properties):**
 ### *recipes* / [tricium:examples/add\_comment](/recipe_modules/tricium/examples/add_comment.py)
 
 [DEPS](/recipe_modules/tricium/examples/add_comment.py#10): [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)

@@ -78,7 +78,7 @@ class exponential_retry(object):
           # Jitter the amount to sleep by plus or minus 15%.
           # Jitter helps avoid
           # https://en.wikipedia.org/wiki/Thundering_herd_problem
-          to_sleep *= 1 + time_api.m.random.random() / .3 - .15
+          to_sleep = time_api._jitter(to_sleep, .15)
           time_api.sleep(to_sleep)
           retry_delay *= 2
     return wrapper
@@ -205,3 +205,12 @@ class TimeApi(recipe_api.RecipeApi):
       return datetime.datetime.utcfromtimestamp(self._fake_time)
     else:  # pragma: no cover
       return datetime.datetime.utcnow()
+
+  def _jitter(self, seconds, jitter_amount, random_func=None):
+    """Returns the provided seconds jittered by the jitter amount provided.
+
+    random_func allows for manually providing the random value in tests.
+    """
+    if not random_func:
+      random_func = self.m.random.random
+    return seconds * (1 + random_func() * (jitter_amount * 2) - jitter_amount)
