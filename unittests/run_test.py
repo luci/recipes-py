@@ -1,4 +1,4 @@
-#!/usr/bin/env vpython
+#!/usr/bin/env vpython3
 # Copyright 2016 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -113,7 +113,8 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
           self._run_cmd(recipe, workdir, properties),
           stdout=subprocess.PIPE,
           stderr=subprocess.STDOUT,
-          env=env)
+          env=env,
+          text=True)
       stdout = proc.communicate()
       self.assertEqual(0, proc.returncode, '%d != %d when testing %s:\n%s' % (
           0, proc.returncode, recipe, stdout))
@@ -173,7 +174,7 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
         'Command with "quotes"',
         "I have 'single quotes'",
         'Some \\Esc\ape Seque\nces/',
-        u'Unicode makes me \u2609\u203f\u2299'.encode('utf-8'),
+        'Unicode makes me \u2609\u203f\u2299',
     ]
 
     for s in STRINGS:
@@ -181,12 +182,12 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
 
       # We shouldn't ever get an actual newline in a command, that's awful
       # for copypasta.
-      self.assertNotRegexpMatches(quoted, '\n')
+      self.assertNotRegex(quoted, '\n')
 
       # We should be able to paste any argument into bash & zsh and get
       # exactly what subprocess did.
-      bash_output = subprocess.check_output([
-          'bash', '-c', '/bin/echo %s' % quoted])
+      bash_output = subprocess.check_output(
+          ['bash', '-c', '/bin/echo %s' % quoted], text=True)
       self.assertEqual(bash_output, s + '\n')
 
       # zsh is untested because zsh isn't provisioned on our bots.
@@ -227,15 +228,15 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
       if self.py_version == 3:
         env['RECIPES_USE_PY3'] = 'true'
 
-      proc = subprocess.Popen(
-          [fake_bbagent, "--pid-file", pidfile],
-          stdin=subprocess.PIPE,
-          env=env)
-      proc.stdin.write(json.dumps({
-        "input": {
-          "properties": properties,
-        },
-      }))
+      proc = subprocess.Popen([fake_bbagent, "--pid-file", pidfile],
+                              stdin=subprocess.PIPE,
+                              env=env,
+                              text=True)
+      json.dump({
+          "input": {
+              "properties": properties,
+          },
+      }, proc.stdin)
       proc.stdin.close()
 
       engine_pid = int(self._wait_for_file(pidfile, 30).strip())
@@ -266,16 +267,16 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
       env['FAKE_BBAGENT_OUTFILE'] = outfile
       if self.py_version == 3:
         env['RECIPES_USE_PY3'] = 'true'
-      proc = subprocess.Popen(
-          [fake_bbagent, "--pid-file", pidfile],
-          stdin=subprocess.PIPE,
-          env=env)
+      proc = subprocess.Popen([fake_bbagent, "--pid-file", pidfile],
+                              stdin=subprocess.PIPE,
+                              env=env,
+                              text=True)
 
-      proc.stdin.write(json.dumps({
-        "input": {
-          "properties": properties,
-        },
-      }))
+      json.dump({
+          "input": {
+              "properties": properties,
+          },
+      }, proc.stdin)
       proc.stdin.close()
 
       engine_pid = int(self._wait_for_file(pidfile, 30).strip())

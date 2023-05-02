@@ -1,4 +1,4 @@
-#!/usr/bin/env vpython
+#!/usr/bin/env vpython3
 # Copyright 2018 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -7,7 +7,7 @@ import os
 import shutil
 import subprocess
 
-import mock
+from unittest import mock
 
 import test_env
 
@@ -28,6 +28,7 @@ class AttrCheckerEquivalenceTests(test_env.RecipeEngineUnitTest):
     kwargs.setdefault('stdout', subprocess.PIPE)
     kwargs.setdefault('stderr', subprocess.PIPE)
     kwargs.setdefault('cwd', self.git_repo)
+    kwargs.setdefault('text', True)
     p = subprocess.Popen(['git'] + list(cmd), **kwargs)
     stdout, stderr = p.communicate(stdin)
     self.assertEqual(p.returncode, 0, stderr)

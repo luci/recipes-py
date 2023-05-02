@@ -1,4 +1,4 @@
-#!/usr/bin/env vpython
+#!/usr/bin/env vpython3
 # Copyright 2014 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -46,8 +46,8 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
       recipe.DEPS = ['aint_no_thang']
 
     def _assert_nomodule(output):
-      self.assertRegexpMatches(
-        output, r"No module named 'aint_no_thang' in repo 'main'.")
+      self.assertRegex(output,
+                       r"No module named 'aint_no_thang' in repo 'main'.")
 
     self._test_cmd(
         deps, ['run', 'foo'], retcode=1, asserts=_assert_nomodule)
@@ -61,7 +61,7 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
       mod.DEPS.append('love')
 
     def _assert_nomodule(output):
-      self.assertRegexpMatches(output, r"No module named 'love' in repo 'main'")
+      self.assertRegex(output, r"No module named 'love' in repo 'main'")
 
     self._test_cmd(
         deps, ['run', 'foo'], retcode=1, asserts=_assert_nomodule)
@@ -80,7 +80,7 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
       ''')
 
     def assert_syntaxerror(output):
-      self.assertRegexpMatches(output, r'invalid syntax')
+      self.assertRegex(output, r'RecipeSyntaxError')
 
     self._test_cmd(deps, ['test', 'run', '--filter', 'foo'],
         asserts=assert_syntaxerror, retcode=1)
@@ -102,8 +102,9 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
       ''')
 
     def _assert_keyerror(output):
-      self.assertRegexpMatches(
-          output, "KeyError.{1,3}Unknown path: bippityboppityboo.{1,3}")
+      self.assertRegex(output,
+                       "KeyError.{1,3}Unknown path: bippityboppityboo.{1,3}")
+
     self._test_cmd(deps, ['test', 'train', '--filter', 'missing_path'],
                    asserts=_assert_keyerror, retcode=1)
     self._test_cmd(deps, ['test', 'run', '--filter', 'missing_path'],
@@ -141,22 +142,22 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
       def RunSteps(api):
         pass
       ''')
-    self._test_cmd(deps, ['run', 'no_gen_tests'],
-      asserts=lambda output: self.assertRegexpMatches(
-          output,
-          r'(?s)misspelled GenTests'),
-      retcode=1)
+    self._test_cmd(
+        deps, ['run', 'no_gen_tests'],
+        asserts=lambda output: self.assertRegex(output,
+                                                r'(?s)misspelled GenTests'),
+        retcode=1)
 
     with deps.main_repo.write_file('recipes/no_run_steps.py') as buf:
       buf.write('''
       def GenTests(api):
         pass
       ''')
-    self._test_cmd(deps, ['run', 'no_run_steps'],
-      asserts=lambda output: self.assertRegexpMatches(
-          output,
-          r'(?s)misspelled RunSteps'),
-      retcode=1)
+    self._test_cmd(
+        deps, ['run', 'no_run_steps'],
+        asserts=lambda output: self.assertRegex(output,
+                                                r'(?s)misspelled RunSteps'),
+        retcode=1)
 
 
   def test_unconsumed_assertion(self):
@@ -181,10 +182,9 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
       recipe.DEPS = []
 
     def _assert_output(output):
-      self.assertRegexpMatches(
-          output, r'from the root of a \'main\' checkout')
-      self.assertRegexpMatches(
-          output, r'\./recipes\.py run .* do_nothing')
+      self.assertRegex(output, r'from the root of a \'main\' checkout')
+      self.assertRegex(output, r'\./recipes\.py run .* do_nothing')
+
     self._test_cmd(deps, ['run', 'do_nothing'],
       asserts=_assert_output)
 
@@ -200,8 +200,8 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
 
     self._test_cmd(
         deps, ['test', 'train'],
-        asserts=lambda output: self.assertRegexpMatches(
-            output, r'No module named BAD_IMPORT'),
+        asserts=lambda output: self.assertRegex(
+            output, r"No module named 'BAD_IMPORT'"),
         retcode=1)
 
   def test_bad_test_api_import(self):
@@ -216,8 +216,8 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
 
     self._test_cmd(
         deps, ['test', 'train'],
-        asserts=lambda output: self.assertRegexpMatches(
-            output, r'No module named BAD_IMPORT'),
+        asserts=lambda output: self.assertRegex(
+            output, r"No module named 'BAD_IMPORT'"),
         retcode=1)
 
 

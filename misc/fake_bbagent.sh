@@ -47,11 +47,13 @@ RECIPES_PY="${RECIPES_PY:-$(realpath "$(git rev-parse --show-toplevel)")}"
 RECIPES_PY_SCRIPT="${RECIPES_PY_SCRIPT:-${RECIPES_PY}/recipes.py}"
 WD="${WD:-$RECIPES_PY/workdir}"
 
+BINDIR="${RECIPES_PY}/misc/bindir"
+
 echo "Clean workdir."
 rm -rf "$WD"
 mkdir -p "$WD/tmp" "$WD/cache" "$WD/wd" "$WD/luci_context"
 
-cipd ensure -root "$WD/butler" -ensure-file - <<EOF
+cipd ensure -root "$BINDIR/butler" -ensure-file - <<EOF
 infra/tools/luci/logdog/butler/\${platform} latest
 EOF
 
@@ -96,7 +98,7 @@ fi
 # Set up a local fifo for butler to serve on.
 # Actually run the recipes.
 "$RECIPES_PY/misc/build_proto.py" | \
-    "$WD/butler/logdog_butler" -project local                 \
+    "$BINDIR/butler/logdog_butler" -project local                 \
     -output directory,path="$WD/logs"                         \
     run -stdout=name=stdout -stderr=name=stderr               \
     -forward-stdin                                            \

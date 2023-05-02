@@ -208,7 +208,7 @@
 
 [DEPS](/recipe_modules/archive/__init__.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 #### **class [ArchiveApi](/recipe_modules/archive/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
@@ -275,7 +275,7 @@ Returns:
   Package object.
 ### *recipe_modules* / [assertions](/recipe_modules/assertions)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 #### **class [AssertionsApi](/recipe_modules/assertions/api.py#55)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
@@ -328,7 +328,7 @@ def GenTests(api):
 
 [DEPS](/recipe_modules/bcid_reporter/__init__.py#7): [cipd](#recipe_modules-cipd), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 #### **class [BcidReporterApi](/recipe_modules/bcid_reporter/api.py#13)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
@@ -386,7 +386,7 @@ Args:
 
 [DEPS](/recipe_modules/buildbucket/__init__.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [resultdb](#recipe_modules-resultdb), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 API for interacting with the buildbucket service.
 
@@ -787,7 +787,7 @@ Set the buildbucket host while in context, then reverts it.
 
 [DEPS](/recipe_modules/cas/__init__.py#9): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 API for interacting with cas client.
 
@@ -836,7 +836,7 @@ Sets the CAS instance while in context, then reverts it.
 
 [DEPS](/recipe_modules/cas_input/__init__.py#9): [cas](#recipe_modules-cas), [path](#recipe_modules-path)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Simple API for handling CAS inputs to a recipe.
 
@@ -873,7 +873,7 @@ Returns:
 
 [DEPS](/recipe_modules/change_verifier/__init__.py#7): [proto](#recipe_modules-proto), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Recipe API for LUCI Change Verifier.
 
@@ -913,7 +913,7 @@ Returns:
 
 [DEPS](/recipe_modules/cipd/__init__.py#7): [context](#recipe_modules-context), [file](#recipe_modules-file), [futures](#recipe_modules-futures), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [url](#recipe_modules-url)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 API for interacting with CIPD.
 
@@ -1215,7 +1215,7 @@ Args:
 Returns the CIPDApi.Pin instance.
 ### *recipe_modules* / [commit\_position](/recipe_modules/commit_position)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 #### **class [CommitPositionApi](/recipe_modules/commit_position/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
@@ -1234,7 +1234,7 @@ Returns (ref, revision_number) tuple.
 
 [DEPS](/recipe_modules/context/__init__.py#7): [path](#recipe_modules-path)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 The context module provides APIs for manipulating a few pieces of 'ambient'
 data that affect how steps are run.
@@ -1393,7 +1393,7 @@ Returns None if resultdb is not defined.
 
 [DEPS](/recipe_modules/cq/__init__.py#9): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Recipe API for LUCI CQ, the pre-commit testing system.
 
@@ -1549,7 +1549,7 @@ Returns recorded Buildbucket build IDs as a list of integers.
 
 [DEPS](/recipe_modules/file/__init__.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [proto](#recipe_modules-proto), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 File manipulation (read/write/delete/glob) methods.
 
@@ -1981,7 +1981,7 @@ Args:
 Raises: file.Error.
 ### *recipe_modules* / [futures](/recipe_modules/futures)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Implements in-recipe concurrency via green threads.
 
@@ -2161,7 +2161,7 @@ Returns the list of done Futures, in the order in which they were done.
 
 [DEPS](/recipe_modules/generator_script/__init__.py#7): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 A simplistic method for running steps generated by an external script.
 
@@ -2211,7 +2211,7 @@ corresponds to one step, and contains the following keys:
 
 [DEPS](/recipe_modules/golang/__init__.py#7): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 #### **class [GolangApi](/recipe_modules/golang/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
@@ -2248,7 +2248,7 @@ Args:
 
 [DEPS](/recipe_modules/json/__init__.py#7): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Methods for producing and consuming JSON.
 
@@ -2258,7 +2258,7 @@ Methods for producing and consuming JSON.
 
 Works like `json.dumps`.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#157)**<br>&mdash; **def [input](/recipe_modules/json/api.py#158)(self, data):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#158)**<br>&mdash; **def [input](/recipe_modules/json/api.py#158)(self, data):**
 
 A placeholder which will expand to a file path containing <data>.
 
@@ -2274,7 +2274,7 @@ Works like `json.loads`, but:
 * replaces 'int-like' floats with ints. These are floats whose magnitude
   is less than (2**53-1) and which don't have a decimal component.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#157)**<br>&mdash; **def [output](/recipe_modules/json/api.py#163)(self, add_json_log=True, name=None, leak_to=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#158)**<br>&mdash; **def [output](/recipe_modules/json/api.py#163)(self, add_json_log=True, name=None, leak_to=None):**
 
 A placeholder which will expand to '/tmp/file'.
 
@@ -2298,7 +2298,7 @@ Returns a step that reads a JSON file.
 
 [DEPS](/recipe_modules/led/__init__.py#7): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [proto](#recipe_modules-proto), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 An interface to call the led tool.
 
@@ -2392,7 +2392,7 @@ Args:
 
 [DEPS](/recipe_modules/legacy_annotation/__init__.py#7): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Legacy Annotation module provides support for running a command emitting
 legacy @@@annotation@@@ in the new luciexe mode.
@@ -2541,7 +2541,7 @@ Returns:
 
 [DEPS](/recipe_modules/milo/__init__.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 API for specifying Milo behavior.
 
@@ -2565,7 +2565,7 @@ Args:
 
 [DEPS](/recipe_modules/nodejs/__init__.py#7): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 #### **class [NodeJSApi](/recipe_modules/nodejs/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
@@ -2600,7 +2600,7 @@ Args:
 
 [DEPS](/recipe_modules/path/__init__.py#7): [platform](#recipe_modules-platform)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 All functions related to manipulating paths in recipes.
 
@@ -2852,7 +2852,7 @@ Returns (name, extension_including_dot).
 
 [DEPS](/recipe_modules/platform/__init__.py#7): [version](#recipe_modules-version)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Mockable system platform identity functions.
 
@@ -2925,7 +2925,7 @@ Return type is int.
 This is equivalent to `psutil.virtual_memory().total / (1024 ** 2)`.
 ### *recipe_modules* / [properties](/recipe_modules/properties)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Provides access to the recipes input properties.
 
@@ -2968,7 +2968,7 @@ Returns a read-write copy of all of the properties.
 
 [DEPS](/recipe_modules/proto/__init__.py#7): [raw\_io](#recipe_modules-raw_io)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Methods for producing and consuming protobuf data to/from steps and the
 filesystem.
@@ -2998,7 +2998,7 @@ Args:
 
 Returns the encoded proto message.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#157)**<br>&mdash; **def [input](/recipe_modules/proto/api.py#85)(self, proto_msg, codec, \*\*encoding_kwargs):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#158)**<br>&mdash; **def [input](/recipe_modules/proto/api.py#85)(self, proto_msg, codec, \*\*encoding_kwargs):**
 
 A placeholder which will expand to a file path containing the encoded
 `proto_msg`.
@@ -3022,7 +3022,7 @@ Args:
 
 Returns an InputPlaceholder.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#157)**<br>&mdash; **def [output](/recipe_modules/proto/api.py#116)(self, msg_class, codec, add_json_log=True, name=None, leak_to=None, \*\*decoding_kwargs):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#158)**<br>&mdash; **def [output](/recipe_modules/proto/api.py#116)(self, msg_class, codec, add_json_log=True, name=None, leak_to=None, \*\*decoding_kwargs):**
 
 A placeholder which expands to a file path and then reads an encoded
 proto back from that location when the step finishes.
@@ -3044,7 +3044,7 @@ Args:
 
 [DEPS](/recipe_modules/python/__init__.py#11): [context](#recipe_modules-context), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [warning](#recipe_modules-warning)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Provides methods for running python scripts correctly.
 
@@ -3142,7 +3142,7 @@ Runs a succeeding step (exits 0).
 ***
 ### *recipe_modules* / [random](/recipe_modules/random)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Allows randomness in recipes.
 
@@ -3165,22 +3165,22 @@ Example:
       api.random.shuffle(my_list)
       # my_list is now random!
 
-#### **class [RandomApi](/recipe_modules/random/api.py#56)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
+#### **class [RandomApi](/recipe_modules/random/api.py#57)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
-&mdash; **def [\_\_getattr\_\_](/recipe_modules/random/api.py#63)(self, name):**
+&mdash; **def [\_\_getattr\_\_](/recipe_modules/random/api.py#64)(self, name):**
 
 Access a member of `random.Random`.
 ### *recipe_modules* / [raw\_io](/recipe_modules/raw_io)
 
 [DEPS](/recipe_modules/raw_io/__init__.py#7): [path](#recipe_modules-path)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Provides objects for reading and writing raw data to and from steps.
 
 #### **class [RawIOApi](/recipe_modules/raw_io/api.py#330)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#157)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#331)(data, suffix='', name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#158)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#331)(data, suffix='', name=None):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -3199,7 +3199,7 @@ tempfile.mkstemp.
 
 See examples/full.py for usage example.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#157)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#358)(data, suffix='', name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#158)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#358)(data, suffix='', name=None):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -3214,7 +3214,7 @@ encoded data. Note that, the support of type 'bytes' is for backwards
 compatibility to Python 2, we may drop this support in the future after
 recipe becomes Python 3 only.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#157)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#381)(suffix='', leak_to=None, name=None, add_output_log=False):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#158)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#381)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -3230,7 +3230,7 @@ Args:
      to a step link named `name`. If this is 'on_failure', only create this
      log when the step has a non-SUCCESS status.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#157)**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#419)(self, leak_to=None, name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#158)**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#419)(self, leak_to=None, name=None):**
 
 Returns a directory Placeholder for use as a step argument.
 
@@ -3262,7 +3262,7 @@ del result.raw_io.output_dir[some_file]
 result.raw_io.output_dir[some_file] -> raises KeyError
 ```
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#157)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#401)(suffix='', leak_to=None, name=None, add_output_log=False):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#158)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#401)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -3279,7 +3279,7 @@ Args:
 
 [DEPS](/recipe_modules/resultdb/__init__.py#7): [context](#recipe_modules-context), [futures](#recipe_modules-futures), [json](#recipe_modules-json), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time), [uuid](#recipe_modules-uuid)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 API for interacting with the ResultDB service.
 
@@ -3535,7 +3535,7 @@ Args:
     invocation
 ### *recipe_modules* / [runtime](/recipe_modules/runtime)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 #### **class [RuntimeApi](/recipe_modules/runtime/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
@@ -3580,7 +3580,7 @@ Examples:
 
 [DEPS](/recipe_modules/scheduler/__init__.py#12): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 API for interacting with the LUCI Scheduler service.
 
@@ -3652,7 +3652,7 @@ A trigger is an instance of triggers_pb2.Trigger.
 
 [DEPS](/recipe_modules/service_account/__init__.py#7): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 API for getting OAuth2 access tokens for LUCI tasks or private keys.
 
@@ -3684,7 +3684,7 @@ Args:
 
 [DEPS](/recipe_modules/step/__init__.py#10): [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [proto](#recipe_modules-proto)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Step is the primary API for running steps (external programs, etc.)
 
@@ -4070,7 +4070,7 @@ status.
 
 [DEPS](/recipe_modules/swarming/__init__.py#9): [buildbucket](#recipe_modules-buildbucket), [cas](#recipe_modules-cas), [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 #### **class [SwarmingApi](/recipe_modules/swarming/api.py#1184)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
@@ -4190,7 +4190,7 @@ Returns:
 
 [DEPS](/recipe_modules/time/__init__.py#7): [random](#recipe_modules-random), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Allows mockable access to the current time.
 
@@ -4297,7 +4297,7 @@ Returns current UTC time as a datetime.datetime.
 
 [DEPS](/recipe_modules/tricium/__init__.py#7): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 API for Tricium analyzers to use.
 
@@ -4361,7 +4361,7 @@ Emit the results accumulated by `add_comment` and `run_legacy`.
 
 [DEPS](/recipe_modules/url/__init__.py#7): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Methods for interacting with HTTP(s) URLs.
 
@@ -4467,7 +4467,7 @@ Raises:
   ValueError: if "v" is not valid.
 ### *recipe_modules* / [uuid](/recipe_modules/uuid)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Allows test-repeatable access to a random UUID.
 
@@ -4478,7 +4478,7 @@ Allows test-repeatable access to a random UUID.
 Returns a random UUID string.
 ### *recipe_modules* / [version](/recipe_modules/version)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Thin API for parsing semver strings into comparable object.
 
@@ -4496,7 +4496,7 @@ You can read more about how this works at:
 https://setuptools.readthedocs.io/en/latest/pkg_resources.html#parsing-utilities
 ### *recipe_modules* / [warning](/recipe_modules/warning)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Allows recipe modules to issue warnings in simulation test.
 
@@ -4520,63 +4520,63 @@ same repo as the issue() call.
 
 [DEPS](/recipe_modules/archive/examples/full.py#9): [archive](#recipe_modules-archive), [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/archive/examples/full.py#21)(api):**
 ### *recipes* / [assertions:tests/assert-raises](/recipe_modules/assertions/tests/assert-raises.py)
 
 [DEPS](/recipe_modules/assertions/tests/assert-raises.py#9): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/assertions/tests/assert-raises.py#18)(api):**
 ### *recipes* / [assertions:tests/assert\_count\_equal](/recipe_modules/assertions/tests/assert_count_equal.py)
 
 [DEPS](/recipe_modules/assertions/tests/assert_count_equal.py#9): [assertions](#recipe_modules-assertions)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/assertions/tests/assert_count_equal.py#14)(api):**
 ### *recipes* / [assertions:tests/assertions](/recipe_modules/assertions/tests/assertions.py)
 
 [DEPS](/recipe_modules/assertions/tests/assertions.py#9): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/assertions/tests/assertions.py#15)(api):**
 ### *recipes* / [assertions:tests/attribute\_error](/recipe_modules/assertions/tests/attribute_error.py)
 
 [DEPS](/recipe_modules/assertions/tests/attribute_error.py#9): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/assertions/tests/attribute_error.py#15)(api):**
 ### *recipes* / [assertions:tests/long\_message](/recipe_modules/assertions/tests/long_message.py)
 
 [DEPS](/recipe_modules/assertions/tests/long_message.py#9): [assertions](#recipe_modules-assertions), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/assertions/tests/long_message.py#14)(api):**
 ### *recipes* / [assertions:tests/max\_diff](/recipe_modules/assertions/tests/max_diff.py)
 
 [DEPS](/recipe_modules/assertions/tests/max_diff.py#9): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/assertions/tests/max_diff.py#15)(api):**
 ### *recipes* / [bcid\_reporter:examples/usage](/recipe_modules/bcid_reporter/examples/usage.py)
 
 [DEPS](/recipe_modules/bcid_reporter/examples/usage.py#7): [bcid\_reporter](#recipe_modules-bcid_reporter), [path](#recipe_modules-path)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/bcid_reporter/examples/usage.py#12)(api):**
 ### *recipes* / [buildbucket:examples/full](/recipe_modules/buildbucket/examples/full.py)
 
 [DEPS](/recipe_modules/buildbucket/examples/full.py#16): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 This file is a recipe demonstrating the buildbucket recipe module.
 
@@ -4594,49 +4594,49 @@ Launches multiple builds at the same revision.
 
 [DEPS](/recipe_modules/buildbucket/tests/add_build_tags.py#7): [buildbucket](#recipe_modules-buildbucket), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/add_build_tags.py#13)(api):**
 ### *recipes* / [buildbucket:tests/add\_step\_tags](/recipe_modules/buildbucket/tests/add_step_tags.py)
 
 [DEPS](/recipe_modules/buildbucket/tests/add_step_tags.py#7): [buildbucket](#recipe_modules-buildbucket), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/add_step_tags.py#13)(api):**
 ### *recipes* / [buildbucket:tests/build](/recipe_modules/buildbucket/tests/build.py)
 
 [DEPS](/recipe_modules/buildbucket/tests/build.py#22): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/build.py#30)(api):**
 ### *recipes* / [buildbucket:tests/cancel](/recipe_modules/buildbucket/tests/cancel.py)
 
 [DEPS](/recipe_modules/buildbucket/tests/cancel.py#12): [buildbucket](#recipe_modules-buildbucket)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/cancel.py#16)(api):**
 ### *recipes* / [buildbucket:tests/collect](/recipe_modules/buildbucket/tests/collect.py)
 
 [DEPS](/recipe_modules/buildbucket/tests/collect.py#7): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/collect.py#13)(api):**
 ### *recipes* / [buildbucket:tests/list\_builders](/recipe_modules/buildbucket/tests/list_builders.py)
 
 [DEPS](/recipe_modules/buildbucket/tests/list_builders.py#12): [buildbucket](#recipe_modules-buildbucket)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/list_builders.py#16)(api):**
 ### *recipes* / [buildbucket:tests/output\_commit](/recipe_modules/buildbucket/tests/output_commit.py)
 
 [DEPS](/recipe_modules/buildbucket/tests/output_commit.py#11): [buildbucket](#recipe_modules-buildbucket), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 This recipe tests the buildbucket.set_output_gitiles_commit function.
 
@@ -4645,35 +4645,35 @@ This recipe tests the buildbucket.set_output_gitiles_commit function.
 
 [DEPS](/recipe_modules/buildbucket/tests/schedule.py#14): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/schedule.py#23)(api):**
 ### *recipes* / [buildbucket:tests/search](/recipe_modules/buildbucket/tests/search.py)
 
 [DEPS](/recipe_modules/buildbucket/tests/search.py#14): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/search.py#23)(api):**
 ### *recipes* / [cas:examples/full](/recipe_modules/cas/examples/full.py)
 
 [DEPS](/recipe_modules/cas/examples/full.py#7): [cas](#recipe_modules-cas), [file](#recipe_modules-file), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/cas/examples/full.py#17)(api):**
 ### *recipes* / [cas\_input:examples/full](/recipe_modules/cas_input/examples/full.py)
 
 [DEPS](/recipe_modules/cas_input/examples/full.py#7): [cas\_input](#recipe_modules-cas_input), [path](#recipe_modules-path), [properties](#recipe_modules-properties)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/cas_input/examples/full.py#18)(api):**
 ### *recipes* / [change\_verifier:tests/search](/recipe_modules/change_verifier/tests/search.py)
 
 [DEPS](/recipe_modules/change_verifier/tests/search.py#10): [change\_verifier](#recipe_modules-change_verifier), [proto](#recipe_modules-proto)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/change_verifier/tests/search.py#16)(api):**
 
@@ -4684,133 +4684,133 @@ Generates response Runs for a test.
 
 [DEPS](/recipe_modules/cipd/examples/full.py#11): [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/cipd/examples/full.py#38)(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files, install_mode, refs, tags, metadata, max_threads):**
 ### *recipes* / [commit\_position:examples/full](/recipe_modules/commit_position/examples/full.py)
 
 [DEPS](/recipe_modules/commit_position/examples/full.py#7): [commit\_position](#recipe_modules-commit_position), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/commit_position/examples/full.py#13)(api):**
 ### *recipes* / [context:examples/full](/recipe_modules/context/examples/full.py)
 
 [DEPS](/recipe_modules/context/examples/full.py#11): [context](#recipe_modules-context), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/context/examples/full.py#20)(api):**
 ### *recipes* / [context:tests/cwd](/recipe_modules/context/tests/cwd.py)
 
 [DEPS](/recipe_modules/context/tests/cwd.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/context/tests/cwd.py#13)(api):**
 ### *recipes* / [context:tests/env](/recipe_modules/context/tests/env.py)
 
 [DEPS](/recipe_modules/context/tests/env.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/context/tests/env.py#21)(api):**
 ### *recipes* / [context:tests/greenlet](/recipe_modules/context/tests/greenlet.py)
 
 [DEPS](/recipe_modules/context/tests/greenlet.py#7): [context](#recipe_modules-context), [futures](#recipe_modules-futures), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/context/tests/greenlet.py#13)(api):**
 ### *recipes* / [context:tests/infra\_step](/recipe_modules/context/tests/infra_step.py)
 
 [DEPS](/recipe_modules/context/tests/infra_step.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/context/tests/infra_step.py#13)(api):**
 ### *recipes* / [context:tests/luci\_context](/recipe_modules/context/tests/luci_context.py)
 
 [DEPS](/recipe_modules/context/tests/luci_context.py#9): [assertions](#recipe_modules-assertions), [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/context/tests/luci_context.py#16)(api):**
 ### *recipes* / [cq:examples/ordered\_cls](/recipe_modules/cq/examples/ordered_cls.py)
 
 [DEPS](/recipe_modules/cq/examples/ordered_cls.py#12): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/cq/examples/ordered_cls.py#21)(api):**
 ### *recipes* / [cq:examples/trigger\_child\_builds](/recipe_modules/cq/examples/trigger_child_builds.py)
 
 [DEPS](/recipe_modules/cq/examples/trigger_child_builds.py#11): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/cq/examples/trigger_child_builds.py#21)(api):**
 ### *recipes* / [cq:tests/cl\_group\_key](/recipe_modules/cq/tests/cl_group_key.py)
 
 [DEPS](/recipe_modules/cq/tests/cl_group_key.py#9): [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/cq/tests/cl_group_key.py#19)(api):**
 ### *recipes* / [cq:tests/do\_not\_retry](/recipe_modules/cq/tests/do_not_retry.py)
 
 [DEPS](/recipe_modules/cq/tests/do_not_retry.py#7): [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/cq/tests/do_not_retry.py#17)(api):**
 ### *recipes* / [cq:tests/experimental](/recipe_modules/cq/tests/experimental.py)
 
 [DEPS](/recipe_modules/cq/tests/experimental.py#9): [assertions](#recipe_modules-assertions), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/cq/tests/experimental.py#17)(api):**
 ### *recipes* / [cq:tests/inactive](/recipe_modules/cq/tests/inactive.py)
 
 [DEPS](/recipe_modules/cq/tests/inactive.py#9): [assertions](#recipe_modules-assertions), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/cq/tests/inactive.py#16)(api):**
 ### *recipes* / [cq:tests/mode\_of\_run](/recipe_modules/cq/tests/mode_of_run.py)
 
 [DEPS](/recipe_modules/cq/tests/mode_of_run.py#7): [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/cq/tests/mode_of_run.py#14)(api):**
 ### *recipes* / [cq:tests/owner\_is\_googler](/recipe_modules/cq/tests/owner_is_googler.py)
 
 [DEPS](/recipe_modules/cq/tests/owner_is_googler.py#9): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/cq/tests/owner_is_googler.py#17)(api):**
 ### *recipes* / [cq:tests/reuse](/recipe_modules/cq/tests/reuse.py)
 
 [DEPS](/recipe_modules/cq/tests/reuse.py#7): [assertions](#recipe_modules-assertions), [cq](#recipe_modules-cq), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/cq/tests/reuse.py#14)(api):**
 ### *recipes* / [cq:tests/triggered\_build\_ids](/recipe_modules/cq/tests/triggered_build_ids.py)
 
 [DEPS](/recipe_modules/cq/tests/triggered_build_ids.py#7): [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/cq/tests/triggered_build_ids.py#17)(api):**
 ### *recipes* / [engine\_tests/bad\_subprocess](/recipes/engine_tests/bad_subprocess.py)
 
 [DEPS](/recipes/engine_tests/bad_subprocess.py#9): [platform](#recipe_modules-platform), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Tests that daemons that hang on to STDOUT can't cause the engine to hang.
 
@@ -4819,7 +4819,7 @@ Tests that daemons that hang on to STDOUT can't cause the engine to hang.
 
 [DEPS](/recipes/engine_tests/comprehensive_ui.py#13): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 A fast-running recipe which comprehensively covers all StepPresentation
 features available in the recipe engine.
@@ -4831,7 +4831,7 @@ features available in the recipe engine.
 
 [DEPS](/recipes/engine_tests/config_operations.py#44): [json](#recipe_modules-json), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Tests that recipes can modify configuration options in various ways.
 
@@ -4850,7 +4850,7 @@ Tests that recipes can modify configuration options in various ways.
 
 [DEPS](/recipes/engine_tests/early_termination.py#10): [file](#recipe_modules-file), [futures](#recipe_modules-futures), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Simple recipe which runs a bunch of subprocesses which react to early
 termination in different ways.
@@ -4858,7 +4858,7 @@ termination in different ways.
 &mdash; **def [RunSteps](/recipes/engine_tests/early_termination.py#23)(api, props):**
 ### *recipes* / [engine\_tests/expect\_exception](/recipes/engine_tests/expect_exception.py)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Tests that step_data can accept multiple specs at once.
 
@@ -4869,7 +4869,7 @@ Tests that step_data can accept multiple specs at once.
 
 [DEPS](/recipes/engine_tests/failure_results.py#14): [json](#recipe_modules-json), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Tests that run_steps is handling recipe failures correctly.
 
@@ -4878,7 +4878,7 @@ Tests that run_steps is handling recipe failures correctly.
 
 [DEPS](/recipes/engine_tests/functools_partial.py#18): [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Engine shouldn't explode when step_test_data gets functools.partial.
 
@@ -4892,7 +4892,7 @@ When this recipe is run (by run_test.py), the _print_step code is exercised.
 
 [DEPS](/recipes/engine_tests/incorrect_recipe_result.py#14): [json](#recipe_modules-json), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Tests that engine.py can handle unknown recipe results.
 
@@ -4901,7 +4901,7 @@ Tests that engine.py can handle unknown recipe results.
 
 [DEPS](/recipes/engine_tests/long_sleep.py#8): [futures](#recipe_modules-futures), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Simple recipe which sleeps in a subprocess forever to facilitate early
 termination tests.
@@ -4911,7 +4911,7 @@ termination tests.
 
 [DEPS](/recipes/engine_tests/missing_start_dir.py#9): [path](#recipe_modules-path), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Tests that deleting the current working directory doesn't immediately fail
 
@@ -4920,7 +4920,7 @@ Tests that deleting the current working directory doesn't immediately fail
 
 [DEPS](/recipes/engine_tests/module_injection_site.py#15): [path](#recipe_modules-path), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 This test serves to demonstrate that the ModuleInjectionSite object on
 recipe modules (i.e. the `.m`) also contains a reference to the module which
@@ -4933,7 +4933,7 @@ This was implemented to aid in refactoring some recipes (crbug.com/782142).
 
 [DEPS](/recipes/engine_tests/multi_test_data.py#9): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Tests that step_data can accept multiple specs at once.
 
@@ -4942,7 +4942,7 @@ Tests that step_data can accept multiple specs at once.
 
 [DEPS](/recipes/engine_tests/multiple_placeholders.py#11): [assertions](#recipe_modules-assertions), [json](#recipe_modules-json), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Tests error checking around multiple placeholders in a single step.
 
@@ -4951,14 +4951,14 @@ Tests error checking around multiple placeholders in a single step.
 
 [DEPS](/recipes/engine_tests/nonexistent_command.py#9): [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipes/engine_tests/nonexistent_command.py#14)(api):**
 ### *recipes* / [engine\_tests/placeholder\_exception](/recipes/engine_tests/placeholder_exception.py)
 
 [DEPS](/recipes/engine_tests/placeholder_exception.py#14): [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Tests that placeholders can't wreck the world by exhausting the step stack.
 
@@ -4967,7 +4967,7 @@ Tests that placeholders can't wreck the world by exhausting the step stack.
 
 [DEPS](/recipes/engine_tests/proto_output_properties.py#12): [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Tests that output properties can be a proto message.
 
@@ -4976,14 +4976,14 @@ Tests that output properties can be a proto message.
 
 [DEPS](/recipes/engine_tests/proto_properties.py#9): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipes/engine_tests/proto_properties.py#18)(api, properties, env_props):**
 ### *recipes* / [engine\_tests/recipe\_paths](/recipes/engine_tests/recipe_paths.py)
 
 [DEPS](/recipes/engine_tests/recipe_paths.py#9): [path](#recipe_modules-path), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Tests that recipes have access to names, resources and their repo.
 
@@ -4992,7 +4992,7 @@ Tests that recipes have access to names, resources and their repo.
 
 [DEPS](/recipes/engine_tests/sort_properties.py#9): [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Tests that step presentation properties can be ordered.
 
@@ -5001,21 +5001,21 @@ Tests that step presentation properties can be ordered.
 
 [DEPS](/recipes/engine_tests/undeclared_method.py#10): [cipd](#recipe_modules-cipd), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipes/engine_tests/undeclared_method.py#22)(api, from_recipe, attribute, module):**
 ### *recipes* / [engine\_tests/unicode](/recipes/engine_tests/unicode.py)
 
 [DEPS](/recipes/engine_tests/unicode.py#8): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipes/engine_tests/unicode.py#13)(api):**
 ### *recipes* / [engine\_tests/whitelist\_steps](/recipes/engine_tests/whitelist_steps.py)
 
 [DEPS](/recipes/engine_tests/whitelist_steps.py#14): [context](#recipe_modules-context), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Tests that step_data can accept multiple specs at once.
 
@@ -5024,105 +5024,105 @@ Tests that step_data can accept multiple specs at once.
 
 [DEPS](/recipe_modules/file/examples/chmod.py#7): [file](#recipe_modules-file), [path](#recipe_modules-path)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/file/examples/chmod.py#13)(api):**
 ### *recipes* / [file:examples/compute\_hash](/recipe_modules/file/examples/compute_hash.py)
 
 [DEPS](/recipe_modules/file/examples/compute_hash.py#7): [assertions](#recipe_modules-assertions), [file](#recipe_modules-file), [path](#recipe_modules-path)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/file/examples/compute_hash.py#13)(api):**
 ### *recipes* / [file:examples/copy](/recipe_modules/file/examples/copy.py)
 
 [DEPS](/recipe_modules/file/examples/copy.py#7): [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/file/examples/copy.py#14)(api):**
 ### *recipes* / [file:examples/copytree](/recipe_modules/file/examples/copytree.py)
 
 [DEPS](/recipe_modules/file/examples/copytree.py#7): [file](#recipe_modules-file), [path](#recipe_modules-path)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/file/examples/copytree.py#13)(api):**
 ### *recipes* / [file:examples/error](/recipe_modules/file/examples/error.py)
 
 [DEPS](/recipe_modules/file/examples/error.py#7): [file](#recipe_modules-file), [path](#recipe_modules-path)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/file/examples/error.py#13)(api):**
 ### *recipes* / [file:examples/file\_hash](/recipe_modules/file/examples/file_hash.py)
 
 [DEPS](/recipe_modules/file/examples/file_hash.py#7): [assertions](#recipe_modules-assertions), [file](#recipe_modules-file), [path](#recipe_modules-path)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/file/examples/file_hash.py#13)(api):**
 ### *recipes* / [file:examples/flatten\_single\_directories](/recipe_modules/file/examples/flatten_single_directories.py)
 
 [DEPS](/recipe_modules/file/examples/flatten_single_directories.py#7): [file](#recipe_modules-file), [path](#recipe_modules-path)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/file/examples/flatten_single_directories.py#13)(api):**
 ### *recipes* / [file:examples/glob](/recipe_modules/file/examples/glob.py)
 
 [DEPS](/recipe_modules/file/examples/glob.py#7): [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/file/examples/glob.py#13)(api):**
 ### *recipes* / [file:examples/handle\_json\_file](/recipe_modules/file/examples/handle_json_file.py)
 
 [DEPS](/recipe_modules/file/examples/handle_json_file.py#7): [file](#recipe_modules-file), [path](#recipe_modules-path)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/file/examples/handle_json_file.py#13)(api):**
 ### *recipes* / [file:examples/listdir](/recipe_modules/file/examples/listdir.py)
 
 [DEPS](/recipe_modules/file/examples/listdir.py#7): [file](#recipe_modules-file), [path](#recipe_modules-path)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/file/examples/listdir.py#13)(api):**
 ### *recipes* / [file:examples/raw\_copy](/recipe_modules/file/examples/raw_copy.py)
 
 [DEPS](/recipe_modules/file/examples/raw_copy.py#7): [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/file/examples/raw_copy.py#14)(api):**
 ### *recipes* / [file:examples/read\_write\_proto](/recipe_modules/file/examples/read_write_proto.py)
 
 [DEPS](/recipe_modules/file/examples/read_write_proto.py#9): [file](#recipe_modules-file), [path](#recipe_modules-path), [proto](#recipe_modules-proto)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/file/examples/read_write_proto.py#16)(api):**
 ### *recipes* / [file:examples/symlink](/recipe_modules/file/examples/symlink.py)
 
 [DEPS](/recipe_modules/file/examples/symlink.py#7): [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/file/examples/symlink.py#14)(api):**
 ### *recipes* / [file:examples/truncate](/recipe_modules/file/examples/truncate.py)
 
 [DEPS](/recipe_modules/file/examples/truncate.py#7): [file](#recipe_modules-file), [path](#recipe_modules-path)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/file/examples/truncate.py#13)(api):**
 ### *recipes* / [futures:examples/background\_helper](/recipe_modules/futures/examples/background_helper.py)
 
 [DEPS](/recipe_modules/futures/examples/background_helper.py#9): [futures](#recipe_modules-futures), [json](#recipe_modules-json), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/futures/examples/background_helper.py#87)(api):**
 
@@ -5141,7 +5141,7 @@ we don't pass the channel to the 'user' code (i.e. RunSteps).
 
 [DEPS](/recipe_modules/futures/examples/extreme_namespaces.py#7): [context](#recipe_modules-context), [futures](#recipe_modules-futures), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [Level1](/recipe_modules/futures/examples/extreme_namespaces.py#27)(api, i):**
 
@@ -5152,28 +5152,28 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 [DEPS](/recipe_modules/futures/examples/fan_out_in.py#7): [futures](#recipe_modules-futures), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/futures/examples/fan_out_in.py#13)(api):**
 ### *recipes* / [futures:examples/lazy\_fan\_out\_in](/recipe_modules/futures/examples/lazy_fan_out_in.py)
 
 [DEPS](/recipe_modules/futures/examples/lazy_fan_out_in.py#7): [futures](#recipe_modules-futures), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/futures/examples/lazy_fan_out_in.py#13)(api):**
 ### *recipes* / [futures:examples/lazy\_fan\_out\_in\_early\_abort](/recipe_modules/futures/examples/lazy_fan_out_in_early_abort.py)
 
 [DEPS](/recipe_modules/futures/examples/lazy_fan_out_in_early_abort.py#7): [futures](#recipe_modules-futures), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/futures/examples/lazy_fan_out_in_early_abort.py#13)(api):**
 ### *recipes* / [futures:examples/lottasteps](/recipe_modules/futures/examples/lottasteps.py)
 
 [DEPS](/recipe_modules/futures/examples/lottasteps.py#20): [futures](#recipe_modules-futures), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 This tests the engine's ability to handle many simultaneously-started steps.
 
@@ -5186,7 +5186,7 @@ handles for the step, instead of waiting for the step's cost to be available.
 
 [DEPS](/recipe_modules/futures/examples/metadata.py#9): [futures](#recipe_modules-futures), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 This tests metadata features of the Future object.
 
@@ -5195,14 +5195,14 @@ This tests metadata features of the Future object.
 
 [DEPS](/recipe_modules/futures/examples/result.py#7): [futures](#recipe_modules-futures), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/futures/examples/result.py#13)(api):**
 ### *recipes* / [futures:examples/semaphore](/recipe_modules/futures/examples/semaphore.py)
 
 [DEPS](/recipe_modules/futures/examples/semaphore.py#7): [futures](#recipe_modules-futures), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/futures/examples/semaphore.py#20)(api):**
 
@@ -5211,81 +5211,81 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 [DEPS](/recipe_modules/generator_script/examples/full.py#9): [generator\_script](#recipe_modules-generator_script), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/generator_script/examples/full.py#21)(api, script_name):**
 ### *recipes* / [generator\_script:examples/vpython3\_test](/recipe_modules/generator_script/examples/vpython3_test.py)
 
 [DEPS](/recipe_modules/generator_script/examples/vpython3_test.py#9): [generator\_script](#recipe_modules-generator_script), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/generator_script/examples/vpython3_test.py#21)(api, script_name):**
 ### *recipes* / [golang:examples/full](/recipe_modules/golang/examples/full.py)
 
 [DEPS](/recipe_modules/golang/examples/full.py#7): [golang](#recipe_modules-golang), [platform](#recipe_modules-platform), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/golang/examples/full.py#14)(api):**
 ### *recipes* / [json:examples/full](/recipe_modules/json/examples/full.py)
 
 [DEPS](/recipe_modules/json/examples/full.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/json/examples/full.py#23)(api):**
 ### *recipes* / [json:tests/add\_json\_log](/recipe_modules/json/tests/add_json_log.py)
 
 [DEPS](/recipe_modules/json/tests/add_json_log.py#7): [json](#recipe_modules-json), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/json/tests/add_json_log.py#12)(api):**
 ### *recipes* / [led:tests/full](/recipe_modules/led/tests/full.py)
 
 [DEPS](/recipe_modules/led/tests/full.py#17): [buildbucket](#recipe_modules-buildbucket), [led](#recipe_modules-led), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/led/tests/full.py#33)(api, get_cmd, child_properties, sloppy_child_properties, do_bogus_edits):**
 ### *recipes* / [led:tests/led\_real\_build](/recipe_modules/led/tests/led_real_build.py)
 
 [DEPS](/recipe_modules/led/tests/led_real_build.py#18): [buildbucket](#recipe_modules-buildbucket), [led](#recipe_modules-led), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/led/tests/led_real_build.py#30)(api, get_cmd):**
 ### *recipes* / [led:tests/no\_exist](/recipe_modules/led/tests/no_exist.py)
 
 [DEPS](/recipe_modules/led/tests/no_exist.py#7): [led](#recipe_modules-led), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/led/tests/no_exist.py#12)(api):**
 ### *recipes* / [led:tests/trigger\_build](/recipe_modules/led/tests/trigger_build.py)
 
 [DEPS](/recipe_modules/led/tests/trigger_build.py#9): [led](#recipe_modules-led), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/led/tests/trigger_build.py#15)(api):**
 ### *recipes* / [legacy\_annotation:examples/full](/recipe_modules/legacy_annotation/examples/full.py)
 
 [DEPS](/recipe_modules/legacy_annotation/examples/full.py#7): [legacy\_annotation](#recipe_modules-legacy_annotation), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/legacy_annotation/examples/full.py#20)(api):**
 ### *recipes* / [luci\_analysis:tests/query\_failure\_rate\_test](/recipe_modules/luci_analysis/tests/query_failure_rate_test.py)
 
-[DEPS](/recipe_modules/luci_analysis/tests/query_failure_rate_test.py#12): [assertions](#recipe_modules-assertions), [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io)
+[DEPS](/recipe_modules/luci_analysis/tests/query_failure_rate_test.py#13): [assertions](#recipe_modules-assertions), [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io)
 
 PYTHON_VERSION_COMPATIBILITY: PY3
 
 Tests for query_failure_rate.
 
-&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/query_failure_rate_test.py#25)(api, input_list):**
+&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/query_failure_rate_test.py#26)(api, input_list):**
 ### *recipes* / [luci\_analysis:tests/test\_generate\_analysis](/recipe_modules/luci_analysis/tests/test_generate_analysis.py)
 
 [DEPS](/recipe_modules/luci_analysis/tests/test_generate_analysis.py#9): [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
@@ -5335,21 +5335,21 @@ Tests for query_variants.
 
 [DEPS](/recipe_modules/milo/examples/full.py#9): [milo](#recipe_modules-milo)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/milo/examples/full.py#13)(api):**
 ### *recipes* / [nodejs:examples/full](/recipe_modules/nodejs/examples/full.py)
 
 [DEPS](/recipe_modules/nodejs/examples/full.py#7): [nodejs](#recipe_modules-nodejs), [platform](#recipe_modules-platform), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/nodejs/examples/full.py#14)(api):**
 ### *recipes* / [path:examples/full](/recipe_modules/path/examples/full.py)
 
 [DEPS](/recipe_modules/path/examples/full.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/path/examples/full.py#19)(api):**
 ### *recipes* / [placeholder](/recipes/placeholder.py)
@@ -5363,42 +5363,42 @@ PYTHON_VERSION_COMPATIBILITY: PY3
 
 [DEPS](/recipe_modules/platform/examples/full.py#7): [platform](#recipe_modules-platform), [step](#recipe_modules-step), [version](#recipe_modules-version)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/platform/examples/full.py#13)(api):**
 ### *recipes* / [properties:examples/full](/recipe_modules/properties/examples/full.py)
 
 [DEPS](/recipe_modules/properties/examples/full.py#16): [json](#recipe_modules-json), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/properties/examples/full.py#25)(api, props, env_props):**
 ### *recipes* / [proto:tests/encode\_decode](/recipe_modules/proto/tests/encode_decode.py)
 
 [DEPS](/recipe_modules/proto/tests/encode_decode.py#7): [assertions](#recipe_modules-assertions), [path](#recipe_modules-path), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/proto/tests/encode_decode.py#17)(api):**
 ### *recipes* / [proto:tests/placeholders](/recipe_modules/proto/tests/placeholders.py)
 
 [DEPS](/recipe_modules/proto/tests/placeholders.py#7): [path](#recipe_modules-path), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/proto/tests/placeholders.py#16)(api):**
 ### *recipes* / [random:tests/full](/recipe_modules/random/tests/full.py)
 
 [DEPS](/recipe_modules/random/tests/full.py#7): [random](#recipe_modules-random), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/random/tests/full.py#13)(api):**
 ### *recipes* / [raw\_io:examples/full](/recipe_modules/raw_io/examples/full.py)
 
 [DEPS](/recipe_modules/raw_io/examples/full.py#8): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/raw_io/examples/full.py#17)(api):**
 ### *recipes* / [raw\_io:tests/output\_mismatch](/recipe_modules/raw_io/tests/output_mismatch.py)
@@ -5412,91 +5412,91 @@ PYTHON_VERSION_COMPATIBILITY: PY3
 
 [DEPS](/recipe_modules/resultdb/examples/exonerate.py#13): [context](#recipe_modules-context), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/exonerate.py#41)(api):**
 ### *recipes* / [resultdb:examples/get\_included\_invocations](/recipe_modules/resultdb/examples/get_included_invocations.py)
 
 [DEPS](/recipe_modules/resultdb/examples/get_included_invocations.py#9): [assertions](#recipe_modules-assertions), [resultdb](#recipe_modules-resultdb)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/get_included_invocations.py#15)(api):**
 ### *recipes* / [resultdb:examples/include](/recipe_modules/resultdb/examples/include.py)
 
 [DEPS](/recipe_modules/resultdb/examples/include.py#13): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/include.py#19)(api):**
 ### *recipes* / [resultdb:examples/query](/recipe_modules/resultdb/examples/query.py)
 
 [DEPS](/recipe_modules/resultdb/examples/query.py#17): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query.py#24)(api):**
 ### *recipes* / [resultdb:examples/query\_test\_result\_statistics](/recipe_modules/resultdb/examples/query_test_result_statistics.py)
 
 [DEPS](/recipe_modules/resultdb/examples/query_test_result_statistics.py#12): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_test_result_statistics.py#18)(api):**
 ### *recipes* / [resultdb:examples/query\_test\_results](/recipe_modules/resultdb/examples/query_test_results.py)
 
 [DEPS](/recipe_modules/resultdb/examples/query_test_results.py#12): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_test_results.py#22)(api, invocation, test_id_regexp):**
 ### *recipes* / [resultdb:examples/resultsink](/recipe_modules/resultdb/examples/resultsink.py)
 
 [DEPS](/recipe_modules/resultdb/examples/resultsink.py#10): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/resultsink.py#17)(api):**
 ### *recipes* / [resultdb:examples/test\_presentation](/recipe_modules/resultdb/examples/test_presentation.py)
 
 [DEPS](/recipe_modules/resultdb/examples/test_presentation.py#7): [resultdb](#recipe_modules-resultdb)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/test_presentation.py#11)(api):**
 ### *recipes* / [resultdb:examples/test\_presentation\_default](/recipe_modules/resultdb/examples/test_presentation_default.py)
 
 [DEPS](/recipe_modules/resultdb/examples/test_presentation_default.py#7): [resultdb](#recipe_modules-resultdb)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/test_presentation_default.py#11)(api):**
 ### *recipes* / [resultdb:examples/update\_invocation](/recipe_modules/resultdb/examples/update_invocation.py)
 
 [DEPS](/recipe_modules/resultdb/examples/update_invocation.py#14): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/update_invocation.py#26)(api, invocation, gitiles_commit, gerrit_changes):**
 ### *recipes* / [resultdb:examples/upload\_invocation\_artifacts](/recipe_modules/resultdb/examples/upload_invocation_artifacts.py)
 
 [DEPS](/recipe_modules/resultdb/examples/upload_invocation_artifacts.py#12): [resultdb](#recipe_modules-resultdb)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/upload_invocation_artifacts.py#17)(api):**
 ### *recipes* / [runtime:tests/full](/recipe_modules/runtime/tests/full.py)
 
 [DEPS](/recipe_modules/runtime/tests/full.py#9): [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/runtime/tests/full.py#15)(api):**
 ### *recipes* / [scheduler:examples/emit\_triggers](/recipe_modules/scheduler/examples/emit_triggers.py)
 
 [DEPS](/recipe_modules/scheduler/examples/emit_triggers.py#9): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [runtime](#recipe_modules-runtime), [scheduler](#recipe_modules-scheduler), [time](#recipe_modules-time)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
 
@@ -5505,7 +5505,7 @@ This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
 
 [DEPS](/recipe_modules/scheduler/examples/info.py#9): [scheduler](#recipe_modules-scheduler), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 This file is a recipe demonstrating reading/mocking scheduler host.
 
@@ -5514,7 +5514,7 @@ This file is a recipe demonstrating reading/mocking scheduler host.
 
 [DEPS](/recipe_modules/scheduler/examples/triggers.py#16): [json](#recipe_modules-json), [scheduler](#recipe_modules-scheduler), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 This file is a recipe demonstrating reading triggers of the current build.
 
@@ -5523,140 +5523,140 @@ This file is a recipe demonstrating reading triggers of the current build.
 
 [DEPS](/recipe_modules/service_account/examples/full.py#9): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [service\_account](#recipe_modules-service_account)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/service_account/examples/full.py#23)(api, key_path, scopes):**
 ### *recipes* / [step:examples/full](/recipe_modules/step/examples/full.py)
 
 [DEPS](/recipe_modules/step/examples/full.py#9): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/step/examples/full.py#27)(api, bad_return, access_invalid_data, access_deep_invalid_data, assign_extra_junk, timeout):**
 ### *recipes* / [step:tests/active\_result](/recipe_modules/step/tests/active_result.py)
 
 [DEPS](/recipe_modules/step/tests/active_result.py#7): [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/step/tests/active_result.py#12)(api):**
 ### *recipes* / [step:tests/defer](/recipe_modules/step/tests/defer.py)
 
 [DEPS](/recipe_modules/step/tests/defer.py#7): [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/step/tests/defer.py#11)(api):**
 ### *recipes* / [step:tests/empty](/recipe_modules/step/tests/empty.py)
 
 [DEPS](/recipe_modules/step/tests/empty.py#12): [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/step/tests/empty.py#17)(api):**
 ### *recipes* / [step:tests/inject\_paths](/recipe_modules/step/tests/inject_paths.py)
 
 [DEPS](/recipe_modules/step/tests/inject_paths.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/step/tests/inject_paths.py#15)(api):**
 ### *recipes* / [step:tests/nested](/recipe_modules/step/tests/nested.py)
 
 [DEPS](/recipe_modules/step/tests/nested.py#11): [context](#recipe_modules-context), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/step/tests/nested.py#17)(api):**
 ### *recipes* / [step:tests/raise\_on\_failure](/recipe_modules/step/tests/raise_on_failure.py)
 
 [DEPS](/recipe_modules/step/tests/raise_on_failure.py#9): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/step/tests/raise_on_failure.py#19)(api, infra_step, set_status_to_exception):**
 ### *recipes* / [step:tests/stdio](/recipe_modules/step/tests/stdio.py)
 
 [DEPS](/recipe_modules/step/tests/stdio.py#7): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/step/tests/stdio.py#13)(api):**
 ### *recipes* / [step:tests/step\_call\_args](/recipe_modules/step/tests/step_call_args.py)
 
 [DEPS](/recipe_modules/step/tests/step_call_args.py#9): [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/step/tests/step_call_args.py#14)(api):**
 ### *recipes* / [step:tests/step\_cost](/recipe_modules/step/tests/step_cost.py)
 
 [DEPS](/recipe_modules/step/tests/step_cost.py#9): [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/step/tests/step_cost.py#14)(api):**
 ### *recipes* / [step:tests/sub\_build](/recipe_modules/step/tests/sub_build.py)
 
 [DEPS](/recipe_modules/step/tests/sub_build.py#20): [assertions](#recipe_modules-assertions), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/step/tests/sub_build.py#31)(api, props):**
 ### *recipes* / [step:tests/timeout](/recipe_modules/step/tests/timeout.py)
 
 [DEPS](/recipe_modules/step/tests/timeout.py#9): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/step/tests/timeout.py#20)(api, timeout):**
 ### *recipes* / [swarming:examples/full](/recipe_modules/swarming/examples/full.py)
 
 [DEPS](/recipe_modules/swarming/examples/full.py#16): [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/swarming/examples/full.py#28)(api):**
 ### *recipes* / [swarming:examples/this\_task](/recipe_modules/swarming/examples/this_task.py)
 
 [DEPS](/recipe_modules/swarming/examples/this_task.py#7): [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/swarming/examples/this_task.py#13)(api):**
 ### *recipes* / [swarming:tests/copy](/recipe_modules/swarming/tests/copy.py)
 
 [DEPS](/recipe_modules/swarming/tests/copy.py#9): [assertions](#recipe_modules-assertions), [swarming](#recipe_modules-swarming)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/swarming/tests/copy.py#15)(api):**
 ### *recipes* / [swarming:tests/list\_bots](/recipe_modules/swarming/tests/list_bots.py)
 
 [DEPS](/recipe_modules/swarming/tests/list_bots.py#10): [assertions](#recipe_modules-assertions), [swarming](#recipe_modules-swarming)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/swarming/tests/list_bots.py#16)(api):**
 ### *recipes* / [swarming:tests/realms](/recipe_modules/swarming/tests/realms.py)
 
 [DEPS](/recipe_modules/swarming/tests/realms.py#9): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [context](#recipe_modules-context), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/swarming/tests/realms.py#18)(api):**
 ### *recipes* / [swarming:tests/task\_request\_from\_jsonish](/recipe_modules/swarming/tests/task_request_from_jsonish.py)
 
 [DEPS](/recipe_modules/swarming/tests/task_request_from_jsonish.py#9): [assertions](#recipe_modules-assertions), [swarming](#recipe_modules-swarming)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/swarming/tests/task_request_from_jsonish.py#15)(api):**
 ### *recipes* / [time:examples/full](/recipe_modules/time/examples/full.py)
 
 [DEPS](/recipe_modules/time/examples/full.py#12): [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/time/examples/full.py#37)(api):**
 
@@ -5665,14 +5665,14 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 [DEPS](/recipe_modules/tricium/examples/add_comment.py#10): [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/tricium/examples/add_comment.py#17)(api, trigger_type_error):**
 ### *recipes* / [tricium:examples/wrapper](/recipe_modules/tricium/examples/wrapper.py)
 
 [DEPS](/recipe_modules/tricium/examples/wrapper.py#14): [file](#recipe_modules-file), [path](#recipe_modules-path), [tricium](#recipe_modules-tricium)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 An example of a recipe wrapping legacy analyzers.
 
@@ -5681,54 +5681,54 @@ An example of a recipe wrapping legacy analyzers.
 
 [DEPS](/recipe_modules/tricium/tests/add_comment_validation.py#10): [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/tricium/tests/add_comment_validation.py#43)(api, case):**
 ### *recipes* / [tricium:tests/enforce\_comments\_num\_limit](/recipe_modules/tricium/tests/enforce_comments_num_limit.py)
 
 [DEPS](/recipe_modules/tricium/tests/enforce_comments_num_limit.py#12): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [tricium](#recipe_modules-tricium)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/tricium/tests/enforce_comments_num_limit.py#22)(api, props):**
 ### *recipes* / [url:examples/full](/recipe_modules/url/examples/full.py)
 
 [DEPS](/recipe_modules/url/examples/full.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step), [url](#recipe_modules-url)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/url/examples/full.py#29)(api):**
 ### *recipes* / [url:tests/join](/recipe_modules/url/tests/join.py)
 
 [DEPS](/recipe_modules/url/tests/join.py#7): [step](#recipe_modules-step), [url](#recipe_modules-url)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/url/tests/join.py#13)(api):**
 ### *recipes* / [url:tests/validate\_url](/recipe_modules/url/tests/validate_url.py)
 
 [DEPS](/recipe_modules/url/tests/validate_url.py#9): [properties](#recipe_modules-properties), [step](#recipe_modules-step), [url](#recipe_modules-url)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/url/tests/validate_url.py#16)(api):**
 ### *recipes* / [uuid:examples/full](/recipe_modules/uuid/examples/full.py)
 
 [DEPS](/recipe_modules/uuid/examples/full.py#7): [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/uuid/examples/full.py#13)(api):**
 ### *recipes* / [version:examples/full](/recipe_modules/version/examples/full.py)
 
 [DEPS](/recipe_modules/version/examples/full.py#7): [version](#recipe_modules-version)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipe_modules/version/examples/full.py#12)(api):**
 ### *recipes* / [warning:tests/fakes](/recipe_modules/warning/tests/fakes.py)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 This is a fake recipe to trick the simulation and make it believes that
 this module has tests. The actual test for this module is done via unit test

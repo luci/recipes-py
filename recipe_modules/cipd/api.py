@@ -16,7 +16,7 @@ import contextlib
 from collections import defaultdict, namedtuple
 try:
   from collections.abc import Mapping, Sequence
-except ImportError:
+except ImportError:  # pragma: no cover
   # Required to support Python < 3.3.
   # pylint: disable=deprecated-class
   from collections import Mapping, Sequence

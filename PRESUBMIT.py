@@ -2,9 +2,12 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+PRESUBMIT_VERSION = '2.0.0'
+
 # This line is 'magic' in that git-cl looks for it to decide whether to
 # use Python3 instead of Python2 when running the code in this file.
 USE_PYTHON3 = True
+
 
 def header(input_api):
   """Returns the expected license header regexp for this project."""
@@ -32,11 +35,11 @@ def CommonChecks(input_api, output_api):
   )
 
 
-def CheckChangeOnUpload(input_api, output_api):
-  return CommonChecks(input_api, output_api)
+def CheckPatchFormatted(input_api, output_api):
+  return input_api.canned_checks.CheckPatchFormatted(input_api, output_api)
 
 
-def CheckChangeOnCommit(input_api, output_api):
+def CheckIntegrationTests(input_api, output_api):
   results = CommonChecks(input_api, output_api)
   # Explicitly run these independently because they update files on disk and are
   # called implicitly with the other tests. The vpython check is nominally
@@ -61,18 +64,26 @@ def CheckChangeOnCommit(input_api, output_api):
   # Now run all the unit tests except run_test in parallel and then run run_test
   # separately. The reason is that run_test depends on the wall clock on the
   # host and if the host gets busy, the tests are likely to be flaky.
-  results.extend(input_api.RunTests(
-      input_api.canned_checks.GetUnitTestsInDirectory(
-          input_api, output_api, 'unittests',
-          files_to_check=[r'.+_test\.py'],
-          files_to_skip=[r'run_test\.py'],
-      )
-  ))
+  results.extend(
+      input_api.RunTests(
+          input_api.canned_checks.GetUnitTestsInDirectory(
+              input_api,
+              output_api,
+              'unittests',
+              files_to_check=[r'.+_test\.py'],
+              files_to_skip=[r'run_test\.py'],
+              run_on_python2=False,
+              run_on_python3=True,
+          )))
 
-  results.extend(input_api.RunTests(
-      input_api.canned_checks.GetUnitTestsInDirectory(
-          input_api, output_api, 'unittests',
-          files_to_check=[r'run_test\.py'],
-      )
-  ))
+  results.extend(
+      input_api.RunTests(
+          input_api.canned_checks.GetUnitTestsInDirectory(
+              input_api,
+              output_api,
+              'unittests',
+              files_to_check=[r'run_test\.py'],
+              run_on_python2=False,
+              run_on_python3=True,
+          )))
   return results

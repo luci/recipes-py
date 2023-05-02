@@ -13,8 +13,9 @@ import sys
 import gevent
 import traceback
 
+import six
+
 from builtins import map, range
-from builtins import str as text
 from future.utils import iteritems
 from past.builtins import basestring
 from recipe_engine.internal.global_shutdown import GLOBAL_SHUTDOWN
@@ -179,9 +180,9 @@ class StringListIO(object):
     while s:
       i = s.find('\n')
       if i == -1:
-        self.lines[-1].write(text(s))
+        self.lines[-1].write(str(s))
         break
-      self.lines[-1].write(text(s[:i]))
+      self.lines[-1].write(str(s[:i]))
       self.lines[-1] = self.lines[-1].getvalue()
       self.lines.append(StringIO())
       s = s[i+1:]
@@ -328,14 +329,13 @@ MAX_SAFE_INTEGER = (2**53) - 1
 def fix_json_object(obj):
   """Recursively:
 
-    * Re-encodes strings as utf-8 inside |obj| (python2 only).
     * Replaces floats with ints when:
       * The value is a whole number
       * The value is outside of [-(2 ** 53 - 1), 2 ** 53 - 1]
 
   Returns the result.
   """
-  if sys.version_info.major == 2 and isinstance(obj, unicode):
+  if sys.version_info.major == 2 and isinstance(obj, six.text_type):
     return obj.encode('utf-8', 'replace')
 
   if isinstance(obj, list):

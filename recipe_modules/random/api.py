@@ -49,7 +49,8 @@ if sys.version_info.major >= 3:
         random = self.random
       return super(_Random, self).shuffle(x, random=random)
 
-else:
+else:  # pragma: no cover
+  # TODO: Remove when ripping out py2.
   _Random = random.Random
 
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env vpython
+#!/usr/bin/env vpython3
 # Copyright 2016 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -26,9 +26,10 @@ class TestBundle(test_env.RecipeEngineUnitTest):
     self.assertEqual(retcode, 0, 'bundling failed!\noutput:\n'+output)
 
     bat = '.bat' if sys.platform.startswith('win') else ''
-    proc = subprocess.Popen(
-        [os.path.join(dest, 'recipes'+bat), 'run', 'foo'],
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    proc = subprocess.Popen([os.path.join(dest, 'recipes' + bat), 'run', 'foo'],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT,
+                            text=True)
     output, _ = proc.communicate()
     self.assertEqual(proc.returncode, 0, 'running failed!\noutput:\n'+output)
     self.assertIn('narwhals', output)

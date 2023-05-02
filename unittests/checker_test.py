@@ -1,4 +1,4 @@
-#!/usr/bin/env vpython
+#!/usr/bin/env vpython3
 # Copyright 2016 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -91,9 +91,8 @@ class TestChecker(test_env.RecipeEngineUnitTest):
     self.assertEqual(len(c.failed_checks), 1)
     self.assertEqual(len(c.failed_checks[0].frames), 1)
     self.assertEqual(
-      self.sanitize(c.failed_checks[0].frames[0]),
-      self.mk('body', 'check((True is falsey())); other', {
-        'other': "'thing'" }))
+        self.sanitize(c.failed_checks[0].frames[0]),
+        self.mk('body', 'check((True is falsey()))', {}))
 
   def test_fail_nested_statement(self):
     c = Checker(HOOK_CONTEXT)
@@ -114,9 +113,9 @@ class TestChecker(test_env.RecipeEngineUnitTest):
     self.assertEqual(len(c.failed_checks), 1)
     self.assertEqual(len(c.failed_checks[0].frames), 1)
     self.assertEqual(
-      self.sanitize(c.failed_checks[0].frames[0]),
-      self.mk('body', 'check((True is falsey())); other', {
-        'other': "'thing'" }))
+        self.sanitize(c.failed_checks[0].frames[0]),
+        self.mk('body', 'check((True is falsey()))', {}),
+    )
 
   def test_var_fail(self):
     c = Checker(HOOK_CONTEXT)
@@ -175,17 +174,22 @@ class TestChecker(test_env.RecipeEngineUnitTest):
     def body(check):
       vals = ['whee', 'sub']
       targ = {'a': {'sub': 'whee'}, 'c': 'd'}
-      map(lambda v: check(v in targ['a']), vals)
+      list(map(lambda v: check(v in targ['a']), vals))
+
     body(c)
     self.assertEqual(len(c.failed_checks), 1)
     self.assertEqual(len(c.failed_checks[0].frames), 2)
     self.assertEqual(
-      self.sanitize(c.failed_checks[0].frames[0]),
-      self.mk('body', "map((lambda v: check((v in targ['a']))), vals)", None))
+        self.sanitize(c.failed_checks[0].frames[0]),
+        self.mk('body', "list(map((lambda v: check((v in targ['a']))), vals))",
+                None))
     self.assertEqual(
-      self.sanitize(c.failed_checks[0].frames[1]),
-      self.mk('<lambda>', "map((lambda v: check((v in targ['a']))), vals)",
-              {"targ['a'].keys()": "['sub']", 'v': "'whee'"}))
+        self.sanitize(c.failed_checks[0].frames[1]),
+        self.mk('<lambda>',
+                "list(map((lambda v: check((v in targ['a']))), vals))", {
+                    'v': "'whee'",
+                    "targ['a'].keys()": "['sub']"
+                }))
 
   def test_lambda_in_multiline_expr_call(self):
     c = Checker(HOOK_CONTEXT)
@@ -280,7 +284,7 @@ class TestStep(test_env.RecipeEngineUnitTest):
     self.assertEqual(s.to_step_dict(), step_dict)
 
   def test_empty_step(self):
-    with self.assertRaisesRegexp(ValueError, "step dict must have 'name' key"):
+    with self.assertRaisesRegex(ValueError, "step dict must have 'name' key"):
       Step.from_step_dict({})
 
   def test_minimal_step(self):
@@ -497,6 +501,7 @@ class TestVerifySubset(test_env.RecipeEngineUnitTest):
 
 
 class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
+
   @staticmethod
   def mkApi():
     return RecipeTestApi()

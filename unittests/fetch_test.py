@@ -1,4 +1,4 @@
-#!/usr/bin/env vpython
+#!/usr/bin/env vpython3
 # Copyright 2016 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -6,8 +6,9 @@
 import json
 import subprocess
 
+from unittest import mock
+
 import attr
-import mock
 
 import test_env
 
@@ -30,7 +31,7 @@ def multi(*side_effect_funcs):
   it = iter(side_effect_funcs)
   def _inner(*args, **kwargs):
     try:
-      return it.next()(*args, **kwargs)
+      return next(it)(*args, **kwargs)
     except StopIteration:
       raise NoMoreExpectatedCalls(
         'multi() ran out of values (i=%d): f(*%r, **%r)' % (l, args, kwargs))
@@ -68,15 +69,16 @@ class TestGit(test_env.RecipeEngineUnitTest):
   @property
   def default_spec(self):
     return SimpleRecipesCfg.from_dict({
-      'api_version': 2,
-      'repo_name': 'main',
-      'deps': {
-        'recipe_engine': {
-          'url': 'https://test.example.com/recipe_engine.git',
-          'branch': 'refs/heads/main',
-          'revision': 'b'*40,
+        'api_version': 2,
+        'py3_only': True,
+        'repo_name': 'main',
+        'deps': {
+            'recipe_engine': {
+                'url': 'https://test.example.com/recipe_engine.git',
+                'branch': 'refs/heads/main',
+                'revision': 'b' * 40,
+            }
         }
-      }
     })
 
   def g_metadata_calls(self, dirname='dir', commit='a'*40,

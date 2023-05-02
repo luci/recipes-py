@@ -1,4 +1,4 @@
-#!/usr/bin/env vpython
+#!/usr/bin/env vpython3
 # Copyright 2017 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -9,14 +9,14 @@ import argparse
 import json
 import os
 
-from cStringIO import StringIO
+from io import StringIO
+from unittest import mock
 
 from google.protobuf import json_format as jsonpb
 
 # pylint: disable=import-error
 import attr
 import enum
-import mock
 import re
 
 import test_env
@@ -35,7 +35,8 @@ class Common(test_env.RecipeEngineUnitTest):
 
   def _run_test(self, *args, **kwargs):
     should_fail = kwargs.pop('should_fail', False)
-    py_version = kwargs.pop('py_version', 'py2')
+    had_py_version = 'py_version' in kwargs
+    py_version = kwargs.pop('py_version', 'py3')
     self.assertDictEqual(
         kwargs, {}, 'got additional unexpected kwargs: {!r}'.format(kwargs))
 
@@ -133,6 +134,7 @@ class Common(test_env.RecipeEngineUnitTest):
 
     for test_name, outcome_types in iteritems(per_test or {}):
       results = ret.test_results[test_name]
+      results.labeled_py_compat = 'PY3'  # default
       for type_ in outcome_types:
         if type_ == self.OutcomeType.diff:
           results.diff.lines[:] = ['placeholder']
@@ -212,7 +214,7 @@ class TestRun(Common):
     test_run = self._run_test('run', '--stop', should_fail=True)
     results = test_run.data['test_results']
     self.assertEqual(len(results), 1)
-    self.assertEqual(results.values()[0].keys()[0], 'diff')
+    self.assertEqual(list(list(results.values())[0].keys())[0], 'diff')
 
   def test_expectation_failure_empty_filter(self):
     with self.main.write_recipe('foo') as recipe:
@@ -277,27 +279,6 @@ class TestRun(Common):
     self.assertDictEqual(
         self._run_test('run', '--filter', 'foo.*').data,
         self._outcome_json(coverage=0))
-
-  def test_require_py3_compatibility(self):
-    with self.main.edit_recipes_cfg_pb2() as pb:
-      pb.require_py3_compatibility = True
-    with self.main.write_module('foo_module') as mod:
-      mod.api.write('''
-         def foo(self):
-           d = {'k': 'v'}
-           d.iteritems() # py2-only function
-       ''')
-
-    with self.main.write_recipe('foo_module', 'examples/full') as recipe:
-      recipe.DEPS = ['foo_module']
-      recipe.RunSteps.write('api.foo_module.foo()')
-      recipe.GenTests.write("yield api.test('basic')")
-
-    result = self._run_test('run', should_fail='crash')
-    self.assertIn("Invalid PYTHON_VERSION_COMPATIBILITY value for recipe or "
-                  "module foo_module:examples/full. It must be one of those "
-                  "values - ('PY2+3', 'PY3')",
-                  result.text_output)
 
   def test_check_failure(self):
     with self.main.write_recipe('foo') as recipe:
@@ -373,39 +354,6 @@ class TestRun(Common):
           'foo.basic': [self.OutcomeType.check],
         }, coverage=0))
 
-  # Test the soft failure, for example, when the recipe is claimed as PY3 but
-  # its dependency only supports PY2.
-  def test_check_soft_failure(self):
-    with self.main.write_module('foo_module') as mod:
-      mod.api.write('''
-        import sys
-        def foo(self):
-          print>> sys.stderr, 'py2 only syntax!'
-      ''')
-    self.deps.ambient_toplevel_code = [
-        '''
-        PYTHON_VERSION_COMPATIBILITY = 'PY3'
-        ''']
-    with self.main.write_recipe('foo_module', 'examples/full') as recipe:
-      recipe.DEPS = ['foo_module']
-      recipe.RunSteps.write('''
-          api.foo_module.foo()
-      ''')
-      del recipe.expectation['basic']
-
-    result = self._run_test('run', should_fail=True, py_version='py3')
-    self.assertIn('Ran 1 tests in', result.text_output)
-    self.assertDictEqual(
-        result.data,
-        self._outcome_json(per_test={
-          'foo_module:examples/full.basic': [
-              self.OutcomeType.crash,
-              self.OutcomeType.diff,
-              self.OutcomeType.expect_py_incompatibility,
-              self.OutcomeType.labeled_py_compat_py3,
-              self.OutcomeType.needs_infra_fail],
-        }))
-
   def test_check_success(self):
     with self.main.write_recipe('foo') as recipe:
       recipe.imports = ['from recipe_engine import post_process']
@@ -458,9 +406,7 @@ class TestRun(Common):
       ''')
 
     result = self._run_test('run', should_fail=True)
-    self.assertIn(
-        "NameError: global name 'baz' is not defined",
-        result.text_output)
+    self.assertIn("NameError: name 'baz' is not defined", result.text_output)
     self.assertDictEqual(
         result.data,
         self._outcome_json(per_test={
@@ -500,8 +446,7 @@ class TestRun(Common):
       del recipe.expectation['basic']
 
     result = self._run_test('run', should_fail=True)
-    self.assertIn('NameError: global name \'baz\' is not defined',
-                  result.text_output)
+    self.assertIn('NameError: name \'baz\' is not defined', result.text_output)
     self.assertDictEqual(
         result.data,
         self._outcome_json(per_test={
@@ -525,8 +470,7 @@ class TestRun(Common):
       del recipe.expectation['basic']
 
     result = self._run_test('run', should_fail=True)
-    self.assertIn('NameError: global name \'baz\' is not defined',
-                  result.text_output)
+    self.assertIn('NameError: name \'baz\' is not defined', result.text_output)
     self.assertIn('FATAL: Insufficient total coverage', result.text_output)
     self.assertDictEqual(
         result.data,
@@ -913,7 +857,7 @@ class TestRun(Common):
     self.assertDictEqual(
         self._run_test('run', should_fail=True).data,
         self._outcome_json(
-            coverage=92.3,
+            coverage=92.6,
             uncovered_mods=['foo_module'],
         ))
 
@@ -1016,9 +960,12 @@ class TestTrain(Common):
     # 3. Make sure training the recipe succeeds and produces correct results.
     result = self._run_test('train')
     self.assertListEqual(
-        json.loads(self.main.read_file(expect_path)),
-        [{u'cmd': [u'echo', u'bar'], u'name': u'test'},
-         {u'name': u'$result'}])
+        json.loads(self.main.read_file(expect_path)), [{
+            'cmd': ['echo', 'bar'],
+            'name': 'test'
+        }, {
+            'name': '$result'
+        }])
     self.assertDictEqual(
         result.data,
         self._outcome_json(per_test={
@@ -1048,8 +995,9 @@ class TestTrain(Common):
     # 3. Make sure training the recipe succeeds and produces correct results.
     result = self._run_test('train')
     self.assertListEqual(
-        json.loads(self.main.read_file(expect_path)),
-        [{u'name': u'$result'}])
+        json.loads(self.main.read_file(expect_path)), [{
+            'name': '$result'
+        }])
     self.assertDictEqual(
         result.data,
         self._outcome_json(per_test={
@@ -1079,30 +1027,8 @@ class TestTrain(Common):
           a = 1
       ''')
     result = self._run_test('train', should_fail=True)
-    self.assertIn('Ran 2 tests in', result.text_output)
-    self.assertDictEqual(
-        result.data,
-        self._outcome_json(coverage=88.9))
-
-  def test_checks_coverage_with_py2_label(self):
-    self.deps.ambient_toplevel_code = [
-        '''
-        PYTHON_VERSION_COMPATIBILITY = 'PY2'
-        ''']
-    with self.main.write_recipe('foo') as recipe:
-      recipe.DEPS = []
-      recipe.RunSteps.write('''
-        bool_var = False
-        if bool_var:
-          a = 1
-      ''')
-    result = self._run_test('train', should_fail=True)
     self.assertIn('Ran 1 tests in', result.text_output)
-    self.assertDictEqual(
-        result.data,
-        self._outcome_json(per_test={
-            'foo.basic': [self.OutcomeType.labeled_py_compat_py2],
-        }, coverage=90))
+    self.assertDictEqual(result.data, self._outcome_json(coverage=88.9))
 
   def test_checks_coverage_with_py3_label(self):
     self.deps.ambient_toplevel_code = [
@@ -1234,11 +1160,13 @@ class TestArgs(test_env.RecipeEngineUnitTest):
         'test', 'run', '--filter', ''])
     self.assertIn('empty filters not allowed', stderr.getvalue())
 
-    stderr.reset()
+    stderr.seek(0)
+    stderr.truncate()
     args = parser.parse_args(['test', 'run', '--filter', 'foo'])
     self.assertEqual(args.test_filters, ['foo*.*'])
 
-    stderr.reset()
+    stderr.seek(0)
+    stderr.truncate()
     args = parser.parse_args(['test', 'run', '--filter', 'foo.bar'])
     self.assertEqual(args.test_filters, ['foo.bar'])
 

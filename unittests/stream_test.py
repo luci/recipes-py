@@ -1,9 +1,9 @@
-#!/usr/bin/env vpython
+#!/usr/bin/env vpython3
 # Copyright 2015 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import cStringIO
+from io import StringIO
 
 import test_env
 
@@ -79,7 +79,7 @@ bar tries to kiss foo, but foo already left
     return 123
 
   def test_example(self):
-    stringio = cStringIO.StringIO()
+    stringio = StringIO()
     engine = AnnotatorStreamEngine(
         stringio, emit_timestamps=True, time_fn=self.fake_time)
     with engine:
@@ -94,7 +94,7 @@ bar tries to kiss foo, but foo already left
       self._example(engine)
 
   def test_product_with_invariants_on_example(self):
-    stringio = cStringIO.StringIO()
+    stringio = StringIO()
     engine = StreamEngineInvariants.wrap(
         AnnotatorStreamEngine(
             stringio, emit_timestamps=True, time_fn=self.fake_time))

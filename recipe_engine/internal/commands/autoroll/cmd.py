@@ -26,6 +26,16 @@ VPYTHON3 = 'vpython3' + ('.bat' if IS_WIN else '')
 GIT = 'git' + ('.bat' if IS_WIN else '')
 
 
+def _toPBDict(spec):
+  ret = jsonpb.MessageToDict(spec, preserving_proto_field_name=True)
+  # HACK: For recipe specs we want to convert py3_only &&
+  # require_py3_compatibility to just py3_only (and, hopefully soon, we can
+  # remove both of them).
+  if ret.get('require_py3_compatibility', False) and ret.get('py3_only', False):
+    del ret['require_py3_compatibility']
+  return ret
+
+
 def write_global_files_to_main_repo(recipe_deps, spec):
   """Writes the recipes.cfg and recipes.py scripts to the main repo on disk.
 
@@ -42,8 +52,10 @@ def write_global_files_to_main_repo(recipe_deps, spec):
     spec.repo_name = spec.project_id
   # Format recipes.cfg nicely and make it deterministic.
   out = json.dumps(
-      jsonpb.MessageToDict(spec, preserving_proto_field_name=True),
-      indent=2, sort_keys=True).replace(' \n', '\n') + '\n'
+      _toPBDict(spec),
+      indent=2,
+      sort_keys=True,
+  ).replace(' \n', '\n') + '\n'
   LOGGER.info('writing: %s', out)
 
   cfg_path = os.path.join(main_repo.path, simple_cfg.RECIPES_CFG_LOCATION_REL)
@@ -62,9 +74,13 @@ def run_simulation_test(repo, *additional_args):
 
   Returns a tuple of exit code and output.
   """
-  proc = subprocess.Popen([
-    VPYTHON3, os.path.join(repo.recipes_root_path, 'recipes.py'), 'test',
-  ] + list(additional_args), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+  args = [
+      VPYTHON3,
+      os.path.join(repo.recipes_root_path, 'recipes.py'),
+      'test',
+  ] + list(additional_args)
+  proc = subprocess.Popen(
+      args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
   output, _ = proc.communicate()
   retcode = proc.returncode
   return retcode, output
@@ -143,17 +159,16 @@ def process_candidates(recipe_deps, candidates, repos, verbose_json):
   # we exit early depending on test results.
   for candidate in candidates:
     roll_details.append({
-      'spec': jsonpb.MessageToDict(
-          candidate.repo_spec, preserving_proto_field_name=True),
-      'commit_infos': {
-        repo_name: [{
-          'author_email': c.author_email,
-          'message_lines': (
-            c.message_lines if verbose_json else c.message_lines[:1]
-          ),
-          'revision': c.revision,
-        } for c in clist]
-        for repo_name, clist in iteritems(candidate.changelist(repos))},
+        'spec': _toPBDict(candidate.repo_spec),
+        'commit_infos': {
+            repo_name: [{
+                'author_email': c.author_email,
+                'message_lines':
+                    (c.message_lines if verbose_json else c.message_lines[:1]),
+                'revision': c.revision,
+            } for c in clist]
+            for repo_name, clist in iteritems(candidate.changelist(repos))
+        },
     })
 
   # Process candidates biggest first. If the roll is trivial, we want
@@ -239,8 +254,7 @@ def test_rolls(recipe_deps, verbose_json):
   }
   if verbose_json:
     ret['rejected_candidate_specs'] = [
-      jsonpb.MessageToDict(c.repo_spec, preserving_proto_field_name=True)
-      for c in rejected_candidates
+        _toPBDict(c.repo_spec) for c in rejected_candidates
     ]
   return ret
 

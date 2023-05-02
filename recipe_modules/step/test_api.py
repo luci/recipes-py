@@ -26,12 +26,16 @@ class StepTestApi(recipe_test_api.RecipeTestApi):
 
   @recipe_test_api.mod_test_data
   @staticmethod
-  def initial_build_create_time(seconds):
+  def initial_build_create_time(seconds):  # pragma: no cover
     """Sets the create time of the initial build for luciexe."""
+    # TODO: See tests/sub_build.clear_fields_of_input_build which would cover
+    # this, but is disabled in python3.
     return seconds
 
   @recipe_test_api.mod_test_data
   @staticmethod
-  def initial_build_start_time(seconds):
+  def initial_build_start_time(seconds):  # pragma: no cover
     """Sets the create time of the initial build for luciexe."""
+    # TODO: See tests/sub_build.clear_fields_of_input_build which would cover
+    # this, but is disabled in python3.
     return seconds

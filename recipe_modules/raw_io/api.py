@@ -229,7 +229,7 @@ class OutputTextPlaceholder(OutputDataPlaceholder):
 
   def read_test_data(self, test):
     test_data = test.data or ''
-    if _PY2:
+    if _PY2:  # pragma: no cover
       test_data = test_data.encode('utf-8', errors='replace')
     else:
       test_data = test_data

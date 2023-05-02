@@ -1,4 +1,4 @@
-#!/usr/bin/env vpython
+#!/usr/bin/env vpython3
 # Copyright 2016 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -319,10 +319,11 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
     self.assertEqual(retcode, 0, output)
 
     proc = subprocess.Popen(
-      [os.path.join(bundle_dir, 'recipes'), 'run', 'recipe'],
-      cwd=bundle_dir,
-      stdout=subprocess.PIPE,
-      stderr=subprocess.STDOUT,
+        [os.path.join(bundle_dir, 'recipes'), 'run', 'recipe'],
+        cwd=bundle_dir,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
     )
     output, _ = proc.communicate()
 
@@ -592,18 +593,17 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
     output, retcode = main.recipes_py('fetch')
     self.assertEqual(retcode, 1, output)
     output = output.replace(main.path, 'BASE').replace('\\', '/')
-    self.assertIn(
-        "BASE/recipe_proto/impersonates_module.proto: bad package: uses reserved namespace 'recipe_modules'",
-        output)
-    self.assertIn(
-        "BASE/recipe_proto/impersonates_recipe.proto: bad package: uses reserved namespace 'recipes'",
-        output)
-    self.assertIn(
-        "BASE/recipe_modules/foobar/bad_namespace.proto: bad package: expected 'recipe_modules.main.foobar', got 'recipe_modules.main.foobar.etc'",
-        output)
-    self.assertIn(
-        "BASE/recipes/bad_namespace.proto: bad package: expected 'recipes.main.bad_namespace', got 'recipes.main'",
-        output)
+    self.assertIn(("BASE/recipe_proto/impersonates_module.proto: bad package: "
+                   "uses reserved namespace 'recipe_modules'"), output)
+    self.assertIn(("BASE/recipe_proto/impersonates_recipe.proto: bad package: "
+                   "uses reserved namespace 'recipes'"), output)
+    self.assertIn((
+        "BASE/recipe_modules/foobar/bad_namespace.proto: bad package: "
+        "expected 'recipe_modules.main.foobar', got 'recipe_modules.main.foobar.etc'"
+    ), output)
+    self.assertIn(("BASE/recipes/bad_namespace.proto: bad package: "
+                   "expected 'recipes.main.bad_namespace', got 'recipes.main'"),
+                  output)
 
 
 if __name__ == '__main__':

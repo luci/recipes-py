@@ -1,4 +1,4 @@
-#!/usr/bin/env vpython
+#!/usr/bin/env vpython3
 # Copyright 2018 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -10,7 +10,7 @@ import os
 import subprocess
 import sys
 
-import mock
+from unittest import mock
 
 import test_env
 
@@ -246,17 +246,16 @@ class AnalyzeSmokeTest(test_env.RecipeEngineUnitTest):
         'engine_tests/whitelist_steps',
       ],
     })
-    self.assertDictEqual(outdata, {
-      'error': '',
-      'invalidRecipes': [],
-      # List should be safe to not wrap with a call to sorted, since
-      # proto repeated fields are ordered, so everything should be
-      # analyzed in the same order every time.
-      'recipes': [
-        'engine_tests/whitelist_steps',
-        'engine_tests/unicode',
-      ],
-    })
+    self.assertDictEqual(
+        outdata, {
+            'error':
+                '',
+            'invalidRecipes': [],
+            'recipes': [
+                'engine_tests/unicode',
+                'engine_tests/whitelist_steps',
+            ],
+        })
     self.assertEqual(exit_code, 0)
 
   def testRecipeChanged(self):

@@ -2,13 +2,14 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import re
 import os
-
-import six
+import re
+import sys
 
 from builtins import zip
 from gevent import subprocess
+
+_PY2 = sys.version_info.major == 2
 
 
 def _pattern2re(pattern):
@@ -31,7 +32,7 @@ def _pattern2re(pattern):
     elif pattern[i] == ']':
       # When ']' is the first character after a character class starts, it
       # doesn't end it, it just means ']' is part of the character class.
-      if charclass_start < i - 1:
+      if charclass_start is None or charclass_start < i - 1:
         charclass_start = None
     elif pattern[i] == '?' and charclass_start is None:
       # '?' shouldn't be replaced inside character classes.
@@ -51,7 +52,7 @@ def _pattern2re(pattern):
     regex += to_add
     i += to_skip
 
-  if regex.startswith(r'\/'):
+  if regex.startswith('/'):
     regex = '^' + regex
   else:
     regex = '/' + regex
@@ -133,12 +134,17 @@ class AttrChecker(object):
 
   def _git(self, cmd, stdin=None):
     """Executes a git command and returns the standard output."""
-    p = subprocess.Popen(['git'] + cmd, cwd=self._repo, stdin=subprocess.PIPE,
-                         stdout=subprocess.PIPE)
-    stdout, _ = p.communicate(six.ensure_binary(stdin) if stdin else None)
+    extra_kwargs = {} if _PY2 else {"text": True}
+    p = subprocess.Popen(
+        ['git'] + cmd,
+        cwd=self._repo,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        **extra_kwargs)
+    stdout, _ = p.communicate(stdin if stdin else None)
     if p.returncode != 0:
       raise subprocess.CalledProcessError(p.returncode, ['git'] + cmd, None)
-    return six.ensure_str(stdout).strip().splitlines()
+    return stdout.strip().splitlines()
 
   def _get_directories(self, files):
     """Lists all the directories touched by any of the |files|."""

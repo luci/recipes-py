@@ -190,7 +190,11 @@ def _gather_sources(deps):
   Args:
     * deps (RecipeDeps) - The loaded recipe dependencies.
 
-  Returns Tuple[dgst: str, proto_files: List[Tuple[str, str]], py_files: List[Tuple[str, str]]]
+  Returns Tuple[
+    dgst: str,
+    proto_files: List[Tuple[str, str]],
+    py_files: List[Tuple[str, str]],
+  ]
     * dgst: The 'overall' checksum for all protos which we ought to to have
       installed (as hex)
     * proto_files: a list of source abspath to dest_relpath for these proto
@@ -580,8 +584,8 @@ def _install_protos(proto_package_path, dgst, proto_files, py_files):
   protoc = os.path.join(proto_package_path, 'protoc', 'bin', 'protoc')
   _compile_protos(proto_files, proto_tree, protoc, argfile, pb_temp)
   _copy_py_files(py_files, pb_temp)
-  with open(os.path.join(pb_temp, 'csum'), 'wb') as csum_f:
-    csum_f.write(dgst.encode('utf-8'))
+  with open(os.path.join(pb_temp, 'csum'), 'w') as csum_f:
+    csum_f.write(dgst)
 
   dest = os.path.join(proto_package_path, 'PB')
   # Check the digest again, in case another engine beat us to the punch.
@@ -605,7 +609,7 @@ def _check_digest(proto_package, dgst):
   """
   try:
     csum_path = os.path.join(proto_package, 'PB', 'csum')
-    with open(csum_path, 'rb') as cur_dgst_f:
+    with open(csum_path, 'r') as cur_dgst_f:
       return cur_dgst_f.read() == dgst
   except (OSError, IOError) as exc:
     if exc.errno != errno.ENOENT:

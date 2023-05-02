@@ -12,7 +12,7 @@ import argparse
 def add_arguments(parser):
   parser.add_argument(
       '--output-json',
-      type=argparse.FileType('w'),
+      type=argparse.FileType('w', encoding='utf-8'),
       help='A json file to output information about the roll to.')
   parser.add_argument(
       '--verbose-json',

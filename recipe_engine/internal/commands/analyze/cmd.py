@@ -75,7 +75,7 @@ def analyze(recipe_deps, in_data):
   git_attr_file_map = {}
 
   # We look at 4 different sets of files which could affect the recipe.
-  for recipe_name in valid_recipes:
+  for recipe_name in (r for r in in_data.recipes if r in valid_recipes):
     # 1: The recipes themselves.
     recipe = main_repo.recipes[recipe_name]
     isect = set(in_data.files).intersection([recipe.path])

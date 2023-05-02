@@ -1,4 +1,4 @@
-#!/usr/bin/env vpython
+#!/usr/bin/env vpython3
 # Copyright 2020 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -9,7 +9,7 @@ import os
 import re
 import textwrap
 
-import mock
+from unittest import mock
 
 import test_env
 
@@ -258,14 +258,13 @@ class TestWarningRecorder(test_env.RecipeEngineUnitTest):
   def test_record_non_fully_qualified_warning(self):
     # execution warning
     with create_test_frames(self.test_file_path) as test_frames:
-      with self.assertRaisesRegexp(
+      with self.assertRaisesRegex(
           ValueError,
           'expected fully-qualified warning name, got SOME_WARNING'):
         self.recorder.record_execution_warning('SOME_WARNING', test_frames)
     # import warning
-    with self.assertRaisesRegexp(
-        ValueError,
-        'expected fully-qualified warning name, got SOME_WARNING'):
+    with self.assertRaisesRegex(
+        ValueError, 'expected fully-qualified warning name, got SOME_WARNING'):
       self.recorder.record_import_warning(
           'SOME_WARNING',
           self._create_mock_recipe('test_module:path/to/recipe', self.repo_name),
@@ -274,13 +273,13 @@ class TestWarningRecorder(test_env.RecipeEngineUnitTest):
   def test_record_not_defined_execution_warning(self):
     # execution warning
     with create_test_frames(self.test_file_path) as test_frames:
-      with self.assertRaisesRegexp(
+      with self.assertRaisesRegex(
           ValueError,
           'warning "COOL_WARNING" is not defined in recipe repo infra'):
         self.recorder.record_execution_warning('infra/COOL_WARNING',
                                                test_frames)
     # import warning
-    with self.assertRaisesRegexp(
+    with self.assertRaisesRegex(
         ValueError,
         'warning "COOL_WARNING" is not defined in recipe repo infra'):
       self.recorder.record_import_warning(
@@ -349,17 +348,16 @@ frames = outer()
 class EscapeWarningPredicateTest(test_env.RecipeEngineUnitTest):
   def test_issue_SOME_WARN(self):
     warning_name = 'SOME_WARN'
-    # self.assertRegexpMatches
     self.assertIsNone(
       self.apply_predicate(warning_name, self.non_escaped_frame()))
-    self.assertRegexpMatches(
-      self.apply_predicate(warning_name, self.escaped_frame()),
-      '^escaped function at .+#L[0-9]+$',
-      )
-    self.assertRegexpMatches(
-      self.apply_predicate(warning_name, self.escaped_all_frame()),
-      '^escaped function at .+#L[0-9]+$',
-      )
+    self.assertRegex(
+        self.apply_predicate(warning_name, self.escaped_frame()),
+        '^escaped function at .+#L[0-9]+$',
+    )
+    self.assertRegex(
+        self.apply_predicate(warning_name, self.escaped_all_frame()),
+        '^escaped function at .+#L[0-9]+$',
+    )
 
   def test_issue_ANOTHER_WARN(self):
     warning_name = 'ANOTHER_WARN'
@@ -367,10 +365,10 @@ class EscapeWarningPredicateTest(test_env.RecipeEngineUnitTest):
       self.apply_predicate(warning_name, self.non_escaped_frame()))
     self.assertIsNone(
       self.apply_predicate(warning_name, self.escaped_frame()))
-    self.assertRegexpMatches(
-      self.apply_predicate(warning_name, self.escaped_all_frame()),
-      '^escaped function at .+#L[0-9]+$',
-      )
+    self.assertRegex(
+        self.apply_predicate(warning_name, self.escaped_all_frame()),
+        '^escaped function at .+#L[0-9]+$',
+    )
 
   def non_escaped_frame(self):
     return inspect.currentframe()
@@ -476,7 +474,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     .+/recipe_modules/cool_mod/api\.py:\d+
     .+/recipe_modules/my_mod/tests/bad\.py:3
     '''.strip('\n'))
-    self.assertRegexpMatches(output, expected_regexp)
+    self.assertRegex(output, expected_regexp)
 
   def test_import_warning(self):
     with self.deps.main_repo.write_module('my_mod') as mod:
@@ -518,7 +516,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     .+/recipe_modules/my_mod/tests/full\.py
     .+/recipe_modules/cool_mod/__init__\.py
     '''.strip('\n'))
-    self.assertRegexpMatches(output, expected_regexp)
+    self.assertRegex(output, expected_regexp)
 
   def test_issue_both_warnings(self):
     with self.deps.main_repo.write_module('my_mod') as mod:
@@ -555,7 +553,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     Import Sites:
     .+/recipe_modules/my_mod/tests/full\.py
     '''.strip('\n'))
-    self.assertRegexpMatches(output, expected_regexp)
+    self.assertRegex(output, expected_regexp)
 
   def test_issue_not_defined_execution_warning(self):
     with self.deps.main_repo.write_module('my_mod') as mod:
@@ -759,7 +757,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     Call Sites:
     .+/main/recipes/bad\.py:3
     '''.strip('\n'))
-    self.assertRegexpMatches(output, expected_regexp)
+    self.assertRegex(output, expected_regexp)
 
 
 if __name__ == '__main__':

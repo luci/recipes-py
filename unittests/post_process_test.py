@@ -1,4 +1,4 @@
-#!/usr/bin/env vpython
+#!/usr/bin/env vpython3
 # Copyright 2016 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -54,7 +54,7 @@ class TestFilter(PostProcessUnitTest):
 
   def test_basic(self):
     results, failures = self.post_process(self.d, self.f('a', 'b'))
-    self.assertEqual(results, mkD('a', 'b').values())
+    self.assertEqual(results, list(mkD('a', 'b').values()))
     self.assertEqual(len(failures), 0)
 
   def test_built(self):
@@ -62,7 +62,7 @@ class TestFilter(PostProcessUnitTest):
     f = f.include('b')
     f = f.include('a')
     results, failures = self.post_process(self.d, f)
-    self.assertEqual(results, mkD('a', 'b').values())
+    self.assertEqual(results, list(mkD('a', 'b').values()))
     self.assertEqual(len(failures), 0)
 
   def test_built_fields(self):
@@ -76,7 +76,7 @@ class TestFilter(PostProcessUnitTest):
   def test_built_extra_includes(self):
     f = self.f('a', 'b', 'x')
     results, failures = self.post_process(self.d, f)
-    self.assertEqual(results, mkD('a', 'b').values())
+    self.assertEqual(results, list(mkD('a', 'b').values()))
     self.assertEqual(len(failures), 1)
     self.assertHas(failures[0],
                    'check((len(unused_includes) == 0))',
@@ -85,30 +85,26 @@ class TestFilter(PostProcessUnitTest):
   def test_re(self):
     f = self.f().include_re(r'b\.')
     results, failures = self.post_process(self.d, f)
-    self.assertEqual(results, mkD('b.sub', 'b.sub2').values())
+    self.assertEqual(results, list(mkD('b.sub', 'b.sub2').values()))
     self.assertEqual(len(failures), 0)
 
   def test_re_low_limit(self):
     f = self.f().include_re(r'b\.', at_least=3)
     results, failures = self.post_process(self.d, f)
-    self.assertEqual(results, mkD('b.sub', 'b.sub2').values())
+    self.assertEqual(results, list(mkD('b.sub', 'b.sub2').values()))
     self.assertEqual(len(failures), 1)
-    self.assertHas(failures[-1],
-                   'check((re_usage_count[regex] >= at_least))',
-                   'at_least: 3',
-                   're_usage_count[regex]: 2',
-                   'regex: re.compile(\'b\\\\.\')')
+    self.assertHas(failures[-1], 'check((re_usage_count[regex] >= at_least))',
+                   'at_least: 3', 're_usage_count[regex]: 2',
+                   'regex: re.compile(\'b\\\\.\'')
 
   def test_re_high_limit(self):
     f = self.f().include_re(r'b\.', at_most=1)
     results, failures = self.post_process(self.d, f)
-    self.assertEqual(results, mkD('b.sub', 'b.sub2').values())
+    self.assertEqual(results, list(mkD('b.sub', 'b.sub2').values()))
     self.assertEqual(len(failures), 1)
     self.assertHas(failures[0], 'check((re_usage_count[regex] <= at_most))')
-    self.assertHas(failures[0],
-                   'at_most: 1',
-                   're_usage_count[regex]: 2',
-                   'regex: re.compile(\'b\\\\.\')')
+    self.assertHas(failures[0], 'at_most: 1', 're_usage_count[regex]: 2',
+                   'regex: re.compile(\'b\\\\.\'')
 
 
 class TestRun(PostProcessUnitTest):
