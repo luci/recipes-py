@@ -26,6 +26,9 @@ CHUNK_SIZE = 1024 * 1024 * 4
 
 def _download(url, outfile, headers, transient_retry, strip_prefix):
   s = requests.Session()
+  s.headers['User-Agent'] = 'luci.recipes-py.url.pycurl/1.0'
+  if headers:
+    s.headers.update(headers)
   retry = None
   if transient_retry > 0:
     # See http://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html
@@ -43,7 +46,7 @@ def _download(url, outfile, headers, transient_retry, strip_prefix):
 
 
   logging.info('Connecting to %s ...', url)
-  r = s.get(url, headers=headers, stream=True)
+  r = s.get(url, stream=True)
   if r.status_code != requests.codes.ok:
     r.raise_for_status()
 
