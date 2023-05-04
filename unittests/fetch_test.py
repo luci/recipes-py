@@ -70,7 +70,6 @@ class TestGit(test_env.RecipeEngineUnitTest):
   def default_spec(self):
     return SimpleRecipesCfg.from_dict({
         'api_version': 2,
-        'py3_only': True,
         'repo_name': 'main',
         'deps': {
             'recipe_engine': {

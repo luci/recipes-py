@@ -48,9 +48,7 @@ class Command(list):
     def get_matcher(obj):
       if isinstance(obj, basestring):
         return lambda other: obj == other
-      # For py2 compatibility.
-      pattern_type = re.Pattern if hasattr(re, "Pattern") else re._pattern_type
-      if isinstance(obj, pattern_type):
+      if isinstance(obj, re.Pattern):
         return obj.search
       if obj is Ellipsis:
         return Ellipsis

@@ -234,11 +234,9 @@ class RecipeDeps(object):
           {'recipe_engine': ret.repos['recipe_engine'], },
           'recipe_engine',
       )
-    for python_version in (2, 3):
-      proto_package = proto_support.ensure_compiled(protoc_deps, python_version,
-                                                    proto_override)
-      if python_version == sys.version_info[0]:
-        proto_support.append_to_syspath(proto_package)
+
+    proto_support.append_to_syspath(
+        proto_support.ensure_compiled(protoc_deps, proto_override))
 
     return ret
 
@@ -314,11 +312,9 @@ class RecipeRepo(object):
     """
     from PB.recipe_engine.recipes_cfg import RepoSpec
     recipes_cfg = os.path.join(self.path, RECIPES_CFG_LOCATION_REL)
-    with open(recipes_cfg, 'rb') as f:
-      ret = jsonpb.Parse(f.read(), RepoSpec())
-      if ret.py3_only:
-        ret.require_py3_compatibility = True
-      return ret
+    with open(recipes_cfg, 'rb') as cfg_file:
+      return jsonpb.Parse(
+          cfg_file.read(), RepoSpec(), ignore_unknown_fields=True)
 
   @cached_property
   def recipes_root_path(self):
@@ -569,28 +565,10 @@ class RecipeModule(object):
     """
     return self.do_import().DISABLE_STRICT_COVERAGE
 
-  @cached_property
-  def python_version_compatibility(self):
-    """This module's claimed python compatibility level."""
-    return _validate_python_version_compat(
-        self.do_import().PYTHON_VERSION_COMPATIBILITY,
-        self.name,
-        require_py3_compat=self.repo.recipes_cfg_pb2.require_py3_compatibility)
-
-  @cached_property
-  def effective_python_compatibility(self):
-    """This module's effective python compatibility level.
-
-    Defined as the lowest compatibility level of this module and all transitive
-    dependencies.
-
-    None if it's impossible to use this module (e.g. this module claims py2-only
-    compat, but depends on a module with py3-only compat).
-    """
-    return _compute_py_compat(
-        self.python_version_compatibility,
-        self.repo.recipe_deps,
-        self.normalized_DEPS)
+  # TODO: py2 compat: Remove
+  is_python_version_labeled = True
+  python_version_compatibility = 'PY3'
+  effective_python_compatibility = 'PY3'
 
   @classmethod
   def create(cls, repo, name):
@@ -766,44 +744,12 @@ class Recipe(object):
           for name, value in iteritems(properties_def)
       }
 
-    if self.repo.recipes_cfg_pb2.py3_only:
-      recipe_globals['IS_PYTHON_VERSION_LABELED'] = True
-      recipe_globals['PYTHON_VERSION_COMPATIBILITY'] = 'PY3'
-    elif 'PYTHON_VERSION_COMPATIBILITY' not in recipe_globals:
-      recipe_globals['IS_PYTHON_VERSION_LABELED'] = False
-      recipe_globals['PYTHON_VERSION_COMPATIBILITY'] = 'PY2'
-    else:
-      recipe_globals['IS_PYTHON_VERSION_LABELED'] = True
-
     return recipe_globals
 
-  @cached_property
-  def is_python_version_labeled(self):
-    """Whether this recipe's python compatibility is explicitly marked."""
-    return self.global_symbols['IS_PYTHON_VERSION_LABELED']
-
-  @cached_property
-  def python_version_compatibility(self):
-    """This recipe's claimed python compatibility level."""
-    return _validate_python_version_compat(
-        self.global_symbols['PYTHON_VERSION_COMPATIBILITY'],
-        self.name,
-        require_py3_compat=self.repo.recipes_cfg_pb2.require_py3_compatibility)
-
-  @cached_property
-  def effective_python_compatibility(self):
-    """This recipe's effective python compatibility level.
-
-    Defined as the lowest compatibility level of this recipe and all transitive
-    dependencies.
-
-    None if it's impossible to use this recipe (e.g. this recipe claims PY2
-    compat, but depends on a module with PY3 compat).
-    """
-    return _compute_py_compat(
-        self.python_version_compatibility,
-        self.repo.recipe_deps,
-        self.normalized_DEPS)
+  # TODO: py2 compat: Remove
+  is_python_version_labeled = True
+  python_version_compatibility = 'PY3'
+  effective_python_compatibility = 'PY3'
 
   @cached_property
   def full_name(self):
@@ -1231,64 +1177,3 @@ def _resolve(recipe_deps, deps_spec, variant, engine, test_data):
   _inner('recipe_engine', 'path', [])
 
   return ret
-
-
-# Lookup table for comparing effective python compatibilities.
-#
-# The following rules are implied for all X:
-#   `(X, X) => X`
-#   `(None, X) => None`
-#   `(X, None) => None`
-_py_compatibility_lut = {
-  ('PY2', 'PY2+3'): 'PY2',
-  ('PY2', 'PY3'):   None,
-
-  ('PY2+3', 'PY2'): 'PY2',
-  ('PY2+3', 'PY3'): 'PY3',
-
-  ('PY3', 'PY2'):   None,
-  ('PY3', 'PY2+3'): 'PY3',
-}
-
-def _compute_py_compat(ours, recipe_deps, normalized_DEPS):
-  """Computes the transitive python compatibility for a recipe or module.
-
-  Result should be cached.
-
-  Args:
-    * ours - This item's claimed python compatibility.
-    * recipe_deps - A RecipeDeps object.
-    * normalized_DEPS - A normalized DEPS dictionary.
-
-  Returns minimal python compatibility level.
-  """
-  ret = ours
-  for repo_name, module_name in itervalues(normalized_DEPS):
-    m = recipe_deps.repos[repo_name].modules[module_name]
-    compat = m.effective_python_compatibility
-    if ret == compat:
-      # equal compat levels
-      continue
-    if compat is None:
-      return None
-    ret = _py_compatibility_lut[ret, compat]
-    if ret is None:
-      return None
-  return ret
-
-def _validate_python_version_compat(ours, name, require_py3_compat=False):
-  """ Validate the clamed PYTHON_VERSION_COMPATIBILITY value.
-
-  Args:
-    * ours(str) - This item's claimed python compatibility.
-    * name(str) - The name of this item.
-    * require_py3_compat - If it requires python3 compatibility.
-
-  Returns the original compatibility value if it passes the validation.
-  """
-  allowed = ('PY2+3', 'PY3') if require_py3_compat else ('PY2', 'PY2+3', 'PY3')
-  if ours not in allowed:
-    raise RecipeAbort('Invalid PYTHON_VERSION_COMPATIBILITY value for recipe '
-                      'or module %s. It must be one of those values - %s'
-                      % (name, allowed))
-  return ours

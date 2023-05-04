@@ -45,9 +45,6 @@ That would include all .py files, but exclude all _test.py files. See the page
 For more information on how gitattributes work.
 """
 
-from __future__ import absolute_import
-from future.utils import listvalues
-import io
 import logging
 import ntpath
 import os
@@ -146,47 +143,20 @@ def export_protos(recipe_deps, destination):
   Args:
     * recipe_deps (RecipeDeps) - All loaded dependency repos.
     * destination (str) - The absolute path we're exporting to (we'll export to
-      subfolders `_pb2/PB` and `_pb3/PB`).
+      subfolder `_pb3/PB`).
   """
-  python_versions = [3]
-  if not recipe_deps.main_repo.recipes_cfg_pb2.py3_only:
-    python_versions.append(2)
-  for python_version in python_versions:
-    shutil.copytree(
-        os.path.join(recipe_deps.recipe_deps_path, '_pb%d' % python_version, 'PB'),
-        os.path.join(destination, '_pb%d' % python_version, 'PB'),
-        ignore=lambda _base, names: [n for n in names if n.endswith('.pyc')],
-    )
+  shutil.copytree(
+      os.path.join(recipe_deps.recipe_deps_path, '_pb3', 'PB'),
+      os.path.join(destination, '_pb3', 'PB'),
+      ignore=lambda _base, names: [n for n in names if n.endswith('.pyc')],
+  )
 
 # pylint: disable=line-too-long
-TEMPLATE_SH = u"""#!/usr/bin/env bash
-VPYTHON="vpython"
-PB_DIR="_pb2"
-if [[ "$RECIPES_USE_PY3" == "true" ]]; then
-    VPYTHON="vpython3"
-    PB_DIR="_pb3"
-fi
-exec ${VPYTHON} -u ${BASH_SOURCE[0]%/*}/recipe_engine/recipe_engine/main.py
-""".strip()
-
-TEMPLATE_BAT = u"""@echo off
-set VPYTHON=vpython.bat
-set PB_DIR=_pb2
-if "%RECIPES_USE_PY3%" == "true" (
-    set VPYTHON=vpython3.bat
-    set PB_DIR=_pb3
-)
-call %VPYTHON% -u "%~dp0\\recipe_engine\\recipe_engine\\main.py"
-""".strip()
-# pylint: enable=line-too-long
-
-TEMPLATE3_SH = u"""#!/usr/bin/env bash
-PB_DIR="_pb3"
+TEMPLATE3_SH = """#!/usr/bin/env bash
 exec vpython3 -u ${BASH_SOURCE[0]%/*}/recipe_engine/recipe_engine/main.py
 """.strip()
 
-TEMPLATE3_BAT = u"""@echo off
-set PB_DIR=_pb3
+TEMPLATE3_BAT = """@echo off
 call vpython3.bat -u "%~dp0\\recipe_engine\\recipe_engine\\main.py"
 """.strip()
 # pylint: enable=line-too-long
@@ -208,30 +178,23 @@ def prep_recipes_py(recipe_deps, destination):
 
   LOGGER.info('prepping recipes.py for %s', recipe_deps.main_repo.name)
 
-  if recipe_deps.main_repo.recipes_cfg_pb2.py3_only:
-    tmpl_sh = TEMPLATE3_SH
-    tmpl_bat = TEMPLATE3_BAT
-  else:
-    tmpl_sh = TEMPLATE_SH
-    tmpl_bat = TEMPLATE_BAT
-
   sh_joiner = ' \\\n'
-  sh_header = tmpl_sh + sh_joiner + sh_joiner.join([
-      u' --package %s' %
+  sh_header = TEMPLATE3_SH + sh_joiner + sh_joiner.join([
+      ' --package %s' %
       posixpath.join('${BASH_SOURCE[0]%%/*}/%s' % recipe_deps.main_repo.name, *
                      simple_cfg.RECIPES_CFG_LOCATION_TOKS),
-      u' --proto-override ${BASH_SOURCE[0]%/*}/${PB_DIR}',
+      ' --proto-override ${BASH_SOURCE[0]%/*}/_pb3',
   ] + [
-      u' -O %s=${BASH_SOURCE[0]%%/*}/%s' % (repo_name, repo_name)
+      ' -O %s=${BASH_SOURCE[0]%%/*}/%s' % (repo_name, repo_name)
       for repo_name in overrides
   ]) + sh_joiner
 
   bat_joiner = ' ^\n'
-  bat_header = tmpl_bat + bat_joiner + bat_joiner.join([
-      u' --package %s' % ntpath.join(
-          '"%%~dp0\\%s"' % recipe_deps.main_repo.name, *simple_cfg
-          .RECIPES_CFG_LOCATION_TOKS), u' --proto-override "%~dp0\\%PB_DIR%"'
-  ] + [u' -O %s=%%~dp0/%s' % (repo_name, repo_name)
+  bat_header = TEMPLATE3_BAT + bat_joiner + bat_joiner.join([
+      ' --package %s' %
+      ntpath.join('"%%~dp0\\%s"' % recipe_deps.main_repo.name, *simple_cfg
+                  .RECIPES_CFG_LOCATION_TOKS), ' --proto-override "%~dp0\\_pb3"'
+  ] + [' -O %s=%%~dp0/%s' % (repo_name, repo_name)
        for repo_name in overrides]) + bat_joiner
 
   files = {
@@ -246,16 +209,16 @@ def prep_recipes_py(recipe_deps, destination):
     header = bat_header if isbat else sh_header
     newline = '\r\n' if isbat else '\n'
     script = os.path.join(destination, fname)
-    with io.open(script, 'w', newline=newline) as fil:
+    with open(script, 'w', newline=newline, encoding='utf-8') as fil:
       fil.write(header)
-      fil.write(u' {}\n'.format(runline))
+      fil.write(f' {runline}\n')
     if not isbat:
       os.chmod(script, os.stat(script).st_mode | stat.S_IXUSR)
 
 
 def main(args):
   destination = _prepare_destination(args.destination)
-  for repo in listvalues(args.recipe_deps.repos):
+  for repo in args.recipe_deps.repos.values():
     export_repo(repo, destination)
   export_protos(args.recipe_deps, destination)
   prep_recipes_py(args.recipe_deps, destination)

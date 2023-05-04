@@ -131,19 +131,10 @@ message RepoSpec {
   // up-to-date.
   bool no_docs = 8;
 
-  // If true, this repo will not allow any non python3 compatible recipes or
-  // recipe modules.
+  // DEPRECATED; python3 is always required.
   bool require_py3_compatibility = 9;
 
-  // If true, implies `require_py3_compatibility`, and also will disable ALL
-  // python2 support. This means:
-  //   * `recipes.py ...` will always run the engine with python3
-  //   * `recipes.py test ...` will never invoke python2
-  //   * recipes and recipe_modules in this repo may use python3-only syntax
-  //     and features.
-  //   * PYTHON_VERSION_COMPATIBILITY annotations are ignored (i.e. everything
-  //     is assumed to be "PY3")
-  //   * bundles created with `recipes.py bundle` will only use vpython3
+  // DEPRECATED; python3 is always used.
   bool py3_only = 10;
 
   // If true, this repo will not allow any tests to exit with a status code that

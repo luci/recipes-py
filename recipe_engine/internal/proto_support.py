@@ -4,10 +4,6 @@
 
 """Contains all logic w.r.t. the recipe engine's support for protobufs."""
 
-from __future__ import print_function
-
-from future.utils import itervalues
-
 import errno
 import hashlib
 import inspect
@@ -30,12 +26,6 @@ from .exceptions import BadProtoDefinitions
 
 
 PROTOC_VERSION = google.protobuf.__version__.encode('utf-8')
-
-if sys.version_info >= (3, 5): # we're running python > 3.5
-  OS_WALK = os.walk
-else:
-  # From vpython
-  from scandir import walk as OS_WALK
 
 
 if sys.platform.startswith('win'):
@@ -156,7 +146,7 @@ def _gather_src_info_from_repo(repo):
 
   ret = []
   for scan_relpath, dest_namespace in scan_path:
-    for base, dirs, fnames in OS_WALK(os.path.join(repo.path, scan_relpath)):
+    for base, dirs, fnames in os.walk(os.path.join(repo.path, scan_relpath)):
       base = str(base)  # base can be unicode
 
       # Skip all '.expected' directories.
@@ -207,7 +197,7 @@ def _gather_sources(deps):
   Raises BadProtoDefinitions if this finds conflicting or reserved protos.
   """
   all_srcs = {}  # Dict[repo_name : str, List[_SrcInfo]]
-  for repo in itervalues(deps.repos):
+  for repo in deps.repos.values():
     src_info = _gather_src_info_from_repo(repo)
     if src_info:
       all_srcs[repo.name] = src_info
@@ -501,7 +491,7 @@ def _compile_protos(proto_files, proto_tree, protoc, argfile, dest):
     sys.exit(1)
 
   rewrite_errors = []
-  for base, _, fnames in OS_WALK(dest):
+  for base, _, fnames in os.walk(dest):
     for name in fnames:
       err = _rewrite_and_rename(dest, os.path.join(base, name))
       if err:
@@ -616,11 +606,11 @@ def _check_digest(proto_package, dgst):
       raise
 
 
-def ensure_compiled(deps, python_version, proto_override):
+def ensure_compiled(deps, proto_override):
   """Ensures protos are compiled.
 
   Gathers protos from all repos and compiles them into
-  `{deps.recipe_deps_path}/_pb{python_version}/recipe_deps/*`.
+  `{deps.recipe_deps_path}/_pb3/recipe_deps/*`.
 
   If proto_override is given, the function returns without doing any work.
 
@@ -628,16 +618,14 @@ def ensure_compiled(deps, python_version, proto_override):
 
   Args:
     * deps (RecipeDeps) - The fully-loaded recipes deps.
-    * python_version (int): Python major version.
     * proto_override (str|None) - Instead of finding/compiling all protos, use
-      this absolute path for `{deps.recipe_deps_path}/_pb{python_version}`.
+      this absolute path for `{deps.recipe_deps_path}/_pb3`.
 
   Returns path to the compiled proto package.
   """
   proto_package = proto_override
   if not proto_package:
-    proto_package = os.path.join(deps.recipe_deps_path,
-                                 '_pb%d' % python_version)
+    proto_package = os.path.join(deps.recipe_deps_path, '_pb3')
     _DirMaker()(proto_package)
 
     dgst, proto_files, py_files = _gather_sources(deps)
@@ -660,8 +648,11 @@ def ensure_compiled(deps, python_version, proto_override):
 
     # Try to remove .recipe_deps/_pb, which is obsoleted in favor of the
     # python-version-specific _pb directories.
+    # Also remove _pb2 since recipes no longer support python2.
     shutil.rmtree(
         os.path.join(deps.recipe_deps_path, '_pb'), ignore_errors=True)
+    shutil.rmtree(
+        os.path.join(deps.recipe_deps_path, '_pb2'), ignore_errors=True)
   return proto_package
 
 

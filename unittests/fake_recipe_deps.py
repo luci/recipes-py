@@ -503,7 +503,7 @@ class FakeRecipeRepo(object):
     env.update(kwargs.pop('env', {}))
     env['RECIPES_USE_PY3'] = 'true' if kwargs.pop('py3', False) else 'false'
     proc = subprocess.Popen(
-        ('python', 'recipes.py') + args,
+        ('python3', 'recipes.py') + args,
         cwd=self.path,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -625,7 +625,6 @@ class FakeRecipeDeps(object):
           {
               'api_version': 2,
               'repo_name': name,
-              'py3_only': True,
               'deps': {
                   'recipe_engine': {
                       'url': 'file://' + ROOT_DIR,

@@ -399,9 +399,7 @@ def render_user_value(val):
   It should be the goal of this function to return an `eval`able string that
   would yield the equivalent value in a python interpreter.
   """
-  # For py2 compatibility.
-  pattern_type = re.Pattern if hasattr(re, "Pattern") else re._pattern_type
-  if isinstance(val, pattern_type):
+  if isinstance(val, re.Pattern):
     return render_re(val)
   return repr(val)
 

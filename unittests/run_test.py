@@ -100,7 +100,7 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
     ]
 
     return (
-      ['python', script_path] +
+      ['python3', script_path] +
       list(engine_args) +
       ['run', '--workdir', workdir, recipe] +
       proplist

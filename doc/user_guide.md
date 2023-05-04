@@ -1,6 +1,6 @@
 # Recipes
 
-Recipes are a Python framework for writing Continuous Integration scripts (i.e.
+Recipes are a Python3 framework for writing Continuous Integration scripts (i.e.
 what you might otherwise write as a bash script). Unlike bash scripts, they
 are meant to:
   * Be testable
@@ -42,7 +42,7 @@ the signalling protocol interspersed with stdout. This provided the ability
 to de-couple working on what-the-build-does from the running BuildBot service,
 allowing changes to the build without redeployment of the service.
 
-Recipes were the evolution of these bash scripts; they are written in Python,
+Recipes were the evolution of these bash scripts; they are written in Python3,
 allow code sharing across repos, have a testing mechanism, etc. Arguably,
 recipes have *too many* features at present, but we're hard at work removing
 them where we can, to keep them simple :-)
@@ -58,9 +58,9 @@ modules.
 
 Recipes depend on a few tools to be in the environment:
 
-  * python: Currently recipes rely on Python 2.7.
-  * `vpython`: This is a LUCI tool to manage python VirtualEnvs. Recipes rely
-    on this for the recipe engine runtime dependencies (like the python
+  * python: Currently recipes rely on Python 3.8 via `vpython3`.
+  * `vpython3`: This is a LUCI tool to manage Python3 VirtualEnvs. Recipes
+    rely on this for the recipe engine runtime dependencies (like the python
     protobuf libraries, etc.)
   * `cipd`: This is a LUCI tool to manage binary package distribution.
 
@@ -138,7 +138,7 @@ your recipe. Its primary functionality is to clone a copy of the recipe_engine
 repo (matching the version in your `recipes.cfg` file), and then invoke the
 main recipe_engine code with whatever command line you gave it.
 
-This script invokes the recipe engine with `vpython`, which picks up a python
+This script invokes the recipe engine with `vpython3`, which picks up a python
 VirtualEnv suitable for the recipe engine (it includes things like
 py-cryptography and the protobuf library).
 
@@ -225,7 +225,7 @@ TODO(iannucci) - Document
 
 ## Writing recipes
 
-A "recipe" is a Python script which the recipe engine can run and test. This
+A "recipe" is a Python3 script which the recipe engine can run and test. This
 script:
   * Must have a RunSteps function
   * Must have a GenTests generator
@@ -896,11 +896,6 @@ the very top of RunSteps, and create a [pdb interactive debugger]. All of the
 standard pdb commands work here. You can also insert additional breakpoints with
 [`import pdb; pdb.set_trace()`].
 
-If your recipes repo runs Py2 by default, then the debugger will also run Py2.
-You can force it to run Py3 instead by prepending `RECIPES_USE_PY3=true` to your
-command: for example, `RECIPE_USE_PY3=true ./recipes.py debug my_recipe
-my_test_case`.
-
 [Pdb interactive debugger]: https://docs.python.org/3/library/pdb.html
 [`import pdb; pdb.set_trace()`]: https://docs.python.org/3/library/pdb.html#pdb.set_trace
 
@@ -1074,191 +1069,6 @@ ecosystem by doing:
 
     # from repo_name.git//.../recipes/recipe_name.proto
     from PB.recipes.repo_name import recipe_name
-
-## Python3 Support
-
-Status: Python3 support in recipes are still a work in progress as of Aug 2021.
-But most commonly used commands (e.g. test, luciexe) are Python3 compatible. We
-are working on making all engine-supplied recipe modules Python3 compatible.
-
-### Indicating per-module/per-recipe compatibility
-
-As part of this transition, recipes and recipe_modules may both indicate their
-individual support for python2, python3 or both via the
-`PYTHON_VERSION_COMPATIBILITY` variable, which should be set to one of:
-
-  * "PY2"
-  * "PY2+3"
-  * "PY3"
-
-For recipes this appears next to the `DEPS` declaration at the top of the
-recipe, and for recipe_modules, this appears in the `__init__.py` file
-along with any other statements (such as `DEPS`). If unspecified, it's
-assumed that the related section of code is marked "PY2".
-
-Example:
-
-    # In /repo/recipe_modules/something/__init__.py
-    PYTHON_VERSION_COMPATIBILITY = "PY2+3"  # compatible with py2 and py3
-
-    # In /repo/recipes/a_recipe.py
-    PYTHON_VERSION_COMPATIBILITY = "PY3"    # only compatible with py3
-
-### Testing
-
-The compatibility declaration will be used in `recipes.py test` to run the
-tests under the appropriate Python interpreter(s) and then surface any errors
-appropriately (i.e. Py3 errors from code claiming Py3 compatibility will be
-marked as hard failures, otherwise they're suppressed warnings). Passing
-additional `--py3-details` flag will show the details of suppressed warnings
-in the test result.
-
-If this recipe depends on modules (including transitive dependencies) with
-irreconcilable `PYTHON_VERSION_COMPATIBILITY` declaration (e.g.
-not-yet-migrated DEPS recipe module), any test failure for this recipe will
-also become suppressed warnings meaning that the test command will succeed. The
-test will become hard failure once all dependency modules of this recipes and
-the recipe itself can reconcile on a Python version.
-
-The reconciling logic is:
-
-  * `PY2` + `PY2` = `PY2`
-  * `PY2` + `PY2+3` = `PY2`
-  * `PY3` + `PY3` = `PY3`
-  * `PY3` + `PY2+3` = `PY3`
-  * `PY2+3` + `PY2+3` = `PY2+3`
-
-All other combinations will result in an irreconcilable Python version. Note
-that you can use `recipes.py deps` command to print out all these (See
-[Print Python 3 readiness info](#print-python-3-readiness-info) section for
-detailed info).
-
-Be aware that the compatibility declaration doesn't dictate the Python
-interpreter used on that actual recipe run on a builder. So marking your
-recipe as `PY3` will result in losing test coverage under Python 2
-interpreter even though the actual build still runs recipe with Python 2.
-If you intend to use Python 3 on your builder as well, please see
-[Run recipe in Python 3 on a builder](#run-recipe-in-python-3-on-a-builder)
-section.
-
-*Known Issue*:
-
-  * If the recipe is marked as `PY2+3` and the expectation file is expected to
-    be changed, `recipes.py test train` may fail on the first pass with false
-    negative result for Python 3 test because it is comparing with the previous
-    expectation file instead of the one Python 2 test just generated. You can
-    workaround it by simply running the train command again.
-  * Sometimes, the "Insufficient coverage" error might be a false positive. It’s
-    because of inconsistencies from 3rd-party Coverage library when combining
-    results from different python interpreters. Possible situations:
-      * Run `RECIPES_USE_PY3=true ./recipes.py test` for a recipe or module
-        which isn’t yet marked as PY2+3 or PY3. The def line of a function with
-        decorators might be reported as uncovered. You could:
-          * Mark that recipe/module to PY2+3 or PY3, and solve any reported
-            errors in running py3 tests.
-          * OR: Add `# pragma: no cover` to the def line if you’re sure it’s
-            covered.
-      * Run `./recipes.py test`, for a recipe or module which is marked as PY3
-        compatible. The line of `while True` or `if True` will be reported as
-        uncovered. You could:
-          * Assign `True` to a var and use that var in conditional statements.
-          * OR: Mark `# pragma: no cover` to that line.
-
-### Print Python 3 readiness info
-
-The `recipes.py deps` command can be used to dump the Python 3 readiness
-status of the supplied recipe or module and its dependencies. Each recipe or
-module will show two statuses. The first one is based on its self-declared
-`PYTHON_VERSION_COMPATIBILITY`. The second one is computed by walking through
-its dependencies and checking their `PYTHON_VERSION_COMPATIBILITY` using
-reconciling logic mentioned above.
-
-### Run recipe in Python 3 on a builder
-
-Recipe can run with Python 3 interpreter if [`luci.recipes.use_python3`
-experiment] is enabled for this build. Note that it works only on builds
-run with bbagent. Kitchen builds are being deprecated so please migrate your
-builder.
-
-This is achieved by BBAgent setting the envvar `$RECIPES_USE_PY3` to `true` and
-the stubs generated with the `recipes.py bundle` subcommand will decide
-the python version based on the envvar. The same envvar is also respected by
-`recipes.py` so that you can run any recipe subcommand with Python3 interpreter
-locally.
-
-If you are launching a led build, you can enable the Python 3 experiment by
-adding `led edit -experiment luci.recipes.use_python3=true` to your led
-pipeline.
-
-Note that, the `test` subcommand will always launch tests with both Python 2 and
-Python 3 if necessary regardless the version of the Python interpreter that
-executes the `test` subcommand. Therefore,
-`RECIPES_USE_PY3=true recipes.py test` and
-`RECIPES_USE_PY3=false recipes.py test` should yield the same result.
-
-[`luci.recipes.use_python3` experiment]: https://source.chromium.org/chromium/infra/infra/+/main:go/src/go.chromium.org/luci/buildbucket/proto/project_config.proto;l=553-556;drc=1a075857890bfaa0c2084d41f29a843c4d762070
-
-### Preventing Python2 regressions
-
-Once you've got all your recipes and modules to at least PY2+3 compatibility,
-you want to prevent new recipes or modules from being added without Python3
-compatibility.
-
-To do this, set the `require_py3_compatibility` entry in your recipes.cfg file
-to `true`:
-
-```
-{
-  "api_version": 2,
-  "repo_name": "YOUR_REPO_NAME",
-  ...
-  "require_py3_compatibility": true,
-  ...
-}
-```
-
-This will make the recipe engine require that everything in the repo at least
-hit "PY2+3" compatibility. However, actual execution of the recipes will still
-be dependent on the `$RECIPES_USE_PY3` environment variable, as described in the
-previous section.
-
-### Fully committing to Python3
-
-Once you've got all your recipes and modules to at least PY2+3 compatibility,
-AND all builders running them in Python3 mode, you can fully commit to Python3,
-which will allow the use of Python3-only syntax and constructs, and will ensure
-that no matter who or where your recipes are executed (bots, locally, wherever)
-they always use Python3.
-
-NOTE: Everything in the repo (modules and recipes) must have at least "PY2+3"
-compatibility when turning this on, and all modules from other dependency repos
-must have at least "PY2+3" compatibility. Notably, a downstream repo can turn
-this feature on before its upstream repos have turned it on.
-
-To do this, set the `py3_only` entry in your recipes.cfg to `true`. Note that
-this implies `require_py3_compatibility` as well, so if you have that set, you
-can replace it with `py3_only`:
-
-```
-{
-  "api_version": 2,
-  ...
-  "py3_only": true,
-  ...
-}
-```
-
-Doing this has the following effects:
-
-* `recipes.py ...` will always run the engine with Python3
-   * This applies to local executions as well as executions on bots.
-   * bundles created with `recipes.py bundle` will only use Python3
-* `recipes.py test ...` will never invoke Python2, and will not run
-  any Python2 compatibility tests.
-* recipes and recipe_modules in this repo may use Python3-only syntax
-  and features, and can delete Python2 compatibility code.
-* PYTHON_VERSION_COMPATIBILITY annotations are ignored (i.e. everything
-  is assumed to be "PY3")
 
 ## Productionizing
 
