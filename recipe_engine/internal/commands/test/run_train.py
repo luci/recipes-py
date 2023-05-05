@@ -422,7 +422,8 @@ def main(args):
   try:
     _run(ret, args.recipe_deps, args.use_emoji, args.test_filters, is_train,
          args.filtered_stacks, args.stop, args.jobs, args.show_warnings,
-         args.py3_details, repo.recipes_cfg_pb2.py3_only or args.py3_only)
+         # TODO(iannucci): py2 rip out these args entirely
+         enable_py3_details=True, py3_only=True)
     _dump()
   except KeyboardInterrupt:
     args.docs = False  # skip docs
