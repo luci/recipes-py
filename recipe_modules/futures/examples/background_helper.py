@@ -4,8 +4,6 @@
 
 from contextlib import contextmanager
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 DEPS = [
   'futures',
   'json',

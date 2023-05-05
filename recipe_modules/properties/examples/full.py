@@ -11,8 +11,6 @@ from recipe_engine import post_process
 from PB.recipe_modules.recipe_engine.properties.examples.full import InputProps
 from PB.recipe_modules.recipe_engine.properties.examples.full import EnvProps
 
-PYTHON_VERSION_COMPATIBILITY = "PY2+3"
-
 DEPS = [
   'json',
   'properties',

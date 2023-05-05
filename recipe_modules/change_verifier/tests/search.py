@@ -5,8 +5,6 @@
 from PB.go.chromium.org.luci.cv.api.v0 import run as run_pb
 from PB.go.chromium.org.luci.cv.api.v0 import service_runs as service_runs_pb
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 DEPS = [
     'change_verifier',
     'proto',

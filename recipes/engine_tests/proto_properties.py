@@ -4,8 +4,6 @@
 
 from PB.recipes.recipe_engine.engine_tests import proto_properties
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 DEPS = [
     'assertions',
     'properties',

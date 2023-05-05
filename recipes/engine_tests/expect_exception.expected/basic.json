@@ -7,9 +7,9 @@
       "The recipe has crashed at point 'Uncaught exception'!",
       "",
       "Traceback (most recent call last):",
-      "  File \"RECIPE_REPO[recipe_engine]/recipes/engine_tests/expect_exception.py\", line 23, in RunSteps",
+      "  File \"RECIPE_REPO[recipe_engine]/recipes/engine_tests/expect_exception.py\", line 21, in RunSteps",
       "    my_function()",
-      "  File \"RECIPE_REPO[recipe_engine]/recipes/engine_tests/expect_exception.py\", line 19, in my_function",
+      "  File \"RECIPE_REPO[recipe_engine]/recipes/engine_tests/expect_exception.py\", line 17, in my_function",
       "    raise TypeError(\"BAD DOGE\")",
       "TypeError('BAD DOGE')"
     ]

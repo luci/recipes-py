@@ -3,8 +3,6 @@
 # that can be found in the LICENSE file.
 from recipe_engine import post_process
 
-PYTHON_VERSION_COMPATIBILITY = "PY3"
-
 from PB.recipe_modules.recipe_engine.time.examples import (
   jitter as properties_pb2
 )

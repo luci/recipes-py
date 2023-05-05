@@ -8,8 +8,6 @@ from recipe_engine.config import Dict
 from recipe_engine.config import List
 from recipe_engine.recipe_api import Property
 
-PYTHON_VERSION_COMPATIBILITY = 'PY3'
-
 DEPS = [
     'luci_analysis',
     'recipe_engine/assertions',

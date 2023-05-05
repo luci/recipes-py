@@ -5,8 +5,6 @@
 from recipe_engine import post_process
 from RECIPE_MODULES.recipe_engine.swarming.api import LIST_BOTS_MANDATORY_FIELDS
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 DEPS = [
     'assertions',
     'swarming',

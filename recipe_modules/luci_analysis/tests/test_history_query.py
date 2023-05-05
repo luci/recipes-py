@@ -10,8 +10,6 @@ from PB.go.chromium.org.luci.analysis.proto.v1 import predicate as predicate_pb2
 from PB.go.chromium.org.luci.analysis.proto.v1 import test_history
 from PB.go.chromium.org.luci.analysis.proto.v1 import test_verdict
 
-PYTHON_VERSION_COMPATIBILITY = "PY3"
-
 DEPS = [
     'luci_analysis',
     'recipe_engine/json',

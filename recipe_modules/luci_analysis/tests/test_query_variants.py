@@ -7,8 +7,6 @@ from recipe_engine import post_process
 from PB.go.chromium.org.luci.analysis.proto.v1 import common as common_pb2
 from PB.go.chromium.org.luci.analysis.proto.v1 import test_history
 
-PYTHON_VERSION_COMPATIBILITY = "PY3"
-
 DEPS = [
     'luci_analysis',
     'recipe_engine/step',

@@ -3,8 +3,6 @@
 # that can be found in the LICENSE file.
 """Tests for lookup_bug."""
 
-PYTHON_VERSION_COMPATIBILITY = "PY3"
-
 DEPS = [
     'luci_analysis',
     'recipe_engine/assertions',

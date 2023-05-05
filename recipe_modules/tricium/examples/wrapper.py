@@ -9,8 +9,6 @@ from recipe_engine import post_process
 
 from PB.tricium.data import Data
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 DEPS = [
     'file',
     'path',

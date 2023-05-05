@@ -13,8 +13,6 @@ When this recipe is run (by run_test.py), the _print_step code is exercised.
 import functools
 from recipe_engine import recipe_test_api
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 DEPS = ['step']
 
 def RunSteps(api):

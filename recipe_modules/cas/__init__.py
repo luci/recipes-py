@@ -4,8 +4,6 @@
 
 from PB.recipe_modules.recipe_engine.cas import properties
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 DEPS = [
     'cipd',
     'context',

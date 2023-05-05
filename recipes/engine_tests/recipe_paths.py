@@ -4,8 +4,6 @@
 
 """Tests that recipes have access to names, resources and their repo."""
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 DEPS = [
   'path',
   'step',

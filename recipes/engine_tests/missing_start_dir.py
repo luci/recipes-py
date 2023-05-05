@@ -4,8 +4,6 @@
 
 """Tests that deleting the current working directory doesn't immediately fail"""
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 DEPS = [
   'step',
   'path',

@@ -8,8 +8,6 @@
 """A fast-running recipe which comprehensively covers all StepPresentation
 features available in the recipe engine."""
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 DEPS = [
   'raw_io',
   'step',

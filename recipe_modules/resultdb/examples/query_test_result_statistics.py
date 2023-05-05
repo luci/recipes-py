@@ -7,8 +7,6 @@ from recipe_engine.post_process import DropExpectation
 from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
 from PB.go.chromium.org.luci.resultdb.proto.v1 import resultdb
 
-PYTHON_VERSION_COMPATIBILITY = "PY2+3"
-
 DEPS = [
     'context',
     'resultdb',

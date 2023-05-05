@@ -4,8 +4,6 @@
 """Tests for query_cluster_failres."""
 from PB.go.chromium.org.luci.analysis.proto.v1.clusters import DistinctClusterFailure
 
-PYTHON_VERSION_COMPATIBILITY = "PY3"
-
 DEPS = [
     'luci_analysis',
     'recipe_engine/assertions',

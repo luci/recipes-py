@@ -4,8 +4,6 @@
 
 """Tests that daemons that hang on to STDOUT can't cause the engine to hang."""
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 DEPS = [
   'platform',
   'step',

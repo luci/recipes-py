@@ -249,13 +249,11 @@ class Printer(object):
       for name, mod in sorted(section_map.items()):
         link = self.anchorlink(name,
                                section_name.replace(' ', '_').lower())
-        py3_compat_text = ' (Python3 ✅)' if (
-            mod.python_version_compatibility in ('PY2+3', 'PY3')) else ''
         if mod.docstring:
           first_line = mod.docstring.split('.', 1)[0].replace('\n', ' ')+'.'
-          self('  * %s%s &mdash; %s' % (link, py3_compat_text, first_line))
+          self('  * %s &mdash; %s' % (link, first_line))
         else:
-          self('  * %s%s' % (link, py3_compat_text))
+          self('  * %s' % (link,))
 
   def dump_links(self):
     self()
@@ -281,7 +279,6 @@ def Emit(p, node):
     Emit(p, node.deps)
 
     p()
-    p("PYTHON_VERSION_COMPATIBILITY: %s" % node.python_version_compatibility)
 
     # TODO(iannucci): PARAMETERS
 
@@ -324,7 +321,6 @@ def Emit(p, node):
     Emit(p, node.deps)
 
     p()
-    p("PYTHON_VERSION_COMPATIBILITY: %s" % node.python_version_compatibility)
 
     # TODO(iannucci): PARAMETERS
 

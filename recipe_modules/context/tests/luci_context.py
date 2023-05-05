@@ -4,8 +4,6 @@
 
 from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 DEPS = [
   'assertions',
   'context',

@@ -12,8 +12,6 @@ from recipe_engine.post_process import (DropExpectation, StepSuccess,
 from PB.go.chromium.org.luci.resultdb.proto.v1 import invocation as invocation_pb2
 from PB.go.chromium.org.luci.resultdb.proto.v1 import test_result as test_result_pb2
 
-PYTHON_VERSION_COMPATIBILITY = "PY2+3"
-
 DEPS = [
   'buildbucket',
   'resultdb',

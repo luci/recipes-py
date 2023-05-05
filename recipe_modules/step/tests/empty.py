@@ -7,8 +7,6 @@ from recipe_engine.post_process import StepException, StepFailure
 from recipe_engine.post_process import StepCommandEmpty
 from recipe_engine.post_process import DropExpectation
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 DEPS = [
   'step',
 ]

@@ -4,8 +4,6 @@
 
 """Tests that step_data can accept multiple specs at once."""
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 DEPS = [
   'raw_io',
   'step',

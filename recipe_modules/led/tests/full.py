@@ -12,8 +12,6 @@ from PB.go.chromium.org.luci.led.job import job
 from PB.go.chromium.org.luci.swarming.proto.api import swarming
 from PB.recipe_modules.recipe_engine.led.properties import InputProperties
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 DEPS = [
   'buildbucket',
   'led',

@@ -9,8 +9,6 @@ from PB.recipes.recipe_engine.engine_tests.incorrect_recipe_result import InputP
 
 from recipe_engine import post_process
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 DEPS = [
   'step',
   'json',

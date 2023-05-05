@@ -10,8 +10,6 @@ owns it.
 This was implemented to aid in refactoring some recipes (crbug.com/782142).
 """
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 DEPS = [
   "recipe_engine/path",
   "step",

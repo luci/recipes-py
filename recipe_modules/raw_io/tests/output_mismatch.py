@@ -5,8 +5,6 @@
 
 from recipe_engine import post_process
 
-PYTHON_VERSION_COMPATIBILITY = "PY3"
-
 DEPS = [
     'assertions',
     'raw_io',

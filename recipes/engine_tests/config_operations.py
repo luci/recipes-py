@@ -10,8 +10,6 @@ from past.builtins import basestring
 from recipe_engine.config import (
     config_item_context, ConfigGroup, ConfigList, Dict, List, Single, Static)
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 def BaseConfig(**_kwargs):
   return ConfigGroup(
     # Various config options to be exercised in tests.

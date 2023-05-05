@@ -7,8 +7,6 @@ from recipe_engine.recipe_api import Property
 
 from PB.go.chromium.org.luci.resultdb.proto.v1 import resultdb
 
-PYTHON_VERSION_COMPATIBILITY = "PY2+3"
-
 DEPS = [
     'resultdb',
     'recipe_engine/properties',

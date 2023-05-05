@@ -4,8 +4,6 @@
 
 from recipe_engine import recipe_api, recipe_test_api, post_process
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 DEPS = [
     'properties',
     'step',

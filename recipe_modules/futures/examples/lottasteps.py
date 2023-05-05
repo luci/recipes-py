@@ -15,8 +15,6 @@ from PB.recipe_modules.recipe_engine.futures.examples.lottasteps import Input
 from PB.recipe_engine.result import RawResult
 from PB.go.chromium.org.luci.buildbucket.proto import common
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 DEPS = [
   'futures',
   'properties',

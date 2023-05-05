@@ -7,8 +7,6 @@ from recipe_engine import post_process
 from PB.tricium.data import Data
 from PB.recipe_modules.recipe_engine.tricium.tests.enforce_comments_num_limit import InputProps
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 DEPS = [
     'assertions',
     'properties',

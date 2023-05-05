@@ -5,8 +5,6 @@
 """Simple recipe which runs a bunch of subprocesses which react to early
 termination in different ways."""
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 DEPS = [
   'file',
   'futures',

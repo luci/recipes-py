@@ -17,8 +17,6 @@ from PB.go.chromium.org.luci.buildbucket.proto \
   import builder_common as builder_common_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 DEPS = [
   'assertions',
   'buildbucket',

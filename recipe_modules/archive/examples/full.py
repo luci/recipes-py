@@ -4,8 +4,6 @@
 
 from recipe_engine.post_process import Filter
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 DEPS = [
   'recipe_engine/archive',
   'recipe_engine/context',

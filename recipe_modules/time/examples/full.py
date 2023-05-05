@@ -7,8 +7,6 @@ import datetime
 from recipe_engine.post_process import StepSuccess, DoesNotRun, DropExpectation
 from RECIPE_MODULES.recipe_engine.time.api import exponential_retry
 
-PYTHON_VERSION_COMPATIBILITY = "PY2+3"
-
 DEPS = [
     'runtime',
     'step',

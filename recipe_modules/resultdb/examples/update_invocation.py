@@ -9,8 +9,6 @@ from recipe_engine.recipe_api import Property
 from PB.go.chromium.org.luci.resultdb.proto.v1 import invocation as invocation_pb
 from PB.go.chromium.org.luci.resultdb.proto.v1 import common as common_pb
 
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 DEPS = [
     'resultdb',
     'properties',

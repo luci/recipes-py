@@ -18,7 +18,7 @@
       "The recipe has crashed at point 'Uncaught exception'!",
       "",
       "Traceback (most recent call last):",
-      "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/time/examples/full.py\", line 72, in RunSteps",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/time/examples/full.py\", line 70, in RunSteps",
       "    helper_fn_that_needs_retries(\"\")",
       "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/time/api.py\", line 61, in wrapper",
       "    time_api = args[0].m.time",
