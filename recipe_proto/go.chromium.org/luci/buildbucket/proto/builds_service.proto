@@ -236,6 +236,7 @@ message BatchRequest {
       SearchBuildsRequest search_builds = 2;
       ScheduleBuildRequest schedule_build = 3;
       CancelBuildRequest cancel_build = 4 ;
+      GetBuildStatusRequest get_build_status = 5;
     }
   }
 
@@ -259,6 +260,7 @@ message BatchResponse {
       SearchBuildsResponse search_builds = 2;
       Build schedule_build = 3;
       Build cancel_build = 4;
+      Build get_build_status = 5;
 
       // Error code and details of the unsuccessful RPC.
       google.rpc.Status error = 100;
@@ -306,7 +308,7 @@ message UpdateBuildRequest {
 
 // A request message for ScheduleBuild RPC.
 //
-// Next ID: 22.
+// Next ID: 23.
 message ScheduleBuildRequest {
   // ** STRONGLY RECOMMENDED **.
   // A unique string id used for detecting duplicate requests.
@@ -516,6 +518,9 @@ message ScheduleBuildRequest {
   // TODO(crbug.com/1031205): after the parent tracking feature is stable,
   // require this field to be set when scheduling a build with parent.
   Trinary can_outlive_parent = 21;
+
+  // Value for Build.retriable.
+  Trinary retriable = 22;
 }
 
 // A request message for CancelBuild RPC.
