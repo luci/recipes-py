@@ -313,6 +313,54 @@
     "name": "test with inherit_sources"
   },
   {
+    "cmd": [
+      "rdb",
+      "stream",
+      "-sources",
+      "{\"gitiles_commit\": {\"host\": \"chromium.googlesource.com\", \"project\": \"chromium/src\", \"ref\": \"refs/heads/main\", \"commit_hash\": \"0011223344556677889900112233445566778899\", \"position\": 1234}}",
+      "--",
+      "echo",
+      "suppose its a test"
+    ],
+    "luci_context": {
+      "realm": {
+        "name": "proj:realm"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "test with sources"
+  },
+  {
+    "cmd": [
+      "rdb",
+      "stream",
+      "-sources-file",
+      "sources.json",
+      "--",
+      "echo",
+      "suppose its a test"
+    ],
+    "luci_context": {
+      "realm": {
+        "name": "proj:realm"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "test with sources_file"
+  },
+  {
     "name": "$result"
   }
 ]

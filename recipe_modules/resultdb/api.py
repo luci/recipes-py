@@ -406,8 +406,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
     Args:
       parent_inv (str): the name of the invocation to be updated.
       step_name (str): name of the step.
-      source_spec (SourceSpec): The source information to apply to the given
-        invocation name
+      source_spec (luci.resultdb.v1.SourceSpec): The source information
+        to apply to the given invocation.
     """
     field_mask_paths = []
     if source_spec:
@@ -505,6 +505,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
       inv_properties='',
       inv_properties_file='',
       inherit_sources=False,
+      sources='',
+      sources_file='',
   ):
     """Wraps the command with ResultSink.
 
@@ -550,7 +552,13 @@ class ResultDBAPI(recipe_api.RecipeApi):
         to the file that contains the JSON object. Cannot be used when
         inv_properties is specified.
       inherit_sources(bool): flag to enable inheriting sources from the parent
-        invocation
+        invocation.
+      sources(string): JSON-serialized luci.resultdb.v1.Sources object that
+        contains information about the code sources tested by the invocation.
+        Cannot be used when inherit_sources or sources_file is specified.
+      sources_file(string): Similar to sources, but takes a path to the
+        file that contains the JSON object. Cannot be used when
+        inherit_sources or sources is specified.
     """
     if require_build_inv:
       self.assert_enabled()
@@ -571,6 +579,9 @@ class ResultDBAPI(recipe_api.RecipeApi):
     assert isinstance(
       inv_properties_file, (type(None), str)), inv_properties_file
     assert not (inv_properties and inv_properties_file), inv_properties_file
+    assert isinstance(inherit_sources, bool), inherit_sources
+    assert isinstance(sources, (type(None), str)), sources
+    assert isinstance(sources_file, (type(None), str)), sources_file
 
     ret = ['rdb', 'stream']
 
@@ -609,6 +620,12 @@ class ResultDBAPI(recipe_api.RecipeApi):
 
     if inherit_sources:
       ret += ['-inherit-sources']
+
+    if sources:
+      ret += ['-sources', sources]
+
+    if sources_file:
+      ret += ['-sources-file', sources_file]
 
     ret += ['--'] + list(cmd)
     return ret

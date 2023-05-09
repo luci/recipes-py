@@ -81,6 +81,28 @@ def RunSteps(api):
       'test with inherit_sources',
       api.resultdb.wrap(['echo', 'suppose its a test'], inherit_sources=True))
 
+  api.step(
+      'test with sources',
+      api.resultdb.wrap(
+          ['echo', 'suppose its a test'],
+          sources=json.dumps({
+              'gitiles_commit': {
+                  'host': 'chromium.googlesource.com',
+                  'project': 'chromium/src',
+                  'ref': 'refs/heads/main',
+                  'commit_hash': '0011223344556677889900112233445566778899',
+                  'position': 1234,
+              }
+          }),
+      ))
+
+  api.step(
+      'test with sources_file',
+      api.resultdb.wrap(
+          ['echo', 'suppose its a test'],
+          sources_file='sources.json',
+      ))
+
 
 def GenTests(api):
   yield api.test(
