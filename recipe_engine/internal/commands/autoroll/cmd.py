@@ -181,12 +181,6 @@ def process_candidates(recipe_deps, candidates, repos, verbose_json):
 
     retcode, output = run_simulation_test(
         recipe_deps.main_repo, 'run', '--no-docs')
-    # TODO(crbug.com/1147793): Remove the retry after py3 migration is done.
-    # Run again as it may be a false error from coverage lib when running and
-    # combining the results from both py2 and py3.
-    if retcode > 0:
-      retcode, output = run_simulation_test(
-        recipe_deps.main_repo, 'run', '--no-docs')
 
     if verbose_json:
       roll_details[i]['recipes_simulation_test'] = {

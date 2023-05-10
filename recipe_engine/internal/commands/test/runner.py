@@ -51,9 +51,6 @@ from .expectation_conversion import transform_expectations
 from .pipe import write_message, read_message
 
 
-_PY2 = sys.version_info.major == 2
-
-
 def _merge_presentation_updates(steps_ran, presentation_steps):
   """Merges the steps ran (from the SimulationStepRunner) with the steps
   presented (from the SimulationAnnotatorStreamEngine).
@@ -266,7 +263,7 @@ def _diff_test(test_results, expect_file, new_expect, is_train):
   if new_expect_text == cur_expect_text:
     return
 
-  if is_train and (_PY2 or test_results.labeled_py_compat == 'PY3'):
+  if is_train:
     if new_expect is None:
       try:
         os.remove(expect_file)
@@ -323,9 +320,6 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
     * test_desc (Description)
     * test_data (TestData)
   """
-  test_results.expect_py_incompatibility = test_desc.expect_py_incompatibility
-  test_results.labeled_py_compat = test_desc.labeled_py_compat
-
   # Reset global state.
   config_types.ResetTostringFns()
   engine_types.PerGreentletStateRegistry.clear()
@@ -458,7 +452,7 @@ def main(recipe_deps, cov_file, filtered_stacks, is_train,
       result.internal_error.extend(traceback.format_exc().splitlines())
       fatal = True
 
-    if (not write_message(sys.stdout if _PY2 else sys.stdout.buffer, result)
+    if (not write_message(sys.stdout.buffer, result)
         or fatal):
       break  # EOF
 
@@ -469,10 +463,9 @@ def main(recipe_deps, cov_file, filtered_stacks, is_train,
 
 def _read_test_desc():
   try:
-    return read_message(sys.stdin if _PY2 else sys.stdin.buffer, Description)
+    return read_message(sys.stdin.buffer, Description)
   except Exception as ex:  # pylint: disable=broad-except
-    write_message(
-        sys.stdout if _PY2 else sys.stdout.buffer, Outcome(internal_error=[
+    write_message(sys.stdout.buffer, Outcome(internal_error=[
           'while reading: %r' % (ex,)
         ]+traceback.format_exc().splitlines()))
     return None
@@ -488,18 +481,19 @@ def _get_test_data(cache, recipe, test_name):
 # TODO(iannucci): fix test system so that non-JSONish types cannot leak into
 # raw_expectations.
 def _encode_decode(obj):
-  """For py2: ensure consistent encoding for common python data structures.
-  For py3: ensure any bytes are decoded to str"""
+  """For py3: ensure any bytes are decoded to str"""
   if isinstance(obj, basestring):
     if isinstance(obj, bytes):
       obj = obj.decode('utf-8', 'replace')
-    return obj.encode('utf-8', 'replace') if _PY2 else obj
-  elif isinstance(obj, collections.Mapping):
-    return {_encode_decode(k): _encode_decode(v) for k, v in iteritems(obj)}
-  elif isinstance(obj, collections.Iterable):
-    return [_encode_decode(i) for i in obj]
-  else:
     return obj
+
+  if isinstance(obj, collections.Mapping):
+    return {_encode_decode(k): _encode_decode(v) for k, v in iteritems(obj)}
+
+  if isinstance(obj, collections.Iterable):
+    return [_encode_decode(i) for i in obj]
+
+  return obj
 
 
 def _make_path_cleaner(recipe_deps):
@@ -570,17 +564,14 @@ class DescriptionWithCallback(object):
 
 class RunnerThread(gevent.Greenlet):
   def __init__(self, recipe_deps, description_queue, outcome_queue, is_train,
-               filtered_stacks, cov_file, cover_module_imports, use_py3,
-               enable_py3_details):
+               filtered_stacks, cov_file, cover_module_imports):
     super(RunnerThread, self).__init__()
 
     self.cov_file = cov_file
     self.exit_code = None
 
-    py_exec = 'vpython3' if use_py3 else 'vpython'
-
     cmd = [
-      py_exec, '-u', sys.argv[0],
+      'vpython3', '-u', sys.argv[0],
       '--package', os.path.join(
           recipe_deps.main_repo.path, RECIPES_CFG_LOCATION_REL),
       '--proto-override', os.path.dirname(PB.__path__[0]),
@@ -602,18 +593,14 @@ class RunnerThread(gevent.Greenlet):
     if not filtered_stacks:
       cmd.append('--full-stacks')
 
-    stderr = None
-    if not enable_py3_details and use_py3:
-      stderr = open(os.devnull, 'w')
     self._runner_proc = subprocess.Popen(cmd, bufsize=0, stdin=subprocess.PIPE,
-                                         stdout=subprocess.PIPE, stderr=stderr)
+                                         stdout=subprocess.PIPE, stderr=None)
     self._description_queue = description_queue
     self._outcome_queue = outcome_queue
 
   @classmethod
   def make_pool(cls, recipe_deps, description_queue, outcome_queue, is_train,
-                filtered_stacks, collect_coverage, jobs, use_py3,
-                enable_py3_details=False):
+                filtered_stacks, collect_coverage, jobs):
     """Returns a pool (list) of started RunnerThread instances.
 
     Each RunnerThread owns a `recipes.py test _runner` subprocess and
@@ -655,9 +642,7 @@ class RunnerThread(gevent.Greenlet):
             is_train,
             filtered_stacks,
             cov_file(i),
-            cover_module_imports=(i == 0),
-            use_py3 = use_py3,
-            enable_py3_details = enable_py3_details) for i in range(jobs)
+            cover_module_imports=(i == 0)) for i in range(jobs)
     ]
     for thread in pool:
       thread.start()

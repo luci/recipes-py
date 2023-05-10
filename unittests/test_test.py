@@ -35,8 +35,6 @@ class Common(test_env.RecipeEngineUnitTest):
 
   def _run_test(self, *args, **kwargs):
     should_fail = kwargs.pop('should_fail', False)
-    had_py_version = 'py_version' in kwargs
-    py_version = kwargs.pop('py_version', 'py3')
     self.assertDictEqual(
         kwargs, {}, 'got additional unexpected kwargs: {!r}'.format(kwargs))
 
@@ -84,8 +82,7 @@ class Common(test_env.RecipeEngineUnitTest):
               os.path.relpath(fpath, self.main.path)
               for fpath in rd['unused_expectation_files']
             ]
-          if rd.pop('python_env') == py_version:
-            data = rd
+          data = rd
       except Exception as ex:  # pylint: disable=broad-except
         if should_fail != 'crash':
           raise Exception(
@@ -103,10 +100,6 @@ class Common(test_env.RecipeEngineUnitTest):
     crash = 5
     bad_test = 6
     internal_error = 7
-    expect_py_incompatibility = 8
-    labeled_py_compat_py2 = 9
-    labeled_py_compat_py2_and_3 = 10
-    labeled_py_compat_py3 = 11
     needs_infra_fail = 12
 
 
@@ -134,7 +127,6 @@ class Common(test_env.RecipeEngineUnitTest):
 
     for test_name, outcome_types in iteritems(per_test or {}):
       results = ret.test_results[test_name]
-      results.labeled_py_compat = 'PY3'  # default
       for type_ in outcome_types:
         if type_ == self.OutcomeType.diff:
           results.diff.lines[:] = ['placeholder']
@@ -150,14 +142,6 @@ class Common(test_env.RecipeEngineUnitTest):
           results.bad_test[:] = ['placeholder']
         elif type_ == self.OutcomeType.internal_error:
           results.internal_error[:] = ['placeholder']
-        elif type_ == self.OutcomeType.labeled_py_compat_py2:
-          results.labeled_py_compat = 'PY2'
-        elif type_ == self.OutcomeType.labeled_py_compat_py2_and_3:
-          results.labeled_py_compat = 'PY2+3'
-        elif type_ == self.OutcomeType.labeled_py_compat_py3:
-          results.labeled_py_compat = 'PY3'
-        elif type_ == self.OutcomeType.expect_py_incompatibility:
-          results.expect_py_incompatibility = True
         elif type_ == self.OutcomeType.needs_infra_fail:
           results.global_warnings.append('expected SUCCESS, got INFRA_FAILURE')
 
@@ -1004,21 +988,6 @@ class TestTrain(Common):
           'foo.basic': [self.OutcomeType.written],
         }))
 
-  # Reminder:
-  # The coverage pkg has a minor bug on a corner case for this type of code:
-  # ```
-  # if False:
-  #   pass
-  # ```
-  # In py2 env, it's able to correctly detect the 'pass' line is missed, while
-  # it detects the 'if False' line is missed in py3.
-  #
-  # It won't impact our usage in 99.9999% of situations unless in the post
-  # migration phase where all code only supports py3 and there is a code like
-  # 'while True' or 'if True'. In that case, coverage will prompt that line's
-  # coverage is missed. When that happens, an workaround is to assige True to a
-  # var and use 'while var'. In any other cases, coverage can correctly detect
-  # missed line number.
   def test_checks_coverage_without_any_label(self):
     with self.main.write_recipe('foo') as recipe:
       recipe.RunSteps.write('''
@@ -1029,26 +998,6 @@ class TestTrain(Common):
     result = self._run_test('train', should_fail=True)
     self.assertIn('Ran 1 tests in', result.text_output)
     self.assertDictEqual(result.data, self._outcome_json(coverage=88.9))
-
-  def test_checks_coverage_with_py3_label(self):
-    self.deps.ambient_toplevel_code = [
-        '''
-        PYTHON_VERSION_COMPATIBILITY = 'PY3'
-        ''']
-    with self.main.write_recipe('foo') as recipe:
-      recipe.DEPS = []
-      recipe.RunSteps.write('''
-        bool_var = False
-        if bool_var:
-          a = 1
-      ''')
-    result = self._run_test('train', should_fail=True, py_version='py3')
-    self.assertIn('Ran 1 tests in', result.text_output)
-    self.assertDictEqual(
-        result.data,
-        self._outcome_json(per_test={
-            'foo.basic': [self.OutcomeType.labeled_py_compat_py3],
-        }, coverage=90))
 
   def test_runs_checks(self):
     with self.main.write_recipe('foo') as recipe:

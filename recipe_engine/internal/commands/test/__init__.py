@@ -20,8 +20,7 @@ import textwrap
 __cmd_priority__ = 1
 
 TIMING_INFO_HELP = """Dumps test timing info to a file. Each line in the file
-has this structure: <test_name><tab><duration>. The test name has a prefix of
-"py2|" or "py3|", depending on if it ran using python 2 or 3. The duration is
+has this structure: <test_name><tab><duration>. The duration is
 the wall clock time of running the test in fractional seconds (a value of 1.5
 means 1 and a half seconds). The recipe engine runs multiple tests concurrently,
 so a test's duration is not necessarily exactly correlated to how long it took
@@ -100,16 +99,6 @@ def add_arguments(parser):
       '--show-warnings',
       action='store_true', default=False, dest='show_warnings',
       help='Show detailed warnings even on test failures.')
-  run_p.add_argument(
-      '--py3-details',
-      action='store_true', default=False, dest='py3_details',
-      help='Show detailed errors from implicit py3 tests.')
-  run_p.add_argument(
-      '--py3-only',
-      action='store_true',
-      default=False,
-      help='Only run the python3 tests. This will not change the results '
-      'of any tests, it just prevents the python2 tests from running.')
 
   helpstr = 'Re-train recipe expectations.'
   train_p = subp.add_parser(
@@ -147,17 +136,6 @@ def add_arguments(parser):
       '--show-warnings',
       action='store_true', default=False, dest='show_warnings',
       help='Show detailed warnings even on test failures.')
-  train_p.add_argument(
-      '--py3-details',
-      action='store_true', default=False, dest='py3_details',
-      help='Show detailed errors from implicit py3 tests.')
-  train_p.add_argument(
-      '--py3-only',
-      action='store_true',
-      default=False,
-      help='Only run the python3 tests. This will not change the results '
-      'of any tests or whether expectation files are updated, '
-      'it just prevents the python2 tests from running.')
 
   helpstr = 'Print all test names.'
   list_p = subp.add_parser(

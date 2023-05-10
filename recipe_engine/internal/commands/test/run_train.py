@@ -34,11 +34,10 @@ from .fail_tracker import FailTracker
 from .runner import RunnerThread, DescriptionWithCallback
 
 
-TestResults = collections.namedtuple('TestResults', 'py2 py3')
-Queue = collections.namedtuple('Queue', 'py2 py3')
-Threads = collections.namedtuple('Threads', 'py2 py3')
+TestResults = collections.namedtuple('TestResults', 'py3')
+Queue = collections.namedtuple('Queue', 'py3')
+Threads = collections.namedtuple('Threads', 'py3')
 
-_PY2 = sys.version_info.major == 2
 
 def _extract_filter_matchers(test_filters):
   if not test_filters:
@@ -61,23 +60,15 @@ def _extract_filter_matchers(test_filters):
 
 # TODO(crbug.com/1147793): Remove the second return value after migration.
 def _push_tests(test_filters, is_train, main_repo, description_queues,
-                recent_fails, py3_only):
+                recent_fails):
   """
   Returns:
     * set - unused_expectation_files
-    * bool - has_labeled_recipe. This is introduced temporarily for migration.
-             Because we want to always run all tests in py3. To decide whether
-             or not to abort the program earlier due to a global failure (see
-             first few lines of code in reporter.short_report() about this
-             failure), we need to know if users have started migrating:
-                * If not, the global failure shouldn't cause an abort.
-                * If migration has started, abort and let them see this error.
   """
   unused_expectation_files = set()
   used_expectation_files = set()
   recipe_filter, test_filter = _extract_filter_matchers(test_filters)
   test_filenames = collections.defaultdict(dict)
-  has_labeled_recipe = [py3_only]
 
   def push_test(recipe, test_case):
     recipe_filenames = test_filenames[recipe]
@@ -88,81 +79,20 @@ def _push_tests(test_filters, is_train, main_repo, description_queues,
       if og_name == test_case.name:
         raise ValueError(
             'Emitted test with duplicate name %r' % (test_case.name,))
-      else:
-        raise ValueError(
-            'Emitted test %r which maps to the same JSON file as %r: %r' %
-            (test_case.name, og_name, expect_file))
+
+      raise ValueError(
+          'Emitted test %r which maps to the same JSON file as %r: %r' %
+          (test_case.name, og_name, expect_file))
+
     recipe_filenames[expect_file] = test_case.name
     if not test_filter('%s.%s' % (recipe.name, test_case.name)):
       return
 
-    if recipe.is_python_version_labeled:
-      has_labeled_recipe[0] = True
+    description_queues.py3.put(
+        Description(
+            recipe_name=recipe.name,
+            test_name=test_case.name))
 
-    def push_py2(expect_py_incompatibility, **kwargs):
-      description_queues.py2.put(
-          Description(
-              recipe_name=recipe.name,
-              test_name=test_case.name,
-              expect_py_incompatibility=expect_py_incompatibility,
-              **kwargs))
-
-    def push_py3(expect_py_incompatibility, **kwargs):
-      description_queues.py3.put(
-          Description(
-              recipe_name=recipe.name,
-              test_name=test_case.name,
-              expect_py_incompatibility=expect_py_incompatibility,
-              **kwargs))
-
-    def push_both(py2_expect_py_incompatibility, py3_expect_py_incompatibilty,
-                  **kwargs):
-      if py3_only:
-        push_py3(
-            expect_py_incompatibility=py3_expect_py_incompatibilty, **kwargs)
-        return
-
-      description = Description(
-          recipe_name=recipe.name,
-          test_name=test_case.name,
-          expect_py_incompatibility=py2_expect_py_incompatibility)
-
-      def callback():
-        push_py3(
-            expect_py_incompatibility=py3_expect_py_incompatibilty, **kwargs)
-
-      description_queues.py2.put(
-          DescriptionWithCallback(description=description, callback=callback))
-
-
-    # Put into both py2 and py3 pools by default, unless this recipe's python
-    # compatibility is explicitly labeled.
-    if not recipe.is_python_version_labeled:
-      push_both(
-          py2_expect_py_incompatibility=(
-              not recipe.effective_python_compatibility),
-          # unlabeled val is regarded as py2
-          py3_expect_py_incompatibilty=True,
-      )
-    elif recipe.python_version_compatibility == 'PY3':
-      push_py3(
-          expect_py_incompatibility=(not recipe.effective_python_compatibility),
-          labeled_py_compat='PY3')
-    elif recipe.python_version_compatibility == 'PY2+3':
-      push_both(
-          py2_expect_py_incompatibility=(
-              recipe.effective_python_compatibility in (None, 'PY3')),
-          py3_expect_py_incompatibilty=(
-              recipe.effective_python_compatibility in (None, 'PY2')),
-          labeled_py_compat='PY2+3',
-      )
-    else:
-      if not py3_only:
-        push_py2(
-            expect_py_incompatibility=(
-                not recipe.effective_python_compatibility),
-            labeled_py_compat='PY2',
-        )
     gevent.sleep()  # let any blocking threads pick this up
 
   # If filters are enabled, we'll only clean up expectation files for recipes
@@ -200,46 +130,25 @@ def _push_tests(test_filters, is_train, main_repo, description_queues,
 
   unused_expectation_files -= used_expectation_files
   if not is_train:
-    return sorted(unused_expectation_files), has_labeled_recipe[0]
+    return sorted(unused_expectation_files)
 
   for path in unused_expectation_files:
     os.remove(path)
-  return set(), has_labeled_recipe[0]
+  return set()
 
 
 def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
-         filtered_stacks, stop, jobs, show_warnings, enable_py3_details,
-         py3_only):
-  """Run tests in py2 and py3 subprocess pools.
-
-  Side effects:
-    Due to the defects or inconsistencies of 3rd party Coverage lib, the run
-    might fail.
-     * If main process runs with the py env>=3.8 (i.e. RECIPES_USE_PY3=true),
-       the def line in a function with decorators might be reported as uncovered
-       by mistake. (root cause -
-       https://github.com/nedbat/coveragepy/issues/866#issuecomment-549613283).
-     * If main process runs in py2.7 (i.e. RECIPES_USE_PY3=false) while a recipe
-       module or recipe is labeled as PYTHON_VERSION_COMPATIBILITY = 'PY3',
-       it will fail if it contains the code snippets like `while True`,
-       `if True`, etc. (root cause -
-       https://github.com/nedbat/coveragepy/issues/1036#issuecomment-706724265)
-
-    All the side effects are because we combine coverage results from different
-    python interpreter versions. The workaround is to add `# pragma: no cover`.
-    After we drop the py2 support and remove the py2 subprocess pool, the side
-    effects will go away.
+         filtered_stacks, stop, jobs, show_warnings):
+  """Run tests in py3 subprocess pools.
   """
   main_repo = recipe_deps.main_repo
 
-  description_queues = Queue(py2=gevent.queue.UnboundQueue(),
-                             py3=gevent.queue.UnboundQueue())
+  description_queues = Queue(py3=gevent.queue.UnboundQueue())
 
   # outcome_queue is written to by RunnerThreads; it will either contain Outcome
   # messages, or it will contain one of our RunnerThread instances (to indicate
   # to our main thread here that the RunnerThread is done).
-  outcome_queues = Queue(py2=gevent.queue.UnboundQueue(),
-                         py3=gevent.queue.UnboundQueue())
+  outcome_queues = Queue(py3=gevent.queue.UnboundQueue())
 
   for test_result in test_results:
     test_result.uncovered_modules.extend(sorted(
@@ -253,30 +162,15 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
 
   fail_tracker = FailTracker(recipe_deps.previous_test_failures_path)
   reporter = report.Reporter(recipe_deps, use_emoji, is_train, fail_tracker,
-                             show_warnings, enable_py3_details or py3_only)
+                             show_warnings, True)
 
-  py2_cov_dir = None
   py3_cov_dir = None
   total_cov = coverage.Coverage(config_file=False, data_file='.total_coverage',
                                 data_suffix=True)
   total_cov.save() # Force to ensure the coverage data file is created.
   try:
     # in case of crash; don't want this undefined in finally clause.
-    live_threads = Threads(py2=[], py3=[])
-
-    if not py3_only:
-      py2_cov_dir, py2_all_threads = RunnerThread.make_pool(
-          recipe_deps,
-          description_queues.py2,
-          outcome_queues.py2,
-          is_train,
-          filtered_stacks,
-          collect_coverage=not test_filters,
-          jobs=jobs,
-          use_py3=False)
-      live_threads.py2[:] = py2_all_threads
-    else:
-      py2_all_threads = []
+    live_threads = Threads(py3=[])
 
     py3_cov_dir, py3_all_threads = RunnerThread.make_pool(
         recipe_deps,
@@ -285,53 +179,34 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
         is_train,
         filtered_stacks,
         collect_coverage=not test_filters,
-        jobs=jobs,
-        use_py3=True,
-        enable_py3_details=enable_py3_details)
+        jobs=jobs)
     live_threads.py3[:] = py3_all_threads
-    all_threads = Threads(py2=py2_all_threads, py3=py3_all_threads)
+    all_threads = Threads(py3=py3_all_threads)
 
-    unused_expectation_files, has_labeled_recipe = _push_tests(
+    unused_expectation_files = _push_tests(
         test_filters, is_train, main_repo, description_queues,
-        fail_tracker.recent_fails, py3_only)
+        fail_tracker.recent_fails)
     for test_result in test_results:
       test_result.unused_expectation_files.extend(unused_expectation_files)
 
-    def execute_queue(py):
+    def execute_queue():
       has_fail = False
       implicit_py3_err = 0
 
-      print('\nRunning tests in %s' % py)
-      threads = getattr(live_threads, py)
-      has_unexpected_fail = False
+      threads = live_threads.py3
       while threads and not (has_fail and stop):
-        rslt = getattr(outcome_queues, py).get()
+        rslt = outcome_queues.py3.get()
         if isinstance(rslt, RunnerThread):
-          if rslt.exit_code and rslt.exit_code > 0:
-            has_unexpected_fail = True
           # should be done at this point, but make sure for cleanliness sake.
           gevent.wait([rslt])
           threads.remove(rslt)
           continue
 
-        getattr(test_results, py).MergeFrom(rslt)
-        has_fail, count = reporter.short_report(rslt, py, can_abort=(
-            py == 'py2' or has_labeled_recipe))
+        test_results.py3.MergeFrom(rslt)
+        has_fail, count = reporter.short_report(rslt, can_abort=True)
         implicit_py3_err += count
         if has_fail and stop:
           break
-
-      if py == 'py3' and not enable_py3_details:
-        if has_unexpected_fail:
-          print()
-          print('WARNING: unexpected errors occurred when trying to run tests '
-                'in python3 mode. Pass --py3-details to see them.')
-          return has_fail
-        if implicit_py3_err > 0:
-          print()
-          print('WARNING: Ignored %d failures in implicit py3 tests for recipes'
-                ' that don\'t declare their own PYTHON_VERSION_COMPATIBILITY. '
-                'Pass --py3-details to see them.' % implicit_py3_err)
 
       # At this point we know all subprocesses and their threads have finished
       # (because outcome_queue has been closed by each worker, which is how we
@@ -339,27 +214,18 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
       #
       # If we don't have any filters, collect coverage data.
       if (test_filters or (stop and has_fail)) is False:
-        data_paths = [t.cov_file for t in getattr(all_threads, py)
+        data_paths = [t.cov_file for t in all_threads.py3
                       if os.path.isfile(t.cov_file)]
         if data_paths:
           total_cov.combine(data_paths)
 
       return has_fail
 
-    # Put None poison pill for each thread. Execute the py2 queues
-    # before poisoning the py3 queues because py3 tests will be enqueued
-    # after completion of the py2 test for py2+3 recipes.
-    if not py3_only:
-      for thread in all_threads.py2:
-        description_queues.py2.put(None)
-      has_fail = execute_queue('py2')
-    else:
-      has_fail = False
+    # Put None poison pill for each thread.
+    for thread in all_threads.py3:
+      description_queues.py3.put(None)
 
-    if not (has_fail and stop):
-      for thread in all_threads.py3:
-        description_queues.py3.put(None)
-      has_fail = execute_queue('py3') or has_fail
+    has_fail = execute_queue()
     print()
 
     # Don't display coverage if the --stop flag was specified and there's a
@@ -370,11 +236,9 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
       reporter.final_report(total_cov, test_results)
 
   finally:
-    for thread in live_threads.py2 + live_threads.py3:
+    for thread in live_threads.py3:
       thread.kill()
       thread.join()
-    if py2_cov_dir:
-      shutil.rmtree(py2_cov_dir, ignore_errors=True)
     if py3_cov_dir:
       shutil.rmtree(py3_cov_dir, ignore_errors=True)
     total_cov.erase()
@@ -388,7 +252,7 @@ def main(args):
     Exit code
   """
   is_train = args.subcommand == 'train'
-  ret = TestResults(py2=Outcome(), py3=Outcome())
+  ret = TestResults(py3=Outcome())
 
   if args.filtered_stacks:
     enable_filtered_stacks()
@@ -398,32 +262,24 @@ def main(args):
   def _dump():
     if args.json:
       output = []
-      for name, r in iteritems(ret._asdict()):
-        result = json_format.MessageToDict(r, preserving_proto_field_name=True)
-        result['python_env'] = name
-        output.append(result)
+      result = json_format.MessageToDict(ret.py3, preserving_proto_field_name=True)
+      output.append(result)
       json.dump(output, args.json)
 
     if args.dump_timing_info:
-      for name, r in iteritems(ret._asdict()):
-        for test, result in iteritems(r.test_results):
-          as_string = json_format.MessageToJson(result.duration)
-          line = name + '|' + test
-          if _PY2:
-            line = line.encode('utf-8', errors='replace')
-          args.dump_timing_info.write('%s\t%s\n' % (
-              line,
-              # Durations are encoded like "0.23s". We just want the raw number
-              # to be put into the file, so skip the first and last quote, and
-              # the 's'.
-              as_string[1:-2]))
+      for testname, result in iteritems(ret.py3.test_results):
+        as_string = json_format.MessageToJson(result.duration)
+        args.dump_timing_info.write('%s\t%s\n' % (
+            testname,
+            # Durations are encoded like "0.23s". We just want the raw number
+            # to be put into the file, so skip the first and last quote, and
+            # the 's'.
+            as_string[1:-2]))
 
   repo = args.recipe_deps.main_repo
   try:
     _run(ret, args.recipe_deps, args.use_emoji, args.test_filters, is_train,
-         args.filtered_stacks, args.stop, args.jobs, args.show_warnings,
-         # TODO(iannucci): py2 rip out these args entirely
-         enable_py3_details=True, py3_only=True)
+         args.filtered_stacks, args.stop, args.jobs, args.show_warnings)
     _dump()
   except KeyboardInterrupt:
     args.docs = False  # skip docs

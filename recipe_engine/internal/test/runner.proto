@@ -19,14 +19,6 @@ message Description {
   // The name of the test, as provided in GenTests (i.e. the name part of
   // `api.test(name)`).
   string test_name = 2;
-
-  // True indicates the PYTHON_VERSION_COMPATIBILITY of a recipe is incompatible
-  // with its dependencies.
-  bool expect_py_incompatibility = 3;
-
-  // The value of labeled recipe Python compatibility. If empty, it means the
-  // compatibility hasn't been manually labeled.
-  string labeled_py_compat = 4;
 }
 
 // Result of running recipe tests (for the recipe engine's own 'test'
@@ -67,14 +59,6 @@ message Outcome {
 
     // Warnings issued during test execution and its causes.
     map<string, recipe_engine.Causes> warnings = 8;
-
-    // True indicates the PYTHON_VERSION_COMPATIBILITY of a recipe is incompatible
-    // with its dependencies.
-    bool expect_py_incompatibility = 9;
-
-    // The value of labeled recipe Python compatibility. If empty, it means the
-    // compatibility hasn't been manually labeled.
-    string labeled_py_compat = 10;
 
     // Wall clock time of how long this test case took to execute.
     // If tests are executed in parallel, this value may not directly correspond

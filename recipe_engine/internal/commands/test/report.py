@@ -17,6 +17,7 @@ import os
 import sys
 
 from collections import defaultdict
+from io import StringIO
 from itertools import groupby
 
 import attr
@@ -24,13 +25,6 @@ import coverage
 
 from .fail_tracker import FailTracker
 from ...warn.cause import CallSite, ImportSite
-
-
-_PY2 = sys.version_info.major == 2
-if _PY2:
-  from cStringIO import StringIO
-else:
-  from io import StringIO
 
 
 @attr.s
@@ -46,10 +40,10 @@ class Reporter(object):
   _enable_py3_details = attr.ib()
 
   _column_count = attr.ib(default=0)
-  _long_err_buf = attr.ib(factory=dict)  # {'py2': StringIO, 'py3': StringIO}
+  _long_err_buf = attr.ib(factory=dict)  # {'py3': StringIO}
   # store the err msg which may be caused not by the recipe itself, but the
   # discrepancy of supported python version between the recipe and its deps.
-  # The dict structure is {'py2': StringIO, 'py3': StringIO}.
+  # The dict structure is {'py3': StringIO}.
   _maybe_soft_failure_buf = attr.ib(factory=dict)
 
   _start_time = attr.ib(factory=datetime.datetime.now)
@@ -71,9 +65,7 @@ class Reporter(object):
     return logging.getLogger().level < logging.WARNING
 
   def __attrs_post_init__(self):
-    self._long_err_buf['py2'] = StringIO()
     self._long_err_buf['py3'] = StringIO()
-    self._maybe_soft_failure_buf['py2'] = StringIO()
     self._maybe_soft_failure_buf['py3'] = StringIO()
 
   def _space_for_columns(self, item_columns):
@@ -91,7 +83,7 @@ class Reporter(object):
       self._column_count = 0
       print()
 
-  def short_report(self, outcome_msg, py='py2', can_abort=True):
+  def short_report(self, outcome_msg, can_abort=True):
     """Prints all test results from `outcome_msg` to stdout.
 
     Detailed error messages (if any) will be accumulated in this reporter.
@@ -103,32 +95,24 @@ class Reporter(object):
     Args:
 
       * outcome_msg (Outcome proto) - The message to report.
-      * py (String) - Indicate which python mode it uses. The value should be
-        either py2 or py3.
       * can_abort(bool) - True by default. Check whether the program should
         abort for a global failure found in test results.
 
     Returns:
       * bool - If test results have any failure.
-      * int - The error count. NOTE: if py='py3' but --py3-details flag is not
-              set, then counts implicit py3 tests only. We only count error in
-              that situation.
+      * int - The error count.
 
     Raises SystemExit if outcome_msg has an internal_error.
     """
     # Global error; this means something in the actual test execution code went
     # wrong.
     if outcome_msg.internal_error:
-      if can_abort or (py == 'py3' and self._enable_py3_details):
+      if can_abort:
         # This is pretty bad.
         print('ABORT ABORT ABORT')
         print('Global failure(s):')
         for failure in outcome_msg.internal_error:
           print('  ', failure)
-      if (py == 'py3' and 'Broken pipe' in outcome_msg.internal_error[0] and
-          not self._enable_py3_details):
-        print('py3 runner may exit unexpectedly. '
-              'Pass --py3-details to see more')
       if can_abort:
         sys.exit(1)
       return True, len(outcome_msg.test_results)
@@ -136,18 +120,11 @@ class Reporter(object):
     err_count = 0
     has_fail = False
     for test_name, test_result in iteritems(outcome_msg.test_results):
-      if (py == 'py3' and not self._enable_py3_details and
-          not test_result.labeled_py_compat):
-        err_count += 1 if FailTracker.test_failed(test_result) else 0
-        continue
-
       _print_summary_info(
           self._recipe_deps, self._verbose, self._use_emoji, test_name,
           test_result, self._space_for_columns)
-      buf = (self._maybe_soft_failure_buf[py]
-             if test_result.expect_py_incompatibility
-             else self._long_err_buf[py])
-      _print_detail_info(buf, test_name, test_result)
+
+      _print_detail_info(self._long_err_buf['py3'], test_name, test_result)
 
       has_fail = self._fail_tracker.cache_recent_fails(test_name,
                                                        test_result) or has_fail
@@ -156,7 +133,7 @@ class Reporter(object):
 
 
   def final_report(self, cov, outcome_msgs):
-    """Prints all final information about the py2 and py3 test run to stdout.
+    """Prints all final information about the test run to stdout.
     Raises SystemExit if the tests have failed.
 
     Args:
@@ -164,7 +141,7 @@ class Reporter(object):
       * cov (coverage.Coverage|None) - The accumulated coverage data to report.
         If None, then no coverage analysis/report will be done. Coverage less
         than 100% counts as a test failure.
-      * outcome_msgs (TestResults(py2=Outcome proto, py3=Outcome proto)) -
+      * outcome_msgs (TestResults(py3=Outcome proto)) -
         Consulted for uncovered_modules and unused_expectation_files.
         coverage_percent is also populated as a side effect.
         Any uncovered_modules/unused_expectation_files count as a test failure.
@@ -175,13 +152,13 @@ class Reporter(object):
     """
     self._fail_tracker.cleanup()
 
-    soft_fail, fail = False, False
-    for py in ('py2', 'py3'):
-      soft_fail = soft_fail or self._maybe_soft_failure_buf[py].tell() > 0
-      if self._long_err_buf[py].tell() > 0:
-        fail = True
-        sys.stdout.write(
-          'Errors in %s %s\n' % (py, self._long_err_buf[py].getvalue()))
+    soft_fail = self._maybe_soft_failure_buf['py3'].tell() > 0
+
+    fail = False
+    if self._long_err_buf['py3'].tell() > 0:
+      fail = True
+      sys.stdout.write(
+        'Errors in %s\n' % (self._long_err_buf['py3'].getvalue()))
 
     # For some integration tests we have repos which don't actually have any
     # recipe files at all. We skip coverage measurement if cov has no data.
@@ -190,42 +167,37 @@ class Reporter(object):
       pct = 0
       try:
         pct = cov.report(file=covf, show_missing=True, skip_covered=True)
-        outcome_msgs.py2.coverage_percent = pct
         outcome_msgs.py3.coverage_percent = pct
       except coverage.CoverageException as ex:
         print('%s: %s' % (ex.__class__.__name__, ex))
       if int(pct) != 100:
         fail = True
         print(covf.getvalue())
-        print('FATAL: Insufficient total coverage for py2+py3 (%.2f%%)' % pct)
+        print('FATAL: Insufficient total coverage (%.2f%%)' % pct)
         print()
 
     duration = (datetime.datetime.now() - self._start_time).total_seconds()
     print('-' * 70)
-    print('Ran %d tests in %0.3fs' % (len(outcome_msgs.py2.test_results) +
-                                      len(outcome_msgs.py3.test_results),
+    print('Ran %d tests in %0.3fs' % (len(outcome_msgs.py3.test_results),
                                       duration))
     print()
 
-    # We have a combined coverage report, hence the uncovered_modules is also
-    # shared between py2 and py3. Only need to use one of them to print
-    # uncovered_modules info.
-    if outcome_msgs.py2.uncovered_modules:
+    if outcome_msgs.py3.uncovered_modules:
       fail = True
       print('------')
       print('ERROR: The following modules lack any form of test coverage:')
-      for modname in outcome_msgs.py2.uncovered_modules:
+      for modname in outcome_msgs.py3.uncovered_modules:
         print('  ', modname)
       print()
       print('Please add test recipes for them (e.g. recipes in the module\'s')
       print('"tests" subdirectory).')
       print()
 
-    if outcome_msgs.py2.unused_expectation_files:
+    if outcome_msgs.py3.unused_expectation_files:
       fail = True
       print('------')
       print('ERROR: The below expectation files have no associated test case:')
-      for expect_file in outcome_msgs.py2.unused_expectation_files:
+      for expect_file in outcome_msgs.py3.unused_expectation_files:
         print('  ', expect_file)
       print()
 
@@ -266,9 +238,6 @@ class Reporter(object):
       sys.exit(1)
 
     if soft_fail:
-      if self._maybe_soft_failure_buf['py2'].tell() > 0:
-        print('Errors in py2 tests:')
-        print(self._maybe_soft_failure_buf['py2'].getvalue())
       if self._maybe_soft_failure_buf['py3'].tell() > 0:
         print('Errors in py3 tests:')
         print(self._maybe_soft_failure_buf['py3'].getvalue())
