@@ -36,15 +36,9 @@ class Reporter(object):
   _fail_tracker = attr.ib()
   # If set, will print warning details (even if there are other fatal failures)
   _enable_warning_details = attr.ib()
-  # Whether to show details for py3 implicit tests.
-  _enable_py3_details = attr.ib()
 
   _column_count = attr.ib(default=0)
-  _long_err_buf = attr.ib(factory=dict)  # {'py3': StringIO}
-  # store the err msg which may be caused not by the recipe itself, but the
-  # discrepancy of supported python version between the recipe and its deps.
-  # The dict structure is {'py3': StringIO}.
-  _maybe_soft_failure_buf = attr.ib(factory=dict)
+  _error_buf = attr.ib(factory=StringIO)
 
   _start_time = attr.ib(factory=datetime.datetime.now)
 
@@ -63,10 +57,6 @@ class Reporter(object):
   @_verbose.default
   def _verbose_default(self):
     return logging.getLogger().level < logging.WARNING
-
-  def __attrs_post_init__(self):
-    self._long_err_buf['py3'] = StringIO()
-    self._maybe_soft_failure_buf['py3'] = StringIO()
 
   def _space_for_columns(self, item_columns):
     """Preemptively ensures we have space to print something which takes
@@ -100,7 +90,6 @@ class Reporter(object):
 
     Returns:
       * bool - If test results have any failure.
-      * int - The error count.
 
     Raises SystemExit if outcome_msg has an internal_error.
     """
@@ -115,24 +104,23 @@ class Reporter(object):
           print('  ', failure)
       if can_abort:
         sys.exit(1)
-      return True, len(outcome_msg.test_results)
+      return True
 
-    err_count = 0
     has_fail = False
     for test_name, test_result in iteritems(outcome_msg.test_results):
       _print_summary_info(
           self._recipe_deps, self._verbose, self._use_emoji, test_name,
           test_result, self._space_for_columns)
 
-      _print_detail_info(self._long_err_buf['py3'], test_name, test_result)
+      _print_detail_info(self._error_buf, test_name, test_result)
 
       has_fail = self._fail_tracker.cache_recent_fails(test_name,
                                                        test_result) or has_fail
 
-    return has_fail, err_count
+    return has_fail
 
 
-  def final_report(self, cov, outcome_msgs):
+  def final_report(self, cov, outcome_msg):
     """Prints all final information about the test run to stdout.
     Raises SystemExit if the tests have failed.
 
@@ -141,7 +129,7 @@ class Reporter(object):
       * cov (coverage.Coverage|None) - The accumulated coverage data to report.
         If None, then no coverage analysis/report will be done. Coverage less
         than 100% counts as a test failure.
-      * outcome_msgs (TestResults(py3=Outcome proto)) -
+      * outcome_msg (Outcome proto) -
         Consulted for uncovered_modules and unused_expectation_files.
         coverage_percent is also populated as a side effect.
         Any uncovered_modules/unused_expectation_files count as a test failure.
@@ -152,13 +140,11 @@ class Reporter(object):
     """
     self._fail_tracker.cleanup()
 
-    soft_fail = self._maybe_soft_failure_buf['py3'].tell() > 0
-
     fail = False
-    if self._long_err_buf['py3'].tell() > 0:
+    if self._error_buf.tell() > 0:
       fail = True
       sys.stdout.write(
-        'Errors in %s\n' % (self._long_err_buf['py3'].getvalue()))
+        'Errors in %s\n' % (self._error_buf.getvalue()))
 
     # For some integration tests we have repos which don't actually have any
     # recipe files at all. We skip coverage measurement if cov has no data.
@@ -167,7 +153,7 @@ class Reporter(object):
       pct = 0
       try:
         pct = cov.report(file=covf, show_missing=True, skip_covered=True)
-        outcome_msgs.py3.coverage_percent = pct
+        outcome_msg.coverage_percent = pct
       except coverage.CoverageException as ex:
         print('%s: %s' % (ex.__class__.__name__, ex))
       if int(pct) != 100:
@@ -178,30 +164,30 @@ class Reporter(object):
 
     duration = (datetime.datetime.now() - self._start_time).total_seconds()
     print('-' * 70)
-    print('Ran %d tests in %0.3fs' % (len(outcome_msgs.py3.test_results),
+    print('Ran %d tests in %0.3fs' % (len(outcome_msg.test_results),
                                       duration))
     print()
 
-    if outcome_msgs.py3.uncovered_modules:
+    if outcome_msg.uncovered_modules:
       fail = True
       print('------')
       print('ERROR: The following modules lack any form of test coverage:')
-      for modname in outcome_msgs.py3.uncovered_modules:
+      for modname in outcome_msg.uncovered_modules:
         print('  ', modname)
       print()
       print('Please add test recipes for them (e.g. recipes in the module\'s')
       print('"tests" subdirectory).')
       print()
 
-    if outcome_msgs.py3.unused_expectation_files:
+    if outcome_msg.unused_expectation_files:
       fail = True
       print('------')
       print('ERROR: The below expectation files have no associated test case:')
-      for expect_file in outcome_msgs.py3.unused_expectation_files:
+      for expect_file in outcome_msg.unused_expectation_files:
         print('  ', expect_file)
       print()
 
-    warning_result = _collect_warning_result(outcome_msgs)
+    warning_result = _collect_warning_result(outcome_msg)
     if warning_result:
       print('------')
       if len(warning_result) == 1:
@@ -209,13 +195,13 @@ class Reporter(object):
       else:
         print('Found %d warnings' % len(warning_result))
       print()
-      if self._enable_warning_details or not (soft_fail or fail):
+      if self._enable_warning_details or not fail:
         _print_warnings(warning_result, self._recipe_deps)
       else:
         print('Fix test failures or pass --show-warnings for details.')
       print()
 
-    status_warning_result = _collect_global_warnings_result(outcome_msgs)
+    status_warning_result = _collect_global_warnings_result(outcome_msg)
     if status_warning_result:
       print('------')
       print('Found these warnings in the following tests:')
@@ -237,20 +223,6 @@ class Reporter(object):
         print('and include them with your CL.')
       sys.exit(1)
 
-    if soft_fail:
-      if self._maybe_soft_failure_buf['py3'].tell() > 0:
-        print('Errors in py3 tests:')
-        print(self._maybe_soft_failure_buf['py3'].getvalue())
-      print('------')
-      print('FAILED')
-      print('Those failures may be caused by the recipe depending on module(s)')
-      print('with disagreeing PYTHON_VERSION_COMPATIBILITY marked. Please do')
-      print('not mark your recipe until all the dependencies are marked.')
-      print()
-      print('NOTE: You can use `recipes.py deps` command to check which')
-      print('dependency has claimed an incompatible python version.')
-      sys.exit(1)
-
     print('------')
     print('TESTS OK')
 
@@ -265,7 +237,6 @@ class Reporter(object):
 #
 # _check_field will scan for the first entry which has fields set.
 FIELD_TO_DISPLAY = collections.OrderedDict([
-  # pylint: disable=bad-whitespace
   ('internal_error', (False, 'internal testrunner error',           '🆘', '!')),
 
   ('bad_test',       (False, 'test specification was bad/invalid',  '🛑', 'S')),
@@ -358,30 +329,28 @@ class PerWarningResult(object):
   import_sites = attr.ib(factory=set)
 
 
-def _collect_warning_result(outcome_msgs):
+def _collect_warning_result(outcome_msg):
   """Collects issued warnings from all test outcomes and dedupes causes for
   each warning.
   """
   result = defaultdict(PerWarningResult)
-  for outcome_msg in outcome_msgs:
-    for _, test_result in iteritems(outcome_msg.test_results):
-      for name, causes in iteritems(test_result.warnings):
-        for cause in causes.causes:
-          if cause.WhichOneof('oneof_cause') == 'call_site':
-            result[name].call_sites.add(CallSite.from_cause_pb(cause))
-          else:
-            result[name].import_sites.add(ImportSite.from_cause_pb(cause))
+  for _, test_result in iteritems(outcome_msg.test_results):
+    for name, causes in iteritems(test_result.warnings):
+      for cause in causes.causes:
+        if cause.WhichOneof('oneof_cause') == 'call_site':
+          result[name].call_sites.add(CallSite.from_cause_pb(cause))
+        else:
+          result[name].import_sites.add(ImportSite.from_cause_pb(cause))
   return result
 
 
-def _collect_global_warnings_result(outcome_msgs):
+def _collect_global_warnings_result(outcome_msg):
   result = []
-  for outcome_msg in outcome_msgs:
-    for test_name, test_result in iteritems(outcome_msg.test_results):
-      _, warnings = _check_field(test_result, 'global_warnings')
-      if warnings:
-        for warning in warnings:
-          result.append((test_name, warning))
+  for test_name, test_result in iteritems(outcome_msg.test_results):
+    _, warnings = _check_field(test_result, 'global_warnings')
+    if warnings:
+      for warning in warnings:
+        result.append((test_name, warning))
   return result
 
 
