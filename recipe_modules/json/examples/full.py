@@ -79,25 +79,28 @@ def RunSteps(api):
 
   # Can leak directly to a file.
   step_result = api.step('leaking json', [
-    'python', api.resource('cool_script.py'),
-    '{"x":1,"y":2}',
-    api.json.output(leak_to=api.path['tmp_base'].join('leak.json')),
+      'python3',
+      api.resource('cool_script.py'),
+      '{"x":1,"y":2}',
+      api.json.output(leak_to=api.path['tmp_base'].join('leak.json')),
   ])
   assert step_result.json.output == example_dict
 
   # Invalid data gets rendered.
   step_result = api.step('invalid json', [
-    'python', api.resource('cool_script.py'),
-    '{"here is some total\ngarbage',
-    api.json.output(),
+      'python3',
+      api.resource('cool_script.py'),
+      '{"here is some total\ngarbage',
+      api.json.output(),
   ])
   assert step_result.json.output is None
 
   # Invalid JSON to test _unify_json_load_err() converter.
   step_result = api.step('invalid json 2', [
-    'python', api.resource('cool_script.py'),
-    '{a}',
-    api.json.output(),
+      'python3',
+      api.resource('cool_script.py'),
+      '{a}',
+      api.json.output(),
   ])
   assert step_result.json.output is None
 

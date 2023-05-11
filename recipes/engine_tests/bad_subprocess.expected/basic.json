@@ -1,7 +1,7 @@
 [
   {
     "cmd": [
-      "python",
+      "python3",
       "RECIPE[recipe_engine::engine_tests/bad_subprocess].resources/unix.py"
     ],
     "name": "bad daemon"

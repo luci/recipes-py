@@ -99,7 +99,7 @@
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "RECIPE[recipe_engine::json:examples/full].resources/cool_script.py",
       "{\"x\":1,\"y\":2}",
       "[TMP_BASE]/leak.json"
@@ -115,7 +115,7 @@
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "RECIPE[recipe_engine::json:examples/full].resources/cool_script.py",
       "{\"here is some total\ngarbage",
       "/path/to/tmp/json"
@@ -131,7 +131,7 @@
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "RECIPE[recipe_engine::json:examples/full].resources/cool_script.py",
       "{a}",
       "/path/to/tmp/json"

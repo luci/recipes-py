@@ -9,7 +9,7 @@
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "RECIPE[recipe_engine::engine_tests/recipe_paths].resources/hello.py"
     ],
     "name": "some_resource"

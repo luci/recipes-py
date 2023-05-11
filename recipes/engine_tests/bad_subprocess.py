@@ -13,7 +13,8 @@ DEPS = [
 def RunSteps(api):
   api.step(
       'bad daemon',
-      ['python', api.resource('win.py' if api.platform.is_win else 'unix.py')])
+      ['python3',
+       api.resource('win.py' if api.platform.is_win else 'unix.py')])
 
 
 def GenTests(api):

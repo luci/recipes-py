@@ -14,9 +14,9 @@ class TestBundle(test_env.RecipeEngineUnitTest):
   def test_simple(self):
     deps = self.FakeRecipeDeps()
     with deps.main_repo.write_recipe('foo') as recipe:
-      recipe.DEPS = ['recipe_engine/python']
+      recipe.DEPS = ['recipe_engine/step']
       recipe.RunSteps.write('''
-        api.python.succeeding_step('hey there', "This is some narwhals.")
+        api.step.empty('hey there', step_text='This is some narwhals.')
       ''')
 
     deps.main_repo.commit('save recipe')

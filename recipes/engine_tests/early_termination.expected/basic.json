@@ -19,7 +19,7 @@
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "RECIPE[recipe_engine::engine_tests/early_termination].resources/sleepytime.py",
       "[CLEANUP]/output_touchfile",
       "--always-ignore",
@@ -29,7 +29,7 @@
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "RECIPE[recipe_engine::engine_tests/early_termination].resources/sleepytime.py",
       "[CLEANUP]/output_touchfile",
       "nice shutdown"
@@ -38,7 +38,7 @@
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "RECIPE[recipe_engine::engine_tests/early_termination].resources/sleepytime.py",
       "[CLEANUP]/output_touchfile",
       "--always-ignore",
@@ -49,7 +49,7 @@
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "RECIPE[recipe_engine::engine_tests/early_termination].resources/sleepytime.py",
       "[CLEANUP]/output_touchfile",
       "--no-handler",

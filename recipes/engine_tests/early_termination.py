@@ -40,34 +40,39 @@ def RunSteps(api, props):
   # locally it's easy to tell which processes are which with e.g. `pstree`.
 
   # This one tries its darndest to stay alive
-  work.append(api.futures.spawn_immediate(
-      api.step,
-      'ignore always',
-      ['python', api.resource('sleepytime.py'),
-       output_touchfile, '--always-ignore', 'ignore always']))
+  work.append(
+      api.futures.spawn_immediate(api.step, 'ignore always', [
+          'python3',
+          api.resource('sleepytime.py'), output_touchfile, '--always-ignore',
+          'ignore always'
+      ]))
 
   # This one nicely quits on TERM
-  work.append(api.futures.spawn_immediate(
-      api.step,
-      'nice shutdown',
-      ['python', api.resource('sleepytime.py'),
-       output_touchfile, 'nice shutdown']))
+  work.append(
+      api.futures.spawn_immediate(api.step, 'nice shutdown', [
+          'python3',
+          api.resource('sleepytime.py'), output_touchfile, 'nice shutdown'
+      ]))
 
   # This one is self-timed-out
-  work.append(api.futures.spawn_immediate(
-      api.step,
-      'self timeout',
-      ['python', api.resource('sleepytime.py'),
-       output_touchfile, '--always-ignore', 'self timeout'],
-      timeout=5))
+  work.append(
+      api.futures.spawn_immediate(
+          api.step,
+          'self timeout', [
+              'python3',
+              api.resource('sleepytime.py'), output_touchfile,
+              '--always-ignore', 'self timeout'
+          ],
+          timeout=5))
 
   def _pure_sleep():
     # This one is totally oblivious
     try:
-      api.step(
-        'sleep',
-        ['python', api.resource('sleepytime.py'),
-         output_touchfile, '--no-handler', 'sleep'])
+      api.step('sleep', [
+          'python3',
+          api.resource('sleepytime.py'), output_touchfile, '--no-handler',
+          'sleep'
+      ])
     except Exception:  # pragma: no cover
       # BAD! don't do bare exceptions... however...
       api.step('no run', None).presentation.step_text = "I don't run"
@@ -83,4 +88,3 @@ def RunSteps(api, props):
 
 def GenTests(api):
   yield api.test('basic')
-

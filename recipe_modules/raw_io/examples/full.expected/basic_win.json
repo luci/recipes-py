@@ -72,7 +72,7 @@
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "RECIPE[recipe_engine::raw_io:examples/full].resources\\dump_files.py",
       "[CLEANUP]\\tmp_tmp_2"
     ],

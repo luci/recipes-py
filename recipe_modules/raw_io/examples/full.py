@@ -78,7 +78,9 @@ def RunSteps(api):
 
   step_result = api.step(
       'dump output_dir',
-      ['python', api.resource('dump_files.py'), api.raw_io.output_dir()])
+      ['python3',
+       api.resource('dump_files.py'),
+       api.raw_io.output_dir()])
   outdir = step_result.raw_io.output_dir
   some_file = api.path.join('some', 'file')
   assert set(outdir) == {some_file, 'other_file'}
