@@ -3657,7 +3657,7 @@ Args:
   key_path: (str|Path) object pointing to a service account JSON key.
 ### *recipe_modules* / [step](/recipe_modules/step)
 
-[DEPS](/recipe_modules/step/__init__.py#8): [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [proto](#recipe_modules-proto)
+[DEPS](/recipe_modules/step/__init__.py#8): [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [proto](#recipe_modules-proto), [warning](#recipe_modules-warning)
 
 
 Step is the primary API for running steps (external programs, etc.)

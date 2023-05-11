@@ -1,7 +1,7 @@
 [
   {
     "cmd": [
-      "python",
+      "python3",
       "RECIPE[recipe_engine::proto:tests/placeholders].resources/dump.py",
       "/path/to/tmp/json"
     ],
@@ -15,7 +15,7 @@
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "RECIPE[recipe_engine::proto:tests/placeholders].resources/dump.py"
     ],
     "name": "read from script stdout (jsonpb)",
@@ -28,7 +28,7 @@
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "RECIPE[recipe_engine::proto:tests/placeholders].resources/dump.py"
     ],
     "name": "read from script stdout (binary)",
@@ -41,7 +41,7 @@
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "RECIPE[recipe_engine::proto:tests/placeholders].resources/dump.py",
       "[START_DIR]/gone"
     ],
@@ -54,7 +54,7 @@
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "RECIPE[recipe_engine::proto:tests/placeholders].resources/dump.py",
       "[START_DIR]/gone"
     ],
@@ -68,7 +68,7 @@
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "RECIPE[recipe_engine::proto:tests/placeholders].resources/read.py",
       "{\n  \"field\": \"sup\"\n}"
     ],
@@ -76,7 +76,7 @@
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "RECIPE[recipe_engine::proto:tests/placeholders].resources/read.py",
       "\n\u0003sup"
     ],

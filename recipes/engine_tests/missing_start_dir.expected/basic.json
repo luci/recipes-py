@@ -25,9 +25,9 @@
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "-c",
-      "print \"hi\""
+      "print(\"hi\")"
     ],
     "name": "python does not"
   },

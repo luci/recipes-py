@@ -13,39 +13,39 @@ from PB.recipe_modules.recipe_engine.proto.tests.placeholders import SomeMessage
 
 def RunSteps(api):
   step = api.step('read from script', [
-    'python', api.resource('dump.py'), api.proto.output(SomeMessage, 'JSONPB'),
+    'python3', api.resource('dump.py'), api.proto.output(SomeMessage, 'JSONPB'),
   ])
   assert step.proto.output == SomeMessage(field="hello")
 
   step = api.step('read from script stdout (jsonpb)', [
-    'python', api.resource('dump.py'),
+    'python3', api.resource('dump.py'),
   ], stdout=api.proto.output(SomeMessage, 'JSONPB'),)
   assert step.stdout == SomeMessage(field="cool stuff")
 
   step = api.step('read from script stdout (binary)', [
-    'python', api.resource('dump.py'),
+    'python3', api.resource('dump.py'),
   ], stdout=api.proto.output(SomeMessage, 'BINARY'),)
   assert step.stdout == SomeMessage(field="cool stuff")
 
   step = api.step('read missing output', [
-    'python', api.resource('dump.py'),
+    'python3', api.resource('dump.py'),
     api.proto.output(SomeMessage, 'JSONPB',
                      leak_to=api.path['start_dir'].join('gone')),
   ])
 
   step = api.step('read invalid output', [
-    'python', api.resource('dump.py'),
+    'python3', api.resource('dump.py'),
     api.proto.output(SomeMessage, 'JSONPB',
                      leak_to=api.path['start_dir'].join('gone')),
   ])
 
   api.step('write to script (jsonpb)', [
-    'python', api.resource('read.py'),
+    'python3', api.resource('read.py'),
     api.proto.input(SomeMessage(field="sup"), 'JSONPB'),
   ])
 
   api.step('write to script (binary)', [
-    'python', api.resource('read.py'),
+    'python3', api.resource('read.py'),
     api.proto.input(SomeMessage(field="sup"), 'BINARY'),
   ])
 

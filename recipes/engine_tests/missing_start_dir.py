@@ -20,7 +20,7 @@ def RunSteps(api):
   except api.step.StepFailure:  # pragma: no cover
     assert False
 
-  api.step('python does not', ['python', '-c', 'print "hi"'])
+  api.step('python does not', ['python3', '-c', 'print("hi")'])
 
 
 def GenTests(api):

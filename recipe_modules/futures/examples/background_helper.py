@@ -21,14 +21,14 @@ def manage_helper(api, chn):
     pid_file = api.path['cleanup'].join('pid_file')
     helper_future = api.futures.spawn_immediate(
         api.step, 'helper loop',
-        ['python', api.resource('helper.py'), pid_file],
+        ['python3', api.resource('helper.py'), pid_file],
         cost=None, # always run this background thread.
         __name='background process',
     )
     try:
       proc_data = api.step(
           'wait for it', [
-            'python',
+            'python3',
             api.resource('wait_for_helper.py'),
             pid_file,
             api.json.output(),

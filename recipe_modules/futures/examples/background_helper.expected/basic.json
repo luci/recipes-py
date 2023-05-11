@@ -5,7 +5,7 @@
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "RECIPE[recipe_engine::futures:examples/background_helper].resources/helper.py",
       "[CLEANUP]/pid_file"
     ],
@@ -22,7 +22,7 @@
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "RECIPE[recipe_engine::futures:examples/background_helper].resources/wait_for_helper.py",
       "[CLEANUP]/pid_file",
       "/path/to/tmp/json"

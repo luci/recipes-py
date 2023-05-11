@@ -6,10 +6,11 @@ from recipe_engine.recipe_api import Property
 from recipe_engine.config import ConfigGroup, List
 
 DEPS = [
-  "context",
-  "path",
-  "platform",
-  "proto",
+    "context",
+    "path",
+    "platform",
+    "proto",
+    "warning",
 ]
 
 PROPERTIES = {

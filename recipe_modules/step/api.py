@@ -683,9 +683,17 @@ class StepApi(recipe_api.RecipeApiPlain):
     cmd = [] if cmd is None else cmd
     self._validate_cmd_list(cmd)
 
+    if cmd and isinstance(
+        cmd[0], str) and cmd[0] in ('python', 'vpython'):  # pragma: no cover
+      self.m.warning.issue("PYTHON2_DEPRECATED")
+
     if cmd and wrapper:
       wrapper = list(wrapper)
       self._validate_cmd_list(wrapper)
+      if isinstance(
+          wrapper[0],
+          str) and wrapper[0] in ('python', 'vpython'):  # pragma: no cover
+        self.m.warning.issue("PYTHON2_DEPRECATED")
       cmd = wrapper + cmd
 
     with self.m.context(env_prefixes={'PATH': self._prefix_path}):

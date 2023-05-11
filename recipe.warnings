@@ -117,3 +117,11 @@ warning {
     id: 1271425
   }
 }
+
+warning {
+  name: "PYTHON2_DEPRECATED"
+  description: "Python2 is deprecated."
+  description: ""
+  description: "The indicated step is invoking vpython or python2."
+  description: "Please switch this to `vpython3` or `python3`."
+}
