@@ -1,4 +1,4 @@
-#!/usr/bin/env vpython
+#!/usr/bin/env vpython3
 # Copyright 2017 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -11,23 +11,12 @@ infra/config/recipes.cfg.
 
 from __future__ import print_function
 
-# Hacks!
-
-# Hack 1; Change default encoding.
-# This is necessary to ensure that str literals are by-default assumed to hold
-# utf-8. It also makes the implicit str(unicode(...)) act like
-# unicode(...).encode('utf-8'), rather than unicode(...).encode('ascii') .
 import sys
-if sys.version_info.major < 3:
-  reload(sys)
-  sys.setdefaultencoding('UTF8')
-
-# pylint: disable=wrong-import-position
 import errno
 import os
 import time
 
-# Hack 2; crbug.com/980535
+# Hack 1; crbug.com/980535
 #
 # On OS X there seems to be an issue with subprocess's use of its error
 # pipe which causes os.read to raise EINVAL (but very infrequently).
@@ -49,11 +38,11 @@ if sys.platform == 'darwin':
         raise
   os.read = _hacked_read
 
-# Hack 3; Bump the recursion limit as well; because of step nesting and gevent
+# Hack 2; Bump the recursion limit as well; because of step nesting and gevent
 # overhead, we can sometimes exceed the default.
 sys.setrecursionlimit(sys.getrecursionlimit() * 2)
 
-# Hack 4; Lookup all available codecs (crbug.com/932259).
+# Hack 3; Lookup all available codecs (crbug.com/932259).
 # TODO(crbug.com/1147793): try to remove this in python3.
 def _hack_lookup_codecs():
   import encodings
@@ -68,7 +57,7 @@ def _hack_lookup_codecs():
 _hack_lookup_codecs()
 del _hack_lookup_codecs
 
-# Hack 5; Drop sys.path[0], which is ROOT_DIR/recipe_engine. This prevents user
+# Hack 4; Drop sys.path[0], which is ROOT_DIR/recipe_engine. This prevents user
 # recipe code from doing things like `import util` and getting
 # recipe_engine/util.py.
 #
@@ -80,15 +69,6 @@ del _hack_lookup_codecs
 # automatically-prepended directory would remove the need for this and the
 # ROOT_DIR bit below.
 sys.path = sys.path[1:]
-
-# Hack 6; Pre-import cryptography wheel in order to suppress python 2
-# deprecation warnings.
-# TODO(crbug.com/1147793): remove it after py2 to py3 migration is done.
-if sys.version_info.major < 3:
-  import warnings
-  with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    import cryptography
 
 try:
   import urllib3.contrib.pyopenssl

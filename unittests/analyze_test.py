@@ -240,7 +240,7 @@ class AnalyzeSmokeTest(test_env.RecipeEngineUnitTest):
 
   def testGitAttrs(self):
     exit_code, outdata = self._run({
-      'files': ['.vpython'],  # vpython is included via .gitattributes
+      'files': ['.vpython3'],  # vpython is included via .gitattributes
       'recipes': [
         'engine_tests/unicode',
         'engine_tests/whitelist_steps',
