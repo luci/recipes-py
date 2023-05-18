@@ -45,10 +45,10 @@ wheel: <
 >
 
 wheel: <
-  name: "infra/python/wheels/protobuf-py2_py3"
+  name: "infra/python/wheels/protobuf-py3"
   # NOTE: This MUST have a matching version of:
   #  infra/3pp/tools/protoc/${{platform}}
-  version: "version:3.15.8"
+  version: "version:4.21.1"
 >
 
 wheel: <

@@ -4,6 +4,7 @@
 
 """Contains all logic w.r.t. the recipe engine's support for protobufs."""
 
+import ast
 import errno
 import hashlib
 import inspect
@@ -20,6 +21,7 @@ import attr
 
 import google.protobuf  # pinned in .vpython
 import google.protobuf.message
+from google.protobuf import descriptor_pb2
 
 from .attr_util import attr_type
 from .exceptions import BadProtoDefinitions
@@ -334,9 +336,12 @@ def _check_package(pkg, relpath_base):
 # `google.protobuf` namespace, and rewrite them.
 _REWRITE_IMPORT_RE = re.compile(
     r'^from (?!google\.protobuf)(\S*) import (\S*)_pb2 as (.*)$')
-# We find the `package` line to enforce what package the proto used for
+# We find the file descriptor line to enforce what package the proto used for
 # enforcement purposes.
-_PACKAGE_RE = re.compile(r'^\s+package=\'([^\']*)\',$')
+_FILE_DESCRIPTOR_RE = re.compile(
+    r'DESCRIPTOR = _descriptor_pool\.Default\(\).AddSerializedFile\((.+)\)$')
+
+
 def _rewrite_and_rename(root, base_proto_path):
   """Transforms a vanilla compiled *_pb2.py file into a recipe proto python
   file.
@@ -365,11 +370,12 @@ def _rewrite_and_rename(root, base_proto_path):
           ofile.write(line.encode('utf-8'))
           continue
 
-        pkg_m = _PACKAGE_RE.match(line)
-        if pkg_m:
-          # found the package line
-          err = _check_package(
-              pkg_m.group(1), os.path.relpath(target_base, root))
+        descriptor_m = _FILE_DESCRIPTOR_RE.match(line)
+        if descriptor_m:
+          # found the file descriptor line
+          desc = descriptor_pb2.FileDescriptorProto.FromString(
+              ast.literal_eval(descriptor_m.group(1)))
+          err = _check_package(desc.package, os.path.relpath(target_base, root))
 
           ofile.write(line.encode('utf-8'))  # write it unchanged
           # This was the last line we were looking for; the rest of the file is
@@ -531,7 +537,7 @@ def _install_protos(proto_package_path, dgst, proto_files, py_files):
   """Installs protos to `{proto_package_path}/PB`.
 
   Args:
-    * proto_package_base (str) - The absolute path to the folder where:
+    * proto_package_path (str) - The absolute path to the folder where:
       * We should install protoc as '.../protoc/...'
       * We should install the compiled proto files as '.../PB/...'
       * We should use '.../tmp/...' as a tempdir.
@@ -548,10 +554,9 @@ def _install_protos(proto_package_path, dgst, proto_files, py_files):
   cipd_proc = subprocess.Popen([
     'cipd'+_BAT, 'ensure', '-root', os.path.join(proto_package_path, 'protoc'),
     '-ensure-file', '-'], stdin=subprocess.PIPE)
-  # We don't have a mac-arm64 protoc package yet; force amd64 for now.
-  protoc_platform = b'mac-amd64' if sys.platform == 'darwin' else b'${platform}'
-  cipd_proc.communicate((b'infra/3pp/tools/protoc/%s version:2@' %
-                         protoc_platform) + PROTOC_VERSION)
+  protoc_version = PROTOC_VERSION.split(b'.', 1)[1]
+  cipd_proc.communicate(b'infra/3pp/tools/protoc/${platform} version:2@' +
+                        protoc_version)
   if cipd_proc.returncode != 0:
     raise ValueError(
         'failed to install protoc: retcode %d' % cipd_proc.returncode)
