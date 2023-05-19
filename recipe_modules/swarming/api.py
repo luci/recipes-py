@@ -21,7 +21,7 @@ from recipe_engine import recipe_api
 
 # Take revision from
 # https://ci.chromium.org/p/infra-internal/g/infra-packagers/console
-DEFAULT_CIPD_VERSION = 'git_revision:25effe8824d4e5ecff43e310290bb668aa995359'
+DEFAULT_CIPD_VERSION = 'git_revision:7f62986230b0ff7fd5f2c74518352ac247c768d4'
 
 # The mandatory fields to include when calling the API list_bots with fields.
 LIST_BOTS_MANDATORY_FIELDS = 'items(bot_id,is_dead,quarantined,maintenance_msg)'
