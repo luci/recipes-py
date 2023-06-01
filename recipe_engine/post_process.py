@@ -268,6 +268,27 @@ def _fullmatch(pattern, string):
   return m and m.span()[1] == len(string)
 
 
+def StepCommandEquals(check, step_odict, step, expected_cmd):
+  """Assert that a step's command matches a given list of strings.
+
+  Args:
+    step (str) - The step to check the command of.
+    expected_cmd (list(str)) - Strings to match the elements of the step's
+      command.
+
+  Usage:
+    yield (
+        TEST
+        + api.post_process(StepCommandEquals, 'step-name',
+                           ['my', 'command'])
+    )
+  """
+  assert all((isinstance(elem, str) for elem in expected_cmd)), \
+      'expected_cmd must be an iterable of strings'
+  cmd = step_odict[step].cmd
+  check(expected_cmd == cmd)
+
+
 def StepCommandRE(check, step_odict, step, expected_patterns):
   """Assert that a step's command matches a given list of regular expressions.
 

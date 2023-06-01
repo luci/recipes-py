@@ -5,7 +5,8 @@
 
 from future.utils import iteritems
 
-from collections import OrderedDict
+import collections
+from typing import Any, Callable, Dict, List, OrderedDict, Tuple
 
 import test_env
 
@@ -16,7 +17,18 @@ from recipe_engine.recipe_test_api import RecipeTestApi
 from PB.recipe_engine.internal.test.runner import Outcome
 
 
-def mkS(name, *fields):
+def make_step(name: str, *fields: str) -> Dict[str, Any]:
+  """Create a step dict containing the given fields and reasonable defaults.
+
+  Args:
+    name: The name of the step.
+    fields: Names of step fields to include, such as 'cmd', 'cwd', 'env'. If not
+      specified, then all default fields will be included.
+
+  Returns:
+    A dict representing a step, containing reasonable defaults for the given
+    fields.
+  """
   ret = {
     'name': name,
     'cmd': ['thing', 'other'],
@@ -28,55 +40,143 @@ def mkS(name, *fields):
   return ret
 
 
-def mkD(*steps):
-  return OrderedDict([(n, mkS(n)) for n in steps])
+def make_step_dict(*names: str) -> OrderedDict[str, Dict[str, Any]]:
+  """Create an OrderedDict of step dicts with given names and default fields.
+
+  Args:
+    names: Step names to include.
+
+  Returns:
+    An ordered dict of {step name: step dict}, in the same order that steps
+    were provided. Each step dict will contain reasonable default values for
+    fields such as 'cmd'.
+  """
+  return collections.OrderedDict([(name, make_step(name)) for name in names])
 
 
 class PostProcessUnitTest(test_env.RecipeEngineUnitTest):
-  @staticmethod
-  def post_process(d, f, *args, **kwargs):
-    test_data = RecipeTestApi().post_process(f, *args, **kwargs)
+  """Helper class for testing post_process functions."""
+
+  @property
+  def step_dict(self) -> Dict[str, Dict[str, Any]]:
+    """Return a standard step dict for this test case.
+
+    Subclasses should override this property to set a step dict that makes sense
+    for the given test case.
+
+    Raises:
+      NotImplementedError: If not overridden by subclasses.
+    """
+    raise NotImplementedError()
+
+  def post_process(self, func: Callable, *args,
+                   **kwargs) -> Tuple[Any, List[List[str]]]:
+    """Run the given post_process function with self.step_dict.
+
+    Args:
+      func: A post_process checker function, such as MustRun.
+      *args: Additional positional args for post_process.
+      **kwargs: Additional keyword args for post-process.
+
+    Returns:
+      A tuple (expectations, failures), where expectations is as returned by
+      magic_check_fn.post_process, and failures is a list of failures returned
+      by the check, each represented by a list of output strings.
+    """
+    test_data = RecipeTestApi().post_process(func, *args, **kwargs)
     results = Outcome.Results()
-    expectations = magic_check_fn.post_process(results, d, test_data)
+    expectations = magic_check_fn.post_process(results, self.step_dict,
+                                               test_data)
     return expectations, results.check
 
-  def assertHas(self, failure, *text):
+  def expect_pass(self, func: Callable, *args, **kwargs) -> None:
+    """Assert that the given post_process func passes.
+
+    The given function will be called with self.step_dict.
+
+    Args:
+      func: The post_process checker function, such as MustRun.
+      *args: Additional positional args for the post_process call.
+      **kwargs: Additional keyword args for the post_process call.
+
+    Raises:
+      AssertionError: If the post_process check raised any failures.
+    """
+    _, failures = self.post_process(func, *args, **kwargs)
+    self.assertEqual(len(failures), 0)
+
+  def expect_fails(self, num_fails: int, func: Callable, *args,
+                   **kwargs) -> List[List[str]]:
+    """Assert that the post_process func fails the expected number of times.
+
+    The given function will be called with self.step_dict.
+
+    Args:
+      num_fails: The number of failures expected.
+      func: The post_process checker function, such as MustRun.
+      *args: Additional positional args for the post_process call.
+      **kwargs: Additional keyword args for the post_process call.
+
+    Returns:
+      A list of failures, each represented as a list of output lines.
+
+    Raises:
+      AssertionError: If the post_process did not raise exactly the expected
+      number of failures.
+    """
+    _, failures = self.post_process(func, *args, **kwargs)
+    self.assertEqual(len(failures), num_fails)
+    return failures
+
+  def assertHas(self, failure: List[str], *text: str) -> None:
+    """Assert that the given failure contains all the given strings.
+
+    Args:
+      failure: A failed post_process check, as a list of output lines.
+      *text: Strings that must be contained by the concatenated failure message.
+
+    Raises:
+      AssertionError: If the failure message does not contain each of *text
+    """
     combined = '\n'.join(failure.lines)
     for item in text:
       self.assertIn(item, combined)
 
 
 class TestFilter(PostProcessUnitTest):
-  def setUp(self):
-    super(TestFilter, self).setUp()
-    self.d = mkD('a', 'b', 'b.sub', 'b.sub2')
-    self.f = post_process.Filter
+  """Test case for post_process.Filter."""
+  f = post_process.Filter
+
+  @property
+  def step_dict(self) -> Dict[str, Dict[str, Any]]:
+    """Return a standard step dict for this test case."""
+    return make_step_dict('a', 'b', 'b.sub', 'b.sub2')
 
   def test_basic(self):
-    results, failures = self.post_process(self.d, self.f('a', 'b'))
-    self.assertEqual(results, list(mkD('a', 'b').values()))
+    results, failures = self.post_process(self.f('a', 'b'))
+    self.assertEqual(results, list(make_step_dict('a', 'b').values()))
     self.assertEqual(len(failures), 0)
 
   def test_built(self):
     f = self.f()
     f = f.include('b')
     f = f.include('a')
-    results, failures = self.post_process(self.d, f)
-    self.assertEqual(results, list(mkD('a', 'b').values()))
+    results, failures = self.post_process(f)
+    self.assertEqual(results, list(make_step_dict('a', 'b').values()))
     self.assertEqual(len(failures), 0)
 
   def test_built_fields(self):
     f = self.f()
     f = f.include('b', ['env'])
     f = f.include('a', ['cmd'])
-    results, failures = self.post_process(self.d, f)
-    self.assertEqual(results, [mkS('a', 'cmd'), mkS('b', 'env')])
+    results, failures = self.post_process(f)
+    self.assertEqual(results, [make_step('a', 'cmd'), make_step('b', 'env')])
     self.assertEqual(len(failures), 0)
 
   def test_built_extra_includes(self):
     f = self.f('a', 'b', 'x')
-    results, failures = self.post_process(self.d, f)
-    self.assertEqual(results, list(mkD('a', 'b').values()))
+    results, failures = self.post_process(f)
+    self.assertEqual(results, list(make_step_dict('a', 'b').values()))
     self.assertEqual(len(failures), 1)
     self.assertHas(failures[0],
                    'check((len(unused_includes) == 0))',
@@ -84,14 +184,14 @@ class TestFilter(PostProcessUnitTest):
 
   def test_re(self):
     f = self.f().include_re(r'b\.')
-    results, failures = self.post_process(self.d, f)
-    self.assertEqual(results, list(mkD('b.sub', 'b.sub2').values()))
+    results, failures = self.post_process(f)
+    self.assertEqual(results, list(make_step_dict('b.sub', 'b.sub2').values()))
     self.assertEqual(len(failures), 0)
 
   def test_re_low_limit(self):
     f = self.f().include_re(r'b\.', at_least=3)
-    results, failures = self.post_process(self.d, f)
-    self.assertEqual(results, list(mkD('b.sub', 'b.sub2').values()))
+    results, failures = self.post_process(f)
+    self.assertEqual(results, list(make_step_dict('b.sub', 'b.sub2').values()))
     self.assertEqual(len(failures), 1)
     self.assertHas(failures[-1], 'check((re_usage_count[regex] >= at_least))',
                    'at_least: 3', 're_usage_count[regex]: 2',
@@ -99,8 +199,8 @@ class TestFilter(PostProcessUnitTest):
 
   def test_re_high_limit(self):
     f = self.f().include_re(r'b\.', at_most=1)
-    results, failures = self.post_process(self.d, f)
-    self.assertEqual(results, list(mkD('b.sub', 'b.sub2').values()))
+    results, failures = self.post_process(f)
+    self.assertEqual(results, list(make_step_dict('b.sub', 'b.sub2').values()))
     self.assertEqual(len(failures), 1)
     self.assertHas(failures[0], 'check((re_usage_count[regex] <= at_most))')
     self.assertHas(failures[0], 'at_most: 1', 're_usage_count[regex]: 2',
@@ -108,24 +208,23 @@ class TestFilter(PostProcessUnitTest):
 
 
 class TestRun(PostProcessUnitTest):
-  def setUp(self):
-    super(TestRun, self).setUp()
-    self.d = mkD('a', 'b', 'b.sub', 'b.sub2')
+  """Test case for checks relating to which steps run."""
 
-  def expect_fails(self, num_fails, func, *args, **kwargs):
-    _, failures = self.post_process(self.d, func, *args, **kwargs)
-    self.assertEqual(len(failures), num_fails)
+  @property
+  def step_dict(self) -> Dict[str, Dict[str, Any]]:
+    """Return a standard step dict for this test case."""
+    return make_step_dict('a', 'b', 'b.sub', 'b.sub2')
 
   def test_mr_pass(self):
-    self.expect_fails(0, post_process.MustRun, 'a')
+    self.expect_pass(post_process.MustRun, 'a')
 
   def test_mr_fail(self):
     self.expect_fails(1, post_process.MustRun, 'x')
 
   def test_mr_pass_re(self):
-    self.expect_fails(0, post_process.MustRunRE, 'a')
-    self.expect_fails(0, post_process.MustRunRE, 'a', at_most=1)
-    self.expect_fails(0, post_process.MustRunRE, 'a', at_least=1, at_most=1)
+    self.expect_pass(post_process.MustRunRE, 'a')
+    self.expect_pass(post_process.MustRunRE, 'a', at_most=1)
+    self.expect_pass(post_process.MustRunRE, 'a', at_least=1, at_most=1)
 
   def test_mr_fail_re(self):
     self.expect_fails(1, post_process.MustRunRE, 'x')
@@ -133,34 +232,41 @@ class TestRun(PostProcessUnitTest):
     self.expect_fails(1, post_process.MustRunRE, 'b', at_least=4)
 
   def test_dnr_pass(self):
-    self.expect_fails(0, post_process.DoesNotRun, 'x')
+    self.expect_pass(post_process.DoesNotRun, 'x')
 
   def test_dnr_fail(self):
     self.expect_fails(1, post_process.DoesNotRun, 'a')
 
   def test_dnr_pass_re(self):
-    self.expect_fails(0, post_process.DoesNotRunRE, 'x')
+    self.expect_pass(post_process.DoesNotRunRE, 'x')
 
   def test_dnr_fail_re(self):
     self.expect_fails(3, post_process.DoesNotRunRE, 'b')
 
 
 class TestStepStatus(PostProcessUnitTest):
-  def setUp(self):
-    super(TestStepStatus, self).setUp()
-    self.d = OrderedDict([
-        ('success-step', {'name': 'success-step', 'status': 'SUCCESS'}),
-        ('failure-step', {'name': 'failure-step', 'status': 'FAILURE'}),
-        ('exception-step', {'name': 'exception-step', 'status': 'EXCEPTION'}),
+  """Test case for checks relating to step status."""
+
+  @property
+  def step_dict(self) -> Dict[str, Dict[str, Any]]:
+    """Return a standard step dict for this test case."""
+    return collections.OrderedDict([
+        ('success-step', {
+            'name': 'success-step',
+            'status': 'SUCCESS'
+        }),
+        ('failure-step', {
+            'name': 'failure-step',
+            'status': 'FAILURE'
+        }),
+        ('exception-step', {
+            'name': 'exception-step',
+            'status': 'EXCEPTION'
+        }),
     ])
 
-  def expect_fails(self, num_fails, func, *args, **kwargs):
-    _, failures = self.post_process(self.d, func, *args, **kwargs)
-    self.assertEqual(len(failures), num_fails)
-    return failures
-
   def test_step_success_pass(self):
-    self.expect_fails(0, post_process.StepSuccess, 'success-step')
+    self.expect_pass(post_process.StepSuccess, 'success-step')
 
   def test_step_success_fail(self):
     failures = self.expect_fails(1, post_process.StepSuccess, 'failure-step')
@@ -171,7 +277,7 @@ class TestStepStatus(PostProcessUnitTest):
                    "check((step_odict[step].status == 'SUCCESS'))")
 
   def test_step_failure_pass(self):
-    self.expect_fails(0, post_process.StepFailure, 'failure-step')
+    self.expect_pass(post_process.StepFailure, 'failure-step')
 
   def test_step_failure_fail(self):
     failures = self.expect_fails(1, post_process.StepFailure, 'success-step')
@@ -182,7 +288,7 @@ class TestStepStatus(PostProcessUnitTest):
                    "check((step_odict[step].status == 'FAILURE'))")
 
   def test_step_exception_pass(self):
-    self.expect_fails(0, post_process.StepException, 'exception-step')
+    self.expect_pass(post_process.StepException, 'exception-step')
 
   def test_step_exception_fail(self):
     failures = self.expect_fails(1, post_process.StepException, 'success-step')
@@ -193,21 +299,55 @@ class TestStepStatus(PostProcessUnitTest):
                    "check((step_odict[step].status == 'EXCEPTION'))")
 
 
-class TestStepCommandRe(PostProcessUnitTest):
-  def setUp(self):
-    super(TestStepCommandRe, self).setUp()
-    self.d = OrderedDict([
-        ('x', {'name': 'x', 'cmd': ['echo', 'foo', 'bar', 'baz']})
-    ])
+class TestStepCommandEquals(PostProcessUnitTest):
+  """Test case for StepCommandEquals."""
 
-  def expect_fails(self, num_fails, func, *args, **kwargs):
-    _, failures = self.post_process(self.d, func, *args, **kwargs)
-    self.assertEqual(len(failures), num_fails)
-    return failures
+  @property
+  def step_dict(self) -> Dict[str, Dict[str, Any]]:
+    """Return a standard step dict for this test case."""
+    return make_step_dict('my-step')
+
+  def test_pass(self):
+    """Assert that comparing against the exact cmd list passes."""
+    self.expect_pass(post_process.StepCommandEquals, 'my-step',
+                     ['thing', 'other'])
+
+  def test_too_many_args(self):
+    """Assert that comparing against the cmd list plus extra args fails."""
+    self.expect_fails(1, post_process.StepCommandEquals, 'my-step',
+                      ['thing', 'other', 'foo'])
+
+  def test_too_few_args(self):
+    """Assert that comparing against the cmd list minus some args fails."""
+    self.expect_fails(1, post_process.StepCommandEquals, 'my-step', ['thing'])
+
+  def test_string_instead_of_list(self):
+    """Assert that comparing against a command string fails."""
+    self.expect_fails(1, post_process.StepCommandEquals, 'my-step',
+                      'thing other')
+
+  def test_regex_would_pass(self):
+    """Assert that comparing against a list of cmd regexes fails."""
+    self.expect_pass(post_process.StepCommandRE, 'my-step',
+                     ['thing', '[other]+'])
+    self.expect_fails(1, post_process.StepCommandEquals, 'my-step',
+                      ['thing', '[other]+'])
+
+
+class TestStepCommandRe(PostProcessUnitTest):
+  """Test case for StepCommandRE."""
+
+  @property
+  def step_dict(self) -> Dict[str, Dict[str, Any]]:
+    """Return a stadnard step dict for this test case."""
+    return collections.OrderedDict([('x', {
+        'name': 'x',
+        'cmd': ['echo', 'foo', 'bar', 'baz']
+    })])
 
   def test_step_command_re_pass(self):
-    self.expect_fails(0, post_process.StepCommandRE, 'x',
-                      ['echo', 'f.*', 'bar', '.*z'])
+    self.expect_pass(post_process.StepCommandRE, 'x',
+                     ['echo', 'f.*', 'bar', '.*z'])
 
   def test_step_command_re_fail(self):
     failures = self.expect_fails(2, post_process.StepCommandRE, 'x',
@@ -233,21 +373,27 @@ class TestStepCommandRe(PostProcessUnitTest):
 
 
 class TestStepCommandContains(PostProcessUnitTest):
-  def setUp(self):
-    super(TestStepCommandContains, self).setUp()
-    self.d = OrderedDict([
-        ('two', {'name': 'two', 'cmd': ['a', 'b']}),
-        ('one', {'name': 'one', 'cmd': ['a']}),
-        ('zero', {'name': 'zero', 'cmd': []}),
-        ('x', {'name': 'x', 'cmd': ['echo', 'foo', 'bar', 'baz']})
-    ])
+  """Test case for StepCommandContains."""
 
-  def expect_pass(self, func, *args, **kwargs):
-    _, failures = self.post_process(self.d, func, *args, **kwargs)
-    self.assertEqual(len(failures), 0)
+  @property
+  def step_dict(self) -> Dict[str, Dict[str, Any]]:
+    """Return a standard step dict for this test case."""
+    return collections.OrderedDict([('two', {
+        'name': 'two',
+        'cmd': ['a', 'b']
+    }), ('one', {
+        'name': 'one',
+        'cmd': ['a']
+    }), ('zero', {
+        'name': 'zero',
+        'cmd': []
+    }), ('x', {
+        'name': 'x',
+        'cmd': ['echo', 'foo', 'bar', 'baz']
+    })])
 
   def expect_fail(self, func, failure, *args, **kwargs):
-    _, failures = self.post_process(self.d, func, *args, **kwargs)
+    _, failures = self.post_process(func, *args, **kwargs)
     self.assertEqual(len(failures), 1)
     self.assertHas(failures[0], 'CHECK %r' % failure)
     return failures
@@ -289,10 +435,12 @@ class TestStepCommandContains(PostProcessUnitTest):
 
 
 class TestStepCommandDoesNotContain(PostProcessUnitTest):
+  """Test case for StepCommandDoesNotContain."""
 
-  def setUp(self):
-    super(TestStepCommandDoesNotContain, self).setUp()
-    self.d = OrderedDict([('two', {
+  @property
+  def step_dict(self) -> Dict[str, Dict[str, Any]]:
+    """Return a standard step dict for this test case."""
+    return collections.OrderedDict([('two', {
         'name': 'two',
         'cmd': ['a', 'b']
     }), ('one', {
@@ -307,11 +455,11 @@ class TestStepCommandDoesNotContain(PostProcessUnitTest):
     })])
 
   def expect_pass(self, func, *args, **kwargs):
-    _, failures = self.post_process(self.d, func, *args, **kwargs)
+    _, failures = self.post_process(func, *args, **kwargs)
     self.assertEqual(len(failures), 0)
 
   def expect_fail(self, func, *args, **kwargs):
-    _, failures = self.post_process(self.d, func, *args, **kwargs)
+    _, failures = self.post_process(func, *args, **kwargs)
     self.assertEqual(len(failures), 1)
     return failures
 
@@ -339,23 +487,19 @@ class TestStepCommandDoesNotContain(PostProcessUnitTest):
 
 
 class TestStepText(PostProcessUnitTest):
-  def setUp(self):
-    super(TestStepText, self).setUp()
-    self.d = OrderedDict([
-        ('x', {
-            'name': 'x',
-            'step_text': 'foobar',
-            'step_summary_text' : 'test summary',
-        })
-    ])
+  """Test case for checks that relate to step text and step summary."""
 
-  def expect_fails(self, num_fails, func, *args, **kwargs):
-    _, failures = self.post_process(self.d, func, *args, **kwargs)
-    self.assertEqual(len(failures), num_fails)
-    return failures
+  @property
+  def step_dict(self) -> Dict[str, Dict[str, Any]]:
+    """Return a standard step dict for this test case."""
+    return collections.OrderedDict([('x', {
+        'name': 'x',
+        'step_text': 'foobar',
+        'step_summary_text': 'test summary',
+    })])
 
   def test_step_text_equals_pass(self):
-    self.expect_fails(0, post_process.StepTextEquals, 'x', 'foobar')
+    self.expect_pass(post_process.StepTextEquals, 'x', 'foobar')
 
   def test_step_text_equals_fail(self):
     failures = self.expect_fails(1, post_process.StepTextEquals, 'x', 'foo')
@@ -363,10 +507,10 @@ class TestStepText(PostProcessUnitTest):
                    'check((step_odict[step].step_text == expected))')
 
   def test_step_text_contains_pass(self):
-    self.expect_fails(0, post_process.StepTextContains, 'x', ['foo', 'bar'])
+    self.expect_pass(post_process.StepTextContains, 'x', ['foo', 'bar'])
 
   def test_step_summary_text_equals_pass(self):
-    self.expect_fails(0, post_process.StepSummaryEquals, 'x', 'test summary')
+    self.expect_pass(post_process.StepSummaryEquals, 'x', 'test summary')
 
   def test_step_summary_text_equals_fail(self):
     failures = self.expect_fails(1, post_process.StepSummaryEquals, 'x',
@@ -388,24 +532,20 @@ class TestStepText(PostProcessUnitTest):
 
 
 class TestLog(PostProcessUnitTest):
-  def setUp(self):
-    super(TestLog, self).setUp()
-    self.d = OrderedDict([
-        ('x', {
-            'name': 'x',
-            'logs': {
-                'log-x': 'foo\nbar',
-            },
-        })
-    ])
+  """Test case for checks that relate to logs."""
 
-  def expect_fails(self, num_fails, func, *args, **kwargs):
-    _, failures = self.post_process(self.d, func, *args, **kwargs)
-    self.assertEqual(len(failures), num_fails)
-    return failures
+  @property
+  def step_dict(self) -> Dict[str, Dict[str, Any]]:
+    """Return a standard step dict for this test case."""
+    return collections.OrderedDict([('x', {
+        'name': 'x',
+        'logs': {
+            'log-x': 'foo\nbar',
+        },
+    })])
 
   def test_log_equals_pass(self):
-    self.expect_fails(0, post_process.LogEquals, 'x', 'log-x', 'foo\nbar')
+    self.expect_pass(post_process.LogEquals, 'x', 'log-x', 'foo\nbar')
 
   def test_log_equals_fail(self):
     failures = self.expect_fails(1, post_process.LogEquals,
@@ -414,8 +554,8 @@ class TestLog(PostProcessUnitTest):
                    'check((step_odict[step].logs[log] == expected))')
 
   def test_log_contains_pass(self):
-    self.expect_fails(0, post_process.LogContains, 'x', 'log-x',
-                      ['foo\n', '\nbar', 'foo\nbar'])
+    self.expect_pass(post_process.LogContains, 'x', 'log-x',
+                     ['foo\n', '\nbar', 'foo\nbar'])
 
   def test_log_contains_fail(self):
     failures = self.expect_fails(
@@ -432,8 +572,8 @@ class TestLog(PostProcessUnitTest):
                    "expected: 'foobar'")
 
   def test_log_does_not_contain_pass(self):
-    self.expect_fails(0, post_process.LogDoesNotContain, 'x', 'log-x',
-                      ['i dont exist'])
+    self.expect_pass(post_process.LogDoesNotContain, 'x', 'log-x',
+                     ['i dont exist'])
 
   def test_log_does_not_contain_fail(self):
     failures = self.expect_fails(1, post_process.LogDoesNotContain, 'x',

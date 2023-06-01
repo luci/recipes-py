@@ -595,7 +595,7 @@ def post_process(test_failures, raw_expectations, test_data):
 
   Args:
 
-    test_failures (Outcome.Failures) - The TestResult object to update in
+    test_failures (Outcome.Results) - The TestResult object to update in
       the event there are failing checks.
     raw_expectations - A dictionary mapping the name of a step to a dictionary
         containing the details of that step.

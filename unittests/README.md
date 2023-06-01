@@ -7,6 +7,8 @@ unittest.TestCase class with some helpers.
 
 The main helpers are `FakeRecipeDeps` and `MockRecipeDeps`.
 
+You should be able to run tests via `./unittests/foo_test.py`.
+
 ## test_env.RecipeEngineUnitTest
 
 This is the base unittest class for all tests in this directory. It has some
