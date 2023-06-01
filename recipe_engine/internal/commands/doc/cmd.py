@@ -4,10 +4,12 @@
 
 from __future__ import print_function, absolute_import
 from builtins import object, range
-from future.utils import iteritems, itervalues
 from past.builtins import basestring
 
+from io import StringIO
+
 import ast
+import difflib
 import inspect
 import json
 import logging
@@ -15,11 +17,6 @@ import os
 import posixpath
 import sys
 import types
-
-if sys.version_info.major < 3:
-  from cStringIO import StringIO
-else:
-  from io import StringIO
 
 import astunparse
 
@@ -151,7 +148,7 @@ def _expand_mock_imports(*mock_imports):
 
   # expand combined_imports so it supports trivial lookups.
   expanded_imports = {}
-  for dotted_name, obj in sorted(iteritems(combined_imports)):
+  for dotted_name, obj in sorted(combined_imports.items()):
     if dotted_name in expanded_imports:
       raise ValueError('nested mock imports! %r', dotted_name)
     toks = dotted_name.split('.')
@@ -304,7 +301,7 @@ def _extract_classes_funcs(body_ast, relpath, imports, do_fixup=True):
   if do_fixup:
     # frequently classes in a file inherit from other classes in the same file.
     # Do a best effort scan to re-attribute class bases when possible.
-    for v in itervalues(classes):
+    for v in classes.values():
       for i, b in enumerate(v.bases):
         if isinstance(b, str):
           if b in classes:
@@ -370,7 +367,7 @@ def parse_deps(repo_name, mod_ast, relpath):
       lineno=lineno,
     )
     spec = parse_deps_spec(repo_name, ast.literal_eval(_unparse(DEPS)))
-    for dep_repo_name, mod_name in sorted(itervalues(spec)):
+    for dep_repo_name, mod_name in sorted(spec.values()):
       ret.module_links.add(repo_name=dep_repo_name, name=mod_name)
 
   return ret
@@ -453,7 +450,7 @@ def parse_parameters(mod_ast, relpath):
   if not data:
     return None
 
-  for k, v in sorted(iteritems(data)):
+  for k, v in sorted(data.items()):
     data[k] = parse_parameter(v)
 
   return doc.Doc.Parameters(relpath=relpath, lineno=lineno, parameters=data)
@@ -564,7 +561,7 @@ def parse_module(module):
     api, posixpath.join(relpath, 'api.py'), imports)
 
   api_class = None
-  for name, val in sorted(iteritems(classes)):
+  for name, val in sorted(classes.items()):
     if any(b.known in _recipe_api_class_imports for b in val.bases):
       api_class = classes.pop(name)
       break
@@ -607,12 +604,12 @@ def parse_repo(repo):
     with open(readme, 'rb') as f:
       ret.docstring = f.read()
 
-  for module in itervalues(repo.modules):
+  for module in repo.modules.values():
     mod = parse_module(module)
     if mod:
       ret.recipe_modules[module.name].CopyFrom(mod)
 
-  for recipe in itervalues(repo.recipes):
+  for recipe in repo.recipes.values():
     recipe = parse_recipe(recipe)
     if recipe:
       ret.recipes[recipe.name].CopyFrom(recipe)
@@ -654,7 +651,7 @@ def _set_known_objects(base):
 
     raise ValueError('could not find %r in %r' % (key, relpath))
 
-  for k, v in iteritems(KNOWN_OBJECTS):
+  for k, v in KNOWN_OBJECTS.items():
     base.known_objects[k].url = RECIPE_ENGINE_URL
     _, target = k.rsplit('.', 1)
     fname = inspect.getsourcefile(v)
@@ -681,32 +678,54 @@ def regenerate_doc(repo, output_file):
   doc_markdown.Emit(doc_markdown.Printer(output_file), node)
 
 
-def is_doc_changed(repo):
-  """Check if the `README.recipes.md` is changed.
+def doc_diff(repo):
+  """Check if the `README.recipes.md` is changed and return the diff as a list
+  of lines.
 
   Args:
     * repo (RecipeRepo) - The repo for this readme file.
 
   Returns boolean.
   """
-  buf = StringIO()
-  regenerate_doc(repo, buf)
-  with open(repo.readme_path, 'r') as f:
-    current_file = f.read()
-  return buf.getvalue() != current_file
+  if repo.recipes_cfg_pb2.no_docs:
+    new_lines = []
+  else:
+    with StringIO() as outf:
+      regenerate_doc(repo, outf)
+      new_lines = outf.getvalue().splitlines(keepends=True)
+
+  if os.path.exists(repo.readme_path):
+    with open(repo.readme_path, 'r', encoding='utf-8') as oldfile:
+      old_lines = oldfile.read().splitlines(keepends=True)
+  else:
+    old_lines = []
+
+  return list(difflib.unified_diff(
+      old_lines, new_lines,
+      fromfile='current', tofile='actual'))
 
 
 def main(args):
   # defer to regenerate_doc for consistency between train and 'doc --kind gen'
   repo = args.recipe_deps.main_repo
   if repo.recipes_cfg_pb2.no_docs:
-    LOGGER.warn('"no_docs" is set in recipes.cfg, generating docs anyway')
+    LOGGER.warning('"no_docs" is set in recipes.cfg, generating docs anyway')
 
   if args.kind == 'gen':
-    print('Generating README.recipes.md')
-    with open(repo.readme_path, 'w') as f:
-      regenerate_doc(repo, f)
-    return 0
+    if not args.check:
+      print('Generating README.recipes.md')
+      with open(repo.readme_path, 'w', encoding='utf-8') as outf:
+        regenerate_doc(repo, outf)
+      return 0
+
+    diff = doc_diff(repo)
+    if not diff:
+      return 0
+
+    print('Found diff in README.recipes.md. Run `recipes.py doc` to regenerate.')
+    for line in diff:
+      print(line, end='')
+    return 1
 
   if args.recipe:
     node = parse_recipe(args.recipe_deps.recipes[args.recipe])

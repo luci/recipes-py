@@ -27,7 +27,7 @@ from recipe_engine.util import enable_filtered_stacks
 # pylint: disable=import-error
 from PB.recipe_engine.internal.test.runner import Description, Outcome
 
-from ..doc.cmd import regenerate_doc, is_doc_changed
+from ..doc.cmd import regenerate_doc, doc_diff
 
 from . import report, test_name
 from .fail_tracker import FailTracker
@@ -279,7 +279,7 @@ def main(args):
   docs_enabled = (not repo.recipes_cfg_pb2.no_docs) and args.docs
   is_run = args.subcommand == 'run'
   if docs_enabled:
-    if is_run and is_doc_changed(repo):
+    if is_run and doc_diff(repo):
       print('------')
       print('README.recipes.md needs to be updated. Please run:')
       print()

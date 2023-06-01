@@ -18,8 +18,19 @@ def add_arguments(parser):
       help=(
         'Output this kind of documentation. `gen` (the default) will write the'
         ' standard README.recipes.md file. All others output to stdout'))
+  parser.add_argument(
+      '--check', action='store_true',
+      help=(
+        'Just check README.recipes.md to see if it is up to date, otherwise'
+        ' print a diff and exit 1. Requires --kind=gen (i.e. the default).'
+      )
+  )
 
   def _launch(args):
     from .cmd import main
+
+    if args.check and args.kind != 'gen':
+      parser.error('--check must use --kind=gen')
+
     return main(args)
   parser.set_defaults(func=_launch)
