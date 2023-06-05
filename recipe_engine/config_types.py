@@ -2,8 +2,9 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from collections import namedtuple
-from itertools import chain
+import collections
+import itertools
+from typing import Any, Dict, Optional, Tuple
 
 import abc
 import os
@@ -20,7 +21,7 @@ def ResetTostringFns():
   NamedBasePath._API = None
 
 
-class RecipeConfigType(object):
+class RecipeConfigType:
   """Base class for custom Recipe config types, intended to be subclassed.
 
   RecipeConfigTypes are meant to be PURE data. There should be no dependency on
@@ -61,26 +62,29 @@ class RecipeConfigType(object):
     return self.tostring_fn(self) # pylint: disable=not-callable
 
 
-class BasePath(with_metaclass(abc.ABCMeta, object)):
+class BasePath(with_metaclass(abc.ABCMeta)):
 
   @abc.abstractmethod
-  def resolve(self, test_enabled):
+  def resolve(self, test_enabled: bool) -> str:
     """Returns a string representation of the path base.
 
     Args:
-      test_enabled (bool) - true iff this is only for recipe expectations
+      test_enabled: True iff this is only for recipe expectations.
+
+    Raises:
+      NotImplementedError: If this method isn't overridden by a subclass.
     """
     raise NotImplementedError()
 
 
-class NamedBasePath(BasePath, namedtuple('NamedBasePath', 'name')):
+class NamedBasePath(BasePath, collections.namedtuple('NamedBasePath', 'name')):
   _API = None
 
   @classmethod
   def set_path_api(cls, api):
     cls._API = api
 
-  def resolve(self, test_enabled):
+  def resolve(self, test_enabled: bool) -> str:
     if self.name in self._API.c.dynamic_paths:
       return self._API.c.dynamic_paths[self.name]
     if self.name in self._API.c.base_paths:
@@ -95,7 +99,9 @@ class NamedBasePath(BasePath, namedtuple('NamedBasePath', 'name')):
     return '[%s]' % self.name.upper()
 
 
-class ModuleBasePath(BasePath, namedtuple('ModuleBasePath', 'module')):
+class ModuleBasePath(BasePath, collections.namedtuple('ModuleBasePath',
+                                                      'module')):
+
   def resolve(self, test_enabled):
     if test_enabled:
       return repr(self)
@@ -110,19 +116,24 @@ class ModuleBasePath(BasePath, namedtuple('ModuleBasePath', 'module')):
     return 'RECIPE_MODULE[%s]' % re.sub(r'\.', '::', name)
 
 
-class RecipeScriptBasePath(
-    BasePath, namedtuple('RecipeScriptBasePath', 'recipe_name script_path')):
+class RecipeScriptBasePath(BasePath,
+                           collections.namedtuple('RecipeScriptBasePath',
+                                                  'recipe_name script_path')):
+
   def resolve(self, test_enabled):
     if test_enabled:
       return repr(self)
-    return os.path.splitext(self.script_path)[0]+".resources" # pragma: no cover
+    return os.path.splitext(
+        self.script_path)[0] + '.resources'  # pragma: no cover
 
   def __repr__(self):
     return 'RECIPE[%s].resources' % self.recipe_name
 
 
-class RepoBasePath(
-    BasePath, namedtuple('RepoBasePath', 'repo_name repo_root_path')):
+class RepoBasePath(BasePath,
+                   collections.namedtuple('RepoBasePath',
+                                          'repo_name repo_root_path')):
+
   def resolve(self, test_enabled):
     if test_enabled:
       return repr(self)
@@ -141,57 +152,58 @@ class Path(RecipeConfigType):
   object.
   """
 
-  def __init__(self, base, *pieces, **kwargs):
-    """Creates a Path
+  def __init__(self,
+               base: BasePath,
+               *pieces: str,
+               platform_ext: Optional[Dict[str, str]] = None):
+    """Creates a Path.
 
     Args:
-      base (str) - The 'name' of a base path, to be filled in at recipe runtime
+      base: The 'name' of a base path, to be filled in at recipe runtime
         by the 'path' recipe module.
-      pieces (tuple(str)) - The components of the path relative to base. These
-        pieces must be non-relative (i.e. no '..' or '.', etc. as a piece).
-
-    Kwargs:
-      platform_ext (dict(str, str)) - A mapping from platform name (as defined
-        by the 'platform' module), to a suffix for the path.
+      *pieces: The components of the path relative to base. These pieces must
+        be non-relative (i.e. no '..' or '.', etc. as a piece).
+      platform_ext: A mapping from platform name (as defined by the 'platform'
+        module), to a suffix for the path.
     """
-    super(Path, self).__init__()
+    super().__init__()
     assert isinstance(base, BasePath), base
-    assert all(isinstance(x, basestring) for x in pieces), pieces
+    assert all(isinstance(x, str) for x in pieces), pieces
     assert not any(x in ('..', '/', '\\') for x in pieces)
     pieces = [p for p in pieces if p != '.']
 
     self._base = base
-    self._pieces = pieces if isinstance(pieces, tuple) else tuple(pieces)
-    self._platform_ext = kwargs.get('platform_ext', {})
+    self._pieces = tuple(pieces)
+    self._platform_ext = platform_ext or {}
 
   @property
-  def base(self):
+  def base(self) -> BasePath:
     return self._base
 
   @property
-  def pieces(self):
+  def pieces(self) -> Tuple[str]:
     return self._pieces
 
   @property
-  def platform_ext(self):
+  def platform_ext(self) -> Dict[str, str]:
     return self._platform_ext
 
-  def __eq__(self, other):
+  def __eq__(self, other: 'Path') -> bool:
     return (self.base == other.base and
             self.pieces == other.pieces and
             self.platform_ext == other.platform_ext)
 
-  def __hash__(self):
+  def __hash__(self) -> int:
     return hash((
         self.base,
         self.pieces,
         tuple(sorted(self.platform_ext.items())),
     ))
 
-  def __ne__(self, other):
+  def __ne__(self, other: Any) -> bool:
     return not self == other
 
-  def __lt__(self, other):
+  def __lt__(self, other: 'Path') -> bool:
     if self.base != other.base:
       return self.base < other.base
     elif self.pieces != other.pieces:
@@ -200,36 +212,34 @@ class Path(RecipeConfigType):
         sorted(self.platform_ext.items()) < sorted(other.platform_ext.items())
     )
 
-  def __truediv__(self, piece):
+  def __truediv__(self, piece: str) -> 'Path':
     """Adds the shorthand '/'-operator for .join(), returning a new path."""
     return self.join(piece)
 
-  def __div__(self, piece):
-    # Same as __truediv__, but for python 2.
-    return self.__truediv__(piece)
-
-  def join(self, *pieces, **kwargs):
+  def join(self,
+           *pieces: str,
+           platform_ext: Optional[Dict[str, str]] = None) -> 'Path':
     """Appends *pieces to this Path, returning a new Path.
 
     Empty values ('', None) in pieces will be omitted.
 
     Args:
-      pieces (tuple(str)) - The components of the path relative to base. These
-        pieces must be non-relative (i.e. no '..' as a piece).
+      pieces: The components of the path relative to base. These pieces must be
+        non-relative (i.e. no '..' as a piece).
+      platform_ext: A mapping from platform name (as defined by the 'platform'
+        module), to a suffix for the path.
 
-    Kwargs:
-      platform_ext (dict(str, str)) - A mapping from platform name (as defined
-        by the 'platform' module), to a suffix for the path.
-
-    Returns (Path) - the new Path.
+    Returns:
+      The new Path.
     """
-    if not pieces and not kwargs:
+    if not pieces and not platform_ext:
       return self
-    kwargs.setdefault('platform_ext', self.platform_ext)
-    return Path(self.base, *[p for p in chain(self.pieces, pieces) if p],
-                **kwargs)
+    return Path(
+        self.base,
+        *[p for p in itertools.chain(self.pieces, pieces) if p],
+        platform_ext=platform_ext or self.platform_ext)
 
-  def is_parent_of(self, child):
+  def is_parent_of(self, child: 'Path') -> bool:
     """True if |child| is in a subdirectory of this path."""
     # Assumes base paths are not nested.
     # TODO(vadimsh): We should not rely on this assumption.
@@ -240,15 +250,29 @@ class Path(RecipeConfigType):
       return False
     return child.pieces[:len(self.pieces)] == self.pieces
 
-  def __repr__(self):
-    s = "Path(%r" % (self.base,)
+  def separate(self, separator: str) -> None:
+    """Breaks apart any pieces of self.pieces containing the separator.
+
+    Example: If self.pieces is ('foo', 'bar/baz') and separator='/', then
+    self.pieces will be transformed into ('foo', 'bar', 'baz'). This allows for
+    more accurate comparisons, like equality or parenthood.
+
+    Args:
+      separator: The file separator character for this platform: '/' for POSIX,
+        '\\' for Windows. Usually fetched via api.path.sep.
+    """
+    self._pieces = sum((tuple(piece.split(separator)) for piece in self.pieces),
+                       start=())
+
+  def __repr__(self) -> str:
+    s = 'Path(%r' % (self.base,)
     if self.pieces:
-      s += ", %s" % ", ".join(repr(x) for x in self.pieces)
+      s += ', %s' % ', '.join(repr(x) for x in self.pieces)
 
     if self.platform_ext:
       platform_exts = []
       for k, v in sorted(self.platform_ext.items()):
-        platform_exts.append("%s=%s" % (k, repr(v)))
-      s += ", platform_exts=(%s)" % ", ".join(repr(x) for x in platform_exts)
+        platform_exts.append('%s=%s' % (k, repr(v)))
+      s += ', platform_exts=(%s)' % ', '.join(repr(x) for x in platform_exts)
 
-    return s + ")"
+    return s + ')'

@@ -34,20 +34,17 @@ There are other anchor points which can be defined (e.g. by the
 documentation.
 """
 
-from future.utils import iteritems
-
 import collections
+import copy
 import errno
 import itertools
 import os
 import re
-import sys
 import tempfile
+from typing import Callable, Optional, Tuple, Union
 
 from recipe_engine import recipe_api
 from recipe_engine import config_types
-
-_PY2 = sys.version_info.major == 2
 
 FILE = 'FILE'
 DIRECTORY = 'DIRECTORY'
@@ -68,7 +65,7 @@ def PathToString(api, test):
   return PathToString_inner
 
 
-class path_set(object):
+class path_set:
   """Implements a set which contains all the parents folders of added
   folders."""
 
@@ -115,7 +112,7 @@ class path_set(object):
     for p in self._paths:
       if self._is_contained_in(p, source, match_root=True):
         to_add[p.replace(source, dest)] = self._paths[p]
-    for path, kind in iteritems(to_add):
+    for path, kind in to_add.items():
       self.add(path, kind)
 
   def remove(self, path, filt):
@@ -140,7 +137,7 @@ class path_set(object):
     return self._paths[path]
 
 
-class fake_path(object):
+class fake_path:
   """Standin for os.path when we're in test mode.
 
   This class simulates the os.path interface exposed by PathApi, respecting the
@@ -238,7 +235,7 @@ class PathApi(recipe_api.RecipeApi):
     }
 
   def __init__(self, path_properties, **kwargs):
-    super(PathApi, self).__init__(**kwargs)
+    super().__init__(**kwargs)
     config_types.Path.set_tostring_fn(PathToString(self, self._test_data))
     config_types.NamedBasePath.set_path_api(self)
 
@@ -270,14 +267,11 @@ class PathApi(recipe_api.RecipeApi):
     return value
 
   def _ensure_dir(self, path):  # pragma: no cover
-    if _PY2:
-      try:
-        os.makedirs(path)
-      except os.error as ex:
-        if ex.errno != errno.EEXIST:
-          raise
-    else:
-      os.makedirs(path, exist_ok=True)
+    try:
+      os.makedirs(path)
+    except os.error as ex:
+      if ex.errno != errno.EEXIST:
+        raise
 
   def _split_path(self, path):  # pragma: no cover
     """Relative or absolute path -> tuple of components."""
@@ -440,12 +434,23 @@ class PathApi(recipe_api.RecipeApi):
     sub_path = abs_string_path[len(sPath):].strip(self.sep)
     return path.join(*sub_path.split(self.sep))
 
-  def __contains__(self, pathname):
+  def __contains__(self, pathname: str) -> bool:
     return any(
         path_set.get(pathname)
         for path_set in (self.c.dynamic_paths, self.c.base_paths))
 
-  def __setitem__(self, pathname, path):
+  def __setitem__(self, pathname: str, path: config_types.Path) -> None:
+    """Sets an anchor path.
+
+    Args:
+      pathname: The name by which this path can be fetched.
+      path: The new value for this pathname.
+
+    Raises:
+      AssertionError: If path is not a config_types.Path.
+      AssertionError: If pathname is not declared as a dynamic path in config.
+      AssertionError: If path is not based on a BasePath.
+    """
     assert isinstance(path, config_types.Path), (
         'Setting dynamic path to something other than a Path: %r' % path)
     assert pathname in self.c.dynamic_paths, (
@@ -454,16 +459,16 @@ class PathApi(recipe_api.RecipeApi):
         'Dynamic path values must be based on a base_path' % path.base)
     self.c.dynamic_paths[pathname] = path
 
-  def get(self, name, default=None):
-    """Gets the base path named `name`. See module docstring for more
-    information."""
+  def get(self,
+          name: str,
+          default: Optional[config_types.Path] = None) -> config_types.Path:
+    """Gets the base path named `name`. See module docstring for more info."""
     if name in self.c.base_paths or name in self.c.dynamic_paths:
       return config_types.Path(config_types.NamedBasePath(name))
     return default
 
-  def __getitem__(self, name):
-    """Gets the base path named `name`. See module docstring for more
-    information."""
+  def __getitem__(self, name: str) -> config_types.Path:
+    """Gets the base path named `name`. See module docstring for more info."""
     result = self.get(name)
     if not result:
       raise KeyError('Unknown path: %s' % name)
@@ -471,21 +476,21 @@ class PathApi(recipe_api.RecipeApi):
 
   @property
   def pardir(self):
-    """Equivalent to os.path.pardir."""
+    """Equivalent to os.pardir."""
     return self._path_mod.pardir
 
   @property
-  def sep(self):
-    """Equivalent to os.path.sep."""
+  def sep(self) -> str:
+    """Equivalent to os.sep."""
     return self._path_mod.sep
 
   @property
-  def pathsep(self):
-    """Equivalent to os.path.pathsep."""
+  def pathsep(self) -> str:
+    """Equivalent to os.pathsep."""
     return self._path_mod.pathsep
 
   def abspath(self, path):
-    """Equivalent to os.path.abspath."""
+    """Equivalent to os.abspath."""
     return self._path_mod.abspath(str(path))
 
   def basename(self, path):
@@ -547,7 +552,9 @@ class PathApi(recipe_api.RecipeApi):
     # return tuple as strings.
     return (dirname, basename)
 
-  def splitext(self, path):
+  def splitext(
+      self, path: Union[config_types.Path, str]
+  ) -> Tuple[Union[config_types.Path, str], str]:
     """For "foo/bar.baz", return ("foo/bar", ".baz").
 
     This corresponds to os.path.splitext().
@@ -556,9 +563,10 @@ class PathApi(recipe_api.RecipeApi):
     argument.
 
     Args:
-      path (Path or str): path to split into name and extension
+      path: Path to split into name and extension
 
-    Returns (name, extension_including_dot).
+    Returns:
+      (name, extension_including_dot).
     """
     name, ext = self._path_mod.splitext(str(path))
     if isinstance(path, config_types.Path):
@@ -617,31 +625,71 @@ class PathApi(recipe_api.RecipeApi):
     """
     return self._path_mod.isfile(str(path))
 
-  def mock_add_paths(self, path, kind=FILE):
+  def mock_add_paths(self, path: config_types.Path, kind: str = FILE) -> None:
     """For testing purposes, mark that |path| exists."""
     if self._test_data.enabled:
       self._path_mod.mock_add_paths(path, kind)
 
-  def mock_add_file(self, path):
+  def mock_add_file(self, path: config_types.Path) -> None:
     """For testing purposes, mark that file |path| exists."""
     self.mock_add_paths(path, FILE)
 
-  def mock_add_directory(self, path):
-    """For testing purposes, mark that directory |path| exists."""
+  def mock_add_directory(self, path: config_types.Path) -> None:
+    """For testing purposes, mark that file |path| exists."""
     self.mock_add_paths(path, DIRECTORY)
 
-  def mock_copy_paths(self, source, dest):
+  def mock_copy_paths(self, source: config_types.Path,
+                      dest: config_types.Path) -> None:
     """For testing purposes, copy |source| to |dest|."""
     if self._test_data.enabled:
       self._path_mod.mock_copy_paths(source, dest)
 
-  def mock_remove_paths(self, path, filt=lambda p: True):
-    """For testing purposes, assert that |path| doesn't exist.
+  def mock_remove_paths(
+      self,
+      path: config_types.Path,
+      should_remove: Callable[[str], bool] = lambda p: True) -> None:
+    """For testing purposes, mark that |path| doesn't exist.
 
     Args:
-      * path (str|Path): The path to remove.
-      * filt (func[str] bool): Called for every candidate path. Return
-        True to remove this path.
+      path: The path to remove.
+      should_remove: Called for every candidate path. Return True to remove this
+        path.
     """
     if self._test_data.enabled:
-      self._path_mod.mock_remove_paths(path, filt)
+      self._path_mod.mock_remove_paths(path, should_remove)
+
+  def separate(self, path: config_types.Path) -> None:
+    """Separate a path's pieces in-place with this platform's separator char."""
+    path.separate(self.sep)
+
+  def eq(self, path1: config_types.Path, path2: config_types.Path) -> bool:
+    """Check whether path1 points to the same path as path2.
+
+    Under most circumstances, path equality is checked via `path1 == path2`.
+    However, if the paths are constructed via differently joined dirs, such as
+    ('foo' / 'bar') vs. ('foo/bar'), that doesn't work. This method addresses
+    that problem by creating copies of the paths, and then separating them
+    according to self.sep. The original paths are not modified.
+    """
+    path1_copy = copy.deepcopy(path1)
+    path2_copy = copy.deepcopy(path2)
+    self.separate(path1_copy)
+    self.separate(path2_copy)
+    return path1_copy == path2_copy
+
+  def is_parent_of(self, parent: config_types.Path,
+                   child: config_types.Path) -> bool:
+    """Check whether child is contained within parent.
+
+    Under most circumstances, this would be checked via
+    `parent.is_parent_of(child)`. However, if the paths are constructed via
+    differently joined dirs, such as ('foo', 'bar') vs. ('foo/bar', 'baz.txt'),
+    that doesn't work. This method addresses that problem by creating copies of
+    the paths, and then separating them according to self.sep. The original
+    paths are not modified.
+    """
+    parent_copy = copy.deepcopy(parent)
+    child_copy = copy.deepcopy(child)
+    self.separate(parent_copy)
+    self.separate(child_copy)
+    return parent_copy.is_parent_of(child_copy)

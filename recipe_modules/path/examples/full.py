@@ -229,6 +229,19 @@ def RunSteps(api):
   assert bar < foo
   assert not (foo < bar)
 
+  slashy_path = api.path['start_dir'].join(f'foo{api.path.sep}bar')
+  separated_path = api.path['start_dir'].join('foo', 'bar')
+  assert str(slashy_path) == str(separated_path)
+  assert slashy_path != separated_path  # Not desired, but true.
+  assert api.path.eq(slashy_path, separated_path)
+  assert slashy_path != separated_path  # eq() didn't modify the paths.
+
+  slashy_file = api.path['start_dir'].join(
+      f'foo{api.path.sep}bar{api.path.sep}baz.txt')
+  assert not separated_path.is_parent_of(slashy_file)  # Again, not desired.
+  assert api.path.is_parent_of(separated_path, slashy_file)
+  assert not separated_path.is_parent_of(slashy_file)  # Again, not modified.
+
 
 def GenTests(api):
   for platform in ('linux', 'win', 'mac'):
