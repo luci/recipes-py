@@ -1,5 +1,9 @@
 [
   {
+    "cmd": [],
+    "name": "get_file"
+  },
+  {
     "cmd": [
       "vpython3",
       "-u",
@@ -13,7 +17,14 @@
       "--headers-json",
       "{\"Authorization\": \"thing\"}"
     ],
-    "name": "GET https://chromium.org"
+    "name": "get_file.GET https://chromium.org",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "get_text"
   },
   {
     "cmd": [
@@ -27,7 +38,10 @@
       "--outfile",
       "/path/to/tmp/"
     ],
-    "name": "GET http://chromium.org"
+    "name": "get_text.GET http://chromium.org",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -41,7 +55,14 @@
       "--outfile",
       "/path/to/tmp/"
     ],
-    "name": "GET http://chromium.org (2)"
+    "name": "get_text.GET http://chromium.org (2)",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "get_json"
   },
   {
     "cmd": [
@@ -57,8 +78,9 @@
       "--strip-prefix",
       "\")]}'\\n\""
     ],
-    "name": "GET https://chromium.googlesource.com/infra/infra?format=JSON",
+    "name": "get_json.GET https://chromium.googlesource.com/infra/infra?format=JSON",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output[output]@{@@@",
       "@@@STEP_LOG_LINE@json.output[output]@  \"is_json\": true@@@",
       "@@@STEP_LOG_LINE@json.output[output]@}@@@",
@@ -79,7 +101,17 @@
       "--strip-prefix",
       "\")]}'\\n\""
     ],
-    "name": "GET https://chromium.googlesource.com/infra/infra?format=JSON (2)"
+    "name": "get_json.GET https://chromium.googlesource.com/infra/infra?format=JSON (2)",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "errors",
+    "~followup_annotations": [
+      "@@@STEP_FAILURE@@@"
+    ]
   },
   {
     "cmd": [
@@ -95,7 +127,10 @@
       "--transient-retry",
       "4"
     ],
-    "name": "error"
+    "name": "errors.error",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -112,7 +147,10 @@
       "0"
     ],
     "infra_step": true,
-    "name": "infra error"
+    "name": "errors.infra error",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -126,8 +164,9 @@
       "--outfile",
       "/path/to/tmp/"
     ],
-    "name": "GET https://wrong.host.badssl.com/",
+    "name": "errors.GET https://wrong.host.badssl.com/",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_FAILURE@@@"
     ]
   },
@@ -143,8 +182,9 @@
       "--outfile",
       "/path/to/tmp/"
     ],
-    "name": "GET https://expired.badssl.com/",
+    "name": "errors.GET https://expired.badssl.com/",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_FAILURE@@@"
     ]
   },
