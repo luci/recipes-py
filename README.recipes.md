@@ -4096,7 +4096,7 @@ add this path to the named cache for their builder.
 
 Swarming bot ID executing this task.
 
-&mdash; **def [collect](/recipe_modules/swarming/api.py#1336)(self, name, tasks, output_dir=None, task_output_stdout='json', timeout=None, eager=False, verbose=False):**
+&mdash; **def [collect](/recipe_modules/swarming/api.py#1337)(self, name, tasks, output_dir=None, task_output_stdout='json', timeout=None, eager=False, verbose=False):**
 
 Waits on a set of Swarming tasks.
 
@@ -4127,7 +4127,7 @@ Swarming server executing this task.
 
 &mdash; **def [initialize](/recipe_modules/swarming/api.py#1222)(self):**
 
-&mdash; **def [list\_bots](/recipe_modules/swarming/api.py#1462)(self, step_name, dimensions=None, fields=None):**
+&mdash; **def [list\_bots](/recipe_modules/swarming/api.py#1463)(self, step_name, dimensions=None, fields=None):**
 
 List bots matching the given options.
 
@@ -4151,7 +4151,7 @@ Example:
     with api.swarming.on_path():
       # do your steps which require the swarming binary on path
 
-&mdash; **def [show\_request](/recipe_modules/swarming/api.py#1425)(self, name, task):**
+&mdash; **def [show\_request](/recipe_modules/swarming/api.py#1426)(self, name, task):**
 
 Retrieve the TaskRequest for a Swarming task.
 

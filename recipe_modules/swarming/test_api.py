@@ -106,19 +106,25 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
       task_names (seq[str]): A sequence of task names representing the tasks we
         want to trigger.
       initial_id (int): The beginning of the ID range.
-      resultdb (bool): If true, adds an invocation name to the trigger output.
+      resultdb (bool|seq[bool]): If true, adds an invocation name to the trigger
+        output. A sequence of bools can be passed to add an invocation on a
+        task-by-task basis.
     """
     start = self._task_id_count if initial_id is None else initial_id
     self._task_id_count += len(task_names)
+    if resultdb in (True, False):
+      resultdb = [resultdb] * len(task_names)
+    assert len(resultdb) == len(task_names)
     trigger_output = {'tasks': []}
-    for idx, name in enumerate(task_names, start=start):
+    for idx, (name, add_invocation) in enumerate(
+        zip(task_names, resultdb), start=start):
       task_output = {
         'task_id': '%d' % idx,
         'request': {
           'name': name,
         },
       }
-      if resultdb:
+      if add_invocation:
         task_output['task_result'] = {
           'resultdb_info': {
             'invocation': 'invocations/%d' % idx,

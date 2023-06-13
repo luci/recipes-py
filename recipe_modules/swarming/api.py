@@ -1315,7 +1315,8 @@ class SwarmingApi(recipe_api.RecipeApi):
         step_name,
         cmd,
         step_test_data=lambda: self.test_api.trigger(
-            task_names=tuple([req.name for req in requests]),))
+            task_names=tuple(req.name for req in requests),
+            resultdb=tuple(req.resultdb.enable for req in requests)))
     trigger_resp = step.json.output
 
     metadata_objs = []

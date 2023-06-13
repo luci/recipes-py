@@ -208,6 +208,18 @@ def GenTests(api):
 
   yield api.test('basic')
 
+  yield api.test(
+      'resultdb',
+      api.override_step_data(
+          'trigger 1 task', api.swarming.trigger(['recipes-go'],
+                                                 resultdb=True)))
+
+  yield api.test(
+      'no-resultdb',
+      api.override_step_data(
+          'trigger 1 task', api.swarming.trigger(['recipes-go'],
+                                                 resultdb=False)))
+
   states = {state.name : api.swarming.TaskState[state.name]
             for state in api.swarming.TaskState if state not in [
               api.swarming.TaskState.INVALID,
