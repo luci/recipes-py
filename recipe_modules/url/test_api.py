@@ -8,7 +8,7 @@ from recipe_engine import recipe_test_api
 
 class UrlTestApi(recipe_test_api.RecipeTestApi): # pragma: no cover
 
-  def _response(self, step_name, data, size, status_code, error_body):
+  def _response(self, step_name, data, size, status_code=200, error_body=None):
     step_data = [
         self.m.json.output({
           'status_code': status_code,
@@ -24,27 +24,23 @@ class UrlTestApi(recipe_test_api.RecipeTestApi): # pragma: no cover
   def error(self, step_name, status_code, body=None):
     body = body or 'HTTP Error (%d)' % (status_code,)
     return self._response(
-        step_name,
-        None,
-        len(body),
-        status_code,
-        body)
+        step_name=step_name,
+        data=None,
+        size=len(body),
+        status_code=status_code,
+        error_body=body)
 
   def text(self, step_name, v):
     return self._response(
-        step_name,
-        self.m.raw_io.output_text(v, name='output'),
-        len(v),
-        200,
-        None)
+        step_name=step_name,
+        data=self.m.raw_io.output_text(v, name='output'),
+        size=len(v))
 
   def json(self, step_name, obj):
     return self._response(
-        step_name,
-        self.m.json.output(obj, name='output'),
-        len(self.m.json.dumps(obj)),
-        200,
-        None)
+        step_name=step_name,
+        data=self.m.json.output(obj, name='output'),
+        size=len(self.m.json.dumps(obj)))
 
   def _get_step_test_data(self, status_cls, is_json, test_data):
     if test_data is None:

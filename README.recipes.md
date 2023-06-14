@@ -4410,7 +4410,7 @@ Raises:
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [get\_json](/recipe_modules/url/api.py#185)(self, url, step_name=None, headers=None, transient_retry=True, strip_prefix=None, log=False, default_test_data=None):**
+&mdash; **def [get\_json](/recipe_modules/url/api.py#195)(self, url, step_name=None, headers=None, transient_retry=True, strip_prefix=None, log=False, default_test_data=None):**
 
 GET data at given URL and writes it to file.
 
@@ -4436,7 +4436,7 @@ Raises:
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [get\_text](/recipe_modules/url/api.py#159)(self, url, step_name=None, headers=None, transient_retry=True, default_test_data=None):**
+&mdash; **def [get\_text](/recipe_modules/url/api.py#165)(self, url, step_name=None, headers=None, transient_retry=True, default_test_data=None):**
 
 GET data at given URL and writes it to file.
 

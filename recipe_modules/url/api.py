@@ -153,8 +153,14 @@ class UrlApi(recipe_api.RecipeApi):
       * HTTPError, InfraHTTPError: if the request failed.
       * ValueError: If the request was invalid.
     """
-    return self._get_step(url, path, step_name, headers, transient_retry,
-                          strip_prefix, False, '')
+    return self._get_step(
+        url=url,
+        path=path,
+        step_name=step_name,
+        headers=headers,
+        transient_retry=transient_retry,
+        strip_prefix=strip_prefix,
+        default_test_data='')
 
   def get_text(self, url, step_name=None, headers=None, transient_retry=True,
                default_test_data=None):
@@ -179,8 +185,12 @@ class UrlApi(recipe_api.RecipeApi):
       * ValueError: If the request was invalid.
     """
     assert isinstance(default_test_data, (type(None), str))
-    return self._get_step(url, None, step_name, headers, transient_retry,
-                          None, False, default_test_data)
+    return self._get_step(
+        url=url,
+        step_name=step_name,
+        headers=headers,
+        transient_retry=transient_retry,
+        default_test_data=default_test_data)
 
   def get_json(self, url, step_name=None, headers=None, transient_retry=True,
                strip_prefix=None, log=False, default_test_data=None):
@@ -208,12 +218,17 @@ class UrlApi(recipe_api.RecipeApi):
       * HTTPError, InfraHTTPError: if the request failed.
       * ValueError: If the request was invalid.
     """
-    as_json = 'log' if log else True
-    return self._get_step(url, None, step_name, headers, transient_retry,
-                          strip_prefix, as_json, default_test_data)
+    return self._get_step(
+        url=url,
+        step_name=step_name,
+        headers=headers,
+        transient_retry=transient_retry,
+        strip_prefix=strip_prefix,
+        as_json='log' if log else True,
+        default_test_data=default_test_data)
 
-  def _get_step(self, url, path, step_name, headers, transient_retry,
-                strip_prefix, as_json, default_test_data):
+  def _get_step(self, url, step_name, headers, transient_retry, path=None,
+                strip_prefix=None, as_json=False, default_test_data=None):
 
     step_name = step_name or 'GET %s' % url
     is_secure = self.validate_url(url)
@@ -258,7 +273,8 @@ class UrlApi(recipe_api.RecipeApi):
         step_name,
         ['vpython3', '-u', self.resource('pycurl.py')] + args,
         step_test_data=self.test_api._get_step_test_data(
-            self._PyCurlStatus, as_json, default_test_data))
+            status_cls=self._PyCurlStatus, is_json=as_json,
+            test_data=default_test_data))
 
     output = path
     if not output:
