@@ -60,6 +60,7 @@ class UrlApi(recipe_api.RecipeApi):
       Returns:
         If JSON, the unmarshalled JSON response object.
         If text, the result as a text string.
+        If raw, the result as a bytes object.
         If file, the output Path.
         On error, will be None.
       """
@@ -192,6 +193,37 @@ class UrlApi(recipe_api.RecipeApi):
         transient_retry=transient_retry,
         default_test_data=default_test_data)
 
+  def get_raw(self, url, step_name=None, headers=None, transient_retry=True,
+              default_test_data=None):
+    """GET data at given URL and writes it to file.
+
+    Args:
+      * url: URL to request.
+      * step_name: optional step name, 'GET <url>' by default.
+      * headers: a {header_name: value} dictionary for HTTP headers.
+      * transient_retry (bool or int): Determines how transient HTTP errorts
+          (>500) will be retried. If True (default), errors will be retried up
+          to 10 times. If False, no transient retries will occur. If an integer
+          is supplied, this is the number of transient retries to perform. All
+          retries have exponential backoff applied.
+      * default_test_data (str): If provided, use this as the text output when
+          testing if no overriding data is available.
+
+    Returns (UrlApi.Response): Response with the content as its output value.
+
+    Raises:
+      * HTTPError, InfraHTTPError: if the request failed.
+      * ValueError: If the request was invalid.
+    """
+    assert isinstance(default_test_data, (type(None), bytes))
+    return self._get_step(
+        url=url,
+        step_name=step_name,
+        headers=headers,
+        transient_retry=transient_retry,
+        default_test_data=default_test_data,
+        as_bytes=True)
+
   def get_json(self, url, step_name=None, headers=None, transient_retry=True,
                strip_prefix=None, log=False, default_test_data=None):
     """GET data at given URL and writes it to file.
@@ -228,7 +260,8 @@ class UrlApi(recipe_api.RecipeApi):
         default_test_data=default_test_data)
 
   def _get_step(self, url, step_name, headers, transient_retry, path=None,
-                strip_prefix=None, as_json=False, default_test_data=None):
+                strip_prefix=None, as_json=False, as_bytes=False,
+                default_test_data=None):
 
     step_name = step_name or 'GET %s' % url
     is_secure = self.validate_url(url)
@@ -247,6 +280,8 @@ class UrlApi(recipe_api.RecipeApi):
       # path is only passed in by the get_file variant
       # in this case, we should not use a placeholder
       args += ['--outfile', path]
+    elif as_bytes:
+      args += ['--outfile', self.m.raw_io.output(leak_to=path, name='output')]
     else:
       args += ['--outfile', self.m.raw_io.output_text(leak_to=path,
                                                       name='output')]
@@ -273,12 +308,13 @@ class UrlApi(recipe_api.RecipeApi):
         step_name,
         ['vpython3', '-u', self.resource('pycurl.py')] + args,
         step_test_data=self.test_api._get_step_test_data(
-            status_cls=self._PyCurlStatus, is_json=as_json,
+            status_cls=self._PyCurlStatus, is_json=as_json, is_bytes=as_bytes,
             test_data=default_test_data))
 
     output = path
     if not output:
       output_placeholder = (result.json.outputs if as_json
+                            else result.raw_io.outputs if as_bytes
                             else result.raw_io.output_texts)
       output = output_placeholder['output']
 

@@ -36,17 +36,24 @@ class UrlTestApi(recipe_test_api.RecipeTestApi): # pragma: no cover
         data=self.m.raw_io.output_text(v, name='output'),
         size=len(v))
 
+  def raw(self, step_name, v):
+    return self._response(
+        step_name=step_name,
+        data=self.m.raw_io.output(v, name='output'),
+        size=len(v))
+
   def json(self, step_name, obj):
     return self._response(
         step_name=step_name,
         data=self.m.json.output(obj, name='output'),
         size=len(self.m.json.dumps(obj)))
 
-  def _get_step_test_data(self, status_cls, is_json, test_data):
+  def _get_step_test_data(self, status_cls, is_json, is_bytes, test_data):
     if test_data is None:
       return None
 
     output_class = (self.m.json.output if is_json
+                    else self.m.raw_io.output if is_bytes
                     else self.m.raw_io.output_text)
     success_status = status_cls(
         status_code=200, success=True, size=len(test_data),

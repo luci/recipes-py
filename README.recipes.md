@@ -4385,7 +4385,7 @@ Methods for interacting with HTTP(s) URLs.
 
 #### **class [UrlApi](/recipe_modules/url/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
-&mdash; **def [get\_file](/recipe_modules/url/api.py#131)(self, url, path, step_name=None, headers=None, transient_retry=True, strip_prefix=None):**
+&mdash; **def [get\_file](/recipe_modules/url/api.py#132)(self, url, path, step_name=None, headers=None, transient_retry=True, strip_prefix=None):**
 
 GET data at given URL and writes it to file.
 
@@ -4410,7 +4410,7 @@ Raises:
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [get\_json](/recipe_modules/url/api.py#195)(self, url, step_name=None, headers=None, transient_retry=True, strip_prefix=None, log=False, default_test_data=None):**
+&mdash; **def [get\_json](/recipe_modules/url/api.py#227)(self, url, step_name=None, headers=None, transient_retry=True, strip_prefix=None, log=False, default_test_data=None):**
 
 GET data at given URL and writes it to file.
 
@@ -4436,7 +4436,7 @@ Raises:
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [get\_text](/recipe_modules/url/api.py#165)(self, url, step_name=None, headers=None, transient_retry=True, default_test_data=None):**
+&mdash; **def [get\_raw](/recipe_modules/url/api.py#196)(self, url, step_name=None, headers=None, transient_retry=True, default_test_data=None):**
 
 GET data at given URL and writes it to file.
 
@@ -4458,7 +4458,29 @@ Raises:
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [join](/recipe_modules/url/api.py#93)(self, \*parts):**
+&mdash; **def [get\_text](/recipe_modules/url/api.py#166)(self, url, step_name=None, headers=None, transient_retry=True, default_test_data=None):**
+
+GET data at given URL and writes it to file.
+
+Args:
+  * url: URL to request.
+  * step_name: optional step name, 'GET <url>' by default.
+  * headers: a {header_name: value} dictionary for HTTP headers.
+  * transient_retry (bool or int): Determines how transient HTTP errorts
+      (>500) will be retried. If True (default), errors will be retried up
+      to 10 times. If False, no transient retries will occur. If an integer
+      is supplied, this is the number of transient retries to perform. All
+      retries have exponential backoff applied.
+  * default_test_data (str): If provided, use this as the text output when
+      testing if no overriding data is available.
+
+Returns (UrlApi.Response): Response with the content as its output value.
+
+Raises:
+  * HTTPError, InfraHTTPError: if the request failed.
+  * ValueError: If the request was invalid.
+
+&mdash; **def [join](/recipe_modules/url/api.py#94)(self, \*parts):**
 
 Constructs a URL path from composite parts.
 
@@ -4467,7 +4489,7 @@ Args:
       will be stripped from intermediate strings to ensure that they join
       together. Trailing slashes will not be stripped from the last part.
 
-&mdash; **def [validate\_url](/recipe_modules/url/api.py#109)(self, v):**
+&mdash; **def [validate\_url](/recipe_modules/url/api.py#110)(self, v):**
 
 Validates that "v" is a valid URL.
 

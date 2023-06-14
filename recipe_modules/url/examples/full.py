@@ -48,6 +48,19 @@ def RunSteps(api):
     assert v.size == len(v.output)
     assert v.status_code == 200
 
+  with api.step.nest('get_raw'):
+    v = api.url.get_raw(TEST_HTTP_URL, default_test_data=b'will be overridden')
+    assert v.method == 'GET'
+    assert b'The Chromium Projects' in v.output
+    assert v.size == len(v.output)
+    assert v.status_code == 200
+
+    v = api.url.get_raw(TEST_HTTP_URL,
+                        default_test_data=b'The Chromium Projects')
+    assert b'The Chromium Projects' in v.output
+    assert v.size == len(v.output)
+    assert v.status_code == 200
+
   with api.step.nest('get_json'):
     v = api.url.get_json(TEST_JSON_URL, log=True,
                          strip_prefix=api.url.GERRIT_JSON_PREFIX)
@@ -102,6 +115,8 @@ def GenTests(api):
       api.test('basic') +
       api.url.text(name('get_text', TEST_HTTP_URL),
                    '<html>The Chromium Projects</html>') +
+      api.url.raw(name('get_raw', TEST_HTTP_URL),
+                  b'<html>The Chromium Projects</html>') +
       api.url.json(name('get_json', TEST_JSON_URL), {'is_json': True}) +
       api.url.error('errors.error', 500, body='500 Internal Server Error') +
       api.url.error('errors.infra error', 500, body='500 Internal Server Error')
