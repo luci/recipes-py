@@ -129,7 +129,7 @@ class UrlApi(recipe_api.RecipeApi):
     return u.scheme.lower() == 'https'
 
   def get_file(self, url, path, step_name=None, headers=None,
-               transient_retry=True, strip_prefix=None, timeout=None):
+               transient_retry=True, strip_prefix=None):
     """GET data at given URL and writes it to file.
 
     Args:
@@ -145,7 +145,6 @@ class UrlApi(recipe_api.RecipeApi):
       * strip_prefix (str or None): If not None, this prefix must be present at
           the beginning of the response, and will be stripped from the resulting
           content (e.g., GERRIT_JSON_PREFIX).
-      * timeout: Timeout (see step.__call__).
 
     Returns (UrlApi.Response):
       Response with "path" as its "output" value.
@@ -155,10 +154,10 @@ class UrlApi(recipe_api.RecipeApi):
       * ValueError: If the request was invalid.
     """
     return self._get_step(url, path, step_name, headers, transient_retry,
-                          strip_prefix, False, timeout, '')
+                          strip_prefix, False, '')
 
   def get_text(self, url, step_name=None, headers=None, transient_retry=True,
-               timeout=None, default_test_data=None):
+               default_test_data=None):
     """GET data at given URL and writes it to file.
 
     Args:
@@ -170,7 +169,6 @@ class UrlApi(recipe_api.RecipeApi):
           to 10 times. If False, no transient retries will occur. If an integer
           is supplied, this is the number of transient retries to perform. All
           retries have exponential backoff applied.
-      * timeout: Timeout (see step.__call__).
       * default_test_data (str): If provided, use this as the text output when
           testing if no overriding data is available.
 
@@ -182,11 +180,10 @@ class UrlApi(recipe_api.RecipeApi):
     """
     assert isinstance(default_test_data, (type(None), str))
     return self._get_step(url, None, step_name, headers, transient_retry,
-                          None, False, timeout, default_test_data)
+                          None, False, default_test_data)
 
   def get_json(self, url, step_name=None, headers=None, transient_retry=True,
-               strip_prefix=None, log=False, timeout=None,
-               default_test_data=None):
+               strip_prefix=None, log=False, default_test_data=None):
     """GET data at given URL and writes it to file.
 
     Args:
@@ -202,7 +199,6 @@ class UrlApi(recipe_api.RecipeApi):
           the beginning of the response, and will be stripped from the resulting
           content (e.g., GERRIT_JSON_PREFIX).
       * log (bool): If True, emit the JSON content as a log.
-      * timeout: Timeout (see step.__call__).
       * default_test_data (jsonish): If provided, use this as the unmarshalled
           JSON result when testing if no overriding data is available.
 
@@ -214,10 +210,10 @@ class UrlApi(recipe_api.RecipeApi):
     """
     as_json = 'log' if log else True
     return self._get_step(url, None, step_name, headers, transient_retry,
-                          strip_prefix, as_json, timeout, default_test_data)
+                          strip_prefix, as_json, default_test_data)
 
   def _get_step(self, url, path, step_name, headers, transient_retry,
-                strip_prefix, as_json, timeout, default_test_data):
+                strip_prefix, as_json, default_test_data):
 
     step_name = step_name or 'GET %s' % url
     is_secure = self.validate_url(url)
@@ -261,7 +257,6 @@ class UrlApi(recipe_api.RecipeApi):
     result = self.m.step(
         step_name,
         ['vpython3', '-u', self.resource('pycurl.py')] + args,
-        timeout=timeout,
         step_test_data=self.test_api._get_step_test_data(
             self._PyCurlStatus, as_json, default_test_data))
 

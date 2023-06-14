@@ -4385,7 +4385,7 @@ Methods for interacting with HTTP(s) URLs.
 
 #### **class [UrlApi](/recipe_modules/url/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
-&mdash; **def [get\_file](/recipe_modules/url/api.py#131)(self, url, path, step_name=None, headers=None, transient_retry=True, strip_prefix=None, timeout=None):**
+&mdash; **def [get\_file](/recipe_modules/url/api.py#131)(self, url, path, step_name=None, headers=None, transient_retry=True, strip_prefix=None):**
 
 GET data at given URL and writes it to file.
 
@@ -4402,7 +4402,6 @@ Args:
   * strip_prefix (str or None): If not None, this prefix must be present at
       the beginning of the response, and will be stripped from the resulting
       content (e.g., GERRIT_JSON_PREFIX).
-  * timeout: Timeout (see step.__call__).
 
 Returns (UrlApi.Response):
   Response with "path" as its "output" value.
@@ -4411,7 +4410,7 @@ Raises:
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [get\_json](/recipe_modules/url/api.py#187)(self, url, step_name=None, headers=None, transient_retry=True, strip_prefix=None, log=False, timeout=None, default_test_data=None):**
+&mdash; **def [get\_json](/recipe_modules/url/api.py#185)(self, url, step_name=None, headers=None, transient_retry=True, strip_prefix=None, log=False, default_test_data=None):**
 
 GET data at given URL and writes it to file.
 
@@ -4428,7 +4427,6 @@ Args:
       the beginning of the response, and will be stripped from the resulting
       content (e.g., GERRIT_JSON_PREFIX).
   * log (bool): If True, emit the JSON content as a log.
-  * timeout: Timeout (see step.__call__).
   * default_test_data (jsonish): If provided, use this as the unmarshalled
       JSON result when testing if no overriding data is available.
 
@@ -4438,7 +4436,7 @@ Raises:
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [get\_text](/recipe_modules/url/api.py#160)(self, url, step_name=None, headers=None, transient_retry=True, timeout=None, default_test_data=None):**
+&mdash; **def [get\_text](/recipe_modules/url/api.py#159)(self, url, step_name=None, headers=None, transient_retry=True, default_test_data=None):**
 
 GET data at given URL and writes it to file.
 
@@ -4451,7 +4449,6 @@ Args:
       to 10 times. If False, no transient retries will occur. If an integer
       is supplied, this is the number of transient retries to perform. All
       retries have exponential backoff applied.
-  * timeout: Timeout (see step.__call__).
   * default_test_data (str): If provided, use this as the text output when
       testing if no overriding data is available.
 
