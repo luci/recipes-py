@@ -4,10 +4,12 @@
 
 import datetime
 
+from recipe_engine.recipe_api import StepFailure
 from recipe_engine.post_process import StepSuccess, DoesNotRun, DropExpectation
 from RECIPE_MODULES.recipe_engine.time.api import exponential_retry
 
 DEPS = [
+    'assertions',
     'runtime',
     'step',
     'time',
@@ -70,6 +72,12 @@ def RunSteps(api):
       helper_fn_that_needs_retries("")
     except:
       raise
+
+  with api.time.timeout(seconds=100.5):
+    api.step('timeout step', ['echo', '"hello"'])
+
+  with api.assertions.assertRaises(StepFailure):
+    api.time.timeout(seconds=-1.)
 
 
 def GenTests(api):

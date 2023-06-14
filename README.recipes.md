@@ -4198,7 +4198,7 @@ Returns:
   A list of TaskRequestMetadata objects.
 ### *recipe_modules* / [time](/recipe_modules/time)
 
-[DEPS](/recipe_modules/time/__init__.py#5): [random](#recipe_modules-random), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/time/__init__.py#5): [context](#recipe_modules-context), [random](#recipe_modules-random), [step](#recipe_modules-step)
 
 
 Allows mockable access to the current time.
@@ -4298,6 +4298,17 @@ Args:
 &mdash; **def [time](/recipe_modules/time/api.py#188)(self):**
 
 Returns current timestamp as a float number of seconds since epoch.
+
+&mdash; **def [timeout](/recipe_modules/time/api.py#218)(self, seconds: float):**
+
+Provides a context that times out after the given number of seconds.
+
+Usage:
+with api.time.timeout(45):
+  # your steps
+
+Look at the "deadline" section of https://chromium.googlesource.com/infra/luci/luci-py/+/HEAD/client/LUCI_CONTEXT.md
+to see how this works.
 
 &mdash; **def [utcnow](/recipe_modules/time/api.py#201)(self):**
 
@@ -5512,12 +5523,12 @@ This file is a recipe demonstrating reading triggers of the current build.
 &mdash; **def [RunSteps](/recipe_modules/swarming/tests/task_request_from_jsonish.py#13)(api):**
 ### *recipes* / [time:examples/full](/recipe_modules/time/examples/full.py)
 
-[DEPS](/recipe_modules/time/examples/full.py#10): [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/time/examples/full.py#11): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
 
-&mdash; **def [RunSteps](/recipe_modules/time/examples/full.py#35)(api):**
+&mdash; **def [RunSteps](/recipe_modules/time/examples/full.py#37)(api):**
 
-&emsp; **@exponential_retry(5, datetime.timedelta(seconds=1))**<br>&mdash; **def [helper\_fn\_that\_needs\_retries](/recipe_modules/time/examples/full.py#29)(api):**
+&emsp; **@exponential_retry(5, datetime.timedelta(seconds=1))**<br>&mdash; **def [helper\_fn\_that\_needs\_retries](/recipe_modules/time/examples/full.py#31)(api):**
 ### *recipes* / [time:examples/jitter](/recipe_modules/time/examples/jitter.py)
 
 [DEPS](/recipe_modules/time/examples/jitter.py#10): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [time](#recipe_modules-time)
