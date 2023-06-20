@@ -33,6 +33,7 @@ ALLOWED_MODULES = [
     r'json',
     r'math',
     r're',
+    r'string',
     r'textwrap',
     r'urlparse',
     r'zlib',

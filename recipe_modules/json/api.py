@@ -5,7 +5,6 @@
 """Methods for producing and consuming JSON."""
 
 import functools
-import collections
 import contextlib
 import json
 
@@ -106,7 +105,7 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
     invalid_error = ''
     ret = None
     try:
-      ret = loads(raw_data, object_pairs_hook=collections.OrderedDict)
+      ret = loads(raw_data)
       valid = True
     except ValueError as ex:
       invalid_error = str(ex)
@@ -119,7 +118,12 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
         with contextlib.closing(recipe_util.StringListIO()) as listio:
           json.dump(ret, listio,
                     indent=2,
-                    sort_keys=True,
+                    # In python3 dictionaries are defined to use insertion
+                    # order, and so we don't need to sort keys for determinism.
+                    #
+                    # By not sorting, it means that the output on the UI will
+                    # reflect ~exactly what the program output.
+                    # sort_keys = True
                     # Python 2 default separators, see comment in `dumps` func.
                     separators=(', ', ': '))
         presentation.logs[self.label] = listio.lines
@@ -134,7 +138,11 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
 class JsonApi(recipe_api.RecipeApi):
   @staticmethod
   def dumps(*args, **kwargs):
-    """Works like `json.dumps`."""
+    """Works like `json.dumps`.
+
+    By default this sorts dictionary keys (see discussion in `input()`), but you
+    can pass sort_keys=False to override this behavior.
+    """
     return dumps(*args, **kwargs)
 
   @staticmethod
@@ -156,9 +164,16 @@ class JsonApi(recipe_api.RecipeApi):
       return False
 
   @recipe_util.returns_placeholder
-  def input(self, data):
-    """A placeholder which will expand to a file path containing <data>."""
-    return self.m.raw_io.input_text(self.dumps(data), '.json')
+  def input(self, data, sort_keys=True):
+    """A placeholder which will expand to a file path containing <data>.
+
+    By default this sorts dictionaries in `data` to make this output
+    deterministic. In python3, dictionary insertion order is preserved per-spec,
+    so this is no longer necessary for determinism, and in some cases (such as
+    SPDX), the 'pretty' output is in non-alphabetical order. The default remains
+    `True`, however, to avoid breaking all downstream tests.
+    """
+    return self.m.raw_io.input_text(self.dumps(data, sort_keys=sort_keys), '.json')
 
   @recipe_util.returns_placeholder
   def output(self, add_json_log=True, name=None, leak_to=None):

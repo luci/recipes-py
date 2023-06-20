@@ -371,7 +371,8 @@ class FileApi(recipe_api.RecipeApi):
         name, source, test_data=test_data_text, include_log=include_log)
     return self.m.json.loads(text)
 
-  def write_json(self, name, dest, data, indent=None, include_log=True):
+  def write_json(self, name, dest, data, indent=None, include_log=True,
+                 sort_keys=True):
     """Write the given json serializable `data` to `dest`.
 
     Args:
@@ -381,10 +382,11 @@ class FileApi(recipe_api.RecipeApi):
       * indent (None|int|str): The indent of the written JSON. See
         https://docs.python.org/3/library/json.html#json.dump for more details.
       * include_log (bool): Include step log of written json.
+      * sort_keys (bool): Sort they keys in `data`. See api.json.input().
 
     Raises: file.Error.
     """
-    text_data = self.m.json.dumps(data, indent=indent)
+    text_data = self.m.json.dumps(data, indent=indent, sort_keys=sort_keys)
     self.write_text(name, dest, text_data, include_log=include_log)
 
   def read_proto(self,

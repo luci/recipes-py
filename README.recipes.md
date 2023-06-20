@@ -135,6 +135,7 @@
   * [golang:examples/full](#recipes-golang_examples_full)
   * [json:examples/full](#recipes-json_examples_full)
   * [json:tests/add_json_log](#recipes-json_tests_add_json_log)
+  * [json:tests/unsorted](#recipes-json_tests_unsorted) &mdash; Test to assert that sort_keys=False preserves insertion order.
   * [led:tests/full](#recipes-led_tests_full)
   * [led:tests/led_real_build](#recipes-led_tests_led_real_build)
   * [led:tests/no_exist](#recipes-led_tests_no_exist)
@@ -1625,7 +1626,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#564)(self, name, dest, mode=511):**
+&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#566)(self, name, dest, mode=511):**
 
 Ensures that `dest` exists and is a directory.
 
@@ -1654,7 +1655,7 @@ Returns (str):
 Raises:
   file.Error and ValueError if passed paths input is not str or Path.
 
-&mdash; **def [filesizes](/recipe_modules/file/api.py#580)(self, name, files, test_data=None):**
+&mdash; **def [filesizes](/recipe_modules/file/api.py#582)(self, name, files, test_data=None):**
 
 Returns list of filesizes for the given files.
 
@@ -1664,7 +1665,7 @@ Args:
 
 Returns list[int], size of each file in bytes.
 
-&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#720)(self, name, path):**
+&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#722)(self, name, path):**
 
 Flattens singular directories, starting at path.
 
@@ -1693,7 +1694,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [glob\_paths](/recipe_modules/file/api.py#462)(self, name, source, pattern, include_hidden=False, test_data=()):**
+&mdash; **def [glob\_paths](/recipe_modules/file/api.py#464)(self, name, source, pattern, include_hidden=False, test_data=()):**
 
 Performs glob expansion on `pattern`.
 
@@ -1723,7 +1724,7 @@ Returns (list[Path]): All paths found.
 
 Raises: file.Error.
 
-&mdash; **def [listdir](/recipe_modules/file/api.py#524)(self, name, source, recursive=False, test_data=(), include_log=True):**
+&mdash; **def [listdir](/recipe_modules/file/api.py#526)(self, name, source, recursive=False, test_data=(), include_log=True):**
 
 Lists all files inside a directory.
 
@@ -1773,7 +1774,7 @@ Returns (object): The content of the file.
 
 Raise file.Error
 
-&mdash; **def [read\_proto](/recipe_modules/file/api.py#390)(self, name, source, msg_class, codec, test_proto=None, include_log=True, encoding_kwargs=None):**
+&mdash; **def [read\_proto](/recipe_modules/file/api.py#392)(self, name, source, msg_class, codec, test_proto=None, include_log=True, encoding_kwargs=None):**
 
 Reads a file into a proto message.
 
@@ -1817,7 +1818,7 @@ Returns (str): The content of the file.
 
 Raises: file.Error
 
-&mdash; **def [remove](/recipe_modules/file/api.py#509)(self, name, source):**
+&mdash; **def [remove](/recipe_modules/file/api.py#511)(self, name, source):**
 
 Removes a file.
 
@@ -1829,7 +1830,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmcontents](/recipe_modules/file/api.py#619)(self, name, source):**
+&mdash; **def [rmcontents](/recipe_modules/file/api.py#621)(self, name, source):**
 
 Similar to rmtree, but removes only contents not the directory.
 
@@ -1844,7 +1845,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmglob](/recipe_modules/file/api.py#637)(self, name, source, pattern, recursive=True, include_hidden=True):**
+&mdash; **def [rmglob](/recipe_modules/file/api.py#639)(self, name, source, pattern, recursive=True, include_hidden=True):**
 
 Removes all entries in `source` matching the glob `pattern`.
 
@@ -1874,7 +1875,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmtree](/recipe_modules/file/api.py#602)(self, name, source):**
+&mdash; **def [rmtree](/recipe_modules/file/api.py#604)(self, name, source):**
 
 Recursively removes a directory.
 
@@ -1888,7 +1889,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [symlink](/recipe_modules/file/api.py#682)(self, name, source, linkname):**
+&mdash; **def [symlink](/recipe_modules/file/api.py#684)(self, name, source, linkname):**
 
 Creates a symlink on the local filesystem.
 
@@ -1901,14 +1902,14 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#699)(self, root):**
+&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#701)(self, root):**
 
 Creates a SymlinkTree, given a root directory.
 
 Args:
   * root (Path): root of a tree of symlinks.
 
-&mdash; **def [truncate](/recipe_modules/file/api.py#707)(self, name, path, size_mb=100):**
+&mdash; **def [truncate](/recipe_modules/file/api.py#709)(self, name, path, size_mb=100):**
 
 Creates an empty file with path and size_mb on the local filesystem.
 
@@ -1919,7 +1920,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [write\_json](/recipe_modules/file/api.py#374)(self, name, dest, data, indent=None, include_log=True):**
+&mdash; **def [write\_json](/recipe_modules/file/api.py#374)(self, name, dest, data, indent=None, include_log=True, sort_keys=True):**
 
 Write the given json serializable `data` to `dest`.
 
@@ -1930,10 +1931,11 @@ Args:
   * indent (None|int|str): The indent of the written JSON. See
     https://docs.python.org/3/library/json.html#json.dump for more details.
   * include_log (bool): Include step log of written json.
+  * sort_keys (bool): Sort they keys in `data`. See api.json.input().
 
 Raises: file.Error.
 
-&mdash; **def [write\_proto](/recipe_modules/file/api.py#431)(self, name, dest, proto_msg, codec, include_log=True, encoding_kwargs=None):**
+&mdash; **def [write\_proto](/recipe_modules/file/api.py#433)(self, name, dest, proto_msg, codec, include_log=True, encoding_kwargs=None):**
 
 Writes the given proto message to `dest`.
 
@@ -2237,21 +2239,30 @@ Args:
 
 Methods for producing and consuming JSON.
 
-#### **class [JsonApi](/recipe_modules/json/api.py#134)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
+#### **class [JsonApi](/recipe_modules/json/api.py#138)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
-&emsp; **@staticmethod**<br>&mdash; **def [dumps](/recipe_modules/json/api.py#135)(\*args, \*\*kwargs):**
+&emsp; **@staticmethod**<br>&mdash; **def [dumps](/recipe_modules/json/api.py#139)(\*args, \*\*kwargs):**
 
 Works like `json.dumps`.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#158)**<br>&mdash; **def [input](/recipe_modules/json/api.py#158)(self, data):**
+By default this sorts dictionary keys (see discussion in `input()`), but you
+can pass sort_keys=False to override this behavior.
+
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#158)**<br>&mdash; **def [input](/recipe_modules/json/api.py#166)(self, data, sort_keys=True):**
 
 A placeholder which will expand to a file path containing <data>.
 
-&mdash; **def [is\_serializable](/recipe_modules/json/api.py#150)(self, obj):**
+By default this sorts dictionaries in `data` to make this output
+deterministic. In python3, dictionary insertion order is preserved per-spec,
+so this is no longer necessary for determinism, and in some cases (such as
+SPDX), the 'pretty' output is in non-alphabetical order. The default remains
+`True`, however, to avoid breaking all downstream tests.
+
+&mdash; **def [is\_serializable](/recipe_modules/json/api.py#158)(self, obj):**
 
 Returns True if the object is JSON-serializable.
 
-&emsp; **@staticmethod**<br>&mdash; **def [loads](/recipe_modules/json/api.py#140)(data, \*\*kwargs):**
+&emsp; **@staticmethod**<br>&mdash; **def [loads](/recipe_modules/json/api.py#148)(data, \*\*kwargs):**
 
 Works like `json.loads`, but:
 * strips out unicode objects (replacing them with utf8-encoded str
@@ -2259,7 +2270,7 @@ Works like `json.loads`, but:
 * replaces 'int-like' floats with ints. These are floats whose magnitude
   is less than (2**53-1) and which don't have a decimal component.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#158)**<br>&mdash; **def [output](/recipe_modules/json/api.py#163)(self, add_json_log=True, name=None, leak_to=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#158)**<br>&mdash; **def [output](/recipe_modules/json/api.py#178)(self, add_json_log=True, name=None, leak_to=None):**
 
 A placeholder which will expand to '/tmp/file'.
 
@@ -2272,7 +2283,7 @@ Args:
     to a step link named `name`. If this is 'on_failure', only create this
     log when the step has a non-SUCCESS status.
 
-&mdash; **def [read](/recipe_modules/json/api.py#178)(self, name, path, add_json_log=True, output_name=None, \*\*kwargs):**
+&mdash; **def [read](/recipe_modules/json/api.py#193)(self, name, path, add_json_log=True, output_name=None, \*\*kwargs):**
 
 Returns a step that reads a JSON file.
 
@@ -5186,6 +5197,14 @@ This tests metadata features of the Future object.
 
 
 &mdash; **def [RunSteps](/recipe_modules/json/tests/add_json_log.py#10)(api):**
+### *recipes* / [json:tests/unsorted](/recipe_modules/json/tests/unsorted.py)
+
+[DEPS](/recipe_modules/json/tests/unsorted.py#12): [json](#recipe_modules-json), [step](#recipe_modules-step)
+
+
+Test to assert that sort_keys=False preserves insertion order.
+
+&mdash; **def [RunSteps](/recipe_modules/json/tests/unsorted.py#17)(api):**
 ### *recipes* / [led:tests/full](/recipe_modules/led/tests/full.py)
 
 [DEPS](/recipe_modules/led/tests/full.py#15): [buildbucket](#recipe_modules-buildbucket), [led](#recipe_modules-led), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
