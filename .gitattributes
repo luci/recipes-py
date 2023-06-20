@@ -2,3 +2,6 @@
 /recipe_engine/**   recipes
 /**/unittests/**   -recipes
 .vpython3           recipes
+
+# We include these in order to allow easier debugging of recipe bundles.
+.*.vpython3         recipes

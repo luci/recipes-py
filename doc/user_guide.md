@@ -868,10 +868,11 @@ TODO(yiwzhang) - Document when CLI options are ready
 
 ## Debugging
 
-The `recipes.py` CLI includes a subcommand to enter the debugger:
+The `recipes.py` CLI includes a subcommand to enter the debugger for a single
+recipe + test case:
 
 ```
-./recipes.py debug [recipe_name] [test_name]
+./recipes.py debug [recipe_name[.test_name]]
 ```
 
 If you do not include a recipe name and test name (that is, just `./recipes.py
@@ -879,25 +880,56 @@ debug`), then the tool will try to find a recently failed test case, and run
 that. If there are no recently failing test cases, then the tool will instead
 print all available recipes to stdout.
 
-If you include only one positional argument, then it will be treated as a
-`recipe_name`, and the tool will print all of that recipe's test cases to
-stdout.
+If you omit the test_name, the tool will debug the first test case for the
+recipe.
 
-If you're trying to debug a recipe module's tests, the syntax is the same. The
-recipe engine internally treats each module example or module test file as a
-"recipe". The syntax to select such a recipe is: `my_module:examples/my_example`
-or `my_module:tests/my_test`. For example, if you had a module called `git` with
-an example file at `recipe_modules/git/examples/full.py`, and that example had a
-test case called `basic` in its GenTests, then you could launch a debugger for
-that test case by running `./recipes.py git:examples/full basic`.
+For reference, recipes inside of modules are always spelled
+`module_name:path_to/recipe`. So if you have a module "my_module" and it has a
+test recipe "tests/some_feature.py", this recipe name is
+`my_module:tests/some_feature`.
 
-When you have chosen a test case, the recipe engine will insert a breakpoint at
-the very top of RunSteps, and create a [pdb interactive debugger]. All of the
-standard pdb commands work here. You can also insert additional breakpoints with
-[`import pdb; pdb.set_trace()`].
+Finally, the tool will execute RunSteps with the mocks from the selected test
+case. As you step through with the debugger, calls to `api.step` will return
+the mocked step_data defined by the test case.
 
-[Pdb interactive debugger]: https://docs.python.org/3/library/pdb.html
-[`import pdb; pdb.set_trace()`]: https://docs.python.org/3/library/pdb.html#pdb.set_trace
+By default (without configuring a Remote Debugger - see the next section),
+the debug command will use `pdb`. In this mode, `pdb` will break at the very top
+of the selected recipe file (allowing you to debug import statements, or set
+breakpoints in e.g. `GenTests`), and it will break again at the very top of
+`RunSteps` after loading the selected test case. In the event of a crash, it
+will also load the crash for postmortem debugging.
+
+Note that you can add standard python3 `breakpoint()` calls to add additional
+breakpoints directly in the code, too.
+
+### Debugging other commands
+
+By default, only the `recipes.py debug` command attaches the debugger, but you
+can actually attach a debugger for ANY subcommand by setting the environment
+variable `RECIPES_DEBUG_ALL=1` in addition to the `RECIPE_DEBUGGER` environment
+variable (see Debugger Configuration).
+
+### Debugger Configuration (VSCode, PyCharm)
+
+The recipe engine also implements support for remote debuggers.
+
+To use this, set up your debugging server as usual, and then set the following
+environment variable like:
+
+   RECIPE_DEBUGGER=protocol[://host[:port]]
+
+Valid protocols are `vscode`, `pycharm` and `pdb` (though pdb will not work with
+`recipes.py test {run, train}` due to multiprocess usage).
+If `host` is omitted or blank, it defaults to "localhost".
+If `port` is omitted, it defaults to 5678 (which is the default for both IDEs).
+
+Under the hood, `vscode` uses the `debugpy` library, and `pycharm` uses
+`pydevd-pycharm` - Other editors which can use these remote debugging protocols
+can also integrate using the RECIPE_DEBUGGER environment variable (I have
+personally gotten `vscode` to work using `nvim-dap` in NeoVim).
+
+The versions of these libraries are pinned in the `.vscode.vpython3` and
+`.pycharm.vpython3` files, respectively.
 
 ## Detecting memory leaks with Pympler
 

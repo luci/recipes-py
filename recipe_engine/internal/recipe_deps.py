@@ -33,6 +33,7 @@ respectively).
 All DEPS evaluation is also handled in this file.
 """
 
+import bdb
 import importlib
 import logging
 import os
@@ -713,6 +714,8 @@ class Recipe(object):
           err=ex,
         ))
       raise_(RecipeSyntaxError, tuple(args), sys.exc_info()[2])
+    except bdb.BdbQuit:
+      raise
     except Exception as ex:
       # Keep the error details and traceback, but change the message.
       args = list(ex.args or [''])

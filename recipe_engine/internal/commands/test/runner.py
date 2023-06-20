@@ -47,6 +47,8 @@ from ...simple_cfg import RECIPES_CFG_LOCATION_REL
 from ...test import magic_check_fn
 from ...test.execute_test_case import execute_test_case
 
+from ... import debugger
+
 from .expectation_conversion import transform_expectations
 from .pipe import write_message, read_message
 
@@ -570,12 +572,27 @@ class RunnerThread(gevent.Greenlet):
     self.cov_file = cov_file
     self.exit_code = None
 
+    engine_path = recipe_deps.repos['recipe_engine'].path
+
     cmd = [
-      'vpython3', '-u', sys.argv[0],
-      '--package', os.path.join(
-          recipe_deps.main_repo.path, RECIPES_CFG_LOCATION_REL),
-      '--proto-override', os.path.dirname(PB.__path__[0]),
-      '--log-level', 'ERROR',
+        # NOTE: We use sys.executable to play nice with pydevd's os.exec patching.
+        # If we re-invoke vpython3 here, it will be confused and won't do it's
+        # awful dark magic on the runners.
+        #
+        # If they ever introduce python4 (heaven help us all), you'll probably
+        # need to generate the virtualenv for python4 here and then directly use
+        # the interpreter here, rather than invoking, say `vpython4`.
+        #
+        # Assuming ANY of those things are still a thing at that point :).
+        sys.executable,
+        '-u',
+        os.path.join(engine_path, 'recipe_engine', 'main.py'),
+        '--package',
+        os.path.join(recipe_deps.main_repo.path, RECIPES_CFG_LOCATION_REL),
+        '--proto-override',
+        os.path.dirname(PB.__path__[0]),
+        '--log-level',
+        'ERROR',
     ]
     # Carry through all repos explicitly via overrides
     for repo_name, repo in iteritems(recipe_deps.repos):

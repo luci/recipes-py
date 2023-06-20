@@ -26,7 +26,7 @@ def header(input_api):
   return license_header
 
 
-def CommonChecks(input_api, output_api):
+def CheckCommon(input_api, output_api):
   return input_api.canned_checks.PanProjectChecks(
       input_api, output_api, license_header=header(input_api),
       excluded_paths=[
@@ -40,8 +40,26 @@ def CheckPatchFormatted(input_api, output_api):
       input_api, output_api, check_clang_format=False)
 
 
+def CheckDevVpythonMatches(input_api, output_api):
+  affected_files = input_api.AffectedTestableFiles(
+      lambda f: f.LocalPath().endswith('.vpython'))
+  results = []
+  if affected_files:
+    root = input_api.PresubmitLocalPath()
+    vpy3 = input_api.ReadFile(input_api.os_path.join(root, '.vpython3'))
+    for debugger in ('vscode', 'pycharm'):
+      devvpy3 = input_api.ReadFile(
+          input_api.os_path.join(root, f'./.{debugger}.vpython3'))
+      if not devvpy3.startswith(vpy3):
+        results.append(
+            output_api.PresubmitError(
+                f'.{debugger}.vpython3 does not have the contents of .vpython3 as a prefix.'
+            ))
+  return results
+
+
 def CheckIntegrationTests(input_api, output_api):
-  results = CommonChecks(input_api, output_api)
+  results = []
   # Explicitly run these independently because they update files on disk and are
   # called implicitly with the other tests. The vpython check is nominally
   # locked with a file lock, but updating the protos, etc. of recipes.py is not.

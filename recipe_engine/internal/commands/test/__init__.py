@@ -15,6 +15,8 @@ import json
 import multiprocessing
 import textwrap
 
+from ... import debugger
+
 
 # Give this a high priority so it shows second in help.
 __cmd_priority__ = 1
@@ -62,13 +64,19 @@ def add_arguments(parser):
     . any recipe with this prefix and all tests.
   ''')
 
+  debugging_enabled = debugger.PROTOCOL is not None
+
+  default_jobs = 1 if debugging_enabled else multiprocessing.cpu_count()
+
   helpstr = 'Run the tests.'
   run_p = subp.add_parser(
       'run', help=helpstr, description=helpstr + '\n' + status_info,
       formatter_class=argparse.RawDescriptionHelpFormatter)
   run_p.add_argument(
-      '--jobs', metavar='N', type=int,
-      default=multiprocessing.cpu_count(),
+      '--jobs',
+      metavar='N',
+      type=int,
+      default=default_jobs,
       help='run N jobs in parallel (default %(default)s)')
   run_p.add_argument(
       '--filter', dest='test_filters', action='append', type=_normalize_filter,
@@ -105,8 +113,10 @@ def add_arguments(parser):
       'train', help=helpstr, description=helpstr + '\n' + status_info,
       formatter_class=argparse.RawDescriptionHelpFormatter)
   train_p.add_argument(
-      '--jobs', metavar='N', type=int,
-      default=multiprocessing.cpu_count(),
+      '--jobs',
+      metavar='N',
+      type=int,
+      default=default_jobs,
       help='run N jobs in parallel (default %(default)s)')
   train_p.add_argument(
       '--filter', dest='test_filters', action='append', type=_normalize_filter,
@@ -155,6 +165,14 @@ def add_arguments(parser):
                         default=False)
 
   def _launch(args):
+    if debugger.PROTOCOL == "pdb" and args.subcommand in {'run', 'train'}:
+      parser.error(
+          f'Cannot use `recipes.py test {args.subcommand}` with RECIPE_DEBUGGER=pdb.'
+      )
+
+    if 'jobs' in args and debugging_enabled and args.jobs != 1:
+      parser.error("Debugging requires --jobs=1.")
+
     if args.subcommand == 'list':
       return run_list(args.recipe_deps, args.json)
 

@@ -9,8 +9,6 @@ This tool operates on the nearest ancestor directory containing an
 infra/config/recipes.cfg.
 """
 
-from __future__ import print_function
-
 import sys
 import errno
 import os
@@ -78,6 +76,18 @@ except ImportError:
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT_DIR)
+
+from recipe_engine.internal import debugger
+
+debugger.engage_debugger()
+if debugger.PROTOCOL == 'pdb' and not debugger.IMPLICIT_BREAKPOINTS:
+  breakpoint()  # pylint: disable=forgotten-debug-statement
+  # NOTE for the NOTE: `pdb` by default gives 4 lines of context when doing `l`,
+  # so try to keep the following comment to 4 lines or less.
+
+  # NOTE: pdb debugging for a non-`recipes.py debug` command breaks extremely
+  # early in the recipe engine. Manually add any additional breakpoints.
+  # It is recommended to use a remote debugger (see doc/user_guide.md).
 
 from recipe_engine.internal.commands import parse_and_run
 

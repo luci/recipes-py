@@ -2,7 +2,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import calendar
+import bdb
 import copy
 import datetime
 import inspect
@@ -36,6 +36,8 @@ from ..step_data import StepData, ExecutionResult
 from ..engine_types import StepPresentation, thaw
 from ..engine_types import PerGreenletState, PerGreentletStateRegistry
 from ..third_party import luci_context
+
+from . import debugger
 
 from .engine_env import merge_envs
 from .exceptions import RecipeUsageError, CrashEngine
@@ -598,6 +600,13 @@ class RecipeEngine(object):
           engine._step_stack[-1].close()   # pylint: disable=protected-access
 
       except recipe_api.StepFailure as ex:
+        if debugger.should_set_implicit_breakpoints():
+
+          # =========================================================
+          # DEBUG: RunSteps just exited with a StepFailure exception.
+          # =========================================================
+          breakpoint()  # pylint: disable=forgotten-debug-statement
+
         is_infra_failure = was_cancelled = False
         if isinstance(ex, recipe_api.AggregatedStepFailure):
           is_infra_failure = ex.result.contains_infra_failure
@@ -617,8 +626,18 @@ class RecipeEngine(object):
           result.status = common_pb2.FAILURE
         result.summary_markdown = ex.reason
 
+    except bdb.BdbQuit:  # let debugger quit flow through
+      raise
+
     # All other exceptions are reported to the user and are fatal.
     except Exception as ex:  # pylint: disable=broad-except
+      if debugger.should_set_implicit_breakpoints():
+
+        # =============================================================
+        # DEBUG: RunSteps just exited with a non-StepFailure exception.
+        # =============================================================
+        breakpoint()  # pylint: disable=forgotten-debug-statement
+
       _log_crash(stream_engine, 'Uncaught exception')
       result.status = common_pb2.INFRA_FAILURE
       result.summary_markdown = 'Uncaught Exception: ' + util.format_ex(ex)
