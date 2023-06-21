@@ -906,7 +906,7 @@ breakpoints directly in the code, too.
 
 By default, only the `recipes.py debug` command attaches the debugger, but you
 can actually attach a debugger for ANY subcommand by setting the environment
-variable `RECIPES_DEBUG_ALL=1` in addition to the `RECIPE_DEBUGGER` environment
+variable `RECIPE_DEBUG_ALL=1` in addition to the `RECIPE_DEBUGGER` environment
 variable (see Debugger Configuration).
 
 ### Debugger Configuration (VSCode, PyCharm)
