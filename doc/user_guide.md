@@ -866,6 +866,35 @@ escape the decorated function from all warnings.
 
 TODO(yiwzhang) - Document when CLI options are ready
 
+## IDE setup
+
+This section will discuss various affordances that the Recipe ecosystem exposes
+to make IDE development of recipes easier.
+
+See Also: Debugger Configuration
+
+### Python/VirtualEnv
+
+NOTE: This feature is not available on Windows platforms due to the restrictions
+Windows has around symlink handling. If you know of a way to easily support this
+on Windows, please get in touch with the owners of this repo.
+
+Recipes use pinned virtual environments described in the `.*.vpython3` files
+in this repo. These files are interpreted by `vpython3`, which transforms them
+into a VirtualEnv, using a pinned version of python, and pinned versions of all
+dependencies (e.g. google.protobuf, gevent, etc.).
+
+As a convenience, `recipes.py fetch` will generate a symlink
+`.recipe_deps/.dev/python3` (right next to your repo's copy of the `recipes.py`
+file) which you can use on the command-line to enter the VirtualEnv used by the
+recipes, or to point your IDE at so it can resolve modules like `google.protobuf`
+to the exact same versions that the recipes will use when run on a builder, or
+when you run local commands like `recipes.py test train` or `recipes.py debug`.
+
+NOTE: Any time the recipe_engine's .vpython3 files change, the value of this
+symlink will be regenerated. Depending on the IDE this may mean that the IDE
+will need to be restarted, in case it's cacheing an old value of the symlink.
+
 ## Debugging
 
 The `recipes.py` CLI includes a subcommand to enter the debugger for a single

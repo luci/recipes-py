@@ -60,4 +60,4 @@ def add_arguments(parser):
   def _post(_error, _args):
     logging.getLogger().setLevel(logging.INFO)
 
-  parser.set_defaults(func=_launch, postprocess_func=_post)
+  parser.set_defaults(func=_launch, postprocess_func=_post, skip_deps=True)

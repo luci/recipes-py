@@ -74,4 +74,5 @@ def add_arguments(parser):
   def _launch(args):
     from .cmd import main
     return main(args)
-  parser.set_defaults(func=_launch, postprocess_func=_postprocess_func)
+  parser.set_defaults(func=_launch, postprocess_func=_postprocess_func,
+                      skip_dev=True)

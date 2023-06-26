@@ -83,7 +83,7 @@ def add_arguments(parser):
       dest='allowlist',
       help=argparse.SUPPRESS)
 
-  parser.set_defaults(func=main)
+  parser.set_defaults(func=main, skip_deps=True)
 
 
 def main(args):

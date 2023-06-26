@@ -33,4 +33,4 @@ def add_arguments(parser):
       parser.error('--check must use --kind=gen')
 
     return main(args)
-  parser.set_defaults(func=_launch)
+  parser.set_defaults(func=_launch, skip_dev=True)
