@@ -224,6 +224,7 @@ class PathApi(recipe_api.RecipeApi):
 
   def get_config_defaults(self):
     """Internal recipe implementation function."""
+    # TODO(iannucci): Completely remove config from path.
     return {
         # Needed downstream in depot_tools
         'PLATFORM': self.m.platform.name,
@@ -442,6 +443,12 @@ class PathApi(recipe_api.RecipeApi):
   def __setitem__(self, pathname: str, path: config_types.Path) -> None:
     """Sets an anchor path.
 
+    This can only be used for dynamic paths (set in the config).
+
+    This can only be done once per dynamic path for the current config (i.e.
+    'write once'). As a legacy concession, setting the path to the same value as
+    before is allowed.
+
     Args:
       pathname: The name by which this path can be fetched.
       path: The new value for this pathname.
@@ -451,12 +458,23 @@ class PathApi(recipe_api.RecipeApi):
       AssertionError: If pathname is not declared as a dynamic path in config.
       AssertionError: If path is not based on a BasePath.
     """
-    assert isinstance(path, config_types.Path), (
-        'Setting dynamic path to something other than a Path: %r' % path)
-    assert pathname in self.c.dynamic_paths, (
-        'Must declare dynamic path (%r) in config before setting it.' % path)
-    assert isinstance(path.base, config_types.BasePath), (
-        'Dynamic path values must be based on a base_path' % path.base)
+    if not isinstance(path, config_types.Path):
+      raise ValueError(
+          f'Setting dynamic path to something other than a Path: {path!r}')
+
+    if pathname not in self.c.dynamic_paths:
+      raise ValueError(
+          f'Must declare dynamic path ({pathname!r}) in config before setting it.'
+      )
+
+    if (current := self.c.dynamic_paths[pathname]) is not None:
+      if current == path:
+        return
+
+      raise ValueError(
+          f'Dynamic path {pathname!r} can only be set once. old:{current!r} new:{path!r}'
+      )
+
     self.c.dynamic_paths[pathname] = path
 
   def get(self,

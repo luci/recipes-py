@@ -150,6 +150,7 @@
   * [milo:examples/full](#recipes-milo_examples_full)
   * [nodejs:examples/full](#recipes-nodejs_examples_full)
   * [path:examples/full](#recipes-path_examples_full)
+  * [path:tests/dynamic_paths](#recipes-path_tests_dynamic_paths)
   * [placeholder](#recipes-placeholder)
   * [platform:examples/full](#recipes-platform_examples_full)
   * [properties:examples/full](#recipes-properties_examples_full)
@@ -2625,13 +2626,19 @@ documentation.
 
 #### **class [PathApi](/recipe_modules/path/api.py#222)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
-&mdash; **def [\_\_getitem\_\_](/recipe_modules/path/api.py#470)(self, name: str):**
+&mdash; **def [\_\_getitem\_\_](/recipe_modules/path/api.py#488)(self, name: str):**
 
 Gets the base path named `name`. See module docstring for more info.
 
-&mdash; **def [\_\_setitem\_\_](/recipe_modules/path/api.py#442)(self, pathname: str, path: config_types.Path):**
+&mdash; **def [\_\_setitem\_\_](/recipe_modules/path/api.py#443)(self, pathname: str, path: config_types.Path):**
 
 Sets an anchor path.
+
+This can only be used for dynamic paths (set in the config).
+
+This can only be done once per dynamic path for the current config (i.e.
+'write once'). As a legacy concession, setting the path to the same value as
+before is allowed.
 
 Args:
   pathname: The name by which this path can be fetched.
@@ -2642,7 +2649,7 @@ Raises:
   AssertionError: If pathname is not declared as a dynamic path in config.
   AssertionError: If path is not based on a BasePath.
 
-&mdash; **def [abs\_to\_path](/recipe_modules/path/api.py#385)(self, abs_string_path):**
+&mdash; **def [abs\_to\_path](/recipe_modules/path/api.py#386)(self, abs_string_path):**
 
 Converts an absolute path string `abs_string_path` to a real Path
 object, using the most appropriate known base path.
@@ -2668,22 +2675,22 @@ api.path.abs_to_path("/basis/dir/for/recipe/some/other/dir") ->
 Raises an ValueError if the preconditions are not met, otherwise returns the
 Path object.
 
-&mdash; **def [abspath](/recipe_modules/path/api.py#492)(self, path):**
+&mdash; **def [abspath](/recipe_modules/path/api.py#510)(self, path):**
 
 Equivalent to os.abspath.
 
-&mdash; **def [assert\_absolute](/recipe_modules/path/api.py#324)(self, path):**
+&mdash; **def [assert\_absolute](/recipe_modules/path/api.py#325)(self, path):**
 
 Raises AssertionError if the given path is not an absolute path.
 
 Args:
   * path (Path|str) - The path to check.
 
-&mdash; **def [basename](/recipe_modules/path/api.py#496)(self, path):**
+&mdash; **def [basename](/recipe_modules/path/api.py#514)(self, path):**
 
 Equivalent to os.path.basename.
 
-&mdash; **def [dirname](/recipe_modules/path/api.py#500)(self, path):**
+&mdash; **def [dirname](/recipe_modules/path/api.py#518)(self, path):**
 
 For "foo/bar/baz", return "foo/bar".
 
@@ -2696,7 +2703,7 @@ Args:
 
 Returns dirname of path
 
-&mdash; **def [eq](/recipe_modules/path/api.py#665)(self, path1: config_types.Path, path2: config_types.Path):**
+&mdash; **def [eq](/recipe_modules/path/api.py#683)(self, path1: config_types.Path, path2: config_types.Path):**
 
 Check whether path1 points to the same path as path2.
 
@@ -2706,20 +2713,20 @@ However, if the paths are constructed via differently joined dirs, such as
 that problem by creating copies of the paths, and then separating them
 according to self.sep. The original paths are not modified.
 
-&mdash; **def [exists](/recipe_modules/path/api.py#604)(self, path):**
+&mdash; **def [exists](/recipe_modules/path/api.py#622)(self, path):**
 
 Equivalent to os.path.exists.
 
 The presence or absence of paths can be mocked during the execution of the
 recipe by using the mock_* methods.
 
-&mdash; **def [expanduser](/recipe_modules/path/api.py#595)(self, path):**
+&mdash; **def [expanduser](/recipe_modules/path/api.py#613)(self, path):**
 
 Do not use this, use `api.path['home']` instead.
 
 This ONLY handles `path` == "~", and returns `str(api.path['home'])`.
 
-&mdash; **def [get](/recipe_modules/path/api.py#462)(self, name: str, default: Optional[config_types.Path]=None):**
+&mdash; **def [get](/recipe_modules/path/api.py#480)(self, name: str, default: Optional[config_types.Path]=None):**
 
 Gets the base path named `name`. See module docstring for more info.
 
@@ -2727,11 +2734,11 @@ Gets the base path named `name`. See module docstring for more info.
 
 Internal recipe implementation function.
 
-&mdash; **def [initialize](/recipe_modules/path/api.py#288)(self):**
+&mdash; **def [initialize](/recipe_modules/path/api.py#289)(self):**
 
 Internal recipe implementation function.
 
-&mdash; **def [is\_parent\_of](/recipe_modules/path/api.py#680)(self, parent: config_types.Path, child: config_types.Path):**
+&mdash; **def [is\_parent\_of](/recipe_modules/path/api.py#698)(self, parent: config_types.Path, child: config_types.Path):**
 
 Check whether child is contained within parent.
 
@@ -2742,21 +2749,21 @@ that doesn't work. This method addresses that problem by creating copies of
 the paths, and then separating them according to self.sep. The original
 paths are not modified.
 
-&mdash; **def [isdir](/recipe_modules/path/api.py#612)(self, path):**
+&mdash; **def [isdir](/recipe_modules/path/api.py#630)(self, path):**
 
 Equivalent to os.path.isdir.
 
 The presence or absence of paths can be mocked during the execution of the
 recipe by using the mock_* methods.
 
-&mdash; **def [isfile](/recipe_modules/path/api.py#620)(self, path):**
+&mdash; **def [isfile](/recipe_modules/path/api.py#638)(self, path):**
 
 Equivalent to os.path.isfile.
 
 The presence or absence of paths can be mocked during the execution of the
 recipe by using the mock_* methods.
 
-&mdash; **def [join](/recipe_modules/path/api.py#519)(self, path, \*paths):**
+&mdash; **def [join](/recipe_modules/path/api.py#537)(self, path, \*paths):**
 
 Equivalent to os.path.join.
 
@@ -2770,7 +2777,7 @@ If your path is rooted in one of the path module's root paths (i.e. those
 retrieved with api.path[something]), then you can convert from a string path
 back to a Path with the `abs_to_path` method.
 
-&mdash; **def [mkdtemp](/recipe_modules/path/api.py#333)(self, prefix=tempfile.template):**
+&mdash; **def [mkdtemp](/recipe_modules/path/api.py#334)(self, prefix=tempfile.template):**
 
 Makes a new temporary directory, returns Path to it.
 
@@ -2780,7 +2787,7 @@ Args:
 
 Returns a Path to the new directory.
 
-&mdash; **def [mkstemp](/recipe_modules/path/api.py#358)(self, prefix=tempfile.template):**
+&mdash; **def [mkstemp](/recipe_modules/path/api.py#359)(self, prefix=tempfile.template):**
 
 Makes a new temporary file, returns Path to it.
 
@@ -2791,23 +2798,23 @@ Args:
 Returns a Path to the new file. Unlike tempfile.mkstemp, the file's file
 descriptor is closed.
 
-&mdash; **def [mock\_add\_directory](/recipe_modules/path/api.py#637)(self, path: config_types.Path):**
+&mdash; **def [mock\_add\_directory](/recipe_modules/path/api.py#655)(self, path: config_types.Path):**
 
 For testing purposes, mark that file |path| exists.
 
-&mdash; **def [mock\_add\_file](/recipe_modules/path/api.py#633)(self, path: config_types.Path):**
+&mdash; **def [mock\_add\_file](/recipe_modules/path/api.py#651)(self, path: config_types.Path):**
 
 For testing purposes, mark that file |path| exists.
 
-&mdash; **def [mock\_add\_paths](/recipe_modules/path/api.py#628)(self, path: config_types.Path, kind: str=FILE):**
+&mdash; **def [mock\_add\_paths](/recipe_modules/path/api.py#646)(self, path: config_types.Path, kind: str=FILE):**
 
 For testing purposes, mark that |path| exists.
 
-&mdash; **def [mock\_copy\_paths](/recipe_modules/path/api.py#641)(self, source: config_types.Path, dest: config_types.Path):**
+&mdash; **def [mock\_copy\_paths](/recipe_modules/path/api.py#659)(self, source: config_types.Path, dest: config_types.Path):**
 
 For testing purposes, copy |source| to |dest|.
 
-&mdash; **def [mock\_remove\_paths](/recipe_modules/path/api.py#647)(self, path: config_types.Path, should_remove: Callable[([str], bool)]=(lambda p: True)):**
+&mdash; **def [mock\_remove\_paths](/recipe_modules/path/api.py#665)(self, path: config_types.Path, should_remove: Callable[([str], bool)]=(lambda p: True)):**
 
 For testing purposes, mark that |path| doesn't exist.
 
@@ -2816,38 +2823,38 @@ Args:
   should_remove: Called for every candidate path. Return True to remove this
     path.
 
-&mdash; **def [normpath](/recipe_modules/path/api.py#591)(self, path):**
+&mdash; **def [normpath](/recipe_modules/path/api.py#609)(self, path):**
 
 Equivalent to os.path.normpath.
 
-&emsp; **@property**<br>&mdash; **def [pardir](/recipe_modules/path/api.py#477)(self):**
+&emsp; **@property**<br>&mdash; **def [pardir](/recipe_modules/path/api.py#495)(self):**
 
 Equivalent to os.pardir.
 
-&emsp; **@property**<br>&mdash; **def [pathsep](/recipe_modules/path/api.py#487)(self):**
+&emsp; **@property**<br>&mdash; **def [pathsep](/recipe_modules/path/api.py#505)(self):**
 
 Equivalent to os.pathsep.
 
-&mdash; **def [realpath](/recipe_modules/path/api.py#579)(self, path):**
+&mdash; **def [realpath](/recipe_modules/path/api.py#597)(self, path):**
 
 Equivalent to os.path.realpath.
 
-&mdash; **def [relpath](/recipe_modules/path/api.py#583)(self, path, start):**
+&mdash; **def [relpath](/recipe_modules/path/api.py#601)(self, path, start):**
 
 Roughly equivalent to os.path.relpath.
 
 Unlike os.path.relpath, `start` is _required_. If you want the 'current
 directory', use the `recipe_engine/context` module's `cwd` property.
 
-&emsp; **@property**<br>&mdash; **def [sep](/recipe_modules/path/api.py#482)(self):**
+&emsp; **@property**<br>&mdash; **def [sep](/recipe_modules/path/api.py#500)(self):**
 
 Equivalent to os.sep.
 
-&mdash; **def [separate](/recipe_modules/path/api.py#661)(self, path: config_types.Path):**
+&mdash; **def [separate](/recipe_modules/path/api.py#679)(self, path: config_types.Path):**
 
 Separate a path's pieces in-place with this platform's separator char.
 
-&mdash; **def [split](/recipe_modules/path/api.py#534)(self, path):**
+&mdash; **def [split](/recipe_modules/path/api.py#552)(self, path):**
 
 For "foo/bar/baz", return ("foo/bar", "baz").
 
@@ -2861,7 +2868,7 @@ Args:
 
 Returns (dirname(path), basename(path)).
 
-&mdash; **def [splitext](/recipe_modules/path/api.py#555)(self, path: Union[(config_types.Path, str)]):**
+&mdash; **def [splitext](/recipe_modules/path/api.py#573)(self, path: Union[(config_types.Path, str)]):**
 
 For "foo/bar.baz", return ("foo/bar", ".baz").
 
@@ -5301,6 +5308,12 @@ Tests for query_variants.
 
 
 &mdash; **def [RunSteps](/recipe_modules/path/examples/full.py#17)(api):**
+### *recipes* / [path:tests/dynamic\_paths](/recipe_modules/path/tests/dynamic_paths.py)
+
+[DEPS](/recipe_modules/path/tests/dynamic_paths.py#7): [path](#recipe_modules-path)
+
+
+&mdash; **def [RunSteps](/recipe_modules/path/tests/dynamic_paths.py#10)(api):**
 ### *recipes* / [placeholder](/recipes/placeholder.py)
 
 [DEPS](/recipes/placeholder.py#5): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming), [time](#recipe_modules-time)
