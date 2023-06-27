@@ -41,8 +41,8 @@ else:
 
 
 @attr.s(frozen=True)
-class _SrcInfo(object):
-  """_SrcInfo holds information about the proto/py files found in a recipe repo.
+class _ProtoInfo(object):
+  """_ProtoInfo holds information about the proto files found in a recipe repo.
   """
   # Native-slash-delimited path to the source file
   src_abspath = attr.ib(validator=attr_type(str))
@@ -64,18 +64,15 @@ class _SrcInfo(object):
   # expensive to compute).
   blobhash = attr.ib(validator=attr_type(str))
 
-  # The kind of source file, either "proto" or "py".
-  kind = attr.ib(validator=attr_type(str))
-
   @classmethod
   def create(cls, repo, scan_relpath, dest_namespace, relpath):
-    """Creates a _SrcInfo.
+    """Creates a _ProtoInfo.
 
     This will convert `relpath` into a global relpath for the output PB folder,
     according to the `dest_namespace`.
 
     NOTE: If `relpath` conflicts with a reserved namespace, then the `reserved`
-    attribute on the returned `_SrcInfo` will be True.
+    attribute on the returned `_ProtoInfo` will be True.
 
     Args:
       * repo (RecipeRepo) - The recipe repo we found the proto file in
@@ -88,7 +85,7 @@ class _SrcInfo(object):
         to where we found the proto. e.g.
         'scripts/slave/recipes/subdir/something.proto'.
 
-    Returns a fully populated _SrcInfo.
+    Returns a fully populated _ProtoInfo.
     """
     assert '\\' not in scan_relpath, (
       'scan_relpath must be fwd-slash-delimited: %r' % scan_relpath)
@@ -119,17 +116,16 @@ class _SrcInfo(object):
         csum.update(data)
     blobhash = csum.hexdigest()
 
-    return cls(src_abspath, relpath, dest_relpath, reserved, blobhash,
-               'proto' if src_abspath.endswith('.proto') else 'py')
+    return cls(src_abspath, relpath, dest_relpath, reserved, blobhash)
 
 
-def _gather_src_info_from_repo(repo):
+def _gather_proto_info_from_repo(repo):
   """Gathers all protos from the given repo.
 
   Args:
     * repo (RecipeRepo) - The repo to gather all protos from.
 
-  Returns List[_SrcInfo]
+  Returns List[_ProtoInfo]
   """
   # Tuples of
   #   * fwd-slash path relative to repo.path of where to look for protos.
@@ -159,9 +155,9 @@ def _gather_src_info_from_repo(repo):
 
       for fname in fnames:
         fname = str(fname)  # fname can be unicode
-        if not fname.endswith(('.proto', '.proto.py')):
+        if not fname.endswith('.proto'):
           continue
-        ret.append(_SrcInfo.create(
+        ret.append(_ProtoInfo.create(
             repo, scan_relpath, dest_namespace, posixpath.join(relbase, fname)
         ))
 
@@ -172,37 +168,30 @@ def _gather_src_info_from_repo(repo):
 # checksum. If you need to change the compilation algorithm/process in any way,
 # you should increment this version number to cause all protos to be regenerated
 # downstream.
-RECIPE_PB_VERSION = b'4'
+RECIPE_PB_VERSION = b'5'
 
 
-def _gather_sources(deps):
-  """Gathers all .proto and .proto.py files from all repos, and calculates their
-  collective hash.
+def _gather_protos(deps):
+  """Gathers all .proto files from all repos, and calculates their collective
+  hash.
 
   Args:
     * deps (RecipeDeps) - The loaded recipe dependencies.
 
-  Returns Tuple[
-    dgst: str,
-    proto_files: List[Tuple[str, str]],
-    py_files: List[Tuple[str, str]],
-  ]
+  Returns Tuple[dgst: str, proto_files: List[Tuple[str, str]]]
     * dgst: The 'overall' checksum for all protos which we ought to to have
       installed (as hex)
     * proto_files: a list of source abspath to dest_relpath for these proto
       files (i.e. copy from source to $tmpdir/dest_relpath when constructing the
       to-be-compiled proto tree).
-    * py_files: a list of source abspath to dest_relpath for these python
-      files (i.e. copy from source to $tmpdir/dest_relpath when constructing the
-      to-be-compiled proto tree).
 
   Raises BadProtoDefinitions if this finds conflicting or reserved protos.
   """
-  all_srcs = {}  # Dict[repo_name : str, List[_SrcInfo]]
+  all_protos = {}  # Dict[repo_name : str, List[_ProtoInfo]]
   for repo in deps.repos.values():
-    src_info = _gather_src_info_from_repo(repo)
-    if src_info:
-      all_srcs[repo.name] = src_info
+    proto_info = _gather_proto_info_from_repo(repo)
+    if proto_info:
+      all_protos[repo.name] = proto_info
 
   csum = hashlib.sha256(RECIPE_PB_VERSION)
   csum.update(b'\0')
@@ -212,13 +201,12 @@ def _gather_sources(deps):
   # dups has keys where len(rel_to_projs[dest_relpath]) > 1
   dups = set()       # type: Set[key: str]
   reserved = set()   # type: Set[key: str]
-  proto_files = []   # type: List[Tuple[src_abspath: str, dest_relpath: str]]
-  py_files = []      # type: List[Tuple[src_abspath: str, dest_relpath: str]]
-  for repo_name, src_infos in sorted(all_srcs.items()):
+  retval = []        # type: List[Tuple[src_abspath: str, dest_relpath: str]]
+  for repo_name, proto_infos in sorted(all_protos.items()):
     csum.update(repo_name.encode('utf-8'))
     csum.update(b'\0\0')
 
-    for info in src_infos:
+    for info in proto_infos:
       duplist = rel_to_projs.setdefault(info.dest_relpath, [])
       duplist.append(repo_name)
       if len(duplist) > 1:
@@ -226,10 +214,7 @@ def _gather_sources(deps):
       if info.reserved:
         reserved.add(info.dest_relpath)
 
-      if info.kind == 'proto':
-        proto_files.append((info.src_abspath, info.dest_relpath))
-      else:
-        py_files.append((info.src_abspath, info.dest_relpath))
+      retval.append((info.src_abspath, info.dest_relpath))
 
       csum.update(info.relpath.encode('utf-8'))
       csum.update(b'\0')
@@ -257,7 +242,7 @@ def _gather_sources(deps):
 
     raise BadProtoDefinitions(msg)
 
-  return csum.hexdigest(), proto_files, py_files
+  return csum.hexdigest(), retval
 
 
 @attr.s
@@ -513,27 +498,7 @@ def _compile_protos(proto_files, proto_tree, protoc, argfile, dest):
     sys.exit(1)
 
 
-def _copy_py_files(py_files, dest):
-  """Copies .proto.py files to .py files in the destination tree.
-
-  This also replaces "." in the dest_relpath with os.path.sep, to
-  correspond with the python package naming rules.
-
-  Args:
-    * py_files (List[Tuple[src_abspath: str, dest_relpath: str]]).
-      dest_relpath will have the '.proto.py' extension, which this function
-      converts.
-    * dest (str): Path to the destination where the py files should go.
-  """
-  for src_abspath, dest_relpath in py_files:
-    dirname, filename = os.path.split(dest_relpath)
-    shutil.copyfile(src_abspath, os.path.join(
-        dest,
-        dirname.replace('.', os.path.sep),
-        filename[:-len('.proto.py')]+'.py'))
-
-
-def _install_protos(proto_package_path, dgst, proto_files, py_files):
+def _install_protos(proto_package_path, dgst, proto_files):
   """Installs protos to `{proto_package_path}/PB`.
 
   Args:
@@ -578,7 +543,6 @@ def _install_protos(proto_package_path, dgst, proto_files, py_files):
 
   protoc = os.path.join(proto_package_path, 'protoc', 'bin', 'protoc')
   _compile_protos(proto_files, proto_tree, protoc, argfile, pb_temp)
-  _copy_py_files(py_files, pb_temp)
   with open(os.path.join(pb_temp, 'csum'), 'w') as csum_f:
     csum_f.write(dgst)
 
@@ -633,13 +597,13 @@ def ensure_compiled(deps, proto_override):
     proto_package = os.path.join(deps.recipe_deps_path, '_pb3')
     _DirMaker()(proto_package)
 
-    dgst, proto_files, py_files = _gather_sources(deps)
+    dgst, proto_files = _gather_protos(deps)
 
     # If the digest already matches, we're done
     if not _check_digest(proto_package, dgst):
       # Otherwise, try to compile
       try:
-        _install_protos(proto_package, dgst, proto_files, py_files)
+        _install_protos(proto_package, dgst, proto_files)
       except:  # pylint: disable=bare-except
         # If some other recipe engine compiled at the same time as us, it may
         # have broken our compilation (e.g. if the other engine cleared tmp out
