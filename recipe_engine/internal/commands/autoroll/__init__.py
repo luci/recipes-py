@@ -29,4 +29,4 @@ def add_arguments(parser):
       error('--verbose-json passed without --output-json')
 
   parser.set_defaults(
-      func=_launch, postprocess_func=_postprocess_func, skip_dev=True)
+      func=_launch, postprocess_func=_postprocess_func)

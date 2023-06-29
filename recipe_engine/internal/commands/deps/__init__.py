@@ -67,5 +67,4 @@ def add_arguments(parser):
   parser.set_defaults(
       func=_launch,
       postprocess_func=_postprocess_func,
-      skip_dev=True,
   )

@@ -122,11 +122,6 @@ class RecipeDeps(object):
     return os.path.join(self.main_repo.recipes_root_path, '.recipe_deps')
 
   @cached_property
-  def recipe_deps_dev_path(self):
-    """Returns the location of the .recipe_deps directory."""
-    return os.path.join(self.recipe_deps_path, '_dev')
-
-  @cached_property
   def previous_test_failures_path(self):
     """Returns the location of the .previous_failures file."""
     return os.path.join(self.recipe_deps_path, '.previous_test_failures')
@@ -145,7 +140,7 @@ class RecipeDeps(object):
 
   @classmethod
   def create(cls, main_repo_path, overrides, proto_override,
-             minimal_protoc=False, skip_dev=False):
+             minimal_protoc=False):
     """Creates a RecipeDeps.
 
     This will possibly do network operations to fetch recipe repos from git if
@@ -163,7 +158,6 @@ class RecipeDeps(object):
       * minimal_protoc (bool) - If True, skips all proto compiliation. This is used
         for subcommands (like manual_roll) where we don't need this, and it can
         actively interfere with the subcommand's functionality.
-      * skip_dev (bool) - If True, skips generation of slow _dev folder entries.
 
     Returns a RecipeDeps.
     """
@@ -247,11 +241,8 @@ class RecipeDeps(object):
     proto_support.append_to_syspath(
         proto_support.ensure_compiled(protoc_deps, proto_override))
 
-    # Add a _dev folder with helpful things for local development
-    dev_support.ensure_python3(ret)
-    if not skip_dev:
-      # TODO(iannucci): add ensure_typings here.
-      pass
+    # Add the _venv link, if we can.
+    dev_support.ensure_venv(ret)
 
     return ret
 

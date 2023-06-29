@@ -151,7 +151,6 @@ def _common_post_process(args):
       {} if args.minimal_recipe_deps else args.repo_override,
       args.proto_override,
       minimal_protoc = args.minimal_recipe_deps,
-      skip_dev = args.skip_dev,
   )
 
   _check_recipes_cfg_consistency(args.recipe_deps)
@@ -272,11 +271,6 @@ def _add_common_args(parser):
       # This is used for subcommands like manual_roll which explicitly operate
       # on the recipes.cfg and nothing else.
       minimal_recipe_deps=False,
-
-      # By default we generate the _dev folder as a side effect of all recipe
-      # commands, but 'prod' commands (like `autoroll`, `test run`, `run`
-      # and `luciexe`) turn it off.
-      skip_dev=False,
 
       postprocess_func=(lambda error, args: None),
   )

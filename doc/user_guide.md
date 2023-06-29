@@ -875,25 +875,38 @@ See Also: Debugger Configuration
 
 ### Python/VirtualEnv
 
-NOTE: This feature is not available on Windows platforms due to the restrictions
-Windows has around symlink handling. If you know of a way to easily support this
-on Windows, please get in touch with the owners of this repo.
+NOTE: Windows platforms may require additional permissions (e.g. Developer Mode
+or SeCreateSymbolicLinkPrivilege).
 
 Recipes use pinned virtual environments described in the `.*.vpython3` files
 in this repo. These files are interpreted by `vpython3`, which transforms them
 into a VirtualEnv, using a pinned version of python, and pinned versions of all
 dependencies (e.g. google.protobuf, gevent, etc.).
 
-As a convenience, `recipes.py fetch` will generate a symlink
-`.recipe_deps/.dev/python3` (right next to your repo's copy of the `recipes.py`
-file) which you can use on the command-line to enter the VirtualEnv used by the
-recipes, or to point your IDE at so it can resolve modules like `google.protobuf`
-to the exact same versions that the recipes will use when run on a builder, or
-when you run local commands like `recipes.py test train` or `recipes.py debug`.
+As a convenience, running recipe commands (such as `recipes.py fetch`) will
+generate symlinks under `.recipe_deps/_venv` to the virtualenv. The
+`.recipe_deps` folder will be right next to your repo's copy of the `recipes.py`
+file. The available virtualenvs are `normal`, `vscode` and `pycharm`, each
+corresponding to the respective `vpython3` environment. (Note: to get the vscode
+and pycharm environments respectively, you need to run `recipes.py` with these
+protocols selected by the `RECIPE_DEBUGGER` environment variable. See the
+Debugger Configuration section).
 
-NOTE: Any time the recipe_engine's .vpython3 files change, the value of this
-symlink will be regenerated. Depending on the IDE this may mean that the IDE
+You can use these virtualenvs to enter the recipe engine's pinned python
+environment, but you can also configure your IDE/editor environment to use these
+environments by default.
+
+You can configure pyright (e.g. in pyproject.toml) to set `.recipe_deps` as
+`venvPath` and `_venv` as the `venv` configuration:
+
+    [tool.pyright]
+    venvPath = ".recipe_deps/_venv"
+    venv = "normal"
+
+NOTE: Any time the recipe_engine's .vpython3 files change, the values of these
+symlinks will be regenerated. Depending on the IDE this may mean that the IDE
 will need to be restarted, in case it's cacheing an old value of the symlink.
+The .vpython3 files change fairly infrequently, however.
 
 ## Debugging
 
@@ -921,12 +934,12 @@ Finally, the tool will execute RunSteps with the mocks from the selected test
 case. As you step through with the debugger, calls to `api.step` will return
 the mocked step_data defined by the test case.
 
-By default (without configuring a Remote Debugger - see the next section),
-the debug command will use `pdb`. In this mode, `pdb` will break at the very top
-of the selected recipe file (allowing you to debug import statements, or set
-breakpoints in e.g. `GenTests`), and it will break again at the very top of
-`RunSteps` after loading the selected test case. In the event of a crash, it
-will also load the crash for postmortem debugging.
+By default (without configuring a Remote Debugger - see the Debugger
+Configuration section), the debug command will use `pdb`. In this mode, `pdb`
+will break at the very top of the selected recipe file (allowing you to debug
+import statements, or set breakpoints in e.g. `GenTests`), and it will break
+again at the very top of `RunSteps` after loading the selected test case. In the
+event of a crash, it will also load the crash for postmortem debugging.
 
 Note that you can add standard python3 `breakpoint()` calls to add additional
 breakpoints directly in the code, too.

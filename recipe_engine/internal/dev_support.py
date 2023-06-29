@@ -10,37 +10,52 @@ This includes generation of .recipe_deps/_dev folder, which includes:
   * typings -> a root folder for type stubs
 """
 
-import os
-import shutil
+import logging
 import sys
 import tempfile
+import importlib.util
+
+from pathlib import Path
+
+from . import recipe_deps
 
 
-def ensure_typings(_):
-  """Ensures that the .recipe_deps/_dev/typings directory is generated."""
-  raise NotImplementedError("dev: typings")
+def ensure_venv(deps: 'recipe_deps.RecipeDeps'):
+  """Ensures that the .recipe_deps/_venvs/$env symlink is generated.
 
-
-def ensure_python3(deps):
-  """Ensures that the .recipe_deps/_dev/python3 symlink is generated.
+  $env is calculated as:
+    * vscode  - .vscode.vpython3
+    * pycharm - .pycharm.vpython3
+    * normal  - .vpython3
 
   No-op on windows.
   """
-  if sys.platform.startswith('win32'):
-    # Not supported on windows.
-    #
-    # If you're reading this and know how to make symlinking work in a pain-free
-    # way on windows, please contact the owners of recipes :).
-    return
+  name = 'normal'
+  if importlib.util.find_spec('debugpy'):
+    name = 'vscode'
+  elif importlib.util.find_spec('pydevd'):
+    name = 'pycharm'
 
-  dev_dir = deps.recipe_deps_dev_path
-  os.makedirs(dev_dir, exist_ok=True)
+  venvDir = Path(deps.recipe_deps_path)/"_venv"
+  venvDir.mkdir(parents=True, exist_ok=True)
 
-  py3_symlink = os.path.join(dev_dir, "python3")
-  tmp_symlink_dir = tempfile.mkdtemp(suffix="python3_link", dir=dev_dir)
+  curLink = venvDir/name
+
+  curLinkVal = None
   try:
-    tmp_symlink = os.path.join(tmp_symlink_dir, "python3")
-    os.symlink(sys.executable, tmp_symlink)
-    os.rename(tmp_symlink, py3_symlink)
-  finally:
-    shutil.rmtree(tmp_symlink_dir, ignore_errors=True)
+    curLinkVal = curLink.readlink()
+  except:
+    pass
+
+  if curLinkVal != sys.prefix:
+    tmpLink = Path(tempfile.mktemp(prefix='venv_', dir=venvDir))
+    try:
+      tmpLink.symlink_to(sys.prefix, target_is_directory=True)
+      tmpLink.replace(curLink)
+    except OSError as ex:
+      logging.warn("unable to create virtualenv link %r: %s", curLink, ex)
+    finally:
+      try:
+        tmpLink.unlink(missing_ok=True)
+      except:
+        pass
