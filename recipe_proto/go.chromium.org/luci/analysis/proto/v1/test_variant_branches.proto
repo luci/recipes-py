@@ -1,0 +1,162 @@
+// Copyright 2023 The LUCI Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package luci.analysis.v1;
+
+import "google/api/field_behavior.proto";
+import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
+import "go.chromium.org/luci/analysis/proto/v1/common.proto";
+
+option go_package = "go.chromium.org/luci/analysis/proto/v1;analysispb";
+
+// For reading test variant branch analyses from Spanner.
+// At the moment, this enables us to inspect the state of a test variant branch
+// analysis in Spanner (which cannot easily inspected using SQL queries,
+// because the data is encoded).
+// This is currently only for LUCI Analysis admin users.
+// In the future, it may be used for displaying the test variant branch
+// analyses in the UI, etc.
+service TestVariantBranches {
+  // Retrieves the current state of test variant branch analysis.
+  rpc Get(GetTestVariantBranchRequest) returns (
+    TestVariantBranch) {};
+}
+
+// A request message for `TestVariantBranches.Get` RPC.
+message GetTestVariantBranchRequest {
+  // The name of the test variant branch.
+  // It MUST be of the form projects/{PROJECT}/tests/{URL_ESCAPED_TEST_ID}/variants/{VARIANT_HASH}/refs/{REF_HASH}
+  // where:
+  // PROJECT is the LUCI Project of the test variant branch analysis.
+  // URL_ESCAPED_TEST_ID is the test ID, escaped with
+  // https://golang.org/pkg/net/url/#PathEscape. See also https://aip.dev/122.
+  // VARIANT_HASH is the variant hash of the test variant analysis (16 lower-case-character hex string).
+  // REF_HASH is the identity of the branch of the analysis. It is a 16 lower-case-character hex string.
+  string name = 1
+    [(google.api.field_behavior) = REQUIRED];
+}
+
+// Represents changepoint analysis for a particular (project, test, variant, ref).
+message TestVariantBranch {
+  // The name of the test variant branch.
+  // Of the form projects/{PROJECT}/tests/{URL_ESCAPED_TEST_ID}/variants/{VARIANT_HASH}/refs/{REF_HASH}
+  // where:
+  // PROJECT is the LUCI Project of the test variant branch analysis.
+  // URL_ESCAPED_TEST_ID is the test ID, escaped with
+  // https://golang.org/pkg/net/url/#PathEscape. See also https://aip.dev/122.
+  // VARIANT_HASH is the variant hash of the test variant analysis (16 lower-case-character hex string).
+  // REF_HASH is the identity of the branch of the analysis. It is a 16 lower-case-character hex string.
+  string name = 1;
+
+  // The LUCI Project. E.g. "chromium".
+  string project = 2;
+
+  // The identity of the test.
+  string test_id = 3;
+
+  // Hash of the variant, as 16 lowercase hexadecimal characters.
+  // E.g. "96c68dc946ab4068".
+  string variant_hash = 4;
+
+  // Hash of the source branch, as 16 lowercase hexadecimal characters.
+  string ref_hash = 5;
+
+  // Describes one specific way of running the test, e.g. a specific bucket,
+  // builder and a test suite.
+  luci.analysis.v1.Variant variant = 6;
+
+  // The branch in source control.
+  luci.analysis.v1.SourceRef ref = 7;
+
+  // The finalized segments in the output buffer.
+  //
+  // Do not depend on this field. The internal protocol buffer stored in
+  // Spanner is returned here for debug purposes only. We use
+  // google.protobuf.Any to avoid revealing its type and having clients
+  // possibly depend on it.
+  //
+  // If any tool needs to read this data, a wire proto (that is different
+  // from the storage proto) needs to be defined and this field replaced
+  // by a field of that wire type.
+  google.protobuf.Any finalized_segments = 8;
+
+  // The finalizing segment in the output buffer.
+  //
+  // Do not depend on this field. The internal protocol buffer stored in
+  // Spanner is returned here for debug purposes only. We use
+  // google.protobuf.Any to avoid revealing its type and having clients
+  // possibly depend on it.
+  //
+  // If any tool needs to read this data, a wire proto (that is different
+  // from the storage proto) needs to be defined and this field replaced
+  // by a field of that wire type.
+  google.protobuf.Any finalizing_segment = 9;
+
+  // Statistics about verdicts in the output buffer.
+  //
+  // Do not depend on this field. The internal protocol buffer stored in
+  // Spanner is returned here for debug purposes only. We use
+  // google.protobuf.Any to avoid revealing its type and having clients
+  // possibly depend on it.
+  //
+  // If any tool needs to read this data, a wire proto (that is different
+  // from the storage proto) needs to be defined and this field replaced
+  // by a field of that wire type.
+  google.protobuf.Any statistics = 12;
+
+  // The hot input buffer.
+  InputBuffer hot_buffer = 10;
+
+  // The cold input buffer.
+  InputBuffer cold_buffer = 11;
+
+  // Additionally we may want to return the segmentize input buffer as well
+  // (maybe to show in the UI), but we will do it when we need it.
+}
+
+// InputBuffer contains the verdict history of the test variant branch.
+// It is used for both the hot buffer and the cold buffer.
+message InputBuffer {
+  // The number of test verdicts in the input buffer.
+  int64 length = 1;
+
+  // Verdicts, sorted by commit position (oldest first), and
+  // then result time (oldest first).
+  repeated PositionVerdict verdicts = 2;
+}
+
+// PositionVerdict represents a test verdict at a commit position.
+message PositionVerdict {
+  // The commit position for the verdict.
+  int64 commitPosition = 1;
+
+  // The time that this verdict is produced, truncated to the nearest hour.
+  google.protobuf.Timestamp hour = 2;
+
+  // Whether the verdict is exonerated or not.
+  bool is_exonerated = 3;
+
+  message Run {
+    // Number of non-skipped expected results in the run.
+    int64 expected_result_count = 1;
+    // Number of non-skipped unexpected results in the run.
+    int64 unexpected_result_count = 2;
+    // Whether this run is a duplicate run.
+    bool is_duplicate = 3;
+  }
+  repeated Run runs = 4;
+}

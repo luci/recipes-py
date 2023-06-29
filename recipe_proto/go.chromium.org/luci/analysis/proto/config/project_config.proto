@@ -48,15 +48,8 @@ message ProjectConfig {
   // The Buganzier configuration to use when filing bugs.
   BuganizerProject buganizer = 8;
 
-  // The threshold at which to file bugs.
-  // If reason cluster's impact exceeds the given threshold,
-  // a bug will be filed for it.
-  // Alternatively, if test name cluster's impact exceeds 134% of the given
-  // threshold, a bug will also be filed for it.
-  //
-  // LUCI Analysis's bias towards reason clusters reflects the fact that bugs
-  // filed for reasons should be better scoped and more actionable
-  // (focus on one problem).
+  // Deprecated. No longer has any effect. Retained for textproto
+  // compatibility only. Use bug_filing_thresholds instead.
   ImpactThreshold bug_filing_threshold = 2;
 
   // Per realm configurations.
@@ -73,7 +66,26 @@ message ProjectConfig {
   // Configuration for automatic bug management.
   BugManagement bug_management = 9;
 
-  // Next ID: 10
+  // The threshold at which to file bugs.
+  // If a reason cluster's impact exceeds the given threshold,
+  // a bug will be filed for it.
+  // Alternatively, if a test name cluster's impact exceeds 134% of the given
+  // threshold, a bug will also be filed for it.
+  //
+  // LUCI Analysis's bias towards reason clusters reflects the fact that bugs
+  // filed for reasons should be better scoped and more actionable
+  // (focus on one problem).
+  //
+  // The thresholds are considered satisfied if any of the individual impact metric
+  // thresholds is met or exceeded (i.e. if multiple thresholds are set, they
+  // are combined using an OR-semantic). If no threshold is set on any individual
+  // metric, the threshold as a whole is unsatisfiable.
+  repeated ImpactMetricThreshold bug_filing_thresholds = 10;
+
+  // Configuration related to metrics in LUCI Analysis.
+  Metrics metrics = 11;
+
+  // Next ID: 12
 }
 
 
@@ -83,6 +95,26 @@ message ProjectMetadata {
   // Indicates the preferred display name for the project in the UI.
   // Deprecated: not used anymore.
   string display_name = 1;
+}
+
+// Settings related to metrics used to measure cluster impact.
+message Metrics {
+  message MetricOverride {
+    // The id of the impact metric.
+    //
+    // Full list of available metrics here:
+    // https://source.chromium.org/chromium/infra/infra/+/main:go/src/go.chromium.org/luci/analysis/internal/analysis/metrics/metrics.go
+    string metric_id = 1;
+    // Whether the metric should be selected by default.
+    optional bool is_default = 2;
+    // Controls the default sort order between metrics. By default,
+    // a list will sort by the metric with the highest sort priority,
+    // followed by the metric with second highest sort priority,
+    // and so on.
+    optional int32 sort_priority = 3;
+  }
+  // Overrides to the default metrics configuration for a project.
+  repeated MetricOverride overrides = 1;
 }
 
 // Settings related to bug management.
@@ -129,6 +161,28 @@ message ImpactThreshold {
   // Deprecated. No longer has any effect. Retained for textproto
   // compatibility only.
   optional int64 unexpected_failures_7d = 3;
+}
+
+// ImpactMetricThreshold specifies a condition on a cluster's impact metric.
+message ImpactMetricThreshold {
+  // The id of the impact metric.
+  // eg.
+  // human-cls-failed-presubmit: The number of presubmit runs that failed.
+  // critical-failures-exonerated: The number of test failures on critical builders that were exonerated
+  //                               with an exoneration reason other than NOT_CRITICAL.
+  // test-runs-failed: The number of test runs that failed.
+  //                   A test run (also known as a 'shard' (chromium) or 'task' (Chrome OS))
+  //                   is considered failed if all tries of test(s) in it unexpectedly failed.
+  //                   The failed test run is attributed to the last failure of each of the
+  //                   test(s) that failed on all tries.
+  // failures: The number of test results that were unexpected failures.
+  //
+  // Full list of available metrics here:
+  // https://source.chromium.org/chromium/infra/infra/+/main:go/src/go.chromium.org/luci/analysis/internal/analysis/metrics/metrics.go
+  string metric_id = 1;
+
+  // The thresholds against a metric.
+  MetricThreshold threshold = 2;
 }
 
 // MetricThreshold specifies thresholds for a particular metric.
@@ -241,8 +295,15 @@ message MonorailPriority {
   // valid priority field values you have defined in your monorail project.
   string priority = 1;
 
-  // The threshold at which to apply the priority.
+  // Deprecated. No longer has any effect. Retained for textproto
+  // compatibility only. Use thresholds instead.
   ImpactThreshold threshold = 2;
+
+  // The threshold at which to apply the priority.
+  // The thresholds are considered satisfied if any of the individual impact metric
+  // thresholds is met or exceeded (i.e. if multiple thresholds are set, they
+  // are combined using an OR-semantic).
+  repeated ImpactMetricThreshold thresholds = 3;
 }
 
 // Configurations per realm.
@@ -272,6 +333,38 @@ message Clustering {
   //   like_template: "${testname}"
   // }
   repeated TestNameClusteringRule test_name_rules = 1;
+
+  // Regular expressions used to mask out part of a failure reason
+  // prior to clustering.
+  //
+  // The process of generating the clustering key is:
+  // 1. All '%', '_' and '\' characters in the failure reason are
+  //    escaped to generate a SQL LIKE expression that matches the
+  //    failure reason literally.
+  // 2. Regular expressions are run over the escaped failure reason
+  //    one by one to identify parts of the failure reason to mask
+  //    out (replace by a SQL LIKE wildcard match).
+  // 3. The clustering key is used in the failure association rule
+  //    of a newly field bug, or hashed to generate the clustering
+  //    key.
+  //
+  // For regular expression run against the failure reason,
+  // the part of the reason that matches the first (capturing)
+  // subexpression is masked out in the reason cluster.
+  // All non-overlapping matches are replaced.
+  //
+  // For example, given the masking expression:
+  // "^\\[Fixture failure\\] (\\w+):"
+  // The failure reason:
+  // `[Fixture failure] myFixture: some_error`
+  // will be escaped to (in step 1):
+  // `[Fixture failure] myFixture: some\_error`
+  // and will yield the following output after masking (step 2):
+  // `[Fixture failure] %: some\_error`
+  //
+  // Masking expressions are applied in the order that they appear
+  // in the list.
+  repeated string reason_mask_patterns = 2;
 }
 
 // A rule used to cluster a test result by test name.
@@ -418,8 +511,15 @@ message BuganizerProject {
     // The Buganizer priority that will be mapped to a threshold.
     BuganizerPriority priority = 1;
 
-    // The threshold at which to apply the priority.
+    // Deprecated. No longer has any effect. Retained for textproto
+    // compatibility only. Use thresholds instead.
     ImpactThreshold threshold = 2;
+
+    // The threshold at which to apply the priority.
+    // The thresholds are considered satisfied if any of the individual impact metric
+    // thresholds is met or exceeded (i.e. if multiple thresholds are set, they
+    // are combined using an OR-semantic).
+    repeated ImpactMetricThreshold thresholds = 3;
   }
 
   // A list of priority mappings that will be used to determine the

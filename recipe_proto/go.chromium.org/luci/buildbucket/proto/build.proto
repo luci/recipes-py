@@ -122,6 +122,11 @@ message Build {
 
     // Logs produced by the build script, typically "stdout" and "stderr".
     repeated Log logs = 5;
+
+    // Build status which is reported by the client via StartBuild or UpdateBuild.
+    Status status = 6;
+    StatusDetails status_details = 7;
+    string summary_html = 8;
   }
 
   reserved 5; // view_url
@@ -251,8 +256,6 @@ message Build {
   // (https://spec.commonmark.org/0.28/).
   // Explains status.
   // Up to 4 KB.
-  //
-  // BigQuery: excluded from rows.
   string summary_markdown = 20 [ (buildbucket.v2.create_build_field_option).field_behavior = OUTPUT_ONLY ];
 
   // Markdown reasoning for cancelling the build.
