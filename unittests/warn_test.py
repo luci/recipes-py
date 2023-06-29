@@ -294,8 +294,7 @@ class TestWarningRecorder(test_env.RecipeEngineUnitTest):
       self.assertIn(cause, recorded_warnings.get(warning_name))
 
   def _override_skip_frame_predicates(self, new_predicates):
-    key = '_cached_property_' + '_skip_frame_predicates'
-    object.__setattr__(self.recorder, key, new_predicates)
+    self.recorder.__dict__['_skip_frame_predicates'] = new_predicates
 
   @staticmethod
   def _create_mock_recipe(recipe_name, repo_name):

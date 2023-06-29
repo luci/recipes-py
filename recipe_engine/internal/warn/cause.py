@@ -12,12 +12,13 @@ deduplication.
 import os
 import inspect
 
+from functools import cached_property
+
 import attr
 
 from PB.recipe_engine import warning as warning_pb
 
 from ..attr_util import attr_type, attr_value_is, attr_list_type
-from ..class_util import cached_property
 from ...engine_types import freeze
 
 @attr.s(frozen=True)

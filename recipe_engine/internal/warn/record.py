@@ -8,6 +8,7 @@ import os
 import types
 
 from collections import defaultdict
+from functools import cached_property
 
 import attr
 
@@ -17,7 +18,6 @@ from .cause import CallSite, Frame, ImportSite
 from .escape import escape_warning_predicate, IGNORE
 
 from ..attr_util import attr_type, attr_seq_type
-from ..class_util import cached_property
 from ..recipe_deps import Recipe, RecipeDeps, RecipeModule
 
 from ...engine_types import FrozenDict

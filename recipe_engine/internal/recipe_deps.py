@@ -41,6 +41,7 @@ import re
 import sys
 
 from collections import namedtuple
+from functools import cached_property
 
 from future.utils import iteritems, itervalues, raise_
 
@@ -62,7 +63,6 @@ from . import proto_support
 from . import dev_support
 
 from .attr_util import attr_type, attr_value_is, attr_superclass, attr_dict_type
-from .class_util import cached_property
 from .exceptions import CyclicalDependencyError, UnknownRecipe, UnknownRepoName
 from .exceptions import RecipeLoadError, RecipeSyntaxError, MalformedRecipeError
 from .exceptions import UnknownRecipeModule
