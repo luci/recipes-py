@@ -3,6 +3,7 @@
 # that can be found in the LICENSE file.
 
 from recipe_engine.recipe_api import Property
+from recipe_engine.post_process import DropExpectation
 
 DEPS = [
   'generator_script',
@@ -29,6 +30,13 @@ def GenTests(api):
           'bogus',
           {'name': 'mock.step.binary', 'cmd': ['echo', 'mock step binary']}
       ),
+      api.post_check(lambda check, steps: check(
+          'bogus' in steps['gen step(bogus)'].cmd
+      )),
+      api.post_check(lambda check, steps: check(
+          'echo' in steps['mock.step.binary'].cmd
+      )),
+      api.post_process(DropExpectation),
   )
 
   yield api.test(
@@ -38,6 +46,13 @@ def GenTests(api):
           'bogus.py',
           {'name': 'mock.step.python', 'cmd': ['echo', 'mock step python']},
       ),
+      api.post_check(lambda check, steps: check(
+          ['vpython3', ..., 'bogus.py'] in steps['gen step(bogus.py)'].cmd
+      )),
+      api.post_check(lambda check, steps: check(
+          'echo' in steps['mock.step.python'].cmd
+      )),
+      api.post_process(DropExpectation),
   )
 
   yield api.test(
@@ -54,6 +69,10 @@ def GenTests(api):
           'mock.step.presentation',
           api.json.output({'step_text': 'mock step text'})
       ),
+      api.post_check(lambda check, steps: check(
+          steps['mock.step.presentation'].step_text == 'mock step text'
+      )),
+      api.post_process(DropExpectation),
   )
 
   yield api.test(
@@ -68,7 +87,11 @@ def GenTests(api):
            'always_run': True},
       ),
       api.step_data('fails', retcode=1),
-      status='FAILURE',
+      api.post_check(lambda check, steps: check(
+          ['echo', 'runs anyway'] in steps['always_runs'].cmd
+      )),
+      api.expect_status('FAILURE'),
+      api.post_process(DropExpectation),
   )
 
   yield api.test(
@@ -77,7 +100,11 @@ def GenTests(api):
       api.step_data(
           'gen step(not_list.py)',
           api.json.output({'not': 'a list'})),
-      status='FAILURE',
+      api.post_check(lambda check, steps: check(
+          steps['gen step(not_list.py)'].status == 'EXCEPTION'
+      )),
+      api.expect_status('FAILURE'),
+      api.post_process(DropExpectation),
   )
 
   yield api.test(
@@ -86,7 +113,24 @@ def GenTests(api):
       api.generator_script(
           'malformed.py',
           {'name': 'run', 'cmd': ['echo', 'there are', 4, 'cows']}),
-      status='FAILURE',
+      api.post_check(lambda check, steps: check(
+          steps['gen step(malformed.py)'].status == 'EXCEPTION'
+      )),
+      api.expect_status('FAILURE'),
+      api.post_process(DropExpectation),
+  )
+
+  yield api.test(
+      'missing_name',
+      api.properties(script_name='missing_name.py'),
+      api.generator_script(
+          'missing_name.py',
+          {'cmd': ['echo', 'hey']}),
+      api.post_check(lambda check, steps: check(
+          steps['gen step(missing_name.py)'].status == 'EXCEPTION'
+      )),
+      api.expect_status('FAILURE'),
+      api.post_process(DropExpectation),
   )
 
   yield api.test(
@@ -95,5 +139,9 @@ def GenTests(api):
       api.generator_script(
           'bad_key.py',
           {'name': 'whatever', 'bad': 'key'}),
-      status='FAILURE',
+      api.post_check(lambda check, steps: check(
+          steps['gen step(bad_key.py)'].status == 'EXCEPTION'
+      )),
+      api.expect_status('FAILURE'),
+      api.post_process(DropExpectation),
   )
