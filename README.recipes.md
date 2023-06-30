@@ -3112,23 +3112,6 @@ Args:
 
 **Returns (`step_data.StepData`)** - The StepData object as returned by
 api.step.
-
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/PYTHON_CALL_DEPRECATED')**<br>&mdash; **def [inline](/recipe_modules/python/api.py#69)(self, name, program, add_python_log=True, \*\*kwargs):**
-
-Run an inline python program as a step.
-
-Program is output to a temp file and run when this step executes.
-
-Args:
-  * name (str) - The name of the step
-  * program (str) - The literal python program text. This will be dumped to
-    a file and run like `python /path/to/file.py`
-  * add_python_log (bool) - Whether to add a 'python.inline' link on this
-    step on the build page. If true, the link will point to a log with
-    a copy of `program`.
-
-**Returns (`step_data.StepData`)** - The StepData object as returned by
-api.step.
 ### *recipe_modules* / [random](/recipe_modules/random)
 
 

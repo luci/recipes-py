@@ -65,37 +65,3 @@ class PythonApi(recipe_api.RecipeApi):  # pragma: no cover
     cmd.append(script)
     with self.m.context(env=env):
       return self.m.step(name, cmd + list(args or []), **kwargs)
-
-  @recipe_api.ignore_warnings("recipe_engine/PYTHON_CALL_DEPRECATED")
-  def inline(self, name, program, add_python_log=True, **kwargs):
-    """Run an inline python program as a step.
-
-    Program is output to a temp file and run when this step executes.
-
-    Args:
-      * name (str) - The name of the step
-      * program (str) - The literal python program text. This will be dumped to
-        a file and run like `python /path/to/file.py`
-      * add_python_log (bool) - Whether to add a 'python.inline' link on this
-        step on the build page. If true, the link will point to a log with
-        a copy of `program`.
-
-    **Returns (`step_data.StepData`)** - The StepData object as returned by
-    api.step.
-    """
-    self.m.warning.issue("PYTHON_INLINE_DEPRECATED")
-
-    program = textwrap.dedent(program)
-    compile(program, '<string>', 'exec', dont_inherit=1)
-
-    try:
-      raw = (
-        program.encode('utf-8') if isinstance(program, text_type) else program
-      )
-      self(name, self.m.raw_io.input(raw, '.py'), **kwargs)
-    finally:
-      result = self.m.step.active_result
-      if result and add_python_log:
-        result.presentation.logs['python.inline'] = program.splitlines()
-
-    return result
