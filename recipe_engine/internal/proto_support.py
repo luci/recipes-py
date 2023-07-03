@@ -15,6 +15,8 @@ import shutil
 import sys
 import tempfile
 
+from typing import Optional
+
 from gevent import subprocess
 
 import attr
@@ -22,6 +24,8 @@ import attr
 import google.protobuf  # pinned in .vpython
 import google.protobuf.message
 from google.protobuf import descriptor_pb2
+
+from . import recipe_deps
 
 from .attr_util import attr_type
 from .exceptions import BadProtoDefinitions
@@ -168,7 +172,7 @@ def _gather_proto_info_from_repo(repo):
 # checksum. If you need to change the compilation algorithm/process in any way,
 # you should increment this version number to cause all protos to be regenerated
 # downstream.
-RECIPE_PB_VERSION = b'5'
+RECIPE_PB_VERSION = b'6'
 
 
 def _gather_protos(deps):
@@ -271,11 +275,12 @@ class _DirMaker(object):
       self.made_dirs.add(curpath)
 
 
-def _check_package(pkg, relpath_base):
+def _check_package(modulebody, relpath_base):
   """Returns an error as a string if the proto file at `relpath_base` has
   a package line which is inconsistent.
 
   Args:
+    * modulebody (str) - The contents of the _pb2.py file.
     * pkg (str) - The package read from the proto, e.g. "some.package.namespace"
     * relpath_base (str) - The native-slash-delimited relative path to the
       destination `PB` folder of the generated proto file, minus the '.py'
@@ -285,6 +290,25 @@ def _check_package(pkg, relpath_base):
   will start with the destination relative path of the proto, suitable for use
   with _rel_to_abs_replacer.
   """
+  parsed = ast.parse(modulebody)
+  for assignment in parsed.body:
+    if not isinstance(assignment, ast.Assign):
+      continue
+
+    assert isinstance(assignment.targets[0], ast.Name)
+    if assignment.targets[0].id != 'DESCRIPTOR':
+      continue
+
+    # found the file descriptor line
+    assert isinstance(assignment.value, ast.Call)
+    assert isinstance(assignment.value.args[0], ast.Constant)
+    desc = descriptor_pb2.FileDescriptorProto.FromString(
+        assignment.value.args[0].value)
+    pkg = desc.package
+    break
+  else:
+    return "unable to find DESCRIPTOR in module"
+
   relpath_toks = relpath_base.split(os.path.sep)
   toplevel_namespace = relpath_toks[0]
 
@@ -320,14 +344,10 @@ def _check_package(pkg, relpath_base):
 # We find all import lines which aren't importing from the special
 # `google.protobuf` namespace, and rewrite them.
 _REWRITE_IMPORT_RE = re.compile(
-    r'^from (?!google\.protobuf)(\S*) import (\S*)_pb2 as (.*)$')
-# We find the file descriptor line to enforce what package the proto used for
-# enforcement purposes.
-_FILE_DESCRIPTOR_RE = re.compile(
-    r'DESCRIPTOR = _descriptor_pool\.Default\(\).AddSerializedFile\((.+)\)$')
+    r'^from (?!google\.protobuf|typing)(\S*) import (\S*)_pb2 as (.*)$', re.MULTILINE)
 
 
-def _rewrite_and_rename(root, base_proto_path):
+def _rewrite_and_rename(root: str, base_proto_path: str) -> Optional[str]:
   """Transforms a vanilla compiled *_pb2.py file into a recipe proto python
   file.
 
@@ -335,54 +355,39 @@ def _rewrite_and_rename(root, base_proto_path):
   *.py.
 
   Args:
-    * root (str) - Root directory
-    * base_proto_path (str) - Path to the *_pb2.py file to rewrite.
+    * root - Root directory
+    * base_proto_path - Path to the *_pb2.py file to rewrite.
 
   Returns None if this was successful, or returns a string with an error message
   if this failed.
   """
-  assert base_proto_path.endswith('_pb2.py')
+  assert base_proto_path.endswith('_pb2.py'), base_proto_path
 
-  err = None
+  target = base_proto_path[:-len('_pb2.py')]+'.py'
+  with open(base_proto_path, 'rU', encoding='utf-8') as ifile:
+    content = ifile.read()
 
-  found_first_import = False
-  target_base = base_proto_path[:-len('_pb2.py')]
-  with open(target_base+'.py', 'wb') as ofile:
-    with open(base_proto_path, 'rU') as ifile:
-      bypass = False
-      for line in ifile:
-        if bypass:
-          ofile.write(line.encode('utf-8'))
-          continue
+  # First, process the _pb2.py file.
+  #
+  # We need to check it's package name and rewrite it's imports.
+  expected_package = os.path.relpath(target, root)
+  expected_package, _ = os.path.splitext(expected_package)
+  err = _check_package(content, expected_package)
 
-        descriptor_m = _FILE_DESCRIPTOR_RE.match(line)
-        if descriptor_m:
-          # found the file descriptor line
-          desc = descriptor_pb2.FileDescriptorProto.FromString(
-              ast.literal_eval(descriptor_m.group(1)))
-          err = _check_package(desc.package, os.path.relpath(target_base, root))
-
-          ofile.write(line.encode('utf-8'))  # write it unchanged
-          # This was the last line we were looking for; the rest of the file is
-          # a straight copy.
-          bypass = True
-          continue
-
-        # If it's the first import line, we want to insert a __future__ import
-        # line.
-        if not found_first_import and line.startswith(('from ', 'import ')):
-          found_first_import = True
-          ofile.write(b"\nfrom __future__ import absolute_import\n\n")
-          ofile.write(line.encode('utf-8'))
-          continue
-
-        # Finally, if we're not in bypass mode, we're potentially rewriting
-        # import lines.
-        ofile.write(
-          _REWRITE_IMPORT_RE.sub(
-              r'from PB.\1 import \2 as \3\n', line
-          ).encode('utf-8'))
+  with open(target, 'w', encoding='utf-8') as ofile:
+    ofile.write(
+        _REWRITE_IMPORT_RE.sub(r'from PB.\1 import \2 as \3', content))
   os.remove(base_proto_path)
+
+  # Next, we process the .pyi file
+  base_pyi_path = base_proto_path + 'i'
+  pyi_target = base_proto_path[:-len('_pb2.py')]+'.pyi'
+  with open(base_pyi_path, 'rU', encoding='utf-8') as ifile:
+    content = ifile.read()
+  with open(pyi_target, 'w', encoding='utf-8') as ofile:
+    ofile.write(
+        _REWRITE_IMPORT_RE.sub(r'from PB.\1 import \2 as \3', content))
+  os.remove(base_pyi_path)
 
   return err
 
@@ -469,11 +474,10 @@ def _compile_protos(proto_files, proto_tree, protoc, argfile, dest):
     * dest (str): Path to the destination where the compiled protos should go.
   """
   protoc_proc = subprocess.Popen(
-      [protoc, '--python_out', dest, '@'+argfile],
+      [protoc, '--python_out', dest, '--pyi_out', dest, '@'+argfile],
       cwd=proto_tree, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
   output, _ = protoc_proc.communicate()
   os.remove(argfile)
-
 
   if protoc_proc.returncode != 0:
     replacer = _rel_to_abs_replacer(proto_files)
@@ -482,13 +486,16 @@ def _compile_protos(proto_files, proto_tree, protoc, argfile, dest):
     sys.exit(1)
 
   rewrite_errors = []
+  # Walk over all _pb2.py and pyi files (_rewrite_and_rename will process both
+  # based on the _pb2.py path)
   for base, _, fnames in os.walk(dest):
     for name in fnames:
-      err = _rewrite_and_rename(dest, os.path.join(base, name))
+      if not name.endswith('_pb2.py'):
+        continue
+      pb2_path = os.path.join(base, name)
+      err = _rewrite_and_rename(dest, pb2_path)
       if err:
         rewrite_errors.append(err)
-    with open(os.path.join(base, '__init__.py'), 'wb'):
-      pass
 
   if rewrite_errors:
     print("Error while rewriting generated protos. Output:\n", file=sys.stderr)
@@ -536,8 +543,8 @@ def _install_protos(proto_package_path, dgst, proto_files):
   # pb_temp is the destination of all the generated files; it will be renamed to
   # `{proto_package_path}/dest` as the final step of the installation.
   _DirMaker()(tmp_base)
-  proto_tree = tempfile.mkdtemp(dir=tmp_base)
-  pb_temp = tempfile.mkdtemp(dir=tmp_base)
+  proto_tree = tempfile.mkdtemp(dir=tmp_base, prefix='proto_')
+  pb_temp = tempfile.mkdtemp(dir=tmp_base, prefix='pb.py_')
   argfile_fd, argfile = tempfile.mkstemp(dir=tmp_base)
   _collect_protos(argfile_fd, proto_files, proto_tree)
 
@@ -575,11 +582,11 @@ def _check_digest(proto_package, dgst):
       raise
 
 
-def ensure_compiled(deps, proto_override):
+def ensure_compiled(deps: 'recipe_deps.RecipeDeps', proto_override):
   """Ensures protos are compiled.
 
   Gathers protos from all repos and compiles them into
-  `{deps.recipe_deps_path}/_pb3/recipe_deps/*`.
+  `{deps.recipe_deps_path}/_pb3/PB/*`.
 
   If proto_override is given, the function returns without doing any work.
 
