@@ -28,7 +28,6 @@
   * [platform](#recipe_modules-platform) &mdash; Mockable system platform identity functions.
   * [properties](#recipe_modules-properties) &mdash; Provides access to the recipes input properties.
   * [proto](#recipe_modules-proto) &mdash; Methods for producing and consuming protobuf data to/from steps and the filesystem.
-  * [python](#recipe_modules-python) &mdash; Provides methods for running python scripts correctly.
   * [random](#recipe_modules-random) &mdash; Allows randomness in recipes.
   * [raw_io](#recipe_modules-raw_io) &mdash; Provides objects for reading and writing raw data to and from steps.
   * [resultdb](#recipe_modules-resultdb) &mdash; API for interacting with the ResultDB service.
@@ -3068,50 +3067,6 @@ Args:
     - JSONPB: google.protobuf.json_format.Parse
       * 'ignore_unknown_fields' defaults to True.
     - TEXTPB: google.protobuf.text_format.Parse
-### *recipe_modules* / [python](/recipe_modules/python)
-
-[DEPS](/recipe_modules/python/__init__.py#9): [context](#recipe_modules-context), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [warning](#recipe_modules-warning)
-
-
-Provides methods for running python scripts correctly.
-
-This includes support for `vpython`, and knows how to specify parameters
-correctly for bots (e.g. ensuring that python is working on Windows, passing the
-unbuffered flag, etc.)
-
-#### **class [PythonApi](/recipe_modules/python/api.py#20)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
-
-*** note
-**DEPRECATED**: Directly invoke python instead of using this module.
-  
-***
-
-&mdash; **def [\_\_call\_\_](/recipe_modules/python/api.py#24)(self, name, script, args=None, unbuffered=True, venv=None, \*\*kwargs):**
-
-Return a step to run a python script with arguments.
-
-**TODO**: We should just use a single "args" list. Having "script"
-separate but required/first leads to weird things like:
-
-    (... script='-m', args=['module'])
-
-Args:
-  * name (str): The name of the step.
-  * script (str or Path): The Path of the script to run, or the first
-      command-line argument to pass to Python.
-  * args (list or None): If not None, additional arguments to pass to the
-      Python command.
-  * unbuffered (bool): If True, run Python in unbuffered mode.
-  * venv (None or False or True or Path): If True, run the script through
-      "vpython". This will, by default, probe the target script for a
-      configured VirtualEnv and, failing that, use an empty VirtualEnv. If a
-      Path, this is a path to an explicit "vpython" VirtualEnv spec file to
-      use. If False or None (default), the script will be run through the
-      standard Python interpreter.
-  * kwargs: Additional keyword arguments to forward to "step".
-
-**Returns (`step_data.StepData`)** - The StepData object as returned by
-api.step.
 ### *recipe_modules* / [random](/recipe_modules/random)
 
 

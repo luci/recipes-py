@@ -4,31 +4,6 @@ monorail_bug_default {
 }
 
 warning {
-  name: "PYTHON_CALL_DEPRECATED"
-  description: "`api.python(...)` is deprecated in favor of `api.step`."
-  description: ""
-  description: "Please update your api.python(name, ...) calls to one of:"
-  description: "  api.step(name, ['vpython3', ...])"
-  description: "  api.step(name, ['python3', ...])"
-  description: "  api.step(name, ['vpython', ...])"
-  description: "  api.step(name, ['python', ...])"
-  monorail_bug {
-    id: 1271425
-  }
-}
-
-warning {
-  name: "PYTHON_MODULE_DEPRECATED"
-  description: "The recipe_engine/python module is deprecated."
-  description: ""
-  description: "Please see other emitted warnings for details on how to migrate"
-  description: "to recipe_engine/step."
-  monorail_bug {
-    id: 1271425
-  }
-}
-
-warning {
   name: "PYTHON2_DEPRECATED"
   description: "Python2 is deprecated."
   description: ""
