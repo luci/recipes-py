@@ -400,7 +400,11 @@ class ResultDBAPI(recipe_api.RecipeApi):
         # Do not fail the build because recipe's proto copy is stale.
         ignore_unknown_fields=True)
 
-  def update_invocation(self, parent_inv='', step_name=None, source_spec=None):
+  def update_invocation(self,
+                        parent_inv='',
+                        step_name=None,
+                        source_spec=None,
+                        baseline_id=None):
     """Makes a call to the UpdateInvocation API to update the invocation
 
     Args:
@@ -408,15 +412,21 @@ class ResultDBAPI(recipe_api.RecipeApi):
       step_name (str): name of the step.
       source_spec (luci.resultdb.v1.SourceSpec): The source information
         to apply to the given invocation.
+      baseline_id (str): Baseline identifier for this invocation, usually of
+        the format {buildbucket bucket}:{buildbucket builder name}. For example,
+        'try:linux-rel'. Baselines are used to detect new tests in invocations.
     """
     field_mask_paths = []
     if source_spec:
       field_mask_paths.append('source_spec')
+    if baseline_id:
+      field_mask_paths.append('baseline_id')
 
     req = recorder.UpdateInvocationRequest(
         invocation=invocation_pb2.Invocation(
             name=parent_inv or self.current_invocation,
-            source_spec=source_spec),
+            source_spec=source_spec,
+            baseline_id=baseline_id),
         update_mask=field_mask_pb2.FieldMask(paths=field_mask_paths),
     )
     self._rpc(
@@ -507,6 +517,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
       inherit_sources=False,
       sources='',
       sources_file='',
+      baseline_id='',
   ):
     """Wraps the command with ResultSink.
 
@@ -559,6 +570,9 @@ class ResultDBAPI(recipe_api.RecipeApi):
       sources_file(string): Similar to sources, but takes a path to the
         file that contains the JSON object. Cannot be used when
         inherit_sources or sources is specified.
+      baseline_id(string): Baseline identifier for this invocation, usually of
+        the format {buildbucket bucket}:{buildbucket builder name}.
+        For example, 'try:linux-rel'.
     """
     if require_build_inv:
       self.assert_enabled()
@@ -582,6 +596,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
     assert isinstance(inherit_sources, bool), inherit_sources
     assert isinstance(sources, (type(None), str)), sources
     assert isinstance(sources_file, (type(None), str)), sources_file
+    assert isinstance(baseline_id, (type(None), str)), baseline_id
 
     ret = ['rdb', 'stream']
 
@@ -626,6 +641,9 @@ class ResultDBAPI(recipe_api.RecipeApi):
 
     if sources_file:
       ret += ['-sources-file', sources_file]
+
+    if baseline_id:
+      ret += ['-baseline-id', baseline_id]
 
     ret += ['--'] + list(cmd)
     return ret

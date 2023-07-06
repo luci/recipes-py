@@ -32,7 +32,8 @@ def RunSteps(api, invocation, gitiles_commit, gerrit_changes):
           sources=invocation_pb.Sources(
               gitiles_commit=gitiles_commit,
               changelists=gerrit_changes,
-          )))
+          )),
+      baseline_id='try:linux-rel')
 
 
 def GenTests(api):

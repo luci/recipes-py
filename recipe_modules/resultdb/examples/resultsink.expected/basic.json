@@ -361,6 +361,30 @@
     "name": "test with sources_file"
   },
   {
+    "cmd": [
+      "rdb",
+      "stream",
+      "-baseline-id",
+      "try:linux-rel",
+      "--",
+      "echo",
+      "suppose its a test"
+    ],
+    "luci_context": {
+      "realm": {
+        "name": "proj:realm"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "test with baseline_id"
+  },
+  {
     "name": "$result"
   }
 ]

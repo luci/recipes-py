@@ -103,6 +103,13 @@ def RunSteps(api):
           sources_file='sources.json',
       ))
 
+  api.step(
+      'test with baseline_id',
+      api.resultdb.wrap(
+          ['echo', 'suppose its a test'],
+          baseline_id='try:linux-rel',
+      ))
+
 
 def GenTests(api):
   yield api.test(

@@ -3216,7 +3216,7 @@ A module for interacting with ResultDB.
 
 &mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#53)(self):**
 
-&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#633)(self, column_keys=(), grouping_keys=('status',)):**
+&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#651)(self, column_keys=(), grouping_keys=('status',)):**
 
 Specifies how the test results should be rendered.
 
@@ -3380,7 +3380,7 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
-&mdash; **def [update\_invocation](/recipe_modules/resultdb/api.py#403)(self, parent_inv='', step_name=None, source_spec=None):**
+&mdash; **def [update\_invocation](/recipe_modules/resultdb/api.py#403)(self, parent_inv='', step_name=None, source_spec=None, baseline_id=None):**
 
 Makes a call to the UpdateInvocation API to update the invocation
 
@@ -3389,6 +3389,9 @@ Args:
   step_name (str): name of the step.
   source_spec (luci.resultdb.v1.SourceSpec): The source information
     to apply to the given invocation.
+  baseline_id (str): Baseline identifier for this invocation, usually of
+    the format {buildbucket bucket}:{buildbucket builder name}. For example,
+    'try:linux-rel'. Baselines are used to detect new tests in invocations.
 
 &mdash; **def [upload\_invocation\_artifacts](/recipe_modules/resultdb/api.py#295)(self, artifacts, parent_inv=None, step_name=None):**
 
@@ -3410,7 +3413,7 @@ Returns:
   A BatchCreateArtifactsResponse proto message listing the artifacts that
   were created.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#492)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file='', inherit_sources=False, sources='', sources_file=''):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#502)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file='', inherit_sources=False, sources='', sources_file='', baseline_id=''):**
 
 Wraps the command with ResultSink.
 
@@ -3463,6 +3466,9 @@ Args:
   sources_file(string): Similar to sources, but takes a path to the
     file that contains the JSON object. Cannot be used when
     inherit_sources or sources is specified.
+  baseline_id(string): Baseline identifier for this invocation, usually of
+    the format {buildbucket bucket}:{buildbucket builder name}.
+    For example, 'try:linux-rel'.
 ### *recipe_modules* / [runtime](/recipe_modules/runtime)
 
 
