@@ -181,7 +181,17 @@ working copy with content matching the steps executed by the recipe.
 When making actual changes, these json files should be included as part of your
 commit and reviewed for correctness.
 
-Running the tests now would result in a passing run, printing OK.
+Running the tests now would result in a passing run, printing OK, without the
+columns containing test coverage results. Whenever you have full test
+coverage, you will see something similar to the following output:
+
+```
+    ----------------------------------------------------------------------
+    Ran 1940 tests in 60.242s
+
+    ------
+    TESTS OK
+```
 
 ### But we can do better
 
