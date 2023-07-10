@@ -24,6 +24,7 @@ import test_env
 from PB.recipe_engine.internal.test.runner import Outcome
 
 from recipe_engine.internal.commands import test as test_parser
+from recipe_engine.internal.commands.test import test_name
 
 # pylint: disable=missing-docstring
 
@@ -1097,27 +1098,43 @@ class TestTrain(Common):
         ))
 
 
-class TestArgs(test_env.RecipeEngineUnitTest):
-  @mock.patch('argparse._sys.stderr', new_callable=StringIO)
-  def test_normalize_filter(self, stderr):
-    parser = argparse.ArgumentParser()
-    subp = parser.add_subparsers()
-    test_parser.add_arguments(subp.add_parser('test'))
+class TestFilter(test_env.RecipeEngineUnitTest):
+  def test_empty_filter(self):
+    filt = test_name.Filter()
+    self.assertFalse(filt)
 
-    with self.assertRaises(SystemExit):
-      args = parser.parse_args([
-        'test', 'run', '--filter', ''])
-    self.assertIn('empty filters not allowed', stderr.getvalue())
+    self.assertTrue(filt.recipe_name('something'))
+    self.assertTrue(filt.recipe_name('module:tests/other'))
 
-    stderr.seek(0)
-    stderr.truncate()
-    args = parser.parse_args(['test', 'run', '--filter', 'foo'])
-    self.assertEqual(args.test_filters, ['foo*.*'])
+    self.assertTrue(filt.full_name('something.test_case'))
+    self.assertTrue(filt.recipe_name('module:tests/other.test_case'))
 
-    stderr.seek(0)
-    stderr.truncate()
-    args = parser.parse_args(['test', 'run', '--filter', 'foo.bar'])
-    self.assertEqual(args.test_filters, ['foo.bar'])
+  def test_recipe_only_filter(self):
+    filt = test_name.Filter()
+    filt.append('something')
+    filt.append('completely_different')
+
+    self.assertTrue(filt.recipe_name('something'))
+    self.assertTrue(filt.recipe_name('completely_different'))
+    self.assertFalse(filt.recipe_name('module:tests/other'))
+
+    self.assertTrue(filt.full_name('something.test_case'))
+    self.assertFalse(filt.recipe_name('module:tests/other.test_case'))
+
+    self.assertTrue(filt.recipe_name('something_else'))
+
+  def test_full_name_filter(self):
+    filt = test_name.Filter()
+    filt.append('something.*specific')
+
+    self.assertTrue(filt.recipe_name('something'))
+    self.assertFalse(filt.recipe_name('completely_different'))
+    self.assertFalse(filt.recipe_name('module:tests/other'))
+
+    self.assertTrue(filt.full_name('something.oddly_specific'))
+    self.assertTrue(filt.full_name('something.mildly_specific'))
+    self.assertFalse(filt.full_name('something.test_case'))
+    self.assertFalse(filt.recipe_name('module:tests/other.test_case'))
 
 
 if __name__ == '__main__':

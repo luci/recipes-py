@@ -15,6 +15,8 @@ import json
 import multiprocessing
 import textwrap
 
+from . import test_name
+
 from ... import debugger
 
 
@@ -31,12 +33,6 @@ to execute, but it should correlate pretty closely. You can sort the file with
 
 
 def add_arguments(parser):
-  def _normalize_filter(filt):
-    if not filt:
-      raise argparse.ArgumentTypeError('empty filters not allowed')
-    # filters missing a test_name portion imply that its a recipe prefix and we
-    # should run all tests for the matching recipes.
-    return filt if '.' in filt else filt+'*.*'
 
   subp = parser.add_subparsers(dest='subcommand', metavar='{run, train, list}')
 
@@ -79,7 +75,7 @@ def add_arguments(parser):
       default=default_jobs,
       help='run N jobs in parallel (default %(default)s)')
   run_p.add_argument(
-      '--filter', dest='test_filters', action='append', type=_normalize_filter,
+      '--filter', dest='test_filter', action='append', default=test_name.Filter(),
       help=glob_helpstr)
   run_p.add_argument(
       '--json', type=argparse.FileType('w'), help=argparse.SUPPRESS)
@@ -119,7 +115,7 @@ def add_arguments(parser):
       default=default_jobs,
       help='run N jobs in parallel (default %(default)s)')
   train_p.add_argument(
-      '--filter', dest='test_filters', action='append', type=_normalize_filter,
+      '--filter', dest='test_filter', action='append', default=test_name.Filter(),
       help=glob_helpstr)
   train_p.add_argument(
       '--no-docs', action='store_false', default=True, dest='docs',
@@ -151,6 +147,9 @@ def add_arguments(parser):
   list_p = subp.add_parser(
       'list', help=helpstr, description=helpstr)
   list_p.add_argument(
+      '--filter', dest='test_filter', action='append', default=test_name.Filter(),
+      help=glob_helpstr)
+  list_p.add_argument(
       '--json', metavar='FILE', type=argparse.FileType('w'),
       help='path to JSON output file')
 
@@ -174,7 +173,7 @@ def add_arguments(parser):
       parser.error("Debugging requires --jobs=1.")
 
     if args.subcommand == 'list':
-      return run_list(args.recipe_deps, args.json)
+      return run_list(args.recipe_deps, args.json, args.test_filter)
 
     if args.subcommand == '_runner':
       from .runner import main
@@ -189,7 +188,7 @@ def add_arguments(parser):
   parser.set_defaults(func=_launch)
 
 
-def run_list(recipe_deps, json_file):
+def run_list(recipe_deps, json_file, test_filter: test_name.Filter):
   """Runs the `test list` subcommand.
 
   Lists all tests either to stdout or to a JSON file.
@@ -203,8 +202,10 @@ def run_list(recipe_deps, json_file):
   Returns 0
   """
   tests = [
-    '%s.%s' % (recipe.name, tc.name)
+    f'{recipe.name}.{tc.name}'
     for recipe in itervalues(recipe_deps.main_repo.recipes)
+    if test_filter.recipe_name(recipe.name)
+
     for tc in recipe.gen_tests()
   ]
   tests.sort()

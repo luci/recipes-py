@@ -31,30 +31,11 @@ from ..doc.cmd import regenerate_doc, doc_diff
 
 from . import report, test_name
 from .fail_tracker import FailTracker
-from .runner import RunnerThread, DescriptionWithCallback
-
-
-def _extract_filter_matchers(test_filters):
-  if not test_filters:
-    return (
-      (lambda _recipe_name: True),
-      (lambda _full_test_case_name: True),
-    )
-
-  return (
-    re.compile('|'.join([
-      fnmatch.translate(test_name.split(pattern)[0])
-      for pattern in test_filters
-    ])).match,
-    re.compile('|'.join([
-      fnmatch.translate(pattern)
-      for pattern in test_filters
-    ])).match
-  )
+from .runner import RunnerThread
 
 
 # TODO(crbug.com/1147793): Remove the second return value after migration.
-def _push_tests(test_filters, is_train, main_repo, description_queue,
+def _push_tests(test_filter: test_name.Filter, is_train, main_repo, description_queue,
                 recent_fails):
   """
   Returns:
@@ -62,7 +43,6 @@ def _push_tests(test_filters, is_train, main_repo, description_queue,
   """
   unused_expectation_files = set()
   used_expectation_files = set()
-  recipe_filter, test_filter = _extract_filter_matchers(test_filters)
   test_filenames = collections.defaultdict(dict)
 
   def push_test(recipe, test_case):
@@ -73,14 +53,14 @@ def _push_tests(test_filters, is_train, main_repo, description_queue,
       og_name = recipe_filenames[expect_file]
       if og_name == test_case.name:
         raise ValueError(
-            'Emitted test with duplicate name %r' % (test_case.name,))
+            f'Emitted test with duplicate name {test_case.name!r}')
 
       raise ValueError(
           'Emitted test %r which maps to the same JSON file as %r: %r' %
           (test_case.name, og_name, expect_file))
 
     recipe_filenames[expect_file] = test_case.name
-    if not test_filter('%s.%s' % (recipe.name, test_case.name)):
+    if not test_filter.full_name(f'{recipe.name}.{test_case.name}'):
       return
 
     description_queue.put(
@@ -92,16 +72,16 @@ def _push_tests(test_filters, is_train, main_repo, description_queue,
 
   # If filters are enabled, we'll only clean up expectation files for recipes
   # that are included by the filter.
-  if not test_filters:
+  if not test_filter:
     unused_expectation_files.update(main_repo.expectation_paths)
 
   # Handle recent fails first
   deferred_tests = []
   for recipe in itervalues(main_repo.recipes):
-    if not recipe_filter(recipe.name):
+    if not test_filter.recipe_name(recipe.name):
       continue
 
-    if test_filters:
+    if test_filter:
       unused_expectation_files.update(recipe.expectation_paths)
 
     # Maps expect_file -> original test_name
@@ -115,8 +95,8 @@ def _push_tests(test_filters, is_train, main_repo, description_queue,
     except KeyboardInterrupt:
       raise
     except:
-      print("USER CODE ERROR:")
-      print("Crashed while running GenTests from recipe %r" % (recipe.name,))
+      print('USER CODE ERROR:')
+      print(f'Crashed while running GenTests from recipe {recipe.name}')
       raise
 
   # Test any non-recently-failed cases
@@ -132,7 +112,7 @@ def _push_tests(test_filters, is_train, main_repo, description_queue,
   return set()
 
 
-def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
+def _run(test_results, recipe_deps, use_emoji, test_filter, is_train,
          filtered_stacks, stop, jobs, show_warnings):
   """Run tests in py3 subprocess pools.
   """
@@ -172,12 +152,12 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
         outcome_queue,
         is_train,
         filtered_stacks,
-        collect_coverage=not test_filters,
+        collect_coverage=not test_filter,
         jobs=jobs)
     live_threads[:] = all_threads
 
     unused_expectation_files = _push_tests(
-        test_filters, is_train, main_repo, description_queue,
+        test_filter, is_train, main_repo, description_queue,
         fail_tracker.recent_fails)
     test_results.unused_expectation_files.extend(unused_expectation_files)
 
@@ -202,7 +182,7 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
       # escaped the while loop above).
       #
       # If we don't have any filters, collect coverage data.
-      if (test_filters or (stop and has_fail)) is False:
+      if (test_filter or (stop and has_fail)) is False:
         data_paths = [t.cov_file for t in all_threads
                       if os.path.isfile(t.cov_file)]
         if data_paths:
@@ -267,7 +247,7 @@ def main(args):
 
   repo = args.recipe_deps.main_repo
   try:
-    _run(ret, args.recipe_deps, args.use_emoji, args.test_filters, is_train,
+    _run(ret, args.recipe_deps, args.use_emoji, args.test_filter, is_train,
          args.filtered_stacks, args.stop, args.jobs, args.show_warnings)
     _dump()
   except KeyboardInterrupt:
