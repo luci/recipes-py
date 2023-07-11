@@ -584,15 +584,19 @@ for it as strictly necessary.
 ### Extending config.py
 
 If you need to extend the configurations provided by another recipe module,
-write your extensions in a file ending with `_config.py` in your recipe module
-and then import that other module's "CONFIG_CTX" to add additional named
-configurations to it (yes, this has very messy implications).
 
-You can import the upstream module's CONFIG_CTX by using the recipe module
-import syntax. For example, importing from the 'gclient' module in 'depot_tools'
-looks like:
+  1. That other module MUST export it's `CONFIG_CTX` in `__init__.py`:
 
-    from RECIPE_MODULES.depot_tools.gclient import CONFIG_CTX
+      from .config import TheConfigRoot as CONFIG_CTX
+
+  1. Write your extensions in a file ending with `_config.py` in your recipe
+  module and then import that other module's `CONFIG_CTX` to add additional
+  named configurations to it (yes, this has very messy implications). You can
+  import the upstream module's `CONFIG_CTX` by using the recipe module import
+  syntax. For example, importing from the 'gclient' module in 'depot_tools'
+  looks like:
+
+      from RECIPE_MODULES.depot_tools.gclient import CONFIG_CTX
 
 ## How recipes execute
 

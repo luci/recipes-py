@@ -197,30 +197,32 @@ class RecipeModuleImporter(object):
     mod.MODULE_DIRECTORY = Path(ModuleBasePath(mod))
     mod.RESOURCE_DIRECTORY = mod.MODULE_DIRECTORY.join('resources')
     mod.REPO_ROOT = Path(RepoBasePath(repo_name, repo_root))
-    mod.CONFIG_CTX = getattr(mod, 'CONFIG_CTX', None)
     mod.DEPS = getattr(mod, 'DEPS', ())
     mod.WARNINGS = getattr(mod, 'WARNINGS', ())
 
     # TODO(iannucci, probably): remove DISABLE_STRICT_COVERAGE (crbug/693058).
     mod.DISABLE_STRICT_COVERAGE = getattr(mod, 'DISABLE_STRICT_COVERAGE', False)
 
-    # TODO(iannucci): do these imports on-demand at the callsites needing these.
-
     # NOTE: late import to avoid early protobuf import
     from ..config import ConfigContext
+    mod.CONFIG_CTX = getattr(mod, 'CONFIG_CTX', None)
+    if mod.CONFIG_CTX:
+      assert isinstance(mod.CONFIG_CTX, ConfigContext), (
+        'Module defines CONFIG_CTX but it is not an instance of ConfigContext?')
+    else:
+      # LEGACY: If CONFIG_CTX is not explicitly exported, try to discover and
+      # insert it.
 
-    cfg_module = None
-    if os.path.isfile(os.path.join(mod.__path__[0], 'config.py')):
-      cfg_module = importlib.import_module(mod.__name__ + '.config')
+      # TODO(iannucci): do these imports on-demand at the callsites needing these.
+      cfg_module = None
+      if os.path.isfile(os.path.join(mod.__path__[0], 'config.py')):
+        cfg_module = importlib.import_module(mod.__name__ + '.config')
 
-    if cfg_module:
-      for v in itervalues(cfg_module.__dict__):
-        if isinstance(v, ConfigContext):
-          assert not mod.CONFIG_CTX, (
-            'More than one configuration context: %s, %s' %
-            (cfg_module, mod.CONFIG_CTX))
-          mod.CONFIG_CTX = v
-      assert mod.CONFIG_CTX, 'Config file, but no config context?'
+      if cfg_module:
+        for v in itervalues(cfg_module.__dict__):
+          if isinstance(v, ConfigContext):
+            mod.CONFIG_CTX = v
+        assert mod.CONFIG_CTX, 'Config file, but no config context?'
 
     # The current config system relies on implicitly importing all the
     # *_config.py files... ugh.
