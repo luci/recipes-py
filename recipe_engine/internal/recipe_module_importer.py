@@ -167,7 +167,6 @@ class RecipeModuleImporter(object):
     calculate all these details.
 
     Currently sets the additional attributes on the python module:
-      * `NAME`: The module's short name (e.g. 'path')
       * `API`: The class derived from RecipeApiPlain in api.py
       * `TEST_API`: The class derived from RecipeTestApi in test_api.py. If none
         exists, then this is set to RecipeTestApi.
@@ -193,7 +192,6 @@ class RecipeModuleImporter(object):
         on disk.
     """
     _, repo_name, module_name = mod.__name__.split('.')
-    mod.NAME = module_name
     mod.MODULE_DIRECTORY = Path(ModuleBasePath(mod))
     mod.RESOURCE_DIRECTORY = mod.MODULE_DIRECTORY.join('resources')
     mod.REPO_ROOT = Path(RepoBasePath(repo_name, repo_root))

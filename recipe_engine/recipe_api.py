@@ -10,7 +10,6 @@ from past.builtins import basestring
 import bisect
 import contextlib
 import copy
-import hashlib
 import inspect
 import json
 import keyword
@@ -19,7 +18,7 @@ import re
 import sys
 import types
 
-from functools import wraps
+from functools import wraps, cached_property
 
 import attr
 
@@ -713,7 +712,7 @@ def defer_results():
 
 
 class RecipeApiMeta(type):
-  WHITELIST = ('__init__',)
+  SKIPLIST = ('__init__',)
   def __new__(mcs, name, bases, attrs):
     """Automatically wraps all methods of subclasses of RecipeApi with
     @infer_composite_step. This allows defer_results to work as intended without
@@ -721,7 +720,7 @@ class RecipeApiMeta(type):
     """
     wrap = lambda f: infer_composite_step(f) if f else f
     for attr in attrs:
-      if attr in RecipeApiMeta.WHITELIST:
+      if attr in RecipeApiMeta.SKIPLIST:
         continue
       val = attrs[attr]
       if isinstance(val, types.FunctionType):
@@ -877,10 +876,6 @@ class RecipeApiPlain(object):
     the recipe repo where this module is defined.
     """
     return self._module.REPO_ROOT.join(*path)
-
-  @property
-  def name(self):
-    return self._module.NAME
 
 
 class RecipeApi(with_metaclass(RecipeApiMeta, RecipeApiPlain)):

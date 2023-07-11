@@ -1,14 +1,6 @@
 [
   {
     "cmd": [
-      "echo",
-      "recipe name is",
-      "recipe_engine::engine_tests/recipe_paths"
-    ],
-    "name": "recipe_name"
-  },
-  {
-    "cmd": [
       "python3",
       "RECIPE[recipe_engine::engine_tests/recipe_paths].resources/hello.py"
     ],

@@ -9,6 +9,7 @@ import datetime
 import functools
 import logging
 import os
+import re
 import sys
 import gevent
 import traceback
@@ -61,7 +62,7 @@ class ModuleInjectionSite(object):
     else:
       raise ModuleInjectionError(
         "Recipe Module %r has no dependency %r. (Add it to __init__.py:DEPS?)"
-        % (self.owner_module.name, key))
+        % (module_name(self.owner_module), key))
 
 
 class Placeholder(object):
@@ -144,12 +145,22 @@ def static_name(obj, func):
     return func.__name__
 
 
+_modname_re = re.compile(r'RECIPE_MODULES\.[^.]*\.([^.]*)\..*')
+
+def module_name(api_subclass_instance: object) -> str:
+  py_mod_name = api_subclass_instance.__class__.__module__
+  if m := _modname_re.match(py_mod_name):
+    return m.group(1)
+  raise ValueError(f'Cannot find recipe module name from {py_mod_name}')
+
+
 def _returns_placeholder(func, alternate_name=None):
   @static_wraps(func)
   def inner(self, *args, **kwargs):
     ret = static_call(self, func, *args, **kwargs)
     assert isinstance(ret, Placeholder)
-    ret.namespaces = (self.name, alternate_name or static_name(self, func))
+    selfname = module_name(self)
+    ret.namespaces = (selfname, alternate_name or static_name(self, func))
     return ret
   # prevent this placeholder-returning function from becoming a composite_step.
   inner._non_step = True # pylint: disable=protected-access

@@ -241,7 +241,6 @@ Our importer behaves specially:
 
 The "patchup" we do to the recipe module adds a few extra attributes to the
 loaded module:
-  * `NAME` - The short name of the module, e.g. "buildbucket".
   * `MODULE_DIRECTORY` - A recipe `Path` object used by the `api.resource()`
     function present on RecipeApi subclasses indirectly (see next item). AFAIK,
     nothing actually uses this directly, but "it seems like a good idea".

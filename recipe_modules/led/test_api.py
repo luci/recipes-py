@@ -37,9 +37,8 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
     self._mock_edit_key = 0
 
   def _singleton_mod_data(self, key, val):
-    mod_name = self._module.NAME
     ret = recipe_test_api.TestData(None)
-    ret.mod_data[mod_name][key] = val
+    ret.mod_data['led'][key] = val
     return ret
 
   def mock_get_builder(self, job_def, project=None, bucket=None, builder=None):

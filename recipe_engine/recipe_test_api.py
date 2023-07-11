@@ -340,7 +340,7 @@ def mod_test_data(func):
   @static_wraps(func)
   def inner(self, *args, **kwargs):
     assert isinstance(self, RecipeTestApi)
-    mod_name = self._module.NAME  # pylint: disable=W0212
+    mod_name = self._module.__name__.split('.')[-1]  # pylint: disable=W0212
     ret = TestData(None)
     data = static_call(self, func, *args, **kwargs)
     ret.mod_data[mod_name][inner.__name__] = data
@@ -437,7 +437,7 @@ def _placeholder_step_data(func, placeholder_name=None):
   @static_wraps(func)
   def inner(self, *args, **kwargs):
     assert isinstance(self, RecipeTestApi)
-    mod_name = self._module.NAME  # pylint: disable=W0212
+    mod_name = self._module.__name__.split('.')[-1]  # pylint: disable=W0212
     data = static_call(self, func, *args, **kwargs)
     if isinstance(data, StepTestData):
       all_data = list(itervalues(data.placeholder_data))

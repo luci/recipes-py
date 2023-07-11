@@ -824,8 +824,7 @@ class Recipe(object):
     # need for some ugly workarounds in user code. A better way to do this would
     # be to migrate all recipes to be members of modules.
     fakeModule = namedtuple(
-      "fakeModule", "NAME REPO_ROOT RESOURCE_DIRECTORY")(
-        self.full_name,
+      "fakeModule", "REPO_ROOT RESOURCE_DIRECTORY")(
         Path(RepoBasePath(self.repo.name, self.repo.path)),
         Path(RecipeScriptBasePath(
           self.full_name,
@@ -986,7 +985,7 @@ def _instantiate_test_api(imported_module, resolved_deps):
 
   Args:
     * imported_module (raw imported python module) - The result of calling
-      RecipeRepo.import_recipe_module().
+      RecipeModule.do_import().
     * resolved_deps ({local_name: None|instantiated recipe test api}) - The
       resolved RecipeTestApi instances which this module has in its DEPS. Deps
       whose value is None will be omitted. These deps will all be populated on
@@ -1001,7 +1000,7 @@ def _instantiate_test_api(imported_module, resolved_deps):
     for local_name, resolved_dep in iteritems(resolved_deps)
     if resolved_dep is not None
   })
-  setattr(inst.m, imported_module.NAME, inst)
+  setattr(inst.m, imported_module.__name__.split('.')[-1], inst)
   return inst
 
 
@@ -1017,7 +1016,7 @@ def _instantiate_api(engine, test_data, fqname, imported_module, test_api,
     * fqname (string) - The fully qualified 'repo_name/module_name' of the
       module we're instantiating.
     * imported_module (raw imported python module) - The result of calling
-      RecipeRepo.import_recipe_module().
+      RecipeModule.do_import().
     * test_api (RecipeTestApi) - The instantiated recipe test api object for
       this module.
     * resolved_deps ({local_name: None|instantiated recipe api}) - The resolved
@@ -1027,10 +1026,11 @@ def _instantiate_api(engine, test_data, fqname, imported_module, test_api,
 
   Returns the instantiated RecipeApiPlain subclass.
   """
+  shortname = imported_module.__name__.split('.')[-1]
   kwargs = {
     'module': imported_module,
     # TODO(luqui): test_data will need to use canonical unique names.
-    'test_data': test_data.get_module_test_data(imported_module.NAME)
+    'test_data': test_data.get_module_test_data(shortname)
   }
 
   properties_def = imported_module.PROPERTIES
@@ -1084,7 +1084,7 @@ def _instantiate_api(engine, test_data, fqname, imported_module, test_api,
   inst.test_api = test_api
 
   inst.m.__dict__.update(resolved_deps)
-  setattr(inst.m, imported_module.NAME, inst)
+  setattr(inst.m, shortname, inst)
 
   # Replace class-level Requirements placeholders in the recipe API with
   # their instance-level real values.
