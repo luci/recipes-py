@@ -14,7 +14,7 @@
     "name": "add log on failure",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output[log2]@{@@@",
-      "@@@STEP_LOG_LINE@json.output[log2]@  \"x\": 1, @@@",
+      "@@@STEP_LOG_LINE@json.output[log2]@  \"x\": 1,@@@",
       "@@@STEP_LOG_LINE@json.output[log2]@  \"y\": 2@@@",
       "@@@STEP_LOG_LINE@json.output[log2]@}@@@",
       "@@@STEP_LOG_END@json.output[log2]@@@",

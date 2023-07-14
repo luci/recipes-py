@@ -258,9 +258,7 @@ def _diff_test(test_results, expect_file, new_expect, is_train):
     return
 
   new_expect_text = json.dumps(
-      _encode_decode(new_expect), sort_keys=True, indent=2,
-      separators=(',', ': '),
-  )
+      _encode_decode(new_expect), sort_keys=True, indent=2)
 
   if new_expect_text == cur_expect_text:
     return

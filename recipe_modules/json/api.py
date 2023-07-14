@@ -21,13 +21,6 @@ from recipe_engine import config_types
 def dumps(*args, **kwargs):
   kwargs.setdefault('sort_keys', True)
   kwargs.setdefault('default', _default_json_serializer)
-  indent = kwargs.get('indent', None)
-  if indent is not None and 'separators' not in kwargs:  # pragma: no cover
-    # The default separators when indent!=None has changed in Python 3.
-    # See: https://docs.python.org/3/library/json.html#json.dump
-    # Assign the Python 2 default to make sure recipe generates the same
-    # expectation in both mode during the migration to Python 3.
-    kwargs['separators'] = (', ', ': ')
   return json.dumps(*args, **kwargs)
 
 
@@ -116,16 +109,17 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
         self.add_json_log == 'on_failure' and presentation.status != 'SUCCESS'):
       if valid:
         with contextlib.closing(recipe_util.StringListIO()) as listio:
-          json.dump(ret, listio,
-                    indent=2,
-                    # In python3 dictionaries are defined to use insertion
-                    # order, and so we don't need to sort keys for determinism.
-                    #
-                    # By not sorting, it means that the output on the UI will
-                    # reflect ~exactly what the program output.
-                    # sort_keys = True
-                    # Python 2 default separators, see comment in `dumps` func.
-                    separators=(', ', ': '))
+          json.dump(
+              ret,
+              listio,
+              indent=2,
+              # In python3 dictionaries are defined to use insertion
+              # order, and so we don't need to sort keys for determinism.
+              #
+              # By not sorting, it means that the output on the UI will
+              # reflect ~exactly what the program output.
+              # sort_keys = True
+          )
         presentation.logs[self.label] = listio.lines
       else:
         presentation.logs[self.label + ' (invalid)'] = raw_data.splitlines()

@@ -319,7 +319,7 @@ class FakeRecipeRepo(object):
       test_name = filesystem_safe(test_name)
       expect_path = os.path.join(base_path + '.expected', test_name + '.json')
       with self.write_file(expect_path) as buf:
-        json.dump(expectation, buf, indent=2, separators=(',', ': '))
+        json.dump(expectation, buf, indent=2)
     self.recipes_py('doc')
 
   @attr.s(slots=True)

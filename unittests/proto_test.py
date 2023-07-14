@@ -24,14 +24,13 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
           import json
           from google.protobuf.json_format import MessageToDict
           return json.dumps(
-              MessageToDict(msg), separators=(', ', ': '), indent=2,
-              sort_keys=True)
+              MessageToDict(msg), indent=2, sort_keys=True)
       '''
     ]
 
   def assertProtoInOutput(self, data, output):
     self.assertIn(
-        json.dumps(data, separators=(', ', ': '), indent=2, sort_keys=True),
+        json.dumps(data, indent=2, sort_keys=True),
         output)
 
   def test_recipe_proto_in_main(self):

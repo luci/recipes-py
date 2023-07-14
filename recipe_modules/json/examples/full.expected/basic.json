@@ -7,8 +7,8 @@
     "name": "echo1",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@[@@@",
-      "@@@STEP_LOG_LINE@json.output@  1, @@@",
-      "@@@STEP_LOG_LINE@json.output@  2, @@@",
+      "@@@STEP_LOG_LINE@json.output@  1,@@@",
+      "@@@STEP_LOG_LINE@json.output@  2,@@@",
       "@@@STEP_LOG_LINE@json.output@  3@@@",
       "@@@STEP_LOG_LINE@json.output@]@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -29,8 +29,8 @@
     "name": "echo2",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@[@@@",
-      "@@@STEP_LOG_LINE@json.output@  2, @@@",
-      "@@@STEP_LOG_LINE@json.output@  3, @@@",
+      "@@@STEP_LOG_LINE@json.output@  2,@@@",
+      "@@@STEP_LOG_LINE@json.output@  3,@@@",
       "@@@STEP_LOG_LINE@json.output@  4@@@",
       "@@@STEP_LOG_LINE@json.output@]@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -46,14 +46,14 @@
     "name": "foo",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output[1]@[@@@",
-      "@@@STEP_LOG_LINE@json.output[1]@  1, @@@",
-      "@@@STEP_LOG_LINE@json.output[1]@  2, @@@",
+      "@@@STEP_LOG_LINE@json.output[1]@  1,@@@",
+      "@@@STEP_LOG_LINE@json.output[1]@  2,@@@",
       "@@@STEP_LOG_LINE@json.output[1]@  3@@@",
       "@@@STEP_LOG_LINE@json.output[1]@]@@@",
       "@@@STEP_LOG_END@json.output[1]@@@",
       "@@@STEP_LOG_LINE@json.output[2]@[@@@",
-      "@@@STEP_LOG_LINE@json.output[2]@  \"x\", @@@",
-      "@@@STEP_LOG_LINE@json.output[2]@  \"y\", @@@",
+      "@@@STEP_LOG_LINE@json.output[2]@  \"x\",@@@",
+      "@@@STEP_LOG_LINE@json.output[2]@  \"y\",@@@",
       "@@@STEP_LOG_LINE@json.output[2]@  \"\\ufeff\\uff5a\"@@@",
       "@@@STEP_LOG_LINE@json.output[2]@]@@@",
       "@@@STEP_LOG_END@json.output[2]@@@"
@@ -67,7 +67,7 @@
     "name": "json through",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"x\": 1, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"x\": 1,@@@",
       "@@@STEP_LOG_LINE@json.output@  \"y\": 2@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -91,7 +91,7 @@
     "name": "read json from file we just wrote",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"x\": 1, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"x\": 1,@@@",
       "@@@STEP_LOG_LINE@json.output@  \"y\": 2@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -107,7 +107,7 @@
     "name": "leaking json",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"x\": 1, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"x\": 1,@@@",
       "@@@STEP_LOG_LINE@json.output@  \"y\": 2@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"

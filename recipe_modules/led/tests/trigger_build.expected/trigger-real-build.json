@@ -87,7 +87,7 @@
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"buildbucket\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"build_id\": 87654321, @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"build_id\": 87654321,@@@",
       "@@@STEP_LOG_LINE@json.output@    \"host_name\": \"buildbucket@appspot.com\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",

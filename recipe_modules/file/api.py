@@ -365,8 +365,7 @@ class FileApi(recipe_api.RecipeApi):
 
     Raise file.Error
     """
-    test_data_text = self.m.json.dumps(
-        test_data, indent=2, separators=(',', ': '))
+    test_data_text = self.m.json.dumps(test_data, indent=2)
     text = self.read_text(
         name, source, test_data=test_data_text, include_log=include_log)
     return self.m.json.loads(text)
