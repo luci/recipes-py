@@ -241,10 +241,6 @@ Our importer behaves specially:
 
 The "patchup" we do to the recipe module adds a few extra attributes to the
 loaded module:
-  * `MODULE_DIRECTORY` - A recipe `Path` object used by the `api.resource()`
-    function present on RecipeApi subclasses indirectly (see next item). AFAIK,
-    nothing actually uses this directly, but "it seems like a good idea".
-    * TODO(iannucci): Remove this and just use `module.__file__` instead.
   * `RESOURCE_DIRECTORY` - A recipe `Path` object used by the `api.resource()`
     function present on RecipeApi subclasses.
     * TODO(iannucci): Remove this and just use `module.__file__` instead.

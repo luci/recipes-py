@@ -173,7 +173,6 @@ class RecipeModuleImporter(object):
       * `PROPERTIES`: A dictionary derived from 'PROPERTIES' defined in
         __init__.py, except that all of the Property values are 'bound' by
         calling their `bind()` method.
-      * `MODULE_DIRECTORY`: The module's directory (as a Path object).
       * `RESOURCE_DIRECTORY`: The module's ./resource directory (as a Path
         object).
       * `REPO_ROOT`: A Path object for the root of the repo containing this
@@ -192,8 +191,7 @@ class RecipeModuleImporter(object):
         on disk.
     """
     _, repo_name, module_name = mod.__name__.split('.')
-    mod.MODULE_DIRECTORY = Path(ModuleBasePath(mod))
-    mod.RESOURCE_DIRECTORY = mod.MODULE_DIRECTORY.join('resources')
+    mod.RESOURCE_DIRECTORY = Path(ModuleBasePath(mod)).join('resources')
     mod.REPO_ROOT = Path(RepoBasePath(repo_name, repo_root))
     mod.DEPS = getattr(mod, 'DEPS', ())
     mod.WARNINGS = getattr(mod, 'WARNINGS', ())
