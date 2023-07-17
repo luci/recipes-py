@@ -35,6 +35,7 @@ SUB_PATHS = [
   'lucictx',
   'resultdb/proto',
   'scheduler/api/scheduler/v1',
+  'scheduler/appengine/messages',
 ]
 
 def main():
