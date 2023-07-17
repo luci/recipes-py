@@ -18,7 +18,9 @@ import re
 import sys
 import types
 
-from functools import wraps, cached_property
+from typing import Optional
+from dataclasses import dataclass
+from functools import wraps
 
 import attr
 
@@ -35,10 +37,13 @@ from .third_party import luci_context
 from .third_party.logdog import streamname
 from .third_party.logdog.bootstrap import ButlerBootstrap, NotBootstrappedError
 from .engine_types import StepPresentation, freeze, FrozenDict
-from .util import ModuleInjectionSite
+from .util import ModuleInjectionSite, ModuleInjectionError
 
 # TODO(iannucci): Rationalize the use of this in downstream scripts.
-from .util import Placeholder  # pylint: disable=unused-import
+from .util import Placeholder
+from recipe_engine import config_types
+
+from recipe_engine import recipe_test_api  # pylint: disable=unused-import
 
 
 class UnknownRequirementError(object):
@@ -755,17 +760,17 @@ class RecipeApiPlain(object):
     """Note: Injected dependencies are NOT available in __init__()."""
     super(RecipeApiPlain, self).__init__()
 
+    assert module
     self._module = module
+    self._resource_directory = config_types.Path(
+        config_types.ModuleBasePath(module)).join('resources')
 
     assert isinstance(test_data, (ModuleTestData, DisabledTestData))
     self._test_data = test_data
 
     # If we're the 'root' api, inject directly into 'self'.
     # Otherwise inject into 'self.m'
-    if not isinstance(module, types.ModuleType):
-      self.m = self
-    else:
-      self.m = ModuleInjectionSite(self)
+    self.m = ModuleInjectionSite(self)
 
     # If our module has a test api, it gets injected here.
     self.test_api = None
@@ -869,7 +874,7 @@ class RecipeApiPlain(object):
     """
     # TODO(vadimsh): Verify that file exists. Including a case like:
     #  module.resource('dir').join('subdir', 'file.py')
-    return self._module.RESOURCE_DIRECTORY.join(*path)
+    return self._resource_directory.join(*path)
 
   def repo_resource(self, *path):
     """Returns a resource path, where path is relative to the root of
@@ -882,9 +887,55 @@ class RecipeApi(with_metaclass(RecipeApiMeta, RecipeApiPlain)):
   pass
 
 
-class RecipeScriptApi(RecipeApiPlain, ModuleInjectionSite):
-  # TODO(dnj): Delete this and make recipe scripts use standard recipe APIs.
-  pass
+@dataclass
+class RecipeScriptApi:
+  '''RecipeScriptApi is the implementation of the `api` object which is passed
+  to RunSteps.
+
+  In addition to the functions defined here, this will also have an attribute for
+  the instantiated RecipeModule corresponding to each DEPS entry.
+
+  For example, if your DEPS looks like:
+
+      DEPS = ['recipe_engine/json']
+
+  Then `api.json` will correspond to an instance of the JsonApi class from the
+  `json` recipe_module in the recipe_engine repo.
+  '''
+  # NOTE: This is a bit of an historical accident; the only thing this is useful
+  # for is to say `api._test_data.enabled` to determine, within a recipe script
+  # (i.e. somewhere under RunSteps), that the recipe is currently in test mode.
+  #
+  # TODO: Find a better API for this.
+  _test_data: Optional[recipe_test_api.ModuleTestData]
+
+  _resource_path: config_types.Path
+  _repo_path: config_types.Path
+
+  def __post_init__(self):
+    # This is a hack to allow `api` to be used in places which are expecting
+    # a recipe module's `self`.
+    self.m = self
+
+  def resource(self, *path):
+    """Returns path to a file under <recipe module>/resources/ directory.
+
+    Args:
+      path: path relative to module's resources/ directory.
+    """
+    # TODO(vadimsh): Verify that file exists. Including a case like:
+    #  module.resource('dir').join('subdir', 'file.py')
+    return self._resource_path.join(*path)
+
+  def repo_resource(self, *path):
+    """Returns a resource path, where path is relative to the root of
+    the recipe repo where this module is defined.
+    """
+    return self._repo_path.join(*path)
+
+  def __getattr__(self, key):
+    raise ModuleInjectionError(
+      f"Recipe has no dependency {key!r}. (Add it to DEPS?)")
 
 
 # This is a sentinel object for the Property system. This allows users to

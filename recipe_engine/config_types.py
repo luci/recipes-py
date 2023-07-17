@@ -11,9 +11,7 @@ import os
 import re
 
 from future.utils import with_metaclass
-from past.builtins import basestring
 
-RECIPE_MODULE_PREFIX = 'RECIPE_MODULES'
 
 
 def ResetTostringFns():
@@ -108,7 +106,7 @@ class ModuleBasePath(BasePath, collections.namedtuple('ModuleBasePath',
     return os.path.dirname(self.module.__file__)  # pragma: no cover
 
   def __repr__(self):
-    prefix = '%s.' % RECIPE_MODULE_PREFIX
+    prefix = 'RECIPE_MODULES.'
     assert self.module.__name__.startswith(prefix)
     name = self.module.__name__[len(prefix):]
     # We change python's module delimiter . to ::, since . is already used

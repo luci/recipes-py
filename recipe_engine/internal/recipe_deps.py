@@ -816,22 +816,14 @@ class Recipe(object):
     Returns RecipeScriptApi.
     """
     test_data = test_data or DisabledTestData()
-    # Provide a fake module to the ScriptApi so that recipes can use:
-    #   * .name
-    #   * .resource
-    #   * .repo_resource
-    # This is obviously a hack, however it homogenizes the api and removes the
-    # need for some ugly workarounds in user code. A better way to do this would
-    # be to migrate all recipes to be members of modules.
-    fakeModule = namedtuple(
-      "fakeModule", "REPO_ROOT RESOURCE_DIRECTORY")(
-        Path(RepoBasePath(self.repo.name, self.repo.path)),
+
+    api = RecipeScriptApi(
+        test_data.get_module_test_data(None),
         Path(RecipeScriptBasePath(
           self.full_name,
-          os.path.splitext(self.path)[0]+".resources")))
-    api = RecipeScriptApi(
-      module=fakeModule,
-      test_data=test_data.get_module_test_data(None))
+          os.path.splitext(self.path)[0]+".resources")),
+        Path(RepoBasePath(self.repo.name, self.repo.path)),
+    )
     resolved_deps = _resolve(
       self.repo.recipe_deps, self.normalized_DEPS, 'API', engine, test_data)
     for _, (warning, importer) in enumerate(_collect_import_warnings(self)):

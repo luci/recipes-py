@@ -241,9 +241,6 @@ Our importer behaves specially:
 
 The "patchup" we do to the recipe module adds a few extra attributes to the
 loaded module:
-  * `RESOURCE_DIRECTORY` - A recipe `Path` object used by the `api.resource()`
-    function present on RecipeApi subclasses.
-    * TODO(iannucci): Remove this and just use `module.__file__` instead.
   * `REPO_ROOT` - The Path to the root of the repo for this module, used by the
     `api.repo_resource()` method.
   * `CONFIG_CTX` - The `ConfigContext` instance defined in the module's

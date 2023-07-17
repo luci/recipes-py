@@ -34,7 +34,7 @@ def GenTests(api):
       api.post_process(post_process.StatusException) +
       api.post_process(
           post_process.SummaryMarkdown,
-          "Uncaught Exception: ModuleInjectionError('RecipeApi has no "
+          "Uncaught Exception: ModuleInjectionError('Recipe has no "
           "dependency 'missing_module'. (Add it to DEPS?)')",
       ) +
       api.post_process(post_process.DropExpectation))
