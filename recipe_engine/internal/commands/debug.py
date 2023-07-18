@@ -63,12 +63,78 @@ def _safely_gen_tests(recipe):
     sys.exit(0)
 
 
-def _dump_recipes_and_exit(rdeps, errmsg):
+def _dump_recipes(rdeps, errmsg, contain=''):
   print(errmsg)
-  print('Available recipes are:')
-  for recipe in sorted(rdeps.main_repo.recipes):
+  available = sorted(rdeps.main_repo.recipes)
+  msg = 'Available recipes are:'
+  if contain:
+    if matching := [name for name in available if contain in name]:
+      available = matching
+      msg = f'Available recipes (containing {contain!r}) are:'
+
+  print(msg)
+  for recipe in available:
     print('  ', recipe)
-  sys.exit(1)
+
+
+def _parse_debug_target(
+    rdeps: recipe_deps.RecipeDeps,
+    debug_target: typing.Optional[str]):
+  """Parses the singular `debug_target` argument, and returns the Recipe and
+  TestData it indicates.
+
+  Prints an error message an returns (None, None) if it fails to parse.
+  """
+  recipe_name, test_case_name = None, None
+
+  if not debug_target:
+    # Try to pull it from previous failures.
+    tracker = FailTracker(rdeps.previous_test_failures_path)
+    for fail in tracker.recent_fails:
+      recipe_name, test_case_name = test_name.split(fail)
+      print(
+          f'Attempting to pick most recent test failure: {recipe_name}.{test_case_name}.'
+      )
+      break
+  else:
+    # They told us something; Could be a recipe or recipe+test
+    recipe_name, test_case_name = debug_target, None
+    if '.' in recipe_name:
+      recipe_name, test_case_name = test_name.split(recipe_name)
+
+  # By this point we need at least the recipe name.
+  if recipe_name is None:
+    _dump_recipes(
+        rdeps,
+        'No recipe specified and no recent test failures found.')
+    return None, None
+
+  # And the recipe should actually exist in our repo.
+  recipe = rdeps.main_repo.recipes.get(recipe_name, None)
+  if recipe is None:
+    _dump_recipes(rdeps,
+                  f'Unable to find recipe {recipe_name!r}.',
+                  recipe_name)
+    return None, None
+  _breakpoint_recipe(recipe)
+
+  # Now make sure that we have a test case (either specified, or just pick the
+  # first one if the user didn't tell us).
+  test_data = None
+  names = []
+  for test_data in _safely_gen_tests(recipe):
+    if test_case_name is None or test_data.name == test_case_name:
+      return recipe, test_data
+    names.append(test_data.name)
+
+  print(
+      f'Unable to find test case {test_case_name!r} in recipe {recipe.name!r}'
+  )
+  print('For reference, we found the following test cases:')
+  for name in names:
+    print('  ', name)
+
+  return None, None
 
 
 def add_arguments(parser):
@@ -82,53 +148,29 @@ def add_arguments(parser):
             'If test_case_name is omitted, this will use the first test case. '
             'If omitted entirely, will debug the most recent test failure.'))
 
+  parser.add_argument(
+      '--filter', dest='test_filter', action='append', default=test_name.Filter(),
+      help=(
+        'Debug all tests which match this filter. Mutually exclusive with `debug_target`.'
+      ))
+
   def _main(args):
-    recipe_name, test_case_name = None, None
+    if args.test_filter and args.debug_target:
+      parser.error("cannot specify debug_target with --filter")
 
-    if not args.debug_target:
-      # Try to pull it from previous failures.
-      tracker = FailTracker(args.recipe_deps.previous_test_failures_path)
-      for fail in tracker.recent_fails:
-        recipe_name, test_case_name = test_name.split(fail)
-        print(
-            f'Attempting to pick most recent test failure: {recipe_name}.{test_case_name}.'
-        )
-        break
-    else:
-      # They told us something; Could be a recipe or recipe+test
-      recipe_name, test_case_name = args.debug_target, None
-      if '.' in recipe_name:
-        recipe_name, test_case_name = test_name.split(recipe_name)
+    if args.test_filter:
+      for recipe in args.recipe_deps.main_repo.recipes.values():
+        if args.test_filter.recipe_name(recipe.name):
+          _breakpoint_recipe(recipe)
+          for test_data in _safely_gen_tests(recipe):
+            if args.test_filter.full_name(f"{recipe.name}.{test_data.name}"):
+              if not _debug_recipe(args.recipe_deps, recipe, test_data):
+                return
+      return
 
-    # By this point we need at least the recipe name.
-    if recipe_name is None:
-      _dump_recipes_and_exit(
-          args.recipe_deps,
-          'No recipe specified and no recent test failures found.')
-
-    # And the recipe should actually exist in our repo.
-    recipe = args.recipe_deps.main_repo.recipes.get(recipe_name, None)
+    recipe, test_data = _parse_debug_target(args.recipe_deps, args.debug_target)
     if recipe is None:
-      _dump_recipes_and_exit(args.recipe_deps,
-                             f'Unable to find recipe {recipe_name}.')
-    _breakpoint_recipe(recipe)
-
-    # Now make sure that we have a test case (either specified, or just pick the
-    # first one if the user didn't tell us).
-    test_data = None
-    names = []
-    for test_data in _safely_gen_tests(recipe):
-      if test_case_name is None or test_data.name == test_case_name:
-        break
-      names.append(test_data.name)
-    else:
-      print(
-          f'Unable to find test case {test_case_name!r} in recipe {recipe.name!r}'
-      )
-      print('For reference, we found the following test cases:')
-      for name in names:
-        print('  ', name)
-      sys.exit(1)
+      return
 
     _debug_recipe(args.recipe_deps, recipe, test_data)
 
@@ -138,11 +180,17 @@ def add_arguments(parser):
 def _debug_recipe(rdeps: recipe_deps.RecipeDeps, recipe: recipe_deps.Recipe,
                   test_data):
   """Debugs the given recipe + test case."""
+  # Reset global state.
+  config_types.ResetTostringFns()
+  engine_types.PerGreentletStateRegistry.clear()
+  global_shutdown.GLOBAL_SHUTDOWN.clear()
+
   try:
     print(f'RunSteps() # Loaded test case: {recipe.name}.{test_data.name}')
     execute_test_case(rdeps, recipe.name, test_data)
+    return True
   except bdb.BdbQuit:
-    pass
+    return False
   except Exception:  # pylint: disable=broad-except
     traceback.print_exc()
     print('Uncaught exception. Entering post mortem debugging')
