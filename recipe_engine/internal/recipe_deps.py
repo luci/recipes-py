@@ -520,7 +520,8 @@ class RecipeModule(object):
 
     This imports the module code.
     """
-    return parse_deps_spec(self.repo.name, self.do_import().DEPS)
+    DEPS = getattr(self.do_import(), 'DEPS', ())
+    return parse_deps_spec(self.repo.name, DEPS)
 
   @cached_property
   def transitive_DEPS(self):

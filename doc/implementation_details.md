@@ -243,8 +243,6 @@ The "patchup" we do to the recipe module adds a few extra attributes to the
 loaded module:
   * `CONFIG_CTX` - The `ConfigContext` instance defined in the module's
     config.py file (if any).
-  * `DEPS` - The DEPS list/dictionary defined in the module's `__init__.py` file
-    (if any). This is populated with `()` if `__init__.py` doesn't define it.
   * `API` - The `RecipeApiPlain` subclass found in the api.py file.
   * `TEST_API` - The `RecipeTestApi` subclass found in the test_api.py file (if
     any).
