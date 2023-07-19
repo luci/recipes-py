@@ -536,7 +536,8 @@ class RecipeModule(object):
   @cached_property
   def warnings(self):
     """Returns a tuple of warnings issued against this recipe module."""
-    return tuple(self.do_import().WARNINGS)
+    WARNINGS = getattr(self.do_import(), 'WARNINGS', ())
+    return tuple(WARNINGS)
 
   @cached_property
   def _cumulative_import_warnings(self):

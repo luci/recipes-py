@@ -175,7 +175,6 @@ class RecipeModuleImporter(object):
         calling their `bind()` method.
       * `CONFIG_CTX`: The ConfigContext object (defined in config.py) for this
         module, or None if no config.py exists.
-      * `WARNINGS`: A list of warnings issued against this recipe module.
       * `DISABLE_STRICT_COVERAGE`: Sets a default value of False.
 
     Args:
@@ -183,7 +182,6 @@ class RecipeModuleImporter(object):
         RECIPE_MODULES.repo_name.module_name.
     """
     _, repo_name, module_name = mod.__name__.split('.')
-    mod.WARNINGS = getattr(mod, 'WARNINGS', ())
 
     # TODO(iannucci, probably): remove DISABLE_STRICT_COVERAGE (crbug/693058).
     mod.DISABLE_STRICT_COVERAGE = getattr(mod, 'DISABLE_STRICT_COVERAGE', False)
