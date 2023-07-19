@@ -152,13 +152,13 @@ class RecipeModuleImporter(object):
     if f:
       f.close()
     if len(toks) == 3:  # RECIPE_MODULES.repo_name.module_name
-      self._patchup_module(loaded, repo.path)
+      self._patchup_module(loaded)
 
     mod.__dict__.update(loaded.__dict__)
     return mod
 
   @staticmethod
-  def _patchup_module(mod, repo_root):
+  def _patchup_module(mod):
     """Adds a bunch of fields to the imported recipe module.
 
     TODO: most of these are obsolete and could be calculated at the sites that
@@ -173,8 +173,6 @@ class RecipeModuleImporter(object):
       * `PROPERTIES`: A dictionary derived from 'PROPERTIES' defined in
         __init__.py, except that all of the Property values are 'bound' by
         calling their `bind()` method.
-      * `REPO_ROOT`: A Path object for the root of the repo containing this
-        module.
       * `CONFIG_CTX`: The ConfigContext object (defined in config.py) for this
         module, or None if no config.py exists.
       * `DEPS`: Sets a default DEPS value of `()` so that other code in the
@@ -185,11 +183,8 @@ class RecipeModuleImporter(object):
     Args:
       * mod (python module type) - This will be the module loaded for e.g.
         RECIPE_MODULES.repo_name.module_name.
-      * repo_root (str) - Absolute path to the root of the module's repository
-        on disk.
     """
     _, repo_name, module_name = mod.__name__.split('.')
-    mod.REPO_ROOT = Path(RepoBasePath(repo_name, repo_root))
     mod.DEPS = getattr(mod, 'DEPS', ())
     mod.WARNINGS = getattr(mod, 'WARNINGS', ())
 

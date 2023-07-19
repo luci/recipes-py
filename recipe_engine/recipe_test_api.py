@@ -8,10 +8,13 @@ import inspect
 from collections import defaultdict
 from collections import namedtuple
 from functools import reduce
+from typing import Optional
 
 from future.utils import iteritems
 from future.utils import itervalues
 from past.builtins import basestring
+
+from recipe_engine.internal import recipe_deps
 
 from .util import ModuleInjectionSite
 from .util import static_call
@@ -340,10 +343,9 @@ def mod_test_data(func):
   @static_wraps(func)
   def inner(self, *args, **kwargs):
     assert isinstance(self, RecipeTestApi)
-    mod_name = self._module.__name__.split('.')[-1]  # pylint: disable=W0212
     ret = TestData(None)
     data = static_call(self, func, *args, **kwargs)
-    ret.mod_data[mod_name][inner.__name__] = data
+    ret.mod_data[self._module.name][inner.__name__] = data
     return ret
   return inner
 
@@ -437,7 +439,6 @@ def _placeholder_step_data(func, placeholder_name=None):
   @static_wraps(func)
   def inner(self, *args, **kwargs):
     assert isinstance(self, RecipeTestApi)
-    mod_name = self._module.__name__.split('.')[-1]  # pylint: disable=W0212
     data = static_call(self, func, *args, **kwargs)
     if isinstance(data, StepTestData):
       all_data = list(itervalues(data.placeholder_data))
@@ -455,7 +456,7 @@ def _placeholder_step_data(func, placeholder_name=None):
     final_placeholder_name = placeholder_name
     if placeholder_name is None:
       final_placeholder_name = inner.__name__
-    key = (mod_name, final_placeholder_name, placeholder_data.name)
+    key = (self._module.name, final_placeholder_name, placeholder_data.name)
     ret.placeholder_data[key] = placeholder_data
     ret.retcode = retcode
     return ret
@@ -528,7 +529,8 @@ class RecipeTestApi(object):
   The platform() call is documented in the 'platform' module's test_api.
   The json.output() call is documented in the 'json' module's test_api.
   """
-  def __init__(self, module=None):
+
+  def __init__(self, module: Optional['recipe_deps.RecipeModule']):
     """Note: Injected dependencies are NOT available in __init__()."""
     # If we're the 'root' api, inject directly into 'self'.
     # Otherwise inject into 'self.m'

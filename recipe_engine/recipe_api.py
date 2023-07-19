@@ -18,7 +18,7 @@ import re
 import sys
 import types
 
-from typing import Optional
+from typing import Any, Optional, Callable, Protocol, List, Dict
 from dataclasses import dataclass
 from functools import wraps
 
@@ -27,6 +27,8 @@ import attr
 from google.protobuf import message
 
 import gevent
+
+from recipe_engine.internal import recipe_deps
 
 from .config_types import Path
 from .internal import engine_step
@@ -261,12 +263,19 @@ class StepClient(object):
     return self._engine.close_non_parent_step()
 
 
+class _spawner(Protocol):
+
+  def __call__(self, func: Callable[..., Any], args: List[Any],
+               kwargs: Dict[str, Any], name: str) -> gevent.Greenlet:
+    ...
+
+
 @attr.s(frozen=True, slots=True)
 class ConcurrencyClient(object):
   IDENT = 'concurrency'
 
-  supports_concurrency = attr.ib()  # type: bool
-  _spawn_impl = attr.ib()           # type: f(func, args, kwargs) -> Greenlet
+  supports_concurrency: bool = attr.ib()
+  _spawn_impl: _spawner = attr.ib()
 
   def spawn(self, func, args, kwargs, greenlet_name):
     return self._spawn_impl(func, args, kwargs, greenlet_name)
@@ -275,7 +284,7 @@ class ConcurrencyClient(object):
 class WarningClient(object):
   IDENT = 'warning'
 
-  def __init__(self, recorder, recipe_deps):
+  def __init__(self, recorder, recipe_deps: 'recipe_deps.RecipeDeps'):
     from .internal.warn import record  # Avoid early proto import
     if recorder != record.NULL_WARNING_RECORDER and (
         not isinstance(recorder, record.WarningRecorder)):
@@ -756,7 +765,10 @@ class RecipeApiPlain(object):
   @infer_composite_step.
   """
 
-  def __init__(self, module=None, test_data=DisabledTestData(), **_kwargs):
+  def __init__(self,
+               module: 'recipe_deps.RecipeModule',
+               test_data=DisabledTestData(),
+               **_kwargs):
     """Note: Injected dependencies are NOT available in __init__()."""
     super(RecipeApiPlain, self).__init__()
 
@@ -764,6 +776,11 @@ class RecipeApiPlain(object):
     self._module = module
     self._resource_directory = config_types.Path(
         config_types.ModuleBasePath(module)).join('resources')
+    self._repo_root = config_types.Path(
+        config_types.RepoBasePath(
+            module.repo.name,
+            module.repo.path,
+        ))
 
     assert isinstance(test_data, (ModuleTestData, DisabledTestData))
     self._test_data = test_data
@@ -805,15 +822,15 @@ class RecipeApiPlain(object):
           `config_name`, the name of the api's module and the list of the api's
           module's config names.
     """
-    ctx = self._module.CONFIG_CTX
+    ctx = self._module.do_import().CONFIG_CTX
     try:
       return ctx.CONFIG_ITEMS[config_name]
     except KeyError:
       if optional:
         return None
       raise KeyError(
-          '%s is not the name of a configuration for module %s: %s' % (
-              config_name, self._module.__name__, sorted(ctx.CONFIG_ITEMS)))
+          '%s is not the name of a configuration for module %s: %s' %
+          (config_name, self._module.full_name, sorted(ctx.CONFIG_ITEMS)))
 
   def make_config_params(self, config_name, optional=False, **CONFIG_VARS):
     """Returns a 'config blob' for the current API, and the computed params
@@ -833,7 +850,7 @@ class RecipeApiPlain(object):
     generic_params = self.get_config_defaults()  # generic defaults
     generic_params.update(CONFIG_VARS)           # per-invocation values
 
-    ctx = self._module.CONFIG_CTX
+    ctx = self._module.do_import().CONFIG_CTX
     if optional and not ctx:
       return None, generic_params
 
@@ -856,7 +873,6 @@ class RecipeApiPlain(object):
 
   def set_config(self, config_name=None, optional=False, **CONFIG_VARS):
     """Sets the modules and its dependencies to the named configuration."""
-    assert self._module
     config, _ = self.make_config_params(config_name, optional, **CONFIG_VARS)
     if config:
       self.c = config
@@ -880,7 +896,7 @@ class RecipeApiPlain(object):
     """Returns a resource path, where path is relative to the root of
     the recipe repo where this module is defined.
     """
-    return self._module.REPO_ROOT.join(*path)
+    return self._repo_root.join(*path)
 
 
 class RecipeApi(with_metaclass(RecipeApiMeta, RecipeApiPlain)):

@@ -83,7 +83,7 @@ class PostProcessUnitTest(test_env.RecipeEngineUnitTest):
       magic_check_fn.post_process, and failures is a list of failures returned
       by the check, each represented by a list of output strings.
     """
-    test_data = RecipeTestApi().post_process(func, *args, **kwargs)
+    test_data = RecipeTestApi(None).post_process(func, *args, **kwargs)
     results = Outcome.Results()
     expectations = magic_check_fn.post_process(results, self.step_dict,
                                                test_data)

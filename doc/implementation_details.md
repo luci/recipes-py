@@ -241,8 +241,6 @@ Our importer behaves specially:
 
 The "patchup" we do to the recipe module adds a few extra attributes to the
 loaded module:
-  * `REPO_ROOT` - The Path to the root of the repo for this module, used by the
-    `api.repo_resource()` method.
   * `CONFIG_CTX` - The `ConfigContext` instance defined in the module's
     config.py file (if any).
   * `DEPS` - The DEPS list/dictionary defined in the module's `__init__.py` file

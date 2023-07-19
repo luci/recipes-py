@@ -103,15 +103,12 @@ class ModuleBasePath(BasePath, collections.namedtuple('ModuleBasePath',
   def resolve(self, test_enabled):
     if test_enabled:
       return repr(self)
-    return os.path.dirname(self.module.__file__)  # pragma: no cover
+    return self.module.path  # pragma: no cover
 
   def __repr__(self):
-    prefix = 'RECIPE_MODULES.'
-    assert self.module.__name__.startswith(prefix)
-    name = self.module.__name__[len(prefix):]
     # We change python's module delimiter . to ::, since . is already used
     # by expect tests.
-    return 'RECIPE_MODULE[%s]' % re.sub(r'\.', '::', name)
+    return f'RECIPE_MODULE[{self.module.repo.name}::{self.module.name}]'
 
 
 class RecipeScriptBasePath(BasePath,

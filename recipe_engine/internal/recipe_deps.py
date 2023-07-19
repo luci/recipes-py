@@ -972,12 +972,10 @@ def _collect_import_warnings(root):
   return ret
 
 
-def _instantiate_test_api(imported_module, resolved_deps):
+def _instantiate_test_api(module: RecipeModule, resolved_deps):
   """Instantiates the RecipeTestApi class from the given imported recipe module.
 
   Args:
-    * imported_module (raw imported python module) - The result of calling
-      RecipeModule.do_import().
     * resolved_deps ({local_name: None|instantiated recipe test api}) - The
       resolved RecipeTestApi instances which this module has in its DEPS. Deps
       whose value is None will be omitted. These deps will all be populated on
@@ -985,18 +983,18 @@ def _instantiate_test_api(imported_module, resolved_deps):
 
   Returns the instantiated RecipeTestApi subclass.
   """
-  inst = imported_module.TEST_API(imported_module)
+  inst = module.do_import().TEST_API(module)
   assert isinstance(inst, RecipeTestApi)
   inst.m.__dict__.update({
     local_name: resolved_dep
     for local_name, resolved_dep in iteritems(resolved_deps)
     if resolved_dep is not None
   })
-  setattr(inst.m, imported_module.__name__.split('.')[-1], inst)
+  setattr(inst.m, module.name, inst)
   return inst
 
 
-def _instantiate_api(engine, test_data, fqname, imported_module, test_api,
+def _instantiate_api(engine, test_data, fqname, module: RecipeModule, test_api,
                      resolved_deps):
   """Instantiates the RecipeApiPlain subclass from the given imported recipe
   module.
@@ -1007,8 +1005,6 @@ def _instantiate_api(engine, test_data, fqname, imported_module, test_api,
     * test_data (TestData) - The test data for this run.
     * fqname (string) - The fully qualified 'repo_name/module_name' of the
       module we're instantiating.
-    * imported_module (raw imported python module) - The result of calling
-      RecipeModule.do_import().
     * test_api (RecipeTestApi) - The instantiated recipe test api object for
       this module.
     * resolved_deps ({local_name: None|instantiated recipe api}) - The resolved
@@ -1018,12 +1014,14 @@ def _instantiate_api(engine, test_data, fqname, imported_module, test_api,
 
   Returns the instantiated RecipeApiPlain subclass.
   """
-  shortname = imported_module.__name__.split('.')[-1]
+  shortname = module.name
   kwargs = {
-    'module': imported_module,
-    # TODO(luqui): test_data will need to use canonical unique names.
-    'test_data': test_data.get_module_test_data(shortname)
+      'module': module,
+      # TODO(luqui): test_data will need to use canonical unique names.
+      'test_data': test_data.get_module_test_data(shortname)
   }
+
+  imported_module = module.do_import()
 
   properties_def = imported_module.PROPERTIES
   global_properties_def = getattr(imported_module, 'GLOBAL_PROPERTIES', None)
@@ -1141,21 +1139,20 @@ def _resolve(recipe_deps, deps_spec, variant, engine, test_data):
     module = recipe_deps.repos[repo_name].modules[module_name]
     deps_spec = module.normalized_DEPS
 
-    mod_imp = module.do_import()
-    test_api = _instantiate_test_api(mod_imp, {
-      local_name: _inner(d_repo_name, d_module, loading_chain).test_api
-      for local_name, (d_repo_name, d_module)
-      in iteritems(deps_spec)
-    })
+    test_api = _instantiate_test_api(
+        module, {
+            local_name: _inner(d_repo_name, d_module, loading_chain).test_api
+            for local_name, (d_repo_name, d_module) in iteritems(deps_spec)
+        })
 
     fqname = '%s/%s' % (repo_name, module_name)
     api = None
     if variant == 'API':
-      api = _instantiate_api(engine, test_data, fqname, mod_imp, test_api, {
-        local_name: _inner(d_repo_name, d_module, loading_chain).api
-        for local_name, (d_repo_name, d_module)
-        in iteritems(deps_spec)
-      })
+      api = _instantiate_api(
+          engine, test_data, fqname, module, test_api, {
+              local_name: _inner(d_repo_name, d_module, loading_chain).api
+              for local_name, (d_repo_name, d_module) in iteritems(deps_spec)
+          })
 
     result = cache_entry(api, test_api)
 

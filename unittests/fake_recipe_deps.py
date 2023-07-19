@@ -501,7 +501,6 @@ class FakeRecipeRepo(object):
     """
     env = os.environ.copy()
     env.update(kwargs.pop('env', {}))
-    env['RECIPES_USE_PY3'] = 'true' if kwargs.pop('py3', False) else 'false'
     proc = subprocess.Popen(
         ('python3', 'recipes.py') + args,
         cwd=self.path,

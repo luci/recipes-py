@@ -9,7 +9,6 @@ from future.utils import iteritems
 import contextlib
 import json
 import os
-import re
 import shutil
 import signal
 import subprocess
@@ -17,7 +16,9 @@ import sys
 import tempfile
 import time
 
-from parameterized import parameterized, parameterized_class
+from typing import Optional, Dict
+
+from parameterized import parameterized
 
 import test_env
 
@@ -30,11 +31,7 @@ os.environ.pop(luci_context.ENV_KEY, None)
 
 
 class RunTest(test_env.RecipeEngineUnitTest):
-  @parameterized.expand(
-    [('py2', False), ('py3', True)],
-    name_func=lambda func, _, param: '%s_%s' % (func.__name__, param.args[0]),
-  )
-  def test_run(self, _, py3):
+  def test_run(self):
     deps = self.FakeRecipeDeps()
 
     with deps.main_repo.write_module('mod') as mod:
@@ -49,8 +46,7 @@ class RunTest(test_env.RecipeEngineUnitTest):
       ''')
       recipe.GenTests.write('pass')
 
-    output, retcode = deps.main_repo.recipes_py('-v', '-v', 'run', 'my_recipe',
-                                                py3=py3)
+    output, retcode = deps.main_repo.recipes_py('-v', '-v', 'run', 'my_recipe')
     self.assertEqual(retcode, 0,
                      'ret code is not zero. Recipe output\n%s' % output)
 
@@ -121,31 +117,31 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
     finally:
       shutil.rmtree(workdir, ignore_errors=True)
 
-  def test_examples(self):
-    env = os.environ.copy()
-
-    # Set the "RECIPE_ENGINE_CONTEXT_TEST" environment variable to a known
-    # value, "default". This is used by the "context:tests/env" recipe module
-    # as a basis for runtime tests.
-    env['RECIPE_ENGINE_CONTEXT_TEST'] = 'default'
-
-    tests = [
-      ['context:examples/full'],
-      ['context:tests/env'],
-      ['file:examples/copy'],
-      ['file:examples/copytree'],
-      ['file:examples/glob'],
-      ['futures:examples/lazy_fan_out_in'],
-      ['json:examples/full'],
-      ['path:examples/full'],
-      ['raw_io:examples/full'],
-      ['step:examples/full'],
-
-      ['engine_tests/functools_partial'],
-    ]
-    for test in tests:
-      print("running", test)
-      self._test_recipe(*test, env=env)
+  @parameterized.expand([
+      ('context:examples/full',),
+      ('context:tests/env', {
+        # Set the "RECIPE_ENGINE_CONTEXT_TEST" environment variable to a known
+        # value, "default". This is used by the "context:tests/env" recipe module
+        # as a basis for runtime tests.
+        'RECIPE_ENGINE_CONTEXT_TEST': 'default',
+      }),
+      ('file:examples/copy',),
+      ('file:examples/copytree',),
+      ('file:examples/glob',),
+      ('futures:examples/lazy_fan_out_in',),
+      ('json:examples/full',),
+      ('path:examples/full',),
+      ('raw_io:examples/full',),
+      ('step:examples/full',),
+      ('engine_tests/functools_partial',),
+  ])
+  def test_examples(self, recipe_name, env_overrides: Optional[Dict[str, str]] = None):
+    env = None
+    if env_overrides:
+      env = os.environ.copy()
+      for k, v in env_overrides.items():
+        env[k] = v
+    self._test_recipe(recipe_name, env=env)
 
   def test_bad_subprocess(self):
     now = time.time()
@@ -196,11 +192,6 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
       # self.assertEqual(zsh_output.decode('utf-8'), s + '\n')
 
 
-@parameterized_class(
-  [{"py_version": 2}, {"py_version": 3}],
-  class_name_func=(
-    lambda cls, _, params: '%s_PY%d' % (cls.__name__, params['py_version'])),
-)
 class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
   def _wait_for_file(self, filename, duration):
     begin = time.time()
@@ -225,8 +216,6 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
       env.pop(luci_context.ENV_KEY, None)
       env['WD'] = workdir
       env['LUCI_GRACE_PERIOD'] = str(grace_period)
-      if self.py_version == 3:
-        env['RECIPES_USE_PY3'] = 'true'
 
       proc = subprocess.Popen([fake_bbagent, "--pid-file", pidfile],
                               stdin=subprocess.PIPE,
@@ -265,8 +254,6 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
       env['LUCI_GRACE_PERIOD'] = str(grace_period)
       env['LUCI_SOFT_DEADLINE'] = str(deadline)
       env['FAKE_BBAGENT_OUTFILE'] = outfile
-      if self.py_version == 3:
-        env['RECIPES_USE_PY3'] = 'true'
       proc = subprocess.Popen([fake_bbagent, "--pid-file", pidfile],
                               stdin=subprocess.PIPE,
                               env=env,

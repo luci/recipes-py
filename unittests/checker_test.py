@@ -504,7 +504,7 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
 
   @staticmethod
   def mkApi():
-    return RecipeTestApi()
+    return RecipeTestApi(None)
 
   def assertHas(self, failure, *text):
     combined = '\n'.join(failure.lines)
