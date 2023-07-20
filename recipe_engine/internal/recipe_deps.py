@@ -569,9 +569,9 @@ class RecipeModule(object):
     calculation (especially for large modules), but there are still modules
     which have this set.
 
-    crbug.com/965278 - Get rid of this feature.
+    crbug.com/693058,crbug.com/965278 - Get rid of this feature.
     """
-    return self.do_import().DISABLE_STRICT_COVERAGE
+    return getattr(self.do_import(), 'DISABLE_STRICT_COVERAGE', False)
 
   # TODO: py2 compat: Remove
   is_python_version_labeled = True

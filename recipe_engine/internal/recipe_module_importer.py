@@ -175,7 +175,6 @@ class RecipeModuleImporter(object):
         calling their `bind()` method.
       * `CONFIG_CTX`: The ConfigContext object (defined in config.py) for this
         module, or None if no config.py exists.
-      * `DISABLE_STRICT_COVERAGE`: Sets a default value of False.
 
     Args:
       * mod (python module type) - This will be the module loaded for e.g.
@@ -183,8 +182,6 @@ class RecipeModuleImporter(object):
     """
     _, repo_name, module_name = mod.__name__.split('.')
 
-    # TODO(iannucci, probably): remove DISABLE_STRICT_COVERAGE (crbug/693058).
-    mod.DISABLE_STRICT_COVERAGE = getattr(mod, 'DISABLE_STRICT_COVERAGE', False)
 
     # NOTE: late import to avoid early protobuf import
     from ..config import ConfigContext
