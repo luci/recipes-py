@@ -4,11 +4,7 @@
 
 """An interface to call the led tool."""
 
-from builtins import range
-from future.moves.urllib.parse import urlparse
-from future.utils import iteritems
-
-import hashlib
+from urllib.parse import urlparse
 
 import attr
 
@@ -161,14 +157,14 @@ class LedApi(recipe_api.RecipeApi):
     if self._test_data.enabled:
       self._get_mocks = {
         key[len('get:'):]: value
-        for key, value in iteritems(self._test_data)
+        for key, value in self._test_data.items()
         if key.startswith('get:')
       }
 
       self._mock_edits = self.test_api.standard_mock_functions()
       sorted_edits = sorted([
         (int(key[len('edit:'):]), value)
-        for key, value in iteritems(self._test_data)
+        for key, value in self._test_data.items()
         if key.startswith('edit:')
       ])
       self._mock_edits.extend(value for _, value in sorted_edits)
