@@ -2,7 +2,6 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from future.utils import iteritems
 from google.protobuf import message
 from google.protobuf import json_format as jsonpb
 
@@ -17,7 +16,7 @@ class ContextTestApi(recipe_test_api.RecipeTestApi):
       to the proto value for that section.
     """
     ret = self.test(None)
-    for section_key, pb_val in iteritems(section_pb_values):
+    for section_key, pb_val in section_pb_values.items():
       if not isinstance(pb_val, message.Message): # pragma: no cover
           raise ValueError(
               'Expected section value in LUCI_CONTEXT to be proto message;'
