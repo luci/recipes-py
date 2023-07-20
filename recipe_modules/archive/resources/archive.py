@@ -14,12 +14,9 @@ the 'archive' recipe module internally. Should not be used elsewhere.
 # >
 # [VPYTHON:END]
 
-from __future__ import print_function
-
 from contextlib import contextmanager
 import json
 import os
-import subprocess
 import sys
 import tarfile
 import zipfile
@@ -122,7 +119,6 @@ def main():
     except:  # pylint: disable=bare-except
       pass
     raise
-  return 1
 
 
 if __name__ == '__main__':
