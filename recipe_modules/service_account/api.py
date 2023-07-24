@@ -49,8 +49,7 @@ class ServiceAccountApi(recipe_api.RecipeApi):
 
     def get_email(self):
       """Returns the service account email."""
-      # TODO(vadimsh): This is implementable, but no one needs it now. Ping
-      # vadimsh if needed.
+      # TODO(crbug.com/1275620): Implement this.
       raise NotImplementedError()  # pragma: no cover
 
 
