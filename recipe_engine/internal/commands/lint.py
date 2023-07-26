@@ -25,6 +25,7 @@ ALLOWED_MODULES = [
     r'collections',
     r'contextlib',
     r'copy',
+    r'dataclasses',
     r'datetime',
     r'difflib',
     r'fnmatch',
