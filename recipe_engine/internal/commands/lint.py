@@ -27,6 +27,7 @@ ALLOWED_MODULES = [
     r'copy',
     r'datetime',
     r'difflib',
+    r'fnmatch',
     r'functools',
     r'hashlib',
     r'itertools',
