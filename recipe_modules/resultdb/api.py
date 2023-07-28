@@ -400,6 +400,40 @@ class ResultDBAPI(recipe_api.RecipeApi):
         # Do not fail the build because recipe's proto copy is stale.
         ignore_unknown_fields=True)
 
+  def query_new_test_variants(
+      self,
+      invocation: str,
+      baseline: str,
+      step_name=None) -> resultdb.QueryNewTestVariantsResponse():
+    """Query ResultDB for new tests.
+
+    Makes a QueryNewTestVariants rpc.
+
+    Args:
+      inovcation: Name of the invocation, e.g. "invocations/{id}".
+      baseline: The baseline to compare test variants against, to determine if
+        they are new. e.g. “projects/{project}/baselines/{baseline_id}”.
+
+    Returns:
+     A QueryNewTestVariantsResponse proto message with is_baseline_ready and
+     new_test_variants.
+    """
+    req = resultdb.QueryNewTestVariantsRequest(
+        invocation=invocation,
+        baseline=baseline,
+    )
+
+    res = self._rpc(
+        step_name or 'query_new_test_variants',
+        'luci.resultdb.v1.ResultDB',
+        'QueryNewTestVariants',
+        req=json_format.MessageToDict(req))
+    return json_format.ParseDict(
+        res,
+        resultdb.QueryNewTestVariantsResponse(),
+        # Do not fail the build because recipe's proto copy is stale.
+        ignore_unknown_fields=True)
+
   def update_invocation(self,
                         parent_inv='',
                         step_name=None,

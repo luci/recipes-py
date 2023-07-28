@@ -161,6 +161,7 @@
   * [resultdb:examples/get_included_invocations](#recipes-resultdb_examples_get_included_invocations)
   * [resultdb:examples/include](#recipes-resultdb_examples_include)
   * [resultdb:examples/query](#recipes-resultdb_examples_query)
+  * [resultdb:examples/query_new_test_variants](#recipes-resultdb_examples_query_new_test_variants)
   * [resultdb:examples/query_test_result_statistics](#recipes-resultdb_examples_query_test_result_statistics)
   * [resultdb:examples/query_test_results](#recipes-resultdb_examples_query_test_results)
   * [resultdb:examples/resultsink](#recipes-resultdb_examples_resultsink)
@@ -3216,7 +3217,7 @@ A module for interacting with ResultDB.
 
 &mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#53)(self):**
 
-&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#651)(self, column_keys=(), grouping_keys=('status',)):**
+&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#685)(self, column_keys=(), grouping_keys=('status',)):**
 
 Specifies how the test results should be rendered.
 
@@ -3318,6 +3319,21 @@ Args:
 Returns:
   A dict {invocation_id: api.Invocation}.
 
+&mdash; **def [query\_new\_test\_variants](/recipe_modules/resultdb/api.py#403)(self, invocation: str, baseline: str, step_name=None):**
+
+Query ResultDB for new tests.
+
+Makes a QueryNewTestVariants rpc.
+
+Args:
+  inovcation: Name of the invocation, e.g. "invocations/{id}".
+  baseline: The baseline to compare test variants against, to determine if
+    they are new. e.g. “projects/{project}/baselines/{baseline_id}”.
+
+Returns:
+ A QueryNewTestVariantsResponse proto message with is_baseline_ready and
+ new_test_variants.
+
 &mdash; **def [query\_test\_result\_statistics](/recipe_modules/resultdb/api.py#262)(self, invocations=None, step_name=None):**
 
 Retrieve stats of test results for the given invocations.
@@ -3380,7 +3396,7 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
-&mdash; **def [update\_invocation](/recipe_modules/resultdb/api.py#403)(self, parent_inv='', step_name=None, source_spec=None, baseline_id=None):**
+&mdash; **def [update\_invocation](/recipe_modules/resultdb/api.py#437)(self, parent_inv='', step_name=None, source_spec=None, baseline_id=None):**
 
 Makes a call to the UpdateInvocation API to update the invocation
 
@@ -3413,7 +3429,7 @@ Returns:
   A BatchCreateArtifactsResponse proto message listing the artifacts that
   were created.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#502)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file='', inherit_sources=False, sources='', sources_file='', baseline_id=''):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#536)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file='', inherit_sources=False, sources='', sources_file='', baseline_id=''):**
 
 Wraps the command with ResultSink.
 
@@ -5283,6 +5299,12 @@ Tests for query_variants.
 
 
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query.py#22)(api):**
+### *recipes* / [resultdb:examples/query\_new\_test\_variants](/recipe_modules/resultdb/examples/query_new_test_variants.py)
+
+[DEPS](/recipe_modules/resultdb/examples/query_new_test_variants.py#10): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
+
+
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_new_test_variants.py#21)(api, invocation, baseline):**
 ### *recipes* / [resultdb:examples/query\_test\_result\_statistics](/recipe_modules/resultdb/examples/query_test_result_statistics.py)
 
 [DEPS](/recipe_modules/resultdb/examples/query_test_result_statistics.py#10): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb)
