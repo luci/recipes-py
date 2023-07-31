@@ -82,7 +82,7 @@ class ResultDBTestApi(recipe_test_api.RecipeTestApi):
 
     Args:
       res (proto.v1.resultdb.QueryNewtestVariantsResponse object): the response.
-      step_name (str): the anme of the step to simulate.
+      step_name (str): the name of the step to simulate.
     """
     return self._proto_step_result(res, step_name)
 

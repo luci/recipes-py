@@ -404,7 +404,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
       self,
       invocation: str,
       baseline: str,
-      step_name=None) -> resultdb.QueryNewTestVariantsResponse():
+      step_name: str = None,
+      step_test_data: dict = None) -> resultdb.QueryNewTestVariantsResponse():
     """Query ResultDB for new tests.
 
     Makes a QueryNewTestVariants rpc.
@@ -427,7 +428,10 @@ class ResultDBAPI(recipe_api.RecipeApi):
         step_name or 'query_new_test_variants',
         'luci.resultdb.v1.ResultDB',
         'QueryNewTestVariants',
-        req=json_format.MessageToDict(req))
+        req=json_format.MessageToDict(req),
+        step_test_data=(
+            lambda: self.m.json.test_api.output_stream(step_test_data or {})),
+    )
     return json_format.ParseDict(
         res,
         resultdb.QueryNewTestVariantsResponse(),

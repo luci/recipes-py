@@ -32,6 +32,7 @@ def GenTests(api):
           invocation='invocations/inv',
           baseline='projects/chromium/baselines/try:linux-rel',
       ),
-      api.resultdb.query_new_test_variants(resultdb.QueryTestResultsResponse()),
+      api.resultdb.query_new_test_variants(
+          resultdb.QueryNewTestVariantsResponse()),
       api.post_process(DropExpectation),
   )
