@@ -192,7 +192,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
             limit=None,
             step_name=None,
             tr_fields=None,
-            test_invocations=None):
+            test_invocations=None,
+            test_regex=None):
     """Returns test results in the invocations.
 
     Most users will be interested only in results of test variants that had
@@ -225,6 +226,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
       test_invocations (dict {invocation_id: api.Invocation}): Default test data
         to be used to simulate the step in tests. The format is the same as
         what this method returns.
+      test_regex (str): A regular expression of the relevant test variants
+        to query for.
 
     Returns:
       A dict {invocation_id: api.Invocation}.
@@ -234,6 +237,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
     assert limit is None or limit >= 0
     assert tr_fields is None or all(
         isinstance(field, str) for field in tr_fields), tr_fields
+    assert test_regex is None or isinstance(test_regex, str)
     limit = 1000 if limit is None else limit
 
     args = [
@@ -246,6 +250,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
       args += ['-merge']
     if tr_fields:
       args += ['-tr-fields', ','.join(tr_fields)]
+    if test_regex:
+      args += ['-test', test_regex]
 
     args += list(inv_ids)
 

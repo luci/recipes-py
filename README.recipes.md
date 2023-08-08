@@ -3217,7 +3217,7 @@ A module for interacting with ResultDB.
 
 &mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#53)(self):**
 
-&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#689)(self, column_keys=(), grouping_keys=('status',)):**
+&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#695)(self, column_keys=(), grouping_keys=('status',)):**
 
 Specifies how the test results should be rendered.
 
@@ -3281,7 +3281,7 @@ Args:
 Returns:
   A list of invocation_ids.
 
-&mdash; **def [query](/recipe_modules/resultdb/api.py#188)(self, inv_ids, variants_with_unexpected_results=False, merge=False, limit=None, step_name=None, tr_fields=None, test_invocations=None):**
+&mdash; **def [query](/recipe_modules/resultdb/api.py#188)(self, inv_ids, variants_with_unexpected_results=False, merge=False, limit=None, step_name=None, tr_fields=None, test_invocations=None, test_regex=None):**
 
 Returns test results in the invocations.
 
@@ -3315,11 +3315,13 @@ Args:
   test_invocations (dict {invocation_id: api.Invocation}): Default test data
     to be used to simulate the step in tests. The format is the same as
     what this method returns.
+  test_regex (str): A regular expression of the relevant test variants
+    to query for.
 
 Returns:
   A dict {invocation_id: api.Invocation}.
 
-&mdash; **def [query\_new\_test\_variants](/recipe_modules/resultdb/api.py#403)(self, invocation: str, baseline: str, step_name: str=None, step_test_data: dict=None):**
+&mdash; **def [query\_new\_test\_variants](/recipe_modules/resultdb/api.py#409)(self, invocation: str, baseline: str, step_name: str=None, step_test_data: dict=None):**
 
 Query ResultDB for new tests.
 
@@ -3334,7 +3336,7 @@ Returns:
  A QueryNewTestVariantsResponse proto message with is_baseline_ready and
  new_test_variants.
 
-&mdash; **def [query\_test\_result\_statistics](/recipe_modules/resultdb/api.py#262)(self, invocations=None, step_name=None):**
+&mdash; **def [query\_test\_result\_statistics](/recipe_modules/resultdb/api.py#268)(self, invocations=None, step_name=None):**
 
 Retrieve stats of test results for the given invocations.
 
@@ -3350,7 +3352,7 @@ Returns:
   A QueryTestResultStatisticsResponse proto message with statistics for the
   queried invocations.
 
-&mdash; **def [query\_test\_results](/recipe_modules/resultdb/api.py#341)(self, invocations, test_id_regexp=None, variant_predicate=None, field_mask_paths=None, page_size=100, page_token=None, step_name=None):**
+&mdash; **def [query\_test\_results](/recipe_modules/resultdb/api.py#347)(self, invocations, test_id_regexp=None, variant_predicate=None, field_mask_paths=None, page_size=100, page_token=None, step_name=None):**
 
 Retrieve test results from an invocation, recursively.
 
@@ -3396,7 +3398,7 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
-&mdash; **def [update\_invocation](/recipe_modules/resultdb/api.py#441)(self, parent_inv='', step_name=None, source_spec=None, baseline_id=None):**
+&mdash; **def [update\_invocation](/recipe_modules/resultdb/api.py#447)(self, parent_inv='', step_name=None, source_spec=None, baseline_id=None):**
 
 Makes a call to the UpdateInvocation API to update the invocation
 
@@ -3409,7 +3411,7 @@ Args:
     the format {buildbucket bucket}:{buildbucket builder name}. For example,
     'try:linux-rel'. Baselines are used to detect new tests in invocations.
 
-&mdash; **def [upload\_invocation\_artifacts](/recipe_modules/resultdb/api.py#295)(self, artifacts, parent_inv=None, step_name=None):**
+&mdash; **def [upload\_invocation\_artifacts](/recipe_modules/resultdb/api.py#301)(self, artifacts, parent_inv=None, step_name=None):**
 
 Create artifacts with the given content type and contents or gcs_uri.
 
@@ -3429,7 +3431,7 @@ Returns:
   A BatchCreateArtifactsResponse proto message listing the artifacts that
   were created.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#540)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file='', inherit_sources=False, sources='', sources_file='', baseline_id=''):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#546)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file='', inherit_sources=False, sources='', sources_file='', baseline_id=''):**
 
 Wraps the command with ResultSink.
 

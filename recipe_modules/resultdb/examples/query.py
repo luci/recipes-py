@@ -27,6 +27,7 @@ def RunSteps(api):
       variants_with_unexpected_results=True,
       merge=True,
       tr_fields=['tags'],
+      test_regex="task-chromium-swarm.+",
   )
   if inv_bundle:
     pres = api.step.active_result.presentation
