@@ -211,11 +211,11 @@
 [DEPS](/recipe_modules/archive/__init__.py#5): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [step](#recipe_modules-step)
 
 
-#### **class [ArchiveApi](/recipe_modules/archive/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#902)):**
+#### **class [ArchiveApi](/recipe_modules/archive/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#902)):**
 
 Provides steps to manipulate archive files (tar, zip, etc.).
 
-&mdash; **def [extract](/recipe_modules/archive/api.py#42)(self, step_name, archive_file, output, mode='safe', include_files=(), archive_type=None):**
+&mdash; **def [extract](/recipe_modules/archive/api.py#46)(self, step_name: str, archive_file: Union[(config_types.Path, str)], output: Union[(config_types.Path, str)], mode: str='safe', include_files: Sequence[str]=(), archive_type: Optional[str]=None):**
 
 Step to uncompress |archive_file| into |output| directory.
 
@@ -247,7 +247,7 @@ Args:
   * archive_type (str): archive_file's archive type ("zip" or "tar"). This
     allows overriding the default detected type (based on file extension).
 
-&mdash; **def [package](/recipe_modules/archive/api.py#13)(self, root):**
+&mdash; **def [package](/recipe_modules/archive/api.py#17)(self, root: config_types.Path):**
 
 Returns Package object that can be used to compress a set of files.
 

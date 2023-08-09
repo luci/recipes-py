@@ -2,7 +2,11 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from __future__ import annotations
+
 from recipe_engine import recipe_api
+from recipe_engine import config_types
+from typing import *
 
 
 class ArchiveApi(recipe_api.RecipeApi):
@@ -10,7 +14,7 @@ class ArchiveApi(recipe_api.RecipeApi):
 
   ARCHIVE_TYPES = ('tar', 'tgz', 'tbz', 'zip', 'tzst')
 
-  def package(self, root):
+  def package(self, root: config_types.Path) -> Package:
     """Returns Package object that can be used to compress a set of files.
 
     Usage:
@@ -39,8 +43,13 @@ class ArchiveApi(recipe_api.RecipeApi):
     """
     return Package(self._archive_impl, root)
 
-  def extract(self, step_name, archive_file, output, mode='safe',
-              include_files=(), archive_type=None):
+  def extract(self,
+              step_name: str,
+              archive_file: Union[config_types.Path, str],
+              output: Union[config_types.Path, str],
+              mode: str = 'safe',
+              include_files: Sequence[str] = (),
+              archive_type: Optional[str] = None):
     """Step to uncompress |archive_file| into |output| directory.
 
     Archive will be unpacked to |output| so that root of an archive is in
