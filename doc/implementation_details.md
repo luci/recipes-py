@@ -246,10 +246,6 @@ loaded module:
   * `API` - The `RecipeApiPlain` subclass found in the api.py file.
   * `TEST_API` - The `RecipeTestApi` subclass found in the test_api.py file (if
     any).
-  * `PROPERTIES` - This finds the `PROPERTIES` dict in `__init__.py` and
-    preprocesses it to 'bind' the property objects with the module name. These
-    bound property objects will be used later when the recipe module is
-    instantiated.
 
 These patchup features are probably actually bugs/relics of the way that the
 module loading system used to work; it would be good to minimize/remove these

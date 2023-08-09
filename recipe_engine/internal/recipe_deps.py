@@ -561,6 +561,26 @@ class RecipeModule(object):
       'RECIPE_MODULES.%s.%s' % (self.repo.name, self.name))
 
   @cached_property
+  def PROPERTIES(self):
+    """Will return either a protobuf message, or an dictionary for config-style
+    properties.
+
+    When Config-style properties are gone, this should be removed.
+    """
+    properties_def = getattr(self.do_import(), 'PROPERTIES', {})
+    if proto_support.is_message_class(properties_def):
+      return properties_def
+
+    # If PROPERTIES isn't a protobuf Message, it must be a legacy Property dict.
+    # Let each property object know about the property name.
+    full_decl_name = f'{self.repo.name}::{self.name}'
+    return {
+        prop_name: value.bind(prop_name, BoundProperty.MODULE_PROPERTY,
+                              full_decl_name)
+        for prop_name, value in iteritems(properties_def)
+    }
+
+  @cached_property
   def uses_sloppy_coverage(self):
     """Returns True if this module has DISABLE_STRICT_COVERAGE set.
 
@@ -1025,7 +1045,7 @@ def _instantiate_api(engine, test_data, fqname, module: RecipeModule, test_api,
 
   imported_module = module.do_import()
 
-  properties_def = imported_module.PROPERTIES
+  properties_def = module.PROPERTIES
   global_properties_def = getattr(imported_module, 'GLOBAL_PROPERTIES', None)
   env_properties_def = getattr(imported_module, 'ENV_PROPERTIES', None)
 

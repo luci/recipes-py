@@ -170,9 +170,6 @@ class RecipeModuleImporter(object):
       * `API`: The class derived from RecipeApiPlain in api.py
       * `TEST_API`: The class derived from RecipeTestApi in test_api.py. If none
         exists, then this is set to RecipeTestApi.
-      * `PROPERTIES`: A dictionary derived from 'PROPERTIES' defined in
-        __init__.py, except that all of the Property values are 'bound' by
-        calling their `bind()` method.
       * `CONFIG_CTX`: The ConfigContext object (defined in config.py) for this
         module, or None if no config.py exists.
 
@@ -180,7 +177,7 @@ class RecipeModuleImporter(object):
       * mod (python module type) - This will be the module loaded for e.g.
         RECIPE_MODULES.repo_name.module_name.
     """
-    _, repo_name, module_name = mod.__name__.split('.')
+    _, _, module_name = mod.__name__.split('.')
 
 
     # NOTE: late import to avoid early protobuf import
@@ -247,15 +244,3 @@ class RecipeModuleImporter(object):
         'Recipe module has test_api.py but no TestApi subclass? %s' % (mod,))
     else:
       mod.TEST_API = RecipeTestApi
-
-    properties_def = getattr(mod, 'PROPERTIES', {})
-
-    # If PROPERTIES isn't a protobuf Message, it must be a legacy Property dict.
-    if not proto_support.is_message_class(properties_def):
-      # Let each property object know about the property name.
-      full_decl_name = '%s::%s' % (repo_name, module_name)
-      mod.PROPERTIES = {
-          prop_name: value.bind(prop_name, BoundProperty.MODULE_PROPERTY,
-                                full_decl_name)
-          for prop_name, value in iteritems(properties_def)
-      }
