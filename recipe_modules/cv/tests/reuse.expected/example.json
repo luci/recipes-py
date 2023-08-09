@@ -1,0 +1,12 @@
+[
+  {
+    "cmd": [],
+    "name": "disallow reuse only for full run",
+    "~followup_annotations": [
+      "@@@SET_BUILD_PROPERTY@$recipe_engine/cq/output@{\"reusability\": {\"modeAllowlist\": [\"DRY_RUN\", \"FULL_RUN\"]}, \"reuse\": [{\"modeRegexp\": \"DRY_RUN\"}, {\"modeRegexp\": \"FULL_RUN\"}]}@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]

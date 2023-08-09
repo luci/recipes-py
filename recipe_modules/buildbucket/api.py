@@ -539,7 +539,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     Hint: when scheduling builds for CQ, let CQ know about them:
     ```python
-        api.cq.record_triggered_builds(*api.buildbucket.schedule([req1, req2]))
+        api.cv.record_triggered_builds(*api.buildbucket.schedule([req1, req2]))
     ```
 
     Args:

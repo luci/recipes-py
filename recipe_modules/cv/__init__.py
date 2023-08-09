@@ -5,8 +5,9 @@
 from PB.go.chromium.org.luci.cv.api.recipe.v1 import cq as cq_pb2
 
 DEPS = [
-    'cv',
+    'buildbucket',
     'properties',
+    'step',
 ]
 
 PROPERTIES = cq_pb2.Input
