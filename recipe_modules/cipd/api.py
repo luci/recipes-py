@@ -10,6 +10,7 @@ https://godoc.org/go.chromium.org/luci/cipd/client/cmd/cipd
 
 from future.utils import iteritems
 from past.builtins import basestring
+from typing import *
 
 import contextlib
 
@@ -1005,7 +1006,10 @@ class CIPDApi(recipe_api.RecipeApi):
             package_file.pieces[-1]))
     return self.Pin(**step_result.json.output['result'])
 
-  def ensure_tool(self, package, version, executable_path=None):
+  def ensure_tool(self,
+                  package: str,
+                  version: str,
+                  executable_path: Optional[str] = None):
     """Downloads an executable from CIPD.
 
     Given a package named "name/of/some_exe/${platform}" and version
@@ -1029,6 +1033,11 @@ class CIPDApi(recipe_api.RecipeApi):
     Future-safe; Multiple concurrent calls for the same (package, version) will
     block on a single ensure step.
     """
+
+    check_type("package", package, str)
+    check_type("version", version, str)
+    check_type("executable_path", executable_path, (str, type(None)))
+
     cache_key = (package, version)
 
     package_parts = [p for p in package.split('/') if '${' not in p]
