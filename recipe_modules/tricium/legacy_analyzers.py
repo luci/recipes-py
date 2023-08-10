@@ -78,8 +78,9 @@ class Analyzers(object):
 
   CPPLINT = LegacyAnalyzer(
       name='Cpplint',
-      package='infra/tricium/function/cpplint',
-      executable='cpplint_parser',
+      package='infra/tricium/legacy_functions/cpplint/linux-amd64',
+      executable='cpplint',
+      version='latest',
       path_filters=['*.cc', '*.cpp', '*.cu', '*.cuh', '*.h'],
       extra_args=['-filter=-whitespace,-build/header_guard', '-verbose=4'])
 
