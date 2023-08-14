@@ -34,7 +34,8 @@ to execute, but it should correlate pretty closely. You can sort the file with
 
 def add_arguments(parser):
 
-  subp = parser.add_subparsers(dest='subcommand', metavar='{run, train, list}')
+  subp = parser.add_subparsers(
+      dest='subcommand', metavar='{run, train, list}', required=True)
 
   status_info = textwrap.dedent('''
     Key for non-verbose symbols (no-emoji equivalent in parens):
