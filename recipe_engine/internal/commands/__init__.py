@@ -287,7 +287,7 @@ def parse_and_run():
 
   _add_common_args(parser)
 
-  subp = parser.add_subparsers(dest='command')
+  subp = parser.add_subparsers(dest='command', required=True)
   for module in _COMMANDS:
     description = module.__doc__
     helplines = []
