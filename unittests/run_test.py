@@ -398,16 +398,34 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
       del step['start_time']
       if step['name'] == 'setup_build':
         del step['summary_markdown']
-    self.assertDictEqual(final_build, {
-      'status': 'CANCELED',
-      'summary_markdown': (
-        "Infra Failure: Step('sleep forever') (canceled) (retcode: -15)"),
-      'steps': [
-        {'name': 'setup_build', 'status': 'SUCCESS'},
-        {'name': 'sleep a bit', 'status': 'FAILURE'},
-        {'name': 'sleep forever', 'status': 'CANCELED'},
-      ],
-    })
+    self.assertDictEqual(
+        final_build, {
+            'status': 'CANCELED',
+            'summary_markdown': (
+                "Infra Failure: Step('sleep forever') (canceled) (retcode: -15)"
+            ),
+            'steps': [
+                {
+                    'name': 'setup_build',
+                    'status': 'SUCCESS'
+                },
+                {
+                    'name': 'sleep a bit',
+                    'status': 'FAILURE'
+                },
+                {
+                    'name': 'sleep forever',
+                    'status': 'CANCELED'
+                },
+            ],
+            'output': {
+                'status':
+                    'CANCELED',
+                'summary_html': (
+                    "<pre>Infra Failure: Step('sleep forever') (canceled) (retcode: -15)</pre>"
+                ),
+            },
+        })
 
   def test_external_timeout_recovery(self):
     final_build = self._test_bbagent(

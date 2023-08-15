@@ -398,7 +398,10 @@ class LUCIStreamEngine(StreamEngine):
 
   # The current Build message. This is mutated and then sent with the _send
   # function (seen as _change_cb in other classes in this file).
-  _build_proto = attr.ib(factory=lambda: Build(status=common.STARTED))
+  _build_proto = attr.ib(factory=lambda: Build(
+      status=common.STARTED,
+      output=dict(status=common.STARTED),
+  ))
 
   # The Butler StreamClient. Used to generate logs for individual steps.
   _bsc = attr.ib(
@@ -486,6 +489,8 @@ class LUCIStreamEngine(StreamEngine):
   def write_result(self, result):
     self._build_proto.status = result.status
     self._build_proto.summary_markdown = result.summary_markdown
+    self._build_proto.output.status = result.status
+    self._build_proto.output.summary_html = '<pre>' + result.summary_markdown + '</pre>'
     self._send()
 
   @property
