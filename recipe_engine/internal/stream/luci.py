@@ -490,7 +490,10 @@ class LUCIStreamEngine(StreamEngine):
     self._build_proto.status = result.status
     self._build_proto.summary_markdown = result.summary_markdown
     self._build_proto.output.status = result.status
-    self._build_proto.output.summary_html = '<pre>' + result.summary_markdown + '</pre>'
+    if result.summary_markdown:
+      self._build_proto.output.summary_html = ('<pre>' +
+                                               result.summary_markdown +
+                                               '</pre>')
     self._send()
 
   @property
