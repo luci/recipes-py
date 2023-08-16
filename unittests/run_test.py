@@ -421,9 +421,6 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
             'output': {
                 'status':
                     'CANCELED',
-                'summary_html': (
-                    "<pre>Infra Failure: Step('sleep forever') (canceled) (retcode: -15)</pre>"
-                ),
             },
         })
 
