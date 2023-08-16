@@ -156,6 +156,24 @@ class CVApi(recipe_api.RecipeApi):
     return self._extract_unique_cq_tag('equivalent_cl_group_key')
 
   @property
+  def cl_owners(self):
+    """Returns string(s) of the owner's email addresses used for the patchset.
+
+    Usually CLs only have one owner, but more than one is possible so a list
+    will be returned.
+
+    Raises:
+      CQInactive if CQ is not active for this build.
+    """
+    self._enforce_active()
+    key = 'cq_cl_owner'
+    cl_owner_strings = []
+    for t in self.m.buildbucket.build.tags:
+      if t.key == key:
+        cl_owner_strings.append(t.value)
+    return cl_owner_strings
+
+  @property
   def triggered_build_ids(self):
     """Returns recorded Buildbucket build IDs as a list of integers."""
     return [bid for bid in self._output.triggered_build_ids]

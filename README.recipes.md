@@ -88,6 +88,7 @@
   * [cv:examples/ordered_cls](#recipes-cv_examples_ordered_cls)
   * [cv:examples/trigger_child_builds](#recipes-cv_examples_trigger_child_builds)
   * [cv:tests/cl_group_key](#recipes-cv_tests_cl_group_key)
+  * [cv:tests/cl_owner](#recipes-cv_tests_cl_owner)
   * [cv:tests/do_not_retry](#recipes-cv_tests_do_not_retry)
   * [cv:tests/experimental](#recipes-cv_tests_experimental)
   * [cv:tests/inactive](#recipes-cv_tests_inactive)
@@ -1421,14 +1422,14 @@ This module provides recipe API of LUCI CV, a pre-commit testing system.
 
 Returns whether CQ is active for this build.
 
-&mdash; **def [allow\_reuse\_for](/recipe_modules/cv/api.py#217)(self, \*modes):**
+&mdash; **def [allow\_reuse\_for](/recipe_modules/cv/api.py#235)(self, \*modes):**
 
 Instructs CQ that this build can be reused in a future Run if
 and only if its mode is in the provided modes.
 
 Overwrites all previously set values.
 
-&emsp; **@property**<br>&mdash; **def [allowed\_reuse\_modes](/recipe_modules/cv/api.py#213)(self):**
+&emsp; **@property**<br>&mdash; **def [allowed\_reuse\_modes](/recipe_modules/cv/api.py#231)(self):**
 
 &emsp; **@property**<br>&mdash; **def [cl\_group\_key](/recipe_modules/cv/api.py#132)(self):**
 
@@ -1441,7 +1442,17 @@ same set of changes at a different time.
 Raises:
   CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [do\_not\_retry\_build](/recipe_modules/cv/api.py#195)(self):**
+&emsp; **@property**<br>&mdash; **def [cl\_owners](/recipe_modules/cv/api.py#158)(self):**
+
+Returns string(s) of the owner's email addresses used for the patchset.
+
+Usually CLs only have one owner, but more than one is possible so a list
+will be returned.
+
+Raises:
+  CQInactive if CQ is not active for this build.
+
+&emsp; **@property**<br>&mdash; **def [do\_not\_retry\_build](/recipe_modules/cv/api.py#213)(self):**
 
 &emsp; **@property**<br>&mdash; **def [equivalent\_cl\_group\_key](/recipe_modules/cv/api.py#145)(self):**
 
@@ -1474,7 +1485,7 @@ applied or submitted.
 Raises:
   CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [owner\_is\_googler](/recipe_modules/cv/api.py#235)(self):**
+&emsp; **@property**<br>&mdash; **def [owner\_is\_googler](/recipe_modules/cv/api.py#253)(self):**
 
 Returns whether the Run/Attempt owner is a Googler.
 
@@ -1505,7 +1516,7 @@ api.cv.record_triggered_builds(*child_builds)
 The contents of returned dict should be treated as opaque blob,
 it may be changed without notice.
 
-&mdash; **def [record\_triggered\_build\_ids](/recipe_modules/cv/api.py#179)(self, \*build_ids):**
+&mdash; **def [record\_triggered\_build\_ids](/recipe_modules/cv/api.py#197)(self, \*build_ids):**
 
 Adds the given Buildbucket build IDs to the list of triggered build IDs.
 
@@ -1514,7 +1525,7 @@ Must be called after some step.
 Args:
   * build_ids (list of int or string): Buildbucket build IDs.
 
-&mdash; **def [record\_triggered\_builds](/recipe_modules/cv/api.py#163)(self, \*builds):**
+&mdash; **def [record\_triggered\_builds](/recipe_modules/cv/api.py#181)(self, \*builds):**
 
 Adds IDs of given Buildbucket builds to the list of triggered build IDs.
 
@@ -1536,7 +1547,7 @@ Returns the mode(str) of the CQ Run that triggers this build.
 Raises:
   CQInactive if CQ is not active for this build.
 
-&mdash; **def [set\_do\_not\_retry\_build](/recipe_modules/cv/api.py#199)(self):**
+&mdash; **def [set\_do\_not\_retry\_build](/recipe_modules/cv/api.py#217)(self):**
 
 Instruct CQ to not retry this build.
 
@@ -1552,7 +1563,7 @@ Can be spoofed. *DO NOT USE FOR SECURITY CHECKS.*
 Raises:
   CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [triggered\_build\_ids](/recipe_modules/cv/api.py#158)(self):**
+&emsp; **@property**<br>&mdash; **def [triggered\_build\_ids](/recipe_modules/cv/api.py#176)(self):**
 
 Returns recorded Buildbucket build IDs as a list of integers.
 ### *recipe_modules* / [file](/recipe_modules/file)
@@ -4776,6 +4787,12 @@ Generates response Runs for a test.
 
 
 &mdash; **def [RunSteps](/recipe_modules/cv/tests/cl_group_key.py#15)(api):**
+### *recipes* / [cv:tests/cl\_owner](/recipe_modules/cv/tests/cl_owner.py)
+
+[DEPS](/recipe_modules/cv/tests/cl_owner.py#7): [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv)
+
+
+&mdash; **def [RunSteps](/recipe_modules/cv/tests/cl_owner.py#15)(api):**
 ### *recipes* / [cv:tests/do\_not\_retry](/recipe_modules/cv/tests/do_not_retry.py)
 
 [DEPS](/recipe_modules/cv/tests/do_not_retry.py#5): [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv), [step](#recipe_modules-step)
