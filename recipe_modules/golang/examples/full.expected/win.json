@@ -41,9 +41,10 @@
       "GOMODCACHE": "[CACHE]\\gocache\\modcache",
       "GOPACKAGESDRIVER": "off",
       "GOPATH": null,
-      "GOPRIVATE": "*.googlesource.com,*.google.com",
+      "GOPRIVATE": "*.googlesource.com,*.git.corp.google.com,google.com",
       "GOPROXY": null,
-      "GOROOT": "[CACHE]\\golang"
+      "GOROOT": "[CACHE]\\golang",
+      "GOTOOLCHAIN": "local"
     },
     "env_prefixes": {
       "PATH": [

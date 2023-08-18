@@ -61,8 +61,9 @@ class GolangApi(recipe_api.RecipeApi):
         'GO111MODULE': 'on',
         'GOPROXY': None,
         'GOPATH': None,
-        'GOPRIVATE': '*.googlesource.com,*.google.com',
+        'GOPRIVATE': '*.googlesource.com,*.git.corp.google.com,google.com',
         'GOPACKAGESDRIVER': 'off',
+        'GOTOOLCHAIN': 'local',
 
         # Caches and GOBIN can be shared across Go versions: defaults are shared
         # hardcoded paths under '~'.
