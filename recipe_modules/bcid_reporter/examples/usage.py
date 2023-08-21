@@ -14,12 +14,22 @@ def RunSteps(api):
   api.bcid_reporter.report_stage("fetch", server_url="http://test.local")
 
   # Report cipd digest.
-  api.bcid_reporter.report_cipd("deadbeef", "example/cipd/package", "fakeiid",
-                                  server_url="http://test.local")
+  api.bcid_reporter.report_cipd(
+      "deadbeef",
+      "example/cipd/package",
+      "fakeiid",
+      server_url="http://test.local")
 
   # Report gcs artifact digest.
-  api.bcid_reporter.report_gcs("deadbeef", "gs://bucket/path/to/binary",
-                                 server_url="http://test.local")
+  api.bcid_reporter.report_gcs(
+      "deadbeef", "gs://bucket/path/to/binary", server_url="http://test.local")
+
+  # Report sbom artifact digest.
+  api.bcid_reporter.report_sbom(
+      "deadbeef",
+      "gs://bucket/path/to/binary.spdx.jsonl",
+      "beefdead",
+      server_url="http://test.local")
 
 
 def GenTests(api):

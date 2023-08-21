@@ -354,30 +354,45 @@ broker will be installed using cipd.
 
 &mdash; **def [report\_cipd](/recipe_modules/bcid_reporter/api.py#72)(self, digest, pkg, iid, server_url=None):**
 
-Reports cipd digest to local local provenance server.
+Reports cipd digest to local provenance server.
 
-This is used to report produced artifacts hash and metadata to server, it is
-used to generate provenance.
+This is used to report produced artifacts hash and metadata to provenance,
+it is used to generate provenance.
 
 Args:
   * digest (str) - The hash of the artifact.
   * pkg (str) - Name of the cipd package built.
   * iid (str) - Instance ID of the package.
-  * server_url (Optional[str]) - URL for the local proveance server, the
+  * server_url (Optional[str]) - URL for the local provenance server, the
     broker tool will use default if not specified.
 
 &mdash; **def [report\_gcs](/recipe_modules/bcid_reporter/api.py#101)(self, digest, guri, server_url=None):**
 
-Reports cipd digest to local local provenance server.
+Reports gcs digest to local provenance server.
 
-This is used to report produced artifacts hash and metadata to proveance, it
-is used to generate provenance.
+This is used to report produced artifacts hash and metadata to provenance,
+it is used to generate provenance.
 
 Args:
   * digest (str) - The hash of the artifact.
   * guri (str) - Name of the GCS artifact built. This is the unique GCS URI,
     e.g. gs://bucket/path/to/binary.
-  * server_url (Optional[str]) - URL for the local proveance server, the
+  * server_url (Optional[str]) - URL for the local provenance server, the
+    broker tool will use default if not specified.
+
+&mdash; **def [report\_sbom](/recipe_modules/bcid_reporter/api.py#128)(self, digest, guri, sbom_subject, server_url=None):**
+
+Reports SBOM gcs digest to local provenance server.
+
+This is used to report produced artifacts hash and metadata to provenance,
+it is used to generate provenance.
+
+Args:
+  * digest (str) - The hash of the SBOM artifact.
+  * guri (str) - Name of the GCS artifact built. This is the unique GCS URI,
+    e.g. gs://bucket/path/to/binary.
+  * sbom_subject (str) - The hash of the subject for the SBOM artifact.
+  * server_url (Optional[str]) - URL for the local provenance server, the
     broker tool will use default if not specified.
 
 &mdash; **def [report\_stage](/recipe_modules/bcid_reporter/api.py#41)(self, stage, server_url=None):**
@@ -391,7 +406,7 @@ Args:
     used in conjunction with process-inspected data to make security policy
     decisions.
     Valid stages: (start, fetch, compile, upload, upload-complete, test).
-  * server_url (Optional[str]) - URL for the local proveance server, the
+  * server_url (Optional[str]) - URL for the local provenance server, the
     broker tool will use default if not specified.
 ### *recipe_modules* / [buildbucket](/recipe_modules/buildbucket)
 
