@@ -130,6 +130,18 @@ class CVApi(recipe_api.RecipeApi):
     }
 
   @property
+  def attempt_key(self):
+    """Returns a string that is unique for a CV attempt.
+
+    The same `attempt_key` will be used for all builds within an
+    attempt.
+
+    Raises:
+      CQInactive if CQ is not active for this build.
+    """
+    return self._extract_unique_cq_tag('attempt_key')
+
+  @property
   def cl_group_key(self):
     """Returns a string that is unique for a current set of Gerrit change
     patchsets (or, equivalently, buildsets).
