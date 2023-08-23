@@ -2601,9 +2601,9 @@ Args:
 [DEPS](/recipe_modules/nodejs/__init__.py#5): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform)
 
 
-#### **class [NodeJSApi](/recipe_modules/nodejs/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#902)):**
+#### **class [NodeJSApi](/recipe_modules/nodejs/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#902)):**
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/nodejs/api.py#15)(self, version, path=None, cache=None):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/nodejs/api.py#20)(self, version: str, path: Optional[config_types.Path]=None, cache: Optional[config_types.Path]=None):**
 
 Installs a Node.js toolchain and activates it in the environment.
 

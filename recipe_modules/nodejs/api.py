@@ -2,8 +2,13 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from __future__ import annotations
+
 import contextlib
 
+from typing import Optional, Tuple
+
+from recipe_engine import config_types
 from recipe_engine import recipe_api
 
 
@@ -13,7 +18,10 @@ class NodeJSApi(recipe_api.RecipeApi):
     self._installed = {}  # {Path: installed nodejs version there}
 
   @contextlib.contextmanager
-  def __call__(self, version, path=None, cache=None):
+  def __call__(self,
+               version: str,
+               path: Optional[config_types.Path] = None,
+               cache: Optional[config_types.Path] = None):
     """Installs a Node.js toolchain and activates it in the environment.
 
     Installs it under the given `path`, defaulting to `[CACHE]/nodejs`. Various
@@ -47,7 +55,9 @@ class NodeJSApi(recipe_api.RecipeApi):
     with self.m.context(env=env, env_prefixes=env_pfx):
       yield
 
-  def _ensure_installed(self, version, path, cache):
+  def _ensure_installed(self: str, version: config_types.Path,
+                        path: config_types.Path,
+                        cache: config_types.Path) -> Tuple[dict, dict]:
     if self._installed.get(path) != version:
       pkgs = self.m.cipd.EnsureFile()
       pkgs.add_package(
