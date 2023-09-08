@@ -764,7 +764,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return None
 
   def get_multi(self, build_ids, url_title_fn=None, step_name=None,
-                fields=DEFAULT_FIELDS):
+                fields=DEFAULT_FIELDS, test_data=None):
     """Gets multiple builds.
 
     Args:
@@ -773,13 +773,16 @@ class BuildbucketApi(recipe_api.RecipeApi):
     *   `step_name`: name for this step.
     *   `fields`: a list of fields to include in the response, names relative
         to `build_pb2.Build` (e.g. ["tags", "infra.swarming"]).
+    *   `test_data`: a sequence of build_pb2.Build objects for use in testing.
 
     Returns:
       A dict {build_id: build_pb2.Build}.
     """
-    return self._get_multi(build_ids, url_title_fn, step_name, fields)[1]
+    return self._get_multi(build_ids, url_title_fn, step_name, fields,
+                           test_data)[1]
 
-  def _get_multi(self, build_ids, url_title_fn, step_name, fields):
+  def _get_multi(self, build_ids, url_title_fn, step_name, fields,
+                 test_data=None):
     """Implements get_multi, but also returns StepResult."""
     batch_req = builds_service_pb2.BatchRequest(
         requests=[
@@ -788,12 +791,18 @@ class BuildbucketApi(recipe_api.RecipeApi):
           for id in build_ids
         ],
     )
-    test_res = builds_service_pb2.BatchResponse(
-        responses=[
-          dict(get_build=dict(id=id, status=common_pb2.SUCCESS))
-          for id in build_ids
-        ]
-    )
+
+    if test_data:
+      test_res = builds_service_pb2.BatchResponse(
+          responses=[dict(get_build=x) for x in test_data]
+      )
+    else:
+      test_res = builds_service_pb2.BatchResponse(
+          responses=[
+              dict(get_build=dict(id=id, status=common_pb2.SUCCESS))
+              for id in build_ids
+          ]
+      )
     step_res, batch_res, has_errors = self._batch_request(
         step_name or 'buildbucket.get_multi', batch_req, test_res)
     ret = {}
@@ -807,7 +816,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return step_res, ret
 
   def get(self, build_id, url_title_fn=None, step_name=None,
-           fields=DEFAULT_FIELDS):
+           fields=DEFAULT_FIELDS, test_data=None):
     """Gets a build.
 
     Args:
@@ -816,6 +825,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     *   `step_name`: name for this step.
     *   `fields`: a list of fields to include in the response, names relative
         to `build_pb2.Build` (e.g. ["tags", "infra.swarming"]).
+    *   `test_data`: a build_pb2.Build for use in testing.
 
     Returns:
       A build_pb2.Build.
@@ -824,7 +834,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
         [build_id],
         url_title_fn=url_title_fn,
         step_name=step_name or 'buildbucket.get',
-        fields=fields)
+        fields=fields,
+        test_data=[test_data] if test_data else None)
     return builds[build_id]
 
   def collect_build(self, build_id, **kwargs):

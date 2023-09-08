@@ -60,6 +60,7 @@
   * [buildbucket:tests/build](#recipes-buildbucket_tests_build)
   * [buildbucket:tests/cancel](#recipes-buildbucket_tests_cancel)
   * [buildbucket:tests/collect](#recipes-buildbucket_tests_collect)
+  * [buildbucket:tests/get](#recipes-buildbucket_tests_get)
   * [buildbucket:tests/list_builders](#recipes-buildbucket_tests_list_builders)
   * [buildbucket:tests/output_commit](#recipes-buildbucket_tests_output_commit) &mdash; This recipe tests the buildbucket.
   * [buildbucket:tests/schedule](#recipes-buildbucket_tests_schedule)
@@ -436,7 +437,7 @@ Args:
   Empty tag values won't remove existing tags with matching keys, since tags
   can only be added.
 
-&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#999)(self):**
+&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#1010)(self):**
 
 Returns bucket name in v1 format.
 
@@ -459,13 +460,13 @@ much information as possible. Some fields may be left empty, violating
 the rules described in the .proto files.
 If the current build is not a buildbucket build, returned `build.id` is 0.
 
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#1010)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#1021)(self):**
 
 *** note
 **DEPRECATED**: use build.id instead.
 ***
 
-&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#1015)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#1026)(self):**
 
 *** note
 **DEPRECATED**: use build.input instead.
@@ -488,7 +489,7 @@ https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/pr
 
 Returns the full builder name: {project}/{bucket}/{builder}.
 
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#1020)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#1031)(self):**
 
 *** note
 **DEPRECATED**: Use build.builder instead.
@@ -520,7 +521,7 @@ Returns:
   None if build is successfully canceled. Otherwise, an InfraFailure will
   be raised
 
-&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#830)(self, build_id, \*\*kwargs):**
+&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#841)(self, build_id, \*\*kwargs):**
 
 Shorthand for `collect_builds` below, but for a single build only.
 
@@ -531,7 +532,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto).
   for the ended build.
 
-&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#843)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False, url_title_fn=None, mirror_status=False, fields=DEFAULT_FIELDS):**
+&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#854)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False, url_title_fn=None, mirror_status=False, fields=DEFAULT_FIELDS):**
 
 Waits for a set of builds to end and returns their details.
 
@@ -554,7 +555,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto)
   for all specified builds.
 
-&mdash; **def [get](/recipe_modules/buildbucket/api.py#809)(self, build_id, url_title_fn=None, step_name=None, fields=DEFAULT_FIELDS):**
+&mdash; **def [get](/recipe_modules/buildbucket/api.py#818)(self, build_id, url_title_fn=None, step_name=None, fields=DEFAULT_FIELDS, test_data=None):**
 
 Gets a build.
 
@@ -564,11 +565,12 @@ Args:
 *   `step_name`: name for this step.
 *   `fields`: a list of fields to include in the response, names relative
     to `build_pb2.Build` (e.g. ["tags", "infra.swarming"]).
+*   `test_data`: a build_pb2.Build for use in testing.
 
 Returns:
   A build_pb2.Build.
 
-&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#766)(self, build_ids, url_title_fn=None, step_name=None, fields=DEFAULT_FIELDS):**
+&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#766)(self, build_ids, url_title_fn=None, step_name=None, fields=DEFAULT_FIELDS, test_data=None):**
 
 Gets multiple builds.
 
@@ -578,6 +580,7 @@ Args:
 *   `step_name`: name for this step.
 *   `fields`: a list of fields to include in the response, names relative
     to `build_pb2.Build` (e.g. ["tags", "infra.swarming"]).
+*   `test_data`: a sequence of build_pb2.Build objects for use in testing.
 
 Returns:
   A dict {build_id: build_pb2.Build}.
@@ -4639,6 +4642,12 @@ Launches multiple builds at the same revision.
 
 
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/collect.py#11)(api):**
+### *recipes* / [buildbucket:tests/get](/recipe_modules/buildbucket/tests/get.py)
+
+[DEPS](/recipe_modules/buildbucket/tests/get.py#9): [buildbucket](#recipe_modules-buildbucket)
+
+
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/get.py#16)(api):**
 ### *recipes* / [buildbucket:tests/list\_builders](/recipe_modules/buildbucket/tests/list_builders.py)
 
 [DEPS](/recipe_modules/buildbucket/tests/list_builders.py#10): [buildbucket](#recipe_modules-buildbucket)
