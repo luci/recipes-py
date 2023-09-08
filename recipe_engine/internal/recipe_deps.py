@@ -35,6 +35,7 @@ All DEPS evaluation is also handled in this file.
 
 import bdb
 import importlib
+import inspect
 import logging
 import os
 import re
@@ -42,6 +43,7 @@ import sys
 
 from collections import namedtuple
 from functools import cached_property
+from typing import Optional, Type
 
 from future.utils import iteritems, itervalues, raise_
 
@@ -65,7 +67,7 @@ from . import dev_support
 from .attr_util import attr_type, attr_value_is, attr_superclass, attr_dict_type
 from .exceptions import CyclicalDependencyError, UnknownRecipe, UnknownRepoName
 from .exceptions import RecipeLoadError, RecipeSyntaxError, MalformedRecipeError
-from .exceptions import UnknownRecipeModule
+from .exceptions import MalformedModuleError, UnknownRecipeModule
 from .simple_cfg import SimpleRecipesCfg, RECIPES_CFG_LOCATION_REL
 from .test.test_util import filesystem_safe
 from .warn.definition import (parse_warning_definitions,
@@ -581,6 +583,44 @@ class RecipeModule(object):
     }
 
   @cached_property
+  def TEST_API(self) -> Optional[Type[RecipeTestApi]]:
+    """Returns this module's TestApi subclass, if this recipe module has one.
+
+    This will prefer an explicitly exported TEST_API object in the module's
+    __init__ file, falling back to importing `test_api.py` and looking for
+    a RecipeTestApi subclass.
+    """
+    imported_module = self.do_import()
+
+    ret = getattr(imported_module, 'TEST_API', None)
+    if ret:
+      if issubclass(ret, RecipeTestApi):
+        # This module explicitly exports TEST_API, return it.
+        return ret
+      raise MalformedModuleError(
+          f'Module "{self.repo.name}/{self.name}" exports '
+          'TEST_API which is not a subclass of RecipeTestApi')
+
+    # Fall back to finding the (optional) RecipeTestApi subclass.
+    test_module = None
+    if os.path.isfile(os.path.join(self.path, 'test_api.py')):
+      test_module = importlib.import_module(
+        f'RECIPE_MODULES.{self.repo.name}.{self.name}.test_api')
+
+    if not test_module:
+      return RecipeTestApi
+
+    for v in itervalues(test_module.__dict__):
+      # If the recipe has literally imported the RecipeTestApi, we don't want
+      # to consider that to be the real RecipeTestApi :)
+      if v is RecipeTestApi:
+        continue
+      if inspect.isclass(v) and issubclass(v, RecipeTestApi):
+        return v
+
+    return RecipeTestApi
+
+  @cached_property
   def uses_sloppy_coverage(self):
     """Returns True if this module has DISABLE_STRICT_COVERAGE set.
 
@@ -1005,7 +1045,7 @@ def _instantiate_test_api(module: RecipeModule, resolved_deps):
 
   Returns the instantiated RecipeTestApi subclass.
   """
-  inst = module.do_import().TEST_API(module)
+  inst = module.TEST_API(module)
   assert isinstance(inst, RecipeTestApi)
   inst.m.__dict__.update({
     local_name: resolved_dep

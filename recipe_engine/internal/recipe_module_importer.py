@@ -168,8 +168,6 @@ class RecipeModuleImporter(object):
 
     Currently sets the additional attributes on the python module:
       * `API`: The class derived from RecipeApiPlain in api.py
-      * `TEST_API`: The class derived from RecipeTestApi in test_api.py. If none
-        exists, then this is set to RecipeTestApi.
       * `CONFIG_CTX`: The ConfigContext object (defined in config.py) for this
         module, or None if no config.py exists.
 
@@ -223,24 +221,3 @@ class RecipeModuleImporter(object):
               module_name, v, mod.API))
         mod.API = v
     assert mod.API, 'Recipe module has no api? %s' % (mod,)
-
-    # Identify the (optional) RecipeTestApi subclass as this module's test API.
-    test_module = None
-    if os.path.isfile(os.path.join(mod.__path__[0], 'test_api.py')):
-      test_module = importlib.import_module(mod.__name__ + '.test_api')
-
-    mod.TEST_API = getattr(mod, 'TEST_API', None)
-    if test_module:
-      for v in itervalues(mod.test_api.__dict__):
-        # If the recipe has literally imported the RecipeTestApi, we don't want
-        # to consider that to be the real RecipeTestApi :)
-        if v is RecipeTestApi:
-          continue
-        if inspect.isclass(v) and issubclass(v, RecipeTestApi):
-          assert not mod.TEST_API, (
-            'More than one TestApi subclass: %s' % mod.api)
-          mod.TEST_API = v
-      assert mod.API, (
-        'Recipe module has test_api.py but no TestApi subclass? %s' % (mod,))
-    else:
-      mod.TEST_API = RecipeTestApi

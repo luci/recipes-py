@@ -22,6 +22,9 @@ class RecipeSyntaxError(SyntaxError, RecipeUsageError):
 class MalformedRecipeError(RecipeUsageError):
   """Raised when a recipe doesn't contain RunSteps + GenTests."""
 
+class MalformedModuleError(RecipeUsageError):
+  """Raised when a recipe module does not contain proper Api or TestApi."""
+
 class CyclicalDependencyError(RecipeUsageError):
   """Raised when a module depends on itself (possibly transitively)."""
 
