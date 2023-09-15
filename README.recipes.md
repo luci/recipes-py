@@ -343,18 +343,18 @@ def GenTests(api):
 [DEPS](/recipe_modules/bcid_reporter/__init__.py#5): [cipd](#recipe_modules-cipd), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-#### **class [BcidReporterApi](/recipe_modules/bcid_reporter/api.py#13)([RecipeApi](/recipe_engine/recipe_api.py#902)):**
+#### **class [BcidReporterApi](/recipe_modules/bcid_reporter/api.py#14)([RecipeApi](/recipe_engine/recipe_api.py#902)):**
 
 API for interacting with Provenance server using the broker tool.
 
-&emsp; **@property**<br>&mdash; **def [bcid\_reporter\_path](/recipe_modules/bcid_reporter/api.py#25)(self):**
+&emsp; **@property**<br>&mdash; **def [bcid\_reporter\_path](/recipe_modules/bcid_reporter/api.py#26)(self):**
 
 Returns the path to the broker binary.
 
 When the property is accessed the first time, the latest stable, released
 broker will be installed using cipd.
 
-&mdash; **def [report\_cipd](/recipe_modules/bcid_reporter/api.py#72)(self, digest, pkg, iid, server_url=None):**
+&mdash; **def [report\_cipd](/recipe_modules/bcid_reporter/api.py#73)(self, digest, pkg, iid, server_url=None):**
 
 Reports cipd digest to local provenance server.
 
@@ -368,7 +368,7 @@ Args:
   * server_url (Optional[str]) - URL for the local provenance server, the
     broker tool will use default if not specified.
 
-&mdash; **def [report\_gcs](/recipe_modules/bcid_reporter/api.py#101)(self, digest, guri, server_url=None):**
+&mdash; **def [report\_gcs](/recipe_modules/bcid_reporter/api.py#102)(self, digest, guri, server_url=None):**
 
 Reports gcs digest to local provenance server.
 
@@ -382,7 +382,7 @@ Args:
   * server_url (Optional[str]) - URL for the local provenance server, the
     broker tool will use default if not specified.
 
-&mdash; **def [report\_sbom](/recipe_modules/bcid_reporter/api.py#128)(self, digest, guri, sbom_subject, server_url=None):**
+&mdash; **def [report\_sbom](/recipe_modules/bcid_reporter/api.py#129)(self, digest, guri, sbom_subject, server_url=None):**
 
 Reports SBOM gcs digest to local provenance server.
 
@@ -397,7 +397,7 @@ Args:
   * server_url (Optional[str]) - URL for the local provenance server, the
     broker tool will use default if not specified.
 
-&mdash; **def [report\_stage](/recipe_modules/bcid_reporter/api.py#41)(self, stage, server_url=None):**
+&mdash; **def [report\_stage](/recipe_modules/bcid_reporter/api.py#42)(self, stage, server_url=None):**
 
 Reports task stage to local provenance server.
 
