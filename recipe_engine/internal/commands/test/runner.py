@@ -392,7 +392,7 @@ def _cover_all_imports(main_repo):
   for module in itervalues(main_repo.modules):
     # Allow exceptions to raise here; they'll be reported as a 'global'
     # failure.
-    module.do_import()
+    module.API
     module.TEST_API
   cov.stop()
   return cov.get_data()

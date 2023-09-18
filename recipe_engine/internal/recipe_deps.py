@@ -56,7 +56,7 @@ from google.protobuf import json_format as jsonpb
 from ..config_types import Path, RepoBasePath, RecipeScriptBasePath
 from ..engine_types import freeze, FrozenDict
 from ..recipe_api import _UnresolvedRequirement, RecipeScriptApi, BoundProperty
-from ..recipe_api import RecipeApiPlain
+from ..recipe_api import RecipeApi, RecipeApiPlain
 from ..recipe_test_api import RecipeTestApi, BaseTestData, DisabledTestData
 from ..util import RecipeAbort
 
@@ -599,7 +599,7 @@ class RecipeModule(object):
         return ret
       raise MalformedModuleError(
           f'Module "{self.repo.name}/{self.name}" exports '
-          'TEST_API which is not a subclass of RecipeTestApi')
+          'TEST_API which is not a subclass of RecipeTestApi.')
 
     # Fall back to finding the (optional) RecipeTestApi subclass.
     test_module = None
@@ -619,6 +619,41 @@ class RecipeModule(object):
         return v
 
     return RecipeTestApi
+
+  @cached_property
+  def API(self) -> Type[RecipeApiPlain]:
+    """Returns this module's RecipeApiPlain subclass, which is required.
+
+    This will prefer an explicitly exported API object in the module's
+    __init__ file, falling back to importing `api.py` and looking for a
+    RecipeApiPlain subclass.
+
+    Raises MalformedModuleError if an RecipeApiPlain subclass was not found.
+    """
+    # Identify the RecipeApiPlain subclass as this module's API.
+    ret = getattr(self.do_import(), 'API', None)
+    if ret:
+      if issubclass(ret, RecipeApiPlain):
+        # This module explicitly explicitly exports API, return it.
+        return ret
+      raise MalformedModuleError(
+          f'Module "{self.repo.name}/{self.name}" exports '
+          'API which is not a subclass of RecipeApiPlain.')
+
+    # Fall back to trying to find it implicitly.
+    api_module = importlib.import_module(
+      f'RECIPE_MODULES.{self.repo.name}.{self.name}.api')
+
+    for v in api_module.__dict__.values():
+      # skip classes which are exactly RecipeApiPlain and RecipeApi
+      if v is RecipeApiPlain or v is RecipeApi:
+        continue
+
+      if inspect.isclass(v) and issubclass(v, RecipeApiPlain):
+        return v
+
+    raise MalformedModuleError(
+        f'Recipe module "{self.repo.name}/{self.name}" is missing API.')
 
   @cached_property
   def uses_sloppy_coverage(self):
@@ -1125,12 +1160,12 @@ def _instantiate_api(engine, test_data, fqname, module: RecipeModule, test_api,
           env_properties_def(),
           ignore_unknown_fields=True))
 
-    inst = imported_module.API(*args, **kwargs)
+    inst = module.API(*args, **kwargs)
   else:
     # Old-style Property dict.
     # NOTE: late import to avoid early protobuf import
     from .property_invoker import invoke_with_properties
-    inst = invoke_with_properties(imported_module.API, engine.properties,
+    inst = invoke_with_properties(module.API, engine.properties,
                                   engine.environ, properties_def, **kwargs)
 
   inst.test_api = test_api
@@ -1140,7 +1175,7 @@ def _instantiate_api(engine, test_data, fqname, module: RecipeModule, test_api,
 
   # Replace class-level Requirements placeholders in the recipe API with
   # their instance-level real values.
-  for k, v in iteritems(imported_module.API.__dict__):
+  for k, v in iteritems(module.API.__dict__):
     if isinstance(v, _UnresolvedRequirement):
       setattr(inst, k, engine.resolve_requirement(v))
 

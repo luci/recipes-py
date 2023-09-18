@@ -175,9 +175,6 @@ class RecipeModuleImporter(object):
       * mod (python module type) - This will be the module loaded for e.g.
         RECIPE_MODULES.repo_name.module_name.
     """
-    _, _, module_name = mod.__name__.split('.')
-
-
     # NOTE: late import to avoid early protobuf import
     from ..config import ConfigContext
     mod.CONFIG_CTX = getattr(mod, 'CONFIG_CTX', None)
@@ -204,20 +201,3 @@ class RecipeModuleImporter(object):
     for fname in os.listdir(os.path.dirname(mod.__file__)):
       if fname.endswith('_config.py'):
         importlib.import_module(mod.__name__ + '.' + fname.rstrip('.py'))
-
-    # Identify the RecipeApiPlain subclass as this module's API.
-    mod.API = getattr(mod, 'API', None)
-
-    api_module = importlib.import_module(mod.__name__ + '.api')
-
-    for v in itervalues(api_module.__dict__):
-      # If the recipe has literally imported the RecipeApi, we don't want to
-      # consider that to be the real RecipeApi :)
-      if v is RecipeApiPlain or v is RecipeApi:
-        continue
-      if inspect.isclass(v) and issubclass(v, RecipeApiPlain):
-        assert not mod.API, (
-          '%s has more than one RecipeApi subclass: %s, %s' % (
-              module_name, v, mod.API))
-        mod.API = v
-    assert mod.API, 'Recipe module has no api? %s' % (mod,)

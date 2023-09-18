@@ -243,7 +243,6 @@ The "patchup" we do to the recipe module adds a few extra attributes to the
 loaded module:
   * `CONFIG_CTX` - The `ConfigContext` instance defined in the module's
     config.py file (if any).
-  * `API` - The `RecipeApiPlain` subclass found in the api.py file.
 
 These patchup features are probably actually bugs/relics of the way that the
 module loading system used to work; it would be good to minimize/remove these
