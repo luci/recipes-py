@@ -32,16 +32,16 @@ def RunSteps(api, get_cmd, child_properties, sloppy_child_properties,
              do_bogus_edits):
   intermediate = api.led(*get_cmd)
   intermediate = intermediate.then(
-      'edit-cr-cl', 'https://fake.url/c/project/123/+/456')
+      'edit-gerrit-cl', 'https://fake.url/c/project/123/+/456')
 
   # add another cl
   intermediate = intermediate.then(
-      'edit-cr-cl', '-no-implicit-clear',
+      'edit-gerrit-cl', '-no-implicit-clear',
       'https://fake.url/c/project/other/+/19/2')
 
   # remove the first one (1337 is the default mock patchset)
   intermediate = intermediate.then(
-      'edit-cr-cl', '-remove',
+      'edit-gerrit-cl', '-remove',
       'https://fake.url/c/project/123/+/456/1337')
 
   # Only use a different version of the recipes code if this is a led job.

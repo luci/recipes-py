@@ -32,7 +32,7 @@ def RunSteps(api, get_cmd):
     assert api.led.shadowed_bucket
 
   intermediate = intermediate.then(
-      'edit-cr-cl', 'https://fake.url/c/project/123/+/456')
+      'edit-gerrit-cl', 'https://fake.url/c/project/123/+/456')
 
   intermediate = intermediate.then('edit', '-name', 'foobar')
 

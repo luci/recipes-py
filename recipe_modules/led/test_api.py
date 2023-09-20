@@ -389,7 +389,7 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
       agent.input.data['kitchen-checkout'].cas.digest.size_bytes = size_bytes
 
 
-    def _edit_cr_cl(build, cmd, _cwd):
+    def _edit_gerrit_cl(build, cmd, _cwd):
       # This mimics the implementation in `led`.
       #
       # Make sure your fake URLs look like:
@@ -447,7 +447,10 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
       cls._MockEditData(_edit_recipe_bundle, cmd_filter=[
         'edit-recipe-bundle',
       ]),
-      cls._MockEditData(_edit_cr_cl, cmd_filter=[
+      cls._MockEditData(_edit_gerrit_cl, cmd_filter=[
         'edit-cr-cl',
+      ]),
+      cls._MockEditData(_edit_gerrit_cl, cmd_filter=[
+        'edit-gerrit-cl',
       ]),
     ]
