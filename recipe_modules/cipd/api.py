@@ -13,6 +13,7 @@ from past.builtins import basestring
 from typing import *
 
 import contextlib
+import hashlib
 
 from collections import defaultdict, namedtuple
 try:
@@ -1015,9 +1016,10 @@ class CIPDApi(recipe_api.RecipeApi):
 
     package_parts = [p for p in package.split('/') if '${' not in p]
     package_dir = self.m.path['start_dir'].join('cipd_tool', *package_parts)
-    # URL-encoding the version is the easiest way to ensure Windows
-    # compatibility; Windows doesn't allow colons in paths.
-    package_dir = package_dir.join(self.m.url.quote(version))
+    # Hashing the version is the easiest way to produce a string with no special
+    # characters e.g. removing colons which don't work on Windows.
+    package_dir = package_dir.join(
+        hashlib.sha256(version.encode('utf-8')).hexdigest())
     basename = package_parts[-1]
 
     if cache_key not in self._installed_tool_package_futures:
