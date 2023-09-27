@@ -129,14 +129,16 @@ class BcidReporterApi(recipe_api.RecipeApi):
   def report_sbom(self, digest, guri, sbom_subject, server_url=None):
     """Reports SBOM gcs digest to local provenance server.
 
-    This is used to report produced artifacts hash and metadata to provenance,
-    it is used to generate provenance.
+    This is used to report the SBOM metadata to provenance, along with
+    the hash of the artifact it represents. It is also used to generate
+    provenance.
 
     Args:
-      * digest (str) - The hash of the SBOM artifact.
-      * guri (str) - Name of the GCS artifact built. This is the unique GCS URI,
-        e.g. gs://bucket/path/to/binary.
-      * sbom_subject (str) - The hash of the subject for the SBOM artifact.
+      * digest (str) - The hash of the SBOM.
+      * guri (str) - This is the unique GCS URI for the SBOM,
+        e.g. gs://bucket/path/to/sbom.
+      * sbom_subject (str) - The hash of the artifact the SBOM was produced
+        for.
       * server_url (Optional[str]) - URL for the local provenance server, the
         broker tool will use default if not specified.
     """
