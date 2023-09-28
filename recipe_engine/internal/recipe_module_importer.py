@@ -151,53 +151,6 @@ class RecipeModuleImporter(object):
     loaded = imp.load_module(fullname, f, pathname, description)
     if f:
       f.close()
-    if len(toks) == 3:  # RECIPE_MODULES.repo_name.module_name
-      self._patchup_module(loaded)
 
     mod.__dict__.update(loaded.__dict__)
     return mod
-
-  @staticmethod
-  def _patchup_module(mod):
-    """Adds a bunch of fields to the imported recipe module.
-
-    TODO: most of these are obsolete and could be calculated at the sites that
-    use them. At some point in the future we should remove _patchup_module
-    entirely and rely on the builtin fields like __name__, __file__, etc. to
-    calculate all these details.
-
-    Currently sets the additional attributes on the python module:
-      * `API`: The class derived from RecipeApiPlain in api.py
-      * `CONFIG_CTX`: The ConfigContext object (defined in config.py) for this
-        module, or None if no config.py exists.
-
-    Args:
-      * mod (python module type) - This will be the module loaded for e.g.
-        RECIPE_MODULES.repo_name.module_name.
-    """
-    # NOTE: late import to avoid early protobuf import
-    from ..config import ConfigContext
-    mod.CONFIG_CTX = getattr(mod, 'CONFIG_CTX', None)
-    if mod.CONFIG_CTX:
-      assert isinstance(mod.CONFIG_CTX, ConfigContext), (
-        'Module defines CONFIG_CTX but it is not an instance of ConfigContext?')
-    else:
-      # LEGACY: If CONFIG_CTX is not explicitly exported, try to discover and
-      # insert it.
-
-      # TODO(iannucci): do these imports on-demand at the callsites needing these.
-      cfg_module = None
-      if os.path.isfile(os.path.join(mod.__path__[0], 'config.py')):
-        cfg_module = importlib.import_module(mod.__name__ + '.config')
-
-      if cfg_module:
-        for v in itervalues(cfg_module.__dict__):
-          if isinstance(v, ConfigContext):
-            mod.CONFIG_CTX = v
-        assert mod.CONFIG_CTX, 'Config file, but no config context?'
-
-    # The current config system relies on implicitly importing all the
-    # *_config.py files... ugh.
-    for fname in os.listdir(os.path.dirname(mod.__file__)):
-      if fname.endswith('_config.py'):
-        importlib.import_module(mod.__name__ + '.' + fname.rstrip('.py'))

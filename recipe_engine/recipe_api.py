@@ -822,7 +822,7 @@ class RecipeApiPlain(object):
           `config_name`, the name of the api's module and the list of the api's
           module's config names.
     """
-    ctx = self._module.do_import().CONFIG_CTX
+    ctx = self._module.CONFIG_CTX
     try:
       return ctx.CONFIG_ITEMS[config_name]
     except KeyError:
@@ -850,7 +850,7 @@ class RecipeApiPlain(object):
     generic_params = self.get_config_defaults()  # generic defaults
     generic_params.update(CONFIG_VARS)           # per-invocation values
 
-    ctx = self._module.do_import().CONFIG_CTX
+    ctx = self._module.CONFIG_CTX
     if optional and not ctx:
       return None, generic_params
 

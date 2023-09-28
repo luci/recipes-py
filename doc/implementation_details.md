@@ -234,19 +234,9 @@ Our importer behaves specially:
   * `RECIPE_MODULES.repo_name.module_name` - Verifies that the given module
     exists in this project, then uses `imp.find_module` and `imp.load_module` to
     actually do the loading. These are the bog-standard implementations for
-    loading regular python modules. Additionally, we run a `patchup` function on
-    this module before returning it.
+    loading regular python modules.
   * `RECIPE_MODULES.repo_name.module_name....` - All submodules are imported
     without any alteration using `imp.find_module` and `imp.load_module`.
-
-The "patchup" we do to the recipe module adds a few extra attributes to the
-loaded module:
-  * `CONFIG_CTX` - The `ConfigContext` instance defined in the module's
-    config.py file (if any).
-
-These patchup features are probably actually bugs/relics of the way that the
-module loading system used to work; it would be good to minimize/remove these
-over time.
 
 
 ### Recipe loading

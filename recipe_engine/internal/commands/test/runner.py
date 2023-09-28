@@ -393,6 +393,7 @@ def _cover_all_imports(main_repo):
     # Allow exceptions to raise here; they'll be reported as a 'global'
     # failure.
     module.API
+    module.CONFIG_CTX
     module.TEST_API
   cov.stop()
   return cov.get_data()

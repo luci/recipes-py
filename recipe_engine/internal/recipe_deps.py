@@ -656,6 +656,36 @@ class RecipeModule(object):
         f'Recipe module "{self.repo.name}/{self.name}" is missing API.')
 
   @cached_property
+  def CONFIG_CTX(self):
+    # The current config system relies on implicitly importing all the
+    # *_config.py files... ugh.
+    for fname in os.listdir(self.path):
+      if fname.endswith('_config.py'):
+        importlib.import_module(
+            f'RECIPE_MODULES.{self.repo.name}.{self.name}.{fname.strip(".py")}')
+
+    # NOTE: late import for protobuf reasons
+    from ..config import ConfigContext
+
+    if CONFIG_CTX := getattr(self.do_import(), 'CONFIG_CTX', None):
+      if not isinstance(CONFIG_CTX, ConfigContext):
+        raise MalformedModuleError(
+            'Module defines CONFIG_CTX but it is not an instance of ConfigContext?')
+      return CONFIG_CTX
+
+    # If CONFIG_CTX is not explicitly exported, try to discover it.... currently
+    # this is ONLY used for `recipe_engine/path`.
+    #
+    # TODO(iannucci): fix recipe_engine/path to not use config.
+    if os.path.isfile(os.path.join(self.path, 'config.py')):
+      cfg_module = importlib.import_module(
+          f'RECIPE_MODULES.{self.repo.name}.{self.name}.config')
+
+      for v in itervalues(cfg_module.__dict__):
+        if isinstance(v, ConfigContext):
+          return v
+
+  @cached_property
   def uses_sloppy_coverage(self):
     """Returns True if this module has DISABLE_STRICT_COVERAGE set.
 
@@ -1171,6 +1201,11 @@ def _instantiate_api(engine, test_data, fqname, module: RecipeModule, test_api,
   inst.test_api = test_api
 
   inst.m.__dict__.update(resolved_deps)
+  # For awful legacy reasons, we must also load the moudles CONFIG_CTX in order
+  # to have the side-effect of importing all of it's *_config.py files
+  # implicitly, because doing so will modify the config of other modules.
+  _ = module.CONFIG_CTX
+
   setattr(inst.m, shortname, inst)
 
   # Replace class-level Requirements placeholders in the recipe API with
