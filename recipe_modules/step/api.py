@@ -7,6 +7,7 @@
 
 import contextlib
 import sys
+from typing import Optional, Union
 
 from builtins import int
 from future.utils import iteritems
@@ -17,6 +18,7 @@ from recipe_engine.config_types import Path
 from recipe_engine.engine_types import StepPresentation
 from recipe_engine.engine_types import ResourceCost as _ResourceCost
 from recipe_engine.util import Placeholder, returns_placeholder
+from recipe_engine.recipe_utils import check_type, check_list_type
 
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
@@ -494,11 +496,11 @@ class StepApi(recipe_api.RecipeApiPlain):
 
   @recipe_api.composite_step
   def sub_build(self,
-                name,
-                cmd,
-                build,
-                raise_on_failure=True,
-                output_path=None,
+                name: str,
+                cmd: Union[int, str, Placeholder, Path],
+                build: build_pb2.Build,
+                raise_on_failure: bool = True,
+                output_path: Optional[Union[str, Path]] = None,
                 legacy_global_namespace=False,
                 timeout=None,
                 step_test_data=None,
@@ -577,6 +579,13 @@ class StepApi(recipe_api.RecipeApiPlain):
     Raises `InfraFailure` if the sub-build reports INFRA_FAILURE or CANCELED
     status.
     """
+
+    check_type("name", name, str)
+    check_list_type("cmd", cmd, (int, str, Placeholder, Path))
+    check_type("build", build, build_pb2.Build)
+    check_type("raise_on_failure", raise_on_failure, bool)
+    check_type("output_path", output_path, (type(None), str, Path))
+
     self._validate_cmd_list(cmd)
     cmd = list(cmd)
     # The command may have positional arguments, so place the output flag
