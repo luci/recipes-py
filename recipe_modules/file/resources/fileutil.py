@@ -9,11 +9,9 @@ This file was cut from "scripts/common/chromium_utils.py" at:
 91310531c31fa645256b4fb5d44b460c42b3e151
 """
 
-from __future__ import print_function
-
 import argparse
 import errno
-import glob2
+import glob
 import hashlib
 import itertools
 import json
@@ -31,7 +29,7 @@ def _RmGlob(file_wildcard, root, include_hidden):
 
   An exception is thrown if root doesn't exist."""
   wildcard = os.path.join(os.path.realpath(root), file_wildcard)
-  for item in glob2.glob(wildcard, include_hidden=include_hidden):
+  for item in glob.glob(wildcard, recursive=True, include_hidden=include_hidden):
     try:
       os.remove(item)
     except OSError as e:
@@ -146,7 +144,7 @@ def _EnsureDir(mode, dest):
 
 def _Glob(base, pattern, include_hidden):
   base = os.path.realpath(base)
-  hits = glob2.glob(os.path.join(base, pattern), include_hidden=include_hidden)
+  hits = glob.glob(os.path.join(base, pattern), recursive=True, include_hidden=include_hidden)
   if hits:
     print('\n'.join(sorted((os.path.relpath(hit, start=base) for hit in hits))))
 
@@ -414,15 +412,13 @@ def main(args):
   try:
     opts.func(opts)
     data['ok'] = True
-  except EnvironmentError as e:
-    # EnvironmentError handles both OSError and IOError in Python <3.3. In
-    # Python >=3.3 this is equivalent to OSError.
-    if e.errno is not None:  # errno can be None in Python 2.
-      data['errno_name'] = errno.errorcode[e.errno]
-    data['message'] = str(e)
   except shutil.Error as e:
     # Note that shutil.Error's "message" field can sometimes be a tuple, just
     # render the entire exception as a string to be safe.
+    data['message'] = str(e)
+  except OSError as e:
+    if e.errno:
+      data['errno_name'] = errno.errorcode[e.errno]
     data['message'] = str(e)
   except Exception as e:
     data['message'] = 'UNKNOWN: %s' % e
