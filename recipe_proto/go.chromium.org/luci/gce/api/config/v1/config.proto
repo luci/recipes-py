@@ -13,7 +13,7 @@ import "google/type/dayofweek.proto";
 import "go.chromium.org/luci/common/proto/options.proto";
 
 option (luci.file_metadata) = {
-  doc_url: "https://luci-config.appspot.com/schemas/services/gce-provider:vms.cfg";
+  doc_url: "https://config.luci.app/schemas/services/gce-provider:vms.cfg";
 };
 
 // A description of a service account.
@@ -116,6 +116,22 @@ message Scheduling {
   repeated NodeAffinity node_affinity = 1;
 }
 
+// GCPChannel is the version of the cloud API to use stable, beta, or alpha.
+enum GCPChannel {
+  GCP_CHANNEL_UNSPECIFIED = 0;
+  GCP_CHANNEL_STABLE = 1;
+  GCP_CHANNEL_BETA = 2;
+  GCP_CHANNEL_ALPHA = 3;
+}
+
+// PerformanceMonitoringUnit tracks the types of performance monitoring units to attach to a given instance.
+enum PerformanceMonitoringUnit {
+  PERFORMANCE_MONITORING_UNIT_UNSPECIFIED = 0; // This is not a mistake! The underlying cloud API expects the string "PERFORMANCE_MONITORING_UNIT_UNSPECIFIED".
+  ARCHITECTURAL = 1;
+  ENHANCED = 2;
+  STANDARD = 3;
+}
+
 // A description of a VM.
 // https://cloud.google.com/compute/docs/reference/rest/v1/instances.
 message VM {
@@ -172,6 +188,12 @@ message VM {
 
   // These are the fields associated with force_send_fields that are specifically null.
   repeated string null_fields = 17;
+
+  // gcp_channel of the GCP api to use, e.g. stable or alpha.
+  GCPChannel gcp_channel = 18;
+
+  // The performance monitoring unit is the type of performance monitoring unit.
+  PerformanceMonitoringUnit performance_monitoring_unit = 19;
 }
 
 // A length of time.
@@ -244,7 +266,9 @@ message Config {
   VM attributes = 2;
 
   // The lifetime of these VMs.
-  // At the end of their lifetime, each VM is deleted and replaced.
+  // At the end of their lifetime, each VM is deleted and replaced. But it
+  // won't happen immediately becasuse of scheduling reasons. The delay varies
+  // based on the specified lifetime.
   TimePeriod lifetime = 3;
 
   // The prefix to use when naming these VMs.
@@ -260,6 +284,8 @@ message Config {
 
   // Chrome Infra Auth groups considered to own this config.
   repeated string owner = 9;
+
+
 
   // Fields below should only be set by the server.
 

@@ -26,6 +26,7 @@ SUB_PATHS = [
   'buildbucket/proto',
   'common/bq/pb',
   'common/proto',
+  'config_service/proto',
   'cv/api/config/v2',
   'cv/api/recipe/v1',
   'cv/api/v0',
