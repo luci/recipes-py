@@ -4,6 +4,7 @@
 
 import datetime
 import json
+from typing import Sequence
 
 from google.protobuf import duration_pb2
 from google.protobuf import json_format
@@ -297,17 +298,22 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     return self._simulated_batch_response(
       batch_response, step_name or 'buildbucket.schedule')
 
-  def simulated_search_results(self, builds, step_name=None):
-    """Simulates a buildbucket.search call."""
-    assert isinstance(builds, list), builds
-    assert all(isinstance(b, build_pb2.Build) for b in builds), builds
+  def simulated_search_result_data(self, builds):
+    """Simulates buildbucket.search results."""
+    assert isinstance(builds, Sequence), builds
+    for b in builds:
+      assert isinstance(b, build_pb2.Build), b
 
-    step_name = step_name or 'buildbucket.search'
     lines = [
         json.dumps(json_format.MessageToDict(b), sort_keys=True) for b in builds
     ]
-    output = "\n".join(lines)
-    return self.step_data(step_name, self.m.raw_io.stream_output_text(output))
+    return self.m.raw_io.stream_output_text("\n".join(lines))
+
+  def simulated_search_results(self, builds, step_name=None):
+    """Simulates a buildbucket.search call."""
+    assert isinstance(builds, list), builds
+    return self.step_data(step_name or 'buildbucket.search',
+                          self.simulated_search_result_data(builds))
 
   def simulated_list_builders(self, builders, step_name=None):
     """Simulates a buildbucket.builders call."""

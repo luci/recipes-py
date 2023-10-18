@@ -4,10 +4,15 @@
 
 from google.protobuf import json_format
 
-from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
-from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
-from PB.go.chromium.org.luci.buildbucket.proto \
-  import builds_service as builds_service_pb2
+from PB.go.chromium.org.luci.buildbucket.proto import (
+    build as build_pb2,
+    builder_common as builder_common_pb2,
+    builds_service as builds_service_pb2,
+    common as common_pb2,
+)
+from PB.recipe_modules.recipe_engine.buildbucket.tests import (
+    properties as properties_pb2
+)
 
 DEPS = [
   'buildbucket',
@@ -17,15 +22,23 @@ DEPS = [
   'step'
 ]
 
+PROPERTIES = properties_pb2.SearchInputProps
 
-def RunSteps(api):
+
+def RunSteps(api, props):
   limit = api.properties.get('limit')
+
+  test_data = None
+  if props.builds:
+    test_data = props.builds
+
   builds = api.buildbucket.search(
       builds_service_pb2.BuildPredicate(
         gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),
       ),
       limit=limit,
       fields=['builder', 'id', 'status', 'create_time'],
+      test_data=test_data,
   )
   assert limit is None or len(builds) <= limit
   pres = api.step.active_result.presentation
@@ -50,12 +63,38 @@ def GenTests(api):
       build(),
   )
 
+  def build_status(id, status=common_pb2.SUCCESS,
+                   builder='chromium/try/test'):
+    project, bucket, builder = builder.split('/')
+    return build_pb2.Build(
+        id=id,
+        status=status,
+        builder=builder_common_pb2.BuilderID(
+            project=project,
+            bucket=bucket,
+            builder=builder,
+        ),
+    )
+
+  yield api.test(
+      'props',
+      build(),
+      api.properties(
+          properties_pb2.SearchInputProps(
+              builds=[
+                  build_status(id=3, builder='chromium/try/foo'),
+                  build_status(id=4, builder='chromium/try/bar'),
+              ],
+          ),
+      ),
+  )
+
   yield api.test(
       'two builds',
       build(),
       api.buildbucket.simulated_search_results([
-          build_pb2.Build(id=1, status=common_pb2.SUCCESS),
-          build_pb2.Build(id=2, status=common_pb2.FAILURE),
+          build_status(id=1),
+          build_status(id=2, status=common_pb2.FAILURE),
       ]),
   )
 

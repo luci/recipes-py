@@ -1,0 +1,62 @@
+[
+  {
+    "cmd": [
+      "bb",
+      "ls",
+      "-host",
+      "cr-buildbucket.appspot.com",
+      "-json",
+      "-nopage",
+      "-n",
+      "1000",
+      "-fields",
+      "builder,create_time,id,status",
+      "-predicate",
+      "{\"gerritChanges\": [{\"change\": \"123456\", \"host\": \"chromium-review.googlesource.com\", \"patchset\": \"7\", \"project\": \"chromium/src\"}]}"
+    ],
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "chromium:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "buildbucket.search",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@raw_io.output_text@{\"builder\": {\"bucket\": \"try\", \"builder\": \"foo\", \"project\": \"chromium\"}, \"id\": \"3\", \"status\": \"SUCCESS\"}@@@",
+      "@@@STEP_LOG_LINE@raw_io.output_text@{\"builder\": {\"bucket\": \"try\", \"builder\": \"bar\", \"project\": \"chromium\"}, \"id\": \"4\", \"status\": \"SUCCESS\"}@@@",
+      "@@@STEP_LOG_END@raw_io.output_text@@@",
+      "@@@STEP_LOG_LINE@build 3@{@@@",
+      "@@@STEP_LOG_LINE@build 3@  \"builder\": {@@@",
+      "@@@STEP_LOG_LINE@build 3@    \"bucket\": \"try\",@@@",
+      "@@@STEP_LOG_LINE@build 3@    \"builder\": \"foo\",@@@",
+      "@@@STEP_LOG_LINE@build 3@    \"project\": \"chromium\"@@@",
+      "@@@STEP_LOG_LINE@build 3@  },@@@",
+      "@@@STEP_LOG_LINE@build 3@  \"id\": \"3\",@@@",
+      "@@@STEP_LOG_LINE@build 3@  \"status\": \"SUCCESS\"@@@",
+      "@@@STEP_LOG_LINE@build 3@}@@@",
+      "@@@STEP_LOG_END@build 3@@@",
+      "@@@STEP_LOG_LINE@build 4@{@@@",
+      "@@@STEP_LOG_LINE@build 4@  \"builder\": {@@@",
+      "@@@STEP_LOG_LINE@build 4@    \"bucket\": \"try\",@@@",
+      "@@@STEP_LOG_LINE@build 4@    \"builder\": \"bar\",@@@",
+      "@@@STEP_LOG_LINE@build 4@    \"project\": \"chromium\"@@@",
+      "@@@STEP_LOG_LINE@build 4@  },@@@",
+      "@@@STEP_LOG_LINE@build 4@  \"id\": \"4\",@@@",
+      "@@@STEP_LOG_LINE@build 4@  \"status\": \"SUCCESS\"@@@",
+      "@@@STEP_LOG_LINE@build 4@}@@@",
+      "@@@STEP_LOG_END@build 4@@@",
+      "@@@STEP_LINK@3@https://cr-buildbucket.appspot.com/build/3@@@",
+      "@@@STEP_LINK@4@https://cr-buildbucket.appspot.com/build/4@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]
