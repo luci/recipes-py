@@ -8,7 +8,7 @@ from recipe_engine import recipe_api
 # Usage of bcid_reporter recipe_module will have significant downstream impact
 # and to avoid any production outage, we are pinning the latest known good build
 # of the tool here. Upstream changes are intentionally left out.
-_LATEST_STABLE_VERSION = 'git_revision:3d14b689ac33c182daa4c0602819ede40bb4e128'
+_LATEST_STABLE_VERSION = 'git_revision:1976175bb06a6ae95a0fe1b08de38572fe447fe8'
 
 
 class BcidReporterApi(recipe_api.RecipeApi):
