@@ -439,7 +439,7 @@ Args:
   Empty tag values won't remove existing tags with matching keys, since tags
   can only be added.
 
-&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#1018)(self):**
+&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#1031)(self):**
 
 Returns bucket name in v1 format.
 
@@ -462,13 +462,13 @@ much information as possible. Some fields may be left empty, violating
 the rules described in the .proto files.
 If the current build is not a buildbucket build, returned `build.id` is 0.
 
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#1029)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#1042)(self):**
 
 *** note
 **DEPRECATED**: use build.id instead.
 ***
 
-&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#1034)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#1047)(self):**
 
 *** note
 **DEPRECATED**: use build.input instead.
@@ -491,7 +491,7 @@ https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/pr
 
 Returns the full builder name: {project}/{bucket}/{builder}.
 
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#1039)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#1052)(self):**
 
 *** note
 **DEPRECATED**: Use build.builder instead.
@@ -508,7 +508,7 @@ Returns the LUCI realm name of the current build.
 Raises `InfraFailure` if the build proto doesn't have `project` or `bucket`
 set. This can happen in tests that don't properly mock build proto.
 
-&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#735)(self, build_id, reason=' ', step_name=None):**
+&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#748)(self, build_id, reason=' ', step_name=None):**
 
 Cancel the build associated with the provided build ID.
 
@@ -523,7 +523,7 @@ Returns:
   None if build is successfully canceled. Otherwise, an InfraFailure will
   be raised
 
-&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#849)(self, build_id, \*\*kwargs):**
+&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#862)(self, build_id, \*\*kwargs):**
 
 Shorthand for `collect_builds` below, but for a single build only.
 
@@ -534,7 +534,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto).
   for the ended build.
 
-&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#862)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False, url_title_fn=None, mirror_status=False, fields=DEFAULT_FIELDS):**
+&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#875)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False, url_title_fn=None, mirror_status=False, fields=DEFAULT_FIELDS):**
 
 Waits for a set of builds to end and returns their details.
 
@@ -557,7 +557,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto)
   for all specified builds.
 
-&mdash; **def [get](/recipe_modules/buildbucket/api.py#826)(self, build_id, url_title_fn=None, step_name=None, fields=DEFAULT_FIELDS, test_data=None):**
+&mdash; **def [get](/recipe_modules/buildbucket/api.py#839)(self, build_id, url_title_fn=None, step_name=None, fields=DEFAULT_FIELDS, test_data=None):**
 
 Gets a build.
 
@@ -572,7 +572,7 @@ Args:
 Returns:
   A build_pb2.Build.
 
-&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#774)(self, build_ids, url_title_fn=None, step_name=None, fields=DEFAULT_FIELDS, test_data=None):**
+&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#787)(self, build_ids, url_title_fn=None, step_name=None, fields=DEFAULT_FIELDS, test_data=None):**
 
 Gets multiple builds.
 
@@ -607,7 +607,7 @@ Hides the build in UI
 Returns True if the build is critical. Build defaults to the current one.
     
 
-&mdash; **def [list\_builders](/recipe_modules/buildbucket/api.py#621)(self, project, bucket, step_name=None):**
+&mdash; **def [list\_builders](/recipe_modules/buildbucket/api.py#633)(self, project, bucket, step_name=None):**
 
 Lists configured builders in a bucket.
 
@@ -631,7 +631,7 @@ Returns:
   [Builds](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto)
   in the same order as schedule_build_requests.
 
-&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#526)(self, schedule_build_requests, url_title_fn=None, step_name=None, include_sub_invs=True):**
+&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#538)(self, schedule_build_requests, url_title_fn=None, step_name=None, include_sub_invs=True):**
 
 Schedules a batch of builds.
 
@@ -662,7 +662,7 @@ Returns:
 Raises:
   `InfraFailure` if any of the requests fail.
 
-&mdash; **def [schedule\_request](/recipe_modules/buildbucket/api.py#328)(self, builder, project=INHERIT, bucket=INHERIT, properties=None, experimental=INHERIT, experiments=None, gitiles_commit=INHERIT, gerrit_changes=INHERIT, tags=None, inherit_buildsets=True, swarming_parent_run_id=None, dimensions=None, priority=INHERIT, critical=INHERIT, exe_cipd_version=None, fields=DEFAULT_FIELDS, can_outlive_parent=None):**
+&mdash; **def [schedule\_request](/recipe_modules/buildbucket/api.py#328)(self, builder, project=INHERIT, bucket=INHERIT, properties=None, experimental=INHERIT, experiments=None, gitiles_commit=INHERIT, gerrit_changes=INHERIT, tags=None, inherit_buildsets=True, swarming_parent_run_id=None, dimensions=None, priority=INHERIT, critical=INHERIT, exe_cipd_version=None, fields=DEFAULT_FIELDS, can_outlive_parent=None, as_shadow_if_parent_is_led=False):**
 
 Creates a new `ScheduleBuildRequest` message with reasonable defaults.
 
@@ -740,8 +740,10 @@ Args:
     ScheduleBuildRequest.can_outlive_parent will be determined by
     swarming_parent_run_id.
     TODO(crbug.com/1031205): remove swarming_parent_run_id.
+* as_shadow_if_parent_is_led: flag for if the scheduled child build should
+  be scheduled in shadow bucket and have shadow adjustments applied.
 
-&mdash; **def [search](/recipe_modules/buildbucket/api.py#647)(self, predicate, limit=None, url_title_fn=None, report_build=True, step_name=None, fields=DEFAULT_FIELDS, timeout=None, test_data=None):**
+&mdash; **def [search](/recipe_modules/buildbucket/api.py#659)(self, predicate, limit=None, url_title_fn=None, report_build=True, step_name=None, fields=DEFAULT_FIELDS, timeout=None, test_data=None):**
 
 Searches for builds.
 
@@ -795,6 +797,8 @@ Args:
   Ref, if not empty, must start with `refs/`.
 
 Can be called at most once per build.
+
+&emsp; **@property**<br>&mdash; **def [shadowed\_bucket](/recipe_modules/buildbucket/api.py#1057)(self):**
 
 &emsp; **@staticmethod**<br>&mdash; **def [tags](/recipe_modules/buildbucket/api.py#249)(\*\*tags):**
 
@@ -4668,16 +4672,16 @@ This recipe tests the buildbucket.set_output_gitiles_commit function.
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/output_commit.py#18)(api):**
 ### *recipes* / [buildbucket:tests/schedule](/recipe_modules/buildbucket/tests/schedule.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/schedule.py#12): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/tests/schedule.py#15): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/schedule.py#21)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/schedule.py#24)(api):**
 ### *recipes* / [buildbucket:tests/search](/recipe_modules/buildbucket/tests/search.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/search.py#17): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/tests/search.py#16): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/search.py#28)(api, props):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/search.py#27)(api, props):**
 ### *recipes* / [cas:examples/full](/recipe_modules/cas/examples/full.py)
 
 [DEPS](/recipe_modules/cas/examples/full.py#5): [cas](#recipe_modules-cas), [file](#recipe_modules-file), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)

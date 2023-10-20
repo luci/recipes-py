@@ -93,6 +93,7 @@ def RunSteps(api, properties):
         bucket=builder.bucket,
         can_outlive_parent=can_outlive_parent,
         swarming_parent_run_id=swarming_parent_run_id,
+        as_shadow_if_parent_is_led=True,
     )
     return api.buildbucket.schedule([req], step_name=step_name)[0]
 

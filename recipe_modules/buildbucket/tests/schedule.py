@@ -2,6 +2,9 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from google.protobuf import json_format
+from google.protobuf import struct_pb2
+
 from recipe_engine import engine_types
 from recipe_engine import post_process
 
@@ -22,9 +25,11 @@ def RunSteps(api):
   # Convert from FrozenDict
   req_body = engine_types.thaw(api.properties.get('request_kwargs'))
   tags = api.properties.get('tags')
+  as_shadow = api.properties.get('as_shadow', False)
   # This is needed to provide coverage for the tags() method in api.py.
   tags = api.buildbucket.tags(**tags) if tags else tags
-  req = api.buildbucket.schedule_request(tags=tags, **req_body)
+  req = api.buildbucket.schedule_request(
+      tags=tags, as_shadow_if_parent_is_led=as_shadow, **req_body)
 
   include_sub_invs = api.properties.get('include_sub_invs', False)
   api.buildbucket.schedule([req], include_sub_invs=include_sub_invs)
@@ -40,25 +45,33 @@ def RunSteps(api):
 
 def GenTests(api):
 
-  def test(test_name, response=None, tags=None, **req):
+  def test(test_name, response=None, tags=None, shadowed_bucket=None, **req):
     req.setdefault('builder', 'linux')
-    return (
-      api.test(test_name) +
-      api.runtime(is_experimental=False) +
-      api.buildbucket.try_build(
-          project='chromium',
-          builder='Builder',
-          git_repo='https://chromium.googlesource.com/chromium/src',
-          revision='a' * 40,
-          tags=api.buildbucket.tags(buildset='bs', unrelated='a'),
-          exe=api.buildbucket.exe(
-              cipd_pkg='path/to/cipd/pkg',
-              cipd_ver='default_ver',
-              cmd=['luciexe'],
-          )
-      ) +
-      api.properties(request_kwargs=req, tags=tags, response=response)
-    )
+    if shadowed_bucket:
+      props_dict = {
+          '$recipe_engine/led': {
+              'shadowed_bucket': shadowed_bucket,
+          },
+      }
+      properties = json_format.Parse(
+          api.json.dumps(props_dict), struct_pb2.Struct())
+    else:
+      properties = None
+    return (api.test(test_name) + api.runtime(is_experimental=False) +
+            api.buildbucket.try_build(
+                project='chromium',
+                builder='Builder',
+                git_repo='https://chromium.googlesource.com/chromium/src',
+                revision='a' * 40,
+                tags=api.buildbucket.tags(buildset='bs', unrelated='a'),
+                exe=api.buildbucket.exe(
+                    cipd_pkg='path/to/cipd/pkg',
+                    cipd_ver='default_ver',
+                    cmd=['luciexe'],
+                ),
+                properties=properties,
+            ) +
+            api.properties(request_kwargs=req, tags=tags, response=response))
 
   yield test('basic')
 
@@ -169,3 +182,23 @@ def GenTests(api):
                        'include sub resultdb invocations')+
       api.post_process(post_process.DropExpectation)
   )
+
+  yield (test(
+      test_name="schedule regular child for led by default",
+      shadowed_bucket='original') + api.properties() +
+         api.post_process(post_process.LogDoesNotContain,
+                          'buildbucket.schedule', 'request', ['original']) +
+         api.post_process(post_process.DropExpectation))
+
+  yield (test(
+      test_name="schedule shadow child for led", shadowed_bucket='original') +
+         api.properties(as_shadow=True) +
+         api.post_process(post_process.LogContains, 'buildbucket.schedule',
+                          'request', ['original']) +
+         api.post_process(post_process.DropExpectation))
+
+  yield (test(test_name="not schedule shadow build for prod build") +
+         api.properties(as_shadow=True) +
+         api.post_process(post_process.LogDoesNotContain,
+                          'buildbucket.schedule', 'request', ['original']) +
+         api.post_process(post_process.DropExpectation))

@@ -10,9 +10,8 @@ from PB.go.chromium.org.luci.buildbucket.proto import (
     builds_service as builds_service_pb2,
     common as common_pb2,
 )
-from PB.recipe_modules.recipe_engine.buildbucket.tests import (
-    properties as properties_pb2
-)
+from PB.recipe_modules.recipe_engine.buildbucket.tests import (properties as
+                                                               properties_pb2)
 
 DEPS = [
   'buildbucket',
@@ -34,8 +33,7 @@ def RunSteps(api, props):
 
   builds = api.buildbucket.search(
       builds_service_pb2.BuildPredicate(
-        gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),
-      ),
+          gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),),
       limit=limit,
       fields=['builder', 'id', 'status', 'create_time'],
       test_data=test_data,
@@ -63,8 +61,7 @@ def GenTests(api):
       build(),
   )
 
-  def build_status(id, status=common_pb2.SUCCESS,
-                   builder='chromium/try/test'):
+  def build_status(id, status=common_pb2.SUCCESS, builder='chromium/try/test'):
     project, bucket, builder = builder.split('/')
     return build_pb2.Build(
         id=id,
@@ -84,9 +81,7 @@ def GenTests(api):
               builds=[
                   build_status(id=3, builder='chromium/try/foo'),
                   build_status(id=4, builder='chromium/try/bar'),
-              ],
-          ),
-      ),
+              ],),),
   )
 
   yield api.test(

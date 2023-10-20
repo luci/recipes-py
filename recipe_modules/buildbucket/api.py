@@ -344,6 +344,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       exe_cipd_version=None,
       fields=DEFAULT_FIELDS,
       can_outlive_parent=None,
+      as_shadow_if_parent_is_led=False,
   ):
     """Creates a new `ScheduleBuildRequest` message with reasonable defaults.
 
@@ -421,6 +422,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
         ScheduleBuildRequest.can_outlive_parent will be determined by
         swarming_parent_run_id.
         TODO(crbug.com/1031205): remove swarming_parent_run_id.
+    * as_shadow_if_parent_is_led: flag for if the scheduled child build should
+      be scheduled in shadow bucket and have shadow adjustments applied.
     """
 
     def as_msg(value, typ):
@@ -520,6 +523,15 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     for d in dimensions or []:
       copy_msg(d, req.dimensions.add())
+
+    # Schedule child builds in the shadow bucket since the parent is a led
+    # real build.
+    if as_shadow_if_parent_is_led and self.shadowed_bucket:
+      if bucket is self.INHERIT:
+        # The child build inherits its parent's bucket,
+        # convert it to the shadowed_bucket.
+        req.builder.bucket = self.shadowed_bucket
+      copy_msg(dict(), req.shadow_input)
 
     return req
 
@@ -707,15 +719,16 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     step_test_data = None
     if test_data:
-      step_test_data=lambda: self.m.buildbucket.test_api.simulated_search_result_data(test_data)
+      step_test_data = lambda: self.m.buildbucket.test_api.simulated_search_result_data(
+          test_data)
 
     step_result = self._run_bb(
-      subcommand='ls',
-      step_name=step_name or 'buildbucket.search',
-      args=args,
-      stdout=self.m.raw_io.output_text(add_output_log=True),
-      timeout=timeout,
-      step_test_data=step_test_data)
+        subcommand='ls',
+        step_name=step_name or 'buildbucket.search',
+        args=args,
+        stdout=self.m.raw_io.output_text(add_output_log=True),
+        timeout=timeout,
+        step_test_data=step_test_data)
 
     ret = []
     # Every line is a build serialized in JSON format
@@ -1040,6 +1053,16 @@ class BuildbucketApi(recipe_api.RecipeApi):
   def builder_id(self):  # pragma: no cover
     """DEPRECATED: Use build.builder instead."""
     return self.build.builder
+
+  @property
+  def shadowed_bucket(self):  # pragma: no cover
+    for prop, value in self.build.input.properties.items():
+      if prop != '$recipe_engine/led':
+        continue
+      for k, v in value.items():
+        if k == 'shadowed_bucket':
+          return v
+    return ''
 
 
 # Legacy support.
