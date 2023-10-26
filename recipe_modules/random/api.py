@@ -24,40 +24,13 @@ Example:
 
 
 import random
-import sys
-from builtins import range
 
 from recipe_engine import recipe_api
-
-
-# TODO(crbug/1147793) When python2 support is removed this class can be removed
-# and RandomApi can just use random.Random, this class is only needed during the
-# migration to resolve implementation differences that result in different
-# random results that impact expectation files
-if sys.version_info.major >= 3:
-
-  class _Random(random.Random):
-
-    def randrange(self, start, stop=None, step=1):
-      return self.choice(range(start, stop, step))
-
-    def choice(self, seq):
-      return seq[int(self.random() * len(seq))]
-
-    def shuffle(self, x, random=None):
-      if random is None:
-        random = self.random
-      return super(_Random, self).shuffle(x, random=random)
-
-else:  # pragma: no cover
-  # TODO: Remove when ripping out py2.
-  _Random = random.Random
-
 
 class RandomApi(recipe_api.RecipeApi):
   def __init__(self, module_properties, **kwargs):
     super(RandomApi, self).__init__(**kwargs)
-    self._random = _Random(
+    self._random = random.Random(
         module_properties.get('seed',
                               1234 if self._test_data.enabled else None))
 
