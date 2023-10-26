@@ -5,13 +5,15 @@
 DEPS = [
   'buildbucket',
   'properties',
+  'step',
 ]
 
 
 def RunSteps(api):
   api.buildbucket.collect_build(
       9016911228971028736, interval=30, step_name='collect1',
-      mirror_status=True)
+      mirror_status=True,
+      cost=api.step.ResourceCost(memory=10))
   api.buildbucket.collect_builds(
       [9016911228971028737, 123456789012345678], timeout=600,
       raise_if_unsuccessful=api.properties.get('raise_if_unsuccessful', False),

@@ -16,6 +16,12 @@
       "30s",
       "9016911228971028736"
     ],
+    "cost": {
+      "cpu": 500,
+      "disk": 0,
+      "memory": 10,
+      "net": 0
+    },
     "infra_step": true,
     "name": "collect1.wait",
     "timeout": 3600,

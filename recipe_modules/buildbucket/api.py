@@ -876,6 +876,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       self, build_ids, interval=None, timeout=None, step_name=None,
       raise_if_unsuccessful=False, url_title_fn=None,
       mirror_status=False, fields=DEFAULT_FIELDS,
+      cost=None,
   ):
     """Waits for a set of builds to end and returns their details.
 
@@ -892,6 +893,9 @@ class BuildbucketApi(recipe_api.RecipeApi):
       did not succeed. Ignored if raise_if_unsuccessful is True.
     * `fields`: a list of fields to include in the response, names relative
       to `build_pb2.Build` (e.g. ["tags", "infra.swarming"]).
+    * `cost`: A step.ResourceCost to override for the underlying bb invocation.
+      If not specified, will use the recipe_engine's default values for
+      ResourceCost.
 
     Returns:
       A map from integer build IDs to the corresponding
@@ -910,6 +914,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
           subcommand='collect',
           args=['-interval', '%ds' % interval] + build_ids,
           timeout=timeout,
+          cost=cost,
       )
 
       # Fetch build details.
@@ -999,7 +1004,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   def _run_bb(
       self, subcommand, step_name=None, args=None, stdin=None, stdout=None,
-      step_test_data=None, timeout=None):
+      step_test_data=None, timeout=None, cost=None):
     cmdline = [
       'bb', subcommand,
       '-host', self._host,
@@ -1009,6 +1014,12 @@ class BuildbucketApi(recipe_api.RecipeApi):
     # it is true here.
     cmdline += args or []
 
+    kwargs = {}
+    if cost:
+      # cost has a special non-None default val, so we can't safely pass in
+      # our cost unconditionally.
+      kwargs['cost'] = cost
+
     return self.m.step(
         step_name or ('bb ' + subcommand),
         cmdline,
@@ -1017,6 +1028,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
         stdout=stdout,
         step_test_data=step_test_data,
         timeout=timeout,
+        **kwargs,
     )
 
   def _check_build_id(self, build_id):
