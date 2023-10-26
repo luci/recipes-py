@@ -254,7 +254,8 @@ def _apply_imports_to_unparsed_expression(exp_ast, imports):
   `imports`. Otherwise this returns the source-code representation of exp_ast as
   a string.
   """
-  assert isinstance(exp_ast, (ast.Name, ast.Attribute, ast.Call)), type(exp_ast)
+  allowed_types = (ast.Name, ast.Attribute, ast.Call, ast.Subscript)
+  assert isinstance(exp_ast, allowed_types), type(exp_ast)
   unparsed = _unparse(exp_ast).strip()
   try:
     return eval(unparsed, {'__builtins__': None}, imports)

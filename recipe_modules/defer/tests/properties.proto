@@ -1,0 +1,16 @@
+// Copyright 2023 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+package recipe_modules.recipe_engine.defer.tests;
+
+message CollectInputProps {
+  bool exception = 1;
+}
+
+message ResultInputProps {
+  bool infra_steps = 1;
+  bool exception = 2;
+}
