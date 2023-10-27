@@ -6,6 +6,7 @@ import bdb
 import copy
 import datetime
 import inspect
+import io
 import json
 import logging
 import os
@@ -948,6 +949,13 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
 
   exc_details = step_stream.new_log_stream('execution details')
   try:
+    # Write the stack trace of the function call to the debug log
+    debug_log.write_line('Stack trace for this step:')
+    buffer = io.StringIO()
+    traceback.print_stack(file=buffer)
+    for line in buffer.getvalue().split("\n"):
+      debug_log.write_line(line)
+
     debug_log.write_line('Prepopulating placeholder data')
     _prepopulate_placeholders(step_config, step_data)
 
