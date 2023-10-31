@@ -11,6 +11,11 @@ message CollectInputProps {
   string step_name = 2;
 }
 
+message ContextInputProps {
+  bool exception = 1;
+  string step_name = 2;
+}
+
 message ResultInputProps {
   bool infra_steps = 1;
   bool exception = 2;

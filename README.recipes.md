@@ -100,6 +100,7 @@
   * [cv:tests/reuse](#recipes-cv_tests_reuse)
   * [cv:tests/triggered_build_ids](#recipes-cv_tests_triggered_build_ids)
   * [defer:tests/collect](#recipes-defer_tests_collect)
+  * [defer:tests/context](#recipes-defer_tests_context)
   * [defer:tests/result](#recipes-defer_tests_result)
   * [engine_tests/bad_subprocess](#recipes-engine_tests_bad_subprocess) &mdash; Tests that daemons that hang on to STDOUT can't cause the engine to hang.
   * [engine_tests/comprehensive_ui](#recipes-engine_tests_comprehensive_ui) &mdash; A fast-running recipe which comprehensively covers all StepPresentation features available in the recipe engine.
@@ -1617,7 +1618,7 @@ Returns recorded Buildbucket build IDs as a list of integers.
 
 Runs a function but defers the result until a later time.
 
-#### **class [DeferApi](/recipe_modules/defer/api.py#52)([RecipeApi](/recipe_engine/recipe_api.py#902)):**
+#### **class [DeferApi](/recipe_modules/defer/api.py#70)([RecipeApi](/recipe_engine/recipe_api.py#902)):**
 
 Runs a function but defers the result until a later time.
 
@@ -1636,7 +1637,7 @@ DeferredResults to re-raise individual failures.
 If there are no failures, api.defer.collect() returns a Sequence of the
 return values of the functions passed into api.defer().
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/defer/api.py#73)(self, func: Callable[(..., T)], \*args, \*\*kwargs):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/defer/api.py#111)(self, func: Callable[(..., T)], \*args, \*\*kwargs):**
 
 Calls func(*args, **kwargs) but catches all exceptions.
 
@@ -1647,7 +1648,7 @@ contains that exception.
 The DeferredResult is expected to be passed into api.defer.collect(), but
 DeferredResult.result() does similar processing.
 
-&mdash; **def [collect](/recipe_modules/defer/api.py#115)(self, results: Sequence[DeferredResult], step_name: Optional[str]='collect'):**
+&mdash; **def [collect](/recipe_modules/defer/api.py#153)(self, results: Sequence[DeferredResult], step_name: Optional[str]='collect'):**
 
 Raise any exceptions in the given list of DeferredResults.
 
@@ -1658,6 +1659,18 @@ Args:
     results: Results to check.
     step_name: Name for step including traceback logs if there are failures.
         If None, don't include a step with traceback logs.
+
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [context](/recipe_modules/defer/api.py#91)(self, collect_step_name: Optional[str]='collect'):**
+
+Creates a context that tracks deferred calls.
+
+Usage:
+
+with api.defer.context() as defer:
+  defer(api.step, ...)
+  defer(api.step, ...)
+  ...
+# api.defer.collect() is called on exiting the context.
 ### *recipe_modules* / [file](/recipe_modules/file)
 
 [DEPS](/recipe_modules/file/__init__.py#5): [json](#recipe_modules-json), [path](#recipe_modules-path), [proto](#recipe_modules-proto), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
@@ -4945,6 +4958,12 @@ Generates response Runs for a test.
 
 
 &mdash; **def [RunSteps](/recipe_modules/defer/tests/collect.py#28)(api, props):**
+### *recipes* / [defer:tests/context](/recipe_modules/defer/tests/context.py)
+
+[DEPS](/recipe_modules/defer/tests/context.py#13): [context](#recipe_modules-context), [defer](#recipe_modules-defer), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+
+
+&mdash; **def [RunSteps](/recipe_modules/defer/tests/context.py#27)(api, props):**
 ### *recipes* / [defer:tests/result](/recipe_modules/defer/tests/result.py)
 
 [DEPS](/recipe_modules/defer/tests/result.py#12): [context](#recipe_modules-context), [defer](#recipe_modules-defer), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

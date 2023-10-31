@@ -3,6 +3,7 @@
 # that can be found in the LICENSE file.
 """Runs a function but defers the result until a later time."""
 
+import contextlib
 import dataclasses
 import functools
 import traceback
@@ -49,6 +50,23 @@ class DeferredResult(Generic[T]):
     return self._value
 
 
+class _DeferContext:
+  def __init__(self, api, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+    self.api = api
+    self.results = []
+
+  def __call__(
+      self, callable: Callable[..., T], *args, **kwargs
+  ) -> DeferredResult[T]:
+    result = self.api.defer(callable, *args, **kwargs)
+    self.results.append(result)
+    return result
+
+  def collect(self, step_name: Optional[str] = 'collect'):
+    self.api.defer.collect(self.results, step_name=step_name)
+
+
 class DeferApi(recipe_api.RecipeApi):
   """Runs a function but defers the result until a later time.
 
@@ -69,6 +87,26 @@ class DeferApi(recipe_api.RecipeApi):
   """
 
   DeferredResult = DeferredResult
+
+  @contextlib.contextmanager
+  def context(self, collect_step_name: Optional[str] = 'collect'):
+    """Creates a context that tracks deferred calls.
+
+    Usage:
+
+    with api.defer.context() as defer:
+      defer(api.step, ...)
+      defer(api.step, ...)
+      ...
+    # api.defer.collect() is called on exiting the context.
+    """
+    ctx = _DeferContext(self.m)
+
+    # try:
+    yield ctx
+    # TODO: crbug.com/1495428 - Use an ExceptionGroup to combine any
+    # non-deferred exceptions from within the try with deferred exceptions.
+    ctx.collect(step_name=collect_step_name)
 
   def __call__(
       self, func: Callable[..., T], *args, **kwargs
