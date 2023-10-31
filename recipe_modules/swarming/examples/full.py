@@ -8,17 +8,8 @@ from future.utils import iteritems
 import difflib
 
 from recipe_engine.post_process import DropExpectation
-from recipe_engine.recipe_api import Property
 
-
-DEPS = [
-    'cipd',
-    'json',
-    'path',
-    'properties',
-    'step',
-    'swarming',
-]
+DEPS = ['cipd', 'json', 'path', 'properties', 'step', 'swarming', 'buildbucket']
 
 EXECUTION_TIMEOUT_SECS = 3600
 
@@ -323,3 +314,6 @@ def GenTests(api):
           retcode=1),
       status='INFRA_FAILURE',
   )
+
+  yield api.test('test_new_swarming_experiment',
+                 api.buildbucket.ci_build(experiments=['swarming.prpc.cli']))

@@ -209,6 +209,7 @@
   * [swarming:tests/list_bots](#recipes-swarming_tests_list_bots)
   * [swarming:tests/realms](#recipes-swarming_tests_realms)
   * [swarming:tests/task_request_from_jsonish](#recipes-swarming_tests_task_request_from_jsonish)
+  * [swarming:tests/task_result_from_jsonish](#recipes-swarming_tests_task_result_from_jsonish)
   * [time:examples/full](#recipes-time_examples_full)
   * [time:examples/jitter](#recipes-time_examples_jitter)
   * [tricium:examples/add_comment](#recipes-tricium_examples_add_comment)
@@ -4137,7 +4138,7 @@ status.
 [DEPS](/recipe_modules/swarming/__init__.py#7): [buildbucket](#recipe_modules-buildbucket), [cas](#recipe_modules-cas), [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
-#### **class [SwarmingApi](/recipe_modules/swarming/api.py#1184)([RecipeApi](/recipe_engine/recipe_api.py#902)):**
+#### **class [SwarmingApi](/recipe_modules/swarming/api.py#1188)([RecipeApi](/recipe_engine/recipe_api.py#902)):**
 
 API for interacting with swarming.
 
@@ -4151,7 +4152,7 @@ add this path to the named cache for their builder.
 
 Swarming bot ID executing this task.
 
-&mdash; **def [collect](/recipe_modules/swarming/api.py#1337)(self, name, tasks, output_dir=None, task_output_stdout='json', timeout=None, eager=False, verbose=False):**
+&mdash; **def [collect](/recipe_modules/swarming/api.py#1346)(self, name, tasks, output_dir=None, task_output_stdout='json', timeout=None, eager=False, verbose=False):**
 
 Waits on a set of Swarming tasks.
 
@@ -4178,11 +4179,11 @@ Returns:
 
 Swarming server executing this task.
 
-&mdash; **def [ensure\_client](/recipe_modules/swarming/api.py#1237)(self):**
+&mdash; **def [ensure\_client](/recipe_modules/swarming/api.py#1246)(self):**
 
 &mdash; **def [initialize](/recipe_modules/swarming/api.py#1222)(self):**
 
-&mdash; **def [list\_bots](/recipe_modules/swarming/api.py#1463)(self, step_name, dimensions=None, fields=None):**
+&mdash; **def [list\_bots](/recipe_modules/swarming/api.py#1472)(self, step_name, dimensions=None, fields=None):**
 
 List bots matching the given options.
 
@@ -4196,7 +4197,7 @@ Args:
 Returns:
   A list of BotMetadata objects.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#1253)(self):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#1262)(self):**
 
 This context manager ensures the go swarming client is available on
 $PATH.
@@ -4206,7 +4207,7 @@ Example:
     with api.swarming.on_path():
       # do your steps which require the swarming binary on path
 
-&mdash; **def [show\_request](/recipe_modules/swarming/api.py#1426)(self, name, task):**
+&mdash; **def [show\_request](/recipe_modules/swarming/api.py#1435)(self, name, task):**
 
 Retrieve the TaskRequest for a Swarming task.
 
@@ -4222,7 +4223,7 @@ Returns:
 
 This task's Swarming ID.
 
-&mdash; **def [task\_request](/recipe_modules/swarming/api.py#1267)(self):**
+&mdash; **def [task\_request](/recipe_modules/swarming/api.py#1276)(self):**
 
 Creates a new TaskRequest object.
 
@@ -4232,14 +4233,14 @@ into a full task.
 Once your TaskRequest is complete, you can pass it to `trigger` in order to
 have it start running on the swarming server.
 
-&mdash; **def [task\_request\_from\_jsonish](/recipe_modules/swarming/api.py#1278)(self, json_d):**
+&mdash; **def [task\_request\_from\_jsonish](/recipe_modules/swarming/api.py#1287)(self, json_d):**
 
 Creates a new TaskRequest object from a JSON-serializable dict.
 
 The input argument should match the schema as the output of
 TaskRequest.to_jsonish().
 
-&mdash; **def [trigger](/recipe_modules/swarming/api.py#1286)(self, step_name, requests, verbose=False):**
+&mdash; **def [trigger](/recipe_modules/swarming/api.py#1295)(self, step_name, requests, verbose=False):**
 
 Triggers a set of Swarming tasks.
 
@@ -5665,10 +5666,10 @@ This file is a recipe demonstrating reading triggers of the current build.
 &mdash; **def [RunSteps](/recipe_modules/step/tests/timeout.py#18)(api, timeout):**
 ### *recipes* / [swarming:examples/full](/recipe_modules/swarming/examples/full.py)
 
-[DEPS](/recipe_modules/swarming/examples/full.py#14): [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
+[DEPS](/recipe_modules/swarming/examples/full.py#12): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
 
 
-&mdash; **def [RunSteps](/recipe_modules/swarming/examples/full.py#26)(api):**
+&mdash; **def [RunSteps](/recipe_modules/swarming/examples/full.py#17)(api):**
 ### *recipes* / [swarming:examples/this\_task](/recipe_modules/swarming/examples/this_task.py)
 
 [DEPS](/recipe_modules/swarming/examples/this_task.py#5): [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
@@ -5699,6 +5700,12 @@ This file is a recipe demonstrating reading triggers of the current build.
 
 
 &mdash; **def [RunSteps](/recipe_modules/swarming/tests/task_request_from_jsonish.py#13)(api):**
+### *recipes* / [swarming:tests/task\_result\_from\_jsonish](/recipe_modules/swarming/tests/task_result_from_jsonish.py)
+
+[DEPS](/recipe_modules/swarming/tests/task_result_from_jsonish.py#9): [assertions](#recipe_modules-assertions), [path](#recipe_modules-path), [swarming](#recipe_modules-swarming)
+
+
+&mdash; **def [RunSteps](/recipe_modules/swarming/tests/task_result_from_jsonish.py#16)(api):**
 ### *recipes* / [time:examples/full](/recipe_modules/time/examples/full.py)
 
 [DEPS](/recipe_modules/time/examples/full.py#11): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [time](#recipe_modules-time)

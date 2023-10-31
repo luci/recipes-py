@@ -1,0 +1,240 @@
+{
+ "task_id": "656757b8221c3a10",
+ "expiration_secs": 21598,
+ "name": "bb-8766690452496995137",
+ "priority": 30,
+ "properties": {
+  "caches": [
+   {
+    "name": "builder_2a811a22c244d86849d8d21cbb7ad8a7eb32a71f80ba26620a8eb4ad9db7bc4b_v2",
+    "path": "cache/builder"
+   },
+   {
+    "name": "git",
+    "path": "cache/git"
+   },
+   {
+    "name": "goma",
+    "path": "cache/goma"
+   },
+   {
+    "name": "vpython",
+    "path": "cache/vpython"
+   }
+  ],
+  "cipd_input": {
+   "server": "https://chrome-infra-packages.appspot.com/",
+   "client_package": {
+    "package_name": "infra/tools/cipd/${platform}",
+    "version": "latest"
+   },
+   "packages": [
+    {
+     "package_name": "infra/tools/luci/bbagent/${platform}",
+     "version": "latest",
+     "path": "."
+    }
+   ]
+  },
+  "command": [
+   "bbagent${EXECUTABLE_SUFFIX}",
+   "-build-id",
+   "8766690452496995137",
+   "-host",
+   "cr-buildbucket-dev.appspot.com",
+   "-cache-base",
+   "cache",
+   "-context-file",
+   "${BUILDBUCKET_AGENT_CONTEXT_FILE}"
+  ],
+  "dimensions": [
+   {
+    "key": "os",
+    "value": "Ubuntu-18.04"
+   },
+   {
+    "key": "cpu",
+    "value": "x86-64"
+   },
+   {
+    "key": "pool",
+    "value": "luci.chromium.ci"
+   },
+   {
+    "key": "caches",
+    "value": "builder_2a811a22c244d86849d8d21cbb7ad8a7eb32a71f80ba26620a8eb4ad9db7bc4b_v2"
+   }
+  ],
+  "execution_timeout_secs": 1800,
+  "grace_period_secs": 210,
+  "secret_bytes": "PFJFREFDVEVEPg==",
+  "containment": {}
+ },
+ "tags": [
+  "authenticated:project:infra",
+  "build_address:luci.infra.ci/linux-rel-buildbucket-child/94673",
+  "buildbucket_bucket:infra/ci",
+  "buildbucket_build_id:8766690452496995137",
+  "buildbucket_hostname:cr-buildbucket-dev.appspot.com",
+  "buildbucket_template_canary:0",
+  "builder:linux-rel-buildbucket-child",
+  "caches:builder_2a811a22c244d86849d8d21cbb7ad8a7eb32a71f80ba26620a8eb4ad9db7bc4b_v2",
+  "cpu:x86-64",
+  "luci_project:infra",
+  "os:Ubuntu-18.04",
+  "parent_buildbucket_id:8766690467629009841",
+  "pool:luci.chromium.ci",
+  "priority:30",
+  "rbe:projects/chromium-swarm-dev/instances/default_instance",
+  "realm:infra:ci",
+  "service_account:adhoc-testing@luci-token-server-dev.iam.gserviceaccount.com",
+  "swarming.pool.template:none",
+  "swarming.pool.version:46283179e264fd892ebe0eb0acace1912977adec",
+  "user:none",
+  "user_agent:recipe"
+ ],
+ "created_ts": "2023-10-20T19:18:18.884106Z",
+ "authenticated": "project:infra",
+ "task_slices": [
+  {
+   "properties": {
+    "caches": [
+     {
+      "name": "builder_2a811a22c244d86849d8d21cbb7ad8a7eb32a71f80ba26620a8eb4ad9db7bc4b_v2",
+      "path": "cache/builder"
+     },
+     {
+      "name": "git",
+      "path": "cache/git"
+     },
+     {
+      "name": "goma",
+      "path": "cache/goma"
+     },
+     {
+      "name": "vpython",
+      "path": "cache/vpython"
+     }
+    ],
+    "cipd_input": {
+     "server": "https://chrome-infra-packages.appspot.com/",
+     "client_package": {
+      "package_name": "infra/tools/cipd/${platform}",
+      "version": "latest"
+     },
+     "packages": [
+      {
+       "package_name": "infra/tools/luci/bbagent/${platform}",
+       "version": "latest",
+       "path": "."
+      }
+     ]
+    },
+    "command": [
+     "bbagent${EXECUTABLE_SUFFIX}",
+     "-build-id",
+     "8766690452496995137",
+     "-host",
+     "cr-buildbucket-dev.appspot.com",
+     "-cache-base",
+     "cache",
+     "-context-file",
+     "${BUILDBUCKET_AGENT_CONTEXT_FILE}"
+    ],
+    "dimensions": [
+     {
+      "key": "os",
+      "value": "Ubuntu-18.04"
+     },
+     {
+      "key": "cpu",
+      "value": "x86-64"
+     },
+     {
+      "key": "pool",
+      "value": "luci.chromium.ci"
+     },
+     {
+      "key": "caches",
+      "value": "builder_2a811a22c244d86849d8d21cbb7ad8a7eb32a71f80ba26620a8eb4ad9db7bc4b_v2"
+     }
+    ],
+    "execution_timeout_secs": 1800,
+    "grace_period_secs": 210,
+    "secret_bytes": "PFJFREFDVEVEPg==",
+    "containment": {}
+   },
+   "expiration_secs": 240
+  },
+  {
+   "properties": {
+    "caches": [
+     {
+      "name": "builder_2a811a22c244d86849d8d21cbb7ad8a7eb32a71f80ba26620a8eb4ad9db7bc4b_v2",
+      "path": "cache/builder"
+     },
+     {
+      "name": "git",
+      "path": "cache/git"
+     },
+     {
+      "name": "goma",
+      "path": "cache/goma"
+     },
+     {
+      "name": "vpython",
+      "path": "cache/vpython"
+     }
+    ],
+    "cipd_input": {
+     "server": "https://chrome-infra-packages.appspot.com/",
+     "client_package": {
+      "package_name": "infra/tools/cipd/${platform}",
+      "version": "latest"
+     },
+     "packages": [
+      {
+       "package_name": "infra/tools/luci/bbagent/${platform}",
+       "version": "latest",
+       "path": "."
+      }
+     ]
+    },
+    "command": [
+     "bbagent${EXECUTABLE_SUFFIX}",
+     "-build-id",
+     "8766690452496995137",
+     "-host",
+     "cr-buildbucket-dev.appspot.com",
+     "-cache-base",
+     "cache",
+     "-context-file",
+     "${BUILDBUCKET_AGENT_CONTEXT_FILE}"
+    ],
+    "dimensions": [
+     {
+      "key": "os",
+      "value": "Ubuntu-18.04"
+     },
+     {
+      "key": "cpu",
+      "value": "x86-64"
+     },
+     {
+      "key": "pool",
+      "value": "luci.chromium.ci"
+     }
+    ],
+    "execution_timeout_secs": 1800,
+    "grace_period_secs": 210,
+    "secret_bytes": "PFJFREFDVEVEPg==",
+    "containment": {}
+   },
+   "expiration_secs": 21358
+  }
+ ],
+ "service_account": "adhoc-testing@luci-token-server-dev.iam.gserviceaccount.com",
+ "realm": "infra:ci",
+ "bot_ping_tolerance_secs": 120,
+ "rbe_instance": "projects/chromium-swarm-dev/instances/default_instance"
+}

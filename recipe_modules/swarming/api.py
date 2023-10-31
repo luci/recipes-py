@@ -21,6 +21,10 @@ from recipe_engine import recipe_api
 
 # Take revision from
 # https://ci.chromium.org/p/infra-internal/g/infra-packagers/console
+# This is the pRPC version of swarming cli tool
+PRPC_SWARMING_CLI_VERSION = ('git_revision:2f2765c478f101b'
+                             'ff8a0dda9bc10b39bdaf302fa')
+# This version of the CLI is the pre-prpc varient of swarming cli tool
 DEFAULT_CIPD_VERSION = 'git_revision:7f62986230b0ff7fd5f2c74518352ac247c768d4'
 
 # The mandatory fields to include when calling the API list_bots with fields.
@@ -954,7 +958,7 @@ class TaskResult(object):
 
       self._success = False
       if self._state == TaskState.COMPLETED:
-        self._success = results['exit_code'] == '0'
+        self._success = int(results.get('exit_code', 0)) == 0
 
       self._duration = results.get('duration', 0)
 
@@ -1191,16 +1195,12 @@ class SwarmingApi(recipe_api.RecipeApi):
   add this path to the named cache for their builder.
   """
   TaskState = TaskState
+  TaskResult = TaskResult
 
   def __init__(self, env_properties, *args, **kwargs):
     super(SwarmingApi, self).__init__(*args, **kwargs)
     self._server = env_properties.SWARMING_SERVER
-    default_cipd_version = DEFAULT_CIPD_VERSION
-    if self._test_data.enabled:
-      default_cipd_version = 'swarming_module_pin'
-    self._version = default_cipd_version
     self._env_properties = env_properties
-
     # Stores TaskRequests by tuple of (task_id, server)
     self._task_requests = {}
 
@@ -1228,6 +1228,15 @@ class SwarmingApi(recipe_api.RecipeApi):
           self._env_properties.SWARMING_TASK_ID or 'fake-task-id')
       self._env_properties.SWARMING_BOT_ID = (
               self._env_properties.SWARMING_BOT_ID or 'fake-bot-id')
+
+  @property
+  def _version(self):
+    version = DEFAULT_CIPD_VERSION
+    if 'swarming.prpc.cli' in self.m.buildbucket.build.input.experiments:
+      version = PRPC_SWARMING_CLI_VERSION
+    elif self._test_data.enabled:
+      version = 'swarming_module_pin'
+    return version
 
   @property
   def _client(self):
