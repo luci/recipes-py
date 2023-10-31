@@ -37,19 +37,22 @@ def RunSteps(api, props):
     with api.context(infra_steps=bool(i % 2)):
       deferred.append(api.defer(step, i))
   api.step.empty('done running steps')
-  api.defer.collect(deferred)
+  api.defer.collect(deferred, step_name=props.step_name or None)
   api.step.empty('all steps succeeded')
 
 
 def GenTests(api) -> Generator[recipe_test_api.TestData, None, None]:
-  def test(name, *args, status, exception=False, **kwargs):
+  def test(name, *args, status, exception=False, step_name='collect', **kwargs):
     res = api.test(name, *args, status=status, **kwargs)
-    res += api.properties(properties_pb2.CollectInputProps(exception=exception))
+    res += api.properties(properties_pb2.CollectInputProps(step_name=step_name,
+                                                           exception=exception))
 
     res += api.post_process(post_process.MustRun, 'done running steps')
 
     if status in ('FAILURE', 'INFRA_FAILURE'):
       res += api.post_process(post_process.DoesNotRun, 'all steps succeeded')
+      if step_name:
+        res += api.post_process(post_process.MustRun, step_name)
     else:
       res += api.post_process(post_process.MustRun, 'all steps succeeded')
 
@@ -76,3 +79,5 @@ def GenTests(api) -> Generator[recipe_test_api.TestData, None, None]:
              status='INFRA_FAILURE')
 
   yield test('exception', exception=True, status='INFRA_FAILURE')
+
+  yield test('noname', step_name=None, exception=True, status='INFRA_FAILURE')

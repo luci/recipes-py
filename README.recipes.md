@@ -1617,7 +1617,7 @@ Returns recorded Buildbucket build IDs as a list of integers.
 
 Runs a function but defers the result until a later time.
 
-#### **class [DeferApi](/recipe_modules/defer/api.py#46)([RecipeApi](/recipe_engine/recipe_api.py#902)):**
+#### **class [DeferApi](/recipe_modules/defer/api.py#52)([RecipeApi](/recipe_engine/recipe_api.py#902)):**
 
 Runs a function but defers the result until a later time.
 
@@ -1636,7 +1636,7 @@ DeferredResults to re-raise individual failures.
 If there are no failures, api.defer.collect() returns a Sequence of the
 return values of the functions passed into api.defer().
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/defer/api.py#67)(self, func: Callable[(..., T)], \*args, \*\*kwargs):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/defer/api.py#73)(self, func: Callable[(..., T)], \*args, \*\*kwargs):**
 
 Calls func(*args, **kwargs) but catches all exceptions.
 
@@ -1647,12 +1647,17 @@ contains that exception.
 The DeferredResult is expected to be passed into api.defer.collect(), but
 DeferredResult.result() does similar processing.
 
-&mdash; **def [collect](/recipe_modules/defer/api.py#109)(self, results: Sequence[DeferredResult], step_name: str='collect'):**
+&mdash; **def [collect](/recipe_modules/defer/api.py#115)(self, results: Sequence[DeferredResult], step_name: Optional[str]='collect'):**
 
 Raise any exceptions in the given list of DeferredResults.
 
 If there are no exceptions, do nothing. If there are one or more exceptions,
 reraise one of the worst of them.
+
+Args:
+    results: Results to check.
+    step_name: Name for step including traceback logs if there are failures.
+        If None, don't include a step with traceback logs.
 ### *recipe_modules* / [file](/recipe_modules/file)
 
 [DEPS](/recipe_modules/file/__init__.py#5): [json](#recipe_modules-json), [path](#recipe_modules-path), [proto](#recipe_modules-proto), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)

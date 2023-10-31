@@ -32,13 +32,19 @@ class DeferredResult(Generic[T]):
   def is_ok(self) -> bool:
     return not self._exc
 
-  def result(self) -> T:
-    """Raise the exception or return the original return value."""
+  def result(self, step_name: Optional[str] = None) -> T:
+    """Raise the exception or return the original return value.
+
+    Args:
+        step_name: Name for step including the traceback log if there was a
+            failure. If None, don't include a step with traceback logs.
+    """
     if self._exc:
-      step = self._api.step.empty('result', status='FAILURE',
-                                  raise_on_failure=False)
-      step.presentation.logs['traceback'] = self._traceback()
-      self._api.step.close_non_nest_step()
+      if step_name:
+        step = self._api.step.empty(step_name, status='FAILURE',
+                                    raise_on_failure=False)
+        step.presentation.logs['traceback'] = self._traceback()
+        self._api.step.close_non_nest_step()
       raise self._exc
     return self._value
 
@@ -109,30 +115,36 @@ class DeferApi(recipe_api.RecipeApi):
   def collect(
       self,
       results: Sequence[DeferredResult],
-      step_name: str = 'collect',
+      step_name: Optional[str] = 'collect',
   ) -> Sequence[Any]:
     """Raise any exceptions in the given list of DeferredResults.
 
     If there are no exceptions, do nothing. If there are one or more exceptions,
     reraise one of the worst of them.
+
+    Args:
+        results: Results to check.
+        step_name: Name for step including traceback logs if there are failures.
+            If None, don't include a step with traceback logs.
     """
     if all(x.is_ok() for x in results):
       return [x.result() for x in results]
 
-    failures = [x for x in results if not x.is_ok()]
+    if step_name:
+      failures = [x for x in results if not x.is_ok()]
 
-    traces_by_name = {}
-    for result in failures:
-      name = repr(result._exc)
-      traces_by_name.setdefault(name, [])
-      traces_by_name[name].append(result._traceback())
+      traces_by_name = {}
+      for result in failures:
+        name = repr(result._exc)
+        traces_by_name.setdefault(name, [])
+        traces_by_name[name].append(result._traceback())
 
-    step = self.m.step.empty(step_name, status='FAILURE',
-                             step_text=f'{len(failures)} deferred failures',
-                             raise_on_failure=False)
-    for name, traces in traces_by_name.items():
-      for i, trace in enumerate(traces):
-        number_part = f' ({i+1})' if i else ''
-        step.presentation.logs[f'{name}{number_part}'] = trace
+      step = self.m.step.empty(step_name, status='FAILURE',
+                               step_text=f'{len(failures)} deferred failures',
+                               raise_on_failure=False)
+      for name, traces in traces_by_name.items():
+        for i, trace in enumerate(traces):
+          number_part = f' ({i+1})' if i else ''
+          step.presentation.logs[f'{name}{number_part}'] = trace
 
     raise self._raise(results)
