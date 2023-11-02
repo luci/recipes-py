@@ -73,7 +73,7 @@ from builtins import object
 from past.builtins import basestring
 from future.utils import iteritems, itervalues
 
-import collections
+import collections.abc
 import functools
 import json
 import sys
@@ -366,7 +366,7 @@ else:
 def _inner_type_schema(inner_type):
   ret = []
   def _flatten(typ):
-    if isinstance(typ, collections.Iterable):
+    if isinstance(typ, collections.abc.Iterable):
       for subtyp in typ:
         _flatten(subtyp)
     else:
@@ -434,7 +434,7 @@ class ConfigGroup(ConfigBase):
   def set_val(self, val):
     if isinstance(val, ConfigBase):
       val = val.as_jsonish(include_hidden=True)
-    typeAssert(val, collections.Mapping)
+    typeAssert(val, collections.abc.Mapping)
 
     val = dict(val)  # because we pop later.
     for name, config_obj in iteritems(self._type_map):
@@ -507,7 +507,7 @@ class ConfigGroupSchema(ConfigSchemaBase):
 ReturnSchema = ConfigGroupSchema
 
 
-class ConfigList(ConfigBase, collections.MutableSequence):
+class ConfigList(ConfigBase, collections.abc.MutableSequence):
   """Allows you to provide an ordered repetition to a configuration schema.
 
   Example usage:
@@ -587,7 +587,7 @@ class ConfigList(ConfigBase, collections.MutableSequence):
     return ret
 
 
-class Dict(ConfigBase, collections.MutableMapping):
+class Dict(ConfigBase, collections.abc.MutableMapping):
   """Provides a semi-homogenous dict()-like configuration object."""
 
   def __init__(self, item_fn=lambda i: i, jsonish_fn=dict, value_type=None,
@@ -634,7 +634,7 @@ class Dict(ConfigBase, collections.MutableMapping):
   def set_val(self, val):
     if isinstance(val, Dict):
       val = val.data
-    typeAssert(val, collections.Mapping)
+    typeAssert(val, collections.abc.Mapping)
     if self.value_type:
       for v in itervalues(val):
         typeAssert(v, self.value_type)
@@ -662,7 +662,7 @@ class Dict(ConfigBase, collections.MutableMapping):
     return ret
 
 
-class List(ConfigBase, collections.MutableSequence):
+class List(ConfigBase, collections.abc.MutableSequence):
   """Provides a semi-homogenous list()-like configuration object."""
 
   def __init__(self, inner_type, jsonish_fn=list, hidden=AutoHide):
@@ -724,7 +724,7 @@ class List(ConfigBase, collections.MutableSequence):
     return ret
 
 
-class Set(ConfigBase, collections.MutableSet):
+class Set(ConfigBase, collections.abc.MutableSet):
   """Provides a semi-homogenous set()-like configuration object."""
 
   def __init__(self, inner_type, jsonish_fn=list, hidden=AutoHide):

@@ -364,7 +364,7 @@ def _rewrite_and_rename(root: str, base_proto_path: str) -> Optional[str]:
   assert base_proto_path.endswith('_pb2.py'), base_proto_path
 
   target = base_proto_path[:-len('_pb2.py')]+'.py'
-  with open(base_proto_path, 'rU', encoding='utf-8') as ifile:
+  with open(base_proto_path, 'r', encoding='utf-8') as ifile:
     content = ifile.read()
 
   # First, process the _pb2.py file.
@@ -382,7 +382,7 @@ def _rewrite_and_rename(root: str, base_proto_path: str) -> Optional[str]:
   # Next, we process the .pyi file
   base_pyi_path = base_proto_path + 'i'
   pyi_target = base_proto_path[:-len('_pb2.py')]+'.pyi'
-  with open(base_pyi_path, 'rU', encoding='utf-8') as ifile:
+  with open(base_pyi_path, 'r', encoding='utf-8') as ifile:
     content = ifile.read()
   with open(pyi_target, 'w', encoding='utf-8') as ofile:
     ofile.write(

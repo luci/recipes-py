@@ -24,11 +24,7 @@ class DeferredResult(Generic[T]):
   def _traceback(self) -> Optional[str]:
     if self.is_ok():
       return None  # pragma: no cover
-
-    # TODO: crbug.com/1495428 - Simplify format_exception call once switched to
-    # Python 3.10+.
-    return traceback.format_exception(
-        etype=type(self._exc), value=self._exc, tb=self._exc.__traceback__)
+    return '\n'.join(traceback.format_exception(self._exc))
 
   def is_ok(self) -> bool:
     return not self._exc
@@ -47,7 +43,9 @@ class DeferredResult(Generic[T]):
         step.presentation.logs['traceback'] = self._traceback()
         self._api.step.close_non_nest_step()
       raise self._exc
-    return self._value
+    # We ignore the type here because we actually know it's T (which COULD BE
+    # None, so we can't really test for that).
+    return self._value  # type:ignore
 
 
 class _DeferContext:

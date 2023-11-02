@@ -1618,7 +1618,7 @@ Returns recorded Buildbucket build IDs as a list of integers.
 
 Runs a function but defers the result until a later time.
 
-#### **class [DeferApi](/recipe_modules/defer/api.py#70)([RecipeApi](/recipe_engine/recipe_api.py#902)):**
+#### **class [DeferApi](/recipe_modules/defer/api.py#68)([RecipeApi](/recipe_engine/recipe_api.py#902)):**
 
 Runs a function but defers the result until a later time.
 
@@ -1637,7 +1637,7 @@ DeferredResults to re-raise individual failures.
 If there are no failures, api.defer.collect() returns a Sequence of the
 return values of the functions passed into api.defer().
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/defer/api.py#111)(self, func: Callable[(..., T)], \*args, \*\*kwargs):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/defer/api.py#109)(self, func: Callable[(..., T)], \*args, \*\*kwargs):**
 
 Calls func(*args, **kwargs) but catches all exceptions.
 
@@ -1648,7 +1648,7 @@ contains that exception.
 The DeferredResult is expected to be passed into api.defer.collect(), but
 DeferredResult.result() does similar processing.
 
-&mdash; **def [collect](/recipe_modules/defer/api.py#153)(self, results: Sequence[DeferredResult], step_name: Optional[str]='collect'):**
+&mdash; **def [collect](/recipe_modules/defer/api.py#151)(self, results: Sequence[DeferredResult], step_name: Optional[str]='collect'):**
 
 Raise any exceptions in the given list of DeferredResults.
 
@@ -1660,7 +1660,7 @@ Args:
     step_name: Name for step including traceback logs if there are failures.
         If None, don't include a step with traceback logs.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [context](/recipe_modules/defer/api.py#91)(self, collect_step_name: Optional[str]='collect'):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [context](/recipe_modules/defer/api.py#89)(self, collect_step_name: Optional[str]='collect'):**
 
 Creates a context that tracks deferred calls.
 
@@ -3106,12 +3106,12 @@ values provided to the recipe engine at the beginning of execution. There is
 intentionally no API to write property values (lest they become a kind of
 random-access global variable).
 
-#### **class [PropertiesApi](/recipe_modules/properties/api.py#30)([RecipeApiPlain](/recipe_engine/recipe_api.py#751), collections.Mapping):**
+#### **class [PropertiesApi](/recipe_modules/properties/api.py#31)([RecipeApiPlain](/recipe_engine/recipe_api.py#751), collections.abc.Mapping):**
 
 PropertiesApi implements all the standard Mapping functions, so you
 can use it like a read-only dict.
 
-&mdash; **def [legacy](/recipe_modules/properties/api.py#56)(self):**
+&mdash; **def [legacy](/recipe_modules/properties/api.py#57)(self):**
 
 *** note
 **DEPRECATED**: Returns a set of properties, possibly used by legacy
@@ -3125,7 +3125,7 @@ Instead of passing all of the properties as a blob, please consider passing
 specific arguments to scripts that need them. Doing this makes it much
 easier to debug and diagnose which scripts use which properties.
 
-&mdash; **def [thaw](/recipe_modules/properties/api.py#80)(self):**
+&mdash; **def [thaw](/recipe_modules/properties/api.py#81)(self):**
 
 Returns a read-write copy of all of the properties.
 ### *recipe_modules* / [proto](/recipe_modules/proto)

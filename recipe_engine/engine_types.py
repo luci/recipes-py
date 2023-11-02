@@ -3,15 +3,10 @@
 # that can be found in the LICENSE file.
 
 import collections
+import collections.abc
 import copy
 import json
 import operator
-
-try:
-  from collections import UserList
-except ImportError:
-  # TODO: python2 import
-  from UserList import UserList
 
 from functools import reduce
 
@@ -53,7 +48,7 @@ def thaw(obj):
   """Takes a a frozen object, and returns a mutable version of it.
 
   Conversions:
-    * collections.Mapping -> dict
+    * collections.abc.Mapping -> dict
     * tuple -> list
     * frozenset -> set
 
@@ -70,7 +65,7 @@ def thaw(obj):
     return obj
 
 
-class FrozenDict(collections.Mapping):
+class FrozenDict(collections.abc.Mapping):
   """An immutable OrderedDict.
 
   Modified From: http://stackoverflow.com/a/2704866
@@ -89,7 +84,7 @@ class FrozenDict(collections.Mapping):
                         (hash(i) for i in enumerate(iteritems(self._d))), 0)
 
   def __eq__(self, other):
-    if not isinstance(other, collections.Mapping):
+    if not isinstance(other, collections.abc.Mapping):
       return NotImplemented
     if self is other:
       return True
@@ -138,7 +133,7 @@ def _fix_stringlike(value):
       "Expected object of (str, bytes) but got %s" % (type(value),))
 
 
-class _StringSequence(UserList):
+class _StringSequence(collections.UserList):
   # NOTE: it could potentially be more efficient to implement the __add__ family
   # of operators to avoid re-fix_stringlike'ing `items` here, but not worth the
   # implementation complexity.
@@ -200,7 +195,7 @@ class _OrderedDictString(collections.OrderedDict):
       pass
     elif isinstance(value, bytes):
       value = _fix_stringlike(value)
-    elif isinstance(value, collections.Iterable):
+    elif isinstance(value, collections.abc.Iterable):
       value = _StringSequence(value)
     else:
       raise ValueError(
@@ -484,7 +479,7 @@ class StepPresentation(object):
         with step_stream.new_log_stream(name) as log_stream:
           if isinstance(log, (text, str, bytes)):
             self.write_data(log_stream, log)
-          elif isinstance(log, collections.Iterable):
+          elif isinstance(log, collections.abc.Iterable):
             for line in log:
               self.write_data(log_stream, line)
           else:

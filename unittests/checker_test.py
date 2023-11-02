@@ -158,16 +158,19 @@ class TestChecker(test_env.RecipeEngineUnitTest):
   def test_dict_lookup_nest(self):
     c = Checker(HOOK_CONTEXT)
     def body(check):
-      sub = 'sub'
+      key = 'sub'
       targ = {'a': {'sub': 'whee'}, 'c': 'd'}
-      check('me' == targ['a'][sub])
+      check('me' == targ['a'][key])
+
     body(c)
     self.assertEqual(len(c.failed_checks), 1)
     self.assertEqual(len(c.failed_checks[0].frames), 1)
     self.assertEqual(
-      self.sanitize(c.failed_checks[0].frames[0]),
-      self.mk('body', "check(('me' == targ['a'][sub]))",
-              {"targ['a'][sub]": "'whee'", 'sub': "'sub'"}))
+        self.sanitize(c.failed_checks[0].frames[0]),
+        self.mk('body', "check(('me' == targ['a'][key]))", {
+            "targ['a'][key]": "'whee'",
+            'key': "'sub'"
+        }))
 
   def test_lambda_call(self):
     c = Checker(HOOK_CONTEXT)

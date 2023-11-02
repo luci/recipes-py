@@ -6,6 +6,7 @@
 conditions inside tests, but with much more debugging information, including
 a smart selection of local variables mentioned inside of the call to check."""
 
+from typing import Optional, cast
 from future.utils import iteritems, itervalues
 from past.builtins import basestring
 
@@ -297,22 +298,23 @@ class _checkTransformer(ast.NodeTransformer):
     self.extras = []
 
   @staticmethod
-  def _is_valid_resolved(node):
-    return isinstance(node, _resolved) and node.valid
+  def _is_valid_resolved(node) -> Optional[_resolved]:
+    if isinstance(node, _resolved) and node.valid:
+      return node
+    return None
 
-  def visit_Compare(self, node):
+  def visit_Compare(self, node: ast.Compare):
     """Compare nodes occur for all sequences of comparison (`in`, gt, lt, etc.)
     operators. We only want to match `___ in instanceof(dict)` here, so we
     restrict this to Compare ops with a single operator which is `In` or
     `NotIn`.
     """
-    node = self.generic_visit(node)
+    node = cast(ast.Compare, self.generic_visit(node))
 
     if len(node.ops) == 1 and isinstance(node.ops[0], (ast.In, ast.NotIn)):
       cmps = node.comparators
-      if len(cmps) == 1 and self._is_valid_resolved(cmps[0]):
-        rslvd = cmps[0]
-        if isinstance(rslvd.value, dict):
+      if len(cmps) == 1 and (rslvd := self._is_valid_resolved(cmps[0])):
+        if isinstance(rslvd.value, (dict, OrderedDict)):
           node = ast.Compare(
             node.left,
             node.ops,
@@ -322,53 +324,55 @@ class _checkTransformer(ast.NodeTransformer):
 
     return node
 
-  def visit_Attribute(self, node):
+  def visit_Attribute(self, node: ast.Attribute):
     """Attribute nodes occur for attribute access (e.g. foo.bar). We want to
     follow attribute access where possible to so that we can provide the value
     that resulted in a check failure.
     """
-    node = self.generic_visit(node)
-    if self._is_valid_resolved(node.value):
-      node = _resolved(
-          '%s.%s' % (node.value.representation, node.attr),
-          getattr(node.value.value, node.attr))
+    node = cast(ast.Attribute, self.generic_visit(node))
+
+    if (rslvd := self._is_valid_resolved(node.value)):
+      return _resolved('%s.%s' % (rslvd.representation, node.attr),
+                       getattr(rslvd.value, node.attr))
+
     return node
 
-  def visit_Subscript(self, node):
+  def visit_Subscript(self, node: ast.Subscript):
     """Subscript nodes are anything which is __[__]. We only want to match __[x]
     here so where the [x] is a regular Index expression (not an ellipsis or
     slice). We only handle cases where x is a constant, or a resolvable variable
     lookup (so a variable lookup, index, etc.)."""
-    node = self.generic_visit(node)
+    node = cast(ast.Subscript, self.generic_visit(node))
 
-    if (isinstance(node.slice, ast.Index) and
-        self._is_valid_resolved(node.value)):
-      sliceVal = MISSING
-      sliceRepr = ''
-      if self._is_valid_resolved(node.slice.value):
-        # (a[b])[c]
-        # will include `a[b]` in the extras.
-        self.extras.append(node.slice.value)
-        sliceVal = node.slice.value.value
-        sliceRepr = node.slice.value.representation
-      elif isinstance(node.slice.value, ast.Num):
-        sliceVal = node.slice.value.n
-        sliceRepr = repr(sliceVal)
-      elif isinstance(node.slice.value, ast.Str):
-        sliceVal = node.slice.value.s
-        sliceRepr = repr(sliceVal)
-      if sliceVal is not MISSING:
-        try:
-          node = _resolved(
-            '%s[%s]' % (node.value.representation, sliceRepr),
-            node.value.value[sliceVal])
-        except KeyError:
-          rslvd = node.value
-          if not isinstance(rslvd.value, dict):
-            raise
-          node = _resolved(rslvd.representation+".keys()",
-                           sorted(rslvd.value.keys()),
-                           valid=False)
+    node_value_resolved = self._is_valid_resolved(node.value)
+    if not node_value_resolved:
+      return node
+
+    sliceVal = MISSING
+    sliceRepr = ''
+
+    if (rslvd := self._is_valid_resolved(node.slice)):
+      # (a[b])[c]
+      # will include `a[b]` in the extras.
+      self.extras.append(rslvd)
+      sliceVal = rslvd.value
+      sliceRepr = rslvd.representation
+    elif isinstance(node.slice, ast.Constant):
+      sliceVal = node.slice.value
+      sliceRepr = repr(sliceVal)
+
+    if sliceVal is not MISSING:
+      try:
+        return _resolved(
+            '%s[%s]' % (node_value_resolved.representation, sliceRepr),
+            node_value_resolved.value[sliceVal])
+      except KeyError:
+        if not isinstance(node_value_resolved.value, (dict, OrderedDict)):
+          raise
+        return _resolved(
+            node_value_resolved.representation + ".keys()",
+            sorted(node_value_resolved.value.keys()),
+            valid=False)
 
     return node
 

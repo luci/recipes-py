@@ -10,8 +10,6 @@ DEPS = [
 
 def RunSteps(api):
   my_list = list(range(10))
-  # Use a specific random number generator to ensure consistency between Python
-  # 2 and 3.
   api.random.shuffle(my_list)
   api.step('echo list', ['echo', ', '.join(map(str, my_list))])
 

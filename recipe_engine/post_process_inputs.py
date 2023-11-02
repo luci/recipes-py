@@ -6,7 +6,7 @@
 
 import re
 
-from collections import Iterable, OrderedDict
+from collections.abc import Iterable
 
 import attr
 from future.utils import iteritems, iterkeys
@@ -233,16 +233,16 @@ class Step(object):
   # A dictionary containing the step's logs, mapping strings containing the log
   # name to strings containing the full content of the log (the lines of the
   # logs in the StepPresentation joined with '\n').
-  logs = attr.ib(factory=OrderedDict)
+  logs = attr.ib(factory=dict)
 
   # A dictionary containing the step's links, mapping strings containing the
   # link name to strings containing the link URL.
-  links = attr.ib(factory=OrderedDict)
+  links = attr.ib(factory=dict)
 
   # A dictionary containing the build properties set by the step, mapping
   # strings containing the property name to json-ish objects containing the
   # value of the property.
-  output_properties = attr.ib(factory=OrderedDict)
+  output_properties = attr.ib(factory=dict)
 
   # A string containing the resulting status of the step, one of: 'SUCCESS',
   # 'EXCEPTION', 'FAILURE', 'WARNING', 'CANCELED'.
@@ -261,7 +261,7 @@ class Step(object):
   # The Key may not exceed 256 bytes.
   # The Value may not exceed 1024 bytes.
   # Key and Value may not be empty.
-  tags = attr.ib(factory=OrderedDict)
+  tags = attr.ib(factory=dict)
 
   # Arbitrary lines that appear in the annotations.
   #

@@ -5,6 +5,7 @@
 from __future__ import print_function
 
 import collections
+import collections.abc
 import functools
 import logging
 import os
@@ -21,7 +22,7 @@ from .roll_candidate import RollCandidate
 LOGGER = logging.getLogger(__name__)
 
 
-class _Config(collections.Mapping):
+class _Config(collections.abc.Mapping):
   """An immutable mapping type storing the revisions to pin repos to.
 
   Instances are hashable and in contrast to FrozenDict, the equality

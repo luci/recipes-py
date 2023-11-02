@@ -2,17 +2,10 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from builtins import str
-from future.utils import iteritems, itervalues
-from past.builtins import basestring
-from builtins import range
-
-import attr
 import collections
-import difflib
+import collections.abc
 import errno
 import json
-import multiprocessing
 import os
 import re
 import sys
@@ -20,13 +13,17 @@ import tempfile
 import time
 import traceback
 
+import attr
+import difflib
 import coverage
-
-from gevent import subprocess
 import gevent
 
-from google.protobuf import json_format as jsonpb
+from builtins import range
+from builtins import str
+from future.utils import iteritems, itervalues
+from gevent import subprocess
 from google.protobuf import duration_pb2
+from google.protobuf import json_format as jsonpb
 
 from recipe_engine import __path__ as RECIPE_ENGINE_PATH
 from recipe_engine.util import extract_tb, enable_filtered_stacks
@@ -484,15 +481,16 @@ def _get_test_data(cache, recipe, test_name):
 # raw_expectations.
 def _encode_decode(obj):
   """For py3: ensure any bytes are decoded to str"""
-  if isinstance(obj, basestring):
-    if isinstance(obj, bytes):
-      obj = obj.decode('utf-8', 'replace')
+  if isinstance(obj, str):
     return obj
 
-  if isinstance(obj, collections.Mapping):
-    return {_encode_decode(k): _encode_decode(v) for k, v in iteritems(obj)}
+  if isinstance(obj, bytes):
+    return obj.decode('utf-8', 'replace')
 
-  if isinstance(obj, collections.Iterable):
+  if isinstance(obj, collections.abc.Mapping):
+    return {_encode_decode(k): _encode_decode(v) for k, v in obj.items()}
+
+  if isinstance(obj, collections.abc.Iterable):
     return [_encode_decode(i) for i in obj]
 
   return obj
