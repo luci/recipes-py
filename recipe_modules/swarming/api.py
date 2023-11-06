@@ -22,8 +22,8 @@ from recipe_engine import recipe_api
 # Take revision from
 # https://ci.chromium.org/p/infra-internal/g/infra-packagers/console
 # This is the pRPC version of swarming cli tool
-PRPC_SWARMING_CLI_VERSION = ('git_revision:2f2765c478f101b'
-                             'ff8a0dda9bc10b39bdaf302fa')
+PRPC_SWARMING_CLI_VERSION = (
+    'git_revision:dfbae63f58ac56e85146d622290b6e471c7fd15d')
 # This version of the CLI is the pre-prpc varient of swarming cli tool
 DEFAULT_CIPD_VERSION = 'git_revision:7f62986230b0ff7fd5f2c74518352ac247c768d4'
 
