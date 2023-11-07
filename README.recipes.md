@@ -839,7 +839,7 @@ API for interacting with cas client.
 
 A module for interacting with cas client.
 
-&mdash; **def [archive](/recipe_modules/cas/api.py#108)(self, step_name, root, \*paths, \*\*kwargs):**
+&mdash; **def [archive](/recipe_modules/cas/api.py#108)(self, step_name, root, \*paths, log_level='info', \*\*kwargs):**
 
 Archives given paths to a cas server.
 

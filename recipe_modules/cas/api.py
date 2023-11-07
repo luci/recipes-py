@@ -105,7 +105,7 @@ class CasApi(recipe_api.RecipeApi):
     return 'https://{0}/{1}/blobs/{2}/tree'.format(
       viewer_host, self.instance, digest)
 
-  def archive(self, step_name, root, *paths, **kwargs):
+  def archive(self, step_name, root, *paths, log_level='info', **kwargs):
     """Archives given paths to a cas server.
 
     Args:
@@ -130,6 +130,8 @@ class CasApi(recipe_api.RecipeApi):
 
     cmd = [
         'archive',
+        '-log-level',
+        log_level,
         '-cas-instance',
         self.instance,
         '-dump-digest',
@@ -142,13 +144,6 @@ class CasApi(recipe_api.RecipeApi):
           ]
         ),
     ]
-
-    # TODO: make `log_level` a proper keyword argument once Python 2 support is
-    # dropped. Python 2 doesn't support named keyword arguments after
-    # variable-length positional arguments like `def func(*args, param=None)`.
-    log_level = kwargs.pop('log_level', None)
-    if log_level:
-      cmd.extend(['-log-level', log_level])
 
     # TODO(tikuta): support multiple tree upload.
     step = self._run(
