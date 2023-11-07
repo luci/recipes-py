@@ -245,7 +245,7 @@ class TestData(BaseTestData):
     self.luci_context = {}  # key -> val
     self.mod_data = defaultdict(ModuleTestData)
     self.step_data = defaultdict(StepTestData)
-    self.expected_exception = None
+    self.expected_exceptions = []
     self.expected_status = None
     self.post_process_hooks = [] # list(PostprocessHook)
 
@@ -276,9 +276,9 @@ class TestData(BaseTestData):
     if other.expected_status is not None:
       ret.expected_status = other.expected_status
 
-    ret.expected_exception = self.expected_exception
-    if other.expected_exception:
-      ret.expected_exception = other.expected_exception
+    ret.expected_exceptions = [
+        *self.expected_exceptions, *other.expected_exceptions
+    ]
 
     return ret
 
@@ -299,12 +299,10 @@ class TestData(BaseTestData):
     return self.mod_data.get(module_name, ModuleTestData())
 
   def expect_exception(self, exception):
-    if self.expected_exception:
-      raise ValueError('Cannot expect more than one exception')
     if not isinstance(exception, basestring):
       raise ValueError('expect_exception expects a string containing the '
                        'exception class name')
-    self.expected_exception = exception
+    self.expected_exceptions.append(exception)
 
   def post_process(self, func, args, kwargs, context):
     self.post_process_hooks.append(PostprocessHook(func, args, kwargs, context))
@@ -317,7 +315,7 @@ class TestData(BaseTestData):
       'luci_context': self.luci_context,
       'mod_data': dict(iteritems(self.mod_data)),
       'step_data': dict(iteritems(self.step_data)),
-      'expected_exception': self.expected_exception,
+      'expected_exceptions': self.expected_exceptions,
       'expected_status': self.expected_status,
     },)
 

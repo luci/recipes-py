@@ -422,6 +422,30 @@ class StepFailure(Exception):
     return self.exc_result.retcode
 
 
+def was_cancelled(exception: Exception) -> bool:
+  if isinstance(exception, StepFailure):
+    return exception.was_cancelled
+
+  if isinstance(exception, ExceptionGroup):
+    for exc in exception.exceptions:
+      if was_cancelled(exc):
+        return True
+
+  return False
+
+
+def had_timeout(exception: Exception) -> bool:
+  if isinstance(exception, StepFailure):
+    return exception.had_timeout
+
+  if isinstance(exception, ExceptionGroup):
+    for exc in exception.exceptions:
+      if had_timeout(exc):
+        return True
+
+  return False
+
+
 class StepWarning(StepFailure):
   """
   A subclass of StepFailure, which still fails the build, but which is

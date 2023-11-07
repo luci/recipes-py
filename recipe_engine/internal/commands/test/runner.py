@@ -137,15 +137,26 @@ def _check_bad_test(test_results, test_data, steps_ran, presentation_steps):
         '  ' + repr(s) for s in presentation_steps if s in steps_ran)
 
 
-def _check_exception(test_results, expected_exception, uncaught_exception_info):
+def _exception_class_names(exception: Exception):
+  if isinstance(exception, ExceptionGroup):
+    types = set()
+    for exc in exception.exceptions:
+      types.update(_exception_class_names(exc))
+    return types
+
+  return set((exception.__class__.__name__,))
+
+
+def _check_exception(test_results, expected_exceptions,
+                     uncaught_exception_info):
   """Check to see if the test run failed with an exception from RunSteps.
 
   Args:
 
     * test_results (Outcome.Results) - The Outcome object to update in
       the event the test exception expectation was bad.
-    * expected_exception (str|None) - The name of the exception that the test
-      case expected.
+    * expected_exceptions (sequence of str) - The name of the exceptions that
+      the test case expected.
     * uncaught_exception_info (Tuple[type, Exception, traceback]|None) - The
       exception info for any uncaught exception triggered by user recipe code.
 
@@ -158,18 +169,22 @@ def _check_exception(test_results, expected_exception, uncaught_exception_info):
     exc_name = exc_type.__name__
   else:
     exc_name = exc = None
-  if expected_exception:
+  if expected_exceptions:
     if not exc:
       test_results.crash_mismatch.append(
         'Missing expected exception in RunSteps. `api.expect_exception` is'
         ' specified, but the exception did not occur.'
       )
 
-    elif exc_name != expected_exception:
-      test_results.crash_mismatch.append(
-        'Expected exception mismatch in RunSteps. The test expected %r but '
-        'the exception line was %r.' % (expected_exception, exc_name)
-      )
+    else:
+      uncaught_exception_types = sorted(_exception_class_names(exc))
+      expected_exception_types = sorted(set(expected_exceptions))
+
+      if uncaught_exception_types != expected_exception_types:
+        test_results.crash_mismatch.append(
+            'Expected exception mismatch in RunSteps. The test expected '
+            f'{expected_exception_types} but saw {uncaught_exception_types}'
+        )
 
   elif exc:
     msg_lines = [
@@ -340,7 +355,7 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
   _check_bad_test(test_results, test_data,
                   list(test_case_result.ran_steps),
                   list(raw_expectations))
-  _check_exception(test_results, test_data.expected_exception,
+  _check_exception(test_results, test_data.expected_exceptions,
                    test_case_result.uncaught_exception)
 
   _check_status(

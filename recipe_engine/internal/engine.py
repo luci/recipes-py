@@ -118,6 +118,21 @@ class _MemoryProfiler(object):
         yield snapshot_line
       yield '-------- Memory Snapshot (%s) Ends --------' % snapshot_name
 
+
+def _get_reasons(exception: Exception) -> list[str]:
+  if isinstance(exception, ExceptionGroup):
+    reasons = []
+    for exc in exception.exceptions:
+      reasons.extend(_get_reasons(exc))
+    return reasons
+
+  elif isinstance(exception, recipe_api.StepFailure):
+    return [exception.reason]
+
+  else:
+    return [str(exception)]
+
+
 class RecipeEngine(object):
   """
   Knows how to execute steps emitted by a recipe, holds global state such as
@@ -600,7 +615,7 @@ class RecipeEngine(object):
           engine.close_non_parent_step()
           engine._step_stack[-1].close()   # pylint: disable=protected-access
 
-      except recipe_api.StepFailure as ex:
+      except* recipe_api.StepFailure as ex:
         if debugger.should_set_implicit_breakpoints():
 
           # =========================================================
@@ -608,10 +623,12 @@ class RecipeEngine(object):
           # =========================================================
           breakpoint()  # pylint: disable=forgotten-debug-statement
 
-        is_infra_failure = was_cancelled = False
-        if isinstance(ex, recipe_api.InfraFailure):
-          is_infra_failure = True
-          was_cancelled = ex.was_cancelled
+        reasons = _get_reasons(ex)
+        is_infra_failure = False
+        was_cancelled = recipe_api.was_cancelled(ex)
+        for sub_ex in ex.exceptions:
+          if isinstance(sub_ex, recipe_api.InfraFailure):
+            is_infra_failure = True
 
         if was_cancelled and GLOBAL_SHUTDOWN.ready():
           # We presume if we caught a cancelation exception and GLOBAL_SHUTDOWN
@@ -622,7 +639,7 @@ class RecipeEngine(object):
           result.status = common_pb2.INFRA_FAILURE
         else:
           result.status = common_pb2.FAILURE
-        result.summary_markdown = ex.reason
+        result.summary_markdown = '\n'.join(reasons)
 
     except bdb.BdbQuit:  # let debugger quit flow through
       raise
