@@ -262,7 +262,7 @@ the dependency graph the same way, but 'API' mode does a superset of the work
 (since all `RecipeApi` objects have a reference to their `test_api` as
 `self.test_api`).
 
-Both `RecipeTestApi` and `RecipeApiPlain` classes have an `m` member injected
+Both `RecipeTestApi` and `RecipeApi` classes have an `m` member injected
 into them after construction, which contains all of the DEPS'd-in modules as
 members.  So if a DEPS entry looks like:
 

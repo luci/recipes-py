@@ -18,7 +18,6 @@ PROPERTIES = {
 }
 
 def RunSteps(api, from_recipe, attribute, module):
-  # We test on the cipd module because it's a RecipeApi, not a RecipeApiPlain.
   if from_recipe:
     api.missing_module('baz')
   if attribute:

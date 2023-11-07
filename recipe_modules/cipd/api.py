@@ -296,7 +296,7 @@ class CIPDApi(recipe_api.RecipeApi):
       super(CIPDApi.Error, self).__init__(reason)
 
   def __init__(self, **kwargs):
-    super(recipe_api.RecipeApi, self).__init__(**kwargs)
+    super().__init__(**kwargs)
     self.max_threads = 0  # 0 means use system CPU count.
     # A mapping from (package, version) to Future for packages installed
     # via `ensure_tool()`. The Future has no returned value and just used to

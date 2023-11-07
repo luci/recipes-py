@@ -9,7 +9,7 @@ import inspect
 from recipe_engine import recipe_api
 
 
-class WarningApi(recipe_api.RecipeApiPlain):
+class WarningApi(recipe_api.RecipeApi):
   warning_client = recipe_api.RequireClient('warning')
 
   @recipe_api.escape_all_warnings

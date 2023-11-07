@@ -609,10 +609,7 @@ class RecipeEngine(object):
           breakpoint()  # pylint: disable=forgotten-debug-statement
 
         is_infra_failure = was_cancelled = False
-        if isinstance(ex, recipe_api.AggregatedStepFailure):
-          is_infra_failure = ex.result.contains_infra_failure
-          was_cancelled = ex.result.contains_cancelled
-        elif isinstance(ex, recipe_api.InfraFailure):
+        if isinstance(ex, recipe_api.InfraFailure):
           is_infra_failure = True
           was_cancelled = ex.was_cancelled
 

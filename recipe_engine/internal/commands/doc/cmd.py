@@ -170,9 +170,6 @@ KNOWN_OBJECTS = {}
 
 _decorator_imports = {
   'recipe_engine.util.returns_placeholder': util.returns_placeholder,
-  'recipe_engine.recipe_api.non_step': recipe_api.non_step,
-  'recipe_engine.recipe_api.infer_composite_step': (
-    recipe_api.infer_composite_step)
 }
 KNOWN_OBJECTS.update(_decorator_imports)
 
@@ -207,7 +204,6 @@ KNOWN_OBJECTS.update(_util_imports)
 
 _recipe_api_class_imports = {
   'recipe_engine.recipe_api.RecipeApi': recipe_api.RecipeApi,
-  'recipe_engine.recipe_api.RecipeApiPlain': recipe_api.RecipeApiPlain,
 }
 KNOWN_OBJECTS.update(_recipe_api_class_imports)
 

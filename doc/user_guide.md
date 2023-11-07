@@ -852,7 +852,7 @@ frame which is not escaped.
 ```python
 from recipe_engine import recipe_api
 
-class FooApi(recipe_api.RecipeApiPlain):
+class FooApi(recipe_api.RecipeApi):
 
   @original_decorator
   # escape_warnings decorator needs to be the innermost decorator

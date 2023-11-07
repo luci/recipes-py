@@ -4,7 +4,7 @@
 
 from __future__ import absolute_import
 from builtins import object
-from future.utils import iteritems, with_metaclass
+from future.utils import iteritems
 from past.builtins import basestring
 
 import bisect
@@ -157,7 +157,7 @@ class PathsClient(object):
 
       for name in dir(api.m):
         sub_api = getattr(api.m, name)
-        if not isinstance(sub_api, RecipeApiPlain):
+        if not isinstance(sub_api, RecipeApi):
           continue
         if id(sub_api) not in found_api_id_set:
           found_api_id_set.add(id(api))
@@ -361,9 +361,6 @@ class StepFailure(Exception):
   """
   This is the base class for all step failures.
 
-  Raising a StepFailure counts as 'running a step' for the purpose of
-  infer_composite_step's logic.
-
   FIXME: This class is as a general way to fail, but it should be split up.
   See crbug.com/892792 for more information.
 
@@ -371,23 +368,17 @@ class StepFailure(Exception):
   the way reason_message is overridden by subclasses is very strange).
   """
   def __init__(self, name_or_reason, result=None):
-    # Raising a StepFailure counts as running a step.
-    _DEFER_CONTEXT.mark_ran_step()
     self.exc_result = None   # default to None
     if result:
       self.name = name_or_reason
       self.result = result
       self.reason = self.reason_message()
-      # TODO(iannucci): This hasattr stuff is pretty bogus. This is attempting
-      # to detect when 'result' was a StepData. However AggregatedStepFailure
-      # passes in something else.
-      if hasattr(result, 'exc_result'):
-        self.exc_result = result.exc_result
-        if self.exc_result.had_timeout:
-          self.reason += ' (timeout)'
-        if self.exc_result.was_cancelled:
-          self.reason += ' (canceled)'
-        self.reason += ' (retcode: {!r})'.format(self.exc_result.retcode)
+      self.exc_result = result.exc_result
+      if self.exc_result.had_timeout:
+        self.reason += ' (timeout)'
+      if self.exc_result.was_cancelled:
+        self.reason += ' (canceled)'
+      self.reason += ' (retcode: {!r})'.format(self.exc_result.retcode)
     else:
       self.name = None
       self.result = None
@@ -455,300 +446,7 @@ class InfraFailure(StepFailure):
     return "Infra Failure: Step({!r})".format(self.name)
 
 
-class AggregatedStepFailure(StepFailure):
-  def __init__(self, result):
-    super(AggregatedStepFailure, self).__init__(
-            "Aggregate step failure.", result=result)
-
-  def reason_message(self):
-    msg = "{!r} out of {!r} aggregated steps failed: ".format(
-        len(self.result.failures), len(self.result.all_results))
-    msg += ', '.join((f.reason or f.name) for f in self.result.failures)
-    return msg
-
-
-
-class AggregatedResult(object):
-  """Holds the result of an aggregated run of steps.
-
-  Currently this is only used internally by defer_results, but it may be exposed
-  to the consumer of defer_results at some point in the future. For now it's
-  expected to be easier for defer_results consumers to do their own result
-  aggregation, as they may need to pick and chose (or label) which results they
-  really care about.
-  """
-  def __init__(self):
-    self.successes = []
-    self.failures = []
-    self.contains_infra_failure = False
-    self.contains_cancelled = False
-
-    # Needs to be here to be able to treat this as a step result
-    self.retcode = None
-
-  @property
-  def all_results(self):
-    """
-    Return a list of two item tuples (x, y), where
-      x is whether or not the step succeeded, and
-      y is the result of the run
-    """
-    res = [(True, result) for result in self.successes]
-    res.extend([(False, result) for result in self.failures])
-    return res
-
-  def add_success(self, result):
-    self.successes.append(result)
-    return DeferredResult(result, None)
-
-  def add_failure(self, exception):
-    if isinstance(exception, InfraFailure):
-      self.contains_infra_failure = True
-      self.contains_cancelled = (
-        self.contains_cancelled or exception.was_cancelled)
-    self.failures.append(exception)
-    return DeferredResult(None, exception)
-
-
-class DeferredResult(object):
-  def __init__(self, result, failure):
-    self._result = result
-    self._failure = failure
-
-  @property
-  def is_ok(self):
-    return self._failure is None
-
-  def get_result(self):
-    if not self.is_ok:
-      raise self.get_error()
-    return self._result
-
-  def get_error(self):
-    return self._failure
-
-
-class _DEFER_CONTEXT_OBJ(object):
-  """This object keeps track of state pertaining to the behavior of
-  defer_results and composite_step.
-  """
-
-  def __init__(self):
-    """The object starts in a state where no steps have been run, and there's no
-    current aggregated_result."""
-    self._ran_step = [False]
-    self._aggregated_result = [None]
-
-  @property
-  def ran_step(self):
-    """Returns True if a step has run within this defer_results context."""
-    return self._ran_step[-1]
-
-  def mark_ran_step(self):
-    """Marks that a step has run within this defer_results context."""
-    self._ran_step[-1] = True
-
-  @property
-  def aggregated_result(self):
-    """Returns the current AggregatedResult() or None, if we're not currently
-    deferring results."""
-    return self._aggregated_result[-1]
-
-  @contextlib.contextmanager
-  def begin_aggregate(self):
-    """Begins aggregating new results. Use with a with statement:
-
-      with _DEFER_CONTEXT.begin_aggregate() as agg:
-        ...
-
-    Where `agg` is the AggregatedResult() for that with section.
-    """
-    try:
-      yield self._enter(AggregatedResult())
-    finally:
-      self._exit()
-
-  @contextlib.contextmanager
-  def begin_normal(self):
-    """Returns the context to normal (stop aggregating results).
-
-      with _DEFER_CONTEXT.begin_normal():
-        ...
-    """
-    try:
-      yield self._enter(None)
-    finally:
-      self._exit()
-
-  def _enter(self, agg):
-    self._ran_step.append(False)
-    self._aggregated_result.append(agg)
-    return agg
-
-  def _exit(self):
-    self._ran_step.pop()
-    self._aggregated_result.pop()
-
-
-_DEFER_CONTEXT = _DEFER_CONTEXT_OBJ()
-
-
-def non_step(func):
-  """A decorator which prevents a method from automatically being wrapped as
-  a infer_composite_step by RecipeApiMeta.
-
-  This is needed for utility methods which don't run any steps, but which are
-  invoked within the context of a defer_results().
-
-  @see infer_composite_step, defer_results, RecipeApiMeta
-  """
-  assert not hasattr(func, "_skip_inference"), \
-         "Double-wrapped method %r?" % func
-  func._skip_inference = True # pylint: disable=protected-access
-  return func
-
-_skip_inference = non_step
-
-
-def infer_composite_step(func):
-  """A decorator which possibly makes this step act as a single step, for the
-  purposes of the defer_results function.
-
-  Behaves as if this function were wrapped by composite_step, unless this
-  function:
-    * is already wrapped by non_step
-    * returns a result without calling api.step
-    * raises an exception which is not derived from StepFailure
-
-  In any of these cases, this function will behave like a normal function.
-
-  This decorator is automatically applied by RecipeApiMeta (or by inheriting
-  from RecipeApi). If you want to declare a method's behavior explicitly, you
-  may decorate it with either composite_step or with non_step.
-  """
-  if getattr(func, "_skip_inference", False):
-    return func
-
-  @_skip_inference # to prevent double-wraps
-  @wraps(func)
-  @escape.escape_all_warnings
-  def _inner(*a, **kw):
-    agg = _DEFER_CONTEXT.aggregated_result
-
-    # We're not deferring results, so run the function normally.
-    if agg is None:
-      return func(*a, **kw)
-
-    # Stop deferring results within this function; the ultimate result of the
-    # function will be added to our parent context's aggregated results and
-    # we'll return a DeferredResult.
-    with _DEFER_CONTEXT.begin_normal():
-      try:
-        ret = func(*a, **kw)
-        # This is how we differ from composite_step; if we didn't actually run
-        # a step or throw a StepFailure, return normally.
-        if not _DEFER_CONTEXT.ran_step:
-          return ret
-        return agg.add_success(ret)
-      except StepFailure as ex:
-        return agg.add_failure(ex)
-  _inner.__original = func
-  return _inner
-
-
-def composite_step(func):
-  """A decorator which makes this step act as a single step, for the purposes of
-  the defer_results function.
-
-  This means that this function will not quit during the middle of its execution
-  because of a StepFailure, if there is an aggregator active.
-
-  You may use this decorator explicitly if infer_composite_step is detecting
-  the behavior of your method incorrectly to force it to behave as a step. You
-  may also need to use this if your Api class inherits from RecipeApiPlain and
-  so doesn't have its methods automatically wrapped by infer_composite_step.
-  """
-  @_skip_inference  # to avoid double-wraps
-  @wraps(func)
-  @escape.escape_all_warnings
-  def _inner(*a, **kw):
-    # composite_steps always count as running a step.
-    _DEFER_CONTEXT.mark_ran_step()
-
-    agg = _DEFER_CONTEXT.aggregated_result
-
-    # If we're not aggregating
-    if agg is None:
-      return func(*a, **kw)
-
-    # Stop deferring results within this function; the ultimate result of the
-    # function will be added to our parent context's aggregated results and
-    # we'll return a DeferredResult.
-    with _DEFER_CONTEXT.begin_normal():
-      try:
-        return agg.add_success(func(*a, **kw))
-      except StepFailure as ex:
-        return agg.add_failure(ex)
-  _inner.__original = func
-  return _inner
-
-
-@contextlib.contextmanager
-def defer_results():
-  """
-  Use this to defer step results in your code. All steps which would previously
-    return a result or throw an exception will instead return a DeferredResult.
-
-  Any exceptions which were thrown during execution will be thrown when either:
-    a. You call get_result() on the step's result.
-    b. You exit the lexical scope inside of the with statement
-
-  Example:
-    with defer_results():
-      api.step('a', ..)
-      api.step('b', ..)
-      result = api.m.module.im_a_composite_step(...)
-      api.m.echo('the data is', result.get_result())
-
-  If 'a' fails, 'b' and 'im a composite step'  will still run.
-  If 'im a composite step' fails, then the get_result() call will raise
-    an exception.
-  If you don't try to use the result (don't call get_result()), an aggregate
-    failure will still be raised once you exit the lexical scope inside
-    the with statement.
-  """
-  assert _DEFER_CONTEXT.aggregated_result is None, (
-      "may not call defer_results in an active defer_results context")
-  with _DEFER_CONTEXT.begin_aggregate() as agg:
-    yield
-  if agg.failures:
-    raise AggregatedStepFailure(agg)
-
-
-class RecipeApiMeta(type):
-  SKIPLIST = ('__init__',)
-  def __new__(mcs, name, bases, attrs):
-    """Automatically wraps all methods of subclasses of RecipeApi with
-    @infer_composite_step. This allows defer_results to work as intended without
-    manually decorating every method.
-    """
-    wrap = lambda f: infer_composite_step(f) if f else f
-    for attr in attrs:
-      if attr in RecipeApiMeta.SKIPLIST:
-        continue
-      val = attrs[attr]
-      if isinstance(val, types.FunctionType):
-        attrs[attr] = wrap(val)
-      elif isinstance(val, property):
-        attrs[attr] = property(
-          wrap(val.fget),
-          wrap(val.fset),
-          wrap(val.fdel),
-          val.__doc__)
-    return super(RecipeApiMeta, mcs).__new__(mcs, name, bases, attrs)
-
-
-class RecipeApiPlain(object):
+class RecipeApi(object):
   """
   Framework class for handling recipe_modules.
 
@@ -757,12 +455,6 @@ class RecipeApiPlain(object):
   injection (in self.m).
 
   Dependency injection takes place in load_recipe_modules() in loader.py.
-
-  USE RecipeApi INSTEAD, UNLESS your RecipeApi subclass derives from something
-  which defines its own __metaclass__. Deriving from RecipeApi instead of
-  RecipeApiPlain allows your RecipeApi subclass to automatically work with
-  defer_results without needing to decorate every methods with
-  @infer_composite_step.
   """
 
   def __init__(self,
@@ -770,7 +462,7 @@ class RecipeApiPlain(object):
                test_data=DisabledTestData(),
                **_kwargs):
     """Note: Injected dependencies are NOT available in __init__()."""
-    super(RecipeApiPlain, self).__init__()
+    super(RecipeApi, self).__init__()
 
     assert module
     self._module = module
@@ -897,10 +589,6 @@ class RecipeApiPlain(object):
     the recipe repo where this module is defined.
     """
     return self._repo_root.join(*path)
-
-
-class RecipeApi(with_metaclass(RecipeApiMeta, RecipeApiPlain)):
-  pass
 
 
 @dataclass

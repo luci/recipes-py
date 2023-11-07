@@ -21,7 +21,7 @@ from recipe_engine.util import Placeholder
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 
 
-class LegacyAnnotationApi(recipe_api.RecipeApiPlain):
+class LegacyAnnotationApi(recipe_api.RecipeApi):
   concurrency_client = recipe_api.RequireClient('concurrency')
   step_client = recipe_api.RequireClient('step')
 

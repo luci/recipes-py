@@ -159,7 +159,6 @@ def _returns_placeholder(func, alternate_name=None):
     ret.namespaces = (selfname, alternate_name or static_name(self, func))
     return ret
   # prevent this placeholder-returning function from becoming a composite_step.
-  inner._non_step = True # pylint: disable=protected-access
   return inner
 
 def returns_placeholder(func):

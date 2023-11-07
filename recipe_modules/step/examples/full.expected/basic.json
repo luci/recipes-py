@@ -120,21 +120,6 @@
   {
     "cmd": [
       "echo",
-      "testa"
-    ],
-    "name": "testa"
-  },
-  {
-    "cmd": [
-      "echo",
-      "testb"
-    ],
-    "infra_step": true,
-    "name": "testb"
-  },
-  {
-    "cmd": [
-      "echo",
       "cleaning",
       "up",
       "build"

@@ -5,14 +5,10 @@
 """Tests that step_data can accept multiple specs at once."""
 
 from recipe_engine import post_process
-from recipe_engine.recipe_api import composite_step
 
 DEPS = [
 ]
 
-# note that the frames from composite_step are omitted in the stack during
-# training.
-@composite_step
 def my_function(): # pragma: no cover
   raise TypeError("BAD DOGE")
 

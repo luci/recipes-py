@@ -42,7 +42,7 @@ import sys
 from future.utils import iteritems, itervalues
 
 from ..config_types import Path, ModuleBasePath, RepoBasePath
-from ..recipe_api import BoundProperty, RecipeApi, RecipeApiPlain
+from ..recipe_api import BoundProperty, RecipeApi
 from ..recipe_test_api import RecipeTestApi
 
 from . import proto_support

@@ -25,10 +25,8 @@ from future.utils import iteritems
 from recipe_engine import recipe_api
 from recipe_engine.engine_types import freeze
 
-# Use RecipeApiPlain because collections.abc.Mapping has its own metaclass.
-# Additionally, nothing in this class is a composite_step (nothing in this class
-# is any sort of step :).
-class PropertiesApi(recipe_api.RecipeApiPlain, collections.abc.Mapping):
+
+class PropertiesApi(recipe_api.RecipeApi, collections.abc.Mapping):
   """PropertiesApi implements all the standard Mapping functions, so you
   can use it like a read-only dict."""
 

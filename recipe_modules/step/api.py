@@ -23,9 +23,8 @@ from recipe_engine.recipe_utils import check_type, check_list_type
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 
-# Inherit from RecipeApiPlain because the only thing which is a step is
-# run_from_dict()
-class StepApi(recipe_api.RecipeApiPlain):
+
+class StepApi(recipe_api.RecipeApi):
   step_client = recipe_api.RequireClient('step')
 
   def __init__(self, step_properties, **kwargs):
@@ -355,11 +354,6 @@ class StepApi(recipe_api.RecipeApiPlain):
       self.raise_on_failure(ret)
     return ret
 
-  @property
-  def defer_results(self):
-    """ See recipe_api.py for docs. """
-    return recipe_api.defer_results
-
   @staticmethod
   def _validate_cmd_list(cmd):
     """Validates cmd is a list and all args in the list have valid types."""
@@ -494,7 +488,6 @@ class StepApi(recipe_api.RecipeApiPlain):
       allowed_statuses += [self.WARNING, self.FAILURE, self.EXCEPTION]
     return self._raise_on_disallowed_statuses(ret, allowed_statuses)
 
-  @recipe_api.composite_step
   def sub_build(self,
                 name: str,
                 cmd: Union[int, str, Placeholder, Path],
@@ -623,7 +616,6 @@ class StepApi(recipe_api.RecipeApiPlain):
             step_test_data=step_test_data,
         ))
 
-  @recipe_api.composite_step
   def __call__(self,
                name,
                cmd,

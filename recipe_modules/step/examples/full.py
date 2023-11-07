@@ -110,16 +110,6 @@ def RunSteps(api, bad_return, access_invalid_data, access_deep_invalid_data,
     e.result.presentation.status = api.step.WARNING
     raise api.step.StepWarning(str(e))
 
-
-  # Aggregate failures from tests!
-  try:
-    with recipe_api.defer_results():
-      api.step('testa', ['echo', 'testa'])
-      api.step('testb', ['echo', 'testb'], infra_step=True)
-  except recipe_api.AggregatedStepFailure as f:
-    # You can raise aggregated step failures.
-    raise f
-
   # Some steps are needed from an infrastructure point of view. If these
   # steps fail, the build stops, but doesn't get turned red because it's
   # not the developers' fault.
@@ -182,19 +172,6 @@ def GenTests(api):
       'warning',
       api.step_data('warning', retcode=1),
       status='FAILURE',
-  )
-
-  yield api.test(
-      'defer_results',
-      api.step_data('testa', retcode=1),
-      status='FAILURE',
-  )
-
-  yield api.test(
-      'defer_results_with_infra_failure',
-      api.step_data('testa', retcode=1),
-      api.step_data('testb', retcode=1),
-      status='INFRA_FAILURE',
   )
 
   yield api.test(

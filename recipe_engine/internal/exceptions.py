@@ -38,7 +38,7 @@ class UnknownRecipe(RecipeUsageError, KeyError):
   """Raised when an unknown recipe is referenced."""
 
 class UndefinedPropertyException(RecipeUsageError):
-  """Raised when invoking a RunSteps or RecipeApiPlain constructor where the
+  """Raised when invoking a RunSteps or RecipeApi constructor where the
   arguments don't match the PROPERTIES for that invocation."""
 
 class BadProtoDefinitions(RecipeUsageError):
