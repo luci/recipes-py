@@ -78,13 +78,6 @@ def add_arguments(parser):
       help=('A regexp matching module names to add to the default allowlist. '
             'Use multiple times to add multiple patterns,'))
 
-  parser.add_argument(
-      '--whitelist',
-      '-w',
-      action='append',
-      dest='allowlist',
-      help=argparse.SUPPRESS)
-
   parser.set_defaults(func=main, skip_deps=True)
 
 
