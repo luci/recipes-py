@@ -115,3 +115,8 @@ wheel: <
   name: "infra/python/wheels/parameterized-py2_py3"
   version: "version:0.8.1"
 >
+
+wheel: <
+  name: "infra/python/wheels/packaging-py3"
+  version: "version:23.0"
+>

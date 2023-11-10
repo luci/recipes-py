@@ -116,6 +116,11 @@ wheel: <
   version: "version:0.8.1"
 >
 
+wheel: <
+  name: "infra/python/wheels/packaging-py3"
+  version: "version:23.0"
+>
+
 # Above this line must exactly match .vpython3, and PRESUBMIT.py will check
 # this.
 #
