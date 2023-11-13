@@ -18,12 +18,24 @@
       "The recipe has crashed at point 'Uncaught exception'!",
       "",
       "Traceback (most recent call last):",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/engine.py\", line 603, in run_steps",
+      "    raw_result = recipe_obj.run_steps(api, engine)",
+      "                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/recipe_deps.py\", line 1011, in run_steps",
+      "    recipe_result = invoke_with_properties(",
+      "                    ^^^^^^^^^^^^^^^^^^^^^^^",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/property_invoker.py\", line 95, in invoke_with_properties",
+      "    return _invoke_with_properties(callable_obj, all_props, environ, prop_defs,",
+      "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/property_invoker.py\", line 55, in _invoke_with_properties",
+      "    return callable_obj(*props, **additional_args)",
+      "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
       "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/time/examples/full.py\", line 72, in RunSteps",
       "    helper_fn_that_needs_retries(\"\")",
       "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/time/api.py\", line 61, in wrapper",
       "    time_api = args[0].m.time",
       "               ^^^^^^^^^",
-      "AttributeError(''str' object has no attribute 'm'')"
+      "AttributeError: 'str' object has no attribute 'm'"
     ]
   },
   {

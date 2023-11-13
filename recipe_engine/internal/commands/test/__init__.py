@@ -83,12 +83,6 @@ def add_arguments(parser):
   run_p.add_argument(
       '--dump-timing-info', type=argparse.FileType('w'), help=TIMING_INFO_HELP)
   run_p.add_argument(
-      '--full-stacks', dest='filtered_stacks', default=True,
-      action='store_false', help=(
-        'By default, tests display filtered stacks for better readability. '
-        'Setting this flag will turn this filtering off.'
-      ))
-  run_p.add_argument(
       '--no-emoji', dest='use_emoji', action='store_false', default=True,
       help='Use text symbols instead of emoji.')
   run_p.add_argument(
@@ -126,12 +120,6 @@ def add_arguments(parser):
   train_p.add_argument(
       '--dump-timing-info', type=argparse.FileType('w'), help=TIMING_INFO_HELP)
   train_p.add_argument(
-      '--full-stacks', dest='filtered_stacks', default=True,
-      action='store_false', help=(
-        'By default, tests display filtered stacks for better readability. '
-        'Setting this flag will turn this filtering off.'
-      ))
-  train_p.add_argument(
       '--no-emoji', dest='use_emoji', action='store_false', default=True,
       help='Use text symbols instead of emoji.')
   train_p.add_argument(
@@ -158,8 +146,6 @@ def add_arguments(parser):
   # to actually run tests.
   runner_p = subp.add_parser('_runner')
   runner_p.add_argument('--cov-file')
-  runner_p.add_argument('--full-stacks', dest='filtered_stacks', default=True,
-                        action='store_false')
   runner_p.add_argument('--train', action='store_true', default=False)
   runner_p.add_argument('--cover-module-imports', action='store_true',
                         default=False)
@@ -179,8 +165,8 @@ def add_arguments(parser):
     if args.subcommand == '_runner':
       from .runner import main
       try:
-        return main(args.recipe_deps, args.cov_file, args.filtered_stacks,
-                    args.train, args.cover_module_imports)
+        return main(args.recipe_deps, args.cov_file, args.train,
+                    args.cover_module_imports)
       except KeyboardInterrupt:
         return 0
 

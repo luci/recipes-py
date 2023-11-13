@@ -106,7 +106,8 @@
   * [engine_tests/comprehensive_ui](#recipes-engine_tests_comprehensive_ui) &mdash; A fast-running recipe which comprehensively covers all StepPresentation features available in the recipe engine.
   * [engine_tests/config_operations](#recipes-engine_tests_config_operations) &mdash; Tests that recipes can modify configuration options in various ways.
   * [engine_tests/early_termination](#recipes-engine_tests_early_termination) &mdash; Simple recipe which runs a bunch of subprocesses which react to early termination in different ways.
-  * [engine_tests/expect_exception](#recipes-engine_tests_expect_exception) &mdash; Tests that step_data can accept multiple specs at once.
+  * [engine_tests/expect_exception](#recipes-engine_tests_expect_exception) &mdash; Tests that tests with a single exception are handled correctly.
+  * [engine_tests/expect_exceptions](#recipes-engine_tests_expect_exceptions) &mdash; Tests that tests with multiple exceptions are handled correctly.
   * [engine_tests/failure_results](#recipes-engine_tests_failure_results) &mdash; Tests that run_steps is handling recipe failures correctly.
   * [engine_tests/functools_partial](#recipes-engine_tests_functools_partial) &mdash; Engine shouldn't explode when step_test_data gets functools.
   * [engine_tests/incorrect_recipe_result](#recipes-engine_tests_incorrect_recipe_result) &mdash; Tests that engine.
@@ -5014,11 +5015,19 @@ termination in different ways.
 ### *recipes* / [engine\_tests/expect\_exception](/recipes/engine_tests/expect_exception.py)
 
 
-Tests that step_data can accept multiple specs at once.
+Tests that tests with a single exception are handled correctly.
 
 &mdash; **def [RunSteps](/recipes/engine_tests/expect_exception.py#16)(api):**
 
 &mdash; **def [my\_function](/recipes/engine_tests/expect_exception.py#12)():**
+### *recipes* / [engine\_tests/expect\_exceptions](/recipes/engine_tests/expect_exceptions.py)
+
+
+Tests that tests with multiple exceptions are handled correctly.
+
+&mdash; **def [RunSteps](/recipes/engine_tests/expect_exceptions.py#23)(api):**
+
+&mdash; **def [my\_function](/recipes/engine_tests/expect_exceptions.py#11)():**
 ### *recipes* / [engine\_tests/failure\_results](/recipes/engine_tests/failure_results.py)
 
 [DEPS](/recipes/engine_tests/failure_results.py#12): [json](#recipe_modules-json), [step](#recipe_modules-step)

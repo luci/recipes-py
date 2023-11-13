@@ -270,65 +270,6 @@ def fix_json_object(obj):
   return obj
 
 
-_FULL_STACKS = True
-_RECIPE_ENGINE_BASE = os.path.dirname(__file__)
-
-def enable_filtered_stacks():
-  """Sets an internal option to filter engine implementation details out of
-  stack traces.
-
-  Only set during tests when '--full-stacks' is not specified.
-  """
-  global _FULL_STACKS
-  _FULL_STACKS = False
-
-
-def remove_engine_impl_from_stack(stack):
-  """Takes a 'processed' stack (e.g. from traceback.extract_stack) and removes
-  recipe engine implementation frames (i.e. not from recipes or recipe modules).
-  This filtering starts in the stack at the first "non-engine" code; This means
-  that if the engine code DOES crash, the full stack will be shown anyway, and
-  if the exception originates from inside the engine code, these frames will be
-  shown as well.
-
-  This will also trim frames which are from known third-party libraries (like
-  gevent).
-
-  Is a NO-OP unless enable_filtered_stacks() has been called.
-  """
-  if _FULL_STACKS:
-    return stack
-
-  def _is_engine_impl(frame):
-    return (
-      frame[0].startswith(_RECIPE_ENGINE_BASE) or
-      frame[2].startswith('gevent.')
-    )
-
-  # stack is organized from deep->shallow. We process the stack backwards; We
-  # walk until we find some `not _is_engine_impl` frame, and then above that we
-  # filter all `_is_engine_impl` frames.
-  ret = []
-  found_user_code = False
-  for frame in reversed(stack):
-    is_engine = _is_engine_impl(frame)
-    if found_user_code and is_engine:
-      continue
-    ret.append(frame)
-    found_user_code = found_user_code or (not is_engine)
-
-  return list(reversed(ret))
-
-
-def extract_tb(tb):
-  """Return a 'processed' stack (as from traceback.extract_tb).
-
-  If enable_filtered_stacks() was called, this trims the stack per
-  remove_engine_impl_from_stack.
-  """
-  return remove_engine_impl_from_stack(traceback.extract_tb(tb))
-
-
 # Convert some known py3 err msg to py2 err msg, otherwise, convert to a
 # constant err msg.
 # TODO(crbug.com/1147793): remove it after py3 migration is done.

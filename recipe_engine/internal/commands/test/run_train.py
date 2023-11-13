@@ -22,7 +22,6 @@ import gevent.queue
 from google.protobuf import json_format
 
 from recipe_engine import __path__ as RECIPE_ENGINE_PATH
-from recipe_engine.util import enable_filtered_stacks
 
 # pylint: disable=import-error
 from PB.recipe_engine.internal.test.runner import Description, Outcome
@@ -113,7 +112,7 @@ def _push_tests(test_filter: test_name.Filter, is_train, main_repo, description_
 
 
 def _run(test_results, recipe_deps, use_emoji, test_filter, is_train,
-         filtered_stacks, stop, jobs, show_warnings):
+         stop, jobs, show_warnings):
   """Run tests in py3 subprocess pools.
   """
   main_repo = recipe_deps.main_repo
@@ -151,7 +150,6 @@ def _run(test_results, recipe_deps, use_emoji, test_filter, is_train,
         description_queue,
         outcome_queue,
         is_train,
-        filtered_stacks,
         collect_coverage=not test_filter,
         jobs=jobs)
     live_threads[:] = all_threads
@@ -223,11 +221,6 @@ def main(args):
   is_train = args.subcommand == 'train'
   ret = Outcome()
 
-  if args.filtered_stacks:
-    enable_filtered_stacks()
-    print('Filtering engine implementation out of crash stacks. '
-          'Pass `--full-stacks` to see entire stack.')
-
   def _dump():
     if args.json:
       output = []
@@ -248,7 +241,7 @@ def main(args):
   repo = args.recipe_deps.main_repo
   try:
     _run(ret, args.recipe_deps, args.use_emoji, args.test_filter, is_train,
-         args.filtered_stacks, args.stop, args.jobs, args.show_warnings)
+         args.stop, args.jobs, args.show_warnings)
     _dump()
   except KeyboardInterrupt:
     args.docs = False  # skip docs

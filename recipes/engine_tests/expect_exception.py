@@ -2,7 +2,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-"""Tests that step_data can accept multiple specs at once."""
+"""Tests that tests with a single exception are handled correctly."""
 
 from recipe_engine import post_process
 
