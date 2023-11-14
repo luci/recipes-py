@@ -1082,7 +1082,11 @@ def _print_step(execution_log, step):
   execution_log.write_line('in dir ' + step.cwd)
 
   # Technically very soon _before_ the step runs, but should be insignificant.
-  execution_log.write_line('at time ' + datetime.datetime.now().isoformat())
+  # Displayed in two formats because ISO format is easy to read but the deadline
+  # that may show inside the LUCI_CONTEXT dict in a few lines will be a
+  # timestamp.
+  now = datetime.datetime.now()
+  execution_log.write_line(f'at time {now.isoformat()} ({now.timestamp()})')
 
   # Some LUCI_CONTEXT sections may contain secrets; explicitly allow the
   # sections we know are safe.
