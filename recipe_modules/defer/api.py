@@ -76,9 +76,11 @@ class DeferApi(recipe_api.RecipeApi):
   For other exceptions, api.defer() will add a step showing the exception and
   continue.
 
-  Details about individual failures cannot yet be reliably retrieved when
-  calling api.defer.collect(), but .result() can be called on individual
-  DeferredResults to re-raise individual failures.
+  If exceptions were caught and saved in DeferredResults, api.defer.collect()
+  will raise an ExceptionGroup containing all deferred exceptions.
+  ExceptionGroups containing specific kinds of exceptions can be handled using
+  the "except*" syntax (for more details see
+  https://docs.python.org/3/tutorial/errors.html#raising-and-handling-multiple-unrelated-exceptions).
 
   If there are no failures, api.defer.collect() returns a Sequence of the
   return values of the functions passed into api.defer().
@@ -100,11 +102,30 @@ class DeferApi(recipe_api.RecipeApi):
     """
     ctx = _DeferContext(self.m)
 
-    # try:
-    yield ctx
-    # TODO: crbug.com/1495428 - Use an ExceptionGroup to combine any
-    # non-deferred exceptions from within the try with deferred exceptions.
-    ctx.collect(step_name=collect_step_name)
+    try:
+      yield ctx
+
+    # Handle exceptions raised within this context but not caught in a
+    # DeferredResult.
+    except Exception as exc:
+      # If the collect call succeeds, re-raise the original (non-deferred)
+      # exception.
+      try:
+        ctx.collect(step_name=collect_step_name)
+        raise
+
+      # If the collect call fails, raise an ExceptionGroup with the non-deferred
+      # exception and the deferred ExceptionGroup.
+      except ExceptionGroup as deferred_exc:
+        raise ExceptionGroup(
+            'deferred and non-deferred exceptions',
+            [exc, deferred_exc],
+        )
+
+    # If the try block didn't produce any exceptions, there are no non-deferred
+    # exceptions so we can just raise the deferred exceptions, if any.
+    else:
+      ctx.collect(step_name=collect_step_name)
 
   def __call__(
       self, func: Callable[..., T], *args, **kwargs
@@ -122,31 +143,6 @@ class DeferApi(recipe_api.RecipeApi):
       return DeferredResult(_api=self.m, _value=func(*args, **kwargs))
     except Exception as exc:
       return DeferredResult(_api=self.m, _exc=exc)
-
-  def _raise(self, results: Sequence[DeferredResult]) -> None:
-    """Re-raise the "worst" failure in results.
-
-    StepFailures are "best", followed by InfraFailures, followed by all other
-    exceptions.
-
-    TODO: crbug.com/1495428 - Use ExceptionGroups once we support Python 3.11.
-    """
-    failing_results = [x for x in results if not x.is_ok()]
-
-    for result in failing_results:
-      if not isinstance(result._exc, self.m.step.StepFailure):
-        raise result._exc
-
-    for result in failing_results:
-      if isinstance(result._exc, self.m.step.InfraFailure):
-        raise result._exc
-
-    for result in failing_results:
-      if result._exc:
-        raise result._exc
-
-    raise ValueError(  # pragma: no cover
-        '_raise() called but no results contained exceptions')
 
   def collect(
       self,
@@ -166,9 +162,9 @@ class DeferApi(recipe_api.RecipeApi):
     if all(x.is_ok() for x in results):
       return [x.result() for x in results]
 
-    if step_name:
-      failures = [x for x in results if not x.is_ok()]
+    failures = [x for x in results if not x.is_ok()]
 
+    if step_name:
       traces_by_name = {}
       for result in failures:
         name = repr(result._exc)
@@ -183,4 +179,4 @@ class DeferApi(recipe_api.RecipeApi):
           number_part = f' ({i+1})' if i else ''
           step.presentation.logs[f'{name}{number_part}'] = trace
 
-    raise self._raise(results)
+    raise ExceptionGroup('deferred failures', [x._exc for x in failures])

@@ -21,3 +21,7 @@ message ResultInputProps {
   bool exception = 2;
   string step_name = 3;
 }
+
+message NonDeferredInputProps {
+  bool fail = 1;
+}
