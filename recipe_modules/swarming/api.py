@@ -1221,8 +1221,9 @@ class SwarmingApi(recipe_api.RecipeApi):
 
   def initialize(self):
     if self._test_data.enabled:
-      self._server = 'https://example.swarmingserver.appspot.com'
-      self._env_properties.SWARMING_SERVER = self._server
+      if not self._env_properties.SWARMING_SERVER:
+        self._server = 'https://example.swarmingserver.appspot.com'
+        self._env_properties.SWARMING_SERVER = self._server
       # Recipes always run on top of swarming task now.
       self._env_properties.SWARMING_TASK_ID = (
           self._env_properties.SWARMING_TASK_ID or 'fake-task-id')
