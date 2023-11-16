@@ -84,6 +84,9 @@ message AutorollRecipeOptions {
   // If true, skip the autoroller will skip CCing authors of CLs in this repo
   // when rolling those CLs downstream.
   bool no_cc_authors = 4;
+
+  // If true, don't use the --r-owner option to 'git cl upload'.
+  bool no_owners = 5;
 }
 
 message RepoSpec {
