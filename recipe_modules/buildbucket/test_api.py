@@ -278,6 +278,95 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     )
     return self.build(build)
 
+  def backend_build(
+      self,
+      project='project',
+      bucket='try',
+      builder='builder-backend',
+      build_id=8945511751514863184,
+      tags=None,
+      status=None,
+      task=None,
+      task_dimensions=None,
+      backend_hostname=None,
+      backend_config=None,
+  ):
+      """Emulates a typical buildbucket backend build.
+      Usage:
+
+          yield (api.test('basic') +
+                api.buildbucket.backend_build(
+                  project='my-proj',
+                  builder='win',
+                  task=build_pb2.Task(
+                      id=build_pb2.TaskID(
+                          id="1",
+                          target="swarming://chromium-swarm"
+                      )
+                  ),
+                  backend_hostname="some_server"
+              ))
+      """
+      return self.build(build_pb2.Build(
+          id=build_id,
+          tags=tags,
+          status=status,
+          builder=builder_common_pb2.BuilderID(
+              project=project,
+              bucket=bucket,
+              builder=builder,
+          ),
+          infra=build_pb2.BuildInfra(
+            backend=build_pb2.BuildInfra.Backend(
+              task=task,
+              task_dimensions=task_dimensions,
+              hostname=backend_hostname,
+              config=backend_config,
+            ),
+            resultdb=build_pb2.BuildInfra.ResultDB(
+                invocation='invocations/build:%d' % build_id),
+        ),
+    ))
+
+  def raw_swarming_build(
+      self,
+      project='project',
+      bucket='try',
+      builder='builder-backend',
+      build_id=8945511751514863184,
+      tags=None,
+      status=None,
+      priority=None,
+      task_dimensions=None,
+      hostname=None,
+      bot_dimensions=None,
+      task_id=None,
+      parent_run_id=None,
+      task_service_account=None,
+  ):
+    return self.build(build_pb2.Build(
+        id=build_id,
+            tags=tags,
+            status=status,
+            builder=builder_common_pb2.BuilderID(
+                project=project,
+                bucket=bucket,
+                builder=builder,
+            ),
+          infra=build_pb2.BuildInfra(
+              swarming=build_pb2.BuildInfra.Swarming(
+                  hostname=hostname,
+                  priority=priority,
+                  task_id=task_id,
+                  parent_run_id=parent_run_id,
+                  task_service_account=task_service_account,
+                  task_dimensions=task_dimensions,
+                  bot_dimensions=bot_dimensions,
+              ),
+              resultdb=build_pb2.BuildInfra.ResultDB(
+                  invocation='invocations/build:%d' % build_id),
+        ),
+    ))
 
   def tags(self, **tags):
     """Alias for tags in util.py. See doc there."""

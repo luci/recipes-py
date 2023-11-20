@@ -11,30 +11,37 @@ option go_package = "go.chromium.org/luci/buildbucket/proto;buildbucketpb";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/struct.proto";
+import "google/rpc/status.proto";
 
 import "go.chromium.org/luci/buildbucket/proto/common.proto";
 import "go.chromium.org/luci/buildbucket/proto/launcher.proto";
 import "go.chromium.org/luci/buildbucket/proto/task.proto";
 
-
+// Services can implement TaskBackend in order for Buildbucket to run Builds
+// on them and track the tasks.
+//
+// Besides implementing all the RPCs below, we also expect the backends to send
+// UpdateBuildTask messages to Buildbucket via Pub/Sub.
+//
+// So that Buildbucket is able to
+//   * get task updates from these backends via the UpdateBuildTask messages,
+//   * periodically fetch tasks it has not heard from for a while,
+//   * give commands about tasks which it has previously issued (e.g. CancelTasks).
+//
+// Simple backends that opt out of backend task syncing/tracking with Buildbucket
+// should use `TaskBackendLite` instead.
 service TaskBackend {
   // RunTask instructs the backend to run a task (which contains payload for
   // executing a Buildbucket Build).
   //
-  // This should return OK as long as the backend will EVENTUALLY run the
-  // task. It's expected that the backend will either call
-  // Builds.UpdateBuildTask or the agent will call UpdateBuild once
-  // the task is running.
-  //
-  // Notably this doesn't return anything other than the gRPC status
-  // code due to complexities of the "RunTask Protocol" (see this section
-  // below).
+  // The RunTaskResponse should contain the created task.
+  // And the implementation of this RPC should be idempotent.
   //
   // Buildbucket will invoke this RPC with the Project-scoped identity.
   rpc RunTask(RunTaskRequest) returns (RunTaskResponse) {};
 
-  // BB will call FetchTasks when it needs to understand the current
-  // status of jobs.
+  // Buildbucket will call FetchTasks when it needs to understand the current
+  // status of tasks.
   //
   // This will happen at a regular, unspecified, interval when
   // UpdateBuild/UpdateBuildTask haven't been called recently.
@@ -45,7 +52,7 @@ service TaskBackend {
   // Buildbucket will invoke this RPC with the Project-scoped identity.
   rpc FetchTasks(FetchTasksRequest) returns (FetchTasksResponse) {};
 
-  // BB will call this if it was requested to cancel some build(s).
+  // Buildbucket will call this if it was requested to cancel some build(s).
   // The backend SHOULD implement cancelation as best as it can, but
   // simple backends may choose to ignore this (because the next call
   // to UpdateBuild will indicate that the build is Canceled, and so the
@@ -54,13 +61,12 @@ service TaskBackend {
   // Buildbucket will invoke this RPC with the Project-scoped identity.
   rpc CancelTasks(CancelTasksRequest) returns (CancelTasksResponse) {};
 
-  // BB will call this when it is asked to validate project configuration i.e.
-  // the Builder.backend.config_json field.
+  // Buildbucket will call this when it is asked to validate project
+  // configuration i.e. the Builder.backend.config_json field.
   //
   // Buildbucket will invoke this RPC with the Project-scoped identity.
   rpc ValidateConfigs(ValidateConfigsRequest)
      returns (ValidateConfigsResponse) {};
-
 
 }
 
@@ -77,11 +83,9 @@ message RunTaskRequest {
   // of a single backend handling multiple different protocols.
   string target = 1;
 
-  // DEPRECATED. The startBuildTaskToken will be now be provided in
-  // RunTaskRequest.StartBuildTaskToken.
-  //
   // A REGISTER_TASK token that the backend can use to register the backend task
   // to Buildbucket via the RegisterBuildTask RPC.
+  // DEPRECATED: The StartBuildToken in RunTaskRequest.Secrets will be used.
   string register_backend_task_token = 2 [deprecated = true];
 
   // The LUCI Realm that the created task should be associated with.
@@ -145,8 +149,12 @@ message RunTaskRequest {
   // e.g. -task-id and -cache-base.
   repeated string agent_args = 5;
 
-  // DEPRECATED. Do not use.
-  BuildSecrets secrets = 6 [deprecated = true];
+  // Secrets contains key material for clients to call StartBuild or UpdateBuild.
+  // This should be added to the BuildbucketAgentContext file for use in the agent.
+  // Alternatively (but not suggested), this can be passed via LUCI_CONTEXT['secrets']
+  // to the agent. There should be no CLI support for secrets in the agent.
+  //
+  BuildSecrets secrets = 6;
 
   // The hostname of the buildbucket service to send RPCs back to.
   //
@@ -219,20 +227,12 @@ message RunTaskRequest {
   // However proper deduplication can be difficult to properly implement,
   // so it may be worth the tradeoff for simple backends to just accept
   // the possibility of occasional duplicated, useless, work.
-  //
-  // See the "RunTask Protocol" section for the full details on how
-  // Buildbucket will avoid raciness even in the face of duplicate tasks.
   string request_id = 16;
 
-  // DEPRECATED. Do not use. This has been moved to StartBuildTaskResponse.
   // The pubsub topic that the backend will use to send
   // UpdateBuildTask messages to buildbucket. It is set by buildbucket using
   // service_config and the current buildbucket host.
-  string pubsub_topic = 17 [deprecated = true];
-
-  // A START_BUILD_TASK token that the backend can use to start and register the
-  // backend task with Buildbucket via the StartBuildTask RPC.
-  string start_build_task_token = 18;
+  string pubsub_topic = 17;
 }
 
 message RunTaskResponse {
@@ -246,8 +246,17 @@ message FetchTasksRequest {
 }
 
 message FetchTasksResponse {
+  message Response {
+    oneof response {
+      // The backend task.
+      Task task = 1;
+
+      // Error code and details of the unsuccessful RPC.
+      google.rpc.Status error = 100;
+    }
+  }
   // These should represent the current state of the requested tasks.
-  repeated Task tasks = 1;
+  repeated Response responses = 1;
 }
 
 message CancelTasksRequest {
@@ -293,4 +302,29 @@ message ValidateConfigsResponse {
   // Must be sorted by `index`, and multiple ErrorDetails for the same index
   // should be assumed to be in an order which makes sense to the backend.
   repeated ErrorDetail config_errors = 1;
+}
+
+
+// Services can implement TaskBackendLite in order for Buildbucket to run Builds
+// on them.
+//
+// This is for the simple use cases where the backends don't have tasks or don't
+// need Buildbucket to track tasks.
+//
+// For example, some Buildbucket v1 users only want to pull builds from
+// Buildbucket to execute and update Buildbucket about the
+// final state of the builds.
+//
+// Backends that opt in backend task syncing/tracking with Buildbucket
+// should use `TaskBackend` instead.
+service TaskBackendLite {
+  // RunTask instructs the backend to run a task (which contains payload for
+  // executing a Buildbucket Build).
+  //
+  // This should return a dummy or empty task.
+  //
+  // While idempotency is not required, it's still nice to have if possible.
+  //
+  // Buildbucket will invoke this RPC with the Project-scoped identity.
+  rpc RunTask(RunTaskRequest) returns (RunTaskResponse) {};
 }

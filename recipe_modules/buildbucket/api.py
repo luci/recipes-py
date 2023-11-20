@@ -1048,6 +1048,102 @@ class BuildbucketApi(recipe_api.RecipeApi):
     """
     return self._bucket_v1
 
+  # Task backend migration functions.
+  #
+  # They serve to pull data from build.infra.swarming or build.infra.backend
+  # depending on which is populated. This takes the conditianal logic out of
+  # the hands of recipe owners.
+  #
+  # These will mostly be deprecated once the migration is over (things like
+  # swarming_bot_dimensions might stay), in favor using the actual fields from
+  # build.infra.backend.
+
+  @property
+  def backend_hostname(self):
+    """Returns the backend hostname for the build.
+    If it is legacy swarming build then the swarming hostname will be returned.
+    """
+    if self.build.infra.swarming.hostname:
+      return self.build.infra.swarming.hostname
+    return self.build.infra.backend.hostname
+
+  @property
+  def backend_task_dimensions(self):
+    """Returns the task dimensions used by the task for the build.
+    """
+    if self.build.infra.swarming.task_dimensions:
+      return self.build.infra.swarming.task_dimensions
+    return self.build.infra.backend.task_dimensions
+
+  @property
+  def backend_task_id(self):
+    """Returns the task id of the task for the build.
+    """
+    if self.build.infra.swarming.task_id:
+      return self.build.infra.swarming.task_id
+    return self.build.infra.backend.task.id.id
+
+  @property
+  def swarming_bot_dimensions(self):
+    """Returns the backend hostname for the build.
+    If it is legacy swarming build then the swarming hostname will be returned.
+    """
+    if self.build.infra.swarming.bot_dimensions:
+      return self.build.infra.swarming.bot_dimensions
+    if ("swarming" not in self.build.infra.backend.task.id.target
+        or not self.build.infra.backend.task.details):
+      return None
+    task_details = self.build.infra.backend.task.details
+    if "bot_dimensions" not in task_details:
+      return None
+    bot_dimensions = []
+    for key, vals in task_details['bot_dimensions'].items():
+      for v in vals:
+          bot_dimensions.append(common_pb2.StringPair(key=key, value=v))
+    return bot_dimensions
+
+  @property
+  def swarming_parent_run_id(self):
+    """Returns the parent_run_id (swarming specific) used in the task.
+    """
+    if self.build.infra.swarming.parent_run_id:
+      return self.build.infra.swarming.parent_run_id
+    if ("swarming" not in self.build.infra.backend.task.id.target
+        or not self.build.infra.backend.task.details):
+      return None
+    task_details = self.build.infra.backend.task.details
+    if 'parent_run_id' not in task_details:
+      return None
+    return task_details['parent_run_id']
+
+  @property
+  def swarming_priority(self):
+    """Returns the priority (swarming specific) of the task.
+    """
+    if self.build.infra.swarming.priority:
+      return self.build.infra.swarming.priority
+    if ("swarming" not in self.build.infra.backend.task.id.target
+        or not self.build.infra.backend.task.details):
+      return None
+    task_details = self.build.infra.backend.task.details
+    if 'priority' not in task_details:
+      return None
+    return task_details['priority']
+
+  @property
+  def swarming_task_service_account(self):
+    """Returns the swarming specific service account used in the task.
+    """
+    if self.build.infra.swarming.task_service_account:
+      return self.build.infra.swarming.task_service_account
+    if "swarming" not in self.build.infra.backend.task.id.target:
+      return None
+    if not self.build.infra.backend.config:
+      return None
+    backend_config = self.build.infra.backend.config
+    if 'task_service_account' not in backend_config:
+      return None
+    return backend_config['task_service_account']
 
   # DEPRECATED API.
 

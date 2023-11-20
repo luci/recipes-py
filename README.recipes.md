@@ -58,6 +58,8 @@
   * [buildbucket:run/multi](#recipes-buildbucket_run_multi) &mdash; Launches multiple builds at the same revision.
   * [buildbucket:tests/add_build_tags](#recipes-buildbucket_tests_add_build_tags)
   * [buildbucket:tests/add_step_tags](#recipes-buildbucket_tests_add_step_tags)
+  * [buildbucket:tests/backend](#recipes-buildbucket_tests_backend)
+  * [buildbucket:tests/backend_utilities_fail](#recipes-buildbucket_tests_backend_utilities_fail)
   * [buildbucket:tests/build](#recipes-buildbucket_tests_build)
   * [buildbucket:tests/cancel](#recipes-buildbucket_tests_cancel)
   * [buildbucket:tests/collect](#recipes-buildbucket_tests_collect)
@@ -445,6 +447,21 @@ Args:
   Empty tag values won't remove existing tags with matching keys, since tags
   can only be added.
 
+&emsp; **@property**<br>&mdash; **def [backend\_hostname](/recipe_modules/buildbucket/api.py#1061)(self):**
+
+Returns the backend hostname for the build.
+If it is legacy swarming build then the swarming hostname will be returned.
+
+&emsp; **@property**<br>&mdash; **def [backend\_task\_dimensions](/recipe_modules/buildbucket/api.py#1070)(self):**
+
+Returns the task dimensions used by the task for the build.
+    
+
+&emsp; **@property**<br>&mdash; **def [backend\_task\_id](/recipe_modules/buildbucket/api.py#1078)(self):**
+
+Returns the task id of the task for the build.
+    
+
 &emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#1043)(self):**
 
 Returns bucket name in v1 format.
@@ -468,13 +485,13 @@ much information as possible. Some fields may be left empty, violating
 the rules described in the .proto files.
 If the current build is not a buildbucket build, returned `build.id` is 0.
 
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#1054)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#1150)(self):**
 
 *** note
 **DEPRECATED**: use build.id instead.
 ***
 
-&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#1059)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#1155)(self):**
 
 *** note
 **DEPRECATED**: use build.input instead.
@@ -497,7 +514,7 @@ https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/pr
 
 Returns the full builder name: {project}/{bucket}/{builder}.
 
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#1064)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#1160)(self):**
 
 *** note
 **DEPRECATED**: Use build.builder instead.
@@ -807,7 +824,27 @@ Args:
 
 Can be called at most once per build.
 
-&emsp; **@property**<br>&mdash; **def [shadowed\_bucket](/recipe_modules/buildbucket/api.py#1069)(self):**
+&emsp; **@property**<br>&mdash; **def [shadowed\_bucket](/recipe_modules/buildbucket/api.py#1165)(self):**
+
+&emsp; **@property**<br>&mdash; **def [swarming\_bot\_dimensions](/recipe_modules/buildbucket/api.py#1086)(self):**
+
+Returns the backend hostname for the build.
+If it is legacy swarming build then the swarming hostname will be returned.
+
+&emsp; **@property**<br>&mdash; **def [swarming\_parent\_run\_id](/recipe_modules/buildbucket/api.py#1105)(self):**
+
+Returns the parent_run_id (swarming specific) used in the task.
+    
+
+&emsp; **@property**<br>&mdash; **def [swarming\_priority](/recipe_modules/buildbucket/api.py#1119)(self):**
+
+Returns the priority (swarming specific) of the task.
+    
+
+&emsp; **@property**<br>&mdash; **def [swarming\_task\_service\_account](/recipe_modules/buildbucket/api.py#1133)(self):**
+
+Returns the swarming specific service account used in the task.
+    
 
 &emsp; **@staticmethod**<br>&mdash; **def [tags](/recipe_modules/buildbucket/api.py#249)(\*\*tags):**
 
@@ -4699,6 +4736,18 @@ Launches multiple builds at the same revision.
 
 
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/add_step_tags.py#11)(api):**
+### *recipes* / [buildbucket:tests/backend](/recipe_modules/buildbucket/tests/backend.py)
+
+[DEPS](/recipe_modules/buildbucket/tests/backend.py#13): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket)
+
+
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/backend.py#19)(api):**
+### *recipes* / [buildbucket:tests/backend\_utilities\_fail](/recipe_modules/buildbucket/tests/backend_utilities_fail.py)
+
+[DEPS](/recipe_modules/buildbucket/tests/backend_utilities_fail.py#13): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket)
+
+
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/backend_utilities_fail.py#19)(api):**
 ### *recipes* / [buildbucket:tests/build](/recipe_modules/buildbucket/tests/build.py)
 
 [DEPS](/recipe_modules/buildbucket/tests/build.py#20): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
