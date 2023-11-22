@@ -131,7 +131,7 @@ class StepTestData(BaseTestData):
 
   @property
   def retcode(self):  # pylint: disable=E0202
-    return self._retcode or 0
+    return self._retcode
 
   @retcode.setter
   def retcode(self, value):  # pylint: disable=E0202
@@ -638,7 +638,9 @@ class RecipeTestApi(object):
              placeholder data for zero or more modules, as well as possibly
              setting the retcode for this step.
       retcode=(int or None) - Override the retcode for this step, even if it
-             was set by |data|. This must be set as a keyword arg.
+             was set by |data|. This must be set as a keyword arg. In the case
+             of None, if the step completes successfully (not canceled or timed
+             out), then the step's retcode will be 0.
       stdout - StepTestData object with a single output placeholder datum for a
              step's stdout.
       stderr - StepTestData object with a single output placeholder datum for a

@@ -10,4 +10,14 @@ message InputProperties {
     // If true, recipe will attempt to recover from early termination and exit
     // with a SUCCESS status.
     bool recover = 1;
+
+    // Message for checking the retcode of the canceled sleep step. If not set,
+    // the retcode won't be checked. If set and retcode is not set, then the
+    // retcode of the canceled step will be checked to be equal to None.
+    // Otherwise, the retcode of the canceled step will be checked to be equal
+    // to the provided retcode.
+    message CheckRetcode {
+      optional int32 retcode = 1;
+    }
+    CheckRetcode check_retcode = 2;
 }

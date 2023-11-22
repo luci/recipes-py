@@ -197,9 +197,9 @@ class SimulationStepRunner(StepRunner):
         return ExecutionResult(had_timeout=True)
 
     if tdata.cancel:
-      return ExecutionResult(was_cancelled=True)
+      return ExecutionResult(was_cancelled=True, retcode=tdata.retcode)
 
-    return ExecutionResult(retcode=tdata.retcode)
+    return ExecutionResult(retcode=tdata.retcode or 0)
 
   def run_noop(self, name_tokens, debug_log):
     return self.run(name_tokens, debug_log, Step(
