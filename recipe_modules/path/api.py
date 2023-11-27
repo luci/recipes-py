@@ -267,12 +267,8 @@ class PathApi(recipe_api.RecipeApi):
                   (value, property_name))
     return value
 
-  def _ensure_dir(self, path):  # pragma: no cover
-    try:
-      os.makedirs(path)
-    except os.error as ex:
-      if ex.errno != errno.EEXIST:
-        raise
+  def _ensure_dir(self, path: str) -> None:  # pragma: no cover
+    os.makedirs(path, exist_ok=True)
 
   def _split_path(self, path):  # pragma: no cover
     """Relative or absolute path -> tuple of components."""
