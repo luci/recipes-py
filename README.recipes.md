@@ -1688,7 +1688,7 @@ contains that exception.
 The DeferredResult is expected to be passed into api.defer.collect(), but
 DeferredResult.result() does similar processing.
 
-&mdash; **def [collect](/recipe_modules/defer/api.py#147)(self, results: Sequence[DeferredResult], step_name: Optional[str]='collect'):**
+&mdash; **def [collect](/recipe_modules/defer/api.py#147)(self, results: Sequence[DeferredResult], step_name: Optional[str]=None):**
 
 Raise any exceptions in the given list of DeferredResults.
 
@@ -1700,7 +1700,7 @@ Args:
     step_name: Name for step including traceback logs if there are failures.
         If None, don't include a step with traceback logs.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [context](/recipe_modules/defer/api.py#91)(self, collect_step_name: Optional[str]='collect'):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [context](/recipe_modules/defer/api.py#91)(self, collect_step_name: Optional[str]=None):**
 
 Creates a context that tracks deferred calls.
 

@@ -89,7 +89,7 @@ class DeferApi(recipe_api.RecipeApi):
   DeferredResult = DeferredResult
 
   @contextlib.contextmanager
-  def context(self, collect_step_name: Optional[str] = 'collect'):
+  def context(self, collect_step_name: Optional[str] = None):
     """Creates a context that tracks deferred calls.
 
     Usage:
@@ -147,7 +147,7 @@ class DeferApi(recipe_api.RecipeApi):
   def collect(
       self,
       results: Sequence[DeferredResult],
-      step_name: Optional[str] = 'collect',
+      step_name: Optional[str] = None,
   ) -> Sequence[Any]:
     """Raise any exceptions in the given list of DeferredResults.
 
