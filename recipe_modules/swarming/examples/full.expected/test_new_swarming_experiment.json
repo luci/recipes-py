@@ -12,7 +12,7 @@
       "/path/to/tmp/json",
       "ensure-directory",
       "--mode",
-      "0777",
+      "0o777",
       "[START_DIR]/cipd_tool/infra/tools/luci/swarming/2899a13d3f05d44c2e0b1c94f1d473ad94c47984016f28cf60edb5ca63006bc8"
     ],
     "infra_step": true,

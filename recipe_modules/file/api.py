@@ -4,9 +4,6 @@
 
 """File manipulation (read/write/delete/glob) methods."""
 
-from future.utils import iteritems
-from past.builtins import oct
-
 from recipe_engine import config_types
 from recipe_engine import recipe_api
 
@@ -63,16 +60,18 @@ class SymlinkTree(object):
     Args:
       * name (str): The name of the step.
     """
-    for target, linknames in iteritems(self._link_map):
+    for target, linknames in self._link_map.items():
       for linkname in linknames:
         self._api.path.mock_copy_paths(target, linkname)
     args = [
-      'python3', '-u', self._resource,
-      '--link-json',
-      self._api.json.input({
-        str(target): linkname
-        for target, linkname in iteritems(self._link_map)
-      }),
+        'python3',
+        '-u',
+        self._resource,
+        '--link-json',
+        self._api.json.input({
+            str(target): linkname
+            for target, linkname in self._link_map.items()
+        }),
     ]
     self._api.step(name, args, infra_step=True)
 
@@ -468,8 +467,8 @@ class FileApi(recipe_api.RecipeApi):
                  test_data=()):
     """Performs glob expansion on `pattern`.
 
-    glob rules for `pattern` follow the same syntax as for the `python-glob2`
-    module, which supports '**' syntax.
+    glob rules for `pattern` follow the same syntax as for the stdlib `glob`
+    module with `recursive=True`.
 
     ```
     e.g. 'a/**/*.py'
@@ -638,8 +637,8 @@ class FileApi(recipe_api.RecipeApi):
   def rmglob(self, name, source, pattern, recursive=True, include_hidden=True):
     """Removes all entries in `source` matching the glob `pattern`.
 
-    glob rules for `pattern` follow the same syntax as for the `python-glob2`
-    module, which supports '**' syntax.
+    glob rules for `pattern` follow the same syntax as for the stdlib `glob`
+    module with `recursive=True`.
 
     ```
     e.g. 'a/**/*.py'

@@ -22,7 +22,7 @@
       "/path/to/tmp/json",
       "ensure-directory",
       "--mode",
-      "0777",
+      "0o777",
       "[CLEANUP]/cas-example_tmp_1/sub/dir"
     ],
     "infra_step": true,
@@ -66,7 +66,7 @@
       "/path/to/tmp/json",
       "ensure-directory",
       "--mode",
-      "0777",
+      "0o777",
       "[START_DIR]/cipd_tool/infra/tools/luci/cas/33f9d887e5b8aeaaf9d65506acccfa8da2c480712e534a23a79e92c342c44bee"
     ],
     "infra_step": true,
