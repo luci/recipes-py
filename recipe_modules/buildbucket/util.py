@@ -2,11 +2,10 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from future.moves.urllib.parse import urlparse
-from future.utils import iteritems
-
 import datetime
 import re
+
+from urllib.parse import urlparse
 
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 
@@ -57,7 +56,7 @@ def tags(**tags):
     List of common_pb2.StringPair messages.
   """
   messages = []
-  for key, values in iteritems(tags):
+  for key, values in tags.items():
     if not isinstance(values, list):
       values = [values]
     for value in values:

@@ -12,9 +12,6 @@ https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 If it returns `None`, the link is not reported. Default link title is build ID.
 """
 
-from future.utils import iteritems, itervalues
-from past.builtins import long
-
 from contextlib import contextmanager
 from google import protobuf
 from google.protobuf import field_mask_pb2
@@ -869,7 +866,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto).
       for the ended build.
     """
-    assert isinstance(build_id, (int, long))
+    assert isinstance(build_id, int)
     return self.collect_builds([build_id], **kwargs)[build_id]
 
   def collect_builds(
@@ -927,7 +924,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
       if raise_if_unsuccessful:
         unsuccessful_builds = sorted(
-            b.id for b in itervalues(builds)
+            b.id for b in builds.values()
             if b.status != common_pb2.SUCCESS
         )
         if unsuccessful_builds:
@@ -937,7 +934,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
           raise self.m.step.InfraFailure(
               'Triggered build(s) did not succeed, unexpectedly')
       elif mirror_status:
-        bs = list(itervalues(builds))
+        bs = list(builds.values())
         if any(b.status == common_pb2.INFRA_FAILURE for b in bs):
           step_res.presentation.status = self.m.step.EXCEPTION
         elif any(b.status == common_pb2.FAILURE for b in bs):
@@ -1035,7 +1032,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     """Raise ValueError if the given build ID is not a number or a string
     that represents numeric value.
     """
-    is_int = isinstance(build_id, (int, long))
+    is_int = isinstance(build_id, int)
     is_str_num = isinstance(build_id, str) and build_id.isdigit()
     if not (is_int or is_str_num):
       raise ValueError('Expected a numeric build ID, got %s' % (build_id,))

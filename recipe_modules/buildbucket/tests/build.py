@@ -2,10 +2,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from future.utils import iteritems
-
 import datetime
-import json
 
 from google.protobuf import text_format
 from google.protobuf import timestamp_pb2
@@ -15,7 +12,7 @@ from recipe_engine import post_process
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 from PB.go.chromium.org.luci.buildbucket.proto \
   import builder_common as builder_common_pb2
-from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
+
 
 DEPS = [
   'assertions',
