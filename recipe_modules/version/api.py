@@ -4,7 +4,8 @@
 
 """Thin API for parsing semver strings into comparable object."""
 
-from pkg_resources import parse_version
+# Keep the legacy behavior of falling back to less-strict version parsing.
+import packaging_legacy.version
 
 from recipe_engine.recipe_api import RecipeApi
 
@@ -21,5 +22,7 @@ class VersionApi(RecipeApi):
 
     You can read more about how this works at:
     https://setuptools.readthedocs.io/en/latest/pkg_resources.html#parsing-utilities
+    (for strict parsing) and https://github.com/di/packaging_legacy (for the fallback
+    behavior).
     """
-    return parse_version(version)
+    return packaging_legacy.version.parse(version)

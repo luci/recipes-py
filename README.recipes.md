@@ -4627,9 +4627,9 @@ Returns a random UUID string.
 
 Thin API for parsing semver strings into comparable object.
 
-#### **class [VersionApi](/recipe_modules/version/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#473)):**
+#### **class [VersionApi](/recipe_modules/version/api.py#13)([RecipeApi](/recipe_engine/recipe_api.py#473)):**
 
-&emsp; **@staticmethod**<br>&mdash; **def [parse](/recipe_modules/version/api.py#14)(version):**
+&emsp; **@staticmethod**<br>&mdash; **def [parse](/recipe_modules/version/api.py#15)(version):**
 
 Parse implements PEP 440 parsing for semvers.
 
@@ -4639,6 +4639,8 @@ version.
 
 You can read more about how this works at:
 https://setuptools.readthedocs.io/en/latest/pkg_resources.html#parsing-utilities
+(for strict parsing) and https://github.com/di/packaging_legacy (for the fallback
+behavior).
 ### *recipe_modules* / [warning](/recipe_modules/warning)
 
 
