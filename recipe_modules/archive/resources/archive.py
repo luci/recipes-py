@@ -7,7 +7,7 @@ the 'archive' recipe module internally. Should not be used elsewhere.
 """
 
 # [VPYTHON:BEGIN]
-# python_version: "3.8"
+# python_version: "3.11"
 # wheel: <
 #   name: "infra/python/wheels/zstandard/${vpython_platform}"
 #   version: "version:0.16.0"
