@@ -17,6 +17,7 @@ from past.builtins import basestring
 from recipe_engine.internal import recipe_deps
 
 from .util import ModuleInjectionSite
+from .util import ModuleInjectionError
 from .util import static_call
 from .util import static_wraps
 
@@ -534,6 +535,12 @@ class RecipeTestApi(object):
     # Otherwise inject into 'self.m'
     self.m = self if module is None else ModuleInjectionSite()
     self._module = module
+
+  def __getattr__(self, name):
+    if self._module is None:
+      raise ModuleInjectionError(
+          f"Recipe has no dependency {name!r}. (Add it to DEPS?)")
+    raise AttributeError(f"'RecipeTestApi' object has no attribute {name!r}")
 
   # TODO(iannucci): Fix this and other kwargs to use direct keyword py3 syntax.
   @staticmethod
