@@ -224,11 +224,6 @@ def RunSteps(api):
   assert a < b
   assert not (b < a)
 
-  foo = start_dir.join('ab', platform_ext=dict(foo='.foo'))
-  bar = start_dir.join('ab', platform_ext=dict(bar='.bar'))
-  assert bar < foo
-  assert not (foo < bar)
-
   slashy_path = api.path['start_dir'].join(f'foo{api.path.sep}bar')
   separated_path = api.path['start_dir'].join('foo', 'bar')
   assert str(slashy_path) == str(separated_path)

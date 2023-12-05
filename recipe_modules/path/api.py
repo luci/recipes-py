@@ -58,9 +58,7 @@ def PathToString(api, test):
 
   def PathToString_inner(path):
     assert isinstance(path, config_types.Path)
-    base_path = path.base.resolve(test.enabled)
-    suffix = path.platform_ext.get(api.m.platform.name, '')
-    return api.join(base_path, *path.pieces) + suffix
+    return api.join(path.base.resolve(test.enabled), *path.pieces)
 
   return PathToString_inner
 

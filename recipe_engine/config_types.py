@@ -2,15 +2,14 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from __future__ import annotations
+
 import collections
 import itertools
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 import abc
 import os
-import re
-
-from future.utils import with_metaclass
 
 
 
@@ -60,7 +59,7 @@ class RecipeConfigType:
     return self.tostring_fn(self) # pylint: disable=not-callable
 
 
-class BasePath(with_metaclass(abc.ABCMeta)):
+class BasePath(metaclass=abc.ABCMeta):
 
   @abc.abstractmethod
   def resolve(self, test_enabled: bool) -> str:
@@ -149,8 +148,7 @@ class Path(RecipeConfigType):
 
   def __init__(self,
                base: BasePath,
-               *pieces: str,
-               platform_ext: Optional[Dict[str, str]] = None):
+               *pieces: str):
     """Creates a Path.
 
     Args:
@@ -158,62 +156,48 @@ class Path(RecipeConfigType):
         by the 'path' recipe module.
       *pieces: The components of the path relative to base. These pieces must
         be non-relative (i.e. no '..' or '.', etc. as a piece).
-      platform_ext: A mapping from platform name (as defined by the 'platform'
-        module), to a suffix for the path.
     """
     super().__init__()
     assert isinstance(base, BasePath), base
     assert all(isinstance(x, str) for x in pieces), pieces
     assert not any(x in ('..', '/', '\\') for x in pieces)
-    pieces = [p for p in pieces if p != '.']
 
     self._base = base
-    self._pieces = tuple(pieces)
-    self._platform_ext = platform_ext or {}
+    self._pieces = tuple(p for p in pieces if p != '.')
 
   @property
   def base(self) -> BasePath:
     return self._base
 
   @property
-  def pieces(self) -> Tuple[str]:
+  def pieces(self) -> tuple[str, ...]:
     return self._pieces
 
-  @property
-  def platform_ext(self) -> Dict[str, str]:
-    return self._platform_ext
-
-  def __eq__(self, other: 'Path') -> bool:
+  def __eq__(self, other: Path) -> bool:
     return (self.base == other.base and
-            self.pieces == other.pieces and
-            self.platform_ext == other.platform_ext)
+            self.pieces == other.pieces)
 
   def __hash__(self) -> int:
     return hash((
         self.base,
         self.pieces,
-        tuple(sorted(self.platform_ext.items())),
     ))
 
   def __ne__(self, other: Any) -> bool:
     return not self == other
 
-  def __lt__(self, other: 'Path') -> bool:
+  def __lt__(self, other: Path) -> bool:
     if self.base != other.base:
+      # NOTE: bases all happen to extend namedtuple, which makes this comparison
+      # work.
       return self.base < other.base
-    elif self.pieces != other.pieces:
-      return self.pieces < other.pieces
-    return (
-        sorted(self.platform_ext.items()) < sorted(other.platform_ext.items())
-    )
+    return self.pieces < other.pieces
 
-  def __truediv__(self, piece: str) -> 'Path':
+  def __truediv__(self, piece: str) -> Path:
     """Adds the shorthand '/'-operator for .join(), returning a new path."""
     return self.join(piece)
 
-  def join(self,
-           *pieces: str,
-           platform_ext: Optional[Dict[str, str]] = None) -> 'Path':
+  def join(self, *pieces: str) -> Path:
     """Appends *pieces to this Path, returning a new Path.
 
     Empty values ('', None) in pieces will be omitted.
@@ -221,20 +205,17 @@ class Path(RecipeConfigType):
     Args:
       pieces: The components of the path relative to base. These pieces must be
         non-relative (i.e. no '..' as a piece).
-      platform_ext: A mapping from platform name (as defined by the 'platform'
-        module), to a suffix for the path.
 
     Returns:
       The new Path.
     """
-    if not pieces and not platform_ext:
+    if not pieces:
       return self
     return Path(
         self.base,
-        *[p for p in itertools.chain(self.pieces, pieces) if p],
-        platform_ext=platform_ext or self.platform_ext)
+        *[p for p in itertools.chain(self.pieces, pieces) if p])
 
-  def is_parent_of(self, child: 'Path') -> bool:
+  def is_parent_of(self, child: Path) -> bool:
     """True if |child| is in a subdirectory of this path."""
     # Assumes base paths are not nested.
     # TODO(vadimsh): We should not rely on this assumption.
@@ -263,11 +244,4 @@ class Path(RecipeConfigType):
     s = 'Path(%r' % (self.base,)
     if self.pieces:
       s += ', %s' % ', '.join(repr(x) for x in self.pieces)
-
-    if self.platform_ext:
-      platform_exts = []
-      for k, v in sorted(self.platform_ext.items()):
-        platform_exts.append('%s=%s' % (k, repr(v)))
-      s += ', platform_exts=(%s)' % ', '.join(repr(x) for x in platform_exts)
-
     return s + ')'
