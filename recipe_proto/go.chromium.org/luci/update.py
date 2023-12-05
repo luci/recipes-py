@@ -22,21 +22,22 @@ LOG_URL = BASE_URL+'/+log/main/%s?format=JSON&n=1'
 TAR_URL = BASE_URL+'/+archive/%s/%s.tar.gz'
 
 SUB_PATHS = [
-  'analysis/proto',
-  'buildbucket/proto',
-  'common/bq/pb',
-  'common/proto',
-  'config_service/proto',
-  'cv/api/config/v2',
-  'cv/api/recipe/v1',
-  'cv/api/v0',
-  'cv/api/v1',
-  'gce/api/config/v1',
-  'led/job',
-  'lucictx',
-  'resultdb/proto',
-  'scheduler/api/scheduler/v1',
-  'scheduler/appengine/messages',
+    'analysis/proto',
+    'buildbucket/proto',
+    'common/bq/pb',
+    'common/proto',
+    'config_service/proto',
+    'cv/api/config/v2',
+    'cv/api/recipe/v1',
+    'cv/api/v0',
+    'cv/api/v1',
+    'gce/api/config/v1',
+    'led/job',
+    'lucictx',
+    'resultdb/proto',
+    'scheduler/api/scheduler/v1',
+    'scheduler/appengine/messages',
+    'swarming/proto/api_v2',
 ]
 
 def main():

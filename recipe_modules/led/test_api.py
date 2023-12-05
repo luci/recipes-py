@@ -235,8 +235,8 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
     """Because users can set any fields on `build`, it may have multiple IDs."""
     ret = set()
 
-    if build.swarming.task.task_id:
-      ret.add('swarming/' + build.swarming.task.task_id)
+    if build.swarming.task.request_uuid:
+      ret.add('swarming/' + build.swarming.task.request_uuid)
 
     if build.buildbucket.bbagent_args.build.id:
       ret.add('buildbucket/build/%s'

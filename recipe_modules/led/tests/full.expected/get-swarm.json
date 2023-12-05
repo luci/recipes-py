@@ -10,7 +10,7 @@
       "@@@STEP_LOG_LINE@proto.output@{@@@",
       "@@@STEP_LOG_LINE@proto.output@  \"swarming\": {@@@",
       "@@@STEP_LOG_LINE@proto.output@    \"task\": {@@@",
-      "@@@STEP_LOG_LINE@proto.output@      \"task_id\": \"deadbeef\"@@@",
+      "@@@STEP_LOG_LINE@proto.output@      \"request_uuid\": \"deadbeef\"@@@",
       "@@@STEP_LOG_LINE@proto.output@    }@@@",
       "@@@STEP_LOG_LINE@proto.output@  }@@@",
       "@@@STEP_LOG_LINE@proto.output@}@@@",
@@ -24,7 +24,7 @@
       "https://fake.url/c/project/123/+/456"
     ],
     "name": "led edit-gerrit-cl",
-    "stdin": "{\n  \"swarming\": {\n    \"task\": {\n      \"task_id\": \"deadbeef\"\n    }\n  }\n}",
+    "stdin": "{\n  \"swarming\": {\n    \"task\": {\n      \"request_uuid\": \"deadbeef\"\n    }\n  }\n}",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@proto.output@{@@@",
       "@@@STEP_LOG_LINE@proto.output@  \"buildbucket\": {@@@",

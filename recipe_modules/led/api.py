@@ -345,7 +345,9 @@ class LedApi(recipe_api.RecipeApi):
       if mocked is not None:
         job_def = job.Definition()
         job_def.CopyFrom(mocked)
-        job_def.swarming.task.task_id = task_id
+        # To allow easier test mocking, set request_uuid as task_id.
+        # It's only used in test to match a job definition with mock_edit_data.
+        job_def.swarming.task.request_uuid = task_id
 
     if job_def is not None:
       return self.test_api.m.proto.output_stream(job_def)
