@@ -124,7 +124,7 @@ class SimulationStepRunner(StepRunner):
     # We ignore this environment variable anyway.
     return ""
 
-  def run(self, name_tokens, debug_log, step):
+  def run(self, name_tokens, debug_log, step: Step):
     del debug_log  # unused
 
     dot_name = '.'.join(name_tokens)
@@ -188,6 +188,26 @@ class SimulationStepRunner(StepRunner):
     self._step_history.setdefault(dot_name, {}).update(step_obj)
 
     tdata = self._used_steps[dot_name]
+    if not step.cmd and tdata.retcode:
+      # If you're here, it means that you had recipe code which ran a step with
+      # no command at all (e.g. None or []). These sorts of steps are 'display
+      # only' and will never have a non-0 exit code when the recipe runs in
+      # production (on a builder, etc.).
+      #
+      # If the intent of the code was just to have a step that raises an
+      # exception, use `api.step.empty` with the `status` kwarg set, which will
+      # make a display-only step, and also raise an appropriate exception.
+      #
+      # If the intent of the code was to have a step which can sometimes fail
+      # for tests, change this step to actually run a real command, or pick
+      # a real step to simulate a non-zero return code for.
+      #
+      # See CL https://chromium-review.googlesource.com/c/4972935.
+      raise ValueError(
+          f'Cannot simulate no-op step {"|".join(name_tokens)!r} with a retcode'
+          ' other than 0. To simulate a step with a retcode, make it real'
+          ' (e.g. give it a command). To just have a step which displays with'
+          ' an error, use `api.step.empty()`.')
 
     if tdata.global_shutdown_event == 'after':
       GLOBAL_SHUTDOWN.set()

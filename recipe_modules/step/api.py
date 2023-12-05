@@ -6,8 +6,9 @@
 
 
 import contextlib
+from datetime import timedelta
 import sys
-from typing import Optional, Union
+from typing import Callable, Literal, Sequence
 
 from builtins import int
 from future.utils import iteritems
@@ -17,6 +18,7 @@ from recipe_engine import recipe_api
 from recipe_engine.config_types import Path
 from recipe_engine.engine_types import StepPresentation
 from recipe_engine.engine_types import ResourceCost as _ResourceCost
+from recipe_engine.recipe_test_api import StepTestData
 from recipe_engine.util import Placeholder, returns_placeholder
 from recipe_engine.recipe_utils import check_type, check_list_type
 
@@ -490,10 +492,10 @@ class StepApi(recipe_api.RecipeApi):
 
   def sub_build(self,
                 name: str,
-                cmd: Union[int, str, Placeholder, Path],
+                cmd: int | str | Placeholder | Path,
                 build: build_pb2.Build,
                 raise_on_failure: bool = True,
-                output_path: Optional[Union[str, Path]] = None,
+                output_path: str | Path | None = None,
                 legacy_global_namespace=False,
                 timeout=None,
                 step_test_data=None,
@@ -533,7 +535,7 @@ class StepApi(recipe_api.RecipeApi):
 
     Args:
       * name (str): The name of this step.
-      * cmd (List[int|string|Placeholder|Path]): Same as the `cmd` parameter in
+      * cmd (list[int|string|Placeholder|Path]): Same as the `cmd` parameter in
         `__call__` method except that None is NOT allowed. cmd[0] MUST denote a
         LUCI executable. The `--output` flag and its value should NOT be
         provided in the list. It should be provided via keyword arg
@@ -617,25 +619,30 @@ class StepApi(recipe_api.RecipeApi):
         ))
 
   def __call__(self,
-               name,
-               cmd,
-               ok_ret=(0,),
-               infra_step=False,
-               raise_on_failure=True,
-               wrapper=(),
-               timeout=None,
-               stdout=None,
-               stderr=None,
-               stdin=None,
-               step_test_data=None,
-               cost=_ResourceCost()):
+               name: str,
+               cmd: list[int | str | Placeholder | Path] | None,
+               ok_ret: Sequence[int] | Literal['any'] | Literal['all'] = (0,),
+               infra_step: bool = False,
+               raise_on_failure: bool = True,
+               wrapper: Sequence[int | str | Placeholder | Path] = (),
+               timeout: int | timedelta | None = None,
+               stdout: Placeholder | None = None,
+               stderr: Placeholder | None = None,
+               stdin: Placeholder | None = None,
+               step_test_data: Callable[[], StepTestData] | None = None,
+               cost: _ResourceCost = _ResourceCost()):
     """Runs a step (subprocess).
 
     Args:
       * name (string): The name of this step.
       * cmd (None|List[int|string|Placeholder|Path]): The program arguments to
-        run. If None or an empty list, then this step just shows up in the UI
-        but doesn't run anything.
+        run.
+
+        If None or an empty list, then this step just shows up in the UI
+        but doesn't run anything (and always has a retcode of 0). See the
+        `empty()` method on this module for a more useful version of this mode.
+
+        Otherwise:
         * Numbers and strings are used as-is.
         * Placeholders are 'rendered' to a string (using their render() method).
           Placeholders are e.g. `api.json.input()` or `api.raw_io.output()`.
