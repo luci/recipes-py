@@ -41,9 +41,9 @@ import itertools
 import os
 import re
 import tempfile
-from typing import Callable, Optional, Tuple, Union
+from typing import Callable, Optional, Tuple, Union, cast
 
-from recipe_engine import recipe_api
+from recipe_engine import recipe_api, recipe_test_api
 from recipe_engine import config_types
 
 FILE = 'FILE'
@@ -144,21 +144,16 @@ class fake_path:
   the platform which is currently running.
   """
 
-  def __init__(self, api, _mock_path_exists):
-    self._api = api
-    self._mock_path_exists = path_set(self, _mock_path_exists)
-    self._pth = None
+  def __init__(self, is_windows: bool, _mock_path_exists):
+    if is_windows:
+      import ntpath as pth
+    else:
+      import posixpath as pth
 
-  def _init_pth(self):
-    if not self._pth:
-      if self._api.m.platform.is_win:
-        import ntpath as pth
-      elif self._api.m.platform.is_mac or self._api.m.platform.is_linux:
-        import posixpath as pth
-      self._pth = pth
+    self._pth = pth
+    self._mock_path_exists = path_set(self, _mock_path_exists)
 
   def __getattr__(self, name):
-    self._init_pth()
     return getattr(self._pth, name)
 
   def mock_add_paths(self, path, kind):
@@ -196,7 +191,6 @@ class fake_path:
     This splits off a recipe base (i.e. RECIPE[...]) so that normpath is
     only called on the user-supplied portion of the path.
     """
-    self._init_pth()
     real_normpath = self._pth.normpath
     m = self.ROOT_MATCHER.match(path)
     if m:
@@ -224,8 +218,6 @@ class PathApi(recipe_api.RecipeApi):
     """Internal recipe implementation function."""
     # TODO(iannucci): Completely remove config from path.
     return {
-        # Needed downstream in depot_tools
-        'PLATFORM': self.m.platform.name,
         'START_DIR': self._startup_cwd,
         'TEMP_DIR': self._temp_dir,
         'CACHE_DIR': self._cache_dir,
@@ -304,9 +296,26 @@ class PathApi(recipe_api.RecipeApi):
       self._ensure_dir(cleanup_dir)
       self._cleanup_dir = self._split_path(cleanup_dir)
     else:
-      self._path_mod = fake_path(self, self._test_data.get('exists', []))
+      tdata = cast(recipe_test_api.ModuleTestData, self._test_data)
+      # HACK: The platform test_api sets platform.name specifically for the
+      # path module when users use api.platform.name(...) in their tests.
+      # This is dirty, but it avoids a LOT of interdependency complexity.
+      #
+      # In the current version of this code, we initialize _path_mod in
+      # `initialize` (rather than __init__) which is already late, but we also
+      # are calling the set_tostring_fn and set_path_api global variable hacks
+      # in __init__ which globally modify the behavior of NamedBasePath and Path
+      # across the entire process.
+      #
+      # In a subsequent CL, we will be able to move _path_mod initialization
+      # into __init__, and remove the set_tostring_fn/set_path_api
+      # interdependency, and we will also be able to return fully-encapsulated
+      # Path objects from this module.
+      is_windows = tdata.get('platform.name', 'linux') == 'win'
 
-      root = 'C:\\' if self.m.platform.is_win else '/'
+      self._path_mod = fake_path(is_windows, tdata.get('exists', []))
+
+      root = 'C:\\' if is_windows else '/'
       self._startup_cwd = [root, 'b', 'FakeTestingCWD']
       # Appended to placeholder '[TMP]' to get fake path in test.
       self._temp_dir = [root]

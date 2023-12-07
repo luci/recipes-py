@@ -1144,7 +1144,7 @@ def _instantiate_api(engine, test_data, fqname, module: RecipeModule, test_api,
   shortname = module.name
   kwargs = {
       'module': module,
-      # TODO(luqui): test_data will need to use canonical unique names.
+      # BUG(crbug.com/1508497): test_data will need to use canonical unique names.
       'test_data': test_data.get_module_test_data(shortname)
   }
 

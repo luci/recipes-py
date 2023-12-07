@@ -21,6 +21,14 @@ def RunSteps(api):
       api.platform.mac_release is not None and
       api.platform.mac_release >= api.version.parse('10.14.0')
   )]
+  if api.platform.name == 'win':
+    assert api.platform.is_win
+    assert not api.platform.is_mac
+    assert not api.platform.is_linux
+  elif api.platform.name == 'linux':
+    assert not api.platform.is_win
+    assert not api.platform.is_mac
+    assert api.platform.is_linux
 
 
 def GenTests(api):

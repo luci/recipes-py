@@ -6,7 +6,7 @@ from recipe_engine.config import config_item_context, ConfigGroup, Dict, Static
 from recipe_engine.config_types import Path
 
 
-def BaseConfig(PLATFORM, START_DIR, TEMP_DIR, CACHE_DIR, CLEANUP_DIR, HOME_DIR,
+def BaseConfig(START_DIR, TEMP_DIR, CACHE_DIR, CLEANUP_DIR, HOME_DIR,
                **_kwargs):
   assert START_DIR[0].endswith(('\\', '/')), START_DIR
   assert TEMP_DIR[0].endswith(('\\', '/')), TEMP_DIR
@@ -19,7 +19,6 @@ def BaseConfig(PLATFORM, START_DIR, TEMP_DIR, CACHE_DIR, CLEANUP_DIR, HOME_DIR,
 
       # dynamic path name -> Path object (referencing one of the base_paths)
       dynamic_paths=Dict(value_type=(Path, type(None))),
-      PLATFORM=Static(PLATFORM),
       START_DIR=Static(tuple(START_DIR)),
       TEMP_DIR=Static(tuple(TEMP_DIR)),
       CACHE_DIR=Static(tuple(CACHE_DIR)),
