@@ -23,7 +23,7 @@ collection of anchor points. The built-in anchor points are:
   * `api.path['tmp_base']` - This directory is the system-configured temp dir.
     This is a weaker form of 'cleanup', and its use should be avoided. This may
     be removed in the future (or converted to an alias of 'cleanup').
-  * `api.path['checkout']` - This directory is set by various 'checkout' modules
+  * `api.path['checkout']` - This directory is set by various checkout modules
     in recipes. It was originally intended to make recipes easier to read and
     make code somewhat generic or homogeneous, but this was a mistake. New code
     should avoid 'checkout', and instead just explicitly pass paths around. This
@@ -36,18 +36,19 @@ documentation.
 
 import collections
 import copy
-import errno
 import itertools
 import os
 import re
 import tempfile
-from typing import Callable, Optional, Tuple, Union, cast
+from typing import Callable, Optional, Tuple, Union, cast, Literal
 
 from recipe_engine import recipe_api, recipe_test_api
 from recipe_engine import config_types
 
 FILE = 'FILE'
 DIRECTORY = 'DIRECTORY'
+
+CheckoutPathName = 'checkout'
 
 
 class Error(Exception):
@@ -214,6 +215,15 @@ class fake_path:
 class PathApi(recipe_api.RecipeApi):
   _paths_client = recipe_api.RequireClient('paths')
 
+  # This is the literal string 'checkout'.
+  #
+  # This is only being added as an intermediate step to removing the
+  # dictionary-like API from the path module, and will be removed in the near
+  # future. Do not use this.
+  #
+  # Use the .checkout_dir @property directly, instead.
+  CheckoutPathName = CheckoutPathName
+
   def get_config_defaults(self):
     """Internal recipe implementation function."""
     # TODO(iannucci): Completely remove config from path.
@@ -239,6 +249,9 @@ class PathApi(recipe_api.RecipeApi):
     self._cache_dir = None
     self._cleanup_dir = None
     self._home_dir = None
+
+    # checkout_dir can be set at most once per recipe run.
+    self._checkout_dir: config_types.Path|None = None
 
     # Used in mkdtemp and mkstemp when generating and checking expectations.
     self._test_counter = collections.Counter()
@@ -398,7 +411,7 @@ class PathApi(recipe_api.RecipeApi):
       * module resource paths
       * recipe resource paths
       * repo paths
-      * dynamic_paths
+      * checkout_dir
       * base_paths
 
     Example:
@@ -423,7 +436,7 @@ class PathApi(recipe_api.RecipeApi):
         abs_string_path, self.sep)
     if path is None:
       # try base paths now
-      for path_name in itertools.chain(self.c.dynamic_paths, self.c.base_paths):
+      for path_name in itertools.chain((CheckoutPathName,), self.c.base_paths):
         path = self[path_name]
         sPath = str(path)
         if abs_string_path.startswith(sPath):
@@ -439,53 +452,56 @@ class PathApi(recipe_api.RecipeApi):
     return path.join(*sub_path.split(self.sep))
 
   def __contains__(self, pathname: str) -> bool:
-    return any(
-        path_set.get(pathname)
-        for path_set in (self.c.dynamic_paths, self.c.base_paths))
+    if pathname == CheckoutPathName:
+      return bool(self.checkout_dir)
+    return pathname in self.c.base_paths
 
-  def __setitem__(self, pathname: str, path: config_types.Path) -> None:
-    """Sets an anchor path.
+  def __setitem__(self, pathname: Literal[CheckoutPathName], path: config_types.Path) -> None:
+    """Sets the checkout path.
 
-    This can only be used for dynamic paths (set in the config).
+    DEPRECATED - Use `api.path.set_checkout_dir` instead.
 
-    This can only be done once per dynamic path for the current config (i.e.
-    'write once'). As a legacy concession, setting the path to the same value as
-    before is allowed.
+    The only valid value of `pathname` is the literal string CheckoutPathName.
+    """
+    if pathname != CheckoutPathName:
+      raise ValueError(
+          f'The only valid dynamic path value is `checkout`. Got {pathname!r}.'
+          ' Use `api.path.checkout_dir = <path>` instead.')
+    self.checkout_dir = path
 
-    Args:
-      pathname: The name by which this path can be fetched.
-      path: The new value for this pathname.
+  @property
+  def checkout_dir(self) -> config_types.Path|None:
+    """Returns the Path which was assigned to this checkout_dir property."""
+    return self._checkout_dir
 
-    Raises:
-      AssertionError: If path is not a config_types.Path.
-      AssertionError: If pathname is not declared as a dynamic path in config.
-      AssertionError: If path is not based on a BasePath.
+  @checkout_dir.setter
+  def checkout_dir(self, path: config_types.Path) -> None:
+    """Sets the global variable `api.path.checkout_dir` to the given path.
+
     """
     if not isinstance(path, config_types.Path):
       raise ValueError(
-          f'Setting dynamic path to something other than a Path: {path!r}')
+          f'api.path.checkout_dir called with bad type: {path!r} ({type(path)})')
 
-    if pathname not in self.c.dynamic_paths:
-      raise ValueError(
-          f'Must declare dynamic path ({pathname!r}) in config before setting it.'
-      )
-
-    if (current := self.c.dynamic_paths[pathname]) is not None:
+    if (current := self._checkout_dir) is not None:
       if current == path:
         return
 
       raise ValueError(
-          f'Dynamic path {pathname!r} can only be set once. old:{current!r} new:{path!r}'
-      )
+          f'api.path.checkout_dir can only be set once. old:{current!r} new:{path!r}')
 
-    self.c.dynamic_paths[pathname] = path
+    self._checkout_dir = path
 
   def get(self,
           name: str,
           default: Optional[config_types.Path] = None) -> config_types.Path:
     """Gets the base path named `name`. See module docstring for more info."""
-    if name in self.c.base_paths or name in self.c.dynamic_paths:
+    if name == CheckoutPathName:
+      return config_types.Path(config_types.NamedBasePath(CheckoutPathName))
+
+    if name in self.c.base_paths:
       return config_types.Path(config_types.NamedBasePath(name))
+
     return default
 
   def __getitem__(self, name: str) -> config_types.Path:

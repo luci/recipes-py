@@ -3,7 +3,6 @@
 # that can be found in the LICENSE file.
 
 from recipe_engine.config import config_item_context, ConfigGroup, Dict, Static
-from recipe_engine.config_types import Path
 
 
 def BaseConfig(START_DIR, TEMP_DIR, CACHE_DIR, CLEANUP_DIR, HOME_DIR,
@@ -18,7 +17,6 @@ def BaseConfig(START_DIR, TEMP_DIR, CACHE_DIR, CLEANUP_DIR, HOME_DIR,
       base_paths=Dict(value_type=tuple),
 
       # dynamic path name -> Path object (referencing one of the base_paths)
-      dynamic_paths=Dict(value_type=(Path, type(None))),
       START_DIR=Static(tuple(START_DIR)),
       TEMP_DIR=Static(tuple(TEMP_DIR)),
       CACHE_DIR=Static(tuple(CACHE_DIR)),
@@ -37,4 +35,3 @@ def BASE(c):
   c.base_paths['cache'] = c.CACHE_DIR
   c.base_paths['cleanup'] = c.CLEANUP_DIR
   c.base_paths['home'] = c.HOME_DIR
-  c.dynamic_paths['checkout'] = None

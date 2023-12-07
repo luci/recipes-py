@@ -4,23 +4,21 @@
 
 from recipe_engine.post_process import DropExpectation
 
-DEPS = ["path"]
+DEPS = ['path']
 
 
 def RunSteps(api):
   try:
-    api.path['something'] = 'hello'
-    # pragma: no cover
-    assert False, "able to assign string to path?"  # pragma: no cover
+    api.path.checkout_dir = 'hello'
+    assert False, 'able to assign string to path?'  # pragma: no cover
   except ValueError as ex:
-    assert "other than a Path" in str(ex), str(ex)
+    assert 'called with bad type' in str(ex), str(ex)
 
   try:
     api.path['something'] = api.path['start_dir'].join('coolstuff')
-    # pragma: no cover
-    assert False, "able to assign path to non-dynamic path?"  # pragma: no cover
+    assert False, 'able to assign path to non-dynamic path?'  # pragma: no cover
   except ValueError as ex:
-    assert "declare dynamic path" in str(ex), str(ex)
+    assert 'The only valid dynamic path value is `checkout`' in str(ex), str(ex)
 
   # OK!
   api.path['checkout'] = api.path['start_dir'].join('coolstuff')
@@ -31,9 +29,9 @@ def RunSteps(api):
   try:
     # Setting a new value is not allowed
     api.path['checkout'] = api.path['start_dir'].join('neatstuff')
-    assert False, "able to set a dynamic path twice?"  # pragma: no cover
+    assert False, 'able to set a dynamic path twice?'  # pragma: no cover
   except ValueError as ex:
-    assert "can only be set once" in str(ex), str(ex)
+    assert 'can only be set once' in str(ex), str(ex)
 
 
 def GenTests(api):
