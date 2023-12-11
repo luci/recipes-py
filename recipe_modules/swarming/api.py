@@ -19,13 +19,9 @@ from .state import TaskState
 
 from recipe_engine import recipe_api
 
-# Take revision from
-# https://ci.chromium.org/p/infra-internal/g/infra-packagers/console
-# This is the pRPC version of swarming cli tool
-PRPC_SWARMING_CLI_VERSION = (
-    'git_revision:dfbae63f58ac56e85146d622290b6e471c7fd15d')
-# This version of the CLI is the pre-prpc varient of swarming cli tool
-DEFAULT_CIPD_VERSION = 'git_revision:7f62986230b0ff7fd5f2c74518352ac247c768d4'
+# Fixed version of the swarming tool.
+# Retrieved at: 2023-10-31 19:36:04.21123 +0000 UTC
+DEFAULT_CIPD_VERSION = 'git_revision:dfbae63f58ac56e85146d622290b6e471c7fd15d'
 
 # The mandatory fields to include when calling the API list_bots with fields.
 LIST_BOTS_MANDATORY_FIELDS = 'items(bot_id,is_dead,quarantined,maintenance_msg)'
@@ -1233,9 +1229,7 @@ class SwarmingApi(recipe_api.RecipeApi):
   @property
   def _version(self):
     version = DEFAULT_CIPD_VERSION
-    if 'swarming.prpc.cli' in self.m.buildbucket.build.input.experiments:
-      version = PRPC_SWARMING_CLI_VERSION
-    elif self._test_data.enabled:
+    if self._test_data.enabled:
       version = 'swarming_module_pin'
     return version
 
