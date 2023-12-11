@@ -76,6 +76,20 @@ def RunSteps(api):
   with api.step.nest('lonely parent'):
     pass
 
+  # funcall successfully produces five
+  out = api.step.funcall("five", (lambda: 5))
+  assert out == 5, f'out must be 5 not {out}'
+
+  def fail():
+    raise ValueError("failed exception")
+
+  try:
+    api.step.funcall(None, fail)
+  except ValueError as e:
+    pass
+  else:  # pragma: nocover
+    assert "we expected an exception here, but there was none"
+
 
 def GenTests(api):
   yield (

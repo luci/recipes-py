@@ -4021,6 +4021,14 @@ Args:
 
 Returns step_data.StepData.
 
+&mdash; **def [funcall](/recipe_modules/step/api.py#733)(self, name, func, \*args, \*\*kwargs):**
+
+Call a function and store the results and exception in a step.
+
+Sample usage:
+
+>>> api.step.funcall(None, some_function, 4, json=True)
+
 &emsp; **@contextlib.contextmanager**<br>&mdash; **def [nest](/recipe_modules/step/api.py#225)(self, name, status='worst'):**
 
 Nest allows you to nest steps hierarchically on the build UI.

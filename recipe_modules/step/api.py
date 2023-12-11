@@ -729,3 +729,31 @@ class StepApi(recipe_api.RecipeApi):
             ok_ret=ok_ret,
             step_test_data=step_test_data,
         ))
+
+  def funcall(self, name, func, *args, **kwargs):
+    """Call a function and store the results and exception in a step.
+
+    Sample usage:
+
+    >>> api.step.funcall(None, some_function, 4, json=True)
+    """
+
+    name = name or func.__name__
+
+    out = None
+    exception = None
+
+    with self.nest(name=name) as step:
+      step.presentation.logs["args"] = str(args)
+      step.presentation.logs["kwargs"] = str(kwargs)
+      try:
+        out = func(*args, **kwargs)
+        return out
+      except BaseException as e:
+        exception = e
+        raise e
+      finally:
+        step.presentation.logs["out"] = str(out)
+        step.presentation.logs["out_type"] = str(type(out))
+        if exception is not None:
+          step.presentation.logs["exception"] = str(exception)

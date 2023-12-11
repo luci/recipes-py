@@ -173,6 +173,37 @@
     "name": "lonely parent"
   },
   {
+    "cmd": [],
+    "name": "five",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@args@()@@@",
+      "@@@STEP_LOG_END@args@@@",
+      "@@@STEP_LOG_LINE@kwargs@{}@@@",
+      "@@@STEP_LOG_END@kwargs@@@",
+      "@@@STEP_LOG_LINE@out@5@@@",
+      "@@@STEP_LOG_END@out@@@",
+      "@@@STEP_LOG_LINE@out_type@<class 'int'>@@@",
+      "@@@STEP_LOG_END@out_type@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "fail",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@args@()@@@",
+      "@@@STEP_LOG_END@args@@@",
+      "@@@STEP_LOG_LINE@kwargs@{}@@@",
+      "@@@STEP_LOG_END@kwargs@@@",
+      "@@@STEP_LOG_LINE@out@None@@@",
+      "@@@STEP_LOG_END@out@@@",
+      "@@@STEP_LOG_LINE@out_type@<class 'NoneType'>@@@",
+      "@@@STEP_LOG_END@out_type@@@",
+      "@@@STEP_LOG_LINE@exception@failed exception@@@",
+      "@@@STEP_LOG_END@exception@@@",
+      "@@@STEP_EXCEPTION@@@"
+    ]
+  },
+  {
     "name": "$result"
   }
 ]
