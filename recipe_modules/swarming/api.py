@@ -935,28 +935,23 @@ class TaskResult(object):
     self._raw_results = raw_results
     self._outputs = {}
     self._cas_outputs = None
+    self._success = None
+    self._duration = None
+    self._output = None
+    self._name = None
+    self._state = None
+    self._bot_id = None
     # This happens most often when `collect` times out before the task
     # completed.
     if 'error' in raw_results:
       self._output = raw_results['error']
-      self._name = None
-      self._state = None
-      self._success = None
-      self._duration = None
-      self._bot_id = None
     else:
       results = raw_results['results']
       self._name = results['name']
       self._state = TaskState[results['state']]
       self._bot_id = results.get('bot_id')
-
-      assert self._state not in [
-          TaskState.INVALID,
-          TaskState.PENDING,
-          TaskState.RUNNING,
-      ], 'state %s is either invalid or non-final' % self._state.name
-
-      self._success = False
+      if not self.finalized:
+        return
       if self._state == TaskState.COMPLETED:
         self._success = int(results.get('exit_code', 0)) == 0
 
@@ -976,6 +971,14 @@ class TaskResult(object):
             output: api.path.join(self._output_dir, output)
             for output in raw_results['outputs']
         }
+
+  @property
+  def finalized(self):
+    """True if state is not PENDING or RUNNING."""
+    return self._state not in [
+        TaskState.PENDING,
+        TaskState.RUNNING,
+    ]
 
   @property
   def name(self):

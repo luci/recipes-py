@@ -29,11 +29,22 @@ def RunSteps(api):
                                      collect_jsonish[task_id], None)
     api.assertions.assertEqual(task_id, result.id)
     api.assertions.assertEqual(result.state, api.swarming.TaskState.COMPLETED)
+    api.assertions.assertTrue(result.finalized)
     api.assertions.assertEqual(result.name, request.name)
     api.assertions.assertEqual(result.bot_id,
                                "linux-bionic-local-ssd-dev-0-lppg")
     api.assertions.assertTrue(result.success)
     api.assertions.assertEqual(result.duration_secs, 104.25532)
+
+    # test state finalization
+    collect_jsonish[task_id]["results"]["state"] = "RUNNING"
+    result = api.swarming.TaskResult(api, request[0], task_id,
+                                     collect_jsonish[task_id], None)
+    api.assertions.assertEqual(result.state, api.swarming.TaskState.RUNNING)
+    api.assertions.assertFalse(result.finalized)
+    api.assertions.assertFalse(result.output)
+    api.assertions.assertFalse(result.duration_secs)
+    api.assertions.assertFalse(result.success)
 
 
 def GenTests(api):
