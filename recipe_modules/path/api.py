@@ -34,13 +34,17 @@ There are other anchor points which can be defined (e.g. by the
 documentation.
 """
 
+from __future__ import annotations
+
 import collections
+from collections.abc import Iterable
 import copy
 import itertools
 import os
 import re
 import tempfile
-from typing import Callable, Optional, Tuple, Union, cast, Literal
+import types
+from typing import Any, Callable, Literal, cast
 
 from recipe_engine import recipe_api, recipe_test_api
 from recipe_engine import config_types
@@ -49,6 +53,8 @@ FILE = 'FILE'
 DIRECTORY = 'DIRECTORY'
 
 CheckoutPathName = 'checkout'
+
+FileType = Literal[DIRECTORY, FILE]
 
 
 class Error(Exception):
@@ -70,70 +76,80 @@ class path_set:
 
   # TODO(iannucci): Expand this to be a full fakey filesystem, including file
   # contents and file types. Coordinate with the `file` module.
-  def __init__(self, path_mod, initial_paths):
-    self._path_mod = path_mod
-    self._initial_paths = set(initial_paths)
+  def __init__(self, path_mod: fake_path, initial_paths):
+    self._path_mod: types.ModuleType = path_mod
+    self._initial_paths: set[config_types.Path]|None = set(initial_paths)
     # An entry in self._paths means an object exists in the mock filesystem.
     # The value (either FILE or DIRECTORY) is the type of that object.
-    self._paths = {}
+    self._paths: dict[config_types.Path, FileType] = {}
 
-  def _initialize(self):  # pylint: disable=method-hidden
-    self._initialize = lambda: None
+  def _initialize(self) -> None:  # pylint: disable=method-hidden
+    self._initialize: Callable[[], None] = lambda: None
     for path in self._initial_paths:
       self.add(path, FILE)
     self._initial_paths = None
-    self.contains = lambda path: path in self._paths
+    self.contains: Callable[[config_types.Path], bool] = (
+        lambda path: path in self._paths
+    )
 
   @property
-  def _separator(self):
+  def _separator(self) -> str:
     return self._path_mod.sep
 
-  def _is_contained_in(self, path, root, match_root):
+  def _is_contained_in(self, path: config_types.Path,
+                       root: config_types.Path, match_root: bool) -> bool:
     if not path.startswith(root):
       return False
     if len(path) == len(root):
       return match_root
     return path[len(root)] == self._separator
 
-  def add(self, path, kind):
+  def add(self, path: config_types.Path, kind: FileType):
     path = str(path)
     self._initialize()
-    prev_path = None
+    prev_path: str|None = None
     while path != prev_path:
       self._paths[path] = kind
       prev_path, path = path, self._path_mod.dirname(path)
       kind = DIRECTORY
 
-  def copy(self, source, dest):
+  def copy(self, source: config_types.Path, dest: config_types.Path) -> None:
     source, dest = str(source), str(dest)
     self._initialize()
-    to_add = {}
+    to_add: dict[str, FileType] = {}
     for p in self._paths:
       if self._is_contained_in(p, source, match_root=True):
         to_add[p.replace(source, dest)] = self._paths[p]
     for path, kind in to_add.items():
       self.add(path, kind)
 
-  def remove(self, path, filt):
-    path = str(path)
+  def remove(self, path: config_types.Path,
+             filt: Callable[[config_types.Path], bool]) -> None:
+    path: str = str(path)
     self._initialize()
-    match_root = True
+    match_root: bool = True
     if path[-1] == self._separator:
       match_root = False
-      path = path.rstrip(self._separator)
-    kill_set = set(
+      path: str = path.rstrip(self._separator)
+    kill_set: set[config_types.Path] = set(
         p for p in self._paths
         if self._is_contained_in(p, path, match_root) and filt(p))
     for entry in kill_set:
       del self._paths[entry]
 
-  def contains(self, path):  # pylint: disable=method-hidden
+  # pylint: disable=method-hidden
+  def contains(self, path: config_types.Path) -> bool:
     self._initialize()
     return self.contains(path)
 
-  def kind(self, path):
+  def kind(self, path: config_types.Path) -> FileType:
     self._initialize()
     return self._paths[path]
+
+
+import ntpath
+import posixpath
+PathCommonModule = Literal[ntpath, posixpath]
 
 
 class fake_path:
@@ -151,32 +167,34 @@ class fake_path:
     else:
       import posixpath as pth
 
-    self._pth = pth
+    self._pth: PathCommonModule = pth
     self._mock_path_exists = path_set(self, _mock_path_exists)
 
-  def __getattr__(self, name):
+  def __getattr__(self, name: str) -> Any:
     return getattr(self._pth, name)
 
-  def mock_add_paths(self, path, kind):
+  def mock_add_paths(self, path: config_types.Path, kind: FileType) -> None:
     """Adds a path and all of its parents to the set of existing paths."""
     self._mock_path_exists.add(path, kind)
 
-  def mock_copy_paths(self, source, dest):
+  def mock_copy_paths(self, source: config_types.Path,
+                      dest: config_types.Path) -> None:
     """Duplicates a path and all of its children to another path."""
     self._mock_path_exists.copy(source, dest)
 
-  def mock_remove_paths(self, path, filt):
+  def mock_remove_paths(self, path: config_types.Path,
+                        filt: Callable[[config_types.Path], bool]) -> None:
     """Removes a path and all of its children from the set of existing paths."""
     self._mock_path_exists.remove(path, filt)
 
-  def exists(self, path):  # pylint: disable=E0202
+  def exists(self, path: config_types.Path) -> bool:  # pylint: disable=E0202
     """Returns True if path refers to an existing path."""
     return self._mock_path_exists.contains(path)
 
-  def isdir(self, path):
+  def isdir(self, path: config_types.Path) -> bool:
     return self.exists(path) and self._mock_path_exists.kind(path) == DIRECTORY
 
-  def isfile(self, path):
+  def isfile(self, path: config_types.Path) -> bool:
     return self.exists(path) and self._mock_path_exists.kind(path) == FILE
 
   # This matches:
@@ -186,7 +204,7 @@ class fake_path:
   # and friends at the beginning of a string.
   ROOT_MATCHER = re.compile(r'^[A-Z_]*\[[^]]*\]')
 
-  def normpath(self, path):
+  def normpath(self, path: config_types.Path) -> config_types.Path:
     """Normalizes the path.
 
     This splits off a recipe base (i.e. RECIPE[...]) so that normpath is
@@ -203,11 +221,11 @@ class fake_path:
       return prefix + real_normpath(rest)
     return real_normpath(path)
 
-  def abspath(self, path):
+  def abspath(self, path: config_types.Path) -> config_types.Path:
     """Returns the absolute version of path."""
     return self.normpath(path)
 
-  def realpath(self, path):
+  def realpath(self, path: config_types.Path) -> config_types.Path:
     """Returns the canonical version of the path."""
     return self.normpath(path)
 
@@ -224,7 +242,7 @@ class PathApi(recipe_api.RecipeApi):
   # Use the .checkout_dir @property directly, instead.
   CheckoutPathName = CheckoutPathName
 
-  def get_config_defaults(self):
+  def get_config_defaults(self) -> dict[str, Any]:
     """Internal recipe implementation function."""
     # TODO(iannucci): Completely remove config from path.
     return {
@@ -243,18 +261,19 @@ class PathApi(recipe_api.RecipeApi):
     self._path_properties = path_properties
 
     # Assigned at "initialize".
-    self._path_mod = None  # NT or POSIX path module, or "os.path" in prod.
-    self._startup_cwd = None
-    self._temp_dir = None
-    self._cache_dir = None
-    self._cleanup_dir = None
-    self._home_dir = None
+    # NT or POSIX path module, or "os.path" in prod.
+    self._path_mod: ModuleType|None = None
+    self._startup_cwd: config_types.Path|None = None
+    self._temp_dir: config_types.Path|None = None
+    self._cache_dir: config_types.Path|None = None
+    self._cleanup_dir: config_types.Path|None = None
+    self._home_dir: config_types.Path|None = None
 
     # checkout_dir can be set at most once per recipe run.
     self._checkout_dir: config_types.Path|None = None
 
     # Used in mkdtemp and mkstemp when generating and checking expectations.
-    self._test_counter = collections.Counter()
+    self._test_counter: collections.Counter = collections.Counter()
 
   def _read_path(self, property_name, default):  # pragma: no cover
     """Reads a path from a property. If absent, returns the default.
@@ -273,9 +292,10 @@ class PathApi(recipe_api.RecipeApi):
   def _ensure_dir(self, path: str) -> None:  # pragma: no cover
     os.makedirs(path, exist_ok=True)
 
-  def _split_path(self, path):  # pragma: no cover
+  def _split_path(self, path: config_types.Path
+                  ) -> tuple[str, ...]:  # pragma: no cover
     """Relative or absolute path -> tuple of components."""
-    abs_path = os.path.abspath(path).split(self.sep)
+    abs_path: list[str, ...] = os.path.abspath(path).split(self.sep)
     # Guarantee that the first element is an absolute drive or the posix root.
     if abs_path[0].endswith(':'):
       abs_path[0] += '\\'
@@ -283,12 +303,12 @@ class PathApi(recipe_api.RecipeApi):
       abs_path[0] = '/'
     else:
       assert False, 'Got unexpected path format: %r' % abs_path
-    return abs_path
+    return tuple(abs_path)
 
-  def initialize(self):
+  def initialize(self) -> None:
     """Internal recipe implementation function."""
     if not self._test_data.enabled:  # pragma: no cover
-      self._path_mod = os.path
+      self._path_mod: ModuleType = os.path
       start_dir = self._paths_client.start_dir
       self._startup_cwd = self._split_path(start_dir)
       self._home_dir = self._split_path(self._path_mod.expanduser('~'))
@@ -324,11 +344,11 @@ class PathApi(recipe_api.RecipeApi):
       # into __init__, and remove the set_tostring_fn/set_path_api
       # interdependency, and we will also be able to return fully-encapsulated
       # Path objects from this module.
-      is_windows = tdata.get('platform.name', 'linux') == 'win'
+      is_windows: bool = tdata.get('platform.name', 'linux') == 'win'
 
       self._path_mod = fake_path(is_windows, tdata.get('exists', []))
 
-      root = 'C:\\' if is_windows else '/'
+      root: str = 'C:\\' if is_windows else '/'
       self._startup_cwd = [root, 'b', 'FakeTestingCWD']
       # Appended to placeholder '[TMP]' to get fake path in test.
       self._temp_dir = [root]
@@ -338,21 +358,20 @@ class PathApi(recipe_api.RecipeApi):
 
     self.set_config('BASE')
 
-  def assert_absolute(self, path):
+  def assert_absolute(self, path: config_types.Path | str) -> None:
     """Raises AssertionError if the given path is not an absolute path.
 
     Args:
-      * path (Path|str) - The path to check.
+      * path - The path to check.
     """
     if self.abspath(path) != str(path):
       raise AssertionError('%s is not absolute' % path)
 
-  def mkdtemp(self, prefix=tempfile.template):
+  def mkdtemp(self, prefix: str = tempfile.template) -> config_types.Path:
     """Makes a new temporary directory, returns Path to it.
 
     Args:
-      * prefix (str) - a tempfile template for the directory name (defaults
-        to "tmp").
+      * prefix - a tempfile template for the directory name (defaults to "tmp").
 
     Returns a Path to the new directory.
     """
@@ -372,12 +391,11 @@ class PathApi(recipe_api.RecipeApi):
     self.mock_add_paths(temp_dir, DIRECTORY)
     return temp_dir
 
-  def mkstemp(self, prefix=tempfile.template):
+  def mkstemp(self, prefix: str = tempfile.template) -> config_types.Path:
     """Makes a new temporary file, returns Path to it.
 
     Args:
-      * prefix (str) - a tempfile template for the file name (defaults to
-        "tmp").
+      * prefix - a tempfile template for the file name (defaults to "tmp").
 
     Returns a Path to the new file. Unlike tempfile.mkstemp, the file's file
     descriptor is closed.
@@ -386,20 +404,21 @@ class PathApi(recipe_api.RecipeApi):
       # New path as str.
       fd, new_path = tempfile.mkstemp(prefix=prefix, dir=str(self['cleanup']))
       # Ensure it's under self._cleanup_dir, convert to Path.
-      new_path = self._split_path(new_path)
-      assert new_path[:len(self._cleanup_dir)] == self._cleanup_dir, (
-          'new_path: %r -- cleanup_dir: %r' % (new_path, self._cleanup_dir))
-      temp_file = self['cleanup'].join(*new_path[len(self._cleanup_dir):])
+      split_path: list[str] = self._split_path(new_path)
+      assert split_path[:len(self._cleanup_dir)] == self._cleanup_dir, (
+          'new_path: %r -- cleanup_dir: %r' % (split_path, self._cleanup_dir))
+      temp_file: config_types.Path = self['cleanup'].join(
+          *split_path[len(self._cleanup_dir):])
       os.close(fd)
     else:
       self._test_counter[prefix] += 1
       assert isinstance(prefix, str)
-      temp_file = self['cleanup'].join('%s_tmp_%d' %
-                                       (prefix, self._test_counter[prefix]))
+      temp_file: config_types.Path = self['cleanup'].join(
+          '%s_tmp_%d' % (prefix, self._test_counter[prefix]))
     self.mock_add_paths(temp_file, FILE)
     return temp_file
 
-  def abs_to_path(self, abs_string_path):
+  def abs_to_path(self, abs_string_path: str) -> config_types.Path:
     """Converts an absolute path string `abs_string_path` to a real Path
     object, using the most appropriate known base path.
 
@@ -494,7 +513,7 @@ class PathApi(recipe_api.RecipeApi):
 
   def get(self,
           name: str,
-          default: Optional[config_types.Path] = None) -> config_types.Path:
+          default: config_types.Path|None = None) -> config_types.Path:
     """Gets the base path named `name`. See module docstring for more info."""
     if name == CheckoutPathName:
       return config_types.Path(config_types.NamedBasePath(CheckoutPathName))
@@ -512,7 +531,7 @@ class PathApi(recipe_api.RecipeApi):
     return result
 
   @property
-  def pardir(self):
+  def pardir(self) -> str:
     """Equivalent to os.pardir."""
     return self._path_mod.pardir
 
@@ -526,15 +545,15 @@ class PathApi(recipe_api.RecipeApi):
     """Equivalent to os.pathsep."""
     return self._path_mod.pathsep
 
-  def abspath(self, path):
+  def abspath(self, path: config_types.Path | str):
     """Equivalent to os.abspath."""
     return self._path_mod.abspath(str(path))
 
-  def basename(self, path):
+  def basename(self, path: config_types.Path | str):
     """Equivalent to os.path.basename."""
     return self._path_mod.basename(str(path))
 
-  def dirname(self, path):
+  def dirname(self, path: config_types.Path | str) -> config_types.Path | str:
     """For "foo/bar/baz", return "foo/bar".
 
     This corresponds to os.path.dirname().
@@ -542,7 +561,7 @@ class PathApi(recipe_api.RecipeApi):
     The type of the return value matches the type of the argument.
 
     Args:
-      path (Path or str): path to take directory name of
+      path: path to take directory name of
 
     Returns dirname of path
     """
@@ -590,8 +609,8 @@ class PathApi(recipe_api.RecipeApi):
     return (dirname, basename)
 
   def splitext(
-      self, path: Union[config_types.Path, str]
-  ) -> Tuple[Union[config_types.Path, str], str]:
+      self, path: config_types.Path | str
+  ) -> tuple[config_types.Path | str, str]:
     """For "foo/bar.baz", return ("foo/bar", ".baz").
 
     This corresponds to os.path.splitext().
@@ -613,7 +632,7 @@ class PathApi(recipe_api.RecipeApi):
     # return tuple as strings.
     return (name, ext)
 
-  def realpath(self, path):
+  def realpath(self, path: config_types.Path | str):
     """Equivalent to os.path.realpath."""
     return self._path_mod.realpath(str(path))
 
