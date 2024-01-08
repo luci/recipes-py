@@ -35,6 +35,7 @@ def RunSteps(api, props):
     for i in range(5):
       defer(step, i)
     api.step.empty('done running steps')
+    api.step.empty(f'is_ok {defer.is_ok()}')
   api.step.empty('all steps succeeded')
 
 

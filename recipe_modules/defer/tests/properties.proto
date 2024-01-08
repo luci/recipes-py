@@ -25,3 +25,7 @@ message ResultInputProps {
 message NonDeferredInputProps {
   bool fail = 1;
 }
+
+message SuppressedInputProps {
+  bool fail = 1;
+}

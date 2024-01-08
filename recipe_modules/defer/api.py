@@ -48,21 +48,58 @@ class DeferredResult(Generic[T]):
     return self._value  # type:ignore
 
 
-class _DeferContext:
+class DeferContext:
   def __init__(self, api, *args, **kwargs):
     super().__init__(*args, **kwargs)
     self.api = api
     self.results = []
+    self.suppressed_results = []
 
   def __call__(
       self, callable: Callable[..., T], *args, **kwargs
   ) -> DeferredResult[T]:
+    """Call callable(*args, **kwargs) and save the result."""
     result = self.api.defer(callable, *args, **kwargs)
     self.results.append(result)
     return result
 
+  def is_ok(self):
+    """Return True iff all results passed."""
+    for result in self.results:
+      if not result.is_ok():
+        return False
+    return True
+
+  def suppress(self):
+    """Suppress errors from existing results, unless they're the only errors.
+
+    This is intended to be used when there was a previous failure, but the
+    caller wants to provide a different explanation for the failure.
+
+    Example:
+      with api.defer.context() as defer:
+        defer(complicated_step)
+        if not defer.is_ok():
+          def raise_error():
+            error = extract_error_from_logs()
+            raise api.step.StepFailure(error)
+          defer.suppress()
+          defer(raise_error)
+    """
+    self.suppressed_results.extend(self.results)
+    self.results.clear()
+
   def collect(self, step_name: Optional[str] = 'collect'):
+    """Raise all deferred failures.
+
+    Only raise failures from suppressed steps if there are no failures in
+    non-suppressed steps.
+    """
     self.api.defer.collect(self.results, step_name=step_name)
+    self.api.defer.collect(
+        self.suppressed_results,
+        step_name=f'{step_name} suppressed',
+    )
 
 
 class DeferApi(recipe_api.RecipeApi):
@@ -86,6 +123,7 @@ class DeferApi(recipe_api.RecipeApi):
   return values of the functions passed into api.defer().
   """
 
+  DeferContext = DeferContext
   DeferredResult = DeferredResult
 
   @contextlib.contextmanager
@@ -100,7 +138,7 @@ class DeferApi(recipe_api.RecipeApi):
       ...
     # api.defer.collect() is called on exiting the context.
     """
-    ctx = _DeferContext(self.m)
+    ctx = DeferContext(self.m)
 
     try:
       yield ctx
