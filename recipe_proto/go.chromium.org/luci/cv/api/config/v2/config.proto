@@ -171,9 +171,6 @@ message ConfigGroup {
   // mode, CQ will fallback to standard DRY_RUN or FULL_RUN.
   //
   // All the mode names must be unique.
-  //
-  // **NOTE**: As of Jan 2023, this field may be given either 1 or 0 mode, and
-  // the name must be "QUICK_DRY_RUN", if provided.
   repeated Mode additional_modes = 7;
 
   // Per-user limits.
@@ -198,8 +195,8 @@ message ConfigGroup {
     message TriggeringCondition {
       // Name of the mode to be matched.
       //
-      // Must be FULL_RUN, DRY_RUN, QUICK_DRY_RUN, NEW_PATCHSET_RUN, or one of
-      // the additional modes configured.
+      // Must be FULL_RUN, DRY_RUN, NEW_PATCHSET_RUN, or one of the additional
+      // modes configured.
       string mode = 1 [(validate.rules).string.min_len = 1];
       // Statuses to trigger the action on.
       //
@@ -309,32 +306,46 @@ message SubmitOptions {
 
 
 // Mode defines a CQ Run mode and how it can be triggered.
+//
+// The mode ACL check will be same as dry run (i.e. use `dry_run_access_list`)
+// if 1 is provided for `cq_label_value`. Otherwise, the check will the same as
+// full run (i.e. checking whether CL is approved and whether CL owner is
+// committer) if 2 is provided for `cq_label_value`.
 message Mode {
   // Name of the mode.
   //
-  // Must match regex "^[a-zA-Z][a-zA-Z0-9_-]{0,39}$".
+  // Must match regex "^[A-Z][A-Z_]{0,39}$".
+  // Must not be one of the reserved Run modes
+  //  - DRY_RUN
+  //  - FULL_RUN
+  //  - NEW_PATCHSET_RUN
   string name = 1 [
-      (validate.rules).string.pattern = "^[a-zA-Z][a-zA-Z0-9-9_-]{0,39}$"
+      (validate.rules).string = {
+        pattern: '^[A-Z][A-Z_]{0,39}$',
+        not_in: ['DRY_RUN', 'FULL_RUN', 'NEW_PATCHSET_RUN'],
+      }
   ];
 
-  // Value of Commit-Queue label that triggers a CQ Run in the mode.
+  // Value of Commit-Queue label that triggers a run in the mode.
   //
-  // Must be either 1 or 2.
+  // Must be either 1 or 2. If 2 is provided, LUCI CV will follow the
+  // FULL_RUN behavior that it will submit CL(s) in this run after all
+  // tryjobs have passed.
   int32 cq_label_value = 2 [(validate.rules).int32 = {in: [1, 2]}];
   // Label that MUST also be voted with `triggering_value` in addition to
-  // "Commit-Queue" label to trigger a CQ Run in the mode.
+  // "Commit-Queue" label to trigger a run in the mode.
   //
   // Must not be "Commit-Queue"
   string triggering_label = 3 [
       (validate.rules).string = {
         min_len: 1,
         not_in: ['Commit-Queue'],
-     }
+      }
   ];
 
-  // Value of the `trigerring_label` that triggers a CQ Run in the mode.
+  // Value of the `triggering_label` that triggers a run in the mode.
   //
-  // Must be > 0
+  // Must be > 0.
   int32 triggering_value = 4 [(validate.rules).int32.gt = 0];
 }
 
@@ -683,9 +694,9 @@ message Verifiers {
 
       reserved 12, 13; // mode_regexp[_exclude]
 
-      // If set, require this builder only if the Run mode matches
-      // one of the modes in this list. If unset, it implies that only FULL_RUN
-      // and DRY_RUN are allowed, and temporarily QUICK_DRY_RUN. Optional.
+      // If set, require this builder only if the Run mode matches one of the
+      // modes in this list. If unset, it implies that only FULL_RUN and
+      // DRY_RUN are allowed. Optional.
       repeated string mode_allowlist = 14;
     }
 
