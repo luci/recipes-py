@@ -89,7 +89,7 @@ class DeferContext:
     self.suppressed_results.extend(self.results)
     self.results.clear()
 
-  def collect(self, step_name: Optional[str] = 'collect'):
+  def collect(self, step_name: Optional[str] = None):
     """Raise all deferred failures.
 
     Only raise failures from suppressed steps if there are no failures in
@@ -98,7 +98,7 @@ class DeferContext:
     self.api.defer.collect(self.results, step_name=step_name)
     self.api.defer.collect(
         self.suppressed_results,
-        step_name=f'{step_name} suppressed',
+        step_name=f'{step_name} suppressed' if step_name else None,
     )
 
 
