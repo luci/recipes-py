@@ -186,3 +186,94 @@ class LuciAnalysisTestApi(recipe_test_api.RecipeTestApi):
                 for x in failures
             ]
         }))
+
+  @staticmethod
+  def query_stability_example_input():
+    return [{
+        "testId": "tast.lockscreen.CloseLid.fieldtrial_testing_config_on",
+        "variant": {
+            "def": {
+                "board": "hana",
+                "build_target": "hana"
+            }
+        },
+        "sources": {
+            "changelists": [{
+                "change": "5138795",
+                "host": "chromium-review.googlesource.com",
+                "patchset": "2",
+                "project": "chromiumos/overlays/chromiumos-overlay"
+            }],
+            "gitilesCommit": {
+                "host": "chrome-internal.googlesource.com",
+                "project": "chromeos/manifest-internal",
+                "ref": "refs/heads/snapshot",
+                "commitHash": "47ccd8e3e33bcab3f56963c765c67deec7775292",
+                "position": "92976"
+            }
+        }
+    }]
+
+  @staticmethod
+  def query_stability_example_output():
+    return {
+        "testVariants": [{
+            "testId": "tast.lockscreen.CloseLid.fieldtrial_testing_config_on",
+            "variant": {
+                "def": {
+                    "board": "hana",
+                    "build_target": "hana"
+                }
+            },
+            "failureRate": {
+                "isMet":
+                    True,
+                "unexpectedTestRuns":
+                    10,
+                "consecutiveUnexpectedTestRuns":
+                    10,
+                "recentVerdicts": [{
+                    "position": "93211",
+                    "invocations": ["build-8759159713660408161"],
+                    "unexpectedRuns": 2,
+                    "totalRuns": 2
+                }, {
+                    "position": "93210",
+                    "invocations": ["build-8759161637520826273"],
+                    "unexpectedRuns": 2,
+                    "totalRuns": 2
+                }, {
+                    "position": "93208",
+                    "invocations": ["build-8759165807629055393"],
+                    "unexpectedRuns": 2,
+                    "totalRuns": 2
+                }, {
+                    "position": "93207",
+                    "invocations": ["build-8759167441766272785"],
+                    "unexpectedRuns": 2,
+                    "totalRuns": 2
+                }, {
+                    "position": "93206",
+                    "invocations": ["build-8759169052502629345"],
+                    "unexpectedRuns": 2,
+                    "totalRuns": 2
+                }]
+            },
+            "flakeRate": {
+                "totalVerdicts": 134,
+                "startPosition": "93206",
+                "endPosition": "93552"
+            }
+        }],
+        "criteria": {
+            "failureRate": {
+                "failureThreshold": 6,
+                "consecutiveFailureThreshold": 3
+            },
+            "flakeRate": {
+                "minWindow": 100,
+                "flakeThreshold": 2,
+                "flakeRateThreshold": 0.01
+            }
+        }
+    }

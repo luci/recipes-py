@@ -163,6 +163,7 @@
   * [led:tests/trigger_build](#recipes-led_tests_trigger_build)
   * [legacy_annotation:examples/full](#recipes-legacy_annotation_examples_full)
   * [luci_analysis:tests/query_failure_rate_test](#recipes-luci_analysis_tests_query_failure_rate_test) &mdash; Tests for query_failure_rate.
+  * [luci_analysis:tests/query_stability_test](#recipes-luci_analysis_tests_query_stability_test) &mdash; Tests for query_stability.
   * [luci_analysis:tests/test_generate_analysis](#recipes-luci_analysis_tests_test_generate_analysis) &mdash; Tests for generate_analysis.
   * [luci_analysis:tests/test_history_query](#recipes-luci_analysis_tests_test_history_query) &mdash; Tests for query_failure_rate.
   * [luci_analysis:tests/test_lookup_bug](#recipes-luci_analysis_tests_test_lookup_bug) &mdash; Tests for lookup_bug.
@@ -2593,9 +2594,9 @@ This API is for calling LUCI Analysis RPCs for various aggregated info about
 test results.
 See go/luci-analysis for more info.
 
-#### **class [LuciAnalysisApi](/recipe_modules/luci_analysis/api.py#27)([RecipeApi](/recipe_engine/recipe_api.py#473)):**
+#### **class [LuciAnalysisApi](/recipe_modules/luci_analysis/api.py#30)([RecipeApi](/recipe_engine/recipe_api.py#473)):**
 
-&mdash; **def [lookup\_bug](/recipe_modules/luci_analysis/api.py#224)(self, bug_id, system='monorail'):**
+&mdash; **def [lookup\_bug](/recipe_modules/luci_analysis/api.py#263)(self, bug_id, system='monorail'):**
 
 Looks up the rule associated with a given bug.
 
@@ -2611,7 +2612,7 @@ Args:
 Returns:
   list of rules (str), Format: projects/{project}/rules/{rule_id}
 
-&mdash; **def [query\_cluster\_failures](/recipe_modules/luci_analysis/api.py#259)(self, cluster_name):**
+&mdash; **def [query\_cluster\_failures](/recipe_modules/luci_analysis/api.py#298)(self, cluster_name):**
 
 Queries examples of failures in the given cluster.
 
@@ -2627,7 +2628,7 @@ Returns:
   For value format, see [`DistinctClusterFailure` message]
   (https://bit.ly/DistinctClusterFailure)
 
-&mdash; **def [query\_failure\_rate](/recipe_modules/luci_analysis/api.py#81)(self, test_and_variant_list, project='chromium'):**
+&mdash; **def [query\_failure\_rate](/recipe_modules/luci_analysis/api.py#84)(self, test_and_variant_list, project='chromium'):**
 
 Queries LUCI Analysis for failure rates
 
@@ -2638,7 +2639,20 @@ Args:
 Returns:
   List of TestVariantFailureRateAnalysis protos
 
-&mdash; **def [query\_test\_history](/recipe_modules/luci_analysis/api.py#114)(self, test_id, project='chromium', sub_realm=None, variant_predicate=None, partition_time_range=None, submitted_filter=None, page_size=1000, page_token=None):**
+&mdash; **def [query\_stability](/recipe_modules/luci_analysis/api.py#117)(self, test_variant_position_list, project='chromium'):**
+
+Queries LUCI Analysis for test stability.
+
+Args:
+  test_variant_position_list list(TestVariantPosition): List of dicts
+    containing testId, variant and source position
+  project (str): Optional. The LUCI project to query the failures from.
+Returns:
+  Tuple of (List(TestVariantStabilityAnalysis), TestStabilityCriteria)
+Raises:
+  StepFailure if query is invalid or service returns unexpected responses.
+
+&mdash; **def [query\_test\_history](/recipe_modules/luci_analysis/api.py#153)(self, test_id, project='chromium', sub_realm=None, variant_predicate=None, partition_time_range=None, submitted_filter=None, page_size=1000, page_token=None):**
 
 A wrapper method to use `luci.analysis.v1.TestHistory` `Query` API.
 
@@ -2669,7 +2683,7 @@ Args:
 Returns:
   (list of parsed luci.analysis.v1.TestVerdict objects, next page token)
 
-&mdash; **def [query\_variants](/recipe_modules/luci_analysis/api.py#175)(self, test_id, project='chromium', sub_realm=None, variant_predicate=None, page_size=1000, page_token=None):**
+&mdash; **def [query\_variants](/recipe_modules/luci_analysis/api.py#214)(self, test_id, project='chromium', sub_realm=None, variant_predicate=None, page_size=1000, page_token=None):**
 
 A wrapper method to use `luci.analysis.v1.TestHistory` `QueryVariants`
 API.
@@ -2696,7 +2710,7 @@ Returns:
   (list of VariantInfo { variant_hash: str, variant: { def: dict } },
    next page token)
 
-&mdash; **def [rule\_name\_to\_cluster\_name](/recipe_modules/luci_analysis/api.py#248)(self, rule):**
+&mdash; **def [rule\_name\_to\_cluster\_name](/recipe_modules/luci_analysis/api.py#287)(self, rule):**
 
 Convert the resource name for a rule to its corresponding cluster.
 Args:
@@ -5473,6 +5487,14 @@ Test to assert that sort_keys=False preserves insertion order.
 Tests for query_failure_rate.
 
 &mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/query_failure_rate_test.py#24)(api, input_list):**
+### *recipes* / [luci\_analysis:tests/query\_stability\_test](/recipe_modules/luci_analysis/tests/query_stability_test.py)
+
+[DEPS](/recipe_modules/luci_analysis/tests/query_stability_test.py#9): [assertions](#recipe_modules-assertions), [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io)
+
+
+Tests for query_stability.
+
+&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/query_stability_test.py#22)(api, input_list):**
 ### *recipes* / [luci\_analysis:tests/test\_generate\_analysis](/recipe_modules/luci_analysis/tests/test_generate_analysis.py)
 
 [DEPS](/recipe_modules/luci_analysis/tests/test_generate_analysis.py#7): [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)

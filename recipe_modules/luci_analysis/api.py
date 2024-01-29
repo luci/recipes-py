@@ -13,12 +13,15 @@ import attr
 
 from google.protobuf import json_format
 from recipe_engine import recipe_api
+from recipe_engine.recipe_api import StepFailure
 
 from PB.go.chromium.org.luci.analysis.proto.v1.predicate import TestVerdictPredicate
 from PB.go.chromium.org.luci.analysis.proto.v1.test_history import (
     QueryTestHistoryRequest, QueryTestHistoryResponse, QueryVariantsRequest,
     QueryVariantsResponse)
-from PB.go.chromium.org.luci.analysis.proto.v1.test_variants import TestVariantFailureRateAnalysis
+from PB.go.chromium.org.luci.analysis.proto.v1.test_variants import (
+    TestVariantFailureRateAnalysis, TestVariantStabilityAnalysis,
+    TestStabilityCriteria)
 from PB.go.chromium.org.luci.analysis.proto.v1.clusters import QueryClusterFailuresResponse
 
 CLUSTER_STEP_NAME = 'cluster failing test results with luci analysis'
@@ -110,6 +113,42 @@ class LuciAnalysisApi(recipe_api.RecipeApi):
               d, TestVariantFailureRateAnalysis(), ignore_unknown_fields=True)
           for d in failure_analysis_dicts
       ]
+
+  def query_stability(self, test_variant_position_list, project='chromium'):
+    """Queries LUCI Analysis for test stability.
+
+    Args:
+      test_variant_position_list list(TestVariantPosition): List of dicts
+        containing testId, variant and source position
+      project (str): Optional. The LUCI project to query the failures from.
+    Returns:
+      Tuple of (List(TestVariantStabilityAnalysis), TestStabilityCriteria)
+    Raises:
+      StepFailure if query is invalid or service returns unexpected responses.
+    """
+    with self.m.step.nest('query LUCI Analysis for stability'):
+      response_dicts = self._run(
+          'rpc call',
+          'luci.analysis.v1.TestVariants.QueryStability',
+          {
+              'project': project,
+              'testVariants': test_variant_position_list,
+          },
+      )
+      # This is not likely to happen, although invalid request may result in a
+      # StepFailure directly raised from the above step.
+      if not response_dicts or not response_dicts.get(
+          'testVariants') or not response_dicts.get('criteria'):
+        raise StepFailure(
+            'Unexpected failure: unexpected response from RPC call')
+      return [
+          json_format.ParseDict(
+              d, TestVariantStabilityAnalysis(), ignore_unknown_fields=True)
+          for d in response_dicts.get('testVariants')
+      ], json_format.ParseDict(
+          response_dicts.get('criteria'),
+          TestStabilityCriteria(),
+          ignore_unknown_fields=True)
 
   def query_test_history(self,
                          test_id,
