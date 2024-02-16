@@ -77,6 +77,15 @@ class ResultDBTestApi(recipe_test_api.RecipeTestApi):
     """
     return self._proto_step_result(res, step_name)
 
+  def query_test_variants(self, res, step_name='query_test_variants'):
+    """Emulates query_test_variants() return value.
+
+    Args:
+      res (proto.v1.resultdb.QueryTestVariantsResponse object): the response.
+      step_name (str): the name of the step to simulate.
+    """
+    return self._proto_step_result(res, step_name)
+
   def query_new_test_variants(self, res, step_name='query_new_test_variants'):
     """Emulates query_new_test_results() return value
 
