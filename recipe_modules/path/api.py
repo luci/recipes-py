@@ -39,6 +39,7 @@ from __future__ import annotations
 import collections
 from collections.abc import Iterable
 import copy
+import enum
 import itertools
 import os
 import re
@@ -49,12 +50,12 @@ from typing import Any, Callable, Literal, cast
 from recipe_engine import recipe_api, recipe_test_api
 from recipe_engine import config_types
 
-FILE = 'FILE'
-DIRECTORY = 'DIRECTORY'
+
+class FileType(enum.Enum):
+  FILE = 1
+  DIRECTORY = 2
 
 CheckoutPathName = 'checkout'
-
-FileType = Literal[DIRECTORY, FILE]
 
 
 class Error(Exception):
@@ -86,7 +87,7 @@ class path_set:
   def _initialize(self) -> None:  # pylint: disable=method-hidden
     self._initialize: Callable[[], None] = lambda: None
     for path in self._initial_paths:
-      self.add(path, FILE)
+      self.add(path, FileType.FILE)
     self._initial_paths = None
     self.contains: Callable[[config_types.Path], bool] = (
         lambda path: path in self._paths
@@ -111,7 +112,7 @@ class path_set:
     while path != prev_path:
       self._paths[path] = kind
       prev_path, path = path, self._path_mod.dirname(path)
-      kind = DIRECTORY
+      kind = FileType.DIRECTORY
 
   def copy(self, source: config_types.Path, dest: config_types.Path) -> None:
     source, dest = str(source), str(dest)
@@ -175,6 +176,7 @@ class fake_path:
 
   def mock_add_paths(self, path: config_types.Path, kind: FileType) -> None:
     """Adds a path and all of its parents to the set of existing paths."""
+    assert kind in FileType
     self._mock_path_exists.add(path, kind)
 
   def mock_copy_paths(self, source: config_types.Path,
@@ -192,10 +194,12 @@ class fake_path:
     return self._mock_path_exists.contains(path)
 
   def isdir(self, path: config_types.Path) -> bool:
-    return self.exists(path) and self._mock_path_exists.kind(path) == DIRECTORY
+    return (self.exists(path) and
+            self._mock_path_exists.kind(path) == FileType.DIRECTORY)
 
   def isfile(self, path: config_types.Path) -> bool:
-    return self.exists(path) and self._mock_path_exists.kind(path) == FILE
+    return (self.exists(path) and
+            self._mock_path_exists.kind(path) == FileType.FILE)
 
   # This matches:
   #   [START_DIR]
@@ -388,7 +392,7 @@ class PathApi(recipe_api.RecipeApi):
       assert isinstance(prefix, str)
       temp_dir = self['cleanup'].join('%s_tmp_%d' %
                                       (prefix, self._test_counter[prefix]))
-    self.mock_add_paths(temp_dir, DIRECTORY)
+    self.mock_add_paths(temp_dir, FileType.DIRECTORY)
     return temp_dir
 
   def mkstemp(self, prefix: str = tempfile.template) -> config_types.Path:
@@ -415,7 +419,7 @@ class PathApi(recipe_api.RecipeApi):
       assert isinstance(prefix, str)
       temp_file: config_types.Path = self['cleanup'].join(
           '%s_tmp_%d' % (prefix, self._test_counter[prefix]))
-    self.mock_add_paths(temp_file, FILE)
+    self.mock_add_paths(temp_file, FileType.FILE)
     return temp_file
 
   def abs_to_path(self, abs_string_path: str) -> config_types.Path:
@@ -681,18 +685,19 @@ class PathApi(recipe_api.RecipeApi):
     """
     return self._path_mod.isfile(str(path))
 
-  def mock_add_paths(self, path: config_types.Path, kind: str = FILE) -> None:
+  def mock_add_paths(self, path: config_types.Path,
+                     kind: FileType = FileType.FILE) -> None:
     """For testing purposes, mark that |path| exists."""
     if self._test_data.enabled:
       self._path_mod.mock_add_paths(path, kind)
 
   def mock_add_file(self, path: config_types.Path) -> None:
     """For testing purposes, mark that file |path| exists."""
-    self.mock_add_paths(path, FILE)
+    self.mock_add_paths(path, FileType.FILE)
 
   def mock_add_directory(self, path: config_types.Path) -> None:
     """For testing purposes, mark that file |path| exists."""
-    self.mock_add_paths(path, DIRECTORY)
+    self.mock_add_paths(path, FileType.DIRECTORY)
 
   def mock_copy_paths(self, source: config_types.Path,
                       dest: config_types.Path) -> None:
