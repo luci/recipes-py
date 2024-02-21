@@ -48,6 +48,7 @@ from .step_runner import Step
 
 
 LOG = logging.getLogger(__name__)
+MAX_SUMMARY_MARKDOWN_SIZE = 4000
 
 
 @attr.s(frozen=True, slots=True, repr=False)
@@ -639,7 +640,26 @@ class RecipeEngine(object):
           result.status = common_pb2.INFRA_FAILURE
         else:
           result.status = common_pb2.FAILURE
-        result.summary_markdown = '\n'.join(reasons)
+
+        # The encoded summary markdown length has a hard limit. We include as
+        # many of the triggering exceptions as possible without exceeding the
+        # limit.
+        parts = []
+
+        max_size = MAX_SUMMARY_MARKDOWN_SIZE - 25
+
+        for i, reason in enumerate(reasons):
+          # Always include the first exception.
+          if i == 0 or len('\n'.join([*parts, reason])) < max_size:
+            parts.append(reason)
+
+          else:
+            num_hidden = len(reasons) - len(parts)
+            parts.append(
+                f'\n({num_hidden}/{len(reasons)} errors truncated)'
+            )
+
+        result.summary_markdown = '\n'.join(parts)
 
     except bdb.BdbQuit:  # let debugger quit flow through
       raise
