@@ -295,8 +295,15 @@ class BuildbucketApi(recipe_api.RecipeApi):
         paths=[path_prefix + p for p in sorted(paths)])
 
   def run(
-      self, schedule_build_requests, collect_interval=None, timeout=None,
-      url_title_fn=None, step_name=None, raise_if_unsuccessful=False):
+      self,
+      schedule_build_requests,
+      collect_interval=None,
+      timeout=None,
+      url_title_fn=None,
+      step_name=None,
+      raise_if_unsuccessful=False,
+      eager=False,
+  ):
     """Runs builds and returns results.
 
     A shortcut for schedule() and collect_builds().
@@ -319,6 +326,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
           raise_if_unsuccessful=raise_if_unsuccessful,
           # Do not print links. self.schedule printed them already.
           url_title_fn=lambda b: None,
+          eager=eager,
       )
       return [build_dict[b.id] for b in builds]
 
@@ -870,10 +878,17 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return self.collect_builds([build_id], **kwargs)[build_id]
 
   def collect_builds(
-      self, build_ids, interval=None, timeout=None, step_name=None,
-      raise_if_unsuccessful=False, url_title_fn=None,
-      mirror_status=False, fields=DEFAULT_FIELDS,
+      self,
+      build_ids,
+      interval=None,
+      timeout=None,
+      step_name=None,
+      raise_if_unsuccessful=False,
+      url_title_fn=None,
+      mirror_status=False,
+      fields=DEFAULT_FIELDS,
       cost=None,
+      eager=False,
   ):
     """Waits for a set of builds to end and returns their details.
 
@@ -893,6 +908,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     * `cost`: A step.ResourceCost to override for the underlying bb invocation.
       If not specified, will use the recipe_engine's default values for
       ResourceCost.
+    * `eager`: Whether stop upon getting the first build.
 
     Returns:
       A map from integer build IDs to the corresponding
@@ -906,10 +922,15 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     with self.m.step.nest(step_name or 'buildbucket.collect'):
       # Wait for the builds to finish.
+      args = ['-interval', '%ds' % interval]
+      if eager:
+        args.append('-eager')
+      args += build_ids
+
       self._run_bb(
           step_name='wait',
           subcommand='collect',
-          args=['-interval', '%ds' % interval] + build_ids,
+          args=args,
           timeout=timeout,
           cost=cost,
       )
@@ -1096,7 +1117,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     bot_dimensions = []
     for key, vals in task_details['bot_dimensions'].items():
       for v in vals:
-          bot_dimensions.append(common_pb2.StringPair(key=key, value=v))
+        bot_dimensions.append(common_pb2.StringPair(key=key, value=v))
     return bot_dimensions
 
   @property
