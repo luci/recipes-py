@@ -23,8 +23,8 @@ from recipe_engine import recipe_api
 # https://ci.chromium.org/p/infra-internal/g/infra-packagers/console
 # This is the pRPC version of swarming cli tool
 PRPC_SWARMING_CLI_VERSION = (
-    'git_revision:dfbae63f58ac56e85146d622290b6e471c7fd15d')
-# This version of the CLI is the pre-prpc varient of swarming cli tool
+    'git_revision:3ee254cc4ff6d4e7aa2f937c6f39f57fdaacd85d')
+# This version of the CLI is the pre-prpc variant of swarming cli tool
 DEFAULT_CIPD_VERSION = 'git_revision:7f62986230b0ff7fd5f2c74518352ac247c768d4'
 
 # The mandatory fields to include when calling the API list_bots with fields.

@@ -13,7 +13,7 @@
       "ensure-directory",
       "--mode",
       "0o777",
-      "[START_DIR]/cipd_tool/infra/tools/luci/swarming/2899a13d3f05d44c2e0b1c94f1d473ad94c47984016f28cf60edb5ca63006bc8"
+      "[START_DIR]/cipd_tool/infra/tools/luci/swarming/5e5bacc3c99ccb2f39c8d1257844c33bad3ef0c5bfc79a4c0b9b76e0051034c5"
     ],
     "infra_step": true,
     "luci_context": {
@@ -38,9 +38,9 @@
       "cipd",
       "ensure",
       "-root",
-      "[START_DIR]/cipd_tool/infra/tools/luci/swarming/2899a13d3f05d44c2e0b1c94f1d473ad94c47984016f28cf60edb5ca63006bc8",
+      "[START_DIR]/cipd_tool/infra/tools/luci/swarming/5e5bacc3c99ccb2f39c8d1257844c33bad3ef0c5bfc79a4c0b9b76e0051034c5",
       "-ensure-file",
-      "infra/tools/luci/swarming/${platform} git_revision:dfbae63f58ac56e85146d622290b6e471c7fd15d",
+      "infra/tools/luci/swarming/${platform} git_revision:3ee254cc4ff6d4e7aa2f937c6f39f57fdaacd85d",
       "-max-threads",
       "0",
       "-json-output",
@@ -66,7 +66,7 @@
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
       "@@@STEP_LOG_LINE@json.output@      {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-git_revision:dfb\",@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-git_revision:3ee\",@@@",
       "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/tools/luci/swarming/resolved-platform\"@@@",
       "@@@STEP_LOG_LINE@json.output@      }@@@",
       "@@@STEP_LOG_LINE@json.output@    ]@@@",
@@ -77,7 +77,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cipd_tool/infra/tools/luci/swarming/2899a13d3f05d44c2e0b1c94f1d473ad94c47984016f28cf60edb5ca63006bc8/swarming",
+      "[START_DIR]/cipd_tool/infra/tools/luci/swarming/5e5bacc3c99ccb2f39c8d1257844c33bad3ef0c5bfc79a4c0b9b76e0051034c5/swarming",
       "spawn-tasks",
       "-server",
       "https://example.swarmingserver.appspot.com",
@@ -288,7 +288,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cipd_tool/infra/tools/luci/swarming/2899a13d3f05d44c2e0b1c94f1d473ad94c47984016f28cf60edb5ca63006bc8/swarming",
+      "[START_DIR]/cipd_tool/infra/tools/luci/swarming/5e5bacc3c99ccb2f39c8d1257844c33bad3ef0c5bfc79a4c0b9b76e0051034c5/swarming",
       "request-show",
       "-server",
       "https://example.swarmingserver.appspot.com",
@@ -475,7 +475,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cipd_tool/infra/tools/luci/swarming/2899a13d3f05d44c2e0b1c94f1d473ad94c47984016f28cf60edb5ca63006bc8/swarming",
+      "[START_DIR]/cipd_tool/infra/tools/luci/swarming/5e5bacc3c99ccb2f39c8d1257844c33bad3ef0c5bfc79a4c0b9b76e0051034c5/swarming",
       "request-show",
       "-server",
       "https://example.swarmingserver.appspot.com",
@@ -662,7 +662,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cipd_tool/infra/tools/luci/swarming/2899a13d3f05d44c2e0b1c94f1d473ad94c47984016f28cf60edb5ca63006bc8/swarming",
+      "[START_DIR]/cipd_tool/infra/tools/luci/swarming/5e5bacc3c99ccb2f39c8d1257844c33bad3ef0c5bfc79a4c0b9b76e0051034c5/swarming",
       "collect",
       "-server",
       "https://example.swarmingserver.appspot.com",
@@ -730,7 +730,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cipd_tool/infra/tools/luci/swarming/2899a13d3f05d44c2e0b1c94f1d473ad94c47984016f28cf60edb5ca63006bc8/swarming",
+      "[START_DIR]/cipd_tool/infra/tools/luci/swarming/5e5bacc3c99ccb2f39c8d1257844c33bad3ef0c5bfc79a4c0b9b76e0051034c5/swarming",
       "collect",
       "-server",
       "https://example.swarmingserver.appspot.com",
@@ -798,7 +798,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cipd_tool/infra/tools/luci/swarming/2899a13d3f05d44c2e0b1c94f1d473ad94c47984016f28cf60edb5ca63006bc8/swarming",
+      "[START_DIR]/cipd_tool/infra/tools/luci/swarming/5e5bacc3c99ccb2f39c8d1257844c33bad3ef0c5bfc79a4c0b9b76e0051034c5/swarming",
       "spawn-tasks",
       "-server",
       "https://example.swarmingserver.appspot.com",
@@ -1010,7 +1010,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cipd_tool/infra/tools/luci/swarming/2899a13d3f05d44c2e0b1c94f1d473ad94c47984016f28cf60edb5ca63006bc8/swarming",
+      "[START_DIR]/cipd_tool/infra/tools/luci/swarming/5e5bacc3c99ccb2f39c8d1257844c33bad3ef0c5bfc79a4c0b9b76e0051034c5/swarming",
       "collect",
       "-server",
       "https://example.swarmingserver.appspot.com",
