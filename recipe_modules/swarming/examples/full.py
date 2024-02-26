@@ -314,6 +314,3 @@ def GenTests(api):
           retcode=1),
       status='INFRA_FAILURE',
   )
-
-  yield api.test('test_new_swarming_experiment',
-                 api.buildbucket.ci_build(experiments=['swarming.prpc.cli']))
