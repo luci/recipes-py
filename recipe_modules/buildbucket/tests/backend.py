@@ -26,6 +26,9 @@ def RunSteps(api):
     api.buildbucket.swarming_bot_dimensions[0].key, "os")
   api.assertions.assertEqual(
     api.buildbucket.swarming_bot_dimensions[0].value, "mac")
+  api.assertions.assertEqual(
+    api.buildbucket.swarming_bot_dimensions_from_build(
+      api.buildbucket.build)[0].key, "os")
   api.assertions.assertEqual(api.buildbucket.swarming_parent_run_id, "1")
   api.assertions.assertEqual(api.buildbucket.swarming_priority, 1)
   api.assertions.assertEqual(

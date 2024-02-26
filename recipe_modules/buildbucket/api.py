@@ -1103,15 +1103,22 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   @property
   def swarming_bot_dimensions(self):
-    """Returns the backend hostname for the build.
-    If it is legacy swarming build then the swarming hostname will be returned.
+    """Returns the swarming bot dimensions for the build.
     """
-    if self.build.infra.swarming.bot_dimensions:
-      return self.build.infra.swarming.bot_dimensions
-    if ("swarming" not in self.build.infra.backend.task.id.target
-        or not self.build.infra.backend.task.details):
+    return self.swarming_bot_dimensions_from_build()
+
+  def swarming_bot_dimensions_from_build(self, build=None):
+    """Returns the swarming bot dimensions for the provided build.
+    If no build is provided, then self.build will be used.
+    """
+    if not build:
+      build = self.build
+    if build.infra.swarming.bot_dimensions:
+      return build.infra.swarming.bot_dimensions
+    if ("swarming" not in build.infra.backend.task.id.target
+        or not build.infra.backend.task.details):
       return None
-    task_details = self.build.infra.backend.task.details
+    task_details = build.infra.backend.task.details
     if "bot_dimensions" not in task_details:
       return None
     bot_dimensions = []
