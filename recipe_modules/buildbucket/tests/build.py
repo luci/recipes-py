@@ -156,6 +156,22 @@ def GenTests(api):
       ))
   )
 
+  yield (case(
+      'ci_on_backend',
+      expected_bucket_v1='luci.project.ci',
+      expected_realm='project:ci',
+      expected_full_name='project/ci/builder') +
+         api.buildbucket.ci_build(on_backend=True,) +
+         api.post_process(post_process.DropExpectation))
+
+  yield (case(
+      'try_on_backend',
+      expected_bucket_v1='luci.project.try',
+      expected_realm='project:try',
+      expected_full_name='project/try/builder') +
+         api.buildbucket.try_build(on_backend=True,) +
+         api.post_process(post_process.DropExpectation))
+
   try:
     api.buildbucket.ci_build(git_repo='https://just.hostname/')
     assert 0  # pragma: no cover

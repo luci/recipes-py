@@ -74,12 +74,27 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       exe=None,
       execution_timeout=None,
       start_time=None,
-    ):
+      on_backend=False,
+  ):
     """Returns a typical buildbucket CI build scheduled by luci-scheduler."""
     git_repo = git_repo or self._default_git_repo(project)
     gitiles_host, gitiles_project = util.parse_gitiles_repo_url(git_repo)
     if not gitiles_host or not gitiles_project:
       raise ValueError('invalid repo %s' % (git_repo,))
+
+    infra = build_pb2.BuildInfra(
+        swarming=build_pb2.BuildInfra.Swarming(priority=priority),
+        resultdb=build_pb2.BuildInfra.ResultDB(
+            invocation='invocations/build:%d' % build_id),
+    )
+    if on_backend:
+      backend_config_dict = {'priority': priority}
+      infra = build_pb2.BuildInfra(
+          backend=build_pb2.BuildInfra.Backend(
+              config=self.dict_to_struct(backend_config_dict),),
+          resultdb=build_pb2.BuildInfra.ResultDB(
+              invocation='invocations/build:%d' % build_id),
+      )
 
     build = build_pb2.Build(
         id=build_id,
@@ -100,11 +115,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
                 id=revision,
             ),
             experiments=experiments),
-        infra=build_pb2.BuildInfra(
-            swarming=build_pb2.BuildInfra.Swarming(priority=priority),
-            resultdb=build_pb2.BuildInfra.ResultDB(
-                invocation='invocations/build:%d' % build_id),
-        ))
+        infra=infra)
 
     if execution_timeout:
       build.execution_timeout.FromSeconds(execution_timeout)
@@ -155,6 +166,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       execution_timeout=None,
       start_time=None,
       properties=None,
+      on_backend=False,
   ):
     """Emulate typical buildbucket try build scheduled by CQ.
 
@@ -191,6 +203,20 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
           ),
       ]
 
+    infra = build_pb2.BuildInfra(
+        swarming=build_pb2.BuildInfra.Swarming(priority=priority),
+        resultdb=build_pb2.BuildInfra.ResultDB(
+            invocation='invocations/build:%d' % build_id),
+    )
+    if on_backend:
+      backend_config_dict = {'priority': priority}
+      infra = build_pb2.BuildInfra(
+          backend=build_pb2.BuildInfra.Backend(
+              config=self.dict_to_struct(backend_config_dict),),
+          resultdb=build_pb2.BuildInfra.ResultDB(
+              invocation='invocations/build:%d' % build_id),
+      )
+
     build = build_pb2.Build(
         id=build_id,
         number=build_number,
@@ -207,11 +233,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
             gerrit_changes=gerrit_changes,
             experiments=experiments,
             properties=properties),
-        infra=build_pb2.BuildInfra(
-            swarming=build_pb2.BuildInfra.Swarming(priority=priority),
-            resultdb=build_pb2.BuildInfra.ResultDB(
-                invocation='invocations/build:%d' % build_id),
-        ),
+        infra=infra,
     )
 
     if execution_timeout:
