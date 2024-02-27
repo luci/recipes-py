@@ -1133,13 +1133,13 @@ class BuildbucketApi(recipe_api.RecipeApi):
     """
     if self.build.infra.swarming.parent_run_id:
       return self.build.infra.swarming.parent_run_id
-    if ("swarming" not in self.build.infra.backend.task.id.target
-        or not self.build.infra.backend.task.details):
+    if ("swarming" not in self.build.infra.backend.task.id.target or
+        not self.build.infra.backend.config):
       return None
-    task_details = self.build.infra.backend.task.details
-    if 'parent_run_id' not in task_details:
+    backend_config = self.build.infra.backend.config
+    if 'parent_run_id' not in backend_config:
       return None
-    return task_details['parent_run_id']
+    return backend_config['parent_run_id']
 
   @property
   def swarming_priority(self):
@@ -1147,13 +1147,13 @@ class BuildbucketApi(recipe_api.RecipeApi):
     """
     if self.build.infra.swarming.priority:
       return self.build.infra.swarming.priority
-    if ("swarming" not in self.build.infra.backend.task.id.target
-        or not self.build.infra.backend.task.details):
+    if ("swarming" not in self.build.infra.backend.task.id.target or
+        not self.build.infra.backend.config):
       return None
-    task_details = self.build.infra.backend.task.details
-    if 'priority' not in task_details:
+    backend_config = self.build.infra.backend.config
+    if 'priority' not in backend_config:
       return None
-    return task_details['priority']
+    return backend_config['priority']
 
   @property
   def swarming_task_service_account(self):

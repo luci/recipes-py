@@ -51,21 +51,17 @@ def GenTests(api):
                   }
               )
           ),
-        "parent_run_id": struct_pb2.Value(
-          string_value="1"
-        ),
-        "priority": struct_pb2.Value(
-          number_value=1
-        ),
       }
   )
   backend_config = struct_pb2.Struct(
       fields={
-          "task_service_account": struct_pb2.Value(
-            string_value="abc123@email.com"
-          )
-      }
-  )
+          "task_service_account":
+              struct_pb2.Value(string_value="abc123@email.com"),
+          "parent_run_id":
+              struct_pb2.Value(string_value="1"),
+          "priority":
+              struct_pb2.Value(number_value=1),
+      })
   yield (
       api.test('swarming_as_a_backend') +
       api.buildbucket.backend_build(
