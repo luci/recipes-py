@@ -21,6 +21,8 @@ def RunSteps(api):
     common_pb2.RequestedDimension(key="key", value="val"))
   api.assertions.assertEqual(api.buildbucket.backend_task_id, "1")
   api.assertions.assertEqual(
+      api.buildbucket.backend_task_id_from_build(api.buildbucket.build), "1")
+  api.assertions.assertEqual(
     api.buildbucket.swarming_bot_dimensions[0].key, "os")
   api.assertions.assertEqual(
     api.buildbucket.swarming_bot_dimensions[0].value, "mac")

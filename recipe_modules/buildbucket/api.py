@@ -1097,9 +1097,17 @@ class BuildbucketApi(recipe_api.RecipeApi):
   def backend_task_id(self):
     """Returns the task id of the task for the build.
     """
-    if self.build.infra.swarming.task_id:
-      return self.build.infra.swarming.task_id
-    return self.build.infra.backend.task.id.id
+    return self.backend_task_id_from_build()
+
+  def backend_task_id_from_build(self, build=None):
+    """Returns the task id of the task for the provided build.
+    If no build is provided, then self.build will be used.
+    """
+    if not build:
+      build = self.build
+    if build.infra.swarming.task_id:
+      return build.infra.swarming.task_id
+    return build.infra.backend.task.id.id
 
   @property
   def swarming_bot_dimensions(self):
