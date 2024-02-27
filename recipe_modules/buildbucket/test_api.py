@@ -8,6 +8,7 @@ from typing import Sequence
 
 from google.protobuf import duration_pb2
 from google.protobuf import json_format
+from google.protobuf import struct_pb2
 from google.protobuf import timestamp_pb2
 
 from recipe_engine import recipe_test_api
@@ -291,7 +292,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       backend_hostname=None,
       backend_config=None,
   ):
-      """Emulates a typical buildbucket backend build.
+    """Emulates a typical buildbucket backend build.
       Usage:
 
           yield (api.test('basic') +
@@ -307,26 +308,27 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
                   backend_hostname="some_server"
               ))
       """
-      return self.build(build_pb2.Build(
-          id=build_id,
-          tags=tags,
-          status=status,
-          builder=builder_common_pb2.BuilderID(
-              project=project,
-              bucket=bucket,
-              builder=builder,
-          ),
-          infra=build_pb2.BuildInfra(
-            backend=build_pb2.BuildInfra.Backend(
-              task=task,
-              task_dimensions=task_dimensions,
-              hostname=backend_hostname,
-              config=backend_config,
+    return self.build(
+        build_pb2.Build(
+            id=build_id,
+            tags=tags,
+            status=status,
+            builder=builder_common_pb2.BuilderID(
+                project=project,
+                bucket=bucket,
+                builder=builder,
             ),
-            resultdb=build_pb2.BuildInfra.ResultDB(
-                invocation='invocations/build:%d' % build_id),
-        ),
-    ))
+            infra=build_pb2.BuildInfra(
+                backend=build_pb2.BuildInfra.Backend(
+                    task=task,
+                    task_dimensions=task_dimensions,
+                    hostname=backend_hostname,
+                    config=backend_config,
+                ),
+                resultdb=build_pb2.BuildInfra.ResultDB(
+                    invocation='invocations/build:%d' % build_id),
+            ),
+        ))
 
   def raw_swarming_build(
       self,
@@ -371,6 +373,9 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
   def tags(self, **tags):
     """Alias for tags in util.py. See doc there."""
     return util.tags(**tags)
+
+  def dict_to_struct(self, d):
+    return json_format.Parse(json.dumps(d), struct_pb2.Struct())
 
   def exe(self, cipd_pkg, cipd_ver=None, cmd=None):
     """Emulates a build executable."""

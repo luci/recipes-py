@@ -2,8 +2,6 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from google.protobuf import struct_pb2
-
 from recipe_engine import post_process
 
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
@@ -36,32 +34,20 @@ def RunSteps(api):
 
 
 def GenTests(api):
-  task_details = struct_pb2.Struct(
-      fields={
-          "bot_dimensions": struct_pb2.Value(
-              struct_value=struct_pb2.Struct(
-                  fields={
-                      "os": struct_pb2.Value(
-                          list_value=struct_pb2.ListValue(
-                              values=[
-                                  struct_pb2.Value(string_value="mac")
-                              ]
-                          )
-                      )
-                  }
-              )
-          ),
-      }
-  )
-  backend_config = struct_pb2.Struct(
-      fields={
-          "task_service_account":
-              struct_pb2.Value(string_value="abc123@email.com"),
-          "parent_run_id":
-              struct_pb2.Value(string_value="1"),
-          "priority":
-              struct_pb2.Value(number_value=1),
-      })
+  task_details_dict = {
+      'bot_dimensions': {
+          'os': ['mac'],
+      },
+  }
+  task_details = api.buildbucket.dict_to_struct(task_details_dict)
+
+  backend_config_dict = {
+      'task_service_account': 'abc123@email.com',
+      'parent_run_id': '1',
+      'priority': 1,
+  }
+  backend_config = api.buildbucket.dict_to_struct(backend_config_dict)
+
   yield (
       api.test('swarming_as_a_backend') +
       api.buildbucket.backend_build(
