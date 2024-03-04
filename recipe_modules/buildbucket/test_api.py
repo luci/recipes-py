@@ -19,6 +19,7 @@ from PB.go.chromium.org.luci.buildbucket.proto \
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 from PB.go.chromium.org.luci.buildbucket.proto \
   import builds_service as builds_service_pb2
+from PB.go.chromium.org.luci.buildbucket.proto import task as task_pb2
 from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
 from . import util
 
@@ -91,7 +92,8 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       backend_config_dict = {'priority': priority}
       infra = build_pb2.BuildInfra(
           backend=build_pb2.BuildInfra.Backend(
-              config=self.dict_to_struct(backend_config_dict),),
+              config=self.dict_to_struct(backend_config_dict),
+              task=task_pb2.Task(id=task_pb2.TaskID())),
           resultdb=build_pb2.BuildInfra.ResultDB(
               invocation='invocations/build:%d' % build_id),
       )
@@ -212,7 +214,8 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       backend_config_dict = {'priority': priority}
       infra = build_pb2.BuildInfra(
           backend=build_pb2.BuildInfra.Backend(
-              config=self.dict_to_struct(backend_config_dict),),
+              config=self.dict_to_struct(backend_config_dict),
+              task=task_pb2.Task(id=task_pb2.TaskID())),
           resultdb=build_pb2.BuildInfra.ResultDB(
               invocation='invocations/build:%d' % build_id),
       )
@@ -321,8 +324,8 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
                 api.buildbucket.backend_build(
                   project='my-proj',
                   builder='win',
-                  task=build_pb2.Task(
-                      id=build_pb2.TaskID(
+                  task=task_pb2.Task(
+                      id=task_pb2.TaskID(
                           id="1",
                           target="swarming://chromium-swarm"
                       )
