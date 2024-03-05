@@ -62,71 +62,46 @@ def GenTests(api):
           )
       }
   )
-  yield (
-      api.test('non_swarming_backend') +
-      api.buildbucket.backend_build(
-          project='my-proj',
-          builder='win',
-          task=task_pb2.Task(
-              id=task_pb2.TaskID(
-                  id="1",
-                  target="cloudbuild://chromium-cloudbuild"
-              ),
-              details=task_details
-          ),
-          backend_hostname="foo",
-          task_dimensions=[
-            common_pb2.RequestedDimension(key="key", value="val")
-          ],
-          backend_config=backend_config,
-      ) + api.post_process(post_process.DropExpectation)
-  )
-  yield (
-        api.test('swarming_backend_no_config_or_task_details') +
-        api.buildbucket.backend_build(
-          project='my-proj',
-          builder='win',
-          task=task_pb2.Task(
-              id=task_pb2.TaskID(
-                  id="1",
-                  target="swarming://chromium-swarm"
-              ),
-              details=struct_pb2.Struct(
-                fields={
-                    "myfield": struct_pb2.Value(
-                        number_value=1
-                    ),
-                }
-              )
-          ),
-          backend_hostname="foo",
-          task_dimensions=[
-            common_pb2.RequestedDimension(key="key", value="val")
-          ],
-      ) + api.post_process(post_process.DropExpectation)
-    )
-  yield (
-        api.test('swarming_backend_bad_config_no_task_details') +
-        api.buildbucket.backend_build(
-          project='my-proj',
-          builder='win',
-          task=task_pb2.Task(
-              id=task_pb2.TaskID(
-                  id="1",
-                  target="swarming://chromium-swarm"
-              ),
-              details=struct_pb2.Struct(
-                fields={
-                    "myfield": struct_pb2.Value(
-                        number_value=1
-                    ),
-                }
-              )
-          ),
-          backend_hostname="foo",
-          task_dimensions=[
-            common_pb2.RequestedDimension(key="key", value="val")
-          ],
-          backend_config=bad_backend_config,
-      ) + api.post_process(post_process.DropExpectation)
-    )
+  yield (api.test('non_swarming_backend') +
+         api.buildbucket.backend_build_message(
+             project='my-proj',
+             builder='win',
+             task=task_pb2.Task(
+                 id=task_pb2.TaskID(
+                     id="1", target="cloudbuild://chromium-cloudbuild"),
+                 details=task_details),
+             backend_hostname="foo",
+             task_dimensions=[
+                 common_pb2.RequestedDimension(key="key", value="val")
+             ],
+             backend_config=backend_config,
+         ) + api.post_process(post_process.DropExpectation))
+  yield (api.test('swarming_backend_no_config_or_task_details') +
+         api.buildbucket.backend_build_message(
+             project='my-proj',
+             builder='win',
+             task=task_pb2.Task(
+                 id=task_pb2.TaskID(id="1", target="swarming://chromium-swarm"),
+                 details=struct_pb2.Struct(fields={
+                     "myfield": struct_pb2.Value(number_value=1),
+                 })),
+             backend_hostname="foo",
+             task_dimensions=[
+                 common_pb2.RequestedDimension(key="key", value="val")
+             ],
+         ) + api.post_process(post_process.DropExpectation))
+  yield (api.test('swarming_backend_bad_config_no_task_details') +
+         api.buildbucket.backend_build_message(
+             project='my-proj',
+             builder='win',
+             task=task_pb2.Task(
+                 id=task_pb2.TaskID(id="1", target="swarming://chromium-swarm"),
+                 details=struct_pb2.Struct(fields={
+                     "myfield": struct_pb2.Value(number_value=1),
+                 })),
+             backend_hostname="foo",
+             task_dimensions=[
+                 common_pb2.RequestedDimension(key="key", value="val")
+             ],
+             backend_config=bad_backend_config,
+         ) + api.post_process(post_process.DropExpectation))

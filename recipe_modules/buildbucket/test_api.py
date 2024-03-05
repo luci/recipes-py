@@ -304,7 +304,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     )
     return self.build(build)
 
-  def backend_build(
+  def backend_build_message(
       self,
       project='project',
       bucket='try',
@@ -334,26 +334,65 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
               ))
       """
     return self.build(
-        build_pb2.Build(
-            id=build_id,
-            tags=tags,
-            status=status,
-            builder=builder_common_pb2.BuilderID(
-                project=project,
-                bucket=bucket,
-                builder=builder,
+        self.backend_build(project, bucket, builder, build_id, tags, status,
+                           task, task_dimensions, backend_hostname,
+                           backend_config))
+
+  def backend_build(
+      self,
+      project='project',
+      bucket='try',
+      builder='builder-backend',
+      build_id=8945511751514863184,
+      tags=None,
+      status=None,
+      task=None,
+      task_dimensions=None,
+      backend_hostname=None,
+      backend_config=None,
+  ):
+    return build_pb2.Build(
+        id=build_id,
+        tags=tags,
+        status=status,
+        builder=builder_common_pb2.BuilderID(
+            project=project,
+            bucket=bucket,
+            builder=builder,
+        ),
+        infra=build_pb2.BuildInfra(
+            backend=build_pb2.BuildInfra.Backend(
+                task=task,
+                task_dimensions=task_dimensions,
+                hostname=backend_hostname,
+                config=backend_config,
             ),
-            infra=build_pb2.BuildInfra(
-                backend=build_pb2.BuildInfra.Backend(
-                    task=task,
-                    task_dimensions=task_dimensions,
-                    hostname=backend_hostname,
-                    config=backend_config,
-                ),
-                resultdb=build_pb2.BuildInfra.ResultDB(
-                    invocation='invocations/build:%d' % build_id),
-            ),
-        ))
+            resultdb=build_pb2.BuildInfra.ResultDB(
+                invocation='invocations/build:%d' % build_id),
+        ),
+    )
+
+  def raw_swarming_build_message(
+      self,
+      project='project',
+      bucket='try',
+      builder='builder-backend',
+      build_id=8945511751514863184,
+      tags=None,
+      status=None,
+      priority=None,
+      task_dimensions=None,
+      hostname=None,
+      bot_dimensions=None,
+      task_id=None,
+      parent_run_id=None,
+      task_service_account=None,
+  ):
+    return self.build(
+        self.raw_swarming_build(project, bucket, builder, build_id, tags,
+                                status, priority, task_dimensions, hostname,
+                                bot_dimensions, task_id, parent_run_id,
+                                task_service_account))
 
   def raw_swarming_build(
       self,
@@ -371,29 +410,29 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       parent_run_id=None,
       task_service_account=None,
   ):
-    return self.build(build_pb2.Build(
+    return build_pb2.Build(
         id=build_id,
-            tags=tags,
-            status=status,
-            builder=builder_common_pb2.BuilderID(
-                project=project,
-                bucket=bucket,
-                builder=builder,
-            ),
-          infra=build_pb2.BuildInfra(
-              swarming=build_pb2.BuildInfra.Swarming(
-                  hostname=hostname,
-                  priority=priority,
-                  task_id=task_id,
-                  parent_run_id=parent_run_id,
-                  task_service_account=task_service_account,
-                  task_dimensions=task_dimensions,
-                  bot_dimensions=bot_dimensions,
-              ),
-              resultdb=build_pb2.BuildInfra.ResultDB(
-                  invocation='invocations/build:%d' % build_id),
+        tags=tags,
+        status=status,
+        builder=builder_common_pb2.BuilderID(
+            project=project,
+            bucket=bucket,
+            builder=builder,
         ),
-    ))
+        infra=build_pb2.BuildInfra(
+            swarming=build_pb2.BuildInfra.Swarming(
+                hostname=hostname,
+                priority=priority,
+                task_id=task_id,
+                parent_run_id=parent_run_id,
+                task_service_account=task_service_account,
+                task_dimensions=task_dimensions,
+                bot_dimensions=bot_dimensions,
+            ),
+            resultdb=build_pb2.BuildInfra.ResultDB(
+                invocation='invocations/build:%d' % build_id),
+        ),
+    )
 
   def tags(self, **tags):
     """Alias for tags in util.py. See doc there."""
@@ -401,6 +440,36 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
 
   def dict_to_struct(self, d):
     return json_format.Parse(json.dumps(d), struct_pb2.Struct())
+
+  def extend_swarming_bot_dimensions(self, build, new_dims):
+    """Extends swarming dimensions of a build.
+    build: build_pb2.Build. The build to be modified.
+    newDims: Dict. The dimensions to add.
+
+    Returns: build_pb2.Build
+
+    Usage should look like
+
+    b = api.buildbucket.backend_build(...)
+    b = api.buildbucket.extend_swarming_bot_dimensions(b, {
+        "key1": "value1",
+        "key2": ["value2", "value3"]
+    })
+    """
+    if len(build.infra.swarming.bot_dimensions) > 0:
+      build.infra.swarming.bot_dimensions.extend(self.tags(**new_dims))
+      return build
+    updated_dims = dict()
+    task_details = build.infra.backend.task.details
+    for k, v in task_details['bot_dimensions'].items():
+      updated_dims[k] = list(v)
+    for k, v in new_dims.items():
+      if not isinstance(v, list):
+        new_dims[k] = [v]
+    updated_dims.update(new_dims)
+    task_details_dict = {"bot_dimensions": updated_dims}
+    build.infra.backend.task.details.update(task_details_dict)
+    return build
 
   def exe(self, cipd_pkg, cipd_ver=None, cmd=None):
     """Emulates a build executable."""
