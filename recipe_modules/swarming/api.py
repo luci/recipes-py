@@ -18,6 +18,7 @@ import six
 from .state import TaskState
 
 from recipe_engine import recipe_api
+from recipe_engine import config_types
 
 # Take revision from
 # https://ci.chromium.org/p/infra-internal/g/infra-packagers/console
@@ -919,7 +920,8 @@ class TaskResult(object):
           self.digest,
       )
 
-  def __init__(self, api, task_slice, id, raw_results, output_dir):
+  def __init__(self, api, task_slice, id, raw_results, output_dir=None,
+               text_output_file=None):
     """
     Args:
       api (recipe_api.RecipeApi): A recipe API.
@@ -928,10 +930,12 @@ class TaskResult(object):
       id (str): The task's ID.
       raw_results (dict): The jsonish summary output from a `collect` call.
       output_dir (Path|None): Where the task's outputs were downloaded to.
+      text_output_file (Path|None): Where the task's text output was fetched to.
     """
     self._task_slice = task_slice
     self._id = id
     self._output_dir = output_dir
+    self._text_output_file = text_output_file
     self._raw_results = raw_results
     self._outputs = {}
     self._cas_outputs = None
@@ -1071,6 +1075,15 @@ class TaskResult(object):
   def cas_outputs(self):
     """Returns the cas output refs (CasOutputs|None) of the task."""
     return self._cas_outputs
+
+  @property
+  def text_output_file(self):
+    """A Path or None where the task's text output is stored.
+
+    If None, the task's text output is not being stored into a file. See
+    'task_output_stdout' in collect(...).
+    """
+    return self._text_output_file
 
   @property
   def bot_id(self):
@@ -1358,8 +1371,11 @@ class SwarmingApi(recipe_api.RecipeApi):
       output_dir (Path|None): Where to download the tasks' isolated outputs. If
         set to None, they will not be downloaded; else, a given task's outputs
         will be downloaded to output_dir/<task id>/.
-      task_output_stdout (str): Where to output each task's output. Must be one
-        of 'none', 'json', 'console' or 'all'.
+      task_output_stdout (str|Path|Iterable(str|Path)): Where to output each
+        task's text output. If given an iterable, will output it into multiple
+        locations. Supported values are 'none', 'json', 'console' or a Path. At
+        most one output Path is allowed. Accepts 'all' as a legacy alias for
+        ['json', 'console'].
       timeout (str|None): The duration for which to wait on the tasks to finish.
         If set to None, there will be no timeout; else, timeout follows the
         format described by https://golang.org/pkg/time/#ParseDuration.
@@ -1372,16 +1388,28 @@ class SwarmingApi(recipe_api.RecipeApi):
     """
     assert self._server
     assert isinstance(tasks, (list, tuple))
-    assert task_output_stdout in ('none', 'json', 'console', 'all')
+
     cmd = [
         'collect',
         '-server',
         self._server,
         '-task-summary-json',
         self.m.json.output(),
-        '-task-output-stdout',
-        task_output_stdout,
     ]
+
+    if isinstance(task_output_stdout, (basestring, config_types.Path)):
+      task_output_stdout = [task_output_stdout]
+    text_output_dir = None
+    for out in task_output_stdout:
+      if isinstance(out, config_types.Path):
+        if text_output_dir:
+          raise ValueError('Cannot specify more than one task text output dir')
+        text_output_dir = out
+        out = 'dir:%s' % out
+      else:
+        assert out in ('none', 'json', 'console', 'all'), out
+      cmd.extend(['-task-output-stdout', out])
+
     if output_dir:
       cmd.extend(['-output-dir', output_dir])
     if timeout:
@@ -1421,7 +1449,9 @@ class SwarmingApi(recipe_api.RecipeApi):
       task_request = self._task_requests.get((task_id, self._server), [None])[0]
       parsed_results.append(
           TaskResult(self.m, task_request, task_id, task,
-                     output_dir.join(task_id) if output_dir else None))
+                     output_dir.join(task_id) if output_dir else None,
+                     text_output_dir.join('%s.txt' % task_id)
+                        if text_output_dir else None))
 
     parsed_results.sort(key=lambda result: result.name or '')
 

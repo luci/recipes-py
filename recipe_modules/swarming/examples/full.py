@@ -123,8 +123,12 @@ def RunSteps(api):
 
   # Collect the result of the task by metadata.
   output_dir = api.path.mkdtemp('swarming')
-  results = api.swarming.collect('collect', metadata, output_dir=output_dir,
-                                 timeout='5m', verbose=True)
+  text_dir = api.path.mkdtemp('swarming')
+  results = api.swarming.collect('collect', metadata,
+                                 output_dir=output_dir,
+                                 task_output_stdout=['json', text_dir],
+                                 timeout='5m',
+                                 verbose=True)
   # Or collect by ID.
   results += api.swarming.collect('collect other pending task', ['0'],
                                   eager=True)
@@ -136,6 +140,7 @@ def RunSteps(api):
   results[0].output
   results[0].outputs
   results[0].output_dir
+  results[0].text_output_file
   results[0].duration_secs
   results[0].bot_id
   results[0].raw

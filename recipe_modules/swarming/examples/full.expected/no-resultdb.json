@@ -605,6 +605,8 @@
       "/path/to/tmp/json",
       "-task-output-stdout",
       "json",
+      "-task-output-stdout",
+      "dir:[CLEANUP]/swarming_tmp_2",
       "-output-dir",
       "[CLEANUP]/swarming_tmp_1",
       "-timeout",
