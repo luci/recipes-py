@@ -1089,9 +1089,17 @@ class BuildbucketApi(recipe_api.RecipeApi):
   def backend_task_dimensions(self):
     """Returns the task dimensions used by the task for the build.
     """
-    if self.build.infra.swarming.task_dimensions:
-      return self.build.infra.swarming.task_dimensions
-    return self.build.infra.backend.task_dimensions
+    return self.backend_task_dimensions_from_build()
+
+  def backend_task_dimensions_from_build(self, build=None):
+    """Returns the task dimensions for the provided build.
+    If no build is provided, then self.build will be used.
+    """
+    if not build:
+      build = self.build
+    if build.infra.swarming.task_dimensions:
+      return build.infra.swarming.task_dimensions
+    return build.infra.backend.task_dimensions
 
   @property
   def backend_task_id(self):

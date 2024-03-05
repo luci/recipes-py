@@ -461,12 +461,17 @@ If it is legacy swarming build then the swarming hostname will be returned.
 Returns the task dimensions used by the task for the build.
     
 
-&emsp; **@property**<br>&mdash; **def [backend\_task\_id](/recipe_modules/buildbucket/api.py#1096)(self):**
+&mdash; **def [backend\_task\_dimensions\_from\_build](/recipe_modules/buildbucket/api.py#1094)(self, build=None):**
+
+Returns the task dimensions for the provided build.
+If no build is provided, then self.build will be used.
+
+&emsp; **@property**<br>&mdash; **def [backend\_task\_id](/recipe_modules/buildbucket/api.py#1104)(self):**
 
 Returns the task id of the task for the build.
     
 
-&mdash; **def [backend\_task\_id\_from\_build](/recipe_modules/buildbucket/api.py#1102)(self, build=None):**
+&mdash; **def [backend\_task\_id\_from\_build](/recipe_modules/buildbucket/api.py#1110)(self, build=None):**
 
 Returns the task id of the task for the provided build.
 If no build is provided, then self.build will be used.
@@ -494,13 +499,13 @@ much information as possible. Some fields may be left empty, violating
 the rules described in the .proto files.
 If the current build is not a buildbucket build, returned `build.id` is 0.
 
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#1183)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#1191)(self):**
 
 *** note
 **DEPRECATED**: use build.id instead.
 ***
 
-&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#1188)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#1196)(self):**
 
 *** note
 **DEPRECATED**: use build.input instead.
@@ -523,7 +528,7 @@ https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/pr
 
 Returns the full builder name: {project}/{bucket}/{builder}.
 
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#1193)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#1201)(self):**
 
 *** note
 **DEPRECATED**: Use build.builder instead.
@@ -834,29 +839,29 @@ Args:
 
 Can be called at most once per build.
 
-&emsp; **@property**<br>&mdash; **def [shadowed\_bucket](/recipe_modules/buildbucket/api.py#1198)(self):**
+&emsp; **@property**<br>&mdash; **def [shadowed\_bucket](/recipe_modules/buildbucket/api.py#1206)(self):**
 
-&emsp; **@property**<br>&mdash; **def [swarming\_bot\_dimensions](/recipe_modules/buildbucket/api.py#1112)(self):**
+&emsp; **@property**<br>&mdash; **def [swarming\_bot\_dimensions](/recipe_modules/buildbucket/api.py#1120)(self):**
 
 Returns the swarming bot dimensions for the build.
     
 
-&mdash; **def [swarming\_bot\_dimensions\_from\_build](/recipe_modules/buildbucket/api.py#1118)(self, build=None):**
+&mdash; **def [swarming\_bot\_dimensions\_from\_build](/recipe_modules/buildbucket/api.py#1126)(self, build=None):**
 
 Returns the swarming bot dimensions for the provided build.
 If no build is provided, then self.build will be used.
 
-&emsp; **@property**<br>&mdash; **def [swarming\_parent\_run\_id](/recipe_modules/buildbucket/api.py#1138)(self):**
+&emsp; **@property**<br>&mdash; **def [swarming\_parent\_run\_id](/recipe_modules/buildbucket/api.py#1146)(self):**
 
 Returns the parent_run_id (swarming specific) used in the task.
     
 
-&emsp; **@property**<br>&mdash; **def [swarming\_priority](/recipe_modules/buildbucket/api.py#1152)(self):**
+&emsp; **@property**<br>&mdash; **def [swarming\_priority](/recipe_modules/buildbucket/api.py#1160)(self):**
 
 Returns the priority (swarming specific) of the task.
     
 
-&emsp; **@property**<br>&mdash; **def [swarming\_task\_service\_account](/recipe_modules/buildbucket/api.py#1166)(self):**
+&emsp; **@property**<br>&mdash; **def [swarming\_task\_service\_account](/recipe_modules/buildbucket/api.py#1174)(self):**
 
 Returns the swarming specific service account used in the task.
     
