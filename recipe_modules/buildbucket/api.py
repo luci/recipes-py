@@ -1182,9 +1182,9 @@ class BuildbucketApi(recipe_api.RecipeApi):
     if not self.build.infra.backend.config:
       return None
     backend_config = self.build.infra.backend.config
-    if 'task_service_account' not in backend_config:
+    if 'service_account' not in backend_config:
       return None
-    return backend_config['task_service_account']
+    return backend_config['service_account']
 
   # DEPRECATED API.
 

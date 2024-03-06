@@ -434,6 +434,33 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         ),
     )
 
+  def update_backend_config(self,
+                            build,
+                            priority=None,
+                            parent_run_id=None,
+                            service_account=None):
+    """Util function to update build.infra.backend.config"""
+    assert isinstance(build, build_pb2.Build), build
+    assert build.infra.backend.config is not None
+    updated = {}
+    if priority is not None:
+      updated['priority'] = priority
+    if parent_run_id:
+      updated['parent_run_id'] = parent_run_id
+    if service_account:
+      updated['service_account'] = service_account
+    build.infra.backend.config.update(updated)
+    return build
+
+  def update_backend_priority(self, build, priority):
+    return self.update_backend_config(build, priority=priority)
+
+  def update_backend_parent_run_id(self, build, parent_run_id):
+    return self.update_backend_config(build, parent_run_id=parent_run_id)
+
+  def update_backend_service_account(self, build, service_account):
+    return self.update_backend_config(build, service_account=service_account)
+
   def tags(self, **tags):
     """Alias for tags in util.py. See doc there."""
     return util.tags(**tags)

@@ -8,7 +8,7 @@ from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import task as task_pb2
 
 
-DEPS = ['assertions', 'buildbucket', 'step']
+DEPS = ['assertions', 'buildbucket', 'properties', 'step']
 
 
 def RunSteps(api):
@@ -31,15 +31,22 @@ def RunSteps(api):
   api.assertions.assertEqual(
       api.buildbucket.swarming_bot_dimensions_from_build(
           api.buildbucket.build)[0].key, "os")
-  api.assertions.assertEqual(api.buildbucket.swarming_parent_run_id, "1")
-  api.assertions.assertEqual(api.buildbucket.swarming_priority, 1)
-  api.assertions.assertEqual(
-    api.buildbucket.swarming_task_service_account, "abc123@email.com")
+
+  if api.properties.get('update_backend_config'):
+    api.assertions.assertEqual(api.buildbucket.swarming_parent_run_id, "new")
+    api.assertions.assertEqual(api.buildbucket.swarming_priority, 30)
+    api.assertions.assertEqual(
+    api.buildbucket.swarming_task_service_account, "other@email.com")
+  else:
+    api.assertions.assertEqual(api.buildbucket.swarming_parent_run_id, "1")
+    api.assertions.assertEqual(api.buildbucket.swarming_priority, 1)
+    api.assertions.assertEqual(api.buildbucket.swarming_task_service_account,
+                               "abc123@email.com")
 
 
 def GenTests(api):
 
-  def _setup_backend_build():
+  def _setup_backend_build(update_backend_config=False):
     task_details_dict = {
         'bot_dimensions': {
             'os': ['mac'],
@@ -48,7 +55,7 @@ def GenTests(api):
     task_details = api.buildbucket.dict_to_struct(task_details_dict)
 
     backend_config_dict = {
-        'task_service_account': 'abc123@email.com',
+        'service_account': 'abc123@email.com',
         'parent_run_id': '1',
         'priority': 1,
     }
@@ -68,6 +75,12 @@ def GenTests(api):
         "key1": "value1",
         "key2": ["value2", "value3"]
     })
+
+    if update_backend_config:
+      api.buildbucket.update_backend_priority(build=b, priority=30)
+      api.buildbucket.update_backend_parent_run_id(build=b, parent_run_id='new')
+      api.buildbucket.update_backend_service_account(
+          build=b, service_account='other@email.com')
     return api.buildbucket.build(b)
 
   def _setup_raw_swarming_build():
@@ -92,6 +105,11 @@ def GenTests(api):
     return api.buildbucket.build(b)
 
   yield (api.test('swarming_as_a_backend') + _setup_backend_build() +
+         api.post_process(post_process.DropExpectation))
+
+  yield (api.test('update_backend_config') +
+         _setup_backend_build(update_backend_config=True) +
+         api.properties(update_backend_config=True) +
          api.post_process(post_process.DropExpectation))
 
   yield (api.test('raw_swarming') + _setup_raw_swarming_build() +

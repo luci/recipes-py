@@ -4816,7 +4816,7 @@ Launches multiple builds at the same revision.
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/add_step_tags.py#11)(api):**
 ### *recipes* / [buildbucket:tests/backend](/recipe_modules/buildbucket/tests/backend.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/backend.py#11): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/tests/backend.py#11): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/backend.py#14)(api):**
