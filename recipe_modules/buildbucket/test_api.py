@@ -453,12 +453,21 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     return build
 
   def update_backend_priority(self, build, priority):
+    if build.infra.HasField('swarming'):
+      build.infra.swarming.priority = priority
+      return build
     return self.update_backend_config(build, priority=priority)
 
   def update_backend_parent_run_id(self, build, parent_run_id):
+    if build.infra.HasField('swarming'):
+      build.infra.swarming.parent_run_id = parent_run_id
+      return build
     return self.update_backend_config(build, parent_run_id=parent_run_id)
 
   def update_backend_service_account(self, build, service_account):
+    if build.infra.HasField('swarming'):
+      build.infra.swarming.task_service_account = service_account
+      return build
     return self.update_backend_config(build, service_account=service_account)
 
   def tags(self, **tags):

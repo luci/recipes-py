@@ -37,6 +37,12 @@ def RunSteps(api):
     api.assertions.assertEqual(api.buildbucket.swarming_priority, 30)
     api.assertions.assertEqual(
     api.buildbucket.swarming_task_service_account, "other@email.com")
+  elif api.properties.get('update_swarming_config'):
+    api.assertions.assertEqual(api.buildbucket.swarming_parent_run_id,
+                               "new_for_swarming")
+    api.assertions.assertEqual(api.buildbucket.swarming_priority, 50)
+    api.assertions.assertEqual(api.buildbucket.swarming_task_service_account,
+                               "other_sw@email.com")
   else:
     api.assertions.assertEqual(api.buildbucket.swarming_parent_run_id, "1")
     api.assertions.assertEqual(api.buildbucket.swarming_priority, 1)
@@ -86,7 +92,7 @@ def GenTests(api):
 
     return api.buildbucket.build(b)
 
-  def _setup_raw_swarming_build():
+  def _setup_raw_swarming_build(update_swarming_config=False):
     b = api.buildbucket.raw_swarming_build(
         project='my-proj',
         builder='win',
@@ -105,6 +111,12 @@ def GenTests(api):
         "key1": "value1",
         "key2": ["value2", "value3"]
     })
+    if update_swarming_config:
+      b = api.buildbucket.update_backend_priority(build=b, priority=50)
+      b = api.buildbucket.update_backend_parent_run_id(
+          build=b, parent_run_id='new_for_swarming')
+      b = api.buildbucket.update_backend_service_account(
+          build=b, service_account='other_sw@email.com')
     return api.buildbucket.build(b)
 
   yield (api.test('swarming_as_a_backend') + _setup_backend_build(bot_dims={
@@ -130,6 +142,11 @@ def GenTests(api):
          api.post_process(post_process.DropExpectation))
 
   yield (api.test('raw_swarming') + _setup_raw_swarming_build() +
+         api.post_process(post_process.DropExpectation))
+
+  yield (api.test('raw_swarming_update_backend_config') +
+         _setup_raw_swarming_build(update_swarming_config=True) +
+         api.properties(update_swarming_config=True) +
          api.post_process(post_process.DropExpectation))
 
   # This is just to satisfy the test_api code coverage of 100%.
