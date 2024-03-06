@@ -46,12 +46,16 @@ def RunSteps(api):
 
 def GenTests(api):
 
-  def _setup_backend_build(update_backend_config=False):
-    task_details_dict = {
-        'bot_dimensions': {
-            'os': ['mac'],
-        },
-    }
+  def _setup_backend_build(update_backend_config=False,
+                           use_default_bot_dims=True,
+                           bot_dims={}):
+    task_details_dict = {}
+    if use_default_bot_dims:
+      task_details_dict = {
+          'bot_dimensions': {
+              'os': ['mac'],
+          },
+      }
     task_details = api.buildbucket.dict_to_struct(task_details_dict)
 
     backend_config_dict = {
@@ -71,16 +75,15 @@ def GenTests(api):
         backend_config=backend_config,
     )
     # Purely just to test that extend_swarming_bot_dimensions works.
-    b = api.buildbucket.extend_swarming_bot_dimensions(b, {
-        "key1": "value1",
-        "key2": ["value2", "value3"]
-    })
+    b = api.buildbucket.extend_swarming_bot_dimensions(b, bot_dims)
 
     if update_backend_config:
-      api.buildbucket.update_backend_priority(build=b, priority=30)
-      api.buildbucket.update_backend_parent_run_id(build=b, parent_run_id='new')
-      api.buildbucket.update_backend_service_account(
+      b = api.buildbucket.update_backend_priority(build=b, priority=30)
+      b = api.buildbucket.update_backend_parent_run_id(
+          build=b, parent_run_id='new')
+      b = api.buildbucket.update_backend_service_account(
           build=b, service_account='other@email.com')
+
     return api.buildbucket.build(b)
 
   def _setup_raw_swarming_build():
@@ -104,12 +107,26 @@ def GenTests(api):
     })
     return api.buildbucket.build(b)
 
-  yield (api.test('swarming_as_a_backend') + _setup_backend_build() +
-         api.post_process(post_process.DropExpectation))
+  yield (api.test('swarming_as_a_backend') + _setup_backend_build(bot_dims={
+      "key1": "value1",
+      "key2": ["value2", "value3"]
+  }) + api.post_process(post_process.DropExpectation))
 
-  yield (api.test('update_backend_config') +
-         _setup_backend_build(update_backend_config=True) +
-         api.properties(update_backend_config=True) +
+  yield (api.test('swarming_as_a_backend_no_default_bot_dims') +
+         _setup_backend_build(
+             use_default_bot_dims=False,
+             bot_dims={
+                 "os": "mac",
+                 "key1": "value1",
+                 "key2": ["value2", "value3"]
+             }) + api.post_process(post_process.DropExpectation))
+
+  yield (api.test('update_backend_config') + _setup_backend_build(
+      update_backend_config=True,
+      bot_dims={
+          "key1": "value1",
+          "key2": ["value2", "value3"]
+      }) + api.properties(update_backend_config=True) +
          api.post_process(post_process.DropExpectation))
 
   yield (api.test('raw_swarming') + _setup_raw_swarming_build() +

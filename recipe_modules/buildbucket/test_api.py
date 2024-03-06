@@ -487,15 +487,15 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       build.infra.swarming.bot_dimensions.extend(self.tags(**new_dims))
       return build
     updated_dims = dict()
-    task_details = build.infra.backend.task.details
-    for k, v in task_details['bot_dimensions'].items():
+    bot_dims = build.infra.backend.task.details.get_or_create_struct(
+        'bot_dimensions')
+    for k, v in bot_dims.items():
       updated_dims[k] = list(v)
     for k, v in new_dims.items():
       if not isinstance(v, list):
         new_dims[k] = [v]
     updated_dims.update(new_dims)
-    task_details_dict = {"bot_dimensions": updated_dims}
-    build.infra.backend.task.details.update(task_details_dict)
+    build.infra.backend.task.details.update({"bot_dimensions": updated_dims})
     return build
 
   def exe(self, cipd_pkg, cipd_ver=None, cmd=None):
