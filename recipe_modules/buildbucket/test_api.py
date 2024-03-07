@@ -76,7 +76,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       execution_timeout=None,
       start_time=None,
       on_backend=False,
-  ):
+      backend_target="swarming://chromium-swarm"):
     """Returns a typical buildbucket CI build scheduled by luci-scheduler."""
     git_repo = git_repo or self._default_git_repo(project)
     gitiles_host, gitiles_project = util.parse_gitiles_repo_url(git_repo)
@@ -93,7 +93,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       infra = build_pb2.BuildInfra(
           backend=build_pb2.BuildInfra.Backend(
               config=self.dict_to_struct(backend_config_dict),
-              task=task_pb2.Task(id=task_pb2.TaskID())),
+              task=task_pb2.Task(id=task_pb2.TaskID(target=backend_target))),
           resultdb=build_pb2.BuildInfra.ResultDB(
               invocation='invocations/build:%d' % build_id),
       )
@@ -169,7 +169,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       start_time=None,
       properties=None,
       on_backend=False,
-  ):
+      backend_target="swarming://chromium-swarm"):
     """Emulate typical buildbucket try build scheduled by CQ.
 
     Usage:
@@ -215,7 +215,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       infra = build_pb2.BuildInfra(
           backend=build_pb2.BuildInfra.Backend(
               config=self.dict_to_struct(backend_config_dict),
-              task=task_pb2.Task(id=task_pb2.TaskID())),
+              task=task_pb2.Task(id=task_pb2.TaskID(target=backend_target))),
           resultdb=build_pb2.BuildInfra.ResultDB(
               invocation='invocations/build:%d' % build_id),
       )

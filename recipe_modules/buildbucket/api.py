@@ -470,7 +470,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
             bucket=if_inherit(bucket, b.builder.bucket),
             builder=builder,
         ),
-        priority=if_inherit(priority, b.infra.swarming.priority),
+        priority=if_inherit(priority, self.swarming_priority),
         critical=as_trinary(if_inherit(critical, b.critical)),
         # If not `INHERIT`, `experimental` must be trinary already, so only
         # pass the parent (boolean) value through `as_trinary`.
@@ -1169,7 +1169,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     backend_config = self.build.infra.backend.config
     if 'priority' not in backend_config:
       return None
-    return backend_config['priority']
+    return int(backend_config['priority'])
 
   @property
   def swarming_task_service_account(self):

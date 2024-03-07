@@ -45,7 +45,12 @@ def RunSteps(api):
 
 def GenTests(api):
 
-  def test(test_name, response=None, tags=None, shadowed_bucket=None, **req):
+  def test(test_name,
+           response=None,
+           tags=None,
+           shadowed_bucket=None,
+           on_backend=False,
+           **req):
     req.setdefault('builder', 'linux')
     if shadowed_bucket:
       props_dict = {
@@ -70,7 +75,8 @@ def GenTests(api):
                     cmd=['luciexe'],
                 ),
                 properties=properties,
-            ) +
+                on_backend=on_backend,
+                backend_target="swarming://chromium-swarm") +
             api.properties(request_kwargs=req, tags=tags, response=response))
 
   yield test('basic')
@@ -91,6 +97,8 @@ def GenTests(api):
       test_name='critical',
       critical=True,
   )
+
+  yield test(test_name='backend', on_backend=True)
 
   yield test(
       test_name='properties',
