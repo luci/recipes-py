@@ -1147,6 +1147,11 @@ class BuildbucketApi(recipe_api.RecipeApi):
   def swarming_parent_run_id(self):
     """Returns the parent_run_id (swarming specific) used in the task.
     """
+    # A "parent_task_id" tag should be populated for both builds on swarming and
+    # backend, check there first.
+    for tag in self.build.tags:
+      if tag.key == 'parent_task_id':
+        return tag.value
     if self.build.infra.swarming.parent_run_id:
       return self.build.infra.swarming.parent_run_id
     if ("swarming" not in self.build.infra.backend.task.id.target or

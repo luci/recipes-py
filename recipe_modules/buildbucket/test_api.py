@@ -459,6 +459,9 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     return self.update_backend_config(build, priority=priority)
 
   def update_backend_parent_run_id(self, build, parent_run_id):
+    for tag in build.tags:
+      if tag.key == 'parent_task_id':
+        tag.value = parent_run_id
     if build.infra.HasField('swarming'):
       build.infra.swarming.parent_run_id = parent_run_id
       return build

@@ -54,7 +54,8 @@ def GenTests(api):
 
   def _setup_backend_build(update_backend_config=False,
                            use_default_bot_dims=True,
-                           bot_dims={}):
+                           bot_dims={},
+                           tags=None):
     task_details_dict = {}
     if use_default_bot_dims:
       task_details_dict = {
@@ -79,6 +80,7 @@ def GenTests(api):
         backend_hostname="foo",
         task_dimensions=[common_pb2.RequestedDimension(key="key", value="val")],
         backend_config=backend_config,
+        tags=tags,
     )
     # Purely just to test that extend_swarming_bot_dimensions works.
     b = api.buildbucket.extend_swarming_bot_dimensions(b, bot_dims)
@@ -138,7 +140,9 @@ def GenTests(api):
       bot_dims={
           "key1": "value1",
           "key2": ["value2", "value3"]
-      }) + api.properties(update_backend_config=True) +
+      },
+      tags=api.buildbucket.tags(parent_task_id='1')) +
+         api.properties(update_backend_config=True) +
          api.post_process(post_process.DropExpectation))
 
   yield (api.test('raw_swarming') + _setup_raw_swarming_build() +
