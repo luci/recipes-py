@@ -4265,7 +4265,7 @@ status.
 [DEPS](/recipe_modules/swarming/__init__.py#7): [buildbucket](#recipe_modules-buildbucket), [cas](#recipe_modules-cas), [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
-#### **class [SwarmingApi](/recipe_modules/swarming/api.py#1204)([RecipeApi](/recipe_engine/recipe_api.py#473)):**
+#### **class [SwarmingApi](/recipe_modules/swarming/api.py#1200)([RecipeApi](/recipe_engine/recipe_api.py#473)):**
 
 API for interacting with swarming.
 
@@ -4275,11 +4275,11 @@ http://go.chromium.org/luci/client/cmd/swarming.
 This module will deploy the client to [CACHE]/swarming_client/; users should
 add this path to the named cache for their builder.
 
-&emsp; **@property**<br>&mdash; **def [bot\_id](/recipe_modules/swarming/api.py#1223)(self):**
+&emsp; **@property**<br>&mdash; **def [bot\_id](/recipe_modules/swarming/api.py#1219)(self):**
 
 Swarming bot ID executing this task.
 
-&mdash; **def [collect](/recipe_modules/swarming/api.py#1363)(self, name, tasks, output_dir=None, task_output_stdout='json', timeout=None, eager=False, verbose=False):**
+&mdash; **def [collect](/recipe_modules/swarming/api.py#1356)(self, name, tasks, output_dir=None, task_output_stdout='json', timeout=None, eager=False, verbose=False):**
 
 Waits on a set of Swarming tasks.
 
@@ -4305,15 +4305,15 @@ Args:
 Returns:
   A list of TaskResult objects.
 
-&emsp; **@property**<br>&mdash; **def [current\_server](/recipe_modules/swarming/api.py#1233)(self):**
+&emsp; **@property**<br>&mdash; **def [current\_server](/recipe_modules/swarming/api.py#1229)(self):**
 
 Swarming server executing this task.
 
-&mdash; **def [ensure\_client](/recipe_modules/swarming/api.py#1263)(self):**
+&mdash; **def [ensure\_client](/recipe_modules/swarming/api.py#1256)(self):**
 
-&mdash; **def [initialize](/recipe_modules/swarming/api.py#1238)(self):**
+&mdash; **def [initialize](/recipe_modules/swarming/api.py#1234)(self):**
 
-&mdash; **def [list\_bots](/recipe_modules/swarming/api.py#1506)(self, step_name, dimensions=None, fields=None):**
+&mdash; **def [list\_bots](/recipe_modules/swarming/api.py#1499)(self, step_name, dimensions=None, fields=None):**
 
 List bots matching the given options.
 
@@ -4327,7 +4327,7 @@ Args:
 Returns:
   A list of BotMetadata objects.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#1279)(self):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#1272)(self):**
 
 This context manager ensures the go swarming client is available on
 $PATH.
@@ -4337,7 +4337,7 @@ Example:
     with api.swarming.on_path():
       # do your steps which require the swarming binary on path
 
-&mdash; **def [show\_request](/recipe_modules/swarming/api.py#1469)(self, name, task):**
+&mdash; **def [show\_request](/recipe_modules/swarming/api.py#1462)(self, name, task):**
 
 Retrieve the TaskRequest for a Swarming task.
 
@@ -4349,11 +4349,11 @@ Args:
 Returns:
   TaskRequest objects.
 
-&emsp; **@property**<br>&mdash; **def [task\_id](/recipe_modules/swarming/api.py#1228)(self):**
+&emsp; **@property**<br>&mdash; **def [task\_id](/recipe_modules/swarming/api.py#1224)(self):**
 
 This task's Swarming ID.
 
-&mdash; **def [task\_request](/recipe_modules/swarming/api.py#1293)(self):**
+&mdash; **def [task\_request](/recipe_modules/swarming/api.py#1286)(self):**
 
 Creates a new TaskRequest object.
 
@@ -4363,14 +4363,14 @@ into a full task.
 Once your TaskRequest is complete, you can pass it to `trigger` in order to
 have it start running on the swarming server.
 
-&mdash; **def [task\_request\_from\_jsonish](/recipe_modules/swarming/api.py#1304)(self, json_d):**
+&mdash; **def [task\_request\_from\_jsonish](/recipe_modules/swarming/api.py#1297)(self, json_d):**
 
 Creates a new TaskRequest object from a JSON-serializable dict.
 
 The input argument should match the schema as the output of
 TaskRequest.to_jsonish().
 
-&mdash; **def [trigger](/recipe_modules/swarming/api.py#1312)(self, step_name, requests, verbose=False):**
+&mdash; **def [trigger](/recipe_modules/swarming/api.py#1305)(self, step_name, requests, verbose=False):**
 
 Triggers a set of Swarming tasks.
 
