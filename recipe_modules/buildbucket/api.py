@@ -1081,9 +1081,9 @@ class BuildbucketApi(recipe_api.RecipeApi):
     """Returns the backend hostname for the build.
     If it is legacy swarming build then the swarming hostname will be returned.
     """
-    if self.build.infra.swarming.hostname:
-      return self.build.infra.swarming.hostname
-    return self.build.infra.backend.hostname
+    if self.build.infra.backend.hostname:
+      return self.build.infra.backend.hostname
+    return self.build.infra.swarming.hostname
 
   @property
   def backend_task_dimensions(self):
