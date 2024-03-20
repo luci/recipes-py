@@ -18,6 +18,8 @@ from gevent.local import local
 from google.protobuf import json_format as json_pb
 from google.protobuf import message
 
+from .config_types import Path
+
 from .internal.attr_util import attr_type
 
 
@@ -40,7 +42,18 @@ def freeze(obj):
   elif isinstance(obj, set):
     return frozenset(freeze(i) for i in obj)
   else:
-    hash(obj)
+    # HACK: Paths are functionally immutable, but cannot have their __hash__
+    # execute correctly until the checkout_dir has actually been set (because
+    # the __hash__ implementation when a Path is based on checkout_dir wants to
+    # compute a result identical to the real underlying Path).
+    #
+    # Since we plan to entirely remove all of this config.py contents at some
+    # point, and Paths are the only known exception to the immutability rule
+    # with well-understood semantics we have a special carve-out here.
+    if isinstance(obj, Path):
+      pass
+    else:
+      hash(obj)
     return obj
 
 

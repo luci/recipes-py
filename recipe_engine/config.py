@@ -80,6 +80,7 @@ import sys
 import types
 
 from PB.recipe_engine import doc
+from recipe_engine.config_types import Path
 
 class BadConf(Exception):
   pass
@@ -847,9 +848,20 @@ class Static(ConfigBase):
 
   def __init__(self, value, hidden=AutoHide):
     super(Static, self).__init__(hidden=hidden)
-    # Attempt to hash the value, which will ensure that it's immutable all the
-    # way down :).
-    hash(value)
+    # HACK: Paths are functionally immutable, but cannot have their __hash__
+    # execute correctly until the checkout_dir has actually been set (because
+    # the __hash__ implementation when a Path is based on checkout_dir wants to
+    # compute a result identical to the real underlying Path).
+    #
+    # Since we plan to entirely remove all of this config.py contents at some
+    # point, and Paths are the only known exception to the immutability rule
+    # with well-understood semantics we have a special carve-out here.
+    if isinstance(value, Path):
+      pass
+    else:
+      # Attempt to hash the value, which will ensure that it's immutable all the
+      # way down :).
+      hash(value)
     self.data = value
 
   def get_val(self):
