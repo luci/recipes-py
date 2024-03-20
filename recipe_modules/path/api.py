@@ -37,8 +37,10 @@ documentation.
 from __future__ import annotations
 
 import collections
+from collections.abc import Iterable
 import copy
 import enum
+import itertools
 import os
 import re
 import tempfile
@@ -457,10 +459,7 @@ class PathApi(recipe_api.RecipeApi):
         abs_string_path, self.sep)
     if path is None:
       # try base paths now
-      to_try = self.c.base_paths.keys()
-      if self.checkout_dir is not None:
-        to_try = [CheckoutPathName] + list(to_try)
-      for path_name in to_try:
+      for path_name in itertools.chain((CheckoutPathName,), self.c.base_paths):
         path = self[path_name]
         sPath = str(path)
         if abs_string_path.startswith(sPath):
