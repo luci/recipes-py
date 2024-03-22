@@ -211,6 +211,7 @@ class ModuleTestData(BaseTestData, dict):
   """
   def __add__(self, other):
     assert isinstance(other, ModuleTestData)
+    # BUG(crbug.com/327644647) - this implementation can silently drop data.
     ret = ModuleTestData()
     ret.update(self)
     ret.update(other)
