@@ -29,7 +29,7 @@ def _default_json_serializer(obj):
 
   Ensures that commonly used types in recipes are JSON-serializable.
   """
-  if isinstance(obj, config_types.RecipeConfigType):
+  if isinstance(obj, config_types.Path):
     return str(obj)
   if isinstance(obj, engine_types.FrozenDict):
     return dict(obj)
