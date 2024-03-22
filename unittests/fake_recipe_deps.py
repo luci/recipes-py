@@ -17,14 +17,13 @@ from __future__ import print_function
 
 import contextlib
 import errno
+from io import StringIO
 import json
 import os
 import shutil
 import subprocess
 import sys
 import textwrap
-
-from six.moves import cStringIO as StringIO
 
 import attr
 
