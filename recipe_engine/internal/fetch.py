@@ -146,7 +146,6 @@ class Backend(object):
     raise NotImplementedError()
 
 
-
   ### private overrides. Override these in the implementations, but don't call
   ### externally.
 

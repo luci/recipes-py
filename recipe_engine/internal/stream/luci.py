@@ -9,7 +9,6 @@ import sys
 import traceback
 import zlib
 
-
 from google.protobuf import json_format as jsonpb
 from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 from google.protobuf.struct_pb2 import Struct

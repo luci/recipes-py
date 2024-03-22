@@ -5,7 +5,6 @@
 """Helpers for using the `attr` library."""
 
 
-
 def attr_type(type_, subname=''):
   """An `attr.s` validator for asserting the type of a value.
 

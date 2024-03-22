@@ -9,7 +9,6 @@ https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 """
 import six
 
-
 from google.protobuf import field_mask_pb2
 from google.protobuf import json_format
 from google.protobuf import timestamp_pb2

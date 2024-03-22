@@ -42,7 +42,6 @@ def RunSteps(api):
   assert api.path.exists(dest2), dest2
 
 
-
 def GenTests(api):
   yield api.test('basic')
 

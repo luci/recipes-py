@@ -24,7 +24,6 @@ class CollectTestError(Exception):
     pass
 
 
-
 def RunSteps(api, props):
 
   def step(i):

@@ -493,7 +493,6 @@ def parse_func(func_ast, relpath, imports):
   return ret
 
 
-
 MOCK_IMPORTS_RECIPE = _expand_mock_imports(
  _util_imports, _decorator_imports, _placeholder_imports)
 ALL_IMPORTS.update(MOCK_IMPORTS_RECIPE)

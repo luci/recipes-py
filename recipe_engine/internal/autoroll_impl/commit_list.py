@@ -4,7 +4,6 @@
 
 import copy
 
-
 from ..fetch import CommitMetadata
 
 from recipe_engine.engine_types import freeze

@@ -5,7 +5,6 @@
 import inspect
 import sys
 
-
 from ..recipe_api import BoundProperty, PROPERTY_SENTINEL
 
 from .exceptions import UndefinedPropertyException

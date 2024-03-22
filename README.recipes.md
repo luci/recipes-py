@@ -3172,12 +3172,12 @@ values provided to the recipe engine at the beginning of execution. There is
 intentionally no API to write property values (lest they become a kind of
 random-access global variable).
 
-#### **class [PropertiesApi](/recipe_modules/properties/api.py#28)([RecipeApi](/recipe_engine/recipe_api.py#472), collections.abc.Mapping):**
+#### **class [PropertiesApi](/recipe_modules/properties/api.py#27)([RecipeApi](/recipe_engine/recipe_api.py#472), collections.abc.Mapping):**
 
 PropertiesApi implements all the standard Mapping functions, so you
 can use it like a read-only dict.
 
-&mdash; **def [legacy](/recipe_modules/properties/api.py#54)(self):**
+&mdash; **def [legacy](/recipe_modules/properties/api.py#53)(self):**
 
 *** note
 **DEPRECATED**: Returns a set of properties, possibly used by legacy
@@ -3191,7 +3191,7 @@ Instead of passing all of the properties as a blob, please consider passing
 specific arguments to scripts that need them. Doing this makes it much
 easier to debug and diagnose which scripts use which properties.
 
-&mdash; **def [thaw](/recipe_modules/properties/api.py#78)(self):**
+&mdash; **def [thaw](/recipe_modules/properties/api.py#77)(self):**
 
 Returns a read-write copy of all of the properties.
 ### *recipe_modules* / [proto](/recipe_modules/proto)
@@ -3412,13 +3412,13 @@ API for interacting with the ResultDB service.
 Requires `rdb` command in `$PATH`:
 https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 
-#### **class [ResultDBAPI](/recipe_modules/resultdb/api.py#31)([RecipeApi](/recipe_engine/recipe_api.py#472)):**
+#### **class [ResultDBAPI](/recipe_modules/resultdb/api.py#30)([RecipeApi](/recipe_engine/recipe_api.py#472)):**
 
 A module for interacting with ResultDB.
 
-&mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#53)(self):**
+&mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#52)(self):**
 
-&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#758)(self, column_keys=(), grouping_keys=('status',)):**
+&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#757)(self, column_keys=(), grouping_keys=('status',)):**
 
 Specifies how the test results should be rendered.
 
@@ -3440,15 +3440,15 @@ Args:
     Caveat: test variants with only expected results are not affected by
     this setting and are always in their own group.
 
-&emsp; **@property**<br>&mdash; **def [current\_invocation](/recipe_modules/resultdb/api.py#45)(self):**
+&emsp; **@property**<br>&mdash; **def [current\_invocation](/recipe_modules/resultdb/api.py#44)(self):**
 
-&emsp; **@property**<br>&mdash; **def [enabled](/recipe_modules/resultdb/api.py#49)(self):**
+&emsp; **@property**<br>&mdash; **def [enabled](/recipe_modules/resultdb/api.py#48)(self):**
 
-&mdash; **def [exclude\_invocations](/recipe_modules/resultdb/api.py#64)(self, invocations, step_name=None):**
+&mdash; **def [exclude\_invocations](/recipe_modules/resultdb/api.py#63)(self, invocations, step_name=None):**
 
 Shortcut for resultdb.update_included_invocations().
 
-&mdash; **def [exonerate](/recipe_modules/resultdb/api.py#130)(self, test_exonerations, step_name=None):**
+&mdash; **def [exonerate](/recipe_modules/resultdb/api.py#129)(self, test_exonerations, step_name=None):**
 
 Exonerates test variants in the current invocation.
 
@@ -3456,7 +3456,7 @@ Args:
   test_exonerations (list): A list of test_result_pb2.TestExoneration.
   step_name (str): name of the step.
 
-&mdash; **def [get\_included\_invocations](/recipe_modules/resultdb/api.py#105)(self, inv_name=None, step_name=None):**
+&mdash; **def [get\_included\_invocations](/recipe_modules/resultdb/api.py#104)(self, inv_name=None, step_name=None):**
 
 Returns names of included invocations of the input invocation.
 
@@ -3468,11 +3468,11 @@ Args:
 Returns:
   A list of invocation name strs.
 
-&mdash; **def [include\_invocations](/recipe_modules/resultdb/api.py#59)(self, invocations, step_name=None):**
+&mdash; **def [include\_invocations](/recipe_modules/resultdb/api.py#58)(self, invocations, step_name=None):**
 
 Shortcut for resultdb.update_included_invocations().
 
-&mdash; **def [invocation\_ids](/recipe_modules/resultdb/api.py#172)(self, inv_names):**
+&mdash; **def [invocation\_ids](/recipe_modules/resultdb/api.py#171)(self, inv_names):**
 
 Returns invocation IDs by parsing invocation names.
 
@@ -3482,7 +3482,7 @@ Args:
 Returns:
   A list of invocation_ids.
 
-&mdash; **def [query](/recipe_modules/resultdb/api.py#188)(self, inv_ids, variants_with_unexpected_results=False, merge=False, limit=None, step_name=None, tr_fields=None, test_invocations=None, test_regex=None):**
+&mdash; **def [query](/recipe_modules/resultdb/api.py#187)(self, inv_ids, variants_with_unexpected_results=False, merge=False, limit=None, step_name=None, tr_fields=None, test_invocations=None, test_regex=None):**
 
 Returns test results in the invocations.
 
@@ -3522,7 +3522,7 @@ Args:
 Returns:
   A dict {invocation_id: api.Invocation}.
 
-&mdash; **def [query\_new\_test\_variants](/recipe_modules/resultdb/api.py#472)(self, invocation: str, baseline: str, step_name: str=None, step_test_data: dict=None):**
+&mdash; **def [query\_new\_test\_variants](/recipe_modules/resultdb/api.py#471)(self, invocation: str, baseline: str, step_name: str=None, step_test_data: dict=None):**
 
 Query ResultDB for new tests.
 
@@ -3537,7 +3537,7 @@ Returns:
  A QueryNewTestVariantsResponse proto message with is_baseline_ready and
  new_test_variants.
 
-&mdash; **def [query\_test\_result\_statistics](/recipe_modules/resultdb/api.py#268)(self, invocations=None, step_name=None):**
+&mdash; **def [query\_test\_result\_statistics](/recipe_modules/resultdb/api.py#267)(self, invocations=None, step_name=None):**
 
 Retrieve stats of test results for the given invocations.
 
@@ -3553,7 +3553,7 @@ Returns:
   A QueryTestResultStatisticsResponse proto message with statistics for the
   queried invocations.
 
-&mdash; **def [query\_test\_results](/recipe_modules/resultdb/api.py#347)(self, invocations, test_id_regexp=None, variant_predicate=None, field_mask_paths=None, page_size=100, page_token=None, step_name=None):**
+&mdash; **def [query\_test\_results](/recipe_modules/resultdb/api.py#346)(self, invocations, test_id_regexp=None, variant_predicate=None, field_mask_paths=None, page_size=100, page_token=None, step_name=None):**
 
 Retrieve test results from an invocation, recursively.
 
@@ -3586,7 +3586,7 @@ Returns:
   For value format, see [`QueryTestResultsResponse` message]
   (https://bit.ly/3dsChbo)
 
-&mdash; **def [query\_test\_variants](/recipe_modules/resultdb/api.py#409)(self, invocations, test_variant_status=None, field_mask_paths=None, page_size=100, page_token=None, step_name=None):**
+&mdash; **def [query\_test\_variants](/recipe_modules/resultdb/api.py#408)(self, invocations, test_variant_status=None, field_mask_paths=None, page_size=100, page_token=None, step_name=None):**
 
 Retrieve test variants from an invocation, recursively.
 
@@ -3620,7 +3620,7 @@ Returns:
   For value format, see [`QueryTestVariantsResponse` message]
   (http://shortn/_hv3edsXidO)
 
-&mdash; **def [update\_included\_invocations](/recipe_modules/resultdb/api.py#69)(self, add_invocations=None, remove_invocations=None, step_name=None):**
+&mdash; **def [update\_included\_invocations](/recipe_modules/resultdb/api.py#68)(self, add_invocations=None, remove_invocations=None, step_name=None):**
 
 Add and/or remove included invocations to/from the current invocation.
 
@@ -3633,7 +3633,7 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
-&mdash; **def [update\_invocation](/recipe_modules/resultdb/api.py#510)(self, parent_inv='', step_name=None, source_spec=None, baseline_id=None):**
+&mdash; **def [update\_invocation](/recipe_modules/resultdb/api.py#509)(self, parent_inv='', step_name=None, source_spec=None, baseline_id=None):**
 
 Makes a call to the UpdateInvocation API to update the invocation
 
@@ -3646,7 +3646,7 @@ Args:
     the format {buildbucket bucket}:{buildbucket builder name}. For example,
     'try:linux-rel'. Baselines are used to detect new tests in invocations.
 
-&mdash; **def [upload\_invocation\_artifacts](/recipe_modules/resultdb/api.py#301)(self, artifacts, parent_inv=None, step_name=None):**
+&mdash; **def [upload\_invocation\_artifacts](/recipe_modules/resultdb/api.py#300)(self, artifacts, parent_inv=None, step_name=None):**
 
 Create artifacts with the given content type and contents or gcs_uri.
 
@@ -3666,7 +3666,7 @@ Returns:
   A BatchCreateArtifactsResponse proto message listing the artifacts that
   were created.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#609)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file='', inherit_sources=False, sources='', sources_file='', baseline_id=''):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#608)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file='', inherit_sources=False, sources='', sources_file='', baseline_id=''):**
 
 Wraps the command with ResultSink.
 
@@ -4963,7 +4963,7 @@ Generates response Runs for a test.
 [DEPS](/recipe_modules/cq/tests/cl_group_key.py#7): [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cq/tests/cl_group_key.py#17)(api):**
+&mdash; **def [RunSteps](/recipe_modules/cq/tests/cl_group_key.py#16)(api):**
 ### *recipes* / [cq:tests/do\_not\_retry](/recipe_modules/cq/tests/do_not_retry.py)
 
 [DEPS](/recipe_modules/cq/tests/do_not_retry.py#5): [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [step](#recipe_modules-step)
@@ -5083,7 +5083,7 @@ Generates response Runs for a test.
 [DEPS](/recipe_modules/defer/tests/collect.py#13): [context](#recipe_modules-context), [defer](#recipe_modules-defer), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/defer/tests/collect.py#28)(api, props):**
+&mdash; **def [RunSteps](/recipe_modules/defer/tests/collect.py#27)(api, props):**
 ### *recipes* / [defer:tests/context](/recipe_modules/defer/tests/context.py)
 
 [DEPS](/recipe_modules/defer/tests/context.py#13): [context](#recipe_modules-context), [defer](#recipe_modules-defer), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

@@ -4,7 +4,6 @@
 
 import json
 
-
 from ...test.empty_log import EMPTY_LOG
 
 

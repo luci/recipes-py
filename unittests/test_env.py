@@ -44,7 +44,6 @@ from fake_recipe_deps import FakeRecipeDeps
 from mock_recipe_deps import MockRecipeDeps
 
 
-
 class CapturableHandler(logging.StreamHandler):
   """Allows unittests to capture log output.
 

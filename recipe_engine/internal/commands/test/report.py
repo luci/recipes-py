@@ -8,7 +8,6 @@
 
 from __future__ import print_function
 
-
 import collections
 import datetime
 import logging
@@ -224,7 +223,6 @@ class Reporter(object):
 
     print('------')
     print('TESTS OK')
-
 
 
 # Internal helper stuff

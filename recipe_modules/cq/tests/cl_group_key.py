@@ -10,7 +10,6 @@ DEPS = [
 ]
 
 
-
 from PB.go.chromium.org.luci.buildbucket.proto.build import Build
 
 
