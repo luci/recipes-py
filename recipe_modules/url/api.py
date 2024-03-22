@@ -5,7 +5,7 @@
 """Methods for interacting with HTTP(s) URLs."""
 
 from builtins import int
-from future.moves.urllib.parse import urlparse, urlencode, quote, unquote
+from urllib.parse import urlparse, urlencode, quote, unquote
 from future.utils import iterkeys
 
 import collections
