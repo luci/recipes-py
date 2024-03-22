@@ -5,10 +5,6 @@
 
 """Provides objects for reading and writing raw data to and from steps."""
 
-from future import standard_library
-standard_library.install_aliases()
-from builtins import range
-from builtins import str as text
 from future.utils import raise_
 
 import codecs
@@ -122,7 +118,7 @@ class InputTextPlaceholder(InputDataPlaceholder):
 
   def __init__(self, data, suffix, name=None):
     super(InputTextPlaceholder, self).__init__(data, suffix, name=name)
-    assert isinstance(data, text)
+    assert isinstance(data, str)
 
   def write_data(self, fd): # pragma: no cover
     with io.open(fd, mode='w', encoding='utf-8', errors='replace') as f:
@@ -348,7 +344,7 @@ class RawIOApi(recipe_api.RecipeApi):
 
     See examples/full.py for usage example.
     """
-    if isinstance(data, text):  # pragma: no cover
+    if isinstance(data, str):  # pragma: no cover
       # TODO(yiwzhang): warn user here to provide bytes data.
       data = data.encode('utf-8', errors='replace')
     if not isinstance(data, bytes):  # pragma: no cover
@@ -374,7 +370,7 @@ class RawIOApi(recipe_api.RecipeApi):
     if isinstance(data, bytes):  # pragma: no cover
       # TODO(yiwzhang): warn user here to provide utf-8 text data.
       data = data.decode('utf-8', errors='replace')
-    if not isinstance(data, text):  # pragma: no cover
+    if not isinstance(data, str):  # pragma: no cover
       raise ValueError("expected utf-8 text, got %s: %r" % (type(data), data))
     return InputTextPlaceholder(data, suffix, name=name)
 
