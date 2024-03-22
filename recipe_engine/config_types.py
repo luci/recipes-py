@@ -13,7 +13,7 @@ import os
 
 
 
-def ResetTostringFns():
+def ResetGlobalVariableAssignments():
   RecipeConfigType._TOSTRING_MAP.clear()  # pylint: disable=W0212
   NamedBasePath._API = None
 

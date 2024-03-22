@@ -181,7 +181,7 @@ def _debug_recipe(rdeps: recipe_deps.RecipeDeps, recipe: recipe_deps.Recipe,
                   test_data):
   """Debugs the given recipe + test case."""
   # Reset global state.
-  config_types.ResetTostringFns()
+  config_types.ResetGlobalVariableAssignments()
   engine_types.PerGreentletStateRegistry.clear()
   global_shutdown.GLOBAL_SHUTDOWN.clear()
 

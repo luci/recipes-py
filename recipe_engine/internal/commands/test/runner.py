@@ -331,11 +331,6 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
     * test_desc (Description)
     * test_data (TestData)
   """
-  # Reset global state.
-  config_types.ResetTostringFns()
-  engine_types.PerGreentletStateRegistry.clear()
-  GLOBAL_SHUTDOWN.clear()
-
   start_time = time.time()
 
   test_case_result = execute_test_case(
@@ -427,6 +422,11 @@ def main(recipe_deps, cov_file, is_train, cover_module_imports):
   fatal = False
 
   while True:
+    # Reset global state as early as possible for each test case.
+    config_types.ResetGlobalVariableAssignments()
+    engine_types.PerGreentletStateRegistry.clear()
+    GLOBAL_SHUTDOWN.clear()
+
     test_desc = _read_test_desc()
     if not test_desc:
       break  # EOF or error
