@@ -6,7 +6,6 @@
 
 from builtins import int
 from urllib.parse import urlparse, urlencode, quote, unquote
-from future.utils import iterkeys
 
 import collections
 
@@ -288,7 +287,7 @@ class UrlApi(recipe_api.RecipeApi):
 
     if headers:
       has_authorization_header = any(k.lower() == 'authorization'
-                                     for k in iterkeys(headers))
+                                     for k in headers)
       if has_authorization_header and not is_secure:
         raise ValueError(
             'Refusing to send authorization header to insecure URL: %s' % (

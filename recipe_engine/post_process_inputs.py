@@ -9,7 +9,6 @@ import re
 from collections.abc import Iterable
 
 import attr
-from future.utils import iterkeys
 from past.builtins import basestring
 
 from .engine_types import ResourceCost
@@ -285,7 +284,7 @@ class Step(object):
     """
     if 'name' not in step_dict:
       raise ValueError("step dict must have 'name' key, step dict keys: %r"
-                       % sorted(iterkeys(step_dict)))
+                       % sorted(step_dict))
     if 'cmd' in step_dict or 'cost' in step_dict:
       step_dict = step_dict.copy()
       if 'cmd' in step_dict:
@@ -305,7 +304,7 @@ class Step(object):
     if step_dict.get('cost', None) is not None:
       cost = step_dict['cost']
       step_dict['cost'] = attr.asdict(cost)
-    for k in step_dict.keys():
+    for k in step_dict:
       if k.startswith('_'):
         step_dict[k[1:]] = step_dict.pop(k)
     return step_dict

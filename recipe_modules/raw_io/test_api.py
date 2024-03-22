@@ -3,7 +3,6 @@
 # that can be found in the LICENSE file.
 
 from builtins import str as text
-from future.utils import iterkeys
 
 from recipe_engine import recipe_test_api
 
@@ -61,7 +60,7 @@ class RawIOTestApi(recipe_test_api.RecipeTestApi): # pragma: no cover
        }))
     """
     assert type(files_dict) is dict
-    assert all(isinstance(key, str) for key in iterkeys(files_dict))
+    assert all(isinstance(key, str) for key in files_dict)
     assert all(isinstance(value, bytes) for value in files_dict.values())
     return files_dict, retcode, name
 
