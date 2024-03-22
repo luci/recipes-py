@@ -5,7 +5,6 @@
 from builtins import int
 
 from recipe_engine import recipe_test_api
-from recipe_engine.config_types import Path, NamedBasePath
 
 class PathTestApi(recipe_test_api.RecipeTestApi):
   def seed(self, seed):

@@ -35,16 +35,8 @@ There are some subtleties here like:
 
 import imp
 import importlib
-import inspect
 import os
 import sys
-
-
-from ..config_types import Path, ModuleBasePath, RepoBasePath
-from ..recipe_api import BoundProperty, RecipeApi
-from ..recipe_test_api import RecipeTestApi
-
-from . import proto_support
 
 
 class RecipeModuleImporter(object):
