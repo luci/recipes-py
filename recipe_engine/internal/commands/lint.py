@@ -17,7 +17,7 @@ import argparse
 import re
 import types
 
-from future.utils import iteritems, itervalues
+from future.utils import itervalues
 
 ALLOWED_MODULES = [
     r'ast',
@@ -56,7 +56,7 @@ def ImportsTest(recipe, allowed_modules):
   Returns a list of errors, or an empty list if there are no errors (duh).
   """
 
-  for _, val in sorted(iteritems(recipe.global_symbols)):
+  for _, val in sorted(recipe.global_symbols.items()):
     if isinstance(val, types.ModuleType):
       module_name = val.__name__
       for pattern in allowed_modules:

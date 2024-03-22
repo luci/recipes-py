@@ -7,7 +7,6 @@ import signal
 import sys
 import time
 
-from future.utils import iteritems
 from gevent import subprocess
 
 import attr
@@ -258,7 +257,7 @@ class SubprocessStepRunner(StepRunner):
     debug_log.write_line('launched pid:%r gid:%r' % (proc.pid, gid))
 
     pipes = set()
-    for handle_name, handle in iteritems(fhandles):
+    for handle_name, handle in fhandles.items():
       # Close all closable file handles, since the subprocess has them now.
       if hasattr(handle, 'close'):
         handle.close()

@@ -12,7 +12,7 @@ from functools import cached_property
 
 import attr
 
-from future.utils import iteritems, itervalues
+from future.utils import itervalues
 
 from .cause import CallSite, Frame, ImportSite
 from .escape import escape_warning_predicate, IGNORE
@@ -92,7 +92,7 @@ class WarningRecorder(object):
     """
     return {
       name: tuple(site.cause_pb for site in sites)
-      for (name, sites) in iteritems(self._recorded_warnings)
+      for (name, sites) in self._recorded_warnings.items()
     }
 
   def record_execution_warning(self, name, frames):

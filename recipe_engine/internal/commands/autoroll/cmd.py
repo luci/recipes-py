@@ -9,7 +9,7 @@ import logging
 import os
 import sys
 
-from future.utils import iteritems, itervalues
+from future.utils import itervalues
 
 from gevent import subprocess
 
@@ -167,7 +167,7 @@ def process_candidates(recipe_deps, candidates, repos, verbose_json):
                     (c.message_lines if verbose_json else c.message_lines[:1]),
                 'revision': c.revision,
             } for c in clist]
-            for repo_name, clist in iteritems(candidate.changelist(repos))
+            for repo_name, clist in candidate.changelist(repos).items()
         },
     })
 

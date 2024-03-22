@@ -7,7 +7,6 @@
 
 
 from __future__ import print_function
-from future.utils import iteritems
 
 
 import collections
@@ -107,7 +106,7 @@ class Reporter(object):
       return True
 
     has_fail = False
-    for test_name, test_result in iteritems(outcome_msg.test_results):
+    for test_name, test_result in outcome_msg.test_results.items():
       _print_summary_info(
           self._recipe_deps, self._verbose, self._use_emoji, test_name,
           test_result, self._space_for_columns)
@@ -334,8 +333,8 @@ def _collect_warning_result(outcome_msg):
   each warning.
   """
   result = defaultdict(PerWarningResult)
-  for _, test_result in iteritems(outcome_msg.test_results):
-    for name, causes in iteritems(test_result.warnings):
+  for _, test_result in outcome_msg.test_results.items():
+    for name, causes in test_result.warnings.items():
       for cause in causes.causes:
         if cause.WhichOneof('oneof_cause') == 'call_site':
           result[name].call_sites.add(CallSite.from_cause_pb(cause))
@@ -346,7 +345,7 @@ def _collect_warning_result(outcome_msg):
 
 def _collect_global_warnings_result(outcome_msg):
   result = []
-  for test_name, test_result in iteritems(outcome_msg.test_results):
+  for test_name, test_result in outcome_msg.test_results.items():
     _, warnings = _check_field(test_result, 'global_warnings')
     if warnings:
       for warning in warnings:

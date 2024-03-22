@@ -8,7 +8,6 @@ Depends on 'cipd' binary available in PATH:
 https://godoc.org/go.chromium.org/luci/cipd/client/cmd/cipd
 """
 
-from future.utils import iteritems
 from past.builtins import basestring
 from typing import *
 
@@ -709,7 +708,7 @@ class CIPDApi(recipe_api.RecipeApi):
     )
     return {
         subdir: [self.Pin(**pin) for pin in pins]
-        for subdir, pins in iteritems(step_result.json.output['result'])
+        for subdir, pins in step_result.json.output['result'].items()
     }
 
   def ensure_file_resolve(self, ensure_file, name='cipd ensure-file-resolve'):

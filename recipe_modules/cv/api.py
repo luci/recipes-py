@@ -3,7 +3,6 @@
 # that can be found in the LICENSE file.
 """Recipe API for LUCI CV, the pre-commit testing system."""
 
-from future.utils import iteritems
 
 import re
 
@@ -294,7 +293,7 @@ class CVApi(recipe_api.RecipeApi):
     output = cq_pb2.Output()
     output.CopyFrom(self._output)
     cur_step.presentation.properties['$recipe_engine/cq/output'] = output
-    for k, v in iteritems(addition_props):
+    for k, v in addition_props.items():
       cur_step.presentation.properties[k] = v
 
   def _enforce_active(self):

@@ -3,7 +3,6 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from future.utils import iteritems
 
 import difflib
 
@@ -225,7 +224,7 @@ def GenTests(api):
             ]}
   states['unreachable'] = None
 
-  for name, value in iteritems(states):
+  for name, value in states.items():
 
     result = api.swarming.task_result(
         id='0', name='recipes-go', state=value, outputs=('out.tar'),

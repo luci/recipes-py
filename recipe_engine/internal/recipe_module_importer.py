@@ -39,7 +39,7 @@ import inspect
 import os
 import sys
 
-from future.utils import iteritems, itervalues
+from future.utils import itervalues
 
 from ..config_types import Path, ModuleBasePath, RepoBasePath
 from ..recipe_api import BoundProperty, RecipeApi

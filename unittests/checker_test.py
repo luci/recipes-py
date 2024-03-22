@@ -3,7 +3,6 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from future.utils import iteritems
 
 import sys
 import copy
@@ -538,7 +537,7 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
     ])
     test_data = self.mkApi().post_process(
         lambda check, steps:
-        OrderedDict((k, {'name': v.name}) for k, v in iteritems(steps)))
+        OrderedDict((k, {'name': v.name}) for k, v in steps.items()))
     results = Outcome.Results()
     expectations = post_process(results, d, test_data)
     self.assertEqual(
@@ -566,7 +565,7 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
     test_data = self.mkApi().post_process(
         lambda check, steps:
         OrderedDict((k, dict(cwd='cwd', **v.to_step_dict()))
-                    for k, v in iteritems(steps)))
+                    for k, v in steps.items()))
     with self.assertRaises(PostProcessError):
       post_process(Outcome.Results(), d, test_data)
 
@@ -579,9 +578,9 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
     test_data = self.mkApi().post_process(
         lambda check, steps:
         OrderedDict(
-            (k, {a: value for a, value in iteritems(v.to_step_dict())
+            (k, {a: value for a, value in v.to_step_dict().items()
                  if a != 'name'})
-            for k,v in iteritems(steps)))
+            for k,v in steps.items()))
     results = Outcome.Results()
     expectations = post_process(results, d, test_data)
     self.assertEqual(expectations, [

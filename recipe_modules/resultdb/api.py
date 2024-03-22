@@ -9,7 +9,6 @@ https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 """
 import six
 
-from future.utils import iteritems
 
 from google.protobuf import field_mask_pb2
 from google.protobuf import json_format
@@ -329,7 +328,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
                 contents=six.ensure_binary(art.get('contents', b'')),
                 gcs_uri=art.get('gcs_uri', ''),
             ),
-        ) for art_id, art in iteritems(artifacts)
+        ) for art_id, art in artifacts.items()
     ])
 
     res = self._rpc(
@@ -711,7 +710,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
     if test_id_prefix:
       ret += ['-test-id-prefix', test_id_prefix]
 
-    for k, v in sorted(iteritems(base_variant or {})):
+    for k, v in sorted((base_variant or {}).items()):
       ret += ['-var', '%s:%s' % (k, v)]
 
     if test_location_base:

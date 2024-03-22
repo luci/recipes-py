@@ -2,7 +2,6 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from future.utils import iteritems
 
 from recipe_engine import recipe_test_api
 
@@ -59,7 +58,7 @@ class CIPDTestApi(recipe_test_api.RecipeTestApi):
     return self._resultify({
         subdir or '': [self.make_pin(name, version)
                        for name, version in sorted(packages)]
-        for subdir, packages in iteritems(ensure_file.packages)
+        for subdir, packages in ensure_file.packages.items()
     })
 
   def example_ensure_file_resolve(self, ensure_file):
@@ -68,7 +67,7 @@ class CIPDTestApi(recipe_test_api.RecipeTestApi):
             'package': self.make_resolved_package(name),
             'pin': self.make_pin(name, version)}
             for name, version in sorted(packages)]
-        for subdir, packages in iteritems(ensure_file.packages)
+        for subdir, packages in ensure_file.packages.items()
     })
 
   def example_set_tag(self, package_name, version):

@@ -16,7 +16,7 @@ import pkgutil
 import sys
 
 from builtins import zip
-from future.utils import iteritems, itervalues
+from future.utils import itervalues
 
 if sys.version_info >= (3, 5): # we're running python > 3.5
   OS_WALK = os.walk
@@ -88,7 +88,7 @@ def _check_recipes_cfg_consistency(recipe_deps):
   # For every repo we loaded
   for repo_name in actual:
     required_deps = recipe_deps.repos[repo_name].simple_cfg.deps
-    for req_repo_name, req_spec in iteritems(required_deps):
+    for req_repo_name, req_spec in required_deps.items():
       # If this depends on something we didn't load, log an error.
       if req_repo_name not in actual:
         LOG.error(

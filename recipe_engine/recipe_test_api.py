@@ -10,7 +10,6 @@ from collections import namedtuple
 from functools import reduce
 from typing import Optional
 
-from future.utils import iteritems
 from future.utils import itervalues
 from past.builtins import basestring
 
@@ -36,7 +35,7 @@ def combineify(name, dest, a, b, overwrite=False):
   """
   dest_dict = getattr(dest, name)
   dest_dict.update(getattr(a, name))
-  for k, v in iteritems(getattr(b, name)):
+  for k, v in getattr(b, name).items():
     if k in dest_dict:
       if not overwrite:
         dest_dict[k] += v
@@ -187,7 +186,7 @@ class StepTestData(BaseTestData):
 
   def __repr__(self):
     dct = {
-      'placeholder_data': dict(iteritems(self.placeholder_data)),
+      'placeholder_data': dict(self.placeholder_data.items()),
       'stdout': self._stdout,
       'stderr': self._stderr,
       'retcode': self._retcode,
@@ -314,8 +313,8 @@ class TestData(BaseTestData):
       'properties': self.properties,
       'environ': self.environ,
       'luci_context': self.luci_context,
-      'mod_data': dict(iteritems(self.mod_data)),
-      'step_data': dict(iteritems(self.step_data)),
+      'mod_data': dict(self.mod_data.items()),
+      'step_data': dict(self.step_data.items()),
       'expected_exceptions': self.expected_exceptions,
       'expected_status': self.expected_status,
     },)

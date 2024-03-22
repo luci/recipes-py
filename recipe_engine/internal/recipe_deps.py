@@ -45,7 +45,7 @@ from collections import namedtuple
 from functools import cached_property
 from typing import Optional, Type
 
-from future.utils import iteritems, itervalues, raise_
+from future.utils import itervalues, raise_
 
 import attr
 
@@ -136,8 +136,8 @@ class RecipeDeps(object):
     """
     return {
         '/'.join((repo_name, warning_name)) : definition
-        for repo_name, repo in iteritems(self.repos)
-        for warning_name, definition in iteritems(repo.warning_definitions)
+        for repo_name, repo in self.repos.items()
+        for warning_name, definition in repo.warning_definitions.items()
     }
 
   @classmethod
@@ -188,7 +188,7 @@ class RecipeDeps(object):
     repos[ret.main_repo_id] = RecipeRepo.create(
       ret, main_repo_path, simple_cfg=simple_cfg, backend=main_backend)
 
-    for project_id, path in iteritems(overrides):
+    for project_id, path in overrides.items():
       backend = None
       if os.path.isdir(os.path.join(path, '.git')):
         backend = fetch.GitBackend(path, None)
@@ -199,7 +199,7 @@ class RecipeDeps(object):
       simple_cfg.recipes_path,
       '.recipe_deps'
     )
-    for repo_name, dep in iteritems(simple_cfg.deps):
+    for repo_name, dep in simple_cfg.deps.items():
       if repo_name in repos:
         continue
 
@@ -579,7 +579,7 @@ class RecipeModule(object):
     return {
         prop_name: value.bind(prop_name, BoundProperty.MODULE_PROPERTY,
                               full_decl_name)
-        for prop_name, value in iteritems(properties_def)
+        for prop_name, value in properties_def.items()
     }
 
   @cached_property
@@ -876,7 +876,7 @@ class Recipe(object):
       # Let each property object know about the fully qualified property name.
       recipe_globals['PROPERTIES'] = {
           name: value.bind(name, BoundProperty.RECIPE_PROPERTY, self.full_name)
-          for name, value in iteritems(properties_def)
+          for name, value in properties_def.items()
       }
 
     return recipe_globals
@@ -903,7 +903,7 @@ class Recipe(object):
       self.repo.recipe_deps, self.normalized_DEPS, 'TEST_API', None, None)
     api.__dict__.update({
       local_name: resolved_dep
-      for local_name, resolved_dep in iteritems(resolved_deps)
+      for local_name, resolved_dep in resolved_deps.items()
       if resolved_dep is not None
     })
     for test_data in self.global_symbols['GenTests'](api):
@@ -957,7 +957,7 @@ class Recipe(object):
       engine.record_import_warning(warning, importer)
     api.__dict__.update({
       local_name: resolved_dep
-      for local_name, resolved_dep in iteritems(resolved_deps)
+      for local_name, resolved_dep in resolved_deps.items()
       if resolved_dep is not None
     })
     return api
@@ -989,7 +989,7 @@ class Recipe(object):
       if properties_def:
         # New-style Protobuf PROPERTIES.
         properties_without_reserved = {
-          k: v for k, v in iteritems(engine.properties)
+          k: v for k, v in engine.properties.items()
           if not k.startswith('$')
         }
         args.append(jsonpb.ParseDict(
@@ -999,7 +999,7 @@ class Recipe(object):
 
       if env_properties_def:
         args.append(jsonpb.ParseDict(
-            {k.upper(): v for k, v in iteritems(engine.environ)},
+            {k.upper(): v for k, v in engine.environ.items()},
             env_properties_def(),
             ignore_unknown_fields=True))
 
@@ -1069,7 +1069,7 @@ def parse_deps_spec(repo_name, deps_spec):
   elif isinstance(deps_spec, dict):
     deps = {
       local_name: _parse_dep_name(dep_name)
-      for local_name, dep_name in iteritems(deps_spec)
+      for local_name, dep_name in deps_spec.items()
     }
 
   elif not deps_spec:
@@ -1089,7 +1089,7 @@ def _collect_import_warnings(root):
   """
   ret = set()
   recipe_deps = root.repo.recipe_deps
-  for _, (repo_name, module_name) in iteritems(root.normalized_DEPS):
+  for _, (repo_name, module_name) in root.normalized_DEPS.items():
     module = recipe_deps.repos[repo_name].modules[module_name]
     for warning in module.warnings:
       if '/' not in warning:
@@ -1114,7 +1114,7 @@ def _instantiate_test_api(module: RecipeModule, resolved_deps):
   assert isinstance(inst, RecipeTestApi)
   inst.m.__dict__.update({
     local_name: resolved_dep
-    for local_name, resolved_dep in iteritems(resolved_deps)
+    for local_name, resolved_dep in resolved_deps.items()
     if resolved_dep is not None
   })
   setattr(inst.m, module.name, inst)
@@ -1176,7 +1176,7 @@ def _instantiate_api(engine, test_data, fqname, module: RecipeModule, test_api,
 
     if global_properties_def:
       properties_without_reserved = {
-        k: v for k, v in iteritems(engine.properties)
+        k: v for k, v in engine.properties.items()
         if not k.startswith('$')
       }
       args.append(jsonpb.ParseDict(
@@ -1186,7 +1186,7 @@ def _instantiate_api(engine, test_data, fqname, module: RecipeModule, test_api,
 
     if env_properties_def:
       args.append(jsonpb.ParseDict(
-          {k.upper(): v for k, v in iteritems(engine.environ)},
+          {k.upper(): v for k, v in engine.environ.items()},
           env_properties_def(),
           ignore_unknown_fields=True))
 
@@ -1210,7 +1210,7 @@ def _instantiate_api(engine, test_data, fqname, module: RecipeModule, test_api,
 
   # Replace class-level Requirements placeholders in the recipe API with
   # their instance-level real values.
-  for k, v in iteritems(module.API.__dict__):
+  for k, v in module.API.__dict__.items():
     if isinstance(v, _UnresolvedRequirement):
       setattr(inst, k, engine.resolve_requirement(v))
 
@@ -1274,7 +1274,7 @@ def _resolve(recipe_deps, deps_spec, variant, engine, test_data):
     test_api = _instantiate_test_api(
         module, {
             local_name: _inner(d_repo_name, d_module, loading_chain).test_api
-            for local_name, (d_repo_name, d_module) in iteritems(deps_spec)
+            for local_name, (d_repo_name, d_module) in deps_spec.items()
         })
 
     fqname = '%s/%s' % (repo_name, module_name)
@@ -1283,7 +1283,7 @@ def _resolve(recipe_deps, deps_spec, variant, engine, test_data):
       api = _instantiate_api(
           engine, test_data, fqname, module, test_api, {
               local_name: _inner(d_repo_name, d_module, loading_chain).api
-              for local_name, (d_repo_name, d_module) in iteritems(deps_spec)
+              for local_name, (d_repo_name, d_module) in deps_spec.items()
           })
 
     result = cache_entry(api, test_api)
@@ -1294,7 +1294,7 @@ def _resolve(recipe_deps, deps_spec, variant, engine, test_data):
   ret = {
     local_name: _inner(d_repo_name, d_module, []).pick()
     for local_name, (d_repo_name, d_module)
-    in iteritems(deps_spec)
+    in deps_spec.items()
   }
 
   # Always instantiate the path module at least once so that string functions on

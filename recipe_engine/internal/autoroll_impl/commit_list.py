@@ -4,7 +4,6 @@
 
 import copy
 
-from future.utils import iteritems
 
 from ..fetch import CommitMetadata
 
@@ -44,14 +43,14 @@ class CommitList(object):
     for i, c in enumerate(commit_list):
       rev_idx[c.revision] = i
 
-      for dep_repo_name, dep in iteritems(c.spec.deps):
+      for dep_repo_name, dep in c.spec.deps.items():
         idx = dep_idx.setdefault(dep_repo_name, {})
         idx.setdefault(dep.revision, set()).add(i)
         revs_for_dep.setdefault(dep_repo_name, set()).add(i)
 
     # Record the commits that don't pin each dep, they are compatible with any
     # revision of the given dep
-    for dep_repo_name, revs in iteritems(revs_for_dep):
+    for dep_repo_name, revs in revs_for_dep.items():
       dep_idx[dep_repo_name][None] = set(range(len(commit_list))) - revs
 
     # Immutable state: safe to copy
@@ -204,7 +203,7 @@ class CommitList(object):
       config's revison.
     """
     compatible_indexes = set(limited_to or range(len(self._commits)))
-    for repo_name, revision in iteritems(config):
+    for repo_name, revision in config.items():
       idx_table = self._dep_idx.get(repo_name)
       if not idx_table:
         continue

@@ -12,7 +12,7 @@ import os
 import sys
 import time
 
-from future.utils import iteritems, itervalues
+from future.utils import itervalues
 
 from ..fetch import GitBackend
 
@@ -35,7 +35,7 @@ class _Config(collections.abc.Mapping):
     self._revisions_by_repo = dict(revisions_by_repo)
     # Calculate the hash immediately so that we know all the items are
     # hashable too.
-    self._hash = hash(tuple(sorted(iteritems(self._revisions_by_repo))))
+    self._hash = hash(tuple(sorted(self._revisions_by_repo.items())))
 
   def __hash__(self):
     return self._hash
@@ -143,13 +143,13 @@ class _ConfigFinder(object):
   def _pin(self, config, repo, commit, repos_to_pin):
     config[repo] = commit.revision
     new_pins_by_repo = {}
-    for dep_repo, dep in iteritems(commit.spec.deps):
+    for dep_repo, dep in commit.spec.deps.items():
       if dep_repo not in repos_to_pin and dep_repo not in config:
         new_pins_by_repo[dep_repo] = dep
       config[dep_repo] = dep.revision
     repos_to_pin.difference_update(config)
 
-    for dep_repo, dep in iteritems(new_pins_by_repo):
+    for dep_repo, dep in new_pins_by_repo.items():
       clist = self._new_repo_commit_list_getter(dep_repo, dep)
       if not clist.is_compatible(dep.revision, config):
         return False
@@ -166,7 +166,7 @@ def _score(commit_lists_by_repo, config, current_config, top_level_repos):
   movement = 0
   timestamp = 0
 
-  for repo, revision in iteritems(config):
+  for repo, revision in config.items():
     clist = commit_lists_by_repo[repo]
     if repo not in current_config:
       new_deps += 1
@@ -181,7 +181,7 @@ def _score(commit_lists_by_repo, config, current_config, top_level_repos):
         movement += dist
 
   timestamp = max(commit_lists_by_repo[repo].lookup(revision).commit_timestamp
-                  for repo, revision in iteritems(config)
+                  for repo, revision in config.items()
                   if repo in top_level_repos)
 
   return backwards_rolls, new_deps, movement, timestamp
@@ -285,7 +285,7 @@ def _get_roll_candidates_impl(recipe_deps, commit_lists_by_repo):
 
   # Tracks the commits we make candidates from
   cursors_by_repo = {
-      repo: clist.cursor() for repo, clist in iteritems(commit_lists_by_repo)
+      repo: clist.cursor() for repo, clist in commit_lists_by_repo.items()
   }
 
   # Tracks the currently accepted config for the purposes of comparison/scoring,
@@ -294,7 +294,7 @@ def _get_roll_candidates_impl(recipe_deps, commit_lists_by_repo):
   # pinned by new configs
   current_config = _Config({
       repo: cursor.current.revision
-      for repo, cursor in iteritems(cursors_by_repo)
+      for repo, cursor in cursors_by_repo.items()
   })
   top_level_repos = None
   yielded_configs = set([current_config])
@@ -302,13 +302,13 @@ def _get_roll_candidates_impl(recipe_deps, commit_lists_by_repo):
   while True:
     if top_level_repos is None:
       top_level_repos = set(current_config)
-      for repo, revision in iteritems(current_config):
+      for repo, revision in current_config.items():
         commit = commit_lists_by_repo[repo].lookup(revision)
         top_level_repos.difference_update(commit.spec.deps)
       top_level_repos = frozenset(top_level_repos)
 
     candidate_configs = set()
-    for repo, cursor in iteritems(cursors_by_repo):
+    for repo, cursor in cursors_by_repo.items():
       if repo not in top_level_repos:
         continue
       commit = cursor.current
@@ -353,7 +353,7 @@ def _get_roll_candidates_impl(recipe_deps, commit_lists_by_repo):
       if not new_revisions:
         return
 
-    for repo, revision in iteritems(new_revisions):
+    for repo, revision in new_revisions.items():
       cursor = cursors_by_repo.get(repo)
       if cursor is None:
         cursor = commit_lists_by_repo[repo].cursor()
@@ -364,10 +364,10 @@ def _get_roll_candidates_impl(recipe_deps, commit_lists_by_repo):
 def _report_commit_counts(commit_lists_by_repo):
   commits_to_consider = {
       r: len(commits) - 1
-      for r, commits in iteritems(commit_lists_by_repo)
+      for r, commits in commit_lists_by_repo.items()
       if len(commits) > 1
   }
-  for repo, commits in iteritems(commits_to_consider):
+  for repo, commits in commits_to_consider.items():
     print('  %s: %d commits' % (repo, commits), file=sys.stderr)
   if LOGGER.isEnabledFor(logging.INFO):
     count = sum(commits_to_consider.values())
@@ -379,7 +379,7 @@ def _report_commit_counts(commit_lists_by_repo):
 def _describe_candidate_config(current_config, candidate_config,
                                commit_lists_by_repo):
   config_description = []
-  for repo, revision in iteritems(candidate_config):
+  for repo, revision in candidate_config.items():
     if repo not in current_config:
       prev_revision = '*not set*'
       dist_description = 'new'
@@ -423,7 +423,7 @@ def get_roll_candidates(recipe_deps):
       repo_name:
       CommitList.from_backend(recipe_deps.main_repo.simple_cfg.deps[repo_name],
                               repo.backend)
-      for repo_name, repo in iteritems(recipe_deps.repos)
+      for repo_name, repo in recipe_deps.repos.items()
       if repo_name != recipe_deps.main_repo_id
   }
 
@@ -457,7 +457,7 @@ def get_roll_candidates(recipe_deps):
 
     # TODO(iannucci): rationalize what happens if there's a conflict in e.g.
     # branch/url.
-    for repo, revision in iteritems(candidate_config):
+    for repo, revision in candidate_config.items():
       if repo not in current_pb.deps:
         clist = commit_lists_by_repo[repo]
         current_pb.deps[repo].url = clist.url
@@ -465,7 +465,7 @@ def get_roll_candidates(recipe_deps):
       current_pb.deps[repo].revision = revision
 
     backwards_roll = False
-    for repo, revision in iteritems(current_config):
+    for repo, revision in current_config.items():
       clist = commit_lists_by_repo[repo]
       if clist.dist(revision, candidate_config[repo]) is None:
         backwards_roll = True

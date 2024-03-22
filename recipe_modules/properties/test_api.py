@@ -3,7 +3,6 @@
 # that can be found in the LICENSE file.
 
 from future.moves.urllib.parse import urlparse, urlunparse
-from future.utils import iteritems
 from past.builtins import basestring
 
 import re
@@ -33,7 +32,7 @@ class PropertiesTestApi(recipe_test_api.RecipeTestApi):
       ret.properties.update(**jsonpb.MessageToDict(
           msg, preserving_proto_field_name=True))
 
-    for key, value in iteritems(kwargs):
+    for key, value in kwargs.items():
       if isinstance(value, PBMessage):
         value = jsonpb.MessageToDict(value, preserving_proto_field_name=True)
       # TODO(iannucci): recursively validate type of value to be all JSONish
@@ -60,7 +59,7 @@ class PropertiesTestApi(recipe_test_api.RecipeTestApi):
     to_apply.append(kwargs)
 
     for dictionary in to_apply:
-      for key, value in iteritems(dictionary):
+      for key, value in dictionary.items():
         if not isinstance(value, (int, float, basestring)):
           raise ValueError(
               'Environment values must be int, float or string. '

@@ -3,7 +3,7 @@
 # that can be found in the LICENSE file.
 
 from __future__ import print_function
-from future.utils import iteritems, itervalues
+from future.utils import itervalues
 
 import collections
 import errno
@@ -229,7 +229,7 @@ def main(args):
       json.dump(output, args.json)
 
     if args.dump_timing_info:
-      for testname, result in iteritems(ret.test_results):
+      for testname, result in ret.test_results.items():
         as_string = json_format.MessageToJson(result.duration)
         args.dump_timing_info.write('%s\t%s\n' % (
             testname,

@@ -20,7 +20,7 @@ import gevent
 
 from builtins import range
 from builtins import str
-from future.utils import iteritems, itervalues
+from future.utils import itervalues
 from gevent import subprocess
 from google.protobuf import duration_pb2
 from google.protobuf import json_format as jsonpb
@@ -65,7 +65,7 @@ def _merge_presentation_updates(steps_ran, presentation_steps):
   in the order that they were presented.
   """
   ret = collections.OrderedDict()
-  for step_name, step_presented in iteritems(presentation_steps):
+  for step_name, step_presented in presentation_steps.items():
     # root annotations
     if step_name is None:
       continue
@@ -347,7 +347,7 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
       duration_pb2.Duration(
           seconds=int(duration), nanos=int((duration % 1) * (10**9))))
 
-  for name, causes in iteritems(test_case_result.warnings):
+  for name, causes in test_case_result.warnings.items():
     test_results.warnings[name].causes.extend(causes)
 
   raw_expectations = _merge_presentation_updates(test_case_result.ran_steps,
@@ -605,7 +605,7 @@ class RunnerThread(gevent.Greenlet):
         'ERROR',
     ]
     # Carry through all repos explicitly via overrides
-    for repo_name, repo in iteritems(recipe_deps.repos):
+    for repo_name, repo in recipe_deps.repos.items():
       if repo_name == recipe_deps.main_repo.name:
         continue
       cmd.extend(['-O', '%s=%s' % (repo_name, repo.path)])

@@ -17,7 +17,6 @@ import traceback
 import six
 
 from builtins import map, range
-from future.utils import iteritems
 from past.builtins import basestring
 from recipe_engine.internal.global_shutdown import GLOBAL_SHUTDOWN
 
@@ -264,7 +263,7 @@ def fix_json_object(obj):
 
   if isinstance(obj, dict):
     new_obj = type(obj)(
-        (fix_json_object(k), fix_json_object(v)) for k, v in iteritems(obj))
+        (fix_json_object(k), fix_json_object(v)) for k, v in obj.items())
     return new_obj
 
   return obj

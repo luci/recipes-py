@@ -10,7 +10,6 @@ individual recipe_modules can do them consistently.
 
 """
 
-from future.utils import iteritems
 from typing import Any, Mapping, Sequence, TypeVar
 
 T = TypeVar('T')
@@ -47,7 +46,7 @@ def check_dict_type(name: str, var: T, expect_key: Any, expect_value: Any) -> T:
   """check_dict_type checks that each element of a dictionary has the expected type"""
   assert isinstance(name, str), f'name has bad type {type(name).__name__}'
   check_type(name, var, Mapping)
-  for key, value in iteritems(var):
+  for key, value in var.items():
     check_type('%s: key' % name, key, expect_key)
     check_type('%s[%s]' % (name, key), value, expect_value)
   return var

@@ -2,7 +2,6 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from future.utils import iteritems
 
 import json
 
@@ -58,7 +57,7 @@ def serialize(inv_bundle, pretty=False):
         json.dumps(jsonish, sort_keys=True, indent=2 if pretty else None)
     )
 
-  for inv_id, inv in sorted(iteritems(inv_bundle)):
+  for inv_id, inv in sorted(inv_bundle.items()):
     assert isinstance(inv, Invocation), inv
     if inv.proto.ListFields():  # if something is set
       add_line(inv_id, 'invocation', inv.proto)

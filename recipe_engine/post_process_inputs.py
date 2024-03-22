@@ -9,7 +9,7 @@ import re
 from collections.abc import Iterable
 
 import attr
-from future.utils import iteritems, iterkeys
+from future.utils import iterkeys
 from past.builtins import basestring
 
 from .engine_types import ResourceCost
@@ -298,7 +298,7 @@ class Step(object):
     return attr.asdict(self, recurse=False)
 
   def to_step_dict(self):
-    step_dict = {k: v for k, v in iteritems(self._as_dict())
+    step_dict = {k: v for k, v in self._as_dict().items()
                  if k == 'name' or v != PROTOTYPE_STEP[k]}
     if step_dict.get('cmd', None) is not None:
       step_dict['cmd'] = list(step_dict['cmd'])

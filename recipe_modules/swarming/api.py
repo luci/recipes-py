@@ -11,7 +11,6 @@ import contextlib
 import copy
 import json
 
-from future.utils import iteritems
 from past.types import basestring
 import six
 
@@ -260,7 +259,7 @@ class TaskRequest(object):
     """
     assert isinstance(tags, dict)
     tags_list = []
-    for tag, values in iteritems(tags):
+    for tag, values in tags.items():
       assert isinstance(tag, basestring)
       assert isinstance(values, list)
       for value in values:
@@ -464,7 +463,7 @@ class TaskRequest(object):
       ret = self._copy()
       # Make a copy.
       ret._dimensions = self.dimensions
-      for k, v in iteritems(kwargs):
+      for k, v in kwargs.items():
         assert isinstance(k, basestring) and (isinstance(v, basestring) or
                                               v is None)
         if v is None:
@@ -532,7 +531,7 @@ class TaskRequest(object):
       ret = self._copy()
       # Make a copy.
       ret._env_vars = self.env_vars
-      for k, v in iteritems(kwargs):
+      for k, v in kwargs.items():
         assert (isinstance(k, basestring) and
                 (isinstance(v, basestring) or v is None))
         if v is None:
@@ -569,7 +568,7 @@ class TaskRequest(object):
       ret = self._copy()
       # Make a copy.
       ret._env_prefixes = self.env_prefixes
-      for k, v in iteritems(kwargs):
+      for k, v in kwargs.items():
         assert (isinstance(k, basestring) and
                 (isinstance(v, list) or v is None)), (
                     '%r must be a string and %r None or a list of strings' %
@@ -803,16 +802,16 @@ class TaskRequest(object):
           'dimensions': [{
               'key': k,
               'value': v
-          } for k, v in sorted(iteritems(dims))],
+          } for k, v in sorted(dims.items())],
           'outputs': self.outputs,
           'env': [{
               'key': k,
               'value': v
-          } for k, v in sorted(iteritems(self.env_vars))],
+          } for k, v in sorted(self.env_vars.items())],
           'env_prefixes': [{
               'key': k,
               'value': v
-          } for k, v in sorted(iteritems(self.env_prefixes))],
+          } for k, v in sorted(self.env_prefixes.items())],
           'execution_timeout_secs': str(self.execution_timeout_secs),
           'grace_period_secs': str(self.grace_period_secs),
           'idempotent': self.idempotent,
@@ -850,7 +849,7 @@ class TaskRequest(object):
         properties['caches'] = [{
             'name': name,
             'path': path
-        } for name, path in sorted(iteritems(self.named_caches))]
+        } for name, path in sorted(self.named_caches.items())]
 
       return {
           'expiration_secs': str(self.expiration_secs),
@@ -1438,7 +1437,7 @@ class SwarmingApi(recipe_api.RecipeApi):
     )
 
     parsed_results = []
-    for task_id, task in iteritems(step.json.output):
+    for task_id, task in step.json.output.items():
       task_request = self._task_requests.get((task_id, self._server), [None])[0]
       parsed_results.append(
           TaskResult(self.m, task_request, task_id, task,

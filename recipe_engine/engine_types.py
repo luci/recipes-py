@@ -11,7 +11,6 @@ import operator
 from functools import reduce
 
 from builtins import str as text
-from future.utils import iteritems
 
 import attr
 from gevent.local import local
@@ -36,7 +35,7 @@ def freeze(obj):
   Will raise TypeError if you pass an object which is not hashable.
   """
   if isinstance(obj, dict):
-    return FrozenDict((freeze(k), freeze(v)) for k, v in iteritems(obj))
+    return FrozenDict((freeze(k), freeze(v)) for k, v in obj.items())
   elif isinstance(obj, (list, tuple)):
     return tuple(freeze(i) for i in obj)
   elif isinstance(obj, set):
@@ -69,7 +68,7 @@ def thaw(obj):
   Does not convert dict keys.
   """
   if isinstance(obj, (dict, collections.OrderedDict, FrozenDict)):
-    return {k: thaw(v) for k, v in iteritems(obj)}
+    return {k: thaw(v) for k, v in obj.items()}
   elif isinstance(obj, (list, tuple)):
     return [thaw(i) for i in obj]
   elif isinstance(obj, (set, frozenset)):
@@ -94,7 +93,7 @@ class FrozenDict(collections.abc.Mapping):
     # Calculate the hash immediately so that we know all the items are
     # hashable too.
     self._hash = reduce(operator.xor,
-                        (hash(i) for i in enumerate(iteritems(self._d))), 0)
+                        (hash(i) for i in enumerate(self._d.items())), 0)
 
   def __eq__(self, other):
     if not isinstance(other, collections.abc.Mapping):
@@ -103,7 +102,7 @@ class FrozenDict(collections.abc.Mapping):
       return True
     if len(self) != len(other):
       return False
-    for k, v in iteritems(self):
+    for k, v in self.items():
       if k not in other or other[k] != v:
         return False
     return True
@@ -125,7 +124,7 @@ class FrozenDict(collections.abc.Mapping):
     return self._hash
 
   def __repr__(self):
-    return 'FrozenDict(%r)' % (list(iteritems(self._d)),)
+    return 'FrozenDict(%r)' % (list(self._d.items()),)
 
 
 def _fix_stringlike(value):
@@ -485,7 +484,7 @@ class StepPresentation(object):
       step_stream.add_step_summary_text(self.step_summary_text)
     # late proto import
     from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
-    for name, log in iteritems(logs):
+    for name, log in logs.items():
       if isinstance(log, common_pb2.Log):
         step_stream.append_log(log)
       else:
@@ -498,18 +497,18 @@ class StepPresentation(object):
           else:
             raise ValueError('log %r has unknown log type %s: %r' %
                              (name, type(log), log))
-    for label, url in iteritems(self._links):
+    for label, url in self._links.items():
       # We fix spaces in urls; It's an extremely common mistake to make, and
       # easy to remedy here.
       #
       # TODO(iannucci) - This seems simultaneously beneficial (?) and woefully
       # insufficient.
       step_stream.add_step_link(text(label), text(url).replace(" ", "%20"))
-    for key, value in sorted(iteritems(self._properties)):
+    for key, value in sorted(self._properties.items()):
       if isinstance(value, message.Message):
         value = json_pb.MessageToDict(value)
       step_stream.set_build_property(key, json.dumps(value, sort_keys=True))
-    for key, value in sorted(iteritems(self._tags)):
+    for key, value in sorted(self._tags.items()):
       step_stream.set_step_tag(key, value)
     step_stream.set_step_status(self.status, self.had_timeout)
 

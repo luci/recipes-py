@@ -13,7 +13,7 @@ from __future__ import print_function
 
 import sys
 
-from future.utils import iteritems, itervalues
+from future.utils import itervalues
 
 from .autoroll.cmd import write_global_files_to_main_repo
 
@@ -49,7 +49,7 @@ def main(args):
 
   candidate = candidates[0]
 
-  for pid, clist in iteritems(candidate.changelist(repos)):
+  for pid, clist in candidate.changelist(repos).items():
     print()
     print(pid+':')
     for commit in clist:

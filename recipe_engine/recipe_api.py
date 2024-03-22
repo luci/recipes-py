@@ -4,7 +4,6 @@
 
 from __future__ import absolute_import
 from builtins import object
-from future.utils import iteritems
 from past.builtins import basestring
 
 import bisect
@@ -167,7 +166,7 @@ class PathsClient(object):
     #   [(path_string, path), ...]
     #   into
     #   ([path_string, ...], [path, ...])
-    for path_string, path in sorted(iteritems(paths_found)):
+    for path_string, path in sorted(paths_found.items()):
       self.path_strings.append(path_string)
       self.paths.append(path)
 
@@ -297,7 +296,7 @@ class WarningClient(object):
     # path to decide which repo contains the issuer file.
     self._repo_paths = sorted(
         ((repo_name, repo.path)
-        for repo_name, repo in iteritems(recipe_deps.repos)),
+        for repo_name, repo in recipe_deps.repos.items()),
         key=lambda r: r[1],
         reverse=True,
     )

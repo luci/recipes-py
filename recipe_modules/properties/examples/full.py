@@ -2,7 +2,6 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from future.utils import iteritems
 
 from google.protobuf import struct_pb2, json_format
 
@@ -25,7 +24,7 @@ def RunSteps(api, props, env_props):
   api.step('echo env_props', ['echo'] + [repr(env_props)])
 
   properties = api.properties.thaw()
-  prop_tups = sorted(iteritems(properties))
+  prop_tups = sorted(properties.items())
   api.step('echo all', ['echo'] + [
     '(%r, %r)' % (k, v) for k, v in prop_tups])
 

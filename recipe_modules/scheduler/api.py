@@ -12,7 +12,6 @@ RPCExplorer available at
   https://luci-scheduler.appspot.com/rpcexplorer/services/scheduler.Scheduler
 """
 
-from future.utils import iteritems
 
 import copy
 import uuid
@@ -115,7 +114,7 @@ class SchedulerApi(recipe_api.RecipeApi):
       self._cleanup_tags(tags)
       tags = list(
           map(':'.join,
-              sorted((k, v) for k, v in iteritems(tags) if v is not None)))
+              sorted((k, v) for k, v in tags.items() if v is not None)))
 
       base = {}
       if self._properties:

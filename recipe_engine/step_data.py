@@ -6,7 +6,7 @@
 a single step (subprocess), usually via the `recipe_engine/step` recipe module.
 """
 
-from future.utils import iteritems, itervalues
+from future.utils import itervalues
 from past.builtins import basestring
 
 import attr
@@ -262,7 +262,7 @@ class StepData(object):
     UNSET = object()   # pylint: disable=invalid-name
 
     # For every staged placeholder namespace.
-    for namespace, name_to_result in iteritems(staged):
+    for namespace, name_to_result in staged.items():
       # The default is defined as the result from the Placeholder with no name
       default = name_to_result.pop(None, UNSET)
       # OR the Placeholder (if there was only one in this namespace)

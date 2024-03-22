@@ -11,7 +11,6 @@ import sys
 from typing import Callable, Literal, Sequence
 
 from builtins import int
-from future.utils import iteritems
 from past.builtins import basestring
 
 from recipe_engine import recipe_api
@@ -385,7 +384,7 @@ class StepApi(recipe_api.RecipeApi):
     path separator from `path` module.
     """
     return self.step_client.EnvAffix(
-        mapping={k: [str(v) for v in vs] for k, vs in iteritems(affix)},
+        mapping={k: [str(v) for v in vs] for k, vs in affix.items()},
         pathsep=self.m.path.pathsep,
     )
 

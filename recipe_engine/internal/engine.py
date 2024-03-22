@@ -16,7 +16,7 @@ import traceback
 
 from contextlib import contextmanager
 
-from future.utils import raise_, iteritems
+from future.utils import raise_
 
 import attr
 import gevent
@@ -898,7 +898,7 @@ def _render_config(debug, name_tokens, step_config, step_runner, step_stream,
 
     section_values = {
       key: jsonpb.MessageToDict(pb_val) if pb_val is not None else None
-      for key, pb_val in iteritems(step_luci_context)
+      for key, pb_val in step_luci_context.items()
     }
 
     if step_config.timeout:

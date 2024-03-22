@@ -8,7 +8,7 @@ This allows the command-line parsing to be protobuf-free so that the recipe
 engine can present a unified protobuf implementation.
 """
 
-from future.utils import raise_from, iteritems
+from future.utils import raise_from
 
 import json
 import logging
@@ -123,7 +123,7 @@ class SimpleRecipesCfg(object):
             str(v['url']),
             str(v['branch']),
             str(v['revision']),
-          ) for k, v in iteritems(dct.get('deps', {}))
+          ) for k, v in dct.get('deps', {}).items()
         },
         str(dct.get('recipes_path', '')),
       )
@@ -136,7 +136,7 @@ class SimpleRecipesCfg(object):
     This is mostly the same as `attr.asdict`, except that it knows how to
     deal with the fact that SimpleRecipesCfg.deps is a FrozenDict."""
     ret = attr.asdict(self)
-    ret['deps'] = {k: attr.asdict(v) for k, v in iteritems(ret['deps'])}
+    ret['deps'] = {k: attr.asdict(v) for k, v in ret['deps'].items()}
     ret['project_id'] = ret['repo_name']   # Alias repo_name<->project_id
     return ret
 

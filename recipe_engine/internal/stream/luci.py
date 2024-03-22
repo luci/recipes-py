@@ -9,7 +9,6 @@ import sys
 import traceback
 import zlib
 
-from future.utils import iteritems
 
 from google.protobuf import json_format as jsonpb
 from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
@@ -296,7 +295,7 @@ class LUCIStepStream(StreamEngine.StepStream):
     # Once annotations are gone, these should be replaced with proper API
     # (rather than this tunnel via set_build_property).
     if key == '$recipe_engine/buildbucket/runtime-tags':
-      for k, vals in iteritems(json.loads(value)):
+      for k, vals in json.loads(value).items():
         self._build_tags.extend(
           [common.StringPair(key=k, value=v) for v in set(vals)
           if common.StringPair(key=k, value=v) not in self._build_tags])

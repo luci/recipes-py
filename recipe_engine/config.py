@@ -71,7 +71,7 @@ derivatives for more info.
 from __future__ import absolute_import
 from builtins import object
 from past.builtins import basestring
-from future.utils import iteritems, itervalues
+from future.utils import itervalues
 
 import collections.abc
 import functools
@@ -411,7 +411,7 @@ class ConfigGroup(ConfigBase):
     assert type_map, 'A ConfigGroup with no type_map is meaningless.'
 
     object.__setattr__(self, '_type_map', type_map)
-    for name, typeval in iteritems(self._type_map):
+    for name, typeval in self._type_map.items():
       typeAssert(typeval, ConfigBase)
       object.__setattr__(self, name, typeval)
 
@@ -438,7 +438,7 @@ class ConfigGroup(ConfigBase):
     typeAssert(val, collections.abc.Mapping)
 
     val = dict(val)  # because we pop later.
-    for name, config_obj in iteritems(self._type_map):
+    for name, config_obj in self._type_map.items():
       if name in val:
         try:
           config_obj.set_val(val.pop(name))
@@ -450,7 +450,7 @@ class ConfigGroup(ConfigBase):
 
   def as_jsonish(self, include_hidden=False):
     return dict(
-      (n, v.as_jsonish(include_hidden)) for n, v in iteritems(self._type_map)
+      (n, v.as_jsonish(include_hidden)) for n, v in self._type_map.items()
         if include_hidden or not v._hidden)  # pylint: disable=W0212
 
   def reset(self):
@@ -466,7 +466,7 @@ class ConfigGroup(ConfigBase):
 
   def schema_proto(self):
     ret = doc.Doc.Schema()
-    for k, v in iteritems(self._type_map):
+    for k, v in self._type_map.items():
       ret.struct.type_map[k].CopyFrom(v.schema_proto())
     return ret
 
@@ -486,7 +486,7 @@ class ConfigGroupSchema(ConfigSchemaBase):
       raise ValueError('A ConfigGroup with no type_map is meaningless.')
 
     object.__setattr__(self, '_type_map', type_map)
-    for _, typeval in iteritems(self._type_map):
+    for _, typeval in self._type_map.items():
       typeAssert(typeval, ConfigBase)
 
   def __call__(self, *args, **kwargs):
@@ -500,7 +500,7 @@ class ConfigGroupSchema(ConfigSchemaBase):
 
   def schema_proto(self):
     ret = doc.Doc.Schema()
-    for k, v in iteritems(self._type_map):
+    for k, v in self._type_map.items():
       ret.struct.type_map[k].CopyFrom(v.schema_proto())
     return ret
 
@@ -644,7 +644,7 @@ class Dict(ConfigBase, collections.abc.MutableMapping):
   def as_jsonish(self, _include_hidden=None):
     return self.jsonish_fn([
       self.item_fn(item)
-      for item in sorted(iteritems(self.data), key=lambda x: x[0])
+      for item in sorted(self.data.items(), key=lambda x: x[0])
     ])
 
   def reset(self):

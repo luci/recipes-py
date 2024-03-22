@@ -7,7 +7,7 @@ conditions inside tests, but with much more debugging information, including
 a smart selection of local variables mentioned inside of the call to check."""
 
 from typing import Optional, cast
-from future.utils import iteritems, itervalues
+from future.utils import itervalues
 from past.builtins import basestring
 
 import ast
@@ -38,7 +38,7 @@ class CheckFrame(namedtuple('CheckFrame', 'fname line function code varmap')):
     indent += 2
     if self.varmap:
       lines.extend('%s%s: %s' % ((' '*indent), k, v)
-                   for k, v in iteritems(self.varmap))
+                   for k, v in self.varmap.items())
     return lines
 
 
@@ -68,7 +68,7 @@ class Check(namedtuple('Check', (
         hook_context.lineno,
         cls._get_name_of_callable(hook_context.func),
         [repr(arg) for arg in hook_context.args],
-        {k: repr(v) for k, v in iteritems(hook_context.kwargs)},
+        {k: repr(v) for k, v in hook_context.kwargs.items()},
         keep_frames,
         passed,
     )
@@ -248,7 +248,7 @@ class Check(namedtuple('Check', (
     if self.ctx_kwargs:
       if self.ctx_args:
         func += ', '
-      func += ', '.join(['%s=%s' % i for i in iteritems(self.ctx_kwargs)])
+      func += ', '.join(['%s=%s' % i for i in self.ctx_kwargs.items()])
     func += ')'
     ret.append('    '+func)
     return ret
@@ -540,8 +540,8 @@ def VerifySubset(a, b):
 
   if isinstance(a, OrderedDict):
     last_idx = 0
-    b_reverse_index = {k: (i, v) for i, (k, v) in enumerate(iteritems(b))}
-    for k, v in iteritems(a):
+    b_reverse_index = {k: (i, v) for i, (k, v) in enumerate(b.items())}
+    for k, v in a.items():
       j, b_val = b_reverse_index.get(k, (MISSING, MISSING))
       if j is MISSING:
         return ': added key %r' % k
@@ -556,7 +556,7 @@ def VerifySubset(a, b):
         return '[%r]%s' % (k, msg)
 
   elif isinstance(a, (dict, FrozenDict)):
-    for k, v in iteritems(a):
+    for k, v in a.items():
       b_val = b.get(k, MISSING)
       if b_val is MISSING:
         return ': added key %r' % k
@@ -618,7 +618,7 @@ def post_process(test_failures, raw_expectations, test_data):
     # The checker MUST be saved to a local variable in order for it to be able
     # to correctly detect the frames to keep when creating a failure backtrace
     check = Checker(context, steps)
-    for k, v in iteritems(steps):
+    for k, v in steps.items():
       if k != '$result':
         steps[k] = Step.from_step_dict(v)
     try:
@@ -642,7 +642,7 @@ def post_process(test_failures, raw_expectations, test_data):
 
     failed_checks += check.failed_checks
     if rslt is not None:
-      for k, v in iteritems(rslt):
+      for k, v in rslt.items():
         if isinstance(v, Step):
           rslt[k] = v.to_step_dict()
         else:
@@ -653,7 +653,7 @@ def post_process(test_failures, raw_expectations, test_data):
       if msg:
         raise PostProcessError('post process: steps' + msg)
       # restore 'name' if it was removed
-      for k, v in iteritems(rslt):
+      for k, v in rslt.items():
         v['name'] = k
       raw_expectations = rslt
 

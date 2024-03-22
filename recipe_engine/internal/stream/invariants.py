@@ -3,7 +3,6 @@
 # that can be found in the LICENSE file.
 
 from builtins import str
-from future.utils import iteritems
 
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 from PB.recipe_engine import result as result_pb2
@@ -54,7 +53,7 @@ class StreamEngineInvariants(StreamEngine):
 
     def close(self):
       assert self._open
-      for log_name, log in iteritems(self._logs):
+      for log_name, log in self._logs.items():
         if isinstance(log, self._engine.LogStream):
           assert not log._open, 'Log %s still open when closing step %s' % (
             log_name, self._step_name)

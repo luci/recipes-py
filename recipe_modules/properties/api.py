@@ -20,7 +20,6 @@ random-access global variable).
 
 import collections.abc
 
-from future.utils import iteritems
 
 from recipe_engine import recipe_api
 from recipe_engine.engine_types import freeze
@@ -70,7 +69,7 @@ class PropertiesApi(recipe_api.RecipeApi, collections.abc.Mapping):
     blacklist = set([
       'buildbotURL',
     ])
-    props = {k: v for k, v in iteritems(self)
+    props = {k: v for k, v in self.items()
              if k not in blacklist and not k.startswith('$')}
     if props.get('bot_id') and not props.get('slavename'):
       props['slavename'] = props['bot_id']
