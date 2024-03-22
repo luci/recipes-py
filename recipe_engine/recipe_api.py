@@ -59,7 +59,7 @@ class UnknownRequirementError(object):
     self.name = req._name
 
 
-class _UnresolvedRequirement(object):
+class UnresolvedRequirement(object):
   """Internal placeholder type for an unresolved module/recipe requirement."""
 
   def __init__(self, typ, name):
@@ -107,7 +107,7 @@ def RequireClient(name):
   Args:
     name (str): the name of the recipe engine client to install.
   """
-  return _UnresolvedRequirement('client', name)
+  return UnresolvedRequirement('client', name)
 
 
 @attr.s(frozen=True, slots=True)

@@ -208,17 +208,16 @@ class RecipeEngine(object):
     """Used by recipe_deps._instantiate_api and recipe_deps.Recipe._run_steps"""
     return self._environ
 
-  def resolve_requirement(self, req):
+  def resolve_requirement(self, req: recipe_api.UnresolvedRequirement):
     """Resolves a requirement or raises ValueError if it cannot be resolved.
 
     Args:
-      * req (_UnresolvedRequirement): The requirement to resolve.
+      * req (UnresolvedRequirement): The requirement to resolve.
 
     Returns the resolved requirement.
     Raises ValueError if the requirement cannot be satisfied.
     """
-    # pylint: disable=protected-access
-    assert isinstance(req, recipe_api._UnresolvedRequirement)
+    assert isinstance(req, recipe_api.UnresolvedRequirement)
     if req._typ == 'client':
       return self._clients.get(req._name)
     raise ValueError('Unknown requirement type [%s]' % (req._typ,))

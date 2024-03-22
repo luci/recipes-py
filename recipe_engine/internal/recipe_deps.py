@@ -41,7 +41,6 @@ import os
 import re
 import sys
 
-from collections import namedtuple
 from functools import cached_property
 from typing import Optional, Type
 
@@ -55,10 +54,9 @@ from google.protobuf import json_format as jsonpb
 
 from ..config_types import Path, RepoBasePath, RecipeScriptBasePath
 from ..engine_types import freeze, FrozenDict
-from ..recipe_api import _UnresolvedRequirement, RecipeScriptApi, BoundProperty
+from ..recipe_api import UnresolvedRequirement, RecipeScriptApi, BoundProperty
 from ..recipe_api import RecipeApi
 from ..recipe_test_api import RecipeTestApi, BaseTestData, DisabledTestData
-from ..util import RecipeAbort
 
 from . import fetch
 from . import proto_support
@@ -1211,7 +1209,7 @@ def _instantiate_api(engine, test_data, fqname, module: RecipeModule, test_api,
   # Replace class-level Requirements placeholders in the recipe API with
   # their instance-level real values.
   for k, v in module.API.__dict__.items():
-    if isinstance(v, _UnresolvedRequirement):
+    if isinstance(v, UnresolvedRequirement):
       setattr(inst, k, engine.resolve_requirement(v))
 
   inst.initialize()

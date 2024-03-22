@@ -283,13 +283,13 @@ If the loader is in 'API' mode, then the module's RecipeApiPlan subclass is also
 instantiated, using the declared PROPERTIES as arguments to __init__, along with
 `test_data`, which may be provided if the `api` is being used from the
 `recipes.py test` subcommand to provide mock data for the execution of the test.
-The `m` object is injected, and then any `_UnresolvedRequirement` objects are
+The `m` object is injected, and then any `UnresolvedRequirement` objects are
 injected as well.  Finally, after `m` has been injected and all
-`_UnresolvedRequirement` objects are injected, the loader calls the instance's
+`UnresolvedRequirement` objects are injected, the loader calls the instance's
 `initialize()` method to allow it to do post-dependency initialization.
 
 *** note
-The `_UnresolvedRequirement` objects are currently only used to provide limited
+The `UnresolvedRequirement` objects are currently only used to provide limited
 'pinhole' interfaces into the recipe engine, such as the ability to run
 a subprocess (step), or get access to the global properties that the recipe was
 started with, etc. Typically these are only used by a single module somewhere in
