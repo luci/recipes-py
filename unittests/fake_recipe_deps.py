@@ -14,7 +14,6 @@ Access this via test_env.RecipeEngineUnitTest.FakeRecipeDeps().
 """
 
 from __future__ import print_function
-from future.utils import itervalues
 
 import contextlib
 import errno

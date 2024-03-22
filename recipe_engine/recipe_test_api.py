@@ -10,7 +10,6 @@ from collections import namedtuple
 from functools import reduce
 from typing import Optional
 
-from future.utils import itervalues
 from past.builtins import basestring
 
 from recipe_engine.internal import recipe_deps
@@ -123,7 +122,7 @@ class StepTestData(BaseTestData):
     if len(self.placeholder_data) != 1:
       raise ValueError('Cannot unwrap placeholder_data with length > 1: len=%d'
                        % len(self.placeholder_data))
-    return list(itervalues(self.placeholder_data))[0]
+    return list(self.placeholder_data.values())[0]
 
   def pop_placeholder(self, module_name, placeholder_name, name):
     return self.placeholder_data.pop(
@@ -439,7 +438,7 @@ def _placeholder_step_data(func, placeholder_name=None):
     assert isinstance(self, RecipeTestApi)
     data = static_call(self, func, *args, **kwargs)
     if isinstance(data, StepTestData):
-      all_data = list(itervalues(data.placeholder_data))
+      all_data = list(data.placeholder_data.values())
       if len(all_data) != 1:
         raise ValueError(
           'placeholder_step_data is only expecting a single output placeholder '

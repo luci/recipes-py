@@ -7,7 +7,6 @@ conditions inside tests, but with much more debugging information, including
 a smart selection of local variables mentioned inside of the call to check."""
 
 from typing import Optional, cast
-from future.utils import itervalues
 from past.builtins import basestring
 
 import ast
@@ -474,7 +473,7 @@ class Checker(object):
           # where the checker is created. We must use `is` for equality check
           # here because otherwise we might end up calling an unrelated object's
           # __eq__ method.
-          if any(self is obj for obj in itervalues(f[0].f_locals)):
+          if any(self is obj for obj in f[0].f_locals.values()):
             break
         frames = frames[i+1:]
 
@@ -661,4 +660,4 @@ def post_process(test_failures, raw_expectations, test_data):
     test_failures.check.add(lines=check.format())
 
   # Empty means drop expectations
-  return list(itervalues(raw_expectations)) if raw_expectations else None
+  return list(raw_expectations.values()) if raw_expectations else None

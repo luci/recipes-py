@@ -9,7 +9,6 @@ import logging
 import os
 import sys
 
-from future.utils import itervalues
 
 from gevent import subprocess
 
@@ -257,7 +256,7 @@ def main(args):
   original_spec = args.recipe_deps.main_repo.recipes_cfg_pb2
 
   # Fetch all remote changes locally, so we can compute metadata for them.
-  for repo in itervalues(args.recipe_deps.repos):
+  for repo in args.recipe_deps.repos.values():
     if repo.name == args.recipe_deps.main_repo_id:
       continue
     repo.backend.fetch(original_spec.deps[repo.name].branch)

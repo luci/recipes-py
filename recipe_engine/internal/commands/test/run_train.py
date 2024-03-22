@@ -3,7 +3,6 @@
 # that can be found in the LICENSE file.
 
 from __future__ import print_function
-from future.utils import itervalues
 
 import collections
 import errno
@@ -76,7 +75,7 @@ def _push_tests(test_filter: test_name.Filter, is_train, main_repo, description_
 
   # Handle recent fails first
   deferred_tests = []
-  for recipe in itervalues(main_repo.recipes):
+  for recipe in main_repo.recipes.values():
     if not test_filter.recipe_name(recipe.name):
       continue
 
@@ -127,7 +126,7 @@ def _run(test_results, recipe_deps, use_emoji, test_filter, is_train,
   test_results.uncovered_modules.extend(sorted(
       set(
           module.name
-          for module in itervalues(main_repo.modules)
+          for module in main_repo.modules.values()
           if not (
             module.uses_sloppy_coverage or module.recipes or module.warnings)
       )

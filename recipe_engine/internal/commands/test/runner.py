@@ -20,7 +20,6 @@ import gevent
 
 from builtins import range
 from builtins import str
-from future.utils import itervalues
 from gevent import subprocess
 from google.protobuf import duration_pb2
 from google.protobuf import json_format as jsonpb
@@ -401,7 +400,7 @@ def _cover_all_imports(main_repo):
       data_file=None,
       include=[os.path.join(main_repo.modules_dir, '*', '*.py')])
   cov.start()
-  for module in itervalues(main_repo.modules):
+  for module in main_repo.modules.values():
     # Allow exceptions to raise here; they'll be reported as a 'global'
     # failure.
     module.API
@@ -523,7 +522,7 @@ def _make_path_cleaner(recipe_deps):
   # maps path_to_replace -> replacement
   roots = {}
   # paths of all recipe_deps
-  for repo in itervalues(recipe_deps.repos):
+  for repo in recipe_deps.repos.values():
     roots[repo.path] = 'RECIPE_REPO[%s]' % repo.name
   main_repo_root = 'RECIPE_REPO[%s]' % recipe_deps.main_repo.name
 

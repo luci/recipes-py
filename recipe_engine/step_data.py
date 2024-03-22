@@ -6,7 +6,6 @@
 a single step (subprocess), usually via the `recipe_engine/step` recipe module.
 """
 
-from future.utils import itervalues
 from past.builtins import basestring
 
 import attr
@@ -267,7 +266,7 @@ class StepData(object):
       default = name_to_result.pop(None, UNSET)
       # OR the Placeholder (if there was only one in this namespace)
       if default is UNSET and len(name_to_result) == 1:
-        default = list(itervalues(name_to_result))[0]
+        default = list(name_to_result.values())[0]
       if default is not UNSET:
         # This sets e.g. 'json.output' to `default`
         _deep_set(namespace, default)
@@ -280,12 +279,12 @@ class StepData(object):
 
     # Now set `_finalized` on all _AttributeRaiser objects to prevent further
     # assignments.
-    objs = list(itervalues(self.__dict__))
+    objs = list(self.__dict__.values())
     while objs:
       obj = objs.pop()
       if not isinstance(obj, _AttributeRaiser):
         continue
-      objs.extend(itervalues(obj.__dict__))
+      objs.extend(obj.__dict__.values())
       obj._finalized = True   # pylint: disable=protected-access
 
   def finalize(self):

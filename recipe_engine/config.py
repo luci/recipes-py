@@ -71,7 +71,6 @@ derivatives for more info.
 from __future__ import absolute_import
 from builtins import object
 from past.builtins import basestring
-from future.utils import itervalues
 
 import collections.abc
 import functools
@@ -454,15 +453,15 @@ class ConfigGroup(ConfigBase):
         if include_hidden or not v._hidden)  # pylint: disable=W0212
 
   def reset(self):
-    for v in itervalues(self._type_map):
+    for v in self._type_map.values():
       v.reset()
 
   def complete(self):
-    return all(v.complete() for v in itervalues(self._type_map))
+    return all(v.complete() for v in self._type_map.values())
 
   def _is_default(self):
     # pylint: disable=W0212
-    return all(v._is_default() for v in itervalues(self._type_map))
+    return all(v._is_default() for v in self._type_map.values())
 
   def schema_proto(self):
     ret = doc.Doc.Schema()
@@ -637,7 +636,7 @@ class Dict(ConfigBase, collections.abc.MutableMapping):
       val = val.data
     typeAssert(val, collections.abc.Mapping)
     if self.value_type:
-      for v in itervalues(val):
+      for v in val.values():
         typeAssert(v, self.value_type)
     self.data = val
 

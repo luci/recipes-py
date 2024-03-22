@@ -8,7 +8,6 @@
 # TODO(iannucci): Add a real docstring.
 
 from __future__ import print_function
-from future.utils import itervalues
 
 import argparse
 import json
@@ -190,7 +189,7 @@ def run_list(recipe_deps, json_file, test_filter: test_name.Filter):
   """
   tests = [
     f'{recipe.name}.{tc.name}'
-    for recipe in itervalues(recipe_deps.main_repo.recipes)
+    for recipe in recipe_deps.main_repo.recipes.values()
     if test_filter.recipe_name(recipe.name)
 
     for tc in recipe.gen_tests()

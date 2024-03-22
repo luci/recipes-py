@@ -12,7 +12,6 @@ import os
 import sys
 import time
 
-from future.utils import itervalues
 
 from ..fetch import GitBackend
 
@@ -413,7 +412,7 @@ def get_roll_candidates(recipe_deps):
     repos (dict(repo_name, CommitList)) - A repos dictionary suitable for
       invoking RollCandidate.changelist().
   """
-  if not all(repo.backend for repo in itervalues(recipe_deps.repos)):
+  if not all(repo.backend for repo in recipe_deps.repos.values()):
     raise ValueError('get_roll_candidates does not work with -O overrides.')
 
   start = time.time()

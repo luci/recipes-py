@@ -5,7 +5,6 @@
 from itertools import chain
 from collections import defaultdict
 
-from future.utils import itervalues
 
 class FakeEnviron(object):
   """This is a fake dictionary which is meant to emulate os.environ strictly for

@@ -9,7 +9,6 @@ import contextlib
 import logging
 import sys
 
-from future.utils import itervalues
 
 from google.protobuf import json_format as jsonpb
 
@@ -20,7 +19,7 @@ from ...exceptions import RecipeUsageError
 
 
 def extract_module_names(obj):
-  for repo, name in itervalues(obj.normalized_DEPS):
+  for repo, name in obj.normalized_DEPS.values():
     yield '%s/%s' % (repo, name)
 
 
@@ -75,7 +74,7 @@ def load_recipes_modules(rd, target, include_test_recipes, include_dependants):
                   or ':tests/' in recipe.name)):
                 continue
 
-              if mod in itervalues(recipe.normalized_DEPS):
+              if mod in recipe.normalized_DEPS.values():
                 recipes.append(recipe)
 
   for recipe in recipes:

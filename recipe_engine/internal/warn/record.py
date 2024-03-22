@@ -12,7 +12,6 @@ from functools import cached_property
 
 import attr
 
-from future.utils import itervalues
 
 from .cause import CallSite, Frame, ImportSite
 from .escape import escape_warning_predicate, IGNORE
@@ -240,7 +239,7 @@ class WarningRecorder(object):
     recipe deps.
     """
     ret = []
-    for repo in itervalues(self.recipe_deps.repos):
+    for repo in self.recipe_deps.repos.values():
       ret.append(repo.recipes_dir)
       ret.append(repo.modules_dir)
     return tuple(ret)

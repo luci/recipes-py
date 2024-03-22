@@ -17,7 +17,6 @@ import argparse
 import re
 import types
 
-from future.utils import itervalues
 
 ALLOWED_MODULES = [
     r'ast',
@@ -85,7 +84,7 @@ def main(args):
   allowed_modules = tuple(map(re.compile, ALLOWED_MODULES + args.allowlist))
 
   errors = []
-  for recipe in itervalues(args.recipe_deps.main_repo.recipes):
+  for recipe in args.recipe_deps.main_repo.recipes.values():
     errors.extend(ImportsTest(recipe, allowed_modules))
 
   if errors:

@@ -4,7 +4,6 @@
 
 """Legacy analyzers which may be used by multiple projects."""
 
-from future.utils import itervalues
 
 import attr
 from attr.validators import instance_of
@@ -148,7 +147,7 @@ class Analyzers(object):
     uses strings in an input proto message to specify analyzers.
     """
     mapping = {}
-    for attr in itervalues(cls.__dict__):
+    for attr in cls.__dict__.values():
       if isinstance(attr, LegacyAnalyzer):
         assert attr.name not in mapping
         mapping[attr.name] = attr

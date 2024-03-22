@@ -3,7 +3,6 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from future.utils import itervalues
 
 import argparse
 import json
@@ -61,7 +60,7 @@ class Common(test_env.RecipeEngineUnitTest):
         if not isinstance(results_data, list):
           return self.JsonResult(output, results_data)
         for rd in results_data:
-          for results in itervalues(rd.get('test_results', {})):
+          for results in rd.get('test_results', {}).values():
             if 'diff' in results:
               results['diff']['lines'] = ['placeholder']
             for check in results.get('check', ()):

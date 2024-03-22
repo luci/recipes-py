@@ -45,7 +45,7 @@ from collections import namedtuple
 from functools import cached_property
 from typing import Optional, Type
 
-from future.utils import itervalues, raise_
+from future.utils import raise_
 
 import attr
 
@@ -355,7 +355,7 @@ class RecipeRepo(object):
     """Returns a frozenset of patterns (fnmatch absolute paths) for files which
     are covered in this repo by `DISABLE_STRICT_COVERAGE=True`."""
     patterns = []
-    for mod in itervalues(self.modules):
+    for mod in self.modules.values():
       if mod.uses_sloppy_coverage:
         patterns.append(os.path.join(mod.path, '*.py'))
     return frozenset(patterns)
@@ -448,7 +448,7 @@ class RecipeRepo(object):
         elif os.path.isfile(os.path.join(possible_mod_path, '__init__.py')):
           mod = RecipeModule.create(ret, entry_name)
           modules[entry_name] = mod
-          for recipe in itervalues(mod.recipes):
+          for recipe in mod.recipes.values():
             recipes[recipe.name] = recipe
         else:
           LOG.warn('ignoring %r: missing __init__.py', possible_mod_path)
@@ -530,7 +530,7 @@ class RecipeModule(object):
     """Returns the set of fully-qualified DEPS reachable from this module."""
     ret = set()
     d = self.repo.recipe_deps
-    for repo_name, module_name in itervalues(self.normalized_DEPS):
+    for repo_name, module_name in self.normalized_DEPS.values():
       ret.add('%s/%s' % (repo_name, module_name))
       ret.update(d.repos[repo_name].modules[module_name].transitive_DEPS)
     return frozenset(ret)
@@ -610,7 +610,7 @@ class RecipeModule(object):
     if not test_module:
       return RecipeTestApi
 
-    for v in itervalues(test_module.__dict__):
+    for v in test_module.__dict__.values():
       # If the recipe has literally imported the RecipeTestApi, we don't want
       # to consider that to be the real RecipeTestApi :)
       if v is RecipeTestApi:
@@ -681,7 +681,7 @@ class RecipeModule(object):
       cfg_module = importlib.import_module(
           f'RECIPE_MODULES.{self.repo.name}.{self.name}.config')
 
-      for v in itervalues(cfg_module.__dict__):
+      for v in cfg_module.__dict__.values():
         if isinstance(v, ConfigContext):
           return v
 
@@ -929,7 +929,7 @@ class Recipe(object):
     """Returns the set of fully-qualified DEPS reachable from this module."""
     ret = set()
     d = self.repo.recipe_deps
-    for repo_name, module_name in itervalues(self.normalized_DEPS):
+    for repo_name, module_name in self.normalized_DEPS.values():
       ret.add('%s/%s' % (repo_name, module_name))
       ret.update(d.repos[repo_name].modules[module_name].transitive_DEPS)
     return frozenset(ret)
