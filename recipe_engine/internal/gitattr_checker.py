@@ -9,8 +9,6 @@ import sys
 from builtins import zip
 from gevent import subprocess
 
-_PY2 = sys.version_info.major == 2
-
 
 def _pattern2re(pattern):
   """Transforms a GA pattern to a regular expression."""
@@ -134,13 +132,12 @@ class AttrChecker(object):
 
   def _git(self, cmd, stdin=None):
     """Executes a git command and returns the standard output."""
-    extra_kwargs = {} if _PY2 else {"text": True}
     p = subprocess.Popen(
         ['git'] + cmd,
         cwd=self._repo,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
-        **extra_kwargs)
+        text=True)
     stdout, _ = p.communicate(stdin if stdin else None)
     if p.returncode != 0:
       raise subprocess.CalledProcessError(p.returncode, ['git'] + cmd, None)

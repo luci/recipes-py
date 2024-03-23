@@ -14,7 +14,6 @@ import json
 import keyword
 import os
 import re
-import sys
 import types
 
 from typing import Any, Optional, Callable, Protocol, List, Dict
@@ -891,8 +890,6 @@ class Property(object):
     # NOTE: late import to avoid early protobuf import
     from .config import Single
     if isinstance(kind, type):
-      if sys.version_info.major < 3 and kind in (str, unicode):
-        kind = basestring
       kind = Single(kind)
     self.kind = kind
 

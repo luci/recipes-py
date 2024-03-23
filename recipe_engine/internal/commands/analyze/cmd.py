@@ -13,8 +13,6 @@ from google.protobuf import json_format as jsonpb
 
 from PB.recipe_engine.analyze import Input, Output
 
-_PY3 = sys.version_info.major == 3
-
 GIT = 'git.bat' if sys.platform == 'win32' else 'git'
 
 
@@ -32,13 +30,9 @@ def get_git_attribute_files(repo_root):
     GIT, '-C', repo_root, 'ls-files', '--',
     ':(attr:recipes)',
   ]
-  kwargs = {}
-  if _PY3:
-    # os.path.join requires that arguments be strings in Python 3.
-    kwargs['text'] = True
   return [
       os.path.join(repo_root, path) for path in
-      subprocess.check_output(args, **kwargs).splitlines()]
+      subprocess.check_output(args, text=True).splitlines()]
 
 
 def analyze(recipe_deps, in_data):

@@ -10,7 +10,6 @@ import functools
 import logging
 import os
 import re
-import sys
 import gevent
 import traceback
 
@@ -250,9 +249,6 @@ def fix_json_object(obj):
 
   Returns the result.
   """
-  if sys.version_info.major == 2 and isinstance(obj, six.text_type):
-    return obj.encode('utf-8', 'replace')
-
   if isinstance(obj, list):
     return list(map(fix_json_object, obj))
 

@@ -21,10 +21,6 @@ from recipe_engine import recipe_api
 from recipe_engine import util as recipe_util
 
 
-_PY2 = sys.version_info.major == 2
-_MAPPING = collections.Mapping if _PY2 else collections.abc.Mapping
-
-
 def _rmfile(p, _win_read_only_unset=False):  # pragma: no cover
   """Deletes a file, even a read-only one on Windows."""
   try:
@@ -110,7 +106,7 @@ class InputDataPlaceholder(recipe_util.InputPlaceholder):
     # TODO(yiwzhang): change errors to backslashreplace after python2 support
     # is dropped so that the expectation will display the escaped raw bytes
     # instead of a replacement character.
-    return self.data if _PY2 else self.data.decode('utf-8', errors='replace')
+    return self.data.decode('utf-8', errors='replace')
 
 
 class InputTextPlaceholder(InputDataPlaceholder):
@@ -126,7 +122,7 @@ class InputTextPlaceholder(InputDataPlaceholder):
 
   @property
   def readable_test_data(self):
-    return self.data.encode('utf-8', errors='replace') if _PY2 else self.data
+    return self.data
 
 
 class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
@@ -194,7 +190,7 @@ class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
 
   def read_test_data(self, test):
     test_data = test.data or b''
-    if not _PY2 and not isinstance(test_data, bytes):
+    if not isinstance(test_data, bytes):
       raise TypeError(
           'test data must be binary data, got {!r}'.format(test_data))
     return test_data
@@ -206,36 +202,19 @@ class OutputTextPlaceholder(OutputDataPlaceholder):
   def read_data(self):  # pragma: no cover
     # This ensures that the raw result bytes we got are, in fact, valid utf-8,
     # replacing invalid bytes with �.
-    if _PY2:
-      n = 1 << 16
-      with io.open(self._backing_file, mode='rb') as f:
-        # The file contents can be large, so be careful to do the conversion in
-        # chunks while streaming the data in, instead of requiring a full copy.
-        chunks = iter(lambda: f.read(n), b'')
-        decoded = codecs.iterdecode(chunks, 'utf-8', 'replace')
-        # This ensures that the raw result bytes we got are, in fact, valid
-        # utf-8, replacing invalid bytes with �. Because python2's unicode
-        # support is wonky, we re-encode the now-valid-utf-8 back into a str
-        # object so that users don't need to deal with `unicode` objects.
-        return ''.join(codecs.iterencode(decoded, 'utf-8'))
-    else:
-      with io.open(self._backing_file,
-                   mode='r', encoding='utf-8', errors='replace') as f:
-        return f.read()
+    with io.open(self._backing_file,
+                 mode='r', encoding='utf-8', errors='replace') as f:
+      return f.read()
 
   def read_test_data(self, test):
     test_data = test.data or ''
-    if _PY2:  # pragma: no cover
-      test_data = test_data.encode('utf-8', errors='replace')
-    else:
-      test_data = test_data
-      if not isinstance(test_data, str):
-        raise TypeError(
-            'test data must be text data, got {!r}'.format(test_data))
+    if not isinstance(test_data, str):
+      raise TypeError(
+          'test data must be text data, got {!r}'.format(test_data))
     return test_data
 
 
-class _LazyDirectoryReader(_MAPPING):
+class _LazyDirectoryReader(collections.abc.Mapping):
   UNSET = object()
 
   def __init__(self, paths, read_fn):

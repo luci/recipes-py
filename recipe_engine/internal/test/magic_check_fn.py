@@ -24,8 +24,6 @@ from recipe_engine.post_process_inputs import Step
 
 from ...engine_types import FrozenDict
 
-_PY2 = sys.version_info.major == 2
-
 
 class CheckFrame(namedtuple('CheckFrame', 'fname line function code varmap')):
   def format(self, indent):
@@ -140,20 +138,8 @@ class Check(namedtuple('Check', (
               queue.append(val)
         if had_statements:
           continue
-        if _PY2:
-          # node is a 'simple' statement (doesn't contain any nested
-          # statements), so find it's maximum line-number (e.g. the line number
-          # that would show up in a stack trace), and add it to
-          # _PARSED_FILE_CACHE. Note that even though this is a simple
-          # statement, it could still span multiple lines.
-          def get_real_lineno(node):
-            return max(getattr(n, 'lineno', 0) for n in ast.walk(node))
-        else:
 
-          def get_real_lineno(node):
-            return node.lineno
-
-        real_line = get_real_lineno(node)
+        real_line = node.lineno
         cls._PARSED_FILE_CACHE[filename][real_line].append(node)
 
         # If the expression contains any nested lambda definitions, then its
@@ -173,7 +159,7 @@ class Check(namedtuple('Check', (
           # Adding the lambda to the nodes when its on the last line results
           # in both the containing expression and the lambda itself appearing
           # in the failure output, so don't add the lambda to the nodes
-          lambda_max_line = get_real_lineno(n)
+          lambda_max_line = n.lineno
           if lambda_max_line != real_line:
             cls._PARSED_FILE_CACHE[filename][lambda_max_line].append(n)
 

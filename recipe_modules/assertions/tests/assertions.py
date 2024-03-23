@@ -31,9 +31,7 @@ def GenTests(api):
       api.post_process(post_process.DropExpectation),
   )
 
-  import sys
-  expected_message = ('0 != 1 : 0 should be 1'
-                      if sys.version_info.major == 3 else '0 should be 1')
+  expected_message = '0 != 1 : 0 should be 1'
 
   yield api.test(
       'custom-message',

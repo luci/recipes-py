@@ -49,7 +49,7 @@ def _hack_lookup_codecs():
   for _, name, _ in pkgutil.iter_modules(encodings.__path__):
     if name in ('aliases', 'mbcs'):
       continue
-    if sys.version_info.major >= 3 and name == 'oem':
+    if name == 'oem':
       continue
     codecs.lookup(name)
 _hack_lookup_codecs()

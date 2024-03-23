@@ -75,7 +75,6 @@ from past.builtins import basestring
 import collections.abc
 import functools
 import json
-import sys
 import types
 
 from PB.recipe_engine import doc
@@ -350,17 +349,8 @@ _SIMPLE_TYPE_LOOKUP = {
   dict: doc.Doc.Schema.OBJECT,
   list: doc.Doc.Schema.ARRAY,
   type(None): doc.Doc.Schema.NULL,
+  bytes: doc.Doc.Schema.STRING,
 }
-
-if sys.version_info.major < 3:
-  _SIMPLE_TYPE_LOOKUP.update({
-    unicode: doc.Doc.Schema.STRING,
-    long: doc.Doc.Schema.NUMBER,
-  })
-else:
-  _SIMPLE_TYPE_LOOKUP.update({
-    bytes: doc.Doc.Schema.STRING,
-  })
 
 
 def _inner_type_schema(inner_type):

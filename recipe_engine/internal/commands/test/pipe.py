@@ -6,11 +6,7 @@
 file descriptors)."""
 
 import struct
-import sys
 import os
-
-
-_PY3 = sys.version_info.major == 3
 
 
 def read_message(in_file, msg_class):
