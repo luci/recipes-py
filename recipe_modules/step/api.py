@@ -252,21 +252,20 @@ class StepApi(recipe_api.RecipeApi):
 
     Example:
 
-        # status='worst'
-        with api.step.nest('run test'):
-          with api.step.defer_results():
-            for shard in range(4):
-              run_shard('test', shard)
+        with api.step.nest('run shards'):  # status='worst' is the default.
+          with api.defer.context() as defer:
+            for shard in shards:
+              defer(run_shard, shard)
 
         # status='last'
-        with api.step.nest('do upload'):
-          for attempt in range(4):
+        with api.step.nest('do upload', status='last'):
+          for attempt in range(num_attempts):
             try:
               do_upload()  # first one fails, but second succeeds.
             except api.step.StepFailure:
+              if range >= num_attempts - 1:
+                raise
               pass
-          else:
-            report_error()
 
         # manually adjust status
         with api.step.nest('custom thing') as presentation:
