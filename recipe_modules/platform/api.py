@@ -34,7 +34,6 @@ class PlatformApi(recipe_api.RecipeApi):
   def initialize(self):
     self._name = PlatformApi.normalize_platform_name(sys.platform)
 
-    self._mac_release = None
     self._arch = get_arch()
     self._bits = norm_bits(platform.machine())
 
@@ -44,10 +43,6 @@ class PlatformApi(recipe_api.RecipeApi):
         self._test_data.get('name', 'linux'))
       self._bits = norm_bits(self._test_data.get('bits', 64))
       self._arch = self._test_data.get('arch', 'intel')
-
-      if self._name == 'mac':
-        self._mac_release = self.m.version.parse(
-            self._test_data.get('mac_release', '10.13.5'))
 
       # cpu_count, memory_bytes should match the values in
       #  recipe_engine/internal/test/execute_test_case.py
@@ -69,9 +64,6 @@ class PlatformApi(recipe_api.RecipeApi):
             platform.architecture()[0] == '64bit'):
         self._bits = 64
 
-      if self._name == 'mac':
-        self._mac_release = self.m.version.parse(platform.mac_ver()[0])
-
       self._num_logical_cores = psutil.cpu_count(True)
       self._memory_bytes = psutil.virtual_memory().total
 
@@ -84,16 +76,6 @@ class PlatformApi(recipe_api.RecipeApi):
   def is_mac(self):
     """Returns True iff the recipe is running on OS X."""
     return self.name == 'mac'
-
-  @property
-  def mac_release(self):
-    """The current OS X release version number (like "10.13.5") as a
-    pkg_resources Version object, or None, if the current platform is not mac.
-
-    Use the "recipe_engine/version" module to parse symvers to compare to this
-    Version object.
-    """
-    return self._mac_release
 
   @property
   def is_linux(self):

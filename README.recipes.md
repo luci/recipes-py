@@ -3082,8 +3082,6 @@ Returns:
   (name, extension_including_dot).
 ### *recipe_modules* / [platform](/recipe_modules/platform)
 
-[DEPS](/recipe_modules/platform/__init__.py#5): [version](#recipe_modules-version)
-
 
 Mockable system platform identity functions.
 
@@ -3096,13 +3094,13 @@ Mocks:
     sys.platform.
   * bits (int): Either 32 or 64.
 
-&emsp; **@property**<br>&mdash; **def [arch](/recipe_modules/platform/api.py#122)(self):**
+&emsp; **@property**<br>&mdash; **def [arch](/recipe_modules/platform/api.py#104)(self):**
 
 Returns the current CPU architecture.
 
 Can return "arm" or "intel".
 
-&emsp; **@property**<br>&mdash; **def [bits](/recipe_modules/platform/api.py#112)(self):**
+&emsp; **@property**<br>&mdash; **def [bits](/recipe_modules/platform/api.py#94)(self):**
 
 Returns the bitness of the userland for the current system (either 32 or
 64 bit).
@@ -3110,45 +3108,37 @@ Returns the bitness of the userland for the current system (either 32 or
 TODO: If anyone needs to query for the kernel bitness, another accessor
 should be added.
 
-&emsp; **@property**<br>&mdash; **def [cpu\_count](/recipe_modules/platform/api.py#139)(self):**
+&emsp; **@property**<br>&mdash; **def [cpu\_count](/recipe_modules/platform/api.py#121)(self):**
 
 The number of logical CPU cores (i.e. including hyper-threaded cores),
 according to `psutil.cpu_count(True)`.
 
 &mdash; **def [initialize](/recipe_modules/platform/api.py#34)(self):**
 
-&emsp; **@property**<br>&mdash; **def [is\_linux](/recipe_modules/platform/api.py#98)(self):**
+&emsp; **@property**<br>&mdash; **def [is\_linux](/recipe_modules/platform/api.py#80)(self):**
 
 Returns True iff the recipe is running on Linux.
 
-&emsp; **@property**<br>&mdash; **def [is\_mac](/recipe_modules/platform/api.py#83)(self):**
+&emsp; **@property**<br>&mdash; **def [is\_mac](/recipe_modules/platform/api.py#75)(self):**
 
 Returns True iff the recipe is running on OS X.
 
-&emsp; **@property**<br>&mdash; **def [is\_win](/recipe_modules/platform/api.py#78)(self):**
+&emsp; **@property**<br>&mdash; **def [is\_win](/recipe_modules/platform/api.py#70)(self):**
 
 Returns True iff the recipe is running on Windows.
 
-&emsp; **@property**<br>&mdash; **def [mac\_release](/recipe_modules/platform/api.py#88)(self):**
-
-The current OS X release version number (like "10.13.5") as a
-pkg_resources Version object, or None, if the current platform is not mac.
-
-Use the "recipe_engine/version" module to parse symvers to compare to this
-Version object.
-
-&emsp; **@property**<br>&mdash; **def [name](/recipe_modules/platform/api.py#103)(self):**
+&emsp; **@property**<br>&mdash; **def [name](/recipe_modules/platform/api.py#85)(self):**
 
 Returns the current platform name which will be in:
 * win
 * mac
 * linux
 
-&emsp; **@staticmethod**<br>&mdash; **def [normalize\_platform\_name](/recipe_modules/platform/api.py#145)(plat):**
+&emsp; **@staticmethod**<br>&mdash; **def [normalize\_platform\_name](/recipe_modules/platform/api.py#127)(plat):**
 
 One of python's sys.platform values -> 'win', 'linux' or 'mac'.
 
-&emsp; **@property**<br>&mdash; **def [total\_memory](/recipe_modules/platform/api.py#130)(self):**
+&emsp; **@property**<br>&mdash; **def [total\_memory](/recipe_modules/platform/api.py#112)(self):**
 
 The total physical memory in MiB.
 
@@ -5621,10 +5611,10 @@ Tests for query_variants.
 &mdash; **def [RunSteps](/recipes/placeholder.py#28)(api, properties):**
 ### *recipes* / [platform:examples/full](/recipe_modules/platform/examples/full.py)
 
-[DEPS](/recipe_modules/platform/examples/full.py#5): [platform](#recipe_modules-platform), [step](#recipe_modules-step), [version](#recipe_modules-version)
+[DEPS](/recipe_modules/platform/examples/full.py#5): [platform](#recipe_modules-platform), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/platform/examples/full.py#11)(api):**
+&mdash; **def [RunSteps](/recipe_modules/platform/examples/full.py#10)(api):**
 ### *recipes* / [properties:examples/full](/recipe_modules/properties/examples/full.py)
 
 [DEPS](/recipe_modules/properties/examples/full.py#13): [json](#recipe_modules-json), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

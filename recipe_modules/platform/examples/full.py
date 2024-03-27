@@ -5,7 +5,6 @@
 DEPS = [
   'platform',
   'step',
-  'version',
 ]
 
 def RunSteps(api):
@@ -15,12 +14,6 @@ def RunSteps(api):
   step_result.presentation.logs['arch'] = [api.platform.arch]
   step_result.presentation.logs['cpu_count'] = [str(api.platform.cpu_count)]
   step_result.presentation.logs['memory'] = [str(api.platform.total_memory)]
-  step_result.presentation.logs['mac_release'] = [
-      repr(api.platform.mac_release)]
-  step_result.presentation.logs['new_mac'] = [str(
-      api.platform.mac_release is not None and
-      api.platform.mac_release >= api.version.parse('10.14.0')
-  )]
   if api.platform.name == 'win':
     assert api.platform.is_win
     assert not api.platform.is_mac
@@ -34,6 +27,5 @@ def RunSteps(api):
 def GenTests(api):
   yield api.test('linux64') + api.platform('linux', 64)
   yield api.test('mac64') + api.platform('mac', 64)
-  yield api.test('mac64-new') + api.platform('mac', 64, mac_release='10.14.0')
   yield api.test('win32') + api.platform('win', 32)
   yield api.test('arm64') + api.platform('linux', 64, 'arm')

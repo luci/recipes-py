@@ -45,19 +45,5 @@ class PlatformTestApi(recipe_test_api.RecipeTestApi):
     assert arch in ('intel', 'arm'), 'unknown arch %r' % (arch,)
     return arch
 
-  @recipe_test_api.mod_test_data
-  @staticmethod
-  def mac_release(version):
-    """Set the version number for the `mac_release()` method for the current
-    test.
-
-    This should be a string like '10.14.0'.
-    """
-    assert isinstance(version, str), f'bad version (not string): {version!r}'
-    assert version, 'bad version (empty): %r' % (version,)
-    return version
-
-  def __call__(self, name, bits, arch='intel', mac_release='10.13.5'):
-    return (
-      self.name(name) + self.bits(bits) + self.arch(arch)
-      + self.mac_release(mac_release))
+  def __call__(self, name, bits, arch='intel'):
+    return self.name(name) + self.bits(bits) + self.arch(arch)
