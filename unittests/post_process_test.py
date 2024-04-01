@@ -5,7 +5,7 @@
 
 
 import collections
-from typing import Any, Callable, OrderedDict, Tuple
+from typing import Any, Callable, OrderedDict
 
 import test_env
 
@@ -69,7 +69,7 @@ class PostProcessUnitTest(test_env.RecipeEngineUnitTest):
     raise NotImplementedError()
 
   def post_process(self, func: Callable, *args,
-                   **kwargs) -> Tuple[Any, list[list[str]]]:
+                   **kwargs) -> tuple[Any, list[list[str]]]:
     """Run the given post_process function with self.step_dict.
 
     Args:

@@ -37,7 +37,7 @@ def set_implicit_pdb_breakpoint(filename, lineno, funcname=None):
 
 
 def parse_remote_debugger() -> \
-  typing.Union[typing.Tuple[str, str, int], typing.Tuple[None, None, None]]:
+  typing.Union[tuple[str, str, int], tuple[None, None, None]]:
   """Parses the RECIPE_DEBUGGER environment variable.
 
   This will also return (None, None, None) if sys.argv doesn't include `debug`.

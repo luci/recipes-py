@@ -83,8 +83,8 @@ class WarningRecorder(object):
     """Returns all recorded warnings in the form of
 
     {
-      "repo_name_1/WARNING_NAME_1": Tuple[warning_pb.Cause]
-      "repo_name_2/WARNING_NAME_2": Tuple[warning_pb.Cause]
+      "repo_name_1/WARNING_NAME_1": tuple[warning_pb.Cause]
+      "repo_name_2/WARNING_NAME_2": tuple[warning_pb.Cause]
     }
 
     cause inside the tuple is guaranteed to be unique for each warning.
