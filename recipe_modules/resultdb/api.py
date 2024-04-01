@@ -7,8 +7,6 @@
 Requires `rdb` command in `$PATH`:
 https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 """
-import six
-
 from google.protobuf import field_mask_pb2
 from google.protobuf import json_format
 from google.protobuf import timestamp_pb2
@@ -177,8 +175,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
     Returns:
       A list of invocation_ids.
     """
-    assert all(
-        isinstance(name, six.string_types) for name in inv_names), inv_names
+    assert all(isinstance(name, str) for name in inv_names), inv_names
     assert all(name.startswith(
         self._INVOCATION_NAME_PREFIX) for name in inv_names), inv_names
 
@@ -318,13 +315,21 @@ class ResultDBAPI(recipe_api.RecipeApi):
       were created.
     """
 
+    # TODO: mohrr - Transition artifacts argument from dict[str, dict] to
+    # specific types like dict[str, ContentsArtifact | GcsUriArtifact].
+
+    def ensure_bytes(s: str | bytes) -> bytes:
+      if isinstance(s, bytes):
+        return s
+      return s.encode()
+
     req = recorder.BatchCreateArtifactsRequest(requests=[
         recorder.CreateArtifactRequest(
             parent=parent_inv or self.current_invocation,
             artifact=artifact.Artifact(
                 artifact_id=art_id,
                 content_type=art.get('content_type', ''),
-                contents=six.ensure_binary(art.get('contents', b'')),
+                contents=ensure_bytes(art.get('contents', b'')),
                 gcs_uri=art.get('gcs_uri', ''),
             ),
         ) for art_id, art in artifacts.items()

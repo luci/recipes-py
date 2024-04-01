@@ -21,7 +21,6 @@ from future.utils import raise_
 import attr
 import gevent
 import gevent.local
-import six
 
 from google.protobuf import json_format as jsonpb
 from pympler import summary, tracker
@@ -350,7 +349,6 @@ class RecipeEngine(object):
       * The StepPresentation for this parent step.
       * The List of children StepData of this parent step.
     """
-    name = six.ensure_str(name)
     name_tokens = self._record_step_name(name)
 
     try:

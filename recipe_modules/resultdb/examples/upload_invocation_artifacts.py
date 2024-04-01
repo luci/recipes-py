@@ -25,7 +25,7 @@ def RunSteps(api):
       'c': {
           'content_type': 'text/plain',
           'contents': 'string_foobar'
-      }
+      },
   })
 
 

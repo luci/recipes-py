@@ -2441,7 +2441,7 @@ Works like `json.dumps`.
 By default this sorts dictionary keys (see discussion in `input()`), but you
 can pass sort_keys=False to override this behavior.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#162)**<br>&mdash; **def [input](/recipe_modules/json/api.py#160)(self, data, sort_keys=True):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#160)**<br>&mdash; **def [input](/recipe_modules/json/api.py#160)(self, data, sort_keys=True):**
 
 A placeholder which will expand to a file path containing <data>.
 
@@ -2463,7 +2463,7 @@ Works like `json.loads`, but:
 * replaces 'int-like' floats with ints. These are floats whose magnitude
   is less than (2**53-1) and which don't have a decimal component.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#162)**<br>&mdash; **def [output](/recipe_modules/json/api.py#172)(self, add_json_log=True, name=None, leak_to=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#160)**<br>&mdash; **def [output](/recipe_modules/json/api.py#172)(self, add_json_log=True, name=None, leak_to=None):**
 
 A placeholder which will expand to '/tmp/file'.
 
@@ -3217,7 +3217,7 @@ Args:
 
 Returns the encoded proto message.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#162)**<br>&mdash; **def [input](/recipe_modules/proto/api.py#85)(self, proto_msg, codec, \*\*encoding_kwargs):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#160)**<br>&mdash; **def [input](/recipe_modules/proto/api.py#85)(self, proto_msg, codec, \*\*encoding_kwargs):**
 
 A placeholder which will expand to a file path containing the encoded
 `proto_msg`.
@@ -3241,7 +3241,7 @@ Args:
 
 Returns an InputPlaceholder.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#162)**<br>&mdash; **def [output](/recipe_modules/proto/api.py#116)(self, msg_class, codec, add_json_log=True, name=None, leak_to=None, \*\*decoding_kwargs):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#160)**<br>&mdash; **def [output](/recipe_modules/proto/api.py#116)(self, msg_class, codec, add_json_log=True, name=None, leak_to=None, \*\*decoding_kwargs):**
 
 A placeholder which expands to a file path and then reads an encoded
 proto back from that location when the step finishes.
@@ -3297,7 +3297,7 @@ Provides objects for reading and writing raw data to and from steps.
 
 #### **class [RawIOApi](/recipe_modules/raw_io/api.py#305)([RecipeApi](/recipe_engine/recipe_api.py#471)):**
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#162)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#306)(data, suffix='', name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#160)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#306)(data, suffix='', name=None):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -3316,7 +3316,7 @@ tempfile.mkstemp.
 
 See examples/full.py for usage example.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#162)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#333)(data, suffix='', name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#160)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#333)(data, suffix='', name=None):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -3331,7 +3331,7 @@ encoded data. Note that, the support of type 'bytes' is for backwards
 compatibility to Python 2, we may drop this support in the future after
 recipe becomes Python 3 only.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#162)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#356)(suffix='', leak_to=None, name=None, add_output_log=False):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#160)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#356)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -3347,7 +3347,7 @@ Args:
      to a step link named `name`. If this is 'on_failure', only create this
      log when the step has a non-SUCCESS status.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#162)**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#394)(self, leak_to=None, name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#160)**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#394)(self, leak_to=None, name=None):**
 
 Returns a directory Placeholder for use as a step argument.
 
@@ -3379,7 +3379,7 @@ del result.raw_io.output_dir[some_file]
 result.raw_io.output_dir[some_file] -> raises KeyError
 ```
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#162)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#376)(suffix='', leak_to=None, name=None, add_output_log=False):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#160)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#376)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -3402,13 +3402,13 @@ API for interacting with the ResultDB service.
 Requires `rdb` command in `$PATH`:
 https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 
-#### **class [ResultDBAPI](/recipe_modules/resultdb/api.py#30)([RecipeApi](/recipe_engine/recipe_api.py#471)):**
+#### **class [ResultDBAPI](/recipe_modules/resultdb/api.py#28)([RecipeApi](/recipe_engine/recipe_api.py#471)):**
 
 A module for interacting with ResultDB.
 
-&mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#52)(self):**
+&mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#50)(self):**
 
-&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#757)(self, column_keys=(), grouping_keys=('status',)):**
+&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#762)(self, column_keys=(), grouping_keys=('status',)):**
 
 Specifies how the test results should be rendered.
 
@@ -3430,15 +3430,15 @@ Args:
     Caveat: test variants with only expected results are not affected by
     this setting and are always in their own group.
 
-&emsp; **@property**<br>&mdash; **def [current\_invocation](/recipe_modules/resultdb/api.py#44)(self):**
+&emsp; **@property**<br>&mdash; **def [current\_invocation](/recipe_modules/resultdb/api.py#42)(self):**
 
-&emsp; **@property**<br>&mdash; **def [enabled](/recipe_modules/resultdb/api.py#48)(self):**
+&emsp; **@property**<br>&mdash; **def [enabled](/recipe_modules/resultdb/api.py#46)(self):**
 
-&mdash; **def [exclude\_invocations](/recipe_modules/resultdb/api.py#63)(self, invocations, step_name=None):**
+&mdash; **def [exclude\_invocations](/recipe_modules/resultdb/api.py#61)(self, invocations, step_name=None):**
 
 Shortcut for resultdb.update_included_invocations().
 
-&mdash; **def [exonerate](/recipe_modules/resultdb/api.py#129)(self, test_exonerations, step_name=None):**
+&mdash; **def [exonerate](/recipe_modules/resultdb/api.py#127)(self, test_exonerations, step_name=None):**
 
 Exonerates test variants in the current invocation.
 
@@ -3446,7 +3446,7 @@ Args:
   test_exonerations (list): A list of test_result_pb2.TestExoneration.
   step_name (str): name of the step.
 
-&mdash; **def [get\_included\_invocations](/recipe_modules/resultdb/api.py#104)(self, inv_name=None, step_name=None):**
+&mdash; **def [get\_included\_invocations](/recipe_modules/resultdb/api.py#102)(self, inv_name=None, step_name=None):**
 
 Returns names of included invocations of the input invocation.
 
@@ -3458,11 +3458,11 @@ Args:
 Returns:
   A list of invocation name strs.
 
-&mdash; **def [include\_invocations](/recipe_modules/resultdb/api.py#58)(self, invocations, step_name=None):**
+&mdash; **def [include\_invocations](/recipe_modules/resultdb/api.py#56)(self, invocations, step_name=None):**
 
 Shortcut for resultdb.update_included_invocations().
 
-&mdash; **def [invocation\_ids](/recipe_modules/resultdb/api.py#171)(self, inv_names):**
+&mdash; **def [invocation\_ids](/recipe_modules/resultdb/api.py#169)(self, inv_names):**
 
 Returns invocation IDs by parsing invocation names.
 
@@ -3472,7 +3472,7 @@ Args:
 Returns:
   A list of invocation_ids.
 
-&mdash; **def [query](/recipe_modules/resultdb/api.py#187)(self, inv_ids, variants_with_unexpected_results=False, merge=False, limit=None, step_name=None, tr_fields=None, test_invocations=None, test_regex=None):**
+&mdash; **def [query](/recipe_modules/resultdb/api.py#184)(self, inv_ids, variants_with_unexpected_results=False, merge=False, limit=None, step_name=None, tr_fields=None, test_invocations=None, test_regex=None):**
 
 Returns test results in the invocations.
 
@@ -3512,7 +3512,7 @@ Args:
 Returns:
   A dict {invocation_id: api.Invocation}.
 
-&mdash; **def [query\_new\_test\_variants](/recipe_modules/resultdb/api.py#471)(self, invocation: str, baseline: str, step_name: str=None, step_test_data: dict=None):**
+&mdash; **def [query\_new\_test\_variants](/recipe_modules/resultdb/api.py#476)(self, invocation: str, baseline: str, step_name: str=None, step_test_data: dict=None):**
 
 Query ResultDB for new tests.
 
@@ -3527,7 +3527,7 @@ Returns:
  A QueryNewTestVariantsResponse proto message with is_baseline_ready and
  new_test_variants.
 
-&mdash; **def [query\_test\_result\_statistics](/recipe_modules/resultdb/api.py#267)(self, invocations=None, step_name=None):**
+&mdash; **def [query\_test\_result\_statistics](/recipe_modules/resultdb/api.py#264)(self, invocations=None, step_name=None):**
 
 Retrieve stats of test results for the given invocations.
 
@@ -3543,7 +3543,7 @@ Returns:
   A QueryTestResultStatisticsResponse proto message with statistics for the
   queried invocations.
 
-&mdash; **def [query\_test\_results](/recipe_modules/resultdb/api.py#346)(self, invocations, test_id_regexp=None, variant_predicate=None, field_mask_paths=None, page_size=100, page_token=None, step_name=None):**
+&mdash; **def [query\_test\_results](/recipe_modules/resultdb/api.py#351)(self, invocations, test_id_regexp=None, variant_predicate=None, field_mask_paths=None, page_size=100, page_token=None, step_name=None):**
 
 Retrieve test results from an invocation, recursively.
 
@@ -3576,7 +3576,7 @@ Returns:
   For value format, see [`QueryTestResultsResponse` message]
   (https://bit.ly/3dsChbo)
 
-&mdash; **def [query\_test\_variants](/recipe_modules/resultdb/api.py#408)(self, invocations, test_variant_status=None, field_mask_paths=None, page_size=100, page_token=None, step_name=None):**
+&mdash; **def [query\_test\_variants](/recipe_modules/resultdb/api.py#413)(self, invocations, test_variant_status=None, field_mask_paths=None, page_size=100, page_token=None, step_name=None):**
 
 Retrieve test variants from an invocation, recursively.
 
@@ -3610,7 +3610,7 @@ Returns:
   For value format, see [`QueryTestVariantsResponse` message]
   (http://shortn/_hv3edsXidO)
 
-&mdash; **def [update\_included\_invocations](/recipe_modules/resultdb/api.py#68)(self, add_invocations=None, remove_invocations=None, step_name=None):**
+&mdash; **def [update\_included\_invocations](/recipe_modules/resultdb/api.py#66)(self, add_invocations=None, remove_invocations=None, step_name=None):**
 
 Add and/or remove included invocations to/from the current invocation.
 
@@ -3623,7 +3623,7 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
-&mdash; **def [update\_invocation](/recipe_modules/resultdb/api.py#509)(self, parent_inv='', step_name=None, source_spec=None, baseline_id=None):**
+&mdash; **def [update\_invocation](/recipe_modules/resultdb/api.py#514)(self, parent_inv='', step_name=None, source_spec=None, baseline_id=None):**
 
 Makes a call to the UpdateInvocation API to update the invocation
 
@@ -3636,7 +3636,7 @@ Args:
     the format {buildbucket bucket}:{buildbucket builder name}. For example,
     'try:linux-rel'. Baselines are used to detect new tests in invocations.
 
-&mdash; **def [upload\_invocation\_artifacts](/recipe_modules/resultdb/api.py#300)(self, artifacts, parent_inv=None, step_name=None):**
+&mdash; **def [upload\_invocation\_artifacts](/recipe_modules/resultdb/api.py#297)(self, artifacts, parent_inv=None, step_name=None):**
 
 Create artifacts with the given content type and contents or gcs_uri.
 
@@ -3656,7 +3656,7 @@ Returns:
   A BatchCreateArtifactsResponse proto message listing the artifacts that
   were created.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#608)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file='', inherit_sources=False, sources='', sources_file='', baseline_id=''):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#613)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file='', inherit_sources=False, sources='', sources_file='', baseline_id=''):**
 
 Wraps the command with ResultSink.
 
@@ -4254,7 +4254,7 @@ status.
 [DEPS](/recipe_modules/swarming/__init__.py#7): [buildbucket](#recipe_modules-buildbucket), [cas](#recipe_modules-cas), [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
-#### **class [SwarmingApi](/recipe_modules/swarming/api.py#1199)([RecipeApi](/recipe_engine/recipe_api.py#471)):**
+#### **class [SwarmingApi](/recipe_modules/swarming/api.py#1198)([RecipeApi](/recipe_engine/recipe_api.py#471)):**
 
 API for interacting with swarming.
 
@@ -4264,11 +4264,11 @@ http://go.chromium.org/luci/client/cmd/swarming.
 This module will deploy the client to [CACHE]/swarming_client/; users should
 add this path to the named cache for their builder.
 
-&emsp; **@property**<br>&mdash; **def [bot\_id](/recipe_modules/swarming/api.py#1218)(self):**
+&emsp; **@property**<br>&mdash; **def [bot\_id](/recipe_modules/swarming/api.py#1217)(self):**
 
 Swarming bot ID executing this task.
 
-&mdash; **def [collect](/recipe_modules/swarming/api.py#1355)(self, name, tasks, output_dir=None, task_output_stdout='json', timeout=None, eager=False, verbose=False):**
+&mdash; **def [collect](/recipe_modules/swarming/api.py#1354)(self, name, tasks, output_dir=None, task_output_stdout='json', timeout=None, eager=False, verbose=False):**
 
 Waits on a set of Swarming tasks.
 
@@ -4294,15 +4294,15 @@ Args:
 Returns:
   A list of TaskResult objects.
 
-&emsp; **@property**<br>&mdash; **def [current\_server](/recipe_modules/swarming/api.py#1228)(self):**
+&emsp; **@property**<br>&mdash; **def [current\_server](/recipe_modules/swarming/api.py#1227)(self):**
 
 Swarming server executing this task.
 
-&mdash; **def [ensure\_client](/recipe_modules/swarming/api.py#1255)(self):**
+&mdash; **def [ensure\_client](/recipe_modules/swarming/api.py#1254)(self):**
 
-&mdash; **def [initialize](/recipe_modules/swarming/api.py#1233)(self):**
+&mdash; **def [initialize](/recipe_modules/swarming/api.py#1232)(self):**
 
-&mdash; **def [list\_bots](/recipe_modules/swarming/api.py#1498)(self, step_name, dimensions=None, fields=None):**
+&mdash; **def [list\_bots](/recipe_modules/swarming/api.py#1497)(self, step_name, dimensions=None, fields=None):**
 
 List bots matching the given options.
 
@@ -4316,7 +4316,7 @@ Args:
 Returns:
   A list of BotMetadata objects.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#1271)(self):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#1270)(self):**
 
 This context manager ensures the go swarming client is available on
 $PATH.
@@ -4326,7 +4326,7 @@ Example:
     with api.swarming.on_path():
       # do your steps which require the swarming binary on path
 
-&mdash; **def [show\_request](/recipe_modules/swarming/api.py#1461)(self, name, task):**
+&mdash; **def [show\_request](/recipe_modules/swarming/api.py#1460)(self, name, task):**
 
 Retrieve the TaskRequest for a Swarming task.
 
@@ -4338,11 +4338,11 @@ Args:
 Returns:
   TaskRequest objects.
 
-&emsp; **@property**<br>&mdash; **def [task\_id](/recipe_modules/swarming/api.py#1223)(self):**
+&emsp; **@property**<br>&mdash; **def [task\_id](/recipe_modules/swarming/api.py#1222)(self):**
 
 This task's Swarming ID.
 
-&mdash; **def [task\_request](/recipe_modules/swarming/api.py#1285)(self):**
+&mdash; **def [task\_request](/recipe_modules/swarming/api.py#1284)(self):**
 
 Creates a new TaskRequest object.
 
@@ -4352,14 +4352,14 @@ into a full task.
 Once your TaskRequest is complete, you can pass it to `trigger` in order to
 have it start running on the swarming server.
 
-&mdash; **def [task\_request\_from\_jsonish](/recipe_modules/swarming/api.py#1296)(self, json_d):**
+&mdash; **def [task\_request\_from\_jsonish](/recipe_modules/swarming/api.py#1295)(self, json_d):**
 
 Creates a new TaskRequest object from a JSON-serializable dict.
 
 The input argument should match the schema as the output of
 TaskRequest.to_jsonish().
 
-&mdash; **def [trigger](/recipe_modules/swarming/api.py#1304)(self, step_name, requests, verbose=False):**
+&mdash; **def [trigger](/recipe_modules/swarming/api.py#1303)(self, step_name, requests, verbose=False):**
 
 Triggers a set of Swarming tasks.
 

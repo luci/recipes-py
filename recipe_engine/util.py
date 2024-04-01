@@ -13,8 +13,6 @@ import re
 import gevent
 import traceback
 
-import six
-
 from builtins import map, range
 from past.builtins import basestring
 from recipe_engine.internal.global_shutdown import GLOBAL_SHUTDOWN

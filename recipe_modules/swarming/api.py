@@ -12,7 +12,6 @@ import copy
 import json
 
 from past.types import basestring
-import six
 
 from .state import TaskState
 
@@ -701,7 +700,7 @@ class TaskRequest(object):
       Args:
         data (bytes) - The data to be written to secret bytes.
       """
-      assert isinstance(data, six.binary_type)
+      assert isinstance(data, bytes)
       ret = self._copy()
       ret._secret_bytes = data
       return ret
