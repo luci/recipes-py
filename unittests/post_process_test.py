@@ -5,7 +5,7 @@
 
 
 import collections
-from typing import Any, Callable, Dict, List, OrderedDict, Tuple
+from typing import Any, Callable, List, OrderedDict, Tuple
 
 import test_env
 
@@ -16,7 +16,7 @@ from recipe_engine.recipe_test_api import RecipeTestApi
 from PB.recipe_engine.internal.test.runner import Outcome
 
 
-def make_step(name: str, *fields: str) -> Dict[str, Any]:
+def make_step(name: str, *fields: str) -> dict[str, Any]:
   """Create a step dict containing the given fields and reasonable defaults.
 
   Args:
@@ -39,7 +39,7 @@ def make_step(name: str, *fields: str) -> Dict[str, Any]:
   return ret
 
 
-def make_step_dict(*names: str) -> OrderedDict[str, Dict[str, Any]]:
+def make_step_dict(*names: str) -> OrderedDict[str, dict[str, Any]]:
   """Create an OrderedDict of step dicts with given names and default fields.
 
   Args:
@@ -57,7 +57,7 @@ class PostProcessUnitTest(test_env.RecipeEngineUnitTest):
   """Helper class for testing post_process functions."""
 
   @property
-  def step_dict(self) -> Dict[str, Dict[str, Any]]:
+  def step_dict(self) -> dict[str, dict[str, Any]]:
     """Return a standard step dict for this test case.
 
     Subclasses should override this property to set a step dict that makes sense
@@ -147,7 +147,7 @@ class TestFilter(PostProcessUnitTest):
   f = post_process.Filter
 
   @property
-  def step_dict(self) -> Dict[str, Dict[str, Any]]:
+  def step_dict(self) -> dict[str, dict[str, Any]]:
     """Return a standard step dict for this test case."""
     return make_step_dict('a', 'b', 'b.sub', 'b.sub2')
 
@@ -210,7 +210,7 @@ class TestRun(PostProcessUnitTest):
   """Test case for checks relating to which steps run."""
 
   @property
-  def step_dict(self) -> Dict[str, Dict[str, Any]]:
+  def step_dict(self) -> dict[str, dict[str, Any]]:
     """Return a standard step dict for this test case."""
     return make_step_dict('a', 'b', 'b.sub', 'b.sub2')
 
@@ -247,7 +247,7 @@ class TestStepStatus(PostProcessUnitTest):
   """Test case for checks relating to step status."""
 
   @property
-  def step_dict(self) -> Dict[str, Dict[str, Any]]:
+  def step_dict(self) -> dict[str, dict[str, Any]]:
     """Return a standard step dict for this test case."""
     return collections.OrderedDict([
         ('success-step', {
@@ -302,7 +302,7 @@ class TestStepCommandEquals(PostProcessUnitTest):
   """Test case for StepCommandEquals."""
 
   @property
-  def step_dict(self) -> Dict[str, Dict[str, Any]]:
+  def step_dict(self) -> dict[str, dict[str, Any]]:
     """Return a standard step dict for this test case."""
     return make_step_dict('my-step')
 
@@ -337,7 +337,7 @@ class TestStepCommandRe(PostProcessUnitTest):
   """Test case for StepCommandRE."""
 
   @property
-  def step_dict(self) -> Dict[str, Dict[str, Any]]:
+  def step_dict(self) -> dict[str, dict[str, Any]]:
     """Return a stadnard step dict for this test case."""
     return collections.OrderedDict([('x', {
         'name': 'x',
@@ -375,7 +375,7 @@ class TestStepCommandContains(PostProcessUnitTest):
   """Test case for StepCommandContains."""
 
   @property
-  def step_dict(self) -> Dict[str, Dict[str, Any]]:
+  def step_dict(self) -> dict[str, dict[str, Any]]:
     """Return a standard step dict for this test case."""
     return collections.OrderedDict([('two', {
         'name': 'two',
@@ -437,7 +437,7 @@ class TestStepCommandDoesNotContain(PostProcessUnitTest):
   """Test case for StepCommandDoesNotContain."""
 
   @property
-  def step_dict(self) -> Dict[str, Dict[str, Any]]:
+  def step_dict(self) -> dict[str, dict[str, Any]]:
     """Return a standard step dict for this test case."""
     return collections.OrderedDict([('two', {
         'name': 'two',
@@ -489,7 +489,7 @@ class TestStepText(PostProcessUnitTest):
   """Test case for checks that relate to step text and step summary."""
 
   @property
-  def step_dict(self) -> Dict[str, Dict[str, Any]]:
+  def step_dict(self) -> dict[str, dict[str, Any]]:
     """Return a standard step dict for this test case."""
     return collections.OrderedDict([('x', {
         'name': 'x',
@@ -534,7 +534,7 @@ class TestLog(PostProcessUnitTest):
   """Test case for checks that relate to logs."""
 
   @property
-  def step_dict(self) -> Dict[str, Dict[str, Any]]:
+  def step_dict(self) -> dict[str, dict[str, Any]]:
     """Return a standard step dict for this test case."""
     return collections.OrderedDict([('x', {
         'name': 'x',
