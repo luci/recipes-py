@@ -6,7 +6,7 @@
 conditions inside tests, but with much more debugging information, including
 a smart selection of local variables mentioned inside of the call to check."""
 
-from typing import Optional, cast
+from typing import cast
 from past.builtins import basestring
 
 import ast
@@ -283,7 +283,7 @@ class _checkTransformer(ast.NodeTransformer):
     self.extras = []
 
   @staticmethod
-  def _is_valid_resolved(node) -> Optional[_resolved]:
+  def _is_valid_resolved(node) -> _resolved | None:
     if isinstance(node, _resolved) and node.valid:
       return node
     return None

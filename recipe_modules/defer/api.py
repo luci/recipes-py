@@ -7,7 +7,7 @@ import contextlib
 import dataclasses
 import functools
 import traceback
-from typing import Any, Callable, Generic, Optional, Sequence, TypeVar
+from typing import Any, Callable, Generic, Sequence, TypeVar
 
 from recipe_engine import recipe_api
 
@@ -18,10 +18,10 @@ T = TypeVar('T')
 @dataclasses.dataclass(frozen=True)
 class DeferredResult(Generic[T]):
   _api: recipe_api.RecipeApi
-  _value: Optional[T] = None
-  _exc: Optional[Exception] = None
+  _value: T | None = None
+  _exc: Exception | None = None
 
-  def _traceback(self) -> Optional[str]:
+  def _traceback(self) -> str | None:
     if self.is_ok():
       return None  # pragma: no cover
     return '\n'.join(traceback.format_exception(self._exc))
@@ -29,7 +29,7 @@ class DeferredResult(Generic[T]):
   def is_ok(self) -> bool:
     return not self._exc
 
-  def result(self, step_name: Optional[str] = None) -> T:
+  def result(self, step_name: str | None = None) -> T:
     """Raise the exception or return the original return value.
 
     Args:
@@ -89,7 +89,7 @@ class DeferContext:
     self.suppressed_results.extend(self.results)
     self.results.clear()
 
-  def collect(self, step_name: Optional[str] = None):
+  def collect(self, step_name: str | None = None):
     """Raise all deferred failures.
 
     Only raise failures from suppressed steps if there are no failures in
@@ -127,7 +127,7 @@ class DeferApi(recipe_api.RecipeApi):
   DeferredResult = DeferredResult
 
   @contextlib.contextmanager
-  def context(self, collect_step_name: Optional[str] = None):
+  def context(self, collect_step_name: str | None = None):
     """Creates a context that tracks deferred calls.
 
     Usage:
@@ -185,7 +185,7 @@ class DeferApi(recipe_api.RecipeApi):
   def collect(
       self,
       results: Sequence[DeferredResult],
-      step_name: Optional[str] = None,
+      step_name: str | None = None,
   ) -> Sequence[Any]:
     """Raise any exceptions in the given list of DeferredResults.
 

@@ -15,8 +15,6 @@ import shutil
 import sys
 import tempfile
 
-from typing import Optional
-
 from gevent import subprocess
 
 import attr
@@ -347,7 +345,7 @@ _REWRITE_IMPORT_RE = re.compile(
     r'^from (?!google\.protobuf|typing)(\S*) import (\S*)_pb2 as (.*)$', re.MULTILINE)
 
 
-def _rewrite_and_rename(root: str, base_proto_path: str) -> Optional[str]:
+def _rewrite_and_rename(root: str, base_proto_path: str) -> str | None:
   """Transforms a vanilla compiled *_pb2.py file into a recipe proto python
   file.
 

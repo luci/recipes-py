@@ -42,7 +42,7 @@ import re
 import sys
 
 from functools import cached_property
-from typing import Optional, Type
+from typing import Type
 
 from future.utils import raise_
 
@@ -581,7 +581,7 @@ class RecipeModule(object):
     }
 
   @cached_property
-  def TEST_API(self) -> Optional[Type[RecipeTestApi]]:
+  def TEST_API(self) -> Type[RecipeTestApi] | None:
     """Returns this module's TestApi subclass, if this recipe module has one.
 
     This will prefer an explicitly exported TEST_API object in the module's

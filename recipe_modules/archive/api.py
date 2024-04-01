@@ -49,7 +49,7 @@ class ArchiveApi(recipe_api.RecipeApi):
               output: Union[config_types.Path, str],
               mode: str = 'safe',
               include_files: Sequence[str] = (),
-              archive_type: Optional[str] = None):
+              archive_type: str | None = None):
     """Step to uncompress |archive_file| into |output| directory.
 
     Archive will be unpacked to |output| so that root of an archive is in

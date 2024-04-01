@@ -241,7 +241,7 @@
 
 Provides steps to manipulate archive files (tar, zip, etc.).
 
-&mdash; **def [extract](/recipe_modules/archive/api.py#46)(self, step_name: str, archive_file: Union[(config_types.Path, str)], output: Union[(config_types.Path, str)], mode: str='safe', include_files: Sequence[str]=(), archive_type: Optional[str]=None):**
+&mdash; **def [extract](/recipe_modules/archive/api.py#46)(self, step_name: str, archive_file: Union[(config_types.Path, str)], output: Union[(config_types.Path, str)], mode: str='safe', include_files: Sequence[str]=(), archive_type: (str | None)=None):**
 
 Step to uncompress |archive_file| into |output| directory.
 
@@ -1175,7 +1175,7 @@ ensure file.
 Args:
   * ensure_file (EnsureFile|Path) - Ensure file to resolve.
 
-&mdash; **def [ensure\_tool](/recipe_modules/cipd/api.py#982)(self, package: str, version: str, executable_path: Optional[str]=None):**
+&mdash; **def [ensure\_tool](/recipe_modules/cipd/api.py#982)(self, package: str, version: str, executable_path: str=None):**
 
 Downloads an executable from CIPD.
 
@@ -1708,7 +1708,7 @@ contains that exception.
 The DeferredResult is expected to be passed into api.defer.collect(), but
 DeferredResult.result() does similar processing.
 
-&mdash; **def [collect](/recipe_modules/defer/api.py#185)(self, results: Sequence[DeferredResult], step_name: Optional[str]=None):**
+&mdash; **def [collect](/recipe_modules/defer/api.py#185)(self, results: Sequence[DeferredResult], step_name: (str | None)=None):**
 
 Raise any exceptions in the given list of DeferredResults.
 
@@ -1720,7 +1720,7 @@ Args:
     step_name: Name for step including traceback logs if there are failures.
         If None, don't include a step with traceback logs.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [context](/recipe_modules/defer/api.py#129)(self, collect_step_name: Optional[str]=None):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [context](/recipe_modules/defer/api.py#129)(self, collect_step_name: (str | None)=None):**
 
 Creates a context that tracks deferred calls.
 

@@ -15,7 +15,7 @@ import sys
 import tempfile
 import time
 
-from typing import Optional, Dict
+from typing import Dict
 
 from parameterized import parameterized
 
@@ -134,7 +134,9 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
       ('step:examples/full',),
       ('engine_tests/functools_partial',),
   ])
-  def test_examples(self, recipe_name, env_overrides: Optional[Dict[str, str]] = None):
+  def test_examples(self,
+                    recipe_name: str,
+                    env_overrides: Dict[str, str] | None = None):
     env = None
     if env_overrides:
       env = os.environ.copy()

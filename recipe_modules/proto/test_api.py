@@ -11,14 +11,16 @@ class ProtoTestApi(recipe_test_api.RecipeTestApi):
 
   @recipe_test_api.placeholder_step_data
   @staticmethod
-  def output(proto_msg, retcode=None, name=None):
+  def output(proto_msg,
+             retcode: int | None = None,
+             name: str | None = None):
     """Supplies placeholder data for a proto.output.
 
     Args:
       * proto_msg - Instance of a proto message that should be returned for this
         placeholder.
-      * retcode (Optional[int]) - The returncode of the step.
-      * name (Optional[str]) - The name of the placeholder you're mocking.
+      * retcode - The returncode of the step.
+      * name - The name of the placeholder you're mocking.
     """
     if not isinstance(proto_msg, message.Message): # pragma: no cover
       raise ValueError("expected proto Message, got: %r" % (type(proto_msg),))

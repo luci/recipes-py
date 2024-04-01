@@ -8,7 +8,6 @@ import inspect
 from collections import defaultdict
 from collections import namedtuple
 from functools import reduce
-from typing import Optional
 
 from past.builtins import basestring
 
@@ -528,7 +527,7 @@ class RecipeTestApi(object):
   The json.output() call is documented in the 'json' module's test_api.
   """
 
-  def __init__(self, module: Optional['recipe_deps.RecipeModule']):
+  def __init__(self, module: 'recipe_deps.RecipeModule | None'):
     """Note: Injected dependencies are NOT available in __init__()."""
     # If we're the 'root' api, inject directly into 'self'.
     # Otherwise inject into 'self.m'

@@ -16,7 +16,7 @@ import os
 import re
 import types
 
-from typing import Any, Optional, Callable, Protocol, List, Dict
+from typing import Any, Callable, Protocol, List, Dict
 from dataclasses import dataclass
 from functools import wraps
 
@@ -633,7 +633,7 @@ class RecipeScriptApi:
   # (i.e. somewhere under RunSteps), that the recipe is currently in test mode.
   #
   # TODO: Find a better API for this.
-  _test_data: Optional[recipe_test_api.ModuleTestData]
+  _test_data: recipe_test_api.ModuleTestData | None
 
   _resource_path: config_types.Path
   _repo_path: config_types.Path

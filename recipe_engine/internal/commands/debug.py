@@ -21,7 +21,6 @@ import ast
 import bdb
 import sys
 import traceback
-import typing
 
 from ... import config_types
 from ... import engine_types
@@ -79,7 +78,7 @@ def _dump_recipes(rdeps, errmsg, contain=''):
 
 def _parse_debug_target(
     rdeps: recipe_deps.RecipeDeps,
-    debug_target: typing.Optional[str]):
+    debug_target: str | None):
   """Parses the singular `debug_target` argument, and returns the Recipe and
   TestData it indicates.
 

@@ -982,7 +982,7 @@ class CIPDApi(recipe_api.RecipeApi):
   def ensure_tool(self,
                   package: str,
                   version: str,
-                  executable_path: Optional[str] = None):
+                  executable_path: str = None):
     """Downloads an executable from CIPD.
 
     Given a package named "name/of/some_exe/${platform}" and version
