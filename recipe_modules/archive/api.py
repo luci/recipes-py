@@ -45,8 +45,8 @@ class ArchiveApi(recipe_api.RecipeApi):
 
   def extract(self,
               step_name: str,
-              archive_file: Union[config_types.Path, str],
-              output: Union[config_types.Path, str],
+              archive_file: config_types.Path | str,
+              output: config_types.Path | str,
               mode: str = 'safe',
               include_files: Sequence[str] = (),
               archive_type: str | None = None):

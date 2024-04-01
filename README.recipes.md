@@ -241,7 +241,7 @@
 
 Provides steps to manipulate archive files (tar, zip, etc.).
 
-&mdash; **def [extract](/recipe_modules/archive/api.py#46)(self, step_name: str, archive_file: Union[(config_types.Path, str)], output: Union[(config_types.Path, str)], mode: str='safe', include_files: Sequence[str]=(), archive_type: (str | None)=None):**
+&mdash; **def [extract](/recipe_modules/archive/api.py#46)(self, step_name: str, archive_file: (config_types.Path | str), output: (config_types.Path | str), mode: str='safe', include_files: Sequence[str]=(), archive_type: (str | None)=None):**
 
 Step to uncompress |archive_file| into |output| directory.
 

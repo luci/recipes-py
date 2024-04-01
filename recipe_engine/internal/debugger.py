@@ -6,7 +6,6 @@
 import os
 import sys
 import pdb
-import typing
 
 _DEBUGGER_ENVVAR = 'RECIPE_DEBUGGER'
 _DEBUG_ALL_ENVVAR = 'RECIPE_DEBUG_ALL'
@@ -36,8 +35,9 @@ def set_implicit_pdb_breakpoint(filename, lineno, funcname=None):
   _PDB.set_break(_PDB.canonic(filename), lineno, funcname=funcname)
 
 
-def parse_remote_debugger() -> \
-  typing.Union[tuple[str, str, int], tuple[None, None, None]]:
+def parse_remote_debugger() -> (
+    tuple[str, str, int] | tuple[None, None, None]
+):
   """Parses the RECIPE_DEBUGGER environment variable.
 
   This will also return (None, None, None) if sys.argv doesn't include `debug`.
