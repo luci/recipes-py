@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from recipe_engine import recipe_api
 from recipe_engine import config_types
-from typing import *
 
 
 class ArchiveApi(recipe_api.RecipeApi):

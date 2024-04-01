@@ -9,7 +9,6 @@ https://godoc.org/go.chromium.org/luci/cipd/client/cmd/cipd
 """
 
 from past.builtins import basestring
-from typing import *
 
 import contextlib
 import hashlib
