@@ -5,7 +5,6 @@
 import argparse
 import fnmatch
 import re
-import typing
 
 import attr
 
@@ -31,8 +30,8 @@ class Filter:
   # TODO: Also track module names indicated by the filters.
   # TODO: Upstream this into RecipeDeps so that it will only scan the
   # modules/recipes that we're interested in.
-  _recipe_patterns : typing.List[str] = attr.ib(default=[])
-  _full_test_name_patterns : typing.List[str] = attr.ib(default=[])
+  _recipe_patterns : list[str] = attr.ib(default=[])
+  _full_test_name_patterns : list[str] = attr.ib(default=[])
 
   _compiled_recipe_pattern : str = attr.ib(default=None)
   _compiled_test_name_pattern : str = attr.ib(default=None)

@@ -5,7 +5,7 @@
 
 
 import collections
-from typing import Any, Callable, List, OrderedDict, Tuple
+from typing import Any, Callable, OrderedDict, Tuple
 
 import test_env
 
@@ -69,7 +69,7 @@ class PostProcessUnitTest(test_env.RecipeEngineUnitTest):
     raise NotImplementedError()
 
   def post_process(self, func: Callable, *args,
-                   **kwargs) -> Tuple[Any, List[List[str]]]:
+                   **kwargs) -> Tuple[Any, list[list[str]]]:
     """Run the given post_process function with self.step_dict.
 
     Args:
@@ -105,7 +105,7 @@ class PostProcessUnitTest(test_env.RecipeEngineUnitTest):
     self.assertEqual(len(failures), 0)
 
   def expect_fails(self, num_fails: int, func: Callable, *args,
-                   **kwargs) -> List[List[str]]:
+                   **kwargs) -> list[list[str]]:
     """Assert that the post_process func fails the expected number of times.
 
     The given function will be called with self.step_dict.
@@ -127,7 +127,7 @@ class PostProcessUnitTest(test_env.RecipeEngineUnitTest):
     self.assertEqual(len(failures), num_fails)
     return failures
 
-  def assertHas(self, failure: List[str], *text: str) -> None:
+  def assertHas(self, failure: list[str], *text: str) -> None:
     """Assert that the given failure contains all the given strings.
 
     Args:

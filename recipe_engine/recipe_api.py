@@ -16,7 +16,7 @@ import os
 import re
 import types
 
-from typing import Any, Callable, Protocol, List
+from typing import Any, Callable, Protocol
 from dataclasses import dataclass
 from functools import wraps
 
@@ -263,7 +263,7 @@ class StepClient(object):
 
 class _spawner(Protocol):
 
-  def __call__(self, func: Callable[..., Any], args: List[Any],
+  def __call__(self, func: Callable[..., Any], args: list[Any],
                kwargs: dict[str, Any], name: str) -> gevent.Greenlet:
     ...
 
