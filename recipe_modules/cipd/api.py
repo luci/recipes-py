@@ -8,10 +8,9 @@ Depends on 'cipd' binary available in PATH:
 https://godoc.org/go.chromium.org/luci/cipd/client/cmd/cipd
 """
 
-from past.builtins import basestring
-
 import contextlib
 import hashlib
+from typing import Literal
 
 from collections import defaultdict, namedtuple
 try:
@@ -21,11 +20,16 @@ except ImportError:  # pragma: no cover
   # pylint: disable=deprecated-class
   from collections import Mapping, Sequence
 
+from past.builtins import basestring
+
 from recipe_engine import recipe_api
 from recipe_engine.config_types import Path
 from recipe_engine.recipe_utils import check_type, check_list_type, check_dict_type
 
 CIPD_SERVER_URL = 'https://chrome-infra-packages.appspot.com'
+
+CompressionLevel = Literal[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+InstallMode = Literal['copy', 'symlink']
 
 
 class PackageDefinition(object):
@@ -34,7 +38,7 @@ class PackageDefinition(object):
   def __init__(self,
                package_name,
                package_root,
-               install_mode=None,
+               install_mode: InstallMode | None = None,
                preserve_mtime=False,
                preserve_writable=False):
     """Build a new PackageDefinition.
@@ -45,9 +49,9 @@ class PackageDefinition(object):
         will be relative to. e.g. if your root is /.../foo, and you add the
         file /.../foo/bar/baz.json, the final cipd package will contain
         'bar/baz.json'.
-      * install_mode (None|'copy'|'symlink') - the mechanism that the cipd
-        client should use when installing this package. If None, defaults to the
-        platform default ('copy' on windows, 'symlink' on everything else).
+      * install_mode - the mechanism that the cipd client should use when
+        installing this package. If None, defaults to the platform default
+        ('copy' on windows, 'symlink' on everything else).
       * preserve_mtime (bool) - Preserve file's modification time.
       * preserve_writable (bool) - Preserve file's writable permission bit.
     """
@@ -287,6 +291,9 @@ class CIPDApi(recipe_api.RecipeApi):
       'refs',
   ])
 
+  CompressionLevel = CompressionLevel
+  InstallMode = InstallMode
+
   class Error(recipe_api.StepFailure):
 
     def __init__(self, step_name, message):
@@ -357,7 +364,7 @@ class CIPDApi(recipe_api.RecipeApi):
              pkg_def_file_or_placeholder,
              output_package,
              pkg_vars=None,
-             compression_level=None):
+             compression_level: CompressionLevel | None = None):
     cmd = [
         'pkg-build',
         '-pkg-def',
@@ -381,7 +388,7 @@ class CIPDApi(recipe_api.RecipeApi):
                       pkg_def,
                       output_package,
                       pkg_vars=None,
-                      compression_level=None):
+                      compression_level: CompressionLevel | None = None):
     """Builds a package based on on-disk YAML package definition file.
 
     Args:
@@ -389,8 +396,8 @@ class CIPDApi(recipe_api.RecipeApi):
       * output_package (Path) - The file to write the package to.
       * pkg_vars (dict[str]str) - A map of var name -> value to use for vars
         referenced in package definition file.
-      * compression_level (None|[0-9]) - Deflate compression level. If None,
-        defaults to 5 (0 - disable, 1 - best speed, 9 - best compression).
+      * compression_level - Deflate compression level. If None, defaults to 5
+        (0 - disable, 1 - best speed, 9 - best compression).
 
     Returns the CIPDApi.Pin instance.
     """
@@ -403,15 +410,18 @@ class CIPDApi(recipe_api.RecipeApi):
         compression_level,
     )
 
-  def build_from_pkg(self, pkg_def, output_package, compression_level=None):
+  def build_from_pkg(self,
+                     pkg_def,
+                     output_package,
+                     compression_level: CompressionLevel | None = None):
     """Builds a package based on a PackageDefinition object.
 
     Args:
       * pkg_def (PackageDefinition) - The description of the package we want to
         create.
       * output_package (Path) - The file to write the package to.
-      * compression_level (None|[0-9]) - Deflate compression level. If None,
-        defaults to 5 (0 - disable, 1 - best speed, 9 - best compression).
+      * compression_level - Deflate compression level. If None, defaults to 5
+        (0 - disable, 1 - best speed, 9 - best compression).
 
     Returns the CIPDApi.Pin instance.
     """
@@ -427,10 +437,10 @@ class CIPDApi(recipe_api.RecipeApi):
             input_dir,
             output_package,
             package_name,
-            compression_level=None,
-            install_mode=None,
-            preserve_mtime=False,
-            preserve_writable=False):
+            compression_level: CompressionLevel | None = None,
+            install_mode: InstallMode | None = None,
+            preserve_mtime: bool = False,
+            preserve_writable: bool = False):
     """Builds, but does not upload, a cipd package from a directory.
 
     Args:
@@ -438,13 +448,13 @@ class CIPDApi(recipe_api.RecipeApi):
       * output_package (Path) - The file to write the package to.
       * package_name (str) - The name of the cipd package as it would appear
         when uploaded to the cipd package server.
-      * compression_level (None|[0-9]) - Deflate compression level. If None,
-        defaults to 5 (0 - disable, 1 - best speed, 9 - best compression).
-      * install_mode (None|'copy'|'symlink') - The mechanism that the cipd
-        client should use when installing this package. If None, defaults to the
-        platform default ('copy' on windows, 'symlink' on everything else).
-      * preserve_mtime (bool) - Preserve file's modification time.
-      * preserve_writable (bool) - Preserve file's writable permission bit.
+      * compression_level - Deflate compression level. If None, defaults to 5
+        (0 - disable, 1 - best speed, 9 - best compression).
+      * install_mode - The mechanism that the cipd client should use when
+        installing this package. If None, defaults to the platform default
+        ('copy' on windows, 'symlink' on everything else).
+      * preserve_mtime - Preserve file's modification time.
+      * preserve_writable - Preserve file's writable permission bit.
 
     Returns the CIPDApi.Pin instance.
     """
@@ -510,7 +520,7 @@ class CIPDApi(recipe_api.RecipeApi):
     return ['-verification-timeout', verification_timeout]
 
   @staticmethod
-  def _compression_level_opts(compression_level):
+  def _compression_level_opts(compression_level: CompressionLevel | None):
     if compression_level is None:
       return []
     check_type('compression_level', compression_level, int)
@@ -566,7 +576,7 @@ class CIPDApi(recipe_api.RecipeApi):
               tags=None,
               metadata=None,
               pkg_vars=None,
-              compression_level=None,
+              compression_level: CompressionLevel | None = None,
               verification_timeout=None):
     cmd = [
         'create',
@@ -601,7 +611,7 @@ class CIPDApi(recipe_api.RecipeApi):
                        tags=None,
                        metadata=None,
                        pkg_vars=None,
-                       compression_level=None,
+                       compression_level: CompressionLevel | None = None,
                        verification_timeout=None):
     """Builds and uploads a package based on on-disk YAML package definition
     file.
@@ -616,8 +626,8 @@ class CIPDApi(recipe_api.RecipeApi):
       * metadata (list[Metadata]) - A list of metadata entries to attach.
       * pkg_vars (dict[str]str) - A map of var name -> value to use for vars
         referenced in package definition file.
-      * compression_level (None|[0-9]) - Deflate compression level. If None,
-        defaults to 5 (0 - disable, 1 - best speed, 9 - best compression).
+      * compression_level - Deflate compression level. If None, defaults to 5
+        (0 - disable, 1 - best speed, 9 - best compression).
       * verification_timeout (str) - Duration string that controls the time to
         wait for backend-side package hash verification. Valid time units are
         "s", "m", "h". Default is "5m".
@@ -638,7 +648,7 @@ class CIPDApi(recipe_api.RecipeApi):
                       refs=None,
                       tags=None,
                       metadata=None,
-                      compression_level=None,
+                      compression_level: CompressionLevel | None = None,
                       verification_timeout=None):
     """Builds and uploads a package based on a PackageDefinition object.
 
@@ -651,8 +661,8 @@ class CIPDApi(recipe_api.RecipeApi):
       * tags (dict[str]str) - A map of tag name -> value to set for the
         package instance.
       * metadata (list[Metadata]) - A list of metadata entries to attach.
-      * compression_level (None|[0-9]) - Deflate compression level. If None,
-        defaults to 5 (0 - disable, 1 - best speed, 9 - best compression).
+      * compression_level - Deflate compression level. If None, defaults to 5
+        (0 - disable, 1 - best speed, 9 - best compression).
       * verification_timeout (str) - Duration string that controls the time to
         wait for backend-side package hash verification. Valid time units are
         "s", "m", "h". Default is "5m".
