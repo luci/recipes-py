@@ -99,9 +99,7 @@ class _MemoryProfiler(object):
         '-------- Diff between current snapshot (%s) and last snapshot (%s) '
         'Starts --------') % (snapshot_name, last_snapshot_name))
       diff = self._tracker.diff(summary1=memsum)
-      # TODO(yiwzhang): switch to yield from after moving to python 3
-      for diff_line in summary.format_(diff):
-        yield diff_line
+      yield from summary.format_(diff)
       yield ((
         '-------- Diff between current snapshot (%s) and last snapshot (%s) '
         'Ends --------') % (snapshot_name, last_snapshot_name))
@@ -113,9 +111,7 @@ class _MemoryProfiler(object):
       # time. From then onwards, dump diff only
       self._diff_snapshot = True
       yield '-------- Memory Snapshot (%s) Start --------' % snapshot_name
-      # TODO(yiwzhang): switch to yield from after moving to python 3
-      for snapshot_line in summary.format_(memsum):
-        yield snapshot_line
+      yield from summary.format_(memsum)
       yield '-------- Memory Snapshot (%s) Ends --------' % snapshot_name
 
 
