@@ -8,17 +8,11 @@ Depends on 'cipd' binary available in PATH:
 https://godoc.org/go.chromium.org/luci/cipd/client/cmd/cipd
 """
 
+from collections import defaultdict, namedtuple
+from collections.abc import Mapping, Sequence
 import contextlib
 import hashlib
 from typing import Literal
-
-from collections import defaultdict, namedtuple
-try:
-  from collections.abc import Mapping, Sequence
-except ImportError:  # pragma: no cover
-  # Required to support Python < 3.3.
-  # pylint: disable=deprecated-class
-  from collections import Mapping, Sequence
 
 from past.builtins import basestring
 
