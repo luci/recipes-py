@@ -5,9 +5,6 @@
 
 """Internal helpers for reporting test status to stdout."""
 
-
-from __future__ import print_function
-
 import collections
 import datetime
 import logging

@@ -12,7 +12,6 @@ correctly for all platforms under simulation).
 
 # TODO(luqui): Implement lint for recipe modules also.
 
-from __future__ import absolute_import, print_function
 import argparse
 import re
 import types

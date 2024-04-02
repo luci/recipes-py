@@ -5,7 +5,6 @@
 
 Provides testing fakes for RecipeDeps, useful for all recipe subcommands.
 """
-from __future__ import print_function
 
 import atexit
 import errno

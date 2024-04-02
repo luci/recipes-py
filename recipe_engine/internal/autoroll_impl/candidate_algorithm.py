@@ -2,8 +2,6 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from __future__ import print_function
-
 import collections
 import collections.abc
 import functools
@@ -11,7 +9,6 @@ import logging
 import os
 import sys
 import time
-
 
 from ..fetch import GitBackend
 

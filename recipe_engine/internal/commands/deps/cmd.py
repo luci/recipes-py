@@ -3,12 +3,9 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from __future__ import print_function, absolute_import
-
 import contextlib
 import logging
 import sys
-
 
 from google.protobuf import json_format as jsonpb
 

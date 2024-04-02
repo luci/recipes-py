@@ -13,8 +13,6 @@ repositories and the ability to make commits in them).
 Access this via test_env.RecipeEngineUnitTest.FakeRecipeDeps().
 """
 
-from __future__ import print_function
-
 import contextlib
 import errno
 from io import StringIO

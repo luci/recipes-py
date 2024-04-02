@@ -3,7 +3,6 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from __future__ import print_function, absolute_import
 from builtins import object, range, str
 
 from PB.recipe_engine import doc

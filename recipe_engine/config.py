@@ -68,7 +68,6 @@ configurations. See the documentation on config_item_context and the BaseConfig
 derivatives for more info.
 """
 
-from __future__ import absolute_import
 from builtins import object
 from past.builtins import basestring
 
