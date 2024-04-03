@@ -1,6 +1,5 @@
-monorail_bug_default {
-  host: "bugs.chromium.org"
-  project: "chromium"
+google_issue_default {
+  host: "issues.chromium.org"
 }
 
 warning {

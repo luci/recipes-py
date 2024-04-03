@@ -13,8 +13,12 @@ message DefinitionCollection {
   repeated Definition warning = 1;
 
   // (optional) contains the default values for fields in all MonorailBug
-  // message proto instances enclosed in this DefinitionCollection
+  // message proto instances enclosed in this DefinitionCollection.
   MonorailBugDefault monorail_bug_default = 2;
+
+  // (optional) contains the default values for fields in all GoogleIssue
+  // message proto instances enclosed in this DefinitionCollection.
+  GoogleIssueDefault google_issue_default = 3;
 }
 
 message Definition {
@@ -36,14 +40,16 @@ message Definition {
   // recipe test execution to error out once the deadline is passed
   string deadline = 3;
 
-  // (optional) a list of monorail bugs associated with the current warning
-  // TODO: (yiwzhang) The bugs are currently for informal purpose only as well.
-  // No automation has been built upon that.
+  // (optional) a list of monorail bugs associated with the current warning.
   repeated MonorailBug monorail_bug = 4;
+
+  // (optional) a list of Google Issue tracker bugs associated with the current
+  // warning.
+  repeated GoogleIssue google_issue = 5;
 }
 
-// The proto message that models a bug in the Monorail. The existence
-// of supplied bug won't be validated
+// The proto message that models a bug in the Monorail issue tracker. The
+// existence of the supplied bug won't be validated.
 message MonorailBug {
   // (required if host is not provided in MonorailBugDefault) host name of
   // monorail. E.g. bugs.chromium.org
@@ -53,6 +59,21 @@ message MonorailBug {
   string project = 2;
   // (required) bug numeric id
   uint32 id = 3;
+}
+
+// The proto message that models a bug in the Google issue tracker. The
+// existence of the supplied bug won't be validated.
+message GoogleIssue {
+  // (required if host is not provided in GoogleIssueDefault) host name of
+  // google issue tracker. E.g. issues.chromium.org
+  string host = 1;
+  // (required) bug numeric id
+  uint32 id = 2;
+}
+
+message GoogleIssueDefault {
+  // (optional) host name of google issue tracker, e.g. issues.chromium.org
+  string host = 1;
 }
 
 // The proto message that contains the default value for the MonorailBug proto

@@ -6,80 +6,103 @@
 import contextlib
 import inspect
 import os
-import re
 import textwrap
 
 from unittest import mock
 
 import test_env
 
-from recipe_engine.internal.recipe_deps import (
-  Recipe,
-  RecipeDeps,
-  RecipeModule,
-  RecipeRepo)
+from recipe_engine.internal.recipe_deps import (Recipe, RecipeDeps,
+                                                RecipeModule)
 from recipe_engine.internal.warn import escape, record
 from recipe_engine.internal.warn.definition import (
-  RECIPE_WARNING_DEFINITIONS_REL,
-  _populate_monorail_bug_default_fields,
-  _validate,
+    RECIPE_WARNING_DEFINITIONS_REL,
+    _populate_bug_issue_fields,
+    _validate,
 )
 
 import PB.recipe_engine.warning as warning_pb
 
-def create_definition(
-  name, description=None, deadline=None, monorail_bug=None):
+def create_definition(name,
+                      description=None,
+                      deadline=None,
+                      monorail_bug=None,
+                      google_issue=None):
   """Shorthand to create a warning definition proto message based on the
   given input"""
   return warning_pb.Definition(
-    name = name,
-    description = description,
-    deadline = deadline,
-    monorail_bug = [monorail_bug] if monorail_bug else None,
+      name=name,
+      description=description,
+      deadline=deadline,
+      monorail_bug=[monorail_bug] if monorail_bug else None,
+      google_issue=[google_issue] if google_issue else None,
   )
 
+
 class TestWarningDefinition(test_env.RecipeEngineUnitTest):
-  def test_populate_monorail_bug_default_fields(self):
+
+  def test_populate_google_issue_default_fields(self):
     # No Default fields specified
     definition = create_definition(
-      'WARNING_NAME', monorail_bug=warning_pb.MonorailBug(id=123))
+        'WARNING_NAME',
+        monorail_bug=warning_pb.MonorailBug(id=123),
+        google_issue=warning_pb.GoogleIssue(id=123),
+    )
     expected_definition = warning_pb.Definition()
     expected_definition.CopyFrom(definition)
-    _populate_monorail_bug_default_fields(
-      [definition], warning_pb.MonorailBugDefault())
+    _populate_bug_issue_fields([definition], warning_pb.MonorailBugDefault(),
+                               warning_pb.GoogleIssueDefault())
     self.assertEqual(expected_definition, definition)
 
     # All Default fields specified
     definition = create_definition(
-      'WARNING_NAME',
-      monorail_bug=warning_pb.MonorailBug(project= 'two', id=123))
-    _populate_monorail_bug_default_fields(
-      [definition], warning_pb.MonorailBugDefault(host='a.com', project='one'))
+        'WARNING_NAME',
+        monorail_bug=warning_pb.MonorailBug(project='two', id=123),
+        google_issue=warning_pb.GoogleIssue(id=123))
+    _populate_bug_issue_fields(
+        [definition],
+        warning_pb.MonorailBugDefault(host='m.com', project='one'),
+        warning_pb.GoogleIssueDefault(host='g.com'),
+    )
     expected_definition = create_definition(
-      'WARNING_NAME',
-      # default project should not override the existing one
-      monorail_bug=warning_pb.MonorailBug(host='a.com', project='two', id=123))
+        'WARNING_NAME',
+        # default project should not override the existing one
+        monorail_bug=warning_pb.MonorailBug(
+            host='m.com', project='two', id=123),
+        google_issue=warning_pb.GoogleIssue(host='g.com', id=123))
     self.assertEqual(expected_definition, definition)
 
     # Partial fields specified
     definition = create_definition(
-      'WARNING_NAME', monorail_bug=warning_pb.MonorailBug(id=123))
-    _populate_monorail_bug_default_fields(
-      [definition], warning_pb.MonorailBugDefault(host='a.com'))
+        'WARNING_NAME',
+        monorail_bug=warning_pb.MonorailBug(id=123),
+        google_issue=warning_pb.GoogleIssue(id=123),
+    )
+    _populate_bug_issue_fields(
+        [definition],
+        warning_pb.MonorailBugDefault(host='m.com'),
+        warning_pb.GoogleIssueDefault(host='g.com'),
+    )
     expected_definition = create_definition(
-      'WARNING_NAME',
-      monorail_bug=warning_pb.MonorailBug(host='a.com', id=123))
+        'WARNING_NAME',
+        monorail_bug=warning_pb.MonorailBug(host='m.com', id=123),
+        google_issue=warning_pb.GoogleIssue(host='g.com', id=123),
+    )
     self.assertEqual(expected_definition, definition)
 
   def test_valid_definitions(self):
     simple_definition = create_definition('SIMPLE_WARNING_NAME')
     _validate(simple_definition)
     full_definition = create_definition(
-      'FULL_WARNING_NAME',
-      description = ['this is a description',],
-      deadline = '2020-12-31',
-      monorail_bug = warning_pb.MonorailBug(
-        host='bugs.chromium.org', project= 'chromium', id=123456),
+        'FULL_WARNING_NAME',
+        description=[
+            'this is a description',
+        ],
+        deadline='2020-12-31',
+        monorail_bug=warning_pb.MonorailBug(
+            host='bugs.chromium.org', project='chromium', id=123456),
+        google_issue=warning_pb.GoogleIssue(
+            host='issues.chromium.org', id=123456),
     )
     _validate(full_definition)
 
@@ -97,18 +120,35 @@ class TestWarningDefinition(test_env.RecipeEngineUnitTest):
       _validate(definition)
     # No project specified
     definition = create_definition(
+        'WARNING_NAME',
+        monorail_bug=warning_pb.MonorailBug(
+            host='bugs.chromium.org', id=123456),
+    )
+    with self.assertRaises(ValueError):
+      _validate(definition)
+    # No id specified
+    definition = create_definition(
+        'WARNING_NAME',
+        monorail_bug=warning_pb.MonorailBug(
+            host='bugs.chromium.org', project='chromium'),
+    )
+    with self.assertRaises(ValueError):
+      _validate(definition)
+
+  def test_invalid_google_issue(self):
+    # No host specified
+    definition = create_definition(
       'WARNING_NAME',
-      monorail_bug = warning_pb.MonorailBug(
-        host='bugs.chromium.org', id=123456),
+      google_issue = warning_pb.GoogleIssue(id=123456),
       )
     with self.assertRaises(ValueError):
       _validate(definition)
     # No id specified
     definition = create_definition(
-      'WARNING_NAME',
-      monorail_bug = warning_pb.MonorailBug(
-        host='bugs.chromium.org', project='chromium'),
-      )
+        'WARNING_NAME',
+        google_issue=warning_pb.GoogleIssue(
+            host='issues.chromium.org'),
+    )
     with self.assertRaises(ValueError):
       _validate(definition)
 
@@ -391,6 +431,9 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     self.deps = self.FakeRecipeDeps()
     with self.deps.main_repo.write_file(RECIPE_WARNING_DEFINITIONS_REL) as d:
       d.write('''
+      google_issue_default {
+        host: "issues.chromium.org"
+      }
       monorail_bug_default {
         host: "bugs.chromium.org"
         project: "chromium"
@@ -402,6 +445,9 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
         monorail_bug {
           id: 123456
         }
+        google_issue {
+          id: 123456
+        }
       }
       warning {
         name: "MYMODULE_DEPRECATION"
@@ -409,6 +455,9 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
         # Comment goes here
         description: "Use other_mod instead."
         deadline: "2020-12-31"
+        google_issue {
+          id: 654321
+        }
         monorail_bug {
           project: "chrome-operations"
           id: 654321
@@ -468,7 +517,9 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
       The `badarg` argument on my_mod\.swizzle is deprecated\.
     Deadline: 2020-01-01
 
-    Bug Link: https://bugs\.chromium\.org/p/chromium/issues/detail\?id=123456
+    Bug Links:
+      https://bugs\.chromium\.org/p/chromium/issues/detail\?id=123456
+      https://issues\.chromium\.org/123456
     Call Sites:
     .+/recipe_modules/cool_mod/api\.py:\d+
     .+/recipe_modules/my_mod/tests/bad\.py:3
@@ -510,7 +561,9 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
       Use other_mod instead\.
     Deadline: 2020-12-31
 
-    Bug Link: https://bugs\.chromium\.org/p/chrome\-operations/issues/detail\?id=654321
+    Bug Links:
+      https://bugs\.chromium\.org/p/chrome\-operations/issues/detail\?id=654321
+      https://issues\.chromium\.org/654321
     Import Sites:
     .+/recipe_modules/my_mod/tests/full\.py
     .+/recipe_modules/cool_mod/__init__\.py
@@ -546,7 +599,9 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
       Use other_mod instead\.
     Deadline: 2020-12-31
 
-    Bug Link: https://bugs\.chromium\.org/p/chrome\-operations/issues/detail\?id=654321
+    Bug Links:
+      https://bugs\.chromium\.org/p/chrome\-operations/issues/detail\?id=654321
+      https://issues\.chromium\.org/654321
     Call Sites:
     .+/recipe_modules/my_mod/tests/full\.py:3
     Import Sites:
@@ -674,6 +729,9 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     upstream = self.deps.add_repo('upstream')
     with upstream.write_file(RECIPE_WARNING_DEFINITIONS_REL) as d:
       d.write('''
+      google_issue_default {
+        host: "issues.chromium.org"
+      }
       monorail_bug_default {
         host: "bugs.chromium.org"
         project: "chromium"
@@ -682,7 +740,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
         name: "MYMODULE_SWIZZLE_BADARG_USAGE"
         description: "The `badarg` argument on my_mod.swizzle is deprecated."
         deadline: "2020-01-01"
-        monorail_bug {
+        google_issue {
           id: 123456
         }
       }
@@ -752,7 +810,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
       The `badarg` argument on my_mod\.swizzle is deprecated\.
     Deadline: 2020-01-01
 
-    Bug Link: https://bugs\.chromium\.org/p/chromium/issues/detail\?id=123456
+    Bug Link: https://issues\.chromium\.org/123456
     Call Sites:
     .+/main/recipes/bad\.py:3
     '''.strip('\n'))

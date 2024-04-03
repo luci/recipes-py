@@ -350,19 +350,23 @@ def _collect_global_warnings_result(outcome_msg):
 
 def _print_warnings(warning_result, recipe_deps):
   def print_bug_links(definition):
-    def construct_monorail_link(bug):
-      return 'https://%s/p/%s/issues/detail?id=%d' % (
-          bug.host, bug.project, bug.id)
+    bug_links = [
+      f'https://{bug.host}/p/{bug.project}/issues/detail?id={bug.id}'
+      for bug in definition.monorail_bug
+    ] + [
+      f'https://{iss.host}/{iss.id}'
+      for iss in definition.google_issue
+    ]
 
-    if definition.monorail_bug:
+    if bug_links:
       print()
-      if len(definition.monorail_bug) == 1:
-        print('Bug Link: %s' % (
-            construct_monorail_link(definition.monorail_bug[0]),))
+      if len(bug_links) == 1:
+        print(f'Bug Link: {bug_links[0]}')
       else:
         print('Bug Links:')
-        for bug in definition.monorail_bug:
-          print('  %s' % construct_monorail_link(bug))
+        for link in bug_links:
+          print(f'  {link}')
+
 
   def print_call_sites(call_sites):
     def stringify_frame(frame):

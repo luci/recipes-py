@@ -713,15 +713,14 @@ A warning is defined in the file `recipe.warnings` under the recipe folder in a
 repo. `recipes.warnings` is a text proto formatted file of
 `DefinitionCollection` Message in [warning.proto]. Example as follows:
 
-    monorail_bug_default {
-      host: "bugs.chromium.org"
-      project: "chromium"
+    google_issue_default {
+      host: "issues.chromium.org"
     }
     warning {
       name: "MYMODULE_SWIZZLE_BADARG_USAGE"
       description: "The `badarg` argument on mymodule.swizzle is deprecated and replaced with swizmod."
       deadline: "2020-01-01"
-      monorail_bug {
+      google_issue {
         id: 123456
       }
     }
@@ -733,10 +732,10 @@ repo. `recipes.warnings` is a text proto formatted file of
       description: "" # blank line
       description: "MyModule contains infra specific logic."
       deadline: "2020-12-31"
-      monorail_bug {
+      google_issue {
         id: 987654
       }
-      monorail_bug {
+      google_issue {
         project: "chrome-operations"
         id: 654321
       }

@@ -14,6 +14,7 @@ from google.protobuf import text_format as textpb
 # path (where the "recipes" and/or "recipe_modules" directories sit)
 RECIPE_WARNING_DEFINITIONS_REL = 'recipe.warnings'
 
+
 def parse_warning_definitions(file_path):
   """Parse the warning definition file at the given absolute path. The file
   content is expected to be in text proto format of warning.DefinitionCollection
@@ -40,8 +41,9 @@ def parse_warning_definitions(file_path):
   definitions = list(definition_collection.warning)
 
   if definition_collection.HasField('monorail_bug_default'):
-    _populate_monorail_bug_default_fields(
-      definitions, definition_collection.monorail_bug_default)
+    _populate_bug_issue_fields(definitions,
+                               definition_collection.monorail_bug_default,
+                               definition_collection.google_issue_default)
 
   ret = {}
   for definition in definitions:
@@ -52,10 +54,12 @@ def parse_warning_definitions(file_path):
     ret[definition.name] = definition
   return ret
 
-def _populate_monorail_bug_default_fields(definitions, monorail_bug_default):
-  """If default field value has been declared for monorail bug, run through all
-  monorail bugs declared in all warning definitions and assign default
-  value to fields which are empty
+
+def _populate_bug_issue_fields(definitions, monorail_bug_default,
+                               google_issue_default):
+  """If default field value has been declared for bugs/issues, run through all
+  bugs/issues declared in all warning definitions and assign default value to
+  fields which are unset.
 
   Args:
     * definitions (list of warning.Definition)
@@ -67,6 +71,10 @@ def _populate_monorail_bug_default_fields(definitions, monorail_bug_default):
     for bug in definition.monorail_bug:
       bug.host = bug.host or monorail_bug_default.host
       bug.project = bug.project or monorail_bug_default.project
+
+    for iss in definition.google_issue:
+      iss.host = iss.host or google_issue_default.host
+
 
 def _validate(definition):
   """Ensure the given warning definition is valid. ValueError will be
@@ -93,6 +101,12 @@ def _validate(definition):
     _require_non_zero_value(bug.host, err_msg_template % 'host')
     _require_non_zero_value(bug.project, err_msg_template % 'project')
     _require_non_zero_value(bug.id, err_msg_template % 'id')
+
+  for iss in definition.google_issue:
+    err_msg_template = 'Field: %s is required; Got empty value'
+    _require_non_zero_value(iss.host, err_msg_template % 'host')
+    _require_non_zero_value(iss.id, err_msg_template % 'id')
+
 
 def _require_non_zero_value(value, message):
   """Raise ValueError with message if the supplied value is a zero value
