@@ -12,6 +12,21 @@
     "name": "get access token for key_name.json"
   },
   {
+    "cmd": [
+      "luci-auth",
+      "token",
+      "-use-id-token",
+      "-audience",
+      "http://www.example.com",
+      "-service-account-json",
+      "[START_DIR]/key_name.json",
+      "-lifetime",
+      "3m"
+    ],
+    "infra_step": true,
+    "name": "get ID token for key_name.json"
+  },
+  {
     "name": "$result"
   }
 ]

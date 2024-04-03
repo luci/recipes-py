@@ -3839,7 +3839,7 @@ Depends on luci-auth to be in PATH.
 
 #### **class [ServiceAccountApi](/recipe_modules/service_account/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#470)):**
 
-&mdash; **def [default](/recipe_modules/service_account/api.py#56)(self):**
+&mdash; **def [default](/recipe_modules/service_account/api.py#72)(self):**
 
 Returns an account associated with the task.
 
@@ -3847,7 +3847,7 @@ On LUCI, this is default account exposed through LUCI_CONTEXT["local_auth"]
 protocol. When running locally this is an account the user logged in via
 "luci-auth login ..." command prior to running the recipe.
 
-&mdash; **def [from\_credentials\_json](/recipe_modules/service_account/api.py#65)(self, key_path):**
+&mdash; **def [from\_credentials\_json](/recipe_modules/service_account/api.py#81)(self, key_path):**
 
 Returns a service account based on a JSON credentials file.
 

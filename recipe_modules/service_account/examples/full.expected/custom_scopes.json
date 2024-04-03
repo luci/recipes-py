@@ -12,6 +12,19 @@
     "name": "get access token for default account"
   },
   {
+    "cmd": [
+      "luci-auth",
+      "token",
+      "-use-id-token",
+      "-audience",
+      "http://www.example.com",
+      "-lifetime",
+      "3m"
+    ],
+    "infra_step": true,
+    "name": "get ID token for default account"
+  },
+  {
     "name": "$result"
   }
 ]

@@ -25,6 +25,7 @@ def RunSteps(api, key_path, scopes):
   else:
     account = api.service_account.default()
   account.get_access_token(scopes)
+  account.get_id_token("http://www.example.com")
 
 
 def GenTests(api):
