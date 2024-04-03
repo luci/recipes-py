@@ -567,7 +567,7 @@ def _make_path_cleaner(recipe_deps):
 
 
 @attr.s(frozen=True)
-class DescriptionWithCallback(object):
+class DescriptionWithCallback:
 
   description = attr.ib()
   callback = attr.ib()

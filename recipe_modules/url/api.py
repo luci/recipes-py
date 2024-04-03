@@ -34,7 +34,7 @@ class UrlApi(recipe_api.RecipeApi):
   _PyCurlStatus = collections.namedtuple('_PyCurlStatus', (
       'status_code', 'success', 'size', 'error_body'))
 
-  class Response(object):
+  class Response:
     """Response is an HTTP response object."""
 
     def __init__(self, method, output, status, infra_step):

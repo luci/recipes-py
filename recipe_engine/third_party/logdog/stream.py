@@ -94,7 +94,7 @@ class StreamParams(_StreamParamsBase):
     return json.dumps(obj, sort_keys=True, ensure_ascii=True, indent=None)
 
 
-class StreamProtocolRegistry(object):
+class StreamProtocolRegistry:
   """Registry of streamserver URI protocols and their client classes.
   """
 
@@ -138,11 +138,11 @@ _default_registry = StreamProtocolRegistry()
 create = _default_registry.create
 
 
-class StreamClient(object):
+class StreamClient:
   """Abstract base class for a streamserver client.
   """
 
-  class _StreamBase(object):
+  class _StreamBase:
     """ABC for StreamClient streams."""
 
     def __init__(self, stream_client, params):
@@ -555,7 +555,7 @@ class _UnixDomainSocketStreamClient(StreamClient):
   """A StreamClient implementation that uses a UNIX domain socket.
   """
 
-  class SocketFile(object):
+  class SocketFile:
     """A write-only file-like object that writes to a UNIX socket."""
 
     def __init__(self, sock):

@@ -142,7 +142,7 @@ def _expand_mock_imports(*mock_imports):
   for mi in mock_imports:
     combined_imports.update(mi)
 
-  class expando(object):
+  class expando:
     pass
 
   # expand combined_imports so it supports trivial lookups.

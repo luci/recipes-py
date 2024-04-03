@@ -43,7 +43,7 @@ else:
 
 
 @attr.s(frozen=True)
-class _ProtoInfo(object):
+class _ProtoInfo:
   """_ProtoInfo holds information about the proto files found in a recipe repo.
   """
   # Native-slash-delimited path to the source file
@@ -248,7 +248,7 @@ def _gather_protos(deps):
 
 
 @attr.s
-class _DirMaker(object):
+class _DirMaker:
   """Helper class to make directories on disk, handling errors for directories
   which exist and only making a given directory once."""
   made_dirs = attr.ib(factory=set)

@@ -51,7 +51,7 @@ MAX_SUMMARY_MARKDOWN_SIZE = 4000
 
 
 @attr.s(frozen=True, slots=True, repr=False)
-class _ActiveStep(object):
+class _ActiveStep:
   """The object type that we keep in RecipeEngine._step_stack."""
   step_data = attr.ib()    # type: StepData
   step_stream = attr.ib()  # type: StepStream
@@ -69,7 +69,7 @@ class _ActiveStep(object):
       self.step_data.presentation.finalize(self.step_stream)
       self.step_stream.close()
 
-class _MemoryProfiler(object):
+class _MemoryProfiler:
   """The memory profiler used in recipe engine that is backed by Pympler.
 
   Note: This class is currently not thread safe. The snapshot operation is not
@@ -129,7 +129,7 @@ def _get_reasons(exception: Exception) -> list[str]:
     return [str(exception)]
 
 
-class RecipeEngine(object):
+class RecipeEngine:
   """
   Knows how to execute steps emitted by a recipe, holds global state such as
   step history and build properties. Each recipe module API has a reference to

@@ -16,7 +16,7 @@ from collections import defaultdict, OrderedDict, namedtuple
 _filterRegexEntry = namedtuple('_filterRegexEntry', 'at_most at_least fields')
 
 
-class Filter(object):
+class Filter:
   """Filter is an implementation of a post_process callable which can remove
   unwanted data from a step OrderedDict."""
 

@@ -76,7 +76,7 @@ def memoize(f):
   return cached
 
 
-class _ConfigFinder(object):
+class _ConfigFinder:
 
   def __init__(self, commit_lists_by_repo, new_repo_commit_list_getter):
     self._commit_lists_by_repo = commit_lists_by_repo

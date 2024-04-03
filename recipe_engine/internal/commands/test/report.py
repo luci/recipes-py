@@ -23,7 +23,7 @@ from ...warn.cause import CallSite, ImportSite
 
 
 @attr.s
-class Reporter(object):
+class Reporter:
   _recipe_deps = attr.ib()
 
   _use_emoji = attr.ib()
@@ -318,7 +318,7 @@ def _print_detail_info(err_buf, test_name, test_result):
 
 
 @attr.s
-class PerWarningResult(object):
+class PerWarningResult:
   call_sites = attr.ib(factory=set)
   import_sites = attr.ib(factory=set)
 

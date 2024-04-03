@@ -22,7 +22,7 @@ from ..attr_util import attr_type, attr_value_is, attr_list_type
 from ...engine_types import freeze
 
 @attr.s(frozen=True)
-class Frame(object):
+class Frame:
   """Equivalent to warning_pb.Frame."""
   # Absolute file path that contains the code object frame is executing.
   file = attr.ib(
@@ -57,7 +57,7 @@ class Frame(object):
     )
 
 @attr.s(frozen=True)
-class CallSite(object):
+class CallSite:
   """Equivalent to warning_pb.CallSite."""
   # The frame of the call site. The frame will have empty value for all its
   # attributes if call site can't be attributed.
@@ -89,7 +89,7 @@ class CallSite(object):
 
 
 @attr.s(frozen=True)
-class ImportSite(object):
+class ImportSite:
   """Equivalent to warning_pb.ImportSite"""
   # Name of the repo that recipe or recipe module is in
   repo = attr.ib(validator=attr_type(str))

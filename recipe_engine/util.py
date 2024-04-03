@@ -47,7 +47,7 @@ class ModuleInjectionError(AttributeError):
   pass
 
 
-class ModuleInjectionSite(object):
+class ModuleInjectionSite:
   def __init__(self, owner_module=None):
     self.owner_module = owner_module
 
@@ -57,7 +57,7 @@ class ModuleInjectionSite(object):
       % (module_name(self.owner_module), key))
 
 
-class Placeholder(object):
+class Placeholder:
   """Base class for command line argument placeholders. Do not use directly."""
   def __init__(self, name=None):
     if name is not None:
@@ -174,7 +174,7 @@ def returns_placeholder(func):
   else:
     raise ValueError('Expected either a function or string; got %r' % func)
 
-class StringListIO(object):
+class StringListIO:
   def __init__(self):
     self.lines = [StringIO()]
 
@@ -194,7 +194,7 @@ class StringListIO(object):
       self.lines[-1] = self.lines[-1].getvalue()
 
 
-class exponential_retry(object):
+class exponential_retry:
   """Decorator which retries the function if an exception is encountered.
 
   THIS FUNCTION IS DEPRECATED.Use the 'time' recipe module's version of this

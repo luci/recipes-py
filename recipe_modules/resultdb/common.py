@@ -11,7 +11,7 @@ from PB.go.chromium.org.luci.resultdb.proto.v1 import invocation as invocation_p
 from PB.go.chromium.org.luci.resultdb.proto.v1 import test_result as test_result_pb2
 
 
-class Invocation(object):
+class Invocation:
   """A ResultDB invocation with contents.
 
   Reference: go/resultdb-concepts.

@@ -15,7 +15,7 @@ from recipe_engine import recipe_api
 
 class ServiceAccountApi(recipe_api.RecipeApi):
 
-  class ServiceAccount(object):
+  class ServiceAccount:
     """Represents some service account available to the recipe.
 
     Grab an instance of this class via 'default()' or 'from_credentials_json()'.

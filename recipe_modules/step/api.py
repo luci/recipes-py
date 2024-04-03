@@ -211,7 +211,7 @@ class StepApi(recipe_api.RecipeApi):
   # To make migration smoother, we yield a hacky object which passes through
   # everything to the real presentation, except for `.presentation` which
   # returns the StepPresentation directly. Ick.
-  class _StepPresentationProxy(object):
+  class _StepPresentationProxy:
     def __init__(self, presentation):
       object.__setattr__(self, 'presentation', presentation)
 

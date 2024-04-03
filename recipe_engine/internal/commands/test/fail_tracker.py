@@ -7,7 +7,7 @@ from typing import TextIO
 
 import attr
 
-class ClosedFailFile(object):
+class ClosedFailFile:
   """Sentinel class that replaced the fail file after it's been closed."""
   pass
 
@@ -16,7 +16,7 @@ class FailFileAlreadyClosedException(Exception):
   pass
 
 @attr.s
-class FailTracker(object):
+class FailTracker:
   """Tracks which tests have failed since the last run.
 
   Saves the failures to a file, and loads them into an instance variable to run

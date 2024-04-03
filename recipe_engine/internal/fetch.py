@@ -33,7 +33,7 @@ CommitMetadata = namedtuple(
   'revision author_email commit_timestamp message_lines spec roll_candidate')
 
 
-class Backend(object):
+class Backend:
   def __init__(self, checkout_dir, repo_url):
     """
     Args:

@@ -86,7 +86,7 @@ def typeAssert(obj, typearg):
   if not isinstance(obj, typearg):
     raise TypeError("Expected %r to be of type %r" % (obj, typearg))
 
-class ConfigContext(object):
+class ConfigContext:
   """A configuration context for a recipe module.
 
   Holds configuration schema and also acts as a config_ctx decorator.
@@ -279,12 +279,12 @@ def config_item_context(CONFIG_SCHEMA):
   return ConfigContext(CONFIG_SCHEMA)
 
 
-class AutoHide(object):
+class AutoHide:
   pass
 AutoHide = AutoHide()
 
 
-class ConfigBase(object):
+class ConfigBase:
   """This is the root interface for all config schema types."""
 
   def __init__(self, hidden=AutoHide):
@@ -364,7 +364,7 @@ def _inner_type_schema(inner_type):
   return sorted(set(ret))
 
 
-class ConfigSchemaBase(object):
+class ConfigSchemaBase:
   """
   A ConfigSchema is an immutable object whose only purpose is to define a
   particular schema which can be re-used many times with no re-use issues.

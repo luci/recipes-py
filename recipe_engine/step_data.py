@@ -16,7 +16,7 @@ from .engine_types import StepPresentation
 
 
 @attr.s
-class _AttributeRaiser(object):
+class _AttributeRaiser:
   _step_name = attr.ib(validator=attr_type(basestring))
   _namespace = attr.ib(validator=attr_type(str))
   # `_finalized` doesn't use `attr.s` because of the shenanigans we do with
@@ -40,7 +40,7 @@ class _AttributeRaiser(object):
 
 
 @attr.s(frozen=True)
-class ExecutionResult(object):
+class ExecutionResult:
   # retcode is the integer returncode of the step, if the step ran and the
   # engine was able to wait() for it. Otherwise this is None.
   retcode = attr.ib(validator=attr_type((int, type(None))), default=None)
@@ -70,7 +70,7 @@ class ExecutionResult(object):
 
 
 @attr.s
-class StepData(object):
+class StepData:
   """StepData represents the result of running a step.
 
   For historical reasons, this object has dynamic properties depending on the

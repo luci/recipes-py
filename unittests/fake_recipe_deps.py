@@ -57,7 +57,7 @@ def _get_suite(buf, default, indent='  '):
 
 
 @attr.s
-class FakeRecipeRepo(object):
+class FakeRecipeRepo:
   """Manipulates a recipe repo on disk (as a git repository)."""
 
   # The FakeRecipeDeps which owns this repo.
@@ -182,7 +182,7 @@ class FakeRecipeRepo(object):
     return os.path.isfile(os.path.join(self.path, path))
 
   @attr.s(slots=True)
-  class WriteableRecipe(object):
+  class WriteableRecipe:
     """Yielded from the `write_recipe` method. Used to generate a recipe on
     disk.
 
@@ -319,7 +319,7 @@ class FakeRecipeRepo(object):
     self.recipes_py('doc')
 
   @attr.s(slots=True)
-  class WriteableModule(object):
+  class WriteableModule:
     """Yielded from the `write_module` method. Used to generate a recipe module
     on disk.
 
@@ -544,7 +544,7 @@ class FakeRecipeRepo(object):
 
 
 @attr.s
-class FakeRecipeDeps(object):
+class FakeRecipeDeps:
   """FakeRecipeDeps is a heavyweight testing object which controls a collection
   of git repos on disk.
 

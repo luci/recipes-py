@@ -29,7 +29,7 @@ from recipe_engine.internal.commands.test import test_name
 
 class Common(test_env.RecipeEngineUnitTest):
   @attr.s(frozen=True)
-  class JsonResult(object):
+  class JsonResult:
     text_output = attr.ib()
     data = attr.ib()
 

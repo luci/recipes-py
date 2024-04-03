@@ -151,7 +151,7 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
   StopApplyingMocks = object()
 
   @attr.s
-  class _MockEditData(object):
+  class _MockEditData:
     # Callable[
     #   [job.Definition, List[string], string],
     #   Union[None, StopApplyingMocks]

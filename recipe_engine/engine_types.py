@@ -224,7 +224,7 @@ class _OrderedDictString(collections.OrderedDict):
     return self[key]  # __setitem__ can replace a list with a _StringSequence.
 
 
-class StepPresentation(object):
+class StepPresentation:
   """StepPresentation allows recipes to alter the presentation of their recipe
   step in both the Buildbucket Build message, as well as it's visual
   presentation on e.g. ci.chromium.org (i.e. 'milo' UI service).
@@ -544,7 +544,7 @@ class StepPresentation(object):
 
 
 @attr.s(frozen=True)
-class ResourceCost(object):
+class ResourceCost:
   """A structure defining the resources that a given step may need.
 
   For use with `api.step`; attaching a ResourceCost to a step will allow the

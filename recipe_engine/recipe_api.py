@@ -45,7 +45,7 @@ from recipe_engine import config_types
 from recipe_engine import recipe_test_api  # pylint: disable=unused-import
 
 
-class UnknownRequirementError(object):
+class UnknownRequirementError:
   """Raised by a requirement function when the referenced requirement is
   unknown.
   """
@@ -57,7 +57,7 @@ class UnknownRequirementError(object):
     self.name = req._name
 
 
-class UnresolvedRequirement(object):
+class UnresolvedRequirement:
   """Internal placeholder type for an unresolved module/recipe requirement."""
 
   def __init__(self, typ, name):
@@ -109,7 +109,7 @@ def RequireClient(name):
 
 
 @attr.s(frozen=True, slots=True)
-class LUCIContextClient(object):
+class LUCIContextClient:
   """A recipe engine client which reads/writes the LUCI_CONTEXT."""
   IDENT = 'lucictx'
   ENV_KEY = luci_context.ENV_KEY
@@ -118,7 +118,7 @@ class LUCIContextClient(object):
                             factory=dict, converter=freeze)
 
 
-class PathsClient(object):
+class PathsClient:
   """A recipe engine client which exposes all known base paths.
 
   In particular, you can use this client to discover all known:
@@ -198,7 +198,7 @@ class PathsClient(object):
     return self._start_dir
 
 
-class PropertiesClient(object):
+class PropertiesClient:
   """A recipe engine client representing the recipe engine properties."""
 
   IDENT = 'properties'
@@ -210,7 +210,7 @@ class PropertiesClient(object):
     return copy.deepcopy(self._properties)
 
 
-class StepClient(object):
+class StepClient:
   """A recipe engine client representing step running and introspection."""
 
   IDENT = 'step'
@@ -268,7 +268,7 @@ class _spawner(Protocol):
 
 
 @attr.s(frozen=True, slots=True)
-class ConcurrencyClient(object):
+class ConcurrencyClient:
   IDENT = 'concurrency'
 
   supports_concurrency: bool = attr.ib()
@@ -278,7 +278,7 @@ class ConcurrencyClient(object):
     return self._spawn_impl(func, args, kwargs, greenlet_name)
 
 
-class WarningClient(object):
+class WarningClient:
   IDENT = 'warning'
 
   def __init__(self, recorder, recipe_deps: 'recipe_deps.RecipeDeps'):
@@ -467,7 +467,7 @@ class InfraFailure(StepFailure):
     return "Infra Failure: Step({!r})".format(self.name)
 
 
-class RecipeApi(object):
+class RecipeApi:
   """
   Framework class for handling recipe_modules.
 
@@ -667,7 +667,7 @@ class RecipeScriptApi:
 # specify a default of None that will actually be respected.
 PROPERTY_SENTINEL = object()
 
-class BoundProperty(object):
+class BoundProperty:
   """
   A bound, named version of a Property.
 
@@ -851,7 +851,7 @@ class BoundProperty(object):
       "No default specified and no value provided for '{}' from {} '{}'".format(
         self.name, self.__property_type, self.full_decl_name))
 
-class Property(object):
+class Property:
   def __init__(self, default=PROPERTY_SENTINEL, from_environ=None, help="",
                kind=None, param_name=None):
     """

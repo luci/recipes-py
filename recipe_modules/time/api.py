@@ -15,7 +15,7 @@ import gevent
 from recipe_engine.internal.global_shutdown import GLOBAL_SHUTDOWN
 
 
-class exponential_retry(object):
+class exponential_retry:
   """Decorator which retries the function with exponential backoff.
 
   See TimeApi.exponential_retry for full documentation.

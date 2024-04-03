@@ -39,7 +39,7 @@ import os
 import sys
 
 
-class RecipeModuleImporter(object):
+class RecipeModuleImporter:
   """This implements both the `find_module` and `load_module` halves of the
   import hook protocol.
 

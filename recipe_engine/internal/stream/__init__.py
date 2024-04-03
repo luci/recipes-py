@@ -25,8 +25,8 @@ import time
 from ..engine_step import StepConfig
 
 
-class StreamEngine(object):
-  class Stream(object):
+class StreamEngine:
+  class Stream:
     def write_line(self, line):
       raise NotImplementedError()
 

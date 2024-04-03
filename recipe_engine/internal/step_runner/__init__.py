@@ -14,7 +14,7 @@ from ...step_data import ExecutionResult
 
 
 @attr.s(frozen=True)
-class Step(object):
+class Step:
   """Step is the full definition of a step to run for a StepRunner."""
   # The full command line as a list of strings. cmd0 will be an absolute path to
   # an executable.
@@ -41,7 +41,7 @@ class Step(object):
   luci_context = attr.ib(validator=attr_dict_type(str, Message))
 
 
-class StepRunner(object):
+class StepRunner:
   """A StepRunner is the interface to actually run steps and resolve
   placeholders.
 

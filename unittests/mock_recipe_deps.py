@@ -25,7 +25,7 @@ import os
 from recipe_engine.internal.recipe_deps import parse_deps_spec
 
 
-class MockRecipeDeps(object):
+class MockRecipeDeps:
   """A mock version of recipe_deps.RecipeDeps."""
 
   def __init__(self, modules_to_deps=None, recipes_to_deps=None):
@@ -67,7 +67,7 @@ class MockRecipeDeps(object):
         recipes_to_deps or {}
     )
 
-class MockRecipeRepo(object):
+class MockRecipeRepo:
   """A mock version of recipe_deps.RecipeRepo."""
 
   def __init__(self, rdeps, name, modules_to_deps, recipes_to_deps):
@@ -100,7 +100,7 @@ class MockRecipeRepo(object):
       for recipe_name, DEPS in recipes_to_deps.items()
     }
 
-class MockRecipeModule(object):
+class MockRecipeModule:
   """A mock version of recipe_deps.RecipeModule."""
 
   def __init__(self, repo, name, DEPS):
@@ -118,7 +118,7 @@ class MockRecipeModule(object):
     # pylint: disable=invalid-name
     self.normalized_DEPS = parse_deps_spec(repo.name, DEPS)
 
-class MockRecipe(object):
+class MockRecipe:
   """A mock version of recipe_deps.Recipe."""
 
   def __init__(self, repo, name, DEPS):

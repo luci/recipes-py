@@ -417,7 +417,7 @@ def render_re(regex):
 MISSING = object()
 
 
-class Checker(object):
+class Checker:
   def __init__(self, hook_context, *ignores):
     self.failed_checks = []
 

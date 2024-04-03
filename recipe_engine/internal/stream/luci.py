@@ -31,7 +31,7 @@ LOG = logging.getLogger(__name__)
 
 
 @attr.s
-class LUCIStepMarkdownWriter(object):
+class LUCIStepMarkdownWriter:
   _step_text = attr.ib(default='')
   def add_step_text(self, text):
     self._step_text += text

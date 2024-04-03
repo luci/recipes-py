@@ -18,7 +18,7 @@ def markdown_flavor_for_url(url):
   return GITILES
 
 
-class Printer(object):
+class Printer:
   def __init__(self, outf):
     self._outf = outf
     self._url = None

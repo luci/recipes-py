@@ -10,7 +10,7 @@ from attr.validators import instance_of
 
 
 @attr.s(frozen=True)
-class LegacyAnalyzer(object):
+class LegacyAnalyzer:
   """LegacyAnalyzer is a specification for legacy "simple" Tricium analyzer.
 
   Legacy Tricium analyzers are executables packaged in CIPD packages.
@@ -44,7 +44,7 @@ class LegacyAnalyzer(object):
   extra_args = attr.ib(validator=instance_of(list), default=[])
 
 
-class Analyzers(object):
+class Analyzers:
   """Specifications of common legacy analyzers.
 
   This is a namespace for common legacy analyzers that may be used across

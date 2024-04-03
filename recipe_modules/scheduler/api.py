@@ -77,7 +77,7 @@ class SchedulerApi(recipe_api.RecipeApi):
     """
     return int(self._invocation_id) if self._invocation_id else None
 
-  class Trigger(object):
+  class Trigger:
     """Generic Trigger accepted by LUCI Scheduler API.
 
     Don't instantiate Trigger itself. Use either BuildbucketTrigger or

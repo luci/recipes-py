@@ -112,7 +112,7 @@ def _parse_gitattr_line(line):
   return _pattern2re(pattern), has_recipes
 
 
-class AttrChecker(object):
+class AttrChecker:
   def __init__(self, repo, shortcircuit=True):
     self._repo = repo
     # Shortcircuit means we only care about whether any of the files we check

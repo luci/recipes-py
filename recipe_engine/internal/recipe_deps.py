@@ -79,7 +79,7 @@ MODULE_RECIPE_SUBDIRS = ('tests', 'examples', 'run')
 
 
 @attr.s(frozen=True)
-class RecipeDeps(object):
+class RecipeDeps:
   """Holds all of the dependency repos for the current recipe execution.
 
   If no '-O' override options were passed on the command line, you'll see a 1:1
@@ -248,7 +248,7 @@ class RecipeDeps(object):
 
 
 @attr.s(frozen=True)
-class RecipeRepo(object):
+class RecipeRepo:
   """This represents a 'recipe repo', i.e. a folder on disk which contains all
   of the requirements of a recipe repo:
     * an infra/config/recipes.cfg file
@@ -471,7 +471,7 @@ class RecipeRepo(object):
 
 
 @attr.s(frozen=True)
-class RecipeModule(object):
+class RecipeModule:
   repo = attr.ib(validator=attr_type(RecipeRepo))  # type: RecipeRepo
   name = attr.ib(validator=attr_type(str))
 
@@ -737,7 +737,7 @@ class RecipeModule(object):
 
 
 @attr.s(frozen=True)
-class Recipe(object):
+class Recipe:
   # The repo in which this recipe is located.
   repo = attr.ib(validator=attr_type(RecipeRepo)) # type: RecipeRepo
 
@@ -1243,7 +1243,7 @@ def _resolve(recipe_deps, deps_spec, variant, engine, test_data):
     assert isinstance(test_data, BaseTestData)
 
   @attr.s(frozen=True)
-  class cache_entry(object):
+  class cache_entry:
     api = attr.ib(validator=optional(attr_superclass(RecipeApi)))
     test_api = attr.ib(validator=attr_superclass(RecipeTestApi))
 

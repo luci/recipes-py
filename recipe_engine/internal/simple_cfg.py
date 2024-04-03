@@ -51,7 +51,7 @@ def _branch_converter(ref):
 
 
 @attr.s(frozen=True)
-class SimpleDep(object):
+class SimpleDep:
   """Represents a single dependency (url, branch, revision).
 
   Equivalent to the recipes_cfg_pb2.DepSpec message.
@@ -69,7 +69,7 @@ class SimpleDep(object):
 
 
 @attr.s(frozen=True)
-class SimpleRecipesCfg(object):
+class SimpleRecipesCfg:
   """Represents a `recipes.cfg` file.
 
   A subset of the recipes_cfg_pb2.RepoSpec message, just enough to load the

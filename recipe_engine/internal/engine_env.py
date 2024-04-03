@@ -6,7 +6,7 @@ from itertools import chain
 from collections import defaultdict
 
 
-class FakeEnviron(object):
+class FakeEnviron:
   """This is a fake dictionary which is meant to emulate os.environ strictly for
   the purposes of interacting with merge_envs.
 

@@ -32,7 +32,7 @@ NULL_WARNING_RECORDER = sentinel('NULL_WARNING_RECORDER',
 
 
 @attr.s(frozen=True, slots=True)
-class _AnnotatedFrame(object):
+class _AnnotatedFrame:
   """A wrapper class over built-in frame which associates additional attributes
   with the wrapped frame.
   """
@@ -46,7 +46,7 @@ class _AnnotatedFrame(object):
   skip_reason = attr.ib(validator=attr.validators.optional(attr_type(str)))
 
 @attr.s
-class WarningRecorder(object):
+class WarningRecorder:
   """A WarningRecorder records and analyzes warnings, preserves all unique
   causes for a given warning.
 

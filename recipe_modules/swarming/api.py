@@ -24,7 +24,7 @@ DEFAULT_CIPD_VERSION = 'git_revision:149e428073697a13c5d9ff792699521396a37eb0'
 LIST_BOTS_MANDATORY_FIELDS = 'items(bot_id,is_dead,quarantined,maintenance_msg)'
 
 
-class TaskRequest(object):
+class TaskRequest:
   """Describes a single Swarming request for a new task.
 
   A TaskRequest object is immutable and building it up follows the 'constructor'
@@ -326,7 +326,7 @@ class TaskRequest(object):
     return ret
 
 
-  class TaskSlice(object):
+  class TaskSlice:
     """Describes a specification of a Swarming task slice.
 
     A TaskSlice object is immutable and building it up follows the 'constructor'
@@ -855,7 +855,7 @@ class TaskRequest(object):
       }
 
 
-class TaskRequestMetadata(object):
+class TaskRequestMetadata:
   """Metadata of a requested task."""
 
   def __init__(self, swarming_server, task_json):
@@ -884,10 +884,10 @@ class TaskRequestMetadata(object):
                                                       {}).get('invocation')
 
 
-class TaskResult(object):
+class TaskResult:
   """Result of a Swarming task."""
 
-  class CasOutputs(object):
+  class CasOutputs:
     """The cas outputs of a task."""
 
     def __init__(self, digest, instance):
@@ -1131,7 +1131,7 @@ class TaskResult(object):
       )
 
 
-class BotMetadata(object):
+class BotMetadata:
   """Metadata of a bot."""
 
   def __init__(self, swarming_server, bot_id, bot_json):

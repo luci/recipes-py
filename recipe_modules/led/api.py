@@ -32,7 +32,7 @@ class LedApi(recipe_api.RecipeApi):
   """
 
   @attr.s(frozen=True, slots=True)
-  class LedLaunchData(object):
+  class LedLaunchData:
     swarming_hostname = attr.ib()
     task_id = attr.ib()
     buildbucket_hostname = attr.ib()
@@ -53,7 +53,7 @@ class LedApi(recipe_api.RecipeApi):
         milo_host = "luci-milo-dev.appspot.com"
       return 'https://%s/b/%s' % (milo_host, self.build_id)
 
-  class LedResult(object):
+  class LedResult:
     """Holds the result of a led operation. Can be chained using |then|."""
 
     def __init__(self, result, module, led_build):

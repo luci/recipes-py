@@ -166,7 +166,7 @@ class ArchiveApi(recipe_api.RecipeApi):
     self.m.path.mock_add_paths(output)
 
 
-class Package(object):
+class Package:
   """Used to gather a list of files to archive.
 
   Construct this with api.archive.package().

@@ -25,7 +25,7 @@ from ..util import InputPlaceholder, OutputPlaceholder, Placeholder, sentinel
 
 
 @attr.s(frozen=True)
-class EnvAffix(object):
+class EnvAffix:
   """Expresses a mapping of environment keys to a list of paths.
 
   This is used as StepConfig's "env_prefixes" and "env_suffixes" value.
@@ -53,7 +53,7 @@ def _file_placeholder(base_placeholder_type):
 
 
 @attr.s
-class StepConfig(object):
+class StepConfig:
   """StepConfig is the representation of a raw step as the recipe_engine sees
   it.  You should use the standard 'step' recipe module, which will construct
   and pass this data to the engine for you, instead. The only reason why you

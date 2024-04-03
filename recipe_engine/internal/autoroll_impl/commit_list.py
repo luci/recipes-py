@@ -17,7 +17,7 @@ class BackwardsRoll(ValueError):
   pass
 
 
-class CommitList(object):
+class CommitList:
   """A seekable list of CommitMetadata objects for a single repo.
 
   This can also be used to obtain the list of commits 'rolled so far' for the
@@ -82,7 +82,7 @@ class CommitList(object):
          git_backend.updates(dep.branch, dep.revision)),
     )
 
-  class _Cursor(object):
+  class _Cursor:
 
     def __init__(self, commit_list):
       self._commit_list = commit_list

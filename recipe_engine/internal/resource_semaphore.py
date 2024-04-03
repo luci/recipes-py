@@ -12,7 +12,7 @@ from ..engine_types import ResourceCost
 
 
 @attr.s
-class ResourceWaiter(object):
+class ResourceWaiter:
   """Represents the machine's CPU, memory, disk and network as limited
   resources.
 

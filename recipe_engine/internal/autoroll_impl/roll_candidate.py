@@ -20,7 +20,7 @@ import copy
 _AUTOROLLER_PREFIX = 'Roll recipe dependencies'
 
 
-class RollCandidate(object):
+class RollCandidate:
   """RollCandidate holds a single, consistent recipes_cfg_pb2.RepoSpec
   representing a potential autoroll candidate.
   """

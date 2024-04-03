@@ -9,7 +9,7 @@ import attr
 from ..attr_util import attr_type, attr_dict_type
 
 @attr.s(frozen=True, slots=True)
-class TestCaseResult(object):
+class TestCaseResult:
   # Raw Result of recipe.
   raw_result = attr.ib()  # type: result_pb2.RawResult
   # The log of each step that would have been run.

@@ -142,7 +142,7 @@ class Command(list):
 
 
 @attr.s
-class Step(object):
+class Step:
   """The representation of a step provided to post-process hooks.
 
   A `Step` has fields for all of the details of a step that would be recorded

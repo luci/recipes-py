@@ -26,7 +26,7 @@ CompressionLevel = Literal[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 InstallMode = Literal['copy', 'symlink']
 
 
-class PackageDefinition(object):
+class PackageDefinition:
   DIR = namedtuple('DIR', ['path', 'exclusions'])
 
   def __init__(self,
@@ -162,7 +162,7 @@ class PackageDefinition(object):
     return output
 
 
-class EnsureFile(object):
+class EnsureFile:
   Package = namedtuple('Package', ['name', 'version'])
 
   def __init__(self):
@@ -190,7 +190,7 @@ class EnsureFile(object):
     return '\n'.join(package_list)
 
 
-class Metadata(object):
+class Metadata:
   def __init__(self, key, value=None, value_from_file=None, content_type=None):
     """Constructs a metadata entry to attach to a package instance.
 

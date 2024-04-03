@@ -41,7 +41,7 @@ def combineify(name, dest, a, b, overwrite=False):
       dest_dict[k] = v
 
 
-class BaseTestData(object):
+class BaseTestData:
   def __init__(self, enabled=True):
     super(BaseTestData, self).__init__()
     self._enabled = enabled
@@ -458,7 +458,7 @@ def _placeholder_step_data(func, placeholder_name=None):
   return inner
 
 
-class RecipeTestApi(object):
+class RecipeTestApi:
   """Provides testing interface for GenTest method.
 
   There are two primary components to the test api:

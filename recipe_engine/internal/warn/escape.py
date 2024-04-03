@@ -23,7 +23,7 @@ import attr
 from ..attr_util import attr_type
 
 @attr.s(frozen=True, slots=True)
-class FuncLoc(object):
+class FuncLoc:
   """An immutable class that describes the location of a function."""
   # Absolute path to the file containing this function's source
   file_path = attr.ib(validator=attr_type(str), converter=os.path.abspath)

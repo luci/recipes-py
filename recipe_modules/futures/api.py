@@ -15,7 +15,7 @@ from recipe_engine.recipe_api import RecipeApi, RequireClient
 from recipe_engine.recipe_api import escape_all_warnings
 
 
-class _IWaitWrapper(object):
+class _IWaitWrapper:
   __slots__ = ('_waiter', '_greenlets_to_futures')
 
   def __init__(self, futures, timeout, count):
@@ -52,7 +52,7 @@ class FuturesApi(RecipeApi):
     """Raised from Future if the requested operation is not done in time."""
 
   @attr.s(frozen=True, slots=True)
-  class Future(object):
+  class Future:
     """Represents a unit of concurrent work.
 
     Modeled after Python 3's `concurrent.futures.Future`. We can expand this

@@ -12,7 +12,7 @@ import hashlib
 import os
 
 
-class SymlinkTree(object):
+class SymlinkTree:
   """A representation of a tree of symlinks."""
 
   def __init__(self, root, api, symlink_resource):
