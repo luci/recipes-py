@@ -543,6 +543,20 @@ class TestLog(PostProcessUnitTest):
         },
     })])
 
+  def test_has_log_pass(self):
+    self.expect_pass(post_process.HasLog, 'x', 'log-x')
+
+  def test_has_log_fail(self):
+    failures = self.expect_fails(1, post_process.HasLog, 'x', 'log-y')
+    self.assertHas(failures[0], 'check((log in step_odict[step].logs))')
+
+  def test_does_not_have_log_pass(self):
+    self.expect_pass(post_process.DoesNotHaveLog, 'x', 'log-y')
+
+  def test_does_not_have_log_fail(self):
+    failures = self.expect_fails(1, post_process.DoesNotHaveLog, 'x', 'log-x')
+    self.assertHas(failures[0], 'check((log not in step_odict[step].logs))')
+
   def test_log_equals_pass(self):
     self.expect_pass(post_process.LogEquals, 'x', 'log-x', 'foo\nbar')
 

@@ -444,6 +444,38 @@ def StepEnvEquals(check, step_odict, step, env_dict):
         step_odict[step].env == env_dict)
 
 
+def HasLog(check, step_odict, step, log):
+  """Assert that a step contains a specific named log.
+
+  Args:
+    step (str) - The step to check the log of.
+    log (str) - The name of the log to check.
+
+  Usage:
+    yield (
+        TEST
+         + api.post_process(HasLog, 'step-name', 'log-name')
+    )
+  """
+  check(log in step_odict[step].logs)
+
+
+def DoesNotHaveLog(check, step_odict, step, log):
+  """Assert that a step does not contain a specific named log.
+
+  Args:
+    step (str) - The step to check the log of.
+    log (str) - The name of the log to check.
+
+  Usage:
+    yield (
+        TEST
+         + api.post_process(DoesNotHaveLog, 'step-name', 'log-name')
+    )
+  """
+  check(log not in step_odict[step].logs)
+
+
 def LogEquals(check, step_odict, step, log, expected):
   """Assert that a step's log is equal to a given string.
 

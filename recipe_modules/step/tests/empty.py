@@ -2,10 +2,16 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from recipe_engine.post_process import StepSuccess, LogEquals, StepTextEquals
-from recipe_engine.post_process import StepException, StepFailure
-from recipe_engine.post_process import StepCommandEmpty
-from recipe_engine.post_process import DropExpectation
+from recipe_engine.post_process import (
+    DropExpectation,
+    HasLog,
+    LogEquals,
+    StepCommandEmpty,
+    StepException,
+    StepFailure,
+    StepSuccess,
+    StepTextEquals
+)
 
 DEPS = [
   'step',
@@ -38,6 +44,7 @@ def GenTests(api):
   yield api.test(
       'basic',
       api.post_process(StepSuccess, 'hello'),
+      api.post_process(HasLog, 'hello', 'stdout'),
       api.post_process(LogEquals, 'hello', 'stdout', 'other\nstuff'),
       api.post_process(StepTextEquals, 'hello', 'stuff'),
       api.post_process(StepCommandEmpty, 'hello'),

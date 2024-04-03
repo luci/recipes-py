@@ -5779,10 +5779,10 @@ This file is a recipe demonstrating reading triggers of the current build.
 &mdash; **def [RunSteps](/recipe_modules/step/tests/active_result.py#10)(api):**
 ### *recipes* / [step:tests/empty](/recipe_modules/step/tests/empty.py)
 
-[DEPS](/recipe_modules/step/tests/empty.py#10): [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/empty.py#16): [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/empty.py#15)(api):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/empty.py#21)(api):**
 ### *recipes* / [step:tests/inject\_paths](/recipe_modules/step/tests/inject_paths.py)
 
 [DEPS](/recipe_modules/step/tests/inject_paths.py#5): [context](#recipe_modules-context), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
