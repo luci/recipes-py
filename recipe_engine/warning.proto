@@ -65,14 +65,14 @@ message MonorailBug {
 // existence of the supplied bug won't be validated.
 message GoogleIssue {
   // (required if host is not provided in GoogleIssueDefault) host name of
-  // google issue tracker. E.g. issues.chromium.org
+  // google issue tracker. E.g. crbug.com
   string host = 1;
   // (required) bug numeric id
   uint32 id = 2;
 }
 
 message GoogleIssueDefault {
-  // (optional) host name of google issue tracker, e.g. issues.chromium.org
+  // (optional) host name of google issue tracker, e.g. crbug.com
   string host = 1;
 }
 

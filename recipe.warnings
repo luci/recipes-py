@@ -1,5 +1,5 @@
 google_issue_default {
-  host: "issues.chromium.org"
+  host: "crbug.com"
 }
 
 warning {

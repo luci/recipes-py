@@ -102,7 +102,7 @@ class TestWarningDefinition(test_env.RecipeEngineUnitTest):
         monorail_bug=warning_pb.MonorailBug(
             host='bugs.chromium.org', project='chromium', id=123456),
         google_issue=warning_pb.GoogleIssue(
-            host='issues.chromium.org', id=123456),
+            host='crbug.com', id=123456),
     )
     _validate(full_definition)
 
@@ -147,7 +147,7 @@ class TestWarningDefinition(test_env.RecipeEngineUnitTest):
     definition = create_definition(
         'WARNING_NAME',
         google_issue=warning_pb.GoogleIssue(
-            host='issues.chromium.org'),
+            host='crbug.com'),
     )
     with self.assertRaises(ValueError):
       _validate(definition)
@@ -432,7 +432,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     with self.deps.main_repo.write_file(RECIPE_WARNING_DEFINITIONS_REL) as d:
       d.write('''
       google_issue_default {
-        host: "issues.chromium.org"
+        host: "crbug.com"
       }
       monorail_bug_default {
         host: "bugs.chromium.org"
@@ -519,7 +519,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
 
     Bug Links:
       https://bugs\.chromium\.org/p/chromium/issues/detail\?id=123456
-      https://issues\.chromium\.org/123456
+      https://crbug.com/123456
     Call Sites:
     .+/recipe_modules/cool_mod/api\.py:\d+
     .+/recipe_modules/my_mod/tests/bad\.py:3
@@ -563,7 +563,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
 
     Bug Links:
       https://bugs\.chromium\.org/p/chrome\-operations/issues/detail\?id=654321
-      https://issues\.chromium\.org/654321
+      https://crbug.com/654321
     Import Sites:
     .+/recipe_modules/my_mod/tests/full\.py
     .+/recipe_modules/cool_mod/__init__\.py
@@ -601,7 +601,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
 
     Bug Links:
       https://bugs\.chromium\.org/p/chrome\-operations/issues/detail\?id=654321
-      https://issues\.chromium\.org/654321
+      https://crbug.com/654321
     Call Sites:
     .+/recipe_modules/my_mod/tests/full\.py:3
     Import Sites:
@@ -730,7 +730,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     with upstream.write_file(RECIPE_WARNING_DEFINITIONS_REL) as d:
       d.write('''
       google_issue_default {
-        host: "issues.chromium.org"
+        host: "crbug.com"
       }
       monorail_bug_default {
         host: "bugs.chromium.org"
@@ -810,7 +810,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
       The `badarg` argument on my_mod\.swizzle is deprecated\.
     Deadline: 2020-01-01
 
-    Bug Link: https://issues\.chromium\.org/123456
+    Bug Link: https://crbug.com/123456
     Call Sites:
     .+/main/recipes/bad\.py:3
     '''.strip('\n'))

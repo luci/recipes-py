@@ -714,15 +714,13 @@ repo. `recipes.warnings` is a text proto formatted file of
 `DefinitionCollection` Message in [warning.proto]. Example as follows:
 
     google_issue_default {
-      host: "issues.chromium.org"
+      host: "crbug.com"
     }
     warning {
       name: "MYMODULE_SWIZZLE_BADARG_USAGE"
       description: "The `badarg` argument on mymodule.swizzle is deprecated and replaced with swizmod."
       deadline: "2020-01-01"
-      google_issue {
-        id: 123456
-      }
+      google_issue { id: 123456 }
     }
     warning {
       name: "MYMODULE_DEPRECATION"
@@ -732,14 +730,14 @@ repo. `recipes.warnings` is a text proto formatted file of
       description: "" # blank line
       description: "MyModule contains infra specific logic."
       deadline: "2020-12-31"
-      google_issue {
-        id: 987654
-      }
-      google_issue {
-        project: "chrome-operations"
-        id: 654321
-      }
+      google_issue { id: 987654 }
+      google_issue { id: 654321 }
     }
+
+The `google_issue_default` will populate the `host` field of `google_issue`, and
+the combination of these messages will produce bug links like:
+
+    https://{google_issue.host}/{google_issue.id}
 
 The name of the warning must be unique within the `recipes.warnings` file. The
 recipe engine will take the warning name and generate a fully-qualified warning
