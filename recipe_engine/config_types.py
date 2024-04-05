@@ -83,10 +83,9 @@ class NamedBasePath(BasePath, collections.namedtuple('NamedBasePath', 'name')):
   def resolve(self, test_enabled: bool) -> str:
     if self.name == self._API.CheckoutPathName:
       checkout_dir = self._API.checkout_dir
-      # TODO: Enable this exception check.
-      # if checkout_dir is None:
-      #  raise ValueError(
-      #      f'Cannot resolve NamedBasePath({self.name!r}) - api.path.checkout_dir is unset.')
+      if checkout_dir is None:
+        raise ValueError(
+            f'Cannot resolve NamedBasePath({self.name!r}) - api.path.checkout_dir is unset.')
       return str(checkout_dir)
 
     if self.name in self._API.c.base_paths:
