@@ -22,10 +22,18 @@
     "name": "buildbucket.search",
     "stdin": "{\"requests\": [{\"searchBuilds\": {\"mask\": {\"fields\": \"builder,createTime,id,status\"}, \"predicate\": {\"gerritChanges\": [{\"change\": \"123456\", \"host\": \"chromium-review.googlesource.com\", \"patchset\": \"7\", \"project\": \"chromium/src\"}]}}}]}",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@json.output (invalid)@there was a problem@@@",
-      "@@@STEP_LOG_END@json.output (invalid)@@@",
-      "@@@STEP_LOG_LINE@json.output (exception)@No JSON object could be decoded@@@",
-      "@@@STEP_LOG_END@json.output (exception)@@@",
+      "@@@STEP_TEXT@Request #0<br>Status code: 1<br>Message: bad<br>@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"responses\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@    {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"error\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"code\": 1,@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"message\": \"bad\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    }@@@",
+      "@@@STEP_LOG_LINE@json.output@  ]@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
       "@@@STEP_LOG_LINE@request@{@@@",
       "@@@STEP_LOG_LINE@request@  \"requests\": [@@@",
       "@@@STEP_LOG_LINE@request@    {@@@",
@@ -47,13 +55,12 @@
       "@@@STEP_LOG_LINE@request@    }@@@",
       "@@@STEP_LOG_LINE@request@  ]@@@",
       "@@@STEP_LOG_LINE@request@}@@@",
-      "@@@STEP_LOG_END@request@@@",
-      "@@@STEP_EXCEPTION@@@"
+      "@@@STEP_LOG_END@request@@@"
     ]
   },
   {
     "failure": {
-      "humanReason": "Buildbucket Internal Error"
+      "humanReason": "Search builds failed"
     },
     "name": "$result"
   }

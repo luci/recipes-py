@@ -528,6 +528,25 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     return self._simulated_batch_response(
       batch_response, step_name or 'buildbucket.schedule')
 
+  def simulated_batch_search_output(self, batch_response, step_name=None):
+    return self._simulated_batch_response(batch_response, step_name or
+                                          'buildbucket.search')
+
+  def simulated_search_results(self, builds, step_name=None):
+    """Simulates a buildbucket.search call with one predicate.
+
+    Note: if use this to simulate a buildbucket.search call with multiple predicates,
+    a "json_format.ParseError: Failed to load JSON" will be raised.
+    """
+    assert isinstance(builds, list), builds
+    for b in builds:
+      assert isinstance(b, build_pb2.Build), b
+    step_name = step_name or 'buildbucket.search'
+
+    return self.simulated_batch_search_output(
+        builds_service_pb2.BatchResponse(
+            responses=[dict(search_builds=dict(builds=builds))]), step_name)
+
   def simulated_search_result_data(self, builds):
     """Simulates buildbucket.search results."""
     assert isinstance(builds, Sequence), builds
@@ -539,11 +558,14 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     ]
     return self.m.raw_io.stream_output_text("\n".join(lines))
 
-  def simulated_search_results(self, builds, step_name=None):
-    """Simulates a buildbucket.search call."""
+  def simulated_multi_predicates_search_results(self, builds, step_name=None):
+    """Simulates a buildbucket.search call with multiple predicates."""
     assert isinstance(builds, list), builds
-    return self.step_data(step_name or 'buildbucket.search',
-                          self.simulated_search_result_data(builds))
+    for b in builds:
+      assert isinstance(b, build_pb2.Build), b
+    step_name = step_name or 'buildbucket.search'
+
+    return self.step_data(step_name, self.simulated_search_result_data(builds))
 
   def simulated_list_builders(self, builders, step_name=None):
     """Simulates a buildbucket.builders call."""

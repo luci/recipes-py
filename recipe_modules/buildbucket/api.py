@@ -670,7 +670,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
              fields=DEFAULT_FIELDS,
              timeout=None,
              test_data=None):
-    """Searches for builds.
+    """Searches builds with one predicate.
 
     Example: find all builds of the current CL.
 
@@ -683,9 +683,78 @@ class BuildbucketApi(recipe_api.RecipeApi):
     ))
     ```
 
+    Underneath it calls `bb batch` to perform the search, which should have a
+    better performance and memory usage than `bb ls`: since we could get the batch
+    response as a whole and take advantage of the proto recipe for direct
+    encoding/decoding. And the limit could be used as the page_size in
+    SearchBuildsRequest.
+    """
+    assert isinstance(predicate, builds_service_pb2.BuildPredicate), (
+      'For searching with a list of predicates, '\
+      'use search_with_multiple_predicates() instead')
+    batch_req = builds_service_pb2.BatchRequest(
+        requests=[
+            dict(
+                search_builds=dict(
+                    predicate=predicate,
+                    mask=dict(fields=self._make_field_mask(paths=fields)),
+                    page_size=limit,
+                ))
+        ],)
+
+    if test_data:
+      test_res = builds_service_pb2.BatchResponse(
+          responses=[dict(search_builds=dict(builds=[x for x in test_data]))])
+    else:
+      test_res = builds_service_pb2.BatchResponse(
+          responses=[dict(search_builds=dict())])
+    step_res, batch_res, has_errors = self._batch_request(
+        step_name or 'buildbucket.search', batch_req, test_res, timeout=timeout)
+
+    ret = []
+    for res in batch_res.responses:
+      if res.HasField('search_builds'):
+        bs = res.search_builds
+        for b in bs.builds:
+          if report_build:
+            self._report_build_maybe(step_res, b, url_title_fn=url_title_fn)
+          ret.append(b)
+    if has_errors:
+      raise self.m.step.InfraFailure('Search builds failed')
+    return ret
+
+  def search_with_multiple_predicates(self,
+                                      predicate,
+                                      limit=None,
+                                      url_title_fn=None,
+                                      report_build=True,
+                                      step_name=None,
+                                      fields=DEFAULT_FIELDS,
+                                      timeout=None,
+                                      test_data=None):
+    """Searches for builds with multiple predicates.
+
+    Example: find all builds with one tag OR another.
+
+    ```python
+    from PB.go.chromium.org.luci.buildbucket.proto import rpc as \
+      builds_service_pb2
+
+    related_builds = api.buildbucket.search([
+      builds_service_pb2.BuildPredicate(
+        tags=['one.tag'],
+      ),
+      builds_service_pb2.BuildPredicate(
+        tags=['another.tag'],
+      ),
+    ])
+    ```
+
+    Unlike search(), it still calls `bb ls` to keep the overall limit working.
+
     Args:
-    *   predicate: a `builds_service_pb2.BuildPredicate` object or a list
-        thereof. If a list, the predicates are connected with logical OR.
+    *   predicate: a list of `builds_service_pb2.BuildPredicate` objects.
+        The predicates are connected with logical OR.
     *   limit: max number of builds to return. Defaults to 1000.
     *   url_title_fn: generates a build URL title. See module docstring.
     *   report_build: whether to report build search results in step
@@ -700,10 +769,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     Returns:
       A list of builds ordered newest-to-oldest.
     """
-    assert isinstance(predicate,
-        (list, builds_service_pb2.BuildPredicate)), predicate
-    if not isinstance(predicate, list):
-      predicate = [predicate]
+    assert isinstance(predicate, list), predicate
     assert all(
         isinstance(p, builds_service_pb2.BuildPredicate) for p in predicate)
     assert isinstance(limit, (type(None), int))
@@ -712,10 +778,9 @@ class BuildbucketApi(recipe_api.RecipeApi):
     limit = limit or 1000
 
     args = [
-      '-json',
-      '-nopage',
-      '-n', limit,
-      '-fields', ','.join(sorted(set(fields)))]
+        '-json', '-nopage', '-n', limit, '-fields',
+        ','.join(sorted(set(fields)))
+    ]
 
     for p in predicate:
       args.append('-predicate')
@@ -812,11 +877,11 @@ class BuildbucketApi(recipe_api.RecipeApi):
     """Implements get_multi, but also returns StepResult."""
     batch_req = builds_service_pb2.BatchRequest(
         requests=[
-          dict(get_build=dict(id=id, fields=self._make_field_mask(
-              paths=fields)))
-          for id in build_ids
-        ],
-    )
+            dict(
+                get_build=dict(
+                    id=id, fields=self._make_field_mask(paths=fields)))
+            for id in build_ids
+        ],)
 
     if test_data:
       test_res = builds_service_pb2.BatchResponse(
@@ -965,7 +1030,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   # Internal.
 
-  def _batch_request(self, step_name, request, test_response):
+  def _batch_request(self, step_name, request, test_response, timeout=None):
     """Makes a Builds.Batch request.
 
     Returns (StepResult, builds_service_pb2.BatchResponse, has_errors) tuple.
@@ -977,6 +1042,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
           subcommand='batch',
           stdin=self.m.json.input(request_dict),
           stdout=self.m.json.output(),
+          timeout=timeout,
           step_test_data=lambda: self.m.json.test_api.output_stream(
               json_format.MessageToDict(test_response)
           ),

@@ -10,4 +10,5 @@ import "go.chromium.org/luci/buildbucket/proto/build.proto";
 
 message SearchInputProps {
   repeated .buildbucket.v2.Build builds = 1;
+  bool dup_predicate = 2;
 }

@@ -1,0 +1,64 @@
+[
+  {
+    "cmd": [
+      "bb",
+      "ls",
+      "-host",
+      "cr-buildbucket.appspot.com",
+      "-json",
+      "-nopage",
+      "-n",
+      "1000",
+      "-fields",
+      "builder,create_time,id,status",
+      "-predicate",
+      "{\"gerritChanges\": [{\"change\": \"123456\", \"host\": \"chromium-review.googlesource.com\", \"patchset\": \"7\", \"project\": \"chromium/src\"}]}",
+      "-predicate",
+      "{\"gerritChanges\": [{\"change\": \"123456\", \"host\": \"chromium-review.googlesource.com\", \"patchset\": \"7\", \"project\": \"chromium/src\"}]}"
+    ],
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "chromium:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "buildbucket.search",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@raw_io.output_text@{\"builder\": {\"bucket\": \"try\", \"builder\": \"test\", \"project\": \"chromium\"}, \"id\": \"1\", \"status\": \"SUCCESS\"}@@@",
+      "@@@STEP_LOG_LINE@raw_io.output_text@{\"builder\": {\"bucket\": \"try\", \"builder\": \"test\", \"project\": \"chromium\"}, \"id\": \"2\", \"status\": \"FAILURE\"}@@@",
+      "@@@STEP_LOG_END@raw_io.output_text@@@",
+      "@@@STEP_LOG_LINE@build 1@{@@@",
+      "@@@STEP_LOG_LINE@build 1@  \"builder\": {@@@",
+      "@@@STEP_LOG_LINE@build 1@    \"bucket\": \"try\",@@@",
+      "@@@STEP_LOG_LINE@build 1@    \"builder\": \"test\",@@@",
+      "@@@STEP_LOG_LINE@build 1@    \"project\": \"chromium\"@@@",
+      "@@@STEP_LOG_LINE@build 1@  },@@@",
+      "@@@STEP_LOG_LINE@build 1@  \"id\": \"1\",@@@",
+      "@@@STEP_LOG_LINE@build 1@  \"status\": \"SUCCESS\"@@@",
+      "@@@STEP_LOG_LINE@build 1@}@@@",
+      "@@@STEP_LOG_END@build 1@@@",
+      "@@@STEP_LOG_LINE@build 2@{@@@",
+      "@@@STEP_LOG_LINE@build 2@  \"builder\": {@@@",
+      "@@@STEP_LOG_LINE@build 2@    \"bucket\": \"try\",@@@",
+      "@@@STEP_LOG_LINE@build 2@    \"builder\": \"test\",@@@",
+      "@@@STEP_LOG_LINE@build 2@    \"project\": \"chromium\"@@@",
+      "@@@STEP_LOG_LINE@build 2@  },@@@",
+      "@@@STEP_LOG_LINE@build 2@  \"id\": \"2\",@@@",
+      "@@@STEP_LOG_LINE@build 2@  \"status\": \"FAILURE\"@@@",
+      "@@@STEP_LOG_LINE@build 2@}@@@",
+      "@@@STEP_LOG_END@build 2@@@",
+      "@@@STEP_LINK@1@https://cr-buildbucket.appspot.com/build/1@@@",
+      "@@@STEP_LINK@2@https://cr-buildbucket.appspot.com/build/2@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]

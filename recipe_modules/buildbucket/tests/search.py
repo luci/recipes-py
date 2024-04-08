@@ -31,13 +31,28 @@ def RunSteps(api, props):
   if props.builds:
     test_data = props.builds
 
-  builds = api.buildbucket.search(
-      builds_service_pb2.BuildPredicate(
-          gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),),
-      limit=limit,
-      fields=['builder', 'id', 'status', 'create_time'],
-      test_data=test_data,
-  )
+  if props.dup_predicate:
+    predicate = [
+        builds_service_pb2.BuildPredicate(
+            gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),),
+        builds_service_pb2.BuildPredicate(
+            gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),)
+    ]
+    builds = api.buildbucket.search_with_multiple_predicates(
+        predicate,
+        limit=limit,
+        fields=['builder', 'id', 'status', 'create_time'],
+        test_data=test_data,
+    )
+  else:
+    predicate = builds_service_pb2.BuildPredicate(
+        gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),)
+    builds = api.buildbucket.search(
+        predicate,
+        limit=limit,
+        fields=['builder', 'id', 'status', 'create_time'],
+        test_data=test_data,
+    )
   assert limit is None or len(builds) <= limit
   pres = api.step.active_result.presentation
   for b in builds:
@@ -102,3 +117,41 @@ def GenTests(api):
           retcode=1),
       status='INFRA_FAILURE',
   )
+
+  yield api.test(
+      'two builds two predicates, simulated',
+      build(),
+      api.properties(dup_predicate=True),
+      api.properties(properties_pb2.SearchInputProps(dup_predicate=True,),),
+      api.buildbucket.simulated_multi_predicates_search_results([
+          build_status(id=1),
+          build_status(id=2, status=common_pb2.FAILURE),
+      ],),
+  )
+
+  yield api.test(
+      'two builds two predicates with test data prop',
+      build(),
+      api.properties(
+          properties_pb2.SearchInputProps(
+              builds=[
+                  build_status(id=3, builder='chromium/try/foo'),
+                  build_status(id=4, builder='chromium/try/bar'),
+              ],
+              dup_predicate=True),),
+      api.buildbucket.simulated_multi_predicates_search_results([
+          build_status(id=1),
+          build_status(id=2, status=common_pb2.FAILURE),
+      ],),
+  )
+
+  yield api.test(
+      'error', build(),
+      api.buildbucket.simulated_batch_search_output(
+          builds_service_pb2.BatchResponse(
+              responses=[
+                  dict(error=dict(
+                      code=1,
+                      message='bad',
+                  ),),
+              ],)) + api.expect_status('INFRA_FAILURE'))
