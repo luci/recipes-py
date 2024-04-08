@@ -4,6 +4,7 @@
 
 import datetime
 
+from recipe_engine import recipe_api
 from recipe_engine.post_process import StepSuccess, StepFailure, StepException
 
 DEPS = [
@@ -12,6 +13,7 @@ DEPS = [
 ]
 
 
+@recipe_api.ignore_warnings('recipe_engine/STEP_NEST_PRESENTATION_DEPRECATED')
 def RunSteps(api):
   # Nest all steps below this.
   with api.step.nest('complicated thing'):

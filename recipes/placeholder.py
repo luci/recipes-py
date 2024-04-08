@@ -20,15 +20,13 @@ from PB.recipes.recipe_engine.placeholder import (
 from PB.go.chromium.org.luci.buildbucket.proto.builder_common import BuilderID
 from PB.go.chromium.org.luci.buildbucket.proto.common import Status, ENDED_MASK
 
-from recipe_engine import post_process
+from recipe_engine import post_process, step_data
 
 PROPERTIES = InputProps
 
 
 def RunSteps(api, properties):
-  def handlePres(result, step_pb):
-    pres = result.presentation
-
+  def handlePres(pres, step_pb):
     pres.step_text = step_pb.step_text
     for name, link in step_pb.links.items():
       pres.links[name] = link
@@ -69,7 +67,7 @@ def RunSteps(api, properties):
           processStep(child)
     else:
       result = api.step(step_name, cmd=None)
-      handlePres(result, fake_step)
+      handlePres(result.presentation, fake_step)
       if fake_step.duration_secs > 0:
         api.time.sleep(
             fake_step.duration_secs, with_step=False, step_result=result)

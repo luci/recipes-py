@@ -166,10 +166,10 @@ class TriciumApi(recipe_api.RecipeApi):
     # For each analyzer, download the CIPD package, run it and accumulate
     # results. Note: Each analyzer could potentially be run in parallel.
     for analyzer in analyzers:
-      with self.m.step.nest(analyzer.name) as parent_step:
+      with self.m.step.nest(analyzer.name) as presentation:
         # Check analyzer.path_filters and conditionally skip.
         if not _matches_path_filters(affected_files, analyzer.path_filters):
-          parent_step.presentation.step_text = 'skipped due to path filters'
+          presentation.step_text = 'skipped due to path filters'
         try:
           analyzer_dir = self.m.path['cleanup'].join(analyzer.name)
           output_base = analyzer_dir.join('out')
@@ -185,11 +185,11 @@ class TriciumApi(recipe_api.RecipeApi):
           for comment in results.comments:
             self._add_comment(comment)
           num_comments = len(results.comments)
-          parent_step.presentation.step_text = '%s comment(s)' % num_comments
-          parent_step.presentation.logs['result'] = self.m.proto.encode(
+          presentation.step_text = '%s comment(s)' % num_comments
+          presentation.logs['result'] = self.m.proto.encode(
               results, 'JSONPB')
         except self.m.step.StepFailure:
-          parent_step.presentation.step_text = 'failed'
+          presentation.step_text = 'failed'
     # The tricium data dir with files.json is written in the checkout cache
     # directory and should be cleaned up.
     self.m.file.rmtree('clean up tricium data dir', input_base.join('tricium'))

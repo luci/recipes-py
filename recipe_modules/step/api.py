@@ -212,14 +212,20 @@ class StepApi(recipe_api.RecipeApi):
   # everything to the real presentation, except for `.presentation` which
   # returns the StepPresentation directly. Ick.
   class _StepPresentationProxy:
-    def __init__(self, presentation):
-      object.__setattr__(self, 'presentation', presentation)
+    def __init__(self, api, presentation):
+      object.__setattr__(self, '_api', api)
+      object.__setattr__(self, '_presentation', presentation)
+
+    @property
+    def presentation(self):
+      self._api.warning.issue('STEP_NEST_PRESENTATION_DEPRECATED')
+      return self._presentation
 
     def __getattr__(self, name):
-      return getattr(self.presentation, name)
+      return getattr(self._presentation, name)
 
     def __setattr__(self, name, value):
-      setattr(self.presentation, name, value)
+      setattr(self._presentation, name, value)
 
   @contextlib.contextmanager
   def nest(self, name, status='worst'):
@@ -290,7 +296,7 @@ class StepApi(recipe_api.RecipeApi):
     with self.step_client.parent_step(name) as (pres, children_presentations):
       caught_exc = None
       try:
-        yield self._StepPresentationProxy(pres)
+        yield self._StepPresentationProxy(self.m, pres)
       except:
         caught_exc = sys.exc_info()[0]
         raise
@@ -741,9 +747,9 @@ class StepApi(recipe_api.RecipeApi):
     out = None
     exception = None
 
-    with self.nest(name=name) as step:
-      step.presentation.logs["args"] = str(args)
-      step.presentation.logs["kwargs"] = str(kwargs)
+    with self.nest(name=name) as presentation:
+      presentation.logs["args"] = str(args)
+      presentation.logs["kwargs"] = str(kwargs)
       try:
         out = func(*args, **kwargs)
         return out
@@ -751,7 +757,7 @@ class StepApi(recipe_api.RecipeApi):
         exception = e
         raise e
       finally:
-        step.presentation.logs["out"] = str(out)
-        step.presentation.logs["out_type"] = str(type(out))
+        presentation.logs["out"] = str(out)
+        presentation.logs["out_type"] = str(type(out))
         if exception is not None:
-          step.presentation.logs["exception"] = str(exception)
+          presentation.logs["exception"] = str(exception)

@@ -9,3 +9,20 @@ warning {
   description: "The indicated step is invoking vpython or python2."
   description: "Please switch this to `vpython3` or `python3`."
 }
+
+warning {
+  name: "STEP_NEST_PRESENTATION_DEPRECATED"
+  description: ".presentation on value yielded by api.step.nest() is deprecated"
+  description: ""
+  description: "Specifically, this is deprecated:"
+  description: ""
+  description: "  with api.step.nest('foo') as foo:"
+  description: "    foo.presentation.step_summary_text = '...'"
+  description: ""
+  description: "Instead, try the following:"
+  description: ""
+  description: "  with api.step.nest('foo') as pres:"
+  description: "    pres.step_summary_text = '...'"
+  deadline: "2024-06-01"
+  google_issue { host: "crbug.com" id: 332773904 }
+}
