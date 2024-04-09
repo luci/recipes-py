@@ -30,6 +30,15 @@ warning {
 }
 
 warning {
+  name: "JSON_READ_DEPRECATED"
+  description: "api.json.read() is deprecated."
+  description: ""
+  description: "Use api.file.read_json() instead."
+  deadline: "2024-06-01"
+  google_issue { host: "crbug.com" id: 332774562 }
+}
+
+warning {
   name: "PYTHON2_DEPRECATED"
   description: "Python2 is deprecated."
   description: ""

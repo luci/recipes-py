@@ -14,10 +14,11 @@ import textwrap
 
 from google.protobuf import struct_pb2
 
-from recipe_engine import engine_types
+from recipe_engine import engine_types, recipe_api
 
 FULLWIDTH_Z = u'\ufeff\uff5a'
 
+@recipe_api.ignore_warnings('recipe_engine/JSON_READ_DEPRECATED')
 def RunSteps(api):
   step_result = api.step('echo1', ['echo', '[1, 2, 3]'],
       stdout=api.json.output())

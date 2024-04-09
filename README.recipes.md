@@ -2454,7 +2454,7 @@ Args:
   * cache (Path) - a path to put Go caches under.
 ### *recipe_modules* / [json](/recipe_modules/json)
 
-[DEPS](/recipe_modules/json/__init__.py#5): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/json/__init__.py#5): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [warning](#recipe_modules-warning)
 
 
 Methods for producing and consuming JSON.
@@ -5505,7 +5505,7 @@ This tests metadata features of the Future object.
 [DEPS](/recipe_modules/json/examples/full.py#5): [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/json/examples/full.py#21)(api):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/JSON_READ_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/json/examples/full.py#21)(api):**
 ### *recipes* / [json:tests/add\_json\_log](/recipe_modules/json/tests/add_json_log.py)
 
 [DEPS](/recipe_modules/json/tests/add_json_log.py#5): [json](#recipe_modules-json), [step](#recipe_modules-step)

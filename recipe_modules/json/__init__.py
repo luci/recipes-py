@@ -4,5 +4,6 @@
 
 DEPS = [
   'step',
-  'raw_io'
+  'raw_io',
+  'warning',
 ]

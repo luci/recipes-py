@@ -189,6 +189,8 @@ class JsonApi(recipe_api.RecipeApi):
 
     DEPRECATED: Use file.read_json instead.
     """
+    self.m.warning.issue('JSON_READ_DEPRECATED')
+
     return self.m.step(
         name, [
           'python3', '-u', self.resource('read.py'),
