@@ -426,7 +426,7 @@ Args:
     broker tool will use default if not specified.
 ### *recipe_modules* / [buildbucket](/recipe_modules/buildbucket)
 
-[DEPS](/recipe_modules/buildbucket/__init__.py#5): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [resultdb](#recipe_modules-resultdb), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
+[DEPS](/recipe_modules/buildbucket/__init__.py#5): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [resultdb](#recipe_modules-resultdb), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid), [warning](#recipe_modules-warning)
 
 
 API for interacting with the buildbucket service.
@@ -505,7 +505,7 @@ If the current build is not a buildbucket build, returned `build.id` is 0.
 **DEPRECATED**: use build.id instead.
 ***
 
-&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#1267)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#1268)(self):**
 
 *** note
 **DEPRECATED**: use build.input instead.
@@ -528,7 +528,7 @@ https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/pr
 
 Returns the full builder name: {project}/{bucket}/{builder}.
 
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#1272)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#1274)(self):**
 
 *** note
 **DEPRECATED**: Use build.builder instead.
@@ -866,7 +866,7 @@ Args:
 
 Can be called at most once per build.
 
-&emsp; **@property**<br>&mdash; **def [shadowed\_bucket](/recipe_modules/buildbucket/api.py#1277)(self):**
+&emsp; **@property**<br>&mdash; **def [shadowed\_bucket](/recipe_modules/buildbucket/api.py#1280)(self):**
 
 &emsp; **@property**<br>&mdash; **def [swarming\_bot\_dimensions](/recipe_modules/buildbucket/api.py#1186)(self):**
 

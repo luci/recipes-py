@@ -3,6 +3,33 @@ google_issue_default {
 }
 
 warning {
+  name: "BUILDBUCKET_BUILD_ID_DEPRECATED"
+  description: "api.buildbucket.build_id is deprecated."
+  description: ""
+  description: "Use api.buildbucket.build.id instead."
+  deadline: "2024-06-01"
+  google_issue { id: 332774996 }
+}
+
+warning {
+  name: "BUILDBUCKET_BUILD_INPUT_DEPRECATED"
+  description: "api.buildbucket.build_input is deprecated."
+  description: ""
+  description: "Use api.buildbucket.build.input instead."
+  deadline: "2024-06-01"
+  google_issue { id: 332774996 }
+}
+
+warning {
+  name: "BUILDBUCKET_BUILDER_ID_DEPRECATED"
+  description: "api.buildbucket.builder_id is deprecated."
+  description: ""
+  description: "Use api.buildbucket.build.builder instead."
+  deadline: "2024-06-01"
+  google_issue { id: 332774996 }
+}
+
+warning {
   name: "PYTHON2_DEPRECATED"
   description: "Python2 is deprecated."
   description: ""

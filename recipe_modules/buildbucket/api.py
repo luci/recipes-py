@@ -1262,16 +1262,19 @@ class BuildbucketApi(recipe_api.RecipeApi):
   @property
   def build_id(self):  # pragma: no cover
     """DEPRECATED: use build.id instead."""
+    self.m.warning.issue('BUILDBUCKET_BUILD_ID_DEPRECATED')
     return self.build.id or None
 
   @property
   def build_input(self):  # pragma: no cover
     """DEPRECATED: use build.input instead."""
+    self.m.warning.issue('BUILDBUCKET_BUILD_INPUT_DEPRECATED')
     return self.build.input
 
   @property
   def builder_id(self):  # pragma: no cover
     """DEPRECATED: Use build.builder instead."""
+    self.m.warning.issue('BUILDBUCKET_BUILDER_ID_DEPRECATED')
     return self.build.builder
 
   @property

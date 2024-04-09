@@ -11,6 +11,7 @@ DEPS = [
   'runtime',
   'step',
   'uuid',
+  'warning',
 ]
 
 from recipe_engine.recipe_api import Property
