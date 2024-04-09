@@ -40,10 +40,9 @@ def parse_warning_definitions(file_path):
   definition_collection = textpb.Parse(raw_text, DefinitionCollection())
   definitions = list(definition_collection.warning)
 
-  if definition_collection.HasField('monorail_bug_default'):
-    _populate_bug_issue_fields(definitions,
-                               definition_collection.monorail_bug_default,
-                               definition_collection.google_issue_default)
+  _populate_bug_issue_fields(definitions,
+                             definition_collection.monorail_bug_default,
+                             definition_collection.google_issue_default)
 
   ret = {}
   for definition in definitions:
