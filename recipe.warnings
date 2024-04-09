@@ -62,3 +62,12 @@ warning {
   deadline: "2024-06-01"
   google_issue { id: 332773904 }
 }
+
+warning {
+  name: "SET_BUILDBUCKET_HOST_DEPRECATED"
+  description: "api.buildbucket.set_buildbucket_host() is deprecated."
+  description: ""
+  description: "Use api.buildbucket.host = '...' instead."
+  deadline: "2024-06-01"
+  google_issue { id: 332776145 }
+}

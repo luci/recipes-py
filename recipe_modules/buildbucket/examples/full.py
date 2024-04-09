@@ -6,6 +6,7 @@
 
 import copy
 
+from recipe_engine import recipe_api
 from recipe_engine.post_process import DropExpectation
 
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
@@ -22,6 +23,7 @@ DEPS = [
 ]
 
 
+@recipe_api.ignore_warnings('recipe_engine/SET_BUILDBUCKET_HOST_DEPRECATED')
 def RunSteps(api):
   build = api.buildbucket.build
   if build.builder.bucket == 'try':

@@ -99,6 +99,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   def set_buildbucket_host(self, host):
     """DEPRECATED: Use host property."""
+    self.m.warning.issue('SET_BUILDBUCKET_HOST_DEPRECATED')
     self.host = host
 
   @contextmanager
