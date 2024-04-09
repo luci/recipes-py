@@ -62,8 +62,10 @@ class PropertiesApi(recipe_api.RecipeApi, collections.abc.Mapping):
     easier to debug and diagnose which scripts use which properties.
     """
 
+    self.m.warning.issue('LEGACY_PROPERTIES_DEPRECATED')
+
     # Add all properties to this blacklist that are required for testing, but
-    # not used by any lecacy scripts, in order to avoid vast expecation
+    # not used by any legacy scripts, in order to avoid vast expectation
     # changes.
     blacklist = set([
       'buildbotURL',

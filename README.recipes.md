@@ -3173,6 +3173,8 @@ Return type is int.
 This is equivalent to `psutil.virtual_memory().total / (1024 ** 2)`.
 ### *recipe_modules* / [properties](/recipe_modules/properties)
 
+[DEPS](/recipe_modules/properties/__init__.py#5): [warning](#recipe_modules-warning)
+
 
 Provides access to the recipes input properties.
 
@@ -3208,7 +3210,7 @@ Instead of passing all of the properties as a blob, please consider passing
 specific arguments to scripts that need them. Doing this makes it much
 easier to debug and diagnose which scripts use which properties.
 
-&mdash; **def [thaw](/recipe_modules/properties/api.py#77)(self):**
+&mdash; **def [thaw](/recipe_modules/properties/api.py#79)(self):**
 
 Returns a read-write copy of all of the properties.
 ### *recipe_modules* / [proto](/recipe_modules/proto)

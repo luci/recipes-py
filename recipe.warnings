@@ -39,6 +39,18 @@ warning {
 }
 
 warning {
+  name: "LEGACY_PROPERTIES_DEPRECATED"
+  description: "api.properties.legacy() is deprecated."
+  description: ""
+  description: "Instead of passing all of the properties as a blob, please"
+  description: "consider passing specific arguments to scripts that need them."
+  description: "Doing this makes it much easier to debug and diagnose which"
+  description: "scripts use which properties."
+  deadline: "2024-06-01"
+  google_issue { id: 332776173 }
+}
+
+warning {
   name: "PYTHON2_DEPRECATED"
   description: "Python2 is deprecated."
   description: ""
