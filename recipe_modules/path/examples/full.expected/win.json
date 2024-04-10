@@ -139,21 +139,6 @@
   {
     "cmd": [
       "echo",
-      "[CACHE]",
-      "[CLEANUP]",
-      "[HOME]",
-      "[START_DIR]",
-      "[TMP_BASE]"
-    ],
-    "name": "base paths",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@result@base_paths: {\"cache\": [\"C:\\\\\", \"b\", \"c\"], \"cleanup\": [\"C:\\\\\", \"b\", \"cleanup\"], \"home\": [\"C:\\\\\", \"home\", \"fake_user\"], \"start_dir\": [\"C:\\\\\", \"b\", \"FakeTestingCWD\"], \"tmp_base\": [\"C:\\\\\"]}@@@",
-      "@@@STEP_LOG_END@result@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "echo",
       "[START_DIR]\\some\\thing"
     ],
     "name": "converted path [START_DIR]\\some\\thing"
@@ -164,6 +149,20 @@
       "[START_DIR]"
     ],
     "name": "converted path [START_DIR]"
+  },
+  {
+    "cmd": [
+      "echo",
+      "[CACHE]\\a file"
+    ],
+    "name": "converted path [CACHE]\\a file"
+  },
+  {
+    "cmd": [
+      "echo",
+      "[HOME]\\another file"
+    ],
+    "name": "converted path [HOME]\\another file"
   },
   {
     "cmd": [

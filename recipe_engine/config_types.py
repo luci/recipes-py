@@ -4,199 +4,307 @@
 
 from __future__ import annotations
 
-import collections
 import itertools
-from typing import Any
 
-import abc
-import os
+from dataclasses import dataclass, field
+from typing import ClassVar, TYPE_CHECKING
 
+if TYPE_CHECKING:
+  from recipe_engine.internal.recipe_deps import RecipeModule, Recipe, RecipeRepo
 
 def ResetGlobalVariableAssignments():
-  RecipeConfigType._TOSTRING_MAP.clear()  # pylint: disable=W0212
-  NamedBasePath._API = None
+  """This function is called from inside of the recipe test runner prior to each
+  test case executed.
 
-
-class RecipeConfigType:
-  """Base class for custom Recipe config types, intended to be subclassed.
-
-  RecipeConfigTypes are meant to be PURE data. There should be no dependency on
-  any external systems (i.e. no importing sys, os, etc.).
-
-  The subclasses should override default_tostring_fn. This method should
-  produce a string representation of the object. This string representation
-  should contain all of the data members of the subclass. This representation
-  will be used during the execution of the recipe_config_tests.
-
-  External entities (usually recipe modules), can override the default
-  tostring_fn method by calling <RecipeConfigType
-  subclass>.set_tostring_fn(<new method>). This new method will receive an
-  instance of the RecipeConfigType subclass as its single argument, and is
-  expected to return a string. There is no restriction on the data that the
-  override tostring_fn may use. For example, the Path class in this module has
-  its tostring_fn overridden by the 'path' recipe_module.  This new tostring_fn
-  uses data from the current recipe run, like the host os, to return platform
-  specific strings using the data in the Path object.
+  See the class variables below for what they are and what sets them.
   """
-  _TOSTRING_MAP = {}
-
-  @property
-  def tostring_fn(self):
-    cls = self.__class__
-    return self._TOSTRING_MAP.get(cls.__name__, cls.default_tostring_fn)
-
-  @classmethod
-  def set_tostring_fn(cls, new_tostring_fn):
-    assert cls.__name__ not in cls._TOSTRING_MAP, (
-        'tostring_fn already installed for %s' % cls)
-    cls._TOSTRING_MAP[cls.__name__] = new_tostring_fn
-
-  def default_tostring_fn(self):
-    raise NotImplementedError()
-
-  def __str__(self):
-    return self.tostring_fn(self) # pylint: disable=not-callable
+  CheckoutBasePath._resolved = None
+  Path._OS_SEP = None
 
 
-class BasePath(metaclass=abc.ABCMeta):
+@dataclass(frozen=True)
+class CheckoutBasePath:
+  """CheckoutBasePath is a placeholder base for Paths relative to
+  api.path.checkout_dir.
 
-  @abc.abstractmethod
-  def resolve(self, test_enabled: bool) -> str:
-    """Returns a string representation of the path base.
+  This base is used in the following cases:
+    * Construction of Paths to be sent from GenTests to RunSteps (e.g. when
+    mocking paths with api.path.exists() from GenTests).
+    * In select circumstances when constructing Paths inside of the recipe
+    engine's "config" subsystem.
 
-    Args:
-      test_enabled: True iff this is only for recipe expectations.
+  Paths using CheckoutBasePath are 'slippery' and will try to resolve to
+  a ResolvedBasePath at almost every opportunity. Resolving a CheckoutBasePath
+  requires that the recipe has already assigned a value to checkout_dir in the
+  recipe_engine/path module, which in turn will assign to the
+  CheckoutBasePath._resolved class variable.
 
-    Raises:
-      NotImplementedError: If this method isn't overridden by a subclass.
+  If the checkout_dir has not yet been set, `resolve` on this class will raise
+  a ValueError stating as such.
+  """
+
+  # HACK: This is directly assigned to by the recipe_engine/path module in the
+  # checkout_dir setter.
+  #
+  # This is also reset by the ResetGlobalVariableAssignments() function in this
+  # file, which is called from the recipe tests prior to each test case.
+  _resolved: ClassVar[Path | None] = None
+
+  def maybe_resolve(self) -> Path | None:
+    """If CheckoutBasePath can be resolved to a real Path, return that,
+    otherwise return None."""
+    if self._resolved:
+      return self._resolved
+
+  def resolve(self) -> Path:
+    """Resolve this CheckoutBasePath, raise ValueError if it's not yet defined."""
+    checkout_dir = self.maybe_resolve()
+    if checkout_dir is None:
+      raise ValueError(
+          f'Cannot resolve CheckoutBasePath() - api.path.checkout_dir is unset.'
+      )
+    return checkout_dir
+
+  def __str__(self) -> str:
+    """Returns the resolved path as a string.
+
+    We never want to render CheckoutBasePath as anything other than the real
+    path base that it points to, which means that this will raise ValueError if
+    checkout_dir has not yet been assigned.
     """
-    raise NotImplementedError()
+    return str(self.resolve())
+
+  def __repr__(self) -> str:
+    if self._resolved:
+      return str(self)
+    return 'CheckoutBasePath[UNRESOLVED]'
 
 
-class NamedBasePath(BasePath, collections.namedtuple('NamedBasePath', 'name')):
-  _API = None
+@dataclass(frozen=True, order=True)
+class ResolvedBasePath:
+  """ResolvedBasePath represents a 'resolved' base path.
+
+  In tests, this will contain a string like "[START_DIR]", "[CACHE]", etc. These
+  names come from the recipe_engine/path module.
+
+  In non-tests, this will contain an actual absolute filesystem path as a string.
+  """
+  resolved: str
 
   @classmethod
-  def set_path_api(cls, api):
-    cls._API = api
+  def for_recipe_module(cls, test_enabled: bool,
+                        module: RecipeModule) -> ResolvedBasePath:
+    if not test_enabled:
+      return cls(module.path)
 
-  def resolve(self, test_enabled: bool) -> str:
-    if self.name == self._API.CheckoutPathName:
-      checkout_dir = self._API.checkout_dir
-      if checkout_dir is None:
-        raise ValueError(
-            f'Cannot resolve NamedBasePath({self.name!r}) - api.path.checkout_dir is unset.')
-      return str(checkout_dir)
-
-    if self.name in self._API.c.base_paths:
-      if test_enabled:
-        return repr(self)
-      return self._API.join(
-          *self._API.c.base_paths[self.name])  # pragma: no cover
-
-    raise KeyError(
-        'Failed to resolve NamedBasePath: %s' % self.name)  # pragma: no cover
-
-  def __repr__(self):
-    return '[%s]' % self.name.upper()
-
-
-class ModuleBasePath(BasePath, collections.namedtuple('ModuleBasePath',
-                                                      'module')):
-
-  def resolve(self, test_enabled):
-    if test_enabled:
-      return repr(self)
-    return self.module.path  # pragma: no cover
-
-  def __repr__(self):
     # We change python's module delimiter . to ::, since . is already used
     # by expect tests.
-    return f'RECIPE_MODULE[{self.module.repo.name}::{self.module.name}]'
+    return cls(f'RECIPE_MODULE[{module.repo.name}::{module.name}]')
+
+  @classmethod
+  def for_recipe_script_resources(cls, test_enabled: bool,
+                                  recipe: Recipe) -> ResolvedBasePath:
+    if not test_enabled:
+      return cls(recipe.resources_dir)
+    return cls(f'RECIPE[{recipe.full_name}].resources')
+
+  @classmethod
+  def for_bundled_repo(cls, test_enabled: bool,
+                       repo: RecipeRepo) -> ResolvedBasePath:
+    if not test_enabled:
+      return cls(repo.path)
+    return cls(f'RECIPE_REPO[{repo.name}]')
+
+  def __repr__(self) -> str:
+    return self.resolved
 
 
-class RecipeScriptBasePath(BasePath,
-                           collections.namedtuple('RecipeScriptBasePath',
-                                                  'recipe_name script_path')):
+@dataclass(frozen=True)
+class Path:
+  """Represents an absolute path which is relative to a 'base' path.
 
-  def resolve(self, test_enabled):
-    if test_enabled:
-      return repr(self)
-    return os.path.splitext(
-        self.script_path)[0] + '.resources'  # pragma: no cover
+  The `base` is either a ResolvedBasePath or a CheckoutBasePath.
 
-  def __repr__(self):
-    return 'RECIPE[%s].resources' % self.recipe_name
-
-
-class RepoBasePath(BasePath,
-                   collections.namedtuple('RepoBasePath',
-                                          'repo_name repo_root_path')):
-
-  def resolve(self, test_enabled):
-    if test_enabled:
-      return repr(self)
-    return self.repo_root_path  # pragma: no cover
-
-  def __repr__(self):
-    return 'RECIPE_REPO[%s]' % self.repo_name
-
-
-class Path(RecipeConfigType):
-  """Represents a path which is relative to a semantically-named base.
-
-  Because there's a lot of platform (separator style) and runtime-specific
-  context (working directory) which goes into assembling a final OS-specific
-  absolute path, we only store three context-free attributes in this Path
-  object.
+  This Path is made aware of the currently simulated path separator from the
+  __init__ method of the recipe_engine/path module, which assigns to this
+  class's _OS_SEP variable.
   """
+  base: CheckoutBasePath | ResolvedBasePath
+  pieces: tuple[str, ...]
 
-  def __init__(self,
-               base: BasePath,
-               *pieces: str):
+  # HACK: This is directly assigned to by the recipe_engine/path module, and is
+  # populated with the current path separator character (either '/' or '\\').
+  #
+  # This is also reset by the ResetGlobalVariableAssignments() function in this
+  # file, which is called from the recipe tests prior to each test case.
+  _OS_SEP: ClassVar[str | None] = None
+
+  # This field is used to cache the output of __str__.
+  #
+  # Why not use @functools.cache on __str__? Unfortunately, this effectively
+  # creates a global variable Path.__str__.<wrapper func>.cache, which is a dict
+  # mapping Path instances to their __str__() values. This is 'fine', but it ends
+  # up capturing the value of _OS_SEP which can change multiple times per
+  # process run (see ResetGlobalVariableAssignments). This can still be used by
+  # adding Path.__str__.cache_clear() to ResetGlobalVariableAssignments, but
+  # I don't think introducing the extra global variable is necessary or
+  # desirable here, especially since we know that Path is immutable.
+  _str: str | None = field(default=None, repr=False, hash=False, compare=False)
+
+  def __init__(self, base: CheckoutBasePath | ResolvedBasePath, *pieces: str):
     """Creates a Path.
 
     Args:
-      base: The 'name' of a base path, to be filled in at recipe runtime
-        by the 'path' recipe module.
-      *pieces: The components of the path relative to base. These pieces must
-        be non-relative (i.e. no '..' or '.', etc. as a piece).
+      base: Either a CheckoutBasePath, which represents a placeholder for
+        a ResolvedBasePath, or a ResolvedBasePath.
+      *pieces: The components of the path relative to base.
+        - If this recipe is being run on windows, pieces with '/' or '\\' will be
+          split. On non-windows, they will be split only on '/'.
+        - Split pieces equaling '..' must not go above the `base`. That is, if
+          you give `Path(ResolvedBasePath('[CACHE]'), '..', 'something')`, this will
+          raise ValueError because the '..' would bring this Path above the
+          base. However, `Path(ResolvedBasePath('[CACHE]'), 'something', '..')`
+          is OK and would be equivalent to `Path(ResolvedBasePath('[CACHE]'))`.
+        - Empty pieces and pieces which are '.' are ignored.
+        - If the recipe is not yet running (e.g. you are calling Path from
+          GenTests), and you include a '\\' in a piece, this will raise
+          ValueError (just use '/' or separate the pieces yourself in that case).
     """
     super().__init__()
-    assert isinstance(base, BasePath), base
-    assert all(isinstance(x, str) for x in pieces), pieces
-    assert not any(x in ('..', '/', '\\') for x in pieces)
+    if not isinstance(base, (CheckoutBasePath, ResolvedBasePath)):
+      raise ValueError(
+          'First argument to Path must be CheckoutBasePath or ResolvedBasePath, '
+          f'got {base!r} ({type(base)!r})')
 
-    self._base = base
-    self._pieces = tuple(p for p in pieces if p != '.')
+    # If they gave us a CheckoutBasePath, but it's already resolvable,
+    # immediately transmute it into a ResolvedBasePath.
+    if isinstance(base, CheckoutBasePath):
+      if resolved_path := base.maybe_resolve():
+        base = resolved_path.base
+        pieces = resolved_path.pieces + tuple(pieces)
 
-  @property
-  def base(self) -> BasePath:
-    return self._base
+    has_backslashes: bool = False
+    for i, piece in enumerate(pieces):
+      if not isinstance(piece, str):
+        raise ValueError('Variadic arguments to Path must only be `str`, '
+                         f'argument {i} was {piece!r} ({type(piece)!r})')
+      has_backslashes = has_backslashes or '\\' in piece
 
-  @property
-  def pieces(self) -> tuple[str, ...]:
-    return self._pieces
+    # NOTE: we always separate on '/', regardless of _OS_SEP, as users like to
+    # pass pieces to Path constructors and join() which contain a slash already
+    # (but almost never pass them with '\\').
+    #
+    # However, if they make a path, using backslash in pieces, during GenTests,
+    # we can't tell if these should be separated or not and so raise a ValueError.
+    if self._OS_SEP is None and has_backslashes:
+      raise ValueError(
+          f'Cannot instantiate Path({base!r}, {pieces!r}) - Pieces contain'
+          ' backslash and recipe_engine/path has not been initialized yet.'
+          ' Please use "/" (even for windows) or pass the pieces to join'
+          ' separately.')
+    need_backslash_split = has_backslashes and self._OS_SEP == '\\'
 
-  def __eq__(self, other: Path) -> bool:
-    return (self.base == other.base and
-            self.pieces == other.pieces)
+    normalized_pieces = []
+    for piece in pieces:
+      slash_pieces = piece.split('/')
+      if need_backslash_split:
+        new_slash_pieces = []
+        for sp in slash_pieces:
+          new_slash_pieces.extend(sp.split(self._OS_SEP))
+        slash_pieces = new_slash_pieces
+      normalized_pieces.extend(p for p in slash_pieces if p and p != '.')
 
-  def __hash__(self) -> int:
-    return hash((
-        self.base,
-        self.pieces,
-    ))
+    # At this point normalized_pieces is pieces but where:
+    #   * All pieces have been split by / and/or \ - there are no more
+    #   splittable slashes in normalized_pieces.
+    #   * All empty pieces (which are '' or '.' pieces) have been removed.
 
-  def __ne__(self, other: Any) -> bool:
-    return not self == other
+    # Next, we normalize '..' passed in - This is allowed as long as it can be
+    # fully resolved within the given pieces. Otherwise we'll raise an exception
+    # if a joined '..' would take us above the base of this Path.
+    #
+    # Note that we start i at 1 and not 0: if pieces[0] == '..', this will be
+    # caught in the next check section.
+    i = 1
+    while 0 < i < len(normalized_pieces):
+      piece = normalized_pieces[i]
+      if piece == '..':
+        # At this point normalized_pieces looks like:
+        #    'previous'  'something' '..'  'other' 'things'
+        #    i-2        [i-1         i   ] i+1     i+2
+        #
+        # The [section] is the items in [i-1:i+1] (this syntax is a half-open
+        # range). Assigning `[]` to this range will remove the previous element,
+        # and also the '..'. This shifts the list to now be:
+        #    'previous' 'other' 'things'
+        #    i-2        i-1     i
+        #
+        # Which means that we need to decrement i by one to evaluate 'other',
+        # which is the next item to analyze.
+        normalized_pieces[i - 1:i + 1] = []
+        i -= 1
+      else:
+        i += 1
 
-  def __lt__(self, other: Path) -> bool:
-    if self.base != other.base:
-      # NOTE: bases all happen to extend namedtuple, which makes this comparison
-      # work.
-      return self.base < other.base
-    return self.pieces < other.pieces
+    # Finally, check to see if any '..' was left over and raise.
+    if normalized_pieces and normalized_pieces[0] == '..':
+      raise ValueError(
+          f'Unable to compute {base!r} / {pieces!r} without going above the base.'
+      )
+
+    # This is a frozen dataclass, so we have to assign using object.__setattr__.
+    # Believe it or not, this is actually documented in
+    # https://docs.python.org/3.11/library/dataclasses.html#frozen-instances
+    object.__setattr__(self, 'base', base)
+    object.__setattr__(self, 'pieces', tuple(normalized_pieces))
+
+  def _resolve(self) -> Path:
+    """If self.base is a ResolvedBasePath, this will return self.
+
+    Otherwise, this will resolve self.base and return an equivalent path to
+    `self` but with a ResolvedBasePath base. If CheckoutBasePath is
+    unresolvable, this raises ValueError.
+    """
+    if not isinstance(self.base, CheckoutBasePath):
+      return self
+    return self.base.resolve().join(*self.pieces)
+
+  def __eq__(self, other: Path | str) -> bool:
+    if isinstance(other, str):
+      return str(self) == other
+
+    # first, if both bases are checkout, just compare pieces, since we know that
+    # CheckoutBasePath, once assigned, will always match.
+    if (isinstance(self.base, CheckoutBasePath) and
+        isinstance(other.base, CheckoutBasePath)):
+      return self.pieces == other.pieces
+
+    try:
+      spath = self._resolve()
+      opath = other._resolve()
+      return spath.base == opath.base and spath.pieces == opath.pieces
+    except Exception as ex:
+      raise ValueError('Path.__eq__ invalid for mismatched bases '
+                       '(CheckoutBasePath vs ResolvedBasePath) '
+                       'before checkout_dir is set') from ex
+
+  def __lt__(self, other: Path | str) -> bool:
+    if isinstance(other, str):
+      return str(self) < other
+
+    # first, if both bases are checkout, just compare pieces, since we know that
+    # CheckoutBasePath, once assigned, will always match.
+    if (isinstance(self.base, CheckoutBasePath) and
+        isinstance(other.base, CheckoutBasePath)):
+      return self.pieces < other.pieces
+    try:
+      spath = self._resolve()
+      opath = other._resolve()
+      return (spath.base, spath.pieces) < (opath.base, opath.pieces)
+    except Exception as ex:
+      raise ValueError('Path.__lt__ invalid for mismatched bases '
+                       '(CheckoutBasePath vs ResolvedBasePath) '
+                       'before checkout_dir is set') from ex
 
   def __truediv__(self, piece: str) -> Path:
     """Adds the shorthand '/'-operator for .join(), returning a new path."""
@@ -208,8 +316,8 @@ class Path(RecipeConfigType):
     Empty values ('', None) in pieces will be omitted.
 
     Args:
-      pieces: The components of the path relative to base. These pieces must be
-        non-relative (i.e. no '..' as a piece).
+      pieces: The components of the path relative to base. The normal Path
+      __init__ rules for '..' and '.' apply.
 
     Returns:
       The new Path.
@@ -220,33 +328,58 @@ class Path(RecipeConfigType):
         self.base,
         *[p for p in itertools.chain(self.pieces, pieces) if p])
 
-  def is_parent_of(self, child: Path) -> bool:
-    """True if |child| is in a subdirectory of this path."""
-    # Assumes base paths are not nested.
-    # TODO(vadimsh): We should not rely on this assumption.
-    if self.base != child.base:
+  def is_parent_of(self, other: Path) -> bool:
+    """True if |other| is in a subdirectory of this Path."""
+    spath = self
+    opath = other
+    # If they are BOTH CheckoutBasePath we can use them directly, otherwise we
+    # need to resolve them (which may raise)
+    if not (isinstance(self.base, CheckoutBasePath) and
+            isinstance(other.base, CheckoutBasePath)):
+      spath = self._resolve()
+      opath = other._resolve()
+
+    # NOTE: This assumes that none of the ResolvedBasePath's overlap, which is
+    # currently true, and simplifies things quite a bit.
+    if spath.base != opath.base:
       return False
-    # A path is not a parent to itself.
-    if len(self.pieces) >= len(child.pieces):
-      return False
-    return child.pieces[:len(self.pieces)] == self.pieces
 
-  def separate(self, separator: str) -> None:
-    """Breaks apart any pieces of self.pieces containing the separator.
+    # They have the same base, so return True if the paths have a matching prefix.
+    #
+    # If spath.pieces is longer than opath.pieces, this will be False, which is
+    # correct.
+    return spath.pieces == opath.pieces[:len(spath.pieces)]
 
-    Example: If self.pieces is ('foo', 'bar/baz') and separator='/', then
-    self.pieces will be transformed into ('foo', 'bar', 'baz'). This allows for
-    more accurate comparisons, like equality or parenthood.
-
-    Args:
-      separator: The file separator character for this platform: '/' for POSIX,
-        '\\' for Windows. Usually fetched via api.path.sep.
-    """
-    self._pieces = sum((tuple(piece.split(separator)) for piece in self.pieces),
-                       start=())
+  def __str__(self) -> str:
+    if self._str is None:
+      if not self._OS_SEP:
+        raise ValueError('Unable to render Path to string - '
+                         'recipe_engine/path has not been initialized yet.')
+      str_val = self._OS_SEP.join(itertools.chain((str(self.base),), self.pieces))
+      object.__setattr__(self, '_str', str_val)
+      return str_val
+    return self._str
 
   def __repr__(self) -> str:
-    s = 'Path(%r' % (self.base,)
-    if self.pieces:
-      s += ', %s' % ', '.join(repr(x) for x in self.pieces)
+    # Try to resolve `self` - if it's rooted in CheckoutBasePath and
+    # checkout_dir is already set, display the fully resolved path, since all
+    # interactions with this Path will behave in that fashion.
+    #
+    # Otherwise, just use `self` as-is to allow repr(Path) to work in scenarios
+    # where checkout_dir hasn't been set (for example, when reporting errors
+    # involving unresolved checkout_dir paths...)
+    try:
+      spath = self._resolve()
+    except ValueError:
+      spath = self
+
+    # NOTE: It would be good to switch to the dataclass-repr instead (or just
+    # use __str__ all the time)
+    s = 'Path(%r' % (spath.base,)
+    if spath.pieces:
+      s += ', %s' % ', '.join(repr(x) for x in spath.pieces)
     return s + ')'
+
+  def __hash__(self) -> int:
+    spath = self._resolve()
+    return hash(('config_types.Path', spath.base, spath.pieces))

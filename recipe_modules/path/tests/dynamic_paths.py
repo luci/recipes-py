@@ -15,6 +15,14 @@ def RunSteps(api):
     assert 'called with bad type' in str(ex), str(ex)
 
   try:
+    # Note - legacy api.path.get('checkout') is the only way to get a dynamic
+    # checkout path before assignment to checkout_dir.
+    api.path.checkout_dir = api.path.get('checkout').join('something')
+    assert False, 'able to assign string to path?'  # pragma: no cover
+  except ValueError as ex:
+    assert 'cannot be rooted in checkout_dir' in str(ex), str(ex)
+
+  try:
     api.path['something'] = api.path['start_dir'].join('coolstuff')
     assert False, 'able to assign path to non-dynamic path?'  # pragma: no cover
   except ValueError as ex:

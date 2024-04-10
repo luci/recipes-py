@@ -52,7 +52,7 @@ from attr.validators import optional
 
 from google.protobuf import json_format as jsonpb
 
-from ..config_types import Path, RepoBasePath, RecipeScriptBasePath
+from ..config_types import Path, ResolvedBasePath
 from ..engine_types import freeze, FrozenDict
 from ..recipe_api import UnresolvedRequirement, RecipeScriptApi, BoundProperty
 from ..recipe_api import RecipeApi
@@ -944,10 +944,10 @@ class Recipe:
 
     api = RecipeScriptApi(
         test_data.get_module_test_data(None),
-        Path(RecipeScriptBasePath(
-          self.full_name,
-          os.path.splitext(self.path)[0]+".resources")),
-        Path(RepoBasePath(self.repo.name, self.repo.path)),
+        Path(
+            ResolvedBasePath.for_recipe_script_resources(
+                test_data.enabled, self)),
+        Path(ResolvedBasePath.for_bundled_repo(test_data.enabled, self.repo)),
     )
     resolved_deps = _resolve(
       self.repo.recipe_deps, self.normalized_DEPS, 'API', engine, test_data)

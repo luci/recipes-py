@@ -168,7 +168,8 @@ class PathsClient:
       self.path_strings.append(path_string)
       self.paths.append(path)
 
-  def find_longest_prefix(self, target, sep):
+  def find_longest_prefix(self, target,
+                          sep) -> tuple[str | None, config_types.Path | None]:
     """Identifies a known resource path which would contain the `target` path.
 
     sep must be the current path separator (can vary from os.path.sep when
@@ -182,7 +183,7 @@ class PathsClient:
       return (None, None) # off the end
 
     sPath, path = self.path_strings[idx], self.paths[idx]
-    if target == sPath :
+    if target == sPath:
       return sPath, path
 
     if idx > 0:
@@ -488,15 +489,14 @@ class RecipeApi:
     assert module
     self._module = module
     self._resource_directory = config_types.Path(
-        config_types.ModuleBasePath(module)).join('resources')
+        config_types.ResolvedBasePath.for_recipe_module(
+            test_data.enabled, module)).join('resources')
     self._repo_root = config_types.Path(
-        config_types.RepoBasePath(
-            module.repo.name,
-            module.repo.path,
-        ))
+        config_types.ResolvedBasePath.for_bundled_repo(test_data.enabled,
+                                                       module.repo))
 
     assert isinstance(test_data, (ModuleTestData, DisabledTestData))
-    self._test_data = test_data
+    self._test_data: ModuleTestData | DisabledTestData = test_data
 
     # If we're the 'root' api, inject directly into 'self'.
     # Otherwise inject into 'self.m'

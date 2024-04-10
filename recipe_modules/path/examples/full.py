@@ -12,7 +12,6 @@ DEPS = [
 
 from builtins import range, zip
 
-from recipe_engine.config_types import Path
 
 def RunSteps(api):
   api.step('step1', ['/bin/echo', str(api.path['tmp_base'].join('foo'))])
@@ -27,16 +26,22 @@ def RunSteps(api):
 
   assert 'start_dir' in api.path
   assert api.path['start_dir'].join('.') == api.path['start_dir']
+
   assert 'checkout' not in api.path
   api.path['checkout'] = api.path['tmp_base'].join('checkout')
   assert 'checkout' in api.path
 
   # Test missing/default value.
   assert 'nonexistent' not in api.path
-  assert api.path.get('nonexistent') is None
+  try:
+    api.path.get('nonexistent')
+    assert False, "We should never get here"  # pragma: no cover
+  except ValueError as ex:
+    assert 'unknown base path' in str(ex), str(ex)
+
   try:
     raise Exception('Should never raise: %s' % (api.path['nonexistent'],))
-  except KeyError:
+  except ValueError:
     pass
 
   # Global dynamic paths (see config.py example for declaration):
@@ -164,22 +169,17 @@ def RunSteps(api):
   assert not api.path.exists(copy2)
   assert api.path.exists(copy20)
 
-  result = api.step('base paths', ['echo'] + [
-      api.path[name] for name in sorted(api.path.c.base_paths.keys())
-  ])
-  result.presentation.logs['result'] = [
-      'base_paths: %s' % (api.json.dumps(api.path.c.base_paths.as_jsonish()),),
-  ]
-
   # Convert strings to Paths.
   def _mk_paths():
     return [
-      api.path['start_dir'].join('some', 'thing'),
-      api.path['start_dir'],
-      api.path.resource("module_resource.py"),
-      api.path.resource(),
-      api.resource("recipe_resource.py"),
-      api.resource(),
+        api.path['start_dir'].join('some', 'thing'),
+        api.path['start_dir'],
+        api.path['cache'] / 'a file',
+        api.path['home'] / 'another file',
+        api.path.resource("module_resource.py"),
+        api.path.resource(),
+        api.resource("recipe_resource.py"),
+        api.resource(),
     ]
   static_paths = _mk_paths()
   for p in static_paths:
@@ -215,54 +215,30 @@ def RunSteps(api):
     assert "could not figure out" in str(ex), ex
 
   start_dir = api.path['start_dir']
-  tmp_base = api.path['tmp_base']
-  assert start_dir < tmp_base
-  assert not (tmp_base < start_dir)
-
-  a = start_dir.join('a')
-  b = start_dir.join('b')
+  a = start_dir / 'a'
+  b = start_dir / 'b'
   assert a < b
+  assert b > a
   assert not (b < a)
+
+  # there is also a join method on the path module
+  assert start_dir.join('a') == api.path.join(start_dir, 'a')
 
   slashy_path = api.path['start_dir'].join(f'foo{api.path.sep}bar')
   separated_path = api.path['start_dir'].join('foo', 'bar')
   assert str(slashy_path) == str(separated_path)
-  assert slashy_path != separated_path  # Not desired, but true.
+  assert slashy_path == separated_path
   assert api.path.eq(slashy_path, separated_path)
-  assert slashy_path != separated_path  # eq() didn't modify the paths.
 
   slashy_file = api.path['start_dir'].join(
       f'foo{api.path.sep}bar{api.path.sep}baz.txt')
-  assert not separated_path.is_parent_of(slashy_file)  # Again, not desired.
+  assert separated_path.is_parent_of(slashy_file)
   assert api.path.is_parent_of(separated_path, slashy_file)
-  assert not separated_path.is_parent_of(slashy_file)  # Again, not modified.
 
 
 def GenTests(api):
-  for platform in ('linux', 'win', 'mac'):
-    yield (api.test(platform) + api.platform.name(platform) +
-           # Test when a file already exists
-           api.path.exists(api.path['tmp_base']))
-
-    # We have support for chromium swarming built in to the engine for some
-    # reason. TODO(phajdan.jr) remove it.
-    yield (api.test('%s_swarming' % platform) +
-           api.platform.name(platform) +
-           api.properties(path_config='swarming') +
-           api.path.exists(api.path['tmp_base']))
-
-    yield (api.test('%s_kitchen' % platform) +
-           api.platform.name(platform) +
-           api.properties(path_config='kitchen') +
-           api.path.exists(api.path['tmp_base']))
-
-    yield (api.test('%s_luci' % platform) +
-           api.platform.name(platform) +
-           api.properties(**{
-              '$recipe_engine/path': {
-                'cache_dir': '/c',
-                'temp_dir': '/t',
-                'cleanup_dir': '/build.dead',
-              },
-           }) +
-           api.path.exists(api.path['tmp_base']))
+  for platform in ('linux', 'win'):
+    yield api.test(
+        platform,
+        api.platform.name(platform),
+    )
