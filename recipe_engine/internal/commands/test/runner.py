@@ -566,13 +566,6 @@ def _make_path_cleaner(recipe_deps):
   return lambda lines: [replacer.sub(_root_subber, line) for line in lines]
 
 
-@attr.s(frozen=True)
-class DescriptionWithCallback:
-
-  description = attr.ib()
-  callback = attr.ib()
-
-
 class RunnerThread(gevent.Greenlet):
   def __init__(self, recipe_deps, description_queue, outcome_queue, is_train,
                cov_file, cover_module_imports):
@@ -686,11 +679,6 @@ class RunnerThread(gevent.Greenlet):
           self._runner_proc.wait()
           return
 
-        callback = None
-        if isinstance(test_desc, DescriptionWithCallback):
-          callback = test_desc.callback
-          test_desc = test_desc.description
-
         if not write_message(self._runner_proc.stdin, test_desc):
           self._outcome_queue.put(Outcome(internal_error=[
             'Unable to send test description for (%s.%s) from %r' % (
@@ -700,8 +688,6 @@ class RunnerThread(gevent.Greenlet):
           return
 
         result = read_message(self._runner_proc.stdout, Outcome)
-        if callback:
-          callback()
         if result is None:
           return
 
