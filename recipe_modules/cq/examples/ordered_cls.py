@@ -2,7 +2,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from recipe_engine import post_process
+from recipe_engine import post_process, recipe_api
 
 from PB.go.chromium.org.luci.cv.api.recipe.v1 import cq as cq_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as bb_common_pb2
@@ -16,6 +16,7 @@ DEPS = [
 ]
 
 
+@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')
 def RunSteps(api):
   if 'raises' in api.properties:
     with api.assertions.assertRaises(api.cq.CQInactive):

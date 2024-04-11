@@ -2,6 +2,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from PB.go.chromium.org.luci.buildbucket.proto.build import Build
+from recipe_engine import recipe_api
+
 DEPS = [
   'buildbucket',
   'cq',
@@ -9,9 +12,7 @@ DEPS = [
 ]
 
 
-from PB.go.chromium.org.luci.buildbucket.proto.build import Build
-
-
+@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')
 def RunSteps(api):
   api.step('no builds actually triggered', cmd=[])
   api.cq.record_triggered_builds(*[])

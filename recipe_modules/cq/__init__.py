@@ -7,6 +7,7 @@ from PB.go.chromium.org.luci.cv.api.recipe.v1 import cq as cq_pb2
 DEPS = [
     'cv',
     'properties',
+    'warning',
 ]
 
 PROPERTIES = cq_pb2.Input

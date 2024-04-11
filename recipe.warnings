@@ -3,6 +3,15 @@ google_issue_default {
 }
 
 warning {
+  name: "CQ_MODULE_DEPRECATED"
+  description: "The cq module is deprecated."
+  description: ""
+  description: "Use the cv module instead."
+  deadline: "2024-07-01"
+  google_issue { id: 333811087 }
+}
+
+warning {
   name: "BUILDBUCKET_BUILD_ID_DEPRECATED"
   description: "api.buildbucket.build_id is deprecated."
   description: ""

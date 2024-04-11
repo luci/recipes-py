@@ -2,7 +2,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from recipe_engine import post_process
+from recipe_engine import post_process, recipe_api
 
 DEPS = [
   'assertions',
@@ -12,6 +12,7 @@ DEPS = [
 ]
 
 
+@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')
 def RunSteps(api):
   api.assertions.assertEqual(
        api.cq.owner_is_googler,  api.properties['expected_owner_is_googler'])

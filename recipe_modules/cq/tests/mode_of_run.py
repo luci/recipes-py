@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from recipe_engine import recipe_api
+
 DEPS = [
   'cq',
   'properties',
@@ -9,6 +11,7 @@ DEPS = [
 ]
 
 
+@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')
 def RunSteps(api):
   api.step('show properties', [])
   api.step.active_result.presentation.logs['result'] = [

@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from recipe_engine import recipe_api
+
 DEPS = [
   'assertions',
   'cq',
@@ -9,6 +11,7 @@ DEPS = [
 ]
 
 
+@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')
 def RunSteps(api):
   api.step('disallow reuse only for full run', cmd=None)
   api.assertions.assertFalse(api.cq.allowed_reuse_modes)

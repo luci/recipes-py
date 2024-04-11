@@ -31,4 +31,5 @@ class CQApi(recipe_api.RecipeApi):
     self.m.cv.initialize()
 
   def __getattr__(self, name):
+    self.m.warning.issue('CQ_MODULE_DEPRECATED')
     return getattr(self.m.cv, name)
