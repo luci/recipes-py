@@ -448,7 +448,10 @@ class RecipeRepo:
           modules[entry_name] = mod
           for recipe in mod.recipes.values():
             recipes[recipe.name] = recipe
-        else:
+        elif any(os.scandir(possible_mod_path)):
+          # Only emit this log if the module directory is non-empty. If the
+          # module directory is empty then it goes without saying that it will
+          # be ignored.
           LOG.warn('ignoring %r: missing __init__.py', possible_mod_path)
 
     for recipe_name in _scan_recipe_directory(ret.recipes_dir):
