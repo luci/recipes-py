@@ -268,6 +268,21 @@ class Path:
     """For 'foo/bar/baz', return 'baz'."""
     return self.pieces[-1]
 
+  @property
+  def stem(self) -> str:
+    """For 'dir/foo.tar.gz', return 'foo.tar'."""
+    return self.name.rsplit('.', 1)[0]
+
+  @property
+  def suffix(self) -> str:
+    """For 'dir/foo.tar.gz', return '.gz'."""
+    return '.' + self.name.rsplit('.', 1)[1]
+
+  @property
+  def suffixes(self) -> str:
+    """For 'dir/foo.tar.gz', return ['.tar', '.gz']."""
+    return [f'.{x}' for x in self.name.split('.')[1:]]
+
   def _resolve(self) -> Path:
     """If self.base is a ResolvedBasePath, this will return self.
 
