@@ -258,6 +258,16 @@ class Path:
     object.__setattr__(self, 'base', base)
     object.__setattr__(self, 'pieces', tuple(normalized_pieces))
 
+  @property
+  def parent(self) -> Path:
+    """For 'foo/bar/baz', return 'foo/bar'."""
+    return Path(self.base, *self.pieces[0:-1])
+
+  @property
+  def name(self) -> str:
+    """For 'foo/bar/baz', return 'baz'."""
+    return self.pieces[-1]
+
   def _resolve(self) -> Path:
     """If self.base is a ResolvedBasePath, this will return self.
 

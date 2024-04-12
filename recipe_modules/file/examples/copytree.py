@@ -28,7 +28,7 @@ def RunSteps(api):
   assert paths == [dest2.join('a'), dest2.join('aa')], paths
 
   for pth in paths:
-    assert api.file.read_text('read %s' % pth, pth, api.path.basename(pth))
+    assert api.file.read_text('read %s' % pth, pth, pth.name)
 
   api.file.remove('rm a', dest2.join('a'))
   paths = api.file.glob_paths('glob *a', dest2, '*a', test_data=['aa'])
@@ -44,4 +44,3 @@ def RunSteps(api):
 
 def GenTests(api):
   yield api.test('basic')
-

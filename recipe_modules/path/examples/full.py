@@ -74,7 +74,9 @@ def RunSteps(api):
     assert api.path.pathsep == ':'
 
   assert api.path.basename(file_path) == 'new_file'
+  assert file_path.name == 'new_file'
   assert api.path.dirname(file_path) == api.path.tmp_base_dir
+  assert file_path.parent == api.path.tmp_base_dir
   assert api.path.split(file_path) == (api.path.tmp_base_dir, 'new_file')
 
   thing_bat = api.path.tmp_base_dir.join('thing.bat')
