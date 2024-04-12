@@ -42,13 +42,13 @@ def RunSteps(api, bad_return, access_invalid_data, access_deep_invalid_data,
 
   # You can change the current working directory as well.
   api.step('mk subdir', ['mkdir', '-p', 'something'])
-  with api.context(cwd=api.path['start_dir'].join('something')):
+  with api.context(cwd=api.path.start_dir.join('something')):
     api.step('something', ['bash', '-c', 'echo Why hello, there, in a subdir.'])
 
   # By default, all steps run in 'start_dir', or the cwd of the recipe engine
   # when the recipe begins. Because of this, setting cwd to start_dir doesn't
   # show anything in particular in the expectations.
-  with api.context(cwd=api.path['start_dir']):
+  with api.context(cwd=api.path.start_dir):
     api.step('start_dir ignored', ['bash', '-c', 'echo what happen'])
 
   # You can also manipulate various aspects of the step, such as env.

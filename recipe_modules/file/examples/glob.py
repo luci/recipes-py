@@ -9,7 +9,7 @@ DEPS = [
 ]
 
 def RunSteps(api):
-  sd = api.path['start_dir']
+  sd = api.path.start_dir
 
   api.file.ensure_directory('mkdir a', sd.join('a'))
   api.file.ensure_directory('mkdir b', sd.join('b'))

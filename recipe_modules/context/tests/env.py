@@ -45,10 +45,10 @@ def RunSteps(api):
   with api.context(env={_KEY: None}):
     expect_step('drop', '')
 
-  pants = api.path['start_dir'].join('pants')
-  shirt = api.path['start_dir'].join('shirt')
-  good_hat = api.path['start_dir'].join('good_hat')
-  bad_hat = api.path['start_dir'].join('bad_hat')
+  pants = api.path.start_dir.join('pants')
+  shirt = api.path.start_dir.join('shirt')
+  good_hat = api.path.start_dir.join('good_hat')
+  bad_hat = api.path.start_dir.join('bad_hat')
   with api.context(env={_KEY: 'bar'}):
     expect_step('env step', 'bar')
 

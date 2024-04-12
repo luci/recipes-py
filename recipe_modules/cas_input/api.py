@@ -34,7 +34,7 @@ class CasInputApi(recipe_api.RecipeApi):
 
     Args:
       output_dir: The output directory to download the caches to. If you're
-        unsure of what directory to use, self.m.path['start_dir'] is a directory
+        unsure of what directory to use, self.m.path.start_dir is a directory
         the recipe engine sets up for you that you can use.
       caches: A CasCache proto message containing the caches which should be
         downloaded. See properties.proto for the message definition.

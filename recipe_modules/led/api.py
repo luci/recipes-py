@@ -439,7 +439,7 @@ class LedApi(recipe_api.RecipeApi):
           # trace a bit more obvious.
           build = self.test_api._transform_build(
               previous, cmd, self._mock_edits,
-              str(self.m.context.cwd or self.m.path['start_dir']))
+              str(self.m.context.cwd or self.m.path.start_dir))
           kwargs['step_test_data'] = (
             lambda: self.test_api.m.proto.output_stream(build))
 

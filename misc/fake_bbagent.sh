@@ -14,9 +14,9 @@
 #
 # This puts all the outputs from the executed recipe in the current git repo's
 # //workdir directory:
-#   * //workdir/tmp   - api.path['tmp_base']
-#   * //workdir/cache - api.path['cache']
-#   * //workdir/wd    - api.path['start_dir']
+#   * //workdir/tmp   - api.path.tmp_base_dir
+#   * //workdir/cache - api.path.cache_dir
+#   * //workdir/wd    - api.path.start_dir
 #   * //workdir/logs  - Dumps of all the logdog streams emitted by the recipe
 #     engine (and any child processes).
 #

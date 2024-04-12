@@ -18,9 +18,9 @@ PROPERTIES = {
 }
 
 def RunSteps(api, script_name):
-  api.path['checkout'] = api.path['tmp_base']
-  script_name = api.properties['script_name']
-  api.generator_script(script_name)
+  api.generator_script(
+      path_to_script=api.properties['script_name'],
+      checkout_dir=api.path.tmp_base_dir)
 
 def GenTests(api):
   yield api.test(

@@ -9,7 +9,7 @@ DEPS = [
 
 
 def RunSteps(api):
-  base = api.path['start_dir'].join('dir')
+  base = api.path.start_dir.join('dir')
   long_dir = base.join('which_has', 'some', 'singular', 'subdirs')
 
   api.file.ensure_directory('make chain of single dirs', long_dir)

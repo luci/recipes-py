@@ -11,13 +11,13 @@ DEPS = [
 def RunSteps(api):
   file_names = ['a', 'aa', 'b', 'bb', 'c', 'cc']
 
-  dest = api.path['start_dir'].join('some dir')
+  dest = api.path.start_dir.join('some dir')
   api.file.ensure_directory('ensure "some dir"', dest)
   for fname in file_names:
     api.file.write_text('write %s' % fname, dest.join(fname), fname)
   api.file.filesizes('check filesizes', [dest.join(f) for f in file_names])
 
-  dest2 = api.path['start_dir'].join('some other dir')
+  dest2 = api.path.start_dir.join('some other dir')
   api.file.rmtree('make sure dest is gone', dest2)
   api.file.copytree('copy it', dest, dest2)
 

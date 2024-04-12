@@ -68,7 +68,7 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
         raise cls.MalformedCmd(generator_step_result.name)
 
 
-  def __call__(self, path_to_script, *args, **_):
+  def __call__(self, path_to_script, *args, checkout_dir=None, **_):
     """Run a script and generate the steps emitted by that script.
 
     The script will be invoked with --output-json /path/to/file.json. The script
@@ -109,7 +109,7 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
     f = '--output-json'
     step_name = 'gen step(%s)' % self.m.path.basename(path_to_script)
 
-    with self.m.context(cwd=self.m.path['checkout']):
+    with self.m.context(cwd=checkout_dir or self.m.path.checkout_dir):
       if str(path_to_script).endswith('.py'):
         step_result = self.m.step(
             step_name,

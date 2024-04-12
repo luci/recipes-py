@@ -9,7 +9,7 @@ DEPS = [
 
 
 def RunSteps(api):
-  root_dir = api.path['start_dir'].join('root_dir')
+  root_dir = api.path.start_dir.join('root_dir')
   api.file.ensure_directory('ensure root_dir', root_dir)
 
   listdir_result = api.file.listdir('listdir root_dir', root_dir, test_data=[])

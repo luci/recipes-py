@@ -171,7 +171,7 @@ class TriciumApi(recipe_api.RecipeApi):
         if not _matches_path_filters(affected_files, analyzer.path_filters):
           presentation.step_text = 'skipped due to path filters'
         try:
-          analyzer_dir = self.m.path['cleanup'].join(analyzer.name)
+          analyzer_dir = self.m.path.cleanup_dir.join(analyzer.name)
           output_base = analyzer_dir.join('out')
           package_dir = analyzer_dir.join('package')
           self._fetch_legacy_analyzer(package_dir, analyzer)

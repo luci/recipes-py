@@ -40,8 +40,8 @@ class NodeJSApi(recipe_api.RecipeApi):
       * path (Path) - a path to install Node.js into.
       * cache (Path) - a path to put Node.js caches under.
     """
-    path = path or self.m.path['cache'].join('nodejs')
-    cache = cache or self.m.path['cache'].join('npmcache')
+    path = path or self.m.path.cache_dir.join('nodejs')
+    cache = cache or self.m.path.cache_dir.join('npmcache')
     with self.m.context(infra_steps=True):
       env, env_pfx = self._ensure_installed(version, path, cache)
     with self.m.context(env=env, env_prefixes=env_pfx):

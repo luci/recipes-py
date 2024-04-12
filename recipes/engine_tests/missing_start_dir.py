@@ -12,7 +12,7 @@ DEPS = [
 
 def RunSteps(api):
   api.step('innocent step', ['bash', '-c', "echo some step"])
-  api.step('nuke it', ['rm', '-rf', api.path['start_dir']])
+  api.step('nuke it', ['rm', '-rf', api.path.start_dir])
 
   try:
     api.step('bash needs cwd', ['bash', '-c', "echo fail"])

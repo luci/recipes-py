@@ -20,7 +20,7 @@ program.
 
 Example:
 ```python
-with api.context(cwd=api.path['start_dir'].join('subdir')):
+with api.context(cwd=api.path.start_dir.join('subdir')):
   # this step is run inside of the subdir directory.
   api.step("cat subdir/foo", ['cat', './foo'])
 ```
@@ -114,7 +114,7 @@ class ContextApi(recipe_api.RecipeApi):
     Args:
       * cwd (Path) - the current working directory to use for all steps.
         To 'reset' to the original cwd at the time recipes started, pass
-        `api.path['start_dir']`.
+        `api.path.start_dir`.
       * env_prefixes (dict) - Environmental variable prefix augmentations. See
           below for more info.
       * env_suffixes (dict) - Environmental variable suffix augmentations. See
@@ -254,7 +254,7 @@ class ContextApi(recipe_api.RecipeApi):
     """Returns the current working directory that steps will run in.
 
     **Returns (Path|None)** - The current working directory. A value of None is
-    equivalent to api.path['start_dir'], though only occurs if no cwd has been
+    equivalent to api.path.start_dir, though only occurs if no cwd has been
     set (e.g. in the outermost context of RunSteps).
     """
     return self._state.cwd

@@ -692,7 +692,7 @@ class HelloApi(recipe_api.RecipeApi):
 
   def greet(self, default_verb=None):
     self.m.step('Greet Admired Individual', [
-        self.m.path['start_dir'].join(self.c.tool),
+        self.m.path.start_dir.join(self.c.tool),
         self.c.verb % self.c.TARGET])
 ```
 
@@ -836,15 +836,15 @@ DEPS = [
 def RunSteps(api):
   step_result = api.step(
       'Determine blue moon',
-      [api.path['start_dir'].join('is_blue_moon.sh')],
+      [api.path.start_dir.join('is_blue_moon.sh')],
       ok_ret='any')
 
   if step_result.retcode == 0:
     api.step('HARLEM SHAKE!',
-             [api.path['start_dir'].join('do_the_harlem_shake.sh')])
+             [api.path.start_dir.join('do_the_harlem_shake.sh')])
   else:
     api.step('Boring',
-             [api.path['start_dir'].join('its_a_small_world.sh')])
+             [api.path.start_dir.join('its_a_small_world.sh')])
 
 def GenTests(api):
   yield api.test(
@@ -897,14 +897,14 @@ DEPS = [
 def RunSteps(api):
   step_result = api.step(
       'run tests',
-      [api.path['start_dir'].join('do_test_things.sh'), api.json.output()])
+      [api.path.start_dir.join('do_test_things.sh'), api.json.output()])
   num_passed = step_result.json.output['num_passed']
   if num_passed > 500:
-    api.step('victory', [api.path['start_dir'].join('do_a_dance.sh')])
+    api.step('victory', [api.path.start_dir.join('do_a_dance.sh')])
   elif num_passed > 200:
-    api.step('not defeated', [api.path['start_dir'].join('woohoo.sh')])
+    api.step('not defeated', [api.path.start_dir.join('woohoo.sh')])
   else:
-    api.step('deads!', [api.path['start_dir'].join('you_r_deads.sh')])
+    api.step('deads!', [api.path.start_dir.join('you_r_deads.sh')])
 
 def GenTests(api):
   yield api.test(

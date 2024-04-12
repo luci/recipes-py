@@ -11,19 +11,19 @@ by calling the .join method with additional components.
 
 In this way, all paths in Recipes are absolute, and are constructed from a small
 collection of anchor points. The built-in anchor points are:
-  * `api.path['start_dir']` - This is the directory that the recipe started in.
+  * `api.path.start_dir` - This is the directory that the recipe started in.
     it's similar to `cwd`, except that it's constant.
-  * `api.path['cache']` - This directory is provided by whatever's running the
+  * `api.path.cache_dir` - This directory is provided by whatever's running the
     recipe. Files and directories created under here /may/ be evicted in between
     runs of the recipe (i.e. to relieve disk pressure).
-  * `api.path['cleanup']` - This directory is provided by whatever's running the
+  * `api.path.cleanup_dir` - This directory is provided by whatever's running the
     recipe. Files and directories created under here /are guaranteed/ to be
     evicted in between runs of the recipe. Additionally, this directory is
     guaranteed to be empty when the recipe starts.
-  * `api.path['tmp_base']` - This directory is the system-configured temp dir.
+  * `api.path.tmp_base_dir` - This directory is the system-configured temp dir.
     This is a weaker form of 'cleanup', and its use should be avoided. This may
     be removed in the future (or converted to an alias of 'cleanup').
-  * `api.path['checkout']` - This directory is set by various checkout modules
+  * `api.path.checkout_dir` - This directory is set by various checkout modules
     in recipes. It was originally intended to make recipes easier to read and
     make code somewhat generic or homogeneous, but this was a mistake. New code
     should avoid 'checkout', and instead just explicitly pass paths around. This
@@ -486,11 +486,12 @@ class PathApi(recipe_api.RecipeApi):
       new_path = tempfile.mkdtemp(prefix=prefix, dir=cleanup_dir)
       assert new_path.startswith(cleanup_dir), (
           f'{new_path=!r} -- {cleanup_dir=!r}')
-      temp_dir = self['cleanup'].join(new_path[len(cleanup_dir):])
+      temp_dir = self.cleanup_dir.join(new_path[len(cleanup_dir):])
     else:
       self._test_counter[prefix] += 1
-      temp_dir = self['cleanup'].join(
+      temp_dir = self.cleanup_dir.join(
           f'{prefix}_tmp_{self._test_counter[prefix]}')
+
     self.mock_add_paths(temp_dir, FileType.DIRECTORY)
     return temp_dir
 
@@ -513,11 +514,11 @@ class PathApi(recipe_api.RecipeApi):
       fd, new_path = tempfile.mkstemp(prefix=prefix, dir=cleanup_dir)
       assert new_path.startswith(cleanup_dir), (
           f'{new_path=!r} -- {cleanup_dir=!r}')
-      temp_file = self['cleanup'].join(new_path[len(cleanup_dir):])
+      temp_file = self.cleanup_dir.join(new_path[len(cleanup_dir):])
       os.close(fd)
     else:
       self._test_counter[prefix] += 1
-      temp_file = self['cleanup'].join(
+      temp_file = self.cleanup_dir.join(
           f'{prefix}_tmp_{self._test_counter[prefix]}')
     self.mock_add_paths(temp_file, FileType.FILE)
     return temp_file
@@ -824,13 +825,13 @@ class PathApi(recipe_api.RecipeApi):
     """Equivalent to os.path.join.
 
     Note that Path objects returned from this module (e.g.
-    api.path['start_dir']) have a built-in join method (e.g.
+    api.path.start_dir) have a built-in join method (e.g.
     new_path = p.join('some', 'name')). Many recipe modules expect Path objects
     rather than strings. Using this `join` method gives you raw path joining
     functionality and returns a string.
 
     If your path is rooted in one of the path module's root paths (i.e. those
-    retrieved with api.path[something]), then you can convert from a string path
+    retrieved with api.path.something), then you can convert from a string path
     back to a Path with the `abs_to_path` method.
     """
     return self._path_mod.join(str(path), *[str(p) for p in paths])
@@ -897,12 +898,12 @@ class PathApi(recipe_api.RecipeApi):
     return self._path_mod.normpath(str(path))
 
   def expanduser(self, path):  # pragma: no cover
-    """Do not use this, use `api.path['home']` instead.
+    """Do not use this, use `api.path.home_dir` instead.
 
-    This ONLY handles `path` == "~", and returns `str(api.path['home'])`.
+    This ONLY handles `path` == "~", and returns `str(api.path.home_dir)`.
     """
     if path == "~":
-      return str(self['home'])
+      return str(self.home_dir)
     raise ValueError("expanduser only supports `~`.")
 
   def exists(self, path):

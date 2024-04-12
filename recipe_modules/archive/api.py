@@ -27,7 +27,7 @@ class ArchiveApi(recipe_api.RecipeApi):
         # Archive root/**
         zip_path = (
           api.archive.package(root).
-          archive('archive step', api.path['start_dir'].join('output.zip'))
+          archive('archive step', api.path.start_dir.join('output.zip'))
         )
 
     Args:

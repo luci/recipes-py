@@ -42,8 +42,8 @@ class GolangApi(recipe_api.RecipeApi):
       * path (Path) - a path to install Go into.
       * cache (Path) - a path to put Go caches under.
     """
-    path = path or self.m.path['cache'].join('golang')
-    cache = cache or self.m.path['cache'].join('gocache')
+    path = path or self.m.path.cache_dir.join('golang')
+    cache = cache or self.m.path.cache_dir.join('gocache')
     with self.m.context(infra_steps=True):
       env, env_pfx, env_sfx = self._ensure_installed(version, path, cache)
     with self.m.context(env=env, env_prefixes=env_pfx, env_suffixes=env_sfx):

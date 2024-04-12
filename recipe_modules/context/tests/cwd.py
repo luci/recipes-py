@@ -11,7 +11,7 @@ DEPS = [
 def RunSteps(api):
   api.step('no cwd', ['echo', 'hello'])
 
-  with api.context(cwd=api.path['start_dir'].join('subdir')):
+  with api.context(cwd=api.path.start_dir.join('subdir')):
     api.step('with cwd', ['echo', 'hello', 'subdir'])
 
   with api.context(cwd=None):

@@ -67,14 +67,14 @@ def RunSteps(api):
   step_result = api.step(
       'leak stdout', ['echo', 'leaking'],
       stdout=api.raw_io.output_text(
-          leak_to=api.path['tmp_base'].join('out.txt')),
+          leak_to=api.path.tmp_base_dir.join('out.txt')),
       step_test_data=(
           lambda: api.raw_io.test_api.stream_output_text('leaking\n')))
   assert step_result.stdout == 'leaking\n'
 
   api.step('list temp dir', ['ls', api.raw_io.output_dir()])
   api.step('leak dir', ['ls', api.raw_io.output_dir(
-      leak_to=api.path['tmp_base'].join('out'))])
+      leak_to=api.path.tmp_base_dir.join('out'))])
 
   step_result = api.step(
       'dump output_dir',
@@ -95,7 +95,7 @@ def RunSteps(api):
   step_result = api.step(
       'nothing leaked to leak_to',
       ['echo',
-       api.raw_io.output(leak_to=api.path['tmp_base'].join('missing.txt'))])
+       api.raw_io.output(leak_to=api.path.tmp_base_dir.join('missing.txt'))])
 
   # Example of overriding default mocked output for a single named output.
   step_result = api.step(

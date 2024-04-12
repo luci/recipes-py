@@ -88,8 +88,8 @@ class PathTestApi(recipe_test_api.RecipeTestApi):
         return self.checkout_dir
 
     # Avoid circular import.
-    from .api import PathApi
-    if name not in PathApi.NamedBasePaths:
+    from .api import PathApi  # pragma: no cover
+    if name not in PathApi.NamedBasePaths:  # pragma: no cover
       raise ValueError(
           f'Unknown base path {name!r} - allowed names are {PathApi.NamedBasePaths!r}'
       )

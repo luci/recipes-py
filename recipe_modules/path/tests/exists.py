@@ -24,7 +24,7 @@ def RunSteps(api):
   # directory. However, the checkout directory still must be set before this
   # check is done.
   api.path.checkout_dir = api.path.cache_dir / 'builder' / 'src'
-  assert api.path.exists(api.path['checkout'] / 'somefile')
+  assert api.path.exists(api.path.checkout_dir / 'somefile')
 
 
 def GenTests(api):

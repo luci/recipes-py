@@ -26,16 +26,13 @@ def RunSteps(api):
 
 
 def GenTests(api):
-  paths = [api.path[name].join('file') for name in GETITEM_NAMES]
-  paths.append(api.path['checkout'].join('file'))
+  def base_path(name):
+    if not name.endswith('_dir'):
+      name += '_dir'
+    return getattr(api.path, name)
 
-  # This is for coverage - we need to make sure that api.path[typo] raises an
-  # exception.
-  try:
-    api.path['chekout']  # note the typo
-    assert False, 'PathTestApi did not catch typo'  # pragma: no cover
-  except ValueError:
-    pass
+  paths = [base_path(name).join('file') for name in GETITEM_NAMES]
+  paths.append(api.path.checkout_dir.join('file'))
 
   yield api.test(
       'basic',

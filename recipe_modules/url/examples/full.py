@@ -30,7 +30,7 @@ def RunSteps(api):
   assert api.url.urlencode({'foo': 'bar'}) == 'foo=bar'
 
   with api.step.nest('get_file'):
-    dest = api.path['start_dir'].join('download.bin')
+    dest = api.path.start_dir.join('download.bin')
     v = api.url.get_file(TEST_HTTPS_URL, dest,
                          headers={'Authorization': 'thing'})
     assert str(v.output) == str(dest)

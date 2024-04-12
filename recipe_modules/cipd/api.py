@@ -1017,7 +1017,7 @@ class CIPDApi(recipe_api.RecipeApi):
     cache_key = (package, version)
 
     package_parts = [p for p in package.split('/') if '${' not in p]
-    package_dir = self.m.path['start_dir'].join('cipd_tool', *package_parts)
+    package_dir = self.m.path.start_dir.join('cipd_tool', *package_parts)
     # Hashing the version is the easiest way to produce a string with no special
     # characters e.g. removing colons which don't work on Windows.
     package_dir = package_dir.join(

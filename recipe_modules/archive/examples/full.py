@@ -18,7 +18,7 @@ DEPS = [
 
 def RunSteps(api):
   # Prepare directories.
-  out = api.path['start_dir'].join('output')
+  out = api.path.start_dir.join('output')
   api.file.rmtree('cleanup', out)
   api.file.ensure_directory('mkdirs out', out)
 

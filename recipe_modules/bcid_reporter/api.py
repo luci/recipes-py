@@ -31,7 +31,7 @@ class BcidReporterApi(recipe_api.RecipeApi):
     broker will be installed using cipd.
     """
     if self._broker_bin is None:
-      reporter_dir = self.m.path['start_dir'].join('reporter')
+      reporter_dir = self.m.path.start_dir.join('reporter')
       ensure_file = self.m.cipd.EnsureFile().add_package(
           'infra/tools/security/provenance_broker/${platform}',
           _LATEST_STABLE_VERSION)

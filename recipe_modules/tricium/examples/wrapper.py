@@ -17,7 +17,7 @@ DEPS = [
 
 
 def RunSteps(api):
-  checkout_base = api.path['cleanup'].join('checkout')
+  checkout_base = api.path.cleanup_dir.join('checkout')
   api.file.write_text('one', checkout_base.join('one.txt'), 'one')
   api.file.write_text('two', checkout_base.join('foo', 'two.txt'), 'two')
 

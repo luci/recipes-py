@@ -14,7 +14,10 @@ from recipe_engine.post_process import StepSuccess, StepCommandContains, DropExp
 
 
 def RunSteps(api):
-  download_dir = api.path[api.properties.get('download_dir', 'start_dir')]
+  if dd := api.properties.get('download_dir'):
+    download_dir = api.path.abs_to_path(dd)
+  else:
+    download_dir = api.path.start_dir
   api.cas_input.download_caches(download_dir)
 
 
@@ -35,7 +38,7 @@ def GenTests(api):
       'download_to_directory',
       cas_props(
           InputProperties(caches=[CasCache(digest='deadbeef')]),
-          download_dir='tmp_base'),
+          download_dir='[TMP_BASE]'),
       api.post_process(StepSuccess, 'download cache'),
       api.post_process(StepCommandContains, 'download cache', '[TMP_BASE]'),
       api.post_process(DropExpectation))

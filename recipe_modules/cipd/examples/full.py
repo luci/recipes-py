@@ -46,7 +46,7 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
       for i, v in enumerate(metadata)
   ]
 
-  cipd_root = api.path['start_dir'].join('packages')
+  cipd_root = api.path.start_dir.join('packages')
   # Some packages don't require credentials to be installed or queried.
   api.cipd.ensure(cipd_root, ensure_file)
   api.cipd.ensure_file_resolve(ensure_file)
@@ -95,7 +95,7 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
 
   # Create (build & register).
   if use_pkg:
-    root = api.path['start_dir'].join('some_subdir')
+    root = api.path.start_dir.join('some_subdir')
     pkg = api.cipd.PackageDefinition(
         'infra/fake-package',
         root,
@@ -118,13 +118,13 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
 
     api.cipd.create_from_pkg(pkg, refs=refs, tags=tags, metadata=md)
   else:
-    api.cipd.build_from_yaml(api.path['start_dir'].join('fake-package.yaml'),
+    api.cipd.build_from_yaml(api.path.start_dir.join('fake-package.yaml'),
                              'fake-package-path', pkg_vars=pkg_vars,
                              compression_level=9)
     api.cipd.register('infra/fake-package', 'fake-package-path',
                       refs=refs, tags=tags, metadata=md)
 
-    api.cipd.create_from_yaml(api.path['start_dir'].join('fake-package.yaml'),
+    api.cipd.create_from_yaml(api.path.start_dir.join('fake-package.yaml'),
                               refs=refs, tags=tags, metadata=md,
                               pkg_vars=pkg_vars, compression_level=9,
                               verification_timeout='20m')
@@ -145,30 +145,30 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
       api.cipd.Metadata(key='key1', value='val2', content_type='text/plain'),
       api.cipd.Metadata(
           key='key2',
-          value_from_file=api.path['start_dir'].join('val1.json'),
+          value_from_file=api.path.start_dir.join('val1.json'),
       ),
       api.cipd.Metadata(
           key='key2',
-          value_from_file=api.path['start_dir'].join('val2.json'),
+          value_from_file=api.path.start_dir.join('val2.json'),
           content_type='application/json',
       ),
   ])
 
   # Fetch a raw package
-  api.cipd.pkg_fetch(api.path['start_dir'].join('fetched_pkg'),
+  api.cipd.pkg_fetch(api.path.start_dir.join('fetched_pkg'),
                      'fake-package/${platform}', 'some:tag')
 
   # Deploy a raw package
   api.cipd.pkg_deploy(
-    api.path['start_dir'].join('raw_root'),
-    api.path['start_dir'].join('fetched_pkg'))
+    api.path.start_dir.join('raw_root'),
+    api.path.start_dir.join('fetched_pkg'))
 
   api.cipd.ensure(
       cipd_root,
-      api.path['start_dir'].join('cipd.ensure'),
+      api.path.start_dir.join('cipd.ensure'),
       name='ensure with existing file')
   api.cipd.ensure_file_resolve(
-      api.path['start_dir'].join('cipd.ensure'),
+      api.path.start_dir.join('cipd.ensure'),
       name='ensure-file-resolve with existing file')
 
   # Install a tool using the high-level helper function. This operation should

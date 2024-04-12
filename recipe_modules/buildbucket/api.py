@@ -283,7 +283,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     See "Builder cache" in
     https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/project_config.proto
     """
-    return self.m.path['cache'].join('builder')
+    return self.m.path.cache_dir.join('builder')
 
   # RPCs.
 
