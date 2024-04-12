@@ -267,7 +267,7 @@ class Path:
     """
     if not isinstance(self.base, CheckoutBasePath):
       return self
-    return self.base.resolve().join(*self.pieces)
+    return self.base.resolve().joinpath(*self.pieces)
 
   def __eq__(self, other: Path | str) -> bool:
     if isinstance(other, str):
@@ -307,10 +307,10 @@ class Path:
                        'before checkout_dir is set') from ex
 
   def __truediv__(self, piece: str) -> Path:
-    """Adds the shorthand '/'-operator for .join(), returning a new path."""
-    return self.join(piece)
+    """Adds the shorthand '/'-operator for .joinpath(), returning a new path."""
+    return self.joinpath(piece)
 
-  def join(self, *pieces: str) -> Path:
+  def joinpath(self, *pieces: str) -> Path:
     """Appends *pieces to this Path, returning a new Path.
 
     Empty values ('', None) in pieces will be omitted.
@@ -327,6 +327,9 @@ class Path:
     return Path(
         self.base,
         *[p for p in itertools.chain(self.pieces, pieces) if p])
+
+  def join(self, *pieces: str) -> Path:
+    return self.joinpath(*pieces)
 
   def is_parent_of(self, other: Path) -> bool:
     """True if |other| is in a subdirectory of this Path."""
