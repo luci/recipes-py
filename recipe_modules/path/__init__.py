@@ -19,3 +19,7 @@ PROPERTIES = {
     ), default={},
   )
 }
+
+DEPS = [
+    'recipe_engine/warning',
+]

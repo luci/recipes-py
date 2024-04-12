@@ -2826,6 +2826,8 @@ Args:
   * cache (Path) - a path to put Node.js caches under.
 ### *recipe_modules* / [path](/recipe_modules/path)
 
+[DEPS](/recipe_modules/path/__init__.py#23): [warning](#recipe_modules-warning)
+
 
 All functions related to manipulating paths in recipes.
 
@@ -2925,7 +2927,7 @@ api.path.abs_to_path("/basis/dir/for/recipe/some/other/dir") ->
 Raises an ValueError if the preconditions are not met, otherwise returns the
 Path object.
 
-&mdash; **def [abspath](/recipe_modules/path/api.py#797)(self, path: (config_types.Path | str)):**
+&mdash; **def [abspath](/recipe_modules/path/api.py#798)(self, path: (config_types.Path | str)):**
 
 Equivalent to os.abspath.
 
@@ -2936,11 +2938,11 @@ Raises AssertionError if the given path is not an absolute path.
 Args:
   * path - The path to check.
 
-&mdash; **def [basename](/recipe_modules/path/api.py#801)(self, path: (config_types.Path | str)):**
+&mdash; **def [basename](/recipe_modules/path/api.py#802)(self, path: (config_types.Path | str)):**
 
 Equivalent to os.path.basename.
 
-&emsp; **@property**<br>&mdash; **def [cache\_dir](/recipe_modules/path/api.py#731)(self):**
+&emsp; **@property**<br>&mdash; **def [cache\_dir](/recipe_modules/path/api.py#732)(self):**
 
 This directory is provided by whatever's running the recipe.
 
@@ -2963,7 +2965,7 @@ As the base Path.
 Note that directories created under here /may/ be evicted in between runs of
 the recipe (i.e. to relieve disk pressure).
 
-&mdash; **def [cast\_to\_path](/recipe_modules/path/api.py#765)(self, strpath: str):**
+&mdash; **def [cast\_to\_path](/recipe_modules/path/api.py#766)(self, strpath: str):**
 
 This returns a Path for strpath which can be used anywhere a Path is
 required.
@@ -2982,14 +2984,14 @@ Sets the global variable `api.path.checkout_dir` to the given path.
 
     
 
-&emsp; **@property**<br>&mdash; **def [cleanup\_dir](/recipe_modules/path/api.py#756)(self):**
+&emsp; **@property**<br>&mdash; **def [cleanup\_dir](/recipe_modules/path/api.py#757)(self):**
 
 This directory is guaranteed to be cleaned up (eventually) after the
 execution of this recipe.
 
 This directory is guaranteed to be empty when the recipe starts.
 
-&mdash; **def [dirname](/recipe_modules/path/api.py#805)(self, path: (config_types.Path | str)):**
+&mdash; **def [dirname](/recipe_modules/path/api.py#806)(self, path: (config_types.Path | str)):**
 
 For "foo/bar/baz", return "foo/bar".
 
@@ -3002,7 +3004,7 @@ Args:
 
 Returns dirname of path
 
-&mdash; **def [eq](/recipe_modules/path/api.py#969)(self, path1: config_types.Path, path2: config_types.Path):**
+&mdash; **def [eq](/recipe_modules/path/api.py#970)(self, path1: config_types.Path, path2: config_types.Path):**
 
 Check whether path1 points to the same path as path2.
 
@@ -3010,14 +3012,14 @@ Check whether path1 points to the same path as path2.
 **DEPRECATED**: Just directly compare path1 and path2 with `==`.
 ***
 
-&mdash; **def [exists](/recipe_modules/path/api.py#909)(self, path):**
+&mdash; **def [exists](/recipe_modules/path/api.py#910)(self, path):**
 
 Equivalent to os.path.exists.
 
 The presence or absence of paths can be mocked during the execution of the
 recipe by using the mock_* methods.
 
-&mdash; **def [expanduser](/recipe_modules/path/api.py#900)(self, path):**
+&mdash; **def [expanduser](/recipe_modules/path/api.py#901)(self, path):**
 
 Do not use this, use `api.path.home_dir` instead.
 
@@ -3038,7 +3040,7 @@ Gets the base path named `name`. See module docstring for more info.
   pass the Paths around instead of using this global variable).
 ***
 
-&emsp; **@property**<br>&mdash; **def [home\_dir](/recipe_modules/path/api.py#713)(self):**
+&emsp; **@property**<br>&mdash; **def [home\_dir](/recipe_modules/path/api.py#714)(self):**
 
 This is the path to the current $HOME directory.
 
@@ -3050,7 +3052,7 @@ that the recipe is non-hermetic.
 This is called by the recipe engine immediately after __init__(), but
 with `self._paths_client` initialized.
 
-&mdash; **def [is\_parent\_of](/recipe_modules/path/api.py#976)(self, parent: config_types.Path, child: config_types.Path):**
+&mdash; **def [is\_parent\_of](/recipe_modules/path/api.py#977)(self, parent: config_types.Path, child: config_types.Path):**
 
 Check whether child is contained within parent.
 
@@ -3058,21 +3060,21 @@ Check whether child is contained within parent.
 **DEPRECATED**: Just use `parent.is_parent_of(child)`.
 ***
 
-&mdash; **def [isdir](/recipe_modules/path/api.py#917)(self, path):**
+&mdash; **def [isdir](/recipe_modules/path/api.py#918)(self, path):**
 
 Equivalent to os.path.isdir.
 
 The presence or absence of paths can be mocked during the execution of the
 recipe by using the mock_* methods.
 
-&mdash; **def [isfile](/recipe_modules/path/api.py#925)(self, path):**
+&mdash; **def [isfile](/recipe_modules/path/api.py#926)(self, path):**
 
 Equivalent to os.path.isfile.
 
 The presence or absence of paths can be mocked during the execution of the
 recipe by using the mock_* methods.
 
-&mdash; **def [join](/recipe_modules/path/api.py#824)(self, path, \*paths):**
+&mdash; **def [join](/recipe_modules/path/api.py#825)(self, path, \*paths):**
 
 Equivalent to os.path.join.
 
@@ -3110,23 +3112,23 @@ need the full security properties of mkstemp, please outsource this to e.g.
 either a resource script of your recipe module or recipe.
 ***
 
-&mdash; **def [mock\_add\_directory](/recipe_modules/path/api.py#944)(self, path: config_types.Path):**
+&mdash; **def [mock\_add\_directory](/recipe_modules/path/api.py#945)(self, path: config_types.Path):**
 
 For testing purposes, mark that file |path| exists.
 
-&mdash; **def [mock\_add\_file](/recipe_modules/path/api.py#940)(self, path: config_types.Path):**
+&mdash; **def [mock\_add\_file](/recipe_modules/path/api.py#941)(self, path: config_types.Path):**
 
 For testing purposes, mark that file |path| exists.
 
-&mdash; **def [mock\_add\_paths](/recipe_modules/path/api.py#933)(self, path: config_types.Path, kind: FileType=FileType.FILE):**
+&mdash; **def [mock\_add\_paths](/recipe_modules/path/api.py#934)(self, path: config_types.Path, kind: FileType=FileType.FILE):**
 
 For testing purposes, mark that |path| exists.
 
-&mdash; **def [mock\_copy\_paths](/recipe_modules/path/api.py#948)(self, source: config_types.Path, dest: config_types.Path):**
+&mdash; **def [mock\_copy\_paths](/recipe_modules/path/api.py#949)(self, source: config_types.Path, dest: config_types.Path):**
 
 For testing purposes, copy |source| to |dest|.
 
-&mdash; **def [mock\_remove\_paths](/recipe_modules/path/api.py#955)(self, path: config_types.Path, should_remove: Callable[([str], bool)]=(lambda p: True)):**
+&mdash; **def [mock\_remove\_paths](/recipe_modules/path/api.py#956)(self, path: config_types.Path, should_remove: Callable[([str], bool)]=(lambda p: True)):**
 
 For testing purposes, mark that |path| doesn't exist.
 
@@ -3135,34 +3137,34 @@ Args:
   should_remove: Called for every candidate path. Return True to remove this
     path.
 
-&mdash; **def [normpath](/recipe_modules/path/api.py#896)(self, path):**
+&mdash; **def [normpath](/recipe_modules/path/api.py#897)(self, path):**
 
 Equivalent to os.path.normpath.
 
-&emsp; **@property**<br>&mdash; **def [pardir](/recipe_modules/path/api.py#782)(self):**
+&emsp; **@property**<br>&mdash; **def [pardir](/recipe_modules/path/api.py#783)(self):**
 
 Equivalent to os.pardir.
 
-&emsp; **@property**<br>&mdash; **def [pathsep](/recipe_modules/path/api.py#792)(self):**
+&emsp; **@property**<br>&mdash; **def [pathsep](/recipe_modules/path/api.py#793)(self):**
 
 Equivalent to os.pathsep.
 
-&mdash; **def [realpath](/recipe_modules/path/api.py#884)(self, path: (config_types.Path | str)):**
+&mdash; **def [realpath](/recipe_modules/path/api.py#885)(self, path: (config_types.Path | str)):**
 
 Equivalent to os.path.realpath.
 
-&mdash; **def [relpath](/recipe_modules/path/api.py#888)(self, path, start):**
+&mdash; **def [relpath](/recipe_modules/path/api.py#889)(self, path, start):**
 
 Roughly equivalent to os.path.relpath.
 
 Unlike os.path.relpath, `start` is _required_. If you want the 'current
 directory', use the `recipe_engine/context` module's `cwd` property.
 
-&emsp; **@property**<br>&mdash; **def [sep](/recipe_modules/path/api.py#787)(self):**
+&emsp; **@property**<br>&mdash; **def [sep](/recipe_modules/path/api.py#788)(self):**
 
 Equivalent to os.sep.
 
-&mdash; **def [split](/recipe_modules/path/api.py#839)(self, path):**
+&mdash; **def [split](/recipe_modules/path/api.py#840)(self, path):**
 
 For "foo/bar/baz", return ("foo/bar", "baz").
 
@@ -3176,7 +3178,7 @@ Args:
 
 Returns (dirname(path), basename(path)).
 
-&mdash; **def [splitext](/recipe_modules/path/api.py#860)(self, path: (config_types.Path | str)):**
+&mdash; **def [splitext](/recipe_modules/path/api.py#861)(self, path: (config_types.Path | str)):**
 
 For "foo/bar.baz", return ("foo/bar", ".baz").
 
@@ -3191,7 +3193,7 @@ Args:
 Returns:
   (name, extension_including_dot).
 
-&emsp; **@property**<br>&mdash; **def [start\_dir](/recipe_modules/path/api.py#702)(self):**
+&emsp; **@property**<br>&mdash; **def [start\_dir](/recipe_modules/path/api.py#703)(self):**
 
 This is the directory that the recipe started in. it's similar to `cwd`,
 except that it's constant for the duration of the entire program.
@@ -3200,7 +3202,7 @@ If you want to modify the current working directory for a set of steps,
 See the 'recipe_engine/context' module which allows modifying the cwd safely
 via a context manager.
 
-&emsp; **@property**<br>&mdash; **def [tmp\_base\_dir](/recipe_modules/path/api.py#722)(self):**
+&emsp; **@property**<br>&mdash; **def [tmp\_base\_dir](/recipe_modules/path/api.py#723)(self):**
 
 This directory is the system-configured temp dir.
 

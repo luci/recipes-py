@@ -85,6 +85,15 @@ warning {
 }
 
 warning {
+  name: "PATH_GETITEM_DEPRECATED"
+  description: "Accessors like api.path['start_dir'] are deprecated."
+  description: ""
+  description: "Use a member like api.path.start_dir instead"
+  deadline: "2024-05-15"
+  google_issue { id: 329113288 }
+}
+
+warning {
   name: "SET_BUILDBUCKET_HOST_DEPRECATED"
   description: "api.buildbucket.set_buildbucket_host() is deprecated."
   description: ""
