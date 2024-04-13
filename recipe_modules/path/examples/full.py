@@ -91,7 +91,7 @@ def RunSteps(api):
   assert api.path.split('abc/xyz') == ('abc', 'xyz')
   assert api.path.dirname('abc/xyz') == 'abc'
 
-  abc_def_xyz = api.path['tmp_base'] / 'abc.def.xyz'
+  abc_def_xyz = api.path.tmp_base_dir / 'abc.def.xyz'
   assert abc_def_xyz.stem == 'abc.def'
   assert abc_def_xyz.suffix == '.xyz'
   assert abc_def_xyz.suffixes == ['.def', '.xyz']
@@ -239,6 +239,11 @@ def RunSteps(api):
       f'foo{api.path.sep}bar{api.path.sep}baz.txt')
   assert separated_path.is_parent_of(slashy_file)
   assert api.path.is_parent_of(separated_path, slashy_file)
+  assert list(slashy_file.parents) == [
+      separated_path,
+      separated_path.parent,
+      api.path.start_dir,
+  ]
 
 
 def GenTests(api):

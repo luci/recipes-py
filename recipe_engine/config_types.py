@@ -7,7 +7,7 @@ from __future__ import annotations
 import itertools
 
 from dataclasses import dataclass, field
-from typing import ClassVar, TYPE_CHECKING
+from typing import ClassVar, Generator, TYPE_CHECKING
 
 if TYPE_CHECKING:
   from recipe_engine.internal.recipe_deps import RecipeModule, Recipe, RecipeRepo
@@ -257,6 +257,16 @@ class Path:
     # https://docs.python.org/3.11/library/dataclasses.html#frozen-instances
     object.__setattr__(self, 'base', base)
     object.__setattr__(self, 'pieces', tuple(normalized_pieces))
+
+  @property
+  def parents(self) -> Generator[Path, None, None]:
+    """For 'foo/bar/baz', yield 'foo/bar' then 'foo'."""
+    result: list[Path] = []
+    prev: Path = self
+    curr: Path = self.parent
+    while prev != curr:
+      yield curr
+      prev, curr = curr, curr.parent
 
   @property
   def parent(self) -> Path:
