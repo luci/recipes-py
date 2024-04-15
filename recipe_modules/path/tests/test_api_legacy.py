@@ -31,8 +31,8 @@ def GenTests(api):
       name += '_dir'
     return getattr(api.path, name)
 
-  paths = [base_path(name).join('file') for name in GETITEM_NAMES]
-  paths.append(api.path.checkout_dir.join('file'))
+  paths = [base_path(name) / 'file' for name in GETITEM_NAMES]
+  paths.append(api.path.checkout_dir / 'file')
 
   yield api.test(
       'basic',

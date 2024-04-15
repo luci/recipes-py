@@ -9,10 +9,10 @@ DEPS = [
 ]
 
 def RunSteps(api):
-  some_dir = api.path.start_dir.join('some_dir')
+  some_dir = api.path.start_dir / 'some_dir'
   api.file.ensure_directory('ensure some_dir', some_dir)
 
-  some_file = some_dir.join('some file')
+  some_file = some_dir / 'some file'
 
   api.file.write_text('write some file', some_file, 'some data')
 
@@ -21,7 +21,7 @@ def RunSteps(api):
   expected = 'deadbeef'
   api.assertions.assertEqual(result, expected)
 
-  another_file = api.path.start_dir.join('another_file')
+  another_file = api.path.start_dir / 'another_file'
   api.file.write_text('write another file', another_file, 'some data')
 
   result = api.file.file_hash(another_file,

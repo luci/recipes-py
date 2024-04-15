@@ -13,7 +13,7 @@ DEPS = [
 def Level2(api, i):
   work = []
   with api.step.nest('Level2 [%d]' % i):
-    with api.context(cwd=api.path.start_dir.join('deep')):
+    with api.context(cwd=api.path.start_dir / 'deep'):
       work.append(api.futures.spawn(
           api.step, 'cool step', cmd=['echo', 'cool']))
 

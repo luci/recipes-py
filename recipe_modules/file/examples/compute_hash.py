@@ -10,12 +10,12 @@ DEPS = [
 
 def RunSteps(api):
   base_path = api.path.start_dir
-  some_dir = api.path.start_dir.join('some_dir')
+  some_dir = api.path.start_dir / 'some_dir'
   api.file.ensure_directory('ensure some_dir', some_dir)
 
-  some_file = some_dir.join('some file')
-  sub_dir = some_dir.join('sub')
-  in_subdir = sub_dir.join('f')
+  some_file = some_dir / 'some file'
+  sub_dir = some_dir / 'sub'
+  in_subdir = sub_dir / 'f'
 
   api.file.write_text('write some file', some_file, 'some data')
   api.file.ensure_directory('ensure sub_dir', sub_dir)
@@ -26,10 +26,10 @@ def RunSteps(api):
   expected = 'deadbeef'
   api.assertions.assertEqual(result, expected)
 
-  some_other_dir = api.path.start_dir.join('some_other_dir')
+  some_other_dir = api.path.start_dir / 'some_other_dir'
   api.file.ensure_directory('ensure some_other_dir', some_other_dir)
 
-  some_other_file = some_other_dir.join('new_f')
+  some_other_file = some_other_dir / 'new_f'
   api.file.write_text('write new_f file', some_other_file, 'some data')
 
   result = api.file.compute_hash('compute_hash of list of dir',
@@ -39,7 +39,7 @@ def RunSteps(api):
   expected = 'abcdefab'
   api.assertions.assertEqual(result, expected)
 
-  another_file = api.path.start_dir.join('another_file')
+  another_file = api.path.start_dir / 'another_file'
   api.file.write_text('write another file', another_file, 'some data')
 
   result = api.file.compute_hash('compute_hash of list of dirs and file',

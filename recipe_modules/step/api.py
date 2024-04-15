@@ -411,7 +411,7 @@ class StepApi(recipe_api.RecipeApi):
       raise ValueError('expected None, str or Path; got %r' % (output_path,))
     ext = '.pb'
     if output_path is None:
-      output_path = self.m.path.mkdtemp().join('sub_build' + ext)
+      output_path = self.m.path.mkdtemp() / f'sub_build{ext}'
     else:
       if self.m.path.exists(output_path):
         raise ValueError('expected non-existent output path; '

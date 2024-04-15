@@ -14,7 +14,7 @@ DEPS = [
 def RunSteps(api):
   msg = SomeMessage(fields=['abc', 'def'])
 
-  dest = api.path.start_dir.join('message.textproto')
+  dest = api.path.start_dir / 'message.textproto'
   api.file.write_proto('write_proto', dest, msg, 'TEXTPB')
 
   read_msg = api.file.read_proto(

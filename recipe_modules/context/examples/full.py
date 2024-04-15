@@ -26,13 +26,13 @@ def RunSteps(api):
 
   # can change cwd
   api.step('mk subdir', ['mkdir', '-p', 'subdir'])
-  with api.context(cwd=api.path.start_dir.join('subdir')):
+  with api.context(cwd=api.path.start_dir / 'subdir'):
     api.step('subdir step', ['bash', '-c', 'pwd'])
     api.step('other subdir step', ['bash', '-c', 'echo hi again!'])
 
   # can set envvars, and path prefix.
-  pants = api.path.start_dir.join('pants')
-  shirt = api.path.start_dir.join('shirt')
+  pants = api.path.start_dir / 'pants'
+  shirt = api.path.start_dir / 'shirt'
   with api.context(env={'FOO': 'bar'}):
     api.step('env step', ['bash', '-c', 'echo $FOO'])
 

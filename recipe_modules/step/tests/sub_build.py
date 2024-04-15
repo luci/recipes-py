@@ -30,7 +30,7 @@ def RunSteps(api, props):
   output_path = None
   if props.HasField('output_path'):
     output_path = (
-      getattr(api.path, props.output_path.base).join(props.output_path.file))
+      getattr(api.path, props.output_path.base) / props.output_path.file)
   with api.context(infra_steps=props.infra_step):
     input_build = props.input_build if props.HasField('input_build') else (
         build_pb2.Build(id=11111, status=common_pb2.SCHEDULED))
@@ -93,7 +93,7 @@ def GenTests(api):
               base='start_dir',
               file='sub_build.json'),
       ),
-      api.path.exists(api.path.start_dir.join('sub_build.json')),
+      api.path.exists(api.path.start_dir / 'sub_build.json'),
       api.expect_exception('ValueError'),
       api.post_process(post_process.StatusException),
       api.post_process(

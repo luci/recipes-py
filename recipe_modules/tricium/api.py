@@ -171,9 +171,9 @@ class TriciumApi(recipe_api.RecipeApi):
         if not _matches_path_filters(affected_files, analyzer.path_filters):
           presentation.step_text = 'skipped due to path filters'
         try:
-          analyzer_dir = self.m.path.cleanup_dir.join(analyzer.name)
-          output_base = analyzer_dir.join('out')
-          package_dir = analyzer_dir.join('package')
+          analyzer_dir = self.m.path.cleanup_dir / analyzer.name
+          output_base = analyzer_dir / 'out'
+          package_dir = analyzer_dir / 'package'
           self._fetch_legacy_analyzer(package_dir, analyzer)
           results = self._run_legacy_analyzer(
               package_dir,
@@ -192,7 +192,7 @@ class TriciumApi(recipe_api.RecipeApi):
           presentation.step_text = 'failed'
     # The tricium data dir with files.json is written in the checkout cache
     # directory and should be cleaned up.
-    self.m.file.rmtree('clean up tricium data dir', input_base.join('tricium'))
+    self.m.file.rmtree('clean up tricium data dir', input_base / 'tricium')
 
     if emit:
       self.write_comments()
@@ -216,7 +216,7 @@ class TriciumApi(recipe_api.RecipeApi):
     data_dir = self._ensure_data_dir(base_dir)
     self.m.file.write_proto(
         'write files.json',
-        data_dir.join('files.json'),
+        data_dir / 'files.json',
         files,
         'JSONPB',
         # Tricium analyzers expect camelCase field names.
@@ -234,7 +234,7 @@ class TriciumApi(recipe_api.RecipeApi):
     data_dir = self._ensure_data_dir(base_dir)
     results_json = self.m.file.read_text(
         'read results',
-        data_dir.join('results.json'),
+        data_dir / 'results.json',
         test_data='{"comments":[]}')
     return json_format.Parse(results_json, Data.Results())
 
@@ -250,7 +250,7 @@ class TriciumApi(recipe_api.RecipeApi):
 
     Returns: Tricium data file directory inside base_dir.
     """
-    data_dir = base_dir.join('tricium', 'data')
+    data_dir = base_dir / 'tricium' / 'data'
     self.m.file.ensure_directory('ensure tricium data dir', data_dir)
     return data_dir
 
@@ -280,7 +280,7 @@ class TriciumApi(recipe_api.RecipeApi):
     # expected to be the directory with the analyzer.
     with self.m.context(cwd=package_dir):
       cmd = [
-          package_dir.join(analyzer.executable), '-input', input_dir, '-output',
+          package_dir / analyzer.executable, '-input', input_dir, '-output',
           output_dir
       ] + analyzer.extra_args
       self.m.step('run analyzer',

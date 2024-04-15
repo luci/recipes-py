@@ -30,13 +30,13 @@ def RunSteps(api):
   step = api.step('read missing output', [
     'python3', api.resource('dump.py'),
     api.proto.output(SomeMessage, 'JSONPB',
-                     leak_to=api.path.start_dir.join('gone')),
+                     leak_to=api.path.start_dir / 'gone'),
   ])
 
   step = api.step('read invalid output', [
     'python3', api.resource('dump.py'),
     api.proto.output(SomeMessage, 'JSONPB',
-                     leak_to=api.path.start_dir.join('gone')),
+                     leak_to=api.path.start_dir / 'gone'),
   ])
 
   api.step('write to script (jsonpb)', [

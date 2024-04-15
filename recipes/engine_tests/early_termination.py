@@ -23,10 +23,10 @@ def RunSteps(api, props):
 
   output_touchfile = props.output_touchfile
   if not output_touchfile:
-    output_touchfile = api.path.cleanup_dir.join('output_touchfile')
+    output_touchfile = api.path.cleanup_dir.joinpath('output_touchfile')
   running_touchfile = props.running_touchfile
   if not running_touchfile:
-    running_touchfile = api.path.cleanup_dir.join('running_touchfile')
+    running_touchfile = api.path.cleanup_dir.joinpath('running_touchfile')
   # make sure touchfile is there
   api.file.write_text("ensure output_touchfile", output_touchfile,
                       "meep".encode('utf-8'))

@@ -48,7 +48,7 @@ class CasInputApi(recipe_api.RecipeApi):
     for cache in caches:
       cache_out = output_dir
       if cache.local_relpath:
-        cache_out = cache_out.join(cache.local_relpath)
+        cache_out = cache_out / cache.local_relpath
       self.m.cas.download("download cache", cache.digest, cache_out)
 
     return output_dir

@@ -17,13 +17,13 @@ def RunSteps(api):
 
   # Prepare files.
   temp = api.path.mkdtemp('cas-example')
-  api.step('touch a', ['touch', temp.join('a')])
-  api.step('touch b', ['touch', temp.join('b')])
-  api.file.ensure_directory('mkdirs', temp.join('sub', 'dir'))
-  api.step('touch d', ['touch', temp.join('sub', 'dir', 'd')])
+  api.step('touch a', ['touch', temp / 'a'])
+  api.step('touch b', ['touch', temp / 'b'])
+  api.file.ensure_directory('mkdirs', temp / 'sub' / 'dir')
+  api.step('touch d', ['touch', temp / 'sub' / 'dir' / 'd'])
 
   digest = api.cas.archive('archive', temp,
-                           *[temp.join(p) for p in ('a', 'b', 'sub')])
+                           *[temp / p for p in ('a', 'b', 'sub')])
   # You can also archive the entire directory.
   with api.cas.with_instance('projects/other-cas-server/instances/instance'):
     api.cas.archive('archive directory', temp, log_level='debug', timeout=60)

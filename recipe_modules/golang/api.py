@@ -42,8 +42,8 @@ class GolangApi(recipe_api.RecipeApi):
       * path (Path) - a path to install Go into.
       * cache (Path) - a path to put Go caches under.
     """
-    path = path or self.m.path.cache_dir.join('golang')
-    cache = cache or self.m.path.cache_dir.join('gocache')
+    path = path or self.m.path.cache_dir / 'golang'
+    cache = cache or self.m.path.cache_dir / 'gocache'
     with self.m.context(infra_steps=True):
       env, env_pfx, env_sfx = self._ensure_installed(version, path, cache)
     with self.m.context(env=env, env_prefixes=env_pfx, env_suffixes=env_sfx):
@@ -67,9 +67,9 @@ class GolangApi(recipe_api.RecipeApi):
 
         # Caches and GOBIN can be shared across Go versions: defaults are shared
         # hardcoded paths under '~'.
-        'GOBIN': cache.join('bin'),
-        'GOCACHE': cache.join('cache'),
-        'GOMODCACHE': cache.join('modcache'),
+        'GOBIN': cache / 'bin',
+        'GOCACHE': cache / 'cache',
+        'GOMODCACHE': cache / 'modcache',
     }
 
     # Disable cgo on Windows by default since it lacks a C compiler by default.
@@ -77,7 +77,7 @@ class GolangApi(recipe_api.RecipeApi):
       env['CGO_ENABLED'] = '0'
 
     env_prefixes = {
-        'PATH': [path.join('bin')],
+        'PATH': [path / 'bin'],
     }
 
     env_suffixes = {

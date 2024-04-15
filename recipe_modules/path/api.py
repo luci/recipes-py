@@ -135,7 +135,7 @@ class path_set:
     for filepath in test_data.get('files_exist', ()):
       if isinstance(filepath, test_api.UnvalidatedPath):
         filepath = _cast_to_path_impl(path_mod,
-                                      filepath.base).join(*filepath.pieces)
+                                      filepath.base).joinpath(*filepath.pieces)
       assert isinstance(filepath, config_types.Path), (
           f'path.files_exist module test data contains non-Path {type(filepath)}'
       )
@@ -144,7 +144,7 @@ class path_set:
     for dirpath in test_data.get('dirs_exist', ()):
       if isinstance(dirpath, test_api.UnvalidatedPath):
         dirpath = _cast_to_path_impl(path_mod,
-                                     dirpath.base).join(*dirpath.pieces)
+                                     dirpath.base).joinpath(*dirpath.pieces)
       assert isinstance(dirpath, config_types.Path), (
           f'path.files_exist module test data contains non-Path {type(dirpath)}'
       )
@@ -486,11 +486,10 @@ class PathApi(recipe_api.RecipeApi):
       new_path = tempfile.mkdtemp(prefix=prefix, dir=cleanup_dir)
       assert new_path.startswith(cleanup_dir), (
           f'{new_path=!r} -- {cleanup_dir=!r}')
-      temp_dir = self.cleanup_dir.join(new_path[len(cleanup_dir):])
+      temp_dir = self.cleanup_dir / new_path[len(cleanup_dir):]
     else:
       self._test_counter[prefix] += 1
-      temp_dir = self.cleanup_dir.join(
-          f'{prefix}_tmp_{self._test_counter[prefix]}')
+      temp_dir = self.cleanup_dir / f'{prefix}_tmp_{self._test_counter[prefix]}'
 
     self.mock_add_paths(temp_dir, FileType.DIRECTORY)
     return temp_dir
@@ -514,11 +513,11 @@ class PathApi(recipe_api.RecipeApi):
       fd, new_path = tempfile.mkstemp(prefix=prefix, dir=cleanup_dir)
       assert new_path.startswith(cleanup_dir), (
           f'{new_path=!r} -- {cleanup_dir=!r}')
-      temp_file = self.cleanup_dir.join(new_path[len(cleanup_dir):])
+      temp_file = self.cleanup_dir / new_path[len(cleanup_dir):]
       os.close(fd)
     else:
       self._test_counter[prefix] += 1
-      temp_file = self.cleanup_dir.join(
+      temp_file = self.cleanup_dir.joinpath(
           f'{prefix}_tmp_{self._test_counter[prefix]}')
     self.mock_add_paths(temp_file, FileType.FILE)
     return temp_file
@@ -584,7 +583,7 @@ class PathApi(recipe_api.RecipeApi):
                        abs_string_path)
 
     sub_path = abs_string_path[len(sPath):].strip(self.sep)
-    return path.join(*sub_path.split(self.sep))
+    return path.joinpath(*sub_path.split(self.sep))
 
   def __contains__(self, pathname: NamedBasePathsType) -> bool:
     """This method is DEPRECATED.
@@ -827,9 +826,9 @@ class PathApi(recipe_api.RecipeApi):
 
     Note that Path objects returned from this module (e.g.
     api.path.start_dir) have a built-in join method (e.g.
-    new_path = p.join('some', 'name')). Many recipe modules expect Path objects
-    rather than strings. Using this `join` method gives you raw path joining
-    functionality and returns a string.
+    new_path = p.joinpath('some', 'name')). Many recipe modules expect Path
+    objects rather than strings. Using this `join` method gives you raw path
+    joining functionality and returns a string.
 
     If your path is rooted in one of the path module's root paths (i.e. those
     retrieved with api.path.something), then you can convert from a string path

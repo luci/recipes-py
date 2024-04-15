@@ -499,10 +499,7 @@ class FileApi(recipe_api.RecipeApi):
       cmd.append('--hidden')
     result = self._run(name, cmd, lambda: self.test_api.glob_paths(test_data),
                        self.m.raw_io.output_text())
-    ret = [
-        source.join(*x.split(self.m.path.sep))
-        for x in result.stdout.splitlines()
-    ]
+    ret = [source / x for x in result.stdout.splitlines()]
     result.presentation.logs["glob"] = [str(x) for x in ret]
     return ret
 
@@ -553,10 +550,7 @@ class FileApi(recipe_api.RecipeApi):
                        (['--recursive'] if recursive else
                         []), lambda: self.test_api.listdir(test_data),
                        self.m.raw_io.output_text())
-    ret = [
-        source.join(*x.split(self.m.path.sep))
-        for x in result.stdout.splitlines()
-    ]
+    ret = [source / x for x in result.stdout.splitlines()]
     if include_log:
       result.presentation.logs['listdir'] = [str(x) for x in ret]
     return ret

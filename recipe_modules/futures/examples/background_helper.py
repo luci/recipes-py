@@ -18,7 +18,7 @@ HELPER_TIMEOUT = object()
 
 def manage_helper(api, chn):
   with api.step.nest('helper'):
-    pid_file = api.path.cleanup_dir.join('pid_file')
+    pid_file = api.path.cleanup_dir / 'pid_file'
     helper_future = api.futures.spawn_immediate(
         api.step, 'helper loop',
         ['python3', api.resource('helper.py'), pid_file],

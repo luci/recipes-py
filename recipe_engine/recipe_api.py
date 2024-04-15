@@ -490,7 +490,7 @@ class RecipeApi:
     self._module = module
     self._resource_directory = config_types.Path(
         config_types.ResolvedBasePath.for_recipe_module(
-            test_data.enabled, module)).join('resources')
+            test_data.enabled, module)) / 'resources'
     self._repo_root = config_types.Path(
         config_types.ResolvedBasePath.for_bundled_repo(test_data.enabled,
                                                        module.repo))
@@ -603,13 +603,13 @@ class RecipeApi:
     """
     # TODO(vadimsh): Verify that file exists. Including a case like:
     #  module.resource('dir').join('subdir', 'file.py')
-    return self._resource_directory.join(*path)
+    return self._resource_directory.joinpath(*path)
 
   def repo_resource(self, *path):
     """Returns a resource path, where path is relative to the root of
     the recipe repo where this module is defined.
     """
-    return self._repo_root.join(*path)
+    return self._repo_root.joinpath(*path)
 
 
 @dataclass
@@ -650,13 +650,13 @@ class RecipeScriptApi:
     """
     # TODO(vadimsh): Verify that file exists. Including a case like:
     #  module.resource('dir').join('subdir', 'file.py')
-    return self._resource_path.join(*path)
+    return self._resource_path.joinpath(*path)
 
   def repo_resource(self, *path):
     """Returns a resource path, where path is relative to the root of
     the recipe repo where this module is defined.
     """
-    return self._repo_path.join(*path)
+    return self._repo_path.joinpath(*path)
 
   def __getattr__(self, key):
     raise ModuleInjectionError(

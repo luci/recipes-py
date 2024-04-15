@@ -9,7 +9,7 @@ DEPS = [
 
 
 def RunSteps(api):
-  filepath = api.path.start_dir.join('some_file')
+  filepath = api.path.start_dir / 'some_file'
   size_mb = 300
 
   MBtoB = lambda x: x * 1024 * 1024

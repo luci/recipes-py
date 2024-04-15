@@ -9,15 +9,15 @@ DEPS = [
 
 
 def RunSteps(api):
-  root_dir = api.path.start_dir.join('root_dir')
+  root_dir = api.path.start_dir / 'root_dir'
   api.file.ensure_directory('ensure root_dir', root_dir)
 
   listdir_result = api.file.listdir('listdir root_dir', root_dir, test_data=[])
   assert listdir_result == [], (listdir_result, [])
 
-  some_file = root_dir.join('some file')
-  sub_dir = root_dir.join('sub')
-  in_subdir = sub_dir.join('f')
+  some_file = root_dir / 'some file'
+  sub_dir = root_dir / 'sub'
+  in_subdir = sub_dir / 'f'
 
   api.file.write_text('write some file', some_file, 'some data')
   api.file.ensure_directory('mkdir', sub_dir)

@@ -10,21 +10,21 @@ DEPS = [
 
 
 def RunSteps(api):
-  dest = api.path.start_dir.join('some file')
+  dest = api.path.start_dir / 'some file'
   data = 'Here is some text data'
 
   api.file.write_text('write a file', dest, data)
-  api.file.copy('copy it', dest, api.path.start_dir.join('new path'))
+  api.file.copy('copy it', dest, api.path.start_dir / 'new path')
   read_data = api.file.read_text(
-    'read it', api.path.start_dir.join('new path'), test_data=data)
+    'read it', api.path.start_dir / 'new path', test_data=data)
 
   assert read_data == data, (read_data, data)
 
-  api.file.move('move it', api.path.start_dir.join('new path'),
-                api.path.start_dir.join('new new path'))
+  api.file.move('move it', api.path.start_dir / 'new path',
+                api.path.start_dir / 'new new path')
 
   read_data = api.file.read_text(
-    'read it', api.path.start_dir.join('new new path'), test_data=data)
+    'read it', api.path.start_dir / 'new new path', test_data=data)
 
   assert read_data == data, (read_data, data)
 

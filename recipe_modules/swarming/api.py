@@ -964,7 +964,7 @@ class TaskResult:
       self._output = raw_results.get('output')
       if self._output_dir and raw_results.get('outputs'):
         self._outputs = {
-            output: api.path.join(self._output_dir, output)
+            output: self._output_dir / output
             for output in raw_results['outputs']
         }
 
@@ -1438,8 +1438,8 @@ class SwarmingApi(recipe_api.RecipeApi):
       task_request = self._task_requests.get((task_id, self._server), [None])[0]
       parsed_results.append(
           TaskResult(self.m, task_request, task_id, task,
-                     output_dir.join(task_id) if output_dir else None,
-                     text_output_dir.join('%s.txt' % task_id)
+                     output_dir / task_id if output_dir else None,
+                     text_output_dir / f'{task_id}.txt'
                         if text_output_dir else None))
 
     parsed_results.sort(key=lambda result: result.name or '')

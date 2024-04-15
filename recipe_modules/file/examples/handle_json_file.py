@@ -9,7 +9,7 @@ DEPS = [
 
 
 def RunSteps(api):
-  dest = api.path.start_dir.join('some_file.json')
+  dest = api.path.start_dir / 'some_file.json'
   # Test a non-trivial number of keys in a dict.  This tests that the keys
   # are sorted in the output.
   data = {str('key%d' % i): True for i in range(10)}

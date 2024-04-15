@@ -17,7 +17,7 @@ from builtins import range, zip
 
 @recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED')
 def RunSteps(api):
-  api.step('step1', ['/bin/echo', str(api.path.tmp_base_dir.join('foo'))])
+  api.step('step1', ['/bin/echo', str(api.path.tmp_base_dir / 'foo')])
 
   # module.resource(...) demo.
   api.step('print resource',
@@ -28,10 +28,10 @@ def RunSteps(api):
            ['echo', api.path.repo_resource('dir', 'file.py')])
 
   assert 'start_dir' in api.path
-  assert api.path.start_dir.join('.') == api.path.start_dir
+  assert api.path.start_dir / '.' == api.path.start_dir
 
   assert 'checkout' not in api.path
-  api.path.checkout_dir = api.path.tmp_base_dir.join('checkout')
+  api.path.checkout_dir = api.path.tmp_base_dir / 'checkout'
   assert 'checkout' in api.path
 
   # Test missing/default value.
@@ -43,7 +43,7 @@ def RunSteps(api):
     assert 'unknown base path' in str(ex), str(ex)
 
   # Global dynamic paths (see config.py example for declaration):
-  dynamic_path = api.path.checkout_dir.join('jerky')
+  dynamic_path = api.path.checkout_dir / 'jerky'
   api.step('checkout path', ['/bin/echo', dynamic_path])
 
   # Methods from python os.path are available via api.path. For testing, we
@@ -56,7 +56,7 @@ def RunSteps(api):
   temp_file = api.path.mkstemp('kawaac')
   assert api.path.exists(temp_file)
 
-  file_path = api.path.tmp_base_dir.join('new_file')
+  file_path = api.path.tmp_base_dir / 'new_file'
   abspath = api.path.abspath(file_path)
   api.path.assert_absolute(abspath)
   try:
@@ -79,8 +79,8 @@ def RunSteps(api):
   assert file_path.parent == api.path.tmp_base_dir
   assert api.path.split(file_path) == (api.path.tmp_base_dir, 'new_file')
 
-  thing_bat = api.path.tmp_base_dir.join('thing.bat')
-  thing_bat_mkv = api.path.tmp_base_dir.join('thing.bat.mkv')
+  thing_bat = api.path.tmp_base_dir / 'thing.bat'
+  thing_bat_mkv = api.path.tmp_base_dir / 'thing.bat.mkv'
   assert api.path.splitext(thing_bat_mkv) == (thing_bat, '.mkv')
 
   assert api.path.abs_to_path(api.path.tmp_base_dir) == api.path.tmp_base_dir
@@ -112,8 +112,8 @@ def RunSteps(api):
   normpath = api.path.normpath(file_path)
   assert api.path.exists(normpath)
 
-  directory = api.path.start_dir.join('directory')
-  filepath = directory.join('filepath')
+  directory = api.path.start_dir / 'directory'
+  filepath = directory / 'filepath'
   api.step('rm directory (initial)', ['rm', '-rf', directory])
   assert not api.path.exists(directory)
   assert not api.path.isdir(directory)
@@ -144,27 +144,27 @@ def RunSteps(api):
   assert not api.path.isfile(directory)
 
   # We can mock copy paths. See the file module to do this for real.
-  copy1 = api.path.start_dir.join('copy1')
-  copy10 = api.path.start_dir.join('copy10')
-  copy2 = api.path.start_dir.join('copy2')
-  copy20 = api.path.start_dir.join('copy20')
+  copy1 = api.path.start_dir / 'copy1'
+  copy10 = api.path.start_dir / 'copy10'
+  copy2 = api.path.start_dir / 'copy2'
+  copy20 = api.path.start_dir / 'copy20'
   api.step('rm copy2 (initial)', ['rm', '-rf', copy2])
   api.step('rm copy20 (initial)', ['rm', '-rf', copy20])
 
-  api.step('mkdirs', ['mkdir', '-p', copy1.join('foo', 'bar')])
-  api.path.mock_add_paths(copy1.join('foo', 'bar'))
+  api.step('mkdirs', ['mkdir', '-p', copy1 / 'foo' / 'bar'])
+  api.path.mock_add_paths(copy1.joinpath('foo', 'bar'))
   api.step('touch copy10', ['touch', copy10])
   api.path.mock_add_paths(copy10)
   api.step('cp copy1 copy2', ['cp', '-a', copy1, copy2])
   api.path.mock_copy_paths(copy1, copy2)
-  assert api.path.exists(copy2.join('foo', 'bar'))
+  assert api.path.exists(copy2 / 'foo' / 'bar')
   assert not api.path.exists(copy20)
 
   # We can mock remove paths. See the file module to do this for real.
-  api.step('rm copy2/foo', ['rm', '-rf', copy2.join('foo')])
+  api.step('rm copy2/foo', ['rm', '-rf', copy2 / 'foo'])
   api.path.mock_remove_paths(str(copy2)+api.path.sep)
-  assert not api.path.exists(copy2.join('foo', 'bar'))
-  assert not api.path.exists(copy2.join('foo'))
+  assert not api.path.exists(copy2 / 'foo' / 'bar')
+  assert not api.path.exists(copy2 / 'foo')
   assert api.path.exists(copy2)
 
   api.step('touch copy20', ['touch', copy20])
@@ -177,7 +177,7 @@ def RunSteps(api):
   # Convert strings to Paths.
   def _mk_paths():
     return [
-        api.path.start_dir.join('some', 'thing'),
+        api.path.start_dir / 'some' / 'thing',
         api.path.start_dir,
         api.path.cache_dir / 'a file',
         api.path.home_dir / 'another file',
@@ -227,15 +227,15 @@ def RunSteps(api):
   assert not (b < a)
 
   # there is also a join method on the path module
-  assert start_dir.join('a') == api.path.join(start_dir, 'a')
+  assert start_dir / 'a' == api.path.join(start_dir, 'a')
 
-  slashy_path = api.path.start_dir.join(f'foo{api.path.sep}bar')
-  separated_path = api.path.start_dir.join('foo', 'bar')
+  slashy_path = api.path.start_dir / f'foo{api.path.sep}bar'
+  separated_path = api.path.start_dir / 'foo' / 'bar'
   assert str(slashy_path) == str(separated_path)
   assert slashy_path == separated_path
   assert api.path.eq(slashy_path, separated_path)
 
-  slashy_file = api.path.start_dir.join(
+  slashy_file = api.path.start_dir.joinpath(
       f'foo{api.path.sep}bar{api.path.sep}baz.txt')
   assert separated_path.is_parent_of(slashy_file)
   assert api.path.is_parent_of(separated_path, slashy_file)

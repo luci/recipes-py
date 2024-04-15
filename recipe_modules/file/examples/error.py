@@ -11,7 +11,7 @@ DEPS = [
 def RunSteps(api):
   try:
     api.file.read_text(
-      'does not exist', api.path.start_dir.join('not_there'))
+      'does not exist', api.path.start_dir / 'not_there')
     assert False, "never reached"  # pragma: no cover
   except api.file.Error as e:
     assert e.errno_name == 'ENOENT'

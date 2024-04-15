@@ -40,8 +40,8 @@ class NodeJSApi(recipe_api.RecipeApi):
       * path (Path) - a path to install Node.js into.
       * cache (Path) - a path to put Node.js caches under.
     """
-    path = path or self.m.path.cache_dir.join('nodejs')
-    cache = cache or self.m.path.cache_dir.join('npmcache')
+    path = path or self.m.path.cache_dir / 'nodejs'
+    cache = cache or self.m.path.cache_dir / 'npmcache'
     with self.m.context(infra_steps=True):
       env, env_pfx = self._ensure_installed(version, path, cache)
     with self.m.context(env=env, env_prefixes=env_pfx):
@@ -57,9 +57,9 @@ class NodeJSApi(recipe_api.RecipeApi):
 
     env = {
         # npm's content-addressed cache.
-        'npm_config_cache': cache.join('npm'),
+        'npm_config_cache': cache / 'npm',
         # Where packages are installed when using 'npm -g ...'.
-        'npm_config_prefix': cache.join('pfx'),
+        'npm_config_prefix': cache / 'pfx',
     }
 
     env_prefixes = {
@@ -67,8 +67,8 @@ class NodeJSApi(recipe_api.RecipeApi):
             # Putting this in front of PATH (before `bin` from the CIPD package)
             # allows doing stuff like `npm install -g npm@8.1.4` and picking up
             # the updated `npm` binary from `<npm_config_prefix>/bin`.
-            env['npm_config_prefix'].join('bin'),
-            path.join('bin'),
+            env['npm_config_prefix'] / 'bin',
+            path / 'bin',
         ],
     }
 

@@ -49,7 +49,7 @@ def GenTests(api):
   yield api.test(
       'json_key',
       api.platform('linux', 64),
-      props(key_path=api.path.start_dir.join('key_name.json')),
+      props(key_path=api.path.start_dir / 'key_name.json'),
   )
 
   yield api.test(
