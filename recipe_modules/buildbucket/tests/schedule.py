@@ -26,10 +26,14 @@ def RunSteps(api):
   req_body = engine_types.thaw(api.properties.get('request_kwargs'))
   tags = api.properties.get('tags')
   as_shadow = api.properties.get('as_shadow', False)
+  child_bucket = api.properties.get('child_bucket', api.buildbucket.INHERIT)
   # This is needed to provide coverage for the tags() method in api.py.
   tags = api.buildbucket.tags(**tags) if tags else tags
   req = api.buildbucket.schedule_request(
-      tags=tags, as_shadow_if_parent_is_led=as_shadow, **req_body)
+      bucket=child_bucket,
+      tags=tags,
+      as_shadow_if_parent_is_led=as_shadow,
+      **req_body)
 
   include_sub_invs = api.properties.get('include_sub_invs', False)
   api.buildbucket.schedule([req], include_sub_invs=include_sub_invs)
@@ -207,6 +211,25 @@ def GenTests(api):
 
   yield (test(test_name="not schedule shadow build for prod build") +
          api.properties(as_shadow=True) +
+         api.post_process(post_process.LogDoesNotContain,
+                          'buildbucket.schedule', 'request', ['original']) +
+         api.post_process(post_process.DropExpectation))
+
+  # It is in fact inheriting the parent's bucket.
+  yield (test(
+      test_name="schedule shadow child for led if provided bucket is parent's bucket",
+      shadowed_bucket='original') + api.properties(as_shadow=True) +
+         api.properties(child_bucket='original') +
+         api.post_process(post_process.LogContains, 'buildbucket.schedule',
+                          'request', ['original']) +
+         api.post_process(post_process.DropExpectation))
+
+  yield (test(
+      test_name="not schedule shadow child for led if provided bucket is not parent's bucket",
+      shadowed_bucket='original') + api.properties(as_shadow=True) +
+         api.properties(child_bucket='special') +
+         api.post_process(post_process.LogContains, 'buildbucket.schedule',
+                          'request', ['special']) +
          api.post_process(post_process.LogDoesNotContain,
                           'buildbucket.schedule', 'request', ['original']) +
          api.post_process(post_process.DropExpectation))

@@ -428,8 +428,23 @@ class BuildbucketApi(recipe_api.RecipeApi):
         ScheduleBuildRequest.can_outlive_parent will be determined by
         swarming_parent_run_id.
         TODO(crbug.com/1031205): remove swarming_parent_run_id.
-    * as_shadow_if_parent_is_led: flag for if the scheduled child build should
-      be scheduled in shadow bucket and have shadow adjustments applied.
+    * as_shadow_if_parent_is_led: flag for if to schedule the child build in
+      shadow bucket and have shadow adjustments applied, if the current build
+      is in shadow bucket.
+      Examples:
+      * if the child build inherits the parent's bucket (explicitly or
+        implicitly).
+        * if the parent is a normal build in bucket 'original', the child will
+          also be created in bucket 'original'.
+        * if the parent is a led build in bucket 'shadow', the child will also
+          be created in bucket 'shadow'.
+          * Note: the schdule request in this case will use bucket 'original'
+            instead of bucket `shadow`. It's because Buildbucket needs the
+            'original' bucket to find the Builder config to generate the child
+            build so it can then put it in 'shadow' bucket.
+      * if the child build is using a different bucket from the parent, then
+        that bucket will be used in both normal and led flow to create the
+        child.
     """
 
     def as_msg(value, typ):
@@ -533,7 +548,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     # Schedule child builds in the shadow bucket since the parent is a led
     # real build.
     if as_shadow_if_parent_is_led and self.shadowed_bucket:
-      if bucket is self.INHERIT:
+      if bucket is self.INHERIT or bucket == self.build.builder.bucket:
         # The child build inherits its parent's bucket,
         # convert it to the shadowed_bucket.
         req.builder.bucket = self.shadowed_bucket
