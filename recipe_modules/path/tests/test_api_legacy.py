@@ -7,31 +7,26 @@ from recipe_engine.post_process import DropExpectation
 
 DEPS = ['path']
 
-GETITEM_NAMES = [
-    'cache',
-    'cleanup',
-    'home',
+GETATTR_NAMES = [
+    'cache_dir',
+    'cleanup_dir',
+    'home_dir',
     'start_dir',
-    'tmp_base',
+    'tmp_base_dir',
 ]
 
 
 def RunSteps(api):
-  for name in GETITEM_NAMES:
-    p = api.path.get(name) / 'file'
+  for name in GETATTR_NAMES:
+    p = getattr(api.path, name) / 'file'
     assert api.path.exists(p), p
 
   api.path.checkout_dir = api.path.start_dir / 'somedir'
-  assert api.path.exists(api.path.get('checkout') / 'file')
+  assert api.path.exists(getattr(api.path, 'checkout_dir') / 'file')
 
 
 def GenTests(api):
-  def base_path(name):
-    if not name.endswith('_dir'):
-      name += '_dir'
-    return getattr(api.path, name)
-
-  paths = [base_path(name) / 'file' for name in GETITEM_NAMES]
+  paths = [getattr(api.path, name) / 'file' for name in GETATTR_NAMES]
   paths.append(api.path.checkout_dir / 'file')
 
   yield api.test(

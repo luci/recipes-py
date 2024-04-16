@@ -17,7 +17,7 @@ def RunSteps(api):
   try:
     # Note - legacy api.path.get('checkout') is the only way to get a dynamic
     # checkout path before assignment to checkout_dir.
-    api.path.checkout_dir = api.path.get('checkout') / 'something'
+    api.path.checkout_dir = api.path.checkout_dir / 'something'
     assert False, 'able to assign string to path?'  # pragma: no cover
   except ValueError as ex:
     assert 'cannot be rooted in checkout_dir' in str(ex), str(ex)

@@ -534,7 +534,6 @@ class PathApi(recipe_api.RecipeApi):
       * module resource paths
       * recipe resource paths
       * repo paths
-      * checkout_dir
       * home_dir
       * start_dir
       * tmp_base_dir
@@ -563,7 +562,6 @@ class PathApi(recipe_api.RecipeApi):
     if path is None:
       to_try = [
           self.cache_dir,
-          self.checkout_dir,
           self.cleanup_dir,
           self.home_dir,
           self.start_dir,
@@ -600,7 +598,7 @@ class PathApi(recipe_api.RecipeApi):
     method remains for now.
     """
     if pathname == self.CheckoutPathName:
-      return bool(self.checkout_dir)
+      return bool(self._checkout_dir)
     return pathname in self.NamedBasePaths
 
   def __setitem__(self, pathname: CheckoutPathNameType,
@@ -621,7 +619,11 @@ class PathApi(recipe_api.RecipeApi):
   @property
   def checkout_dir(self) -> config_types.Path|None:
     """Returns the Path which was assigned to this checkout_dir property."""
-    return self._checkout_dir
+    if cdir := self._checkout_dir:
+      # If the checkout_dir is already set, just return it directly.
+      return cdir
+    # In this case, the checkout_dir is not yet set, but it could be later.
+    return config_types.Path(config_types.CheckoutBasePath())
 
   @checkout_dir.setter
   def checkout_dir(self, path: config_types.Path) -> None:
@@ -652,7 +654,8 @@ class PathApi(recipe_api.RecipeApi):
       assert isinstance(self._path_mod, fake_path)
       self._path_mod._mock_path_exists.mark_checkout_dir_set()
 
-  def get(self, name: NamedBasePathsType) -> config_types.Path:
+  def get(self, name: NamedBasePathsType, *,
+          skip_deprecation=False) -> config_types.Path:
     """Gets the base path named `name`. See module docstring for more info.
 
     DEPRECATED: Use the following @properties on this module instead:
@@ -664,15 +667,14 @@ class PathApi(recipe_api.RecipeApi):
       * checkout_dir (but use of checkout_dir is generally discouraged - just
       pass the Paths around instead of using this global variable).
     """
+    if not skip_deprecation:
+      self.m.warning.issue('PATH_GETITEM_DEPRECATED')
+
     match name:
       case 'cache':
         return self.cache_dir
       case 'checkout':
-        if cdir := self.checkout_dir:
-          # If the checkout_dir is already set, just return it directly.
-          return cdir
-        # In this case, the checkout_dir is not yet set, but it could be later.
-        return config_types.Path(config_types.CheckoutBasePath())
+        return self.checkout_dir
       case 'cleanup':
         return self.cleanup_dir
       case 'home':
@@ -697,7 +699,7 @@ class PathApi(recipe_api.RecipeApi):
       pass the Paths around instead of using this global variable).
     """
     self.m.warning.issue('PATH_GETITEM_DEPRECATED')
-    return self.get(name)
+    return self.get(name, skip_deprecation=True)
 
   @property
   def start_dir(self) -> config_types.Path:
