@@ -486,10 +486,12 @@ class PathApi(recipe_api.RecipeApi):
       new_path = tempfile.mkdtemp(prefix=prefix, dir=cleanup_dir)
       assert new_path.startswith(cleanup_dir), (
           f'{new_path=!r} -- {cleanup_dir=!r}')
-      temp_dir = self.cleanup_dir / new_path[len(cleanup_dir):]
+      temp_name = new_path[len(cleanup_dir):]
     else:
       self._test_counter[prefix] += 1
-      temp_dir = self.cleanup_dir / f'{prefix}_tmp_{self._test_counter[prefix]}'
+      temp_name = f'{prefix}_tmp_{self._test_counter[prefix]}'
+
+    temp_dir = self.cleanup_dir / temp_name
 
     self.mock_add_paths(temp_dir, FileType.DIRECTORY)
     return temp_dir
