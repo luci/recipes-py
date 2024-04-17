@@ -3,6 +3,7 @@
 # that can be found in the LICENSE file.
 """Test to cover legacy aspects of PathTestApi."""
 
+from recipe_engine import recipe_api
 from recipe_engine.post_process import DropExpectation
 
 DEPS = ['path']
@@ -16,6 +17,7 @@ GETATTR_NAMES = [
 ]
 
 
+@recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED')
 def RunSteps(api):
   for name in GETATTR_NAMES:
     p = getattr(api.path, name) / 'file'

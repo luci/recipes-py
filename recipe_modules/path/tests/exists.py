@@ -2,11 +2,13 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from recipe_engine import recipe_api
 from recipe_engine.post_process import DropExpectation
 
 DEPS = ['path']
 
 
+@recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED')
 def RunSteps(api):
   assert not api.path.exists(api.path.start_dir / 'does not exist')
   assert not api.path.isfile(api.path.start_dir / 'does not exist')

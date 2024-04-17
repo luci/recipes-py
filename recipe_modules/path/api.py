@@ -524,6 +524,7 @@ class PathApi(recipe_api.RecipeApi):
     self.mock_add_paths(temp_file, FileType.FILE)
     return temp_file
 
+  @recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED')
   def abs_to_path(self, abs_string_path: str) -> config_types.Path:
     """Converts an absolute path string `abs_string_path` to a real Path
     object, using the most appropriate known base path.
@@ -585,6 +586,7 @@ class PathApi(recipe_api.RecipeApi):
     sub_path = abs_string_path[len(sPath):].strip(self.sep)
     return path.joinpath(*sub_path.split(self.sep))
 
+  @recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED')
   def __contains__(self, pathname: NamedBasePathsType) -> bool:
     """This method is DEPRECATED.
 
@@ -603,6 +605,7 @@ class PathApi(recipe_api.RecipeApi):
       return bool(self._checkout_dir)
     return pathname in self.NamedBasePaths
 
+  @recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED')
   def __setitem__(self, pathname: CheckoutPathNameType,
                   path: config_types.Path) -> None:
     """Sets the checkout path.
@@ -621,6 +624,7 @@ class PathApi(recipe_api.RecipeApi):
   @property
   def checkout_dir(self) -> config_types.Path|None:
     """Returns the Path which was assigned to this checkout_dir property."""
+    self.m.warning.issue('CHECKOUT_DIR_DEPRECATED')
     if cdir := self._checkout_dir:
       # If the checkout_dir is already set, just return it directly.
       return cdir
@@ -632,6 +636,8 @@ class PathApi(recipe_api.RecipeApi):
     """Sets the global variable `api.path.checkout_dir` to the given path.
 
     """
+    self.m.warning.issue('CHECKOUT_DIR_DEPRECATED')
+
     if not isinstance(path, config_types.Path):
       raise ValueError(
           f'api.path.checkout_dir called with bad type: {path!r} ({type(path)})')
@@ -656,6 +662,11 @@ class PathApi(recipe_api.RecipeApi):
       assert isinstance(self._path_mod, fake_path)
       self._path_mod._mock_path_exists.mark_checkout_dir_set()
 
+  # We can always ignore checkout_dir warnings from this method because all
+  # uses of this method produce PATH_GETITEM_DEPRECATED warnings. When those
+  # get fixed, callers will be accessing api.path.checkout_dir directly and
+  # will then hit the CHECKOUT_DIR_DEPRECATED warning.
+  @recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED')
   def get(self, name: NamedBasePathsType, *,
           skip_deprecation=False) -> config_types.Path:
     """Gets the base path named `name`. See module docstring for more info.
