@@ -114,10 +114,10 @@ class TestPathsPreGlobalInit(unittest.TestCase):
     with self.assertRaisesRegex(ValueError, 'going above the base'):
       print(repr(p / 'something' / '..///./..'))
 
-  def test_path_join(self):
-    """Tests for Path.join()."""
+  def test_path_joinpath(self):
+    """Tests for Path.joinpath()."""
     base_path = Path(ResolvedBasePath('[START_DIR]'))
-    reference_path = base_path.join('foo').join('bar')
+    reference_path = base_path.joinpath('foo').joinpath('bar')
     self.assertEqual(base_path / 'foo' / 'bar', reference_path)
 
   def test_is_parent_of(self):

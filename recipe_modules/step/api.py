@@ -523,17 +523,17 @@ class StepApi(recipe_api.RecipeApi):
     # output path, cwd and cache directory.
     with api.context(
         # Change the cwd of the launched LUCI executable
-        cwd=api.path.start_dir.join('subdir'),
+        cwd=api.path.start_dir / 'subdir',
         # Change the cache_dir of the launched LUCI executable. Defaults to
         # api.path.cache_dir if unchanged.
-        luciexe=sections_pb2.LUCIExe(cache_dir=api.path.cache_dir.join('sub')),
+        luciexe=sections_pb2.LUCIExe(cache_dir=api.path.cache_dir / 'sub'),
       ):
       # Command executed:
       #   `/path/to/run_exe --output [CLEANUP]/build.json --foo bar baz`
       ret = api.sub_build("launch sub build",
                           [run_exe, '--foo', 'bar', 'baz'],
                           api.buildbucket.build,
-                          output_path=api.path.cleanup_dir.join('build.json'))
+                          output_path=api.path.cleanup_dir / 'build.json')
     sub_build = ret.step.sub_build  # access final build proto result
     ```
 

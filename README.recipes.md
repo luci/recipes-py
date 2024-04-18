@@ -285,14 +285,14 @@ Usage:
 
     # Archive root/file and root/directory/**
     (api.archive.package(root).
-        with_file(root.join('file')).
-        with_dir(root.join('directory')).
+        with_file(root / 'file').
+        with_dir(root / 'directory').
         archive('archive step', output, 'tbz'))
 
     # Archive root/**
     zip_path = (
       api.archive.package(root).
-      archive('archive step', api.path.start_dir.join('output.zip'))
+      archive('archive step', api.path.start_dir / 'output.zip')
     )
 
 Args:
@@ -1397,7 +1397,7 @@ program.
 
 Example:
 ```python
-with api.context(cwd=api.path.start_dir.join('subdir')):
+with api.context(cwd=api.path.start_dir / 'subdir'):
   # this step is run inside of the subdir directory.
   api.step("cat subdir/foo", ['cat', './foo'])
 ```
@@ -4339,17 +4339,17 @@ sub_build = ret.step.sub_build #  access final build proto result
 # output path, cwd and cache directory.
 with api.context(
     # Change the cwd of the launched LUCI executable
-    cwd=api.path.start_dir.join('subdir'),
+    cwd=api.path.start_dir / 'subdir',
     # Change the cache_dir of the launched LUCI executable. Defaults to
     # api.path.cache_dir if unchanged.
-    luciexe=sections_pb2.LUCIExe(cache_dir=api.path.cache_dir.join('sub')),
+    luciexe=sections_pb2.LUCIExe(cache_dir=api.path.cache_dir / 'sub'),
   ):
   # Command executed:
   #   `/path/to/run_exe --output [CLEANUP]/build.json --foo bar baz`
   ret = api.sub_build("launch sub build",
                       [run_exe, '--foo', 'bar', 'baz'],
                       api.buildbucket.build,
-                      output_path=api.path.cleanup_dir.join('build.json'))
+                      output_path=api.path.cleanup_dir / 'build.json')
 sub_build = ret.step.sub_build  # access final build proto result
 ```
 

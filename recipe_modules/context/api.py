@@ -20,7 +20,7 @@ program.
 
 Example:
 ```python
-with api.context(cwd=api.path.start_dir.join('subdir')):
+with api.context(cwd=api.path.start_dir / 'subdir'):
   # this step is run inside of the subdir directory.
   api.step("cat subdir/foo", ['cat', './foo'])
 ```

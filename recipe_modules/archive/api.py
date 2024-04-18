@@ -20,14 +20,14 @@ class ArchiveApi(recipe_api.RecipeApi):
 
         # Archive root/file and root/directory/**
         (api.archive.package(root).
-            with_file(root.join('file')).
-            with_dir(root.join('directory')).
+            with_file(root / 'file').
+            with_dir(root / 'directory').
             archive('archive step', output, 'tbz'))
 
         # Archive root/**
         zip_path = (
           api.archive.package(root).
-          archive('archive step', api.path.start_dir.join('output.zip'))
+          archive('archive step', api.path.start_dir / 'output.zip')
         )
 
     Args:

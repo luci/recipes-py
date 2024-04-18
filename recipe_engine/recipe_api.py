@@ -602,7 +602,7 @@ class RecipeApi:
       path: path relative to module's resources/ directory.
     """
     # TODO(vadimsh): Verify that file exists. Including a case like:
-    #  module.resource('dir').join('subdir', 'file.py')
+    #  module.resource('dir') / 'subdir' / 'file.py'
     return self._resource_directory.joinpath(*path)
 
   def repo_resource(self, *path):
@@ -649,7 +649,7 @@ class RecipeScriptApi:
       path: path relative to module's resources/ directory.
     """
     # TODO(vadimsh): Verify that file exists. Including a case like:
-    #  module.resource('dir').join('subdir', 'file.py')
+    #  module.resource('dir') / 'subdir' / 'file.py'
     return self._resource_path.joinpath(*path)
 
   def repo_resource(self, *path):
