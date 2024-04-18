@@ -5,11 +5,14 @@
 
 """Internal helpers for reporting test status to stdout."""
 
+from __future__ import annotations
+
 import collections
 import datetime
 import logging
 import os
 import sys
+from typing import TYPE_CHECKING
 
 from collections import defaultdict
 from io import StringIO
@@ -21,6 +24,9 @@ import coverage
 from .fail_tracker import FailTracker
 from ...warn.cause import CallSite, ImportSite
 
+if TYPE_CHECKING:
+  import PB.recipe_engine.internal.test.runner as runner_pb2
+
 
 @attr.s
 class Reporter:
@@ -31,6 +37,8 @@ class Reporter:
   _fail_tracker = attr.ib()
   # If set, will print warning details (even if there are other fatal failures)
   _enable_warning_details = attr.ib()
+  # If set, will print duration details (even if there are fatal failures).
+  _enable_duration_details = attr.ib()
 
   _column_count = attr.ib(default=0)
   _error_buf = attr.ib(factory=StringIO)
@@ -194,6 +202,20 @@ class Reporter:
         _print_warnings(warning_result, self._recipe_deps)
       else:
         print('Fix test failures or pass --show-warnings for details.')
+      print()
+
+    duration_result = _collect_duration_result(outcome_msg)
+    if duration_result:
+      print('------')
+      if len(duration_result) == 1:
+        print('Found 1 long-running test')
+      else:
+        print(f'Found {len(duration_result)} long-running tests')
+      print()
+      if self._enable_duration_details or not fail:
+        _print_durations(duration_result, self._enable_duration_details)
+      else:
+        print('Fix test failures or pass --show-durations for details.')
       print()
 
     status_warning_result = _collect_global_warnings_result(outcome_msg)
@@ -427,3 +449,40 @@ def _print_warnings(warning_result, recipe_deps):
     print_bug_links(definition)
     print_call_sites(causes.call_sites)
     print_import_sites(causes.import_sites)
+
+
+def _collect_duration_result(
+    outcome_msg: runner_pb2.Outcome) -> dict[str, datetime.timedelta]:
+  """Collects durations from all test outcomes saves the long ones."""
+  result = defaultdict(PerWarningResult)
+  for name, test_result in outcome_msg.test_results.items():
+    duration = datetime.timedelta(
+        milliseconds=test_result.duration.ToMilliseconds()
+    )
+    if duration >= datetime.timedelta(seconds=10):
+      result[name] = duration
+
+  return result
+
+
+SOFT_MAX_DURATIONS = 8
+HARD_MAX_DURATIONS = 12
+
+
+def _print_durations(duration_result: dict[str, datetime.timedelta],
+                     full: bool):
+  durations = list(duration_result.items())
+  durations.sort(key=lambda x: (x[1], x[0]))
+
+  # Don't show "x long-running tests hidden" when x is a very small number.
+  # In that case, just show the tests.
+  exit_early = True
+  if full or len(durations) <= HARD_MAX_DURATIONS:
+    exit_early = False
+
+  for i, (name, duration) in enumerate(reversed(durations)):
+    if exit_early and i >= SOFT_MAX_DURATIONS:
+      print(f'{len(durations)-i} long-running tests hidden, use '
+            '--show-durations to show all')
+      break
+    print(f'{duration.total_seconds():8.3f}s  {name}')

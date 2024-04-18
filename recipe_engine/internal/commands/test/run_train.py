@@ -109,7 +109,7 @@ def _push_tests(test_filter: test_name.Filter, is_train, main_repo, description_
 
 
 def _run(test_results, recipe_deps, use_emoji, test_filter, is_train,
-         stop, jobs, show_warnings):
+         stop, jobs, show_warnings, show_durations):
   """Run tests in py3 subprocess pools.
   """
   main_repo = recipe_deps.main_repo
@@ -132,7 +132,7 @@ def _run(test_results, recipe_deps, use_emoji, test_filter, is_train,
 
   fail_tracker = FailTracker(recipe_deps.previous_test_failures_path)
   reporter = report.Reporter(recipe_deps, use_emoji, is_train, fail_tracker,
-                             show_warnings)
+                             show_warnings, show_durations)
 
   cov_dir = None
   total_cov = coverage.Coverage(config_file=False, data_file='.total_coverage',
@@ -238,7 +238,7 @@ def main(args):
   repo = args.recipe_deps.main_repo
   try:
     _run(ret, args.recipe_deps, args.use_emoji, args.test_filter, is_train,
-         args.stop, args.jobs, args.show_warnings)
+         args.stop, args.jobs, args.show_warnings, args.show_durations)
     _dump()
   except KeyboardInterrupt:
     args.docs = False  # skip docs

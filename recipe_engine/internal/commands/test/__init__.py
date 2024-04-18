@@ -95,6 +95,10 @@ def add_arguments(parser):
       '--show-warnings',
       action='store_true', default=False, dest='show_warnings',
       help='Show detailed warnings even on test failures.')
+  run_p.add_argument(
+      '--show-durations',
+      action='store_true', default=False, dest='show_durations',
+      help='Show long-running tests even on test failures.')
 
   helpstr = 'Re-train recipe expectations.'
   train_p = subp.add_parser(
@@ -128,6 +132,10 @@ def add_arguments(parser):
       '--show-warnings',
       action='store_true', default=False, dest='show_warnings',
       help='Show detailed warnings even on test failures.')
+  train_p.add_argument(
+      '--show-durations',
+      action='store_true', default=False, dest='show_durations',
+      help='Show long-running tests even on test failures.')
 
   helpstr = 'Print all test names.'
   list_p = subp.add_parser(
