@@ -986,6 +986,7 @@ class PathApi(recipe_api.RecipeApi):
 
     DEPRECATED: Just directly compare path1 and path2 with `==`.
     """
+    self.m.warning.issue('PATH_EQ_DEPRECATED')
     return path1 == path2
 
   def is_parent_of(self, parent: config_types.Path,
