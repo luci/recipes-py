@@ -49,7 +49,7 @@ class SymlinkTree:
           '%s is already linked to %s' %
           (linkname, self._reverse_map[linkname]))
 
-    assert self.root.is_parent_of(linkname), (
+    assert self.root in linkname.parents, (
         '%s is not within the root directory %s' % (linkname, self.root))
     self._link_map.setdefault(target, []).append(linkname)
     self._reverse_map[linkname] = target

@@ -69,7 +69,7 @@ class PackageDefinition:
     the package root. Will raise ValueError if path is not inside the root."""
     if path == self.package_root:
       return '.'
-    if not self.package_root.is_parent_of(path):
+    if not self.package_root in path.parents:
       raise ValueError(
           'path %r is not the package root %r and not a child thereof' %
           (path, self.package_root))

@@ -992,6 +992,6 @@ class PathApi(recipe_api.RecipeApi):
                    child: config_types.Path) -> bool:
     """Check whether child is contained within parent.
 
-    DEPRECATED: Just use `parent.is_parent_of(child)`.
+    DEPRECATED: Just use `parent in child.parents`.
     """
-    return parent.is_parent_of(child)
+    return parent in child.parents

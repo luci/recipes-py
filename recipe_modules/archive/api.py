@@ -193,7 +193,7 @@ class Package:
     Returns:
       `self` to allow chaining.
     """
-    assert self._root.is_parent_of(path), (
+    assert self._root in path.parents, (
       '%r is not a parent of %r' % (self._root, path))
     self._entries.append({
       'type': 'file',
@@ -210,7 +210,7 @@ class Package:
     Returns:
       `self` to allow chaining.
     """
-    assert self._root.is_parent_of(path) or path == self._root, (
+    assert self._root in (path, *path.parents), (
       '%r is not a parent of %r' % (self._root, path))
     self._entries.append({
       'type': 'dir',
