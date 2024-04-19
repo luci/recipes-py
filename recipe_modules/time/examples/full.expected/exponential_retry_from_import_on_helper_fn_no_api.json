@@ -21,7 +21,7 @@
       "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/engine.py\", line 597, in run_steps",
       "    raw_result = recipe_obj.run_steps(api, engine)",
       "                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/recipe_deps.py\", line 1012, in run_steps",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/recipe_deps.py\", line 1017, in run_steps",
       "    recipe_result = invoke_with_properties(",
       "                    ^^^^^^^^^^^^^^^^^^^^^^^",
       "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/property_invoker.py\", line 88, in invoke_with_properties",
