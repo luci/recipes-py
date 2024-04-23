@@ -3,21 +3,12 @@ google_issue_default {
 }
 
 warning {
-  name: "CQ_MODULE_DEPRECATED"
-  description: "The cq module is deprecated."
+  name: "BUILDBUCKET_BUILDER_ID_DEPRECATED"
+  description: "api.buildbucket.builder_id is deprecated."
   description: ""
-  description: "Use the cv module instead."
-  deadline: "2024-07-01"
-  google_issue { id: 333811087 }
-}
-
-warning {
-  name: "PATH_EQ_DEPRECATED"
-  description: "api.path.eq() is deprecated."
-  description: ""
-  description: "Use the == operator instead."
-  deadline: "2024-07-01"
-  google_issue { id: 335898567 }
+  description: "Use api.buildbucket.build.builder instead."
+  deadline: "2024-06-01"
+  google_issue { id: 332774996 }
 }
 
 warning {
@@ -36,79 +27,6 @@ warning {
   description: "Use api.buildbucket.build.input instead."
   deadline: "2024-06-01"
   google_issue { id: 332774996 }
-}
-
-warning {
-  name: "BUILDBUCKET_BUILDER_ID_DEPRECATED"
-  description: "api.buildbucket.builder_id is deprecated."
-  description: ""
-  description: "Use api.buildbucket.build.builder instead."
-  deadline: "2024-06-01"
-  google_issue { id: 332774996 }
-}
-
-warning {
-  name: "JSON_READ_DEPRECATED"
-  description: "api.json.read() is deprecated."
-  description: ""
-  description: "Use api.file.read_json() instead."
-  deadline: "2024-06-01"
-  google_issue { id: 332774562 }
-}
-
-warning {
-  name: "LEGACY_PROPERTIES_DEPRECATED"
-  description: "api.properties.legacy() is deprecated."
-  description: ""
-  description: "Instead of passing all of the properties as a blob, please"
-  description: "consider passing specific arguments to scripts that need them."
-  description: "Doing this makes it much easier to debug and diagnose which"
-  description: "scripts use which properties."
-  deadline: "2024-06-01"
-  google_issue { id: 332776173 }
-}
-
-warning {
-  name: "PYTHON2_DEPRECATED"
-  description: "Python2 is deprecated."
-  description: ""
-  description: "The indicated step is invoking vpython or python2."
-  description: "Please switch this to `vpython3` or `python3`."
-}
-
-warning {
-  name: "STEP_NEST_PRESENTATION_DEPRECATED"
-  description: ".presentation on value yielded by api.step.nest() is deprecated"
-  description: ""
-  description: "Specifically, this is deprecated:"
-  description: ""
-  description: "  with api.step.nest('foo') as foo:"
-  description: "    foo.presentation.step_summary_text = '...'"
-  description: ""
-  description: "Instead, try the following:"
-  description: ""
-  description: "  with api.step.nest('foo') as pres:"
-  description: "    pres.step_summary_text = '...'"
-  deadline: "2024-06-01"
-  google_issue { id: 332773904 }
-}
-
-warning {
-  name: "PATH_GETITEM_DEPRECATED"
-  description: "Accessors like api.path['start_dir'] are deprecated."
-  description: ""
-  description: "Use a member like api.path.start_dir instead"
-  deadline: "2024-05-15"
-  google_issue { id: 329113288 }
-}
-
-warning {
-  name: "SET_BUILDBUCKET_HOST_DEPRECATED"
-  description: "api.buildbucket.set_buildbucket_host() is deprecated."
-  description: ""
-  description: "Use api.buildbucket.host = '...' instead."
-  deadline: "2024-06-01"
-  google_issue { id: 332776145 }
 }
 
 warning {
@@ -145,4 +63,86 @@ warning {
   description: "ValueError) if this is accessed prior to assignment."
   deadline: "2024-06-15"
   google_issue { id: 329113288 }
+}
+
+warning {
+  name: "CQ_MODULE_DEPRECATED"
+  description: "The cq module is deprecated."
+  description: ""
+  description: "Use the cv module instead."
+  deadline: "2024-07-01"
+  google_issue { id: 333811087 }
+}
+
+warning {
+  name: "JSON_READ_DEPRECATED"
+  description: "api.json.read() is deprecated."
+  description: ""
+  description: "Use api.file.read_json() instead."
+  deadline: "2024-06-01"
+  google_issue { id: 332774562 }
+}
+
+warning {
+  name: "LEGACY_PROPERTIES_DEPRECATED"
+  description: "api.properties.legacy() is deprecated."
+  description: ""
+  description: "Instead of passing all of the properties as a blob, please"
+  description: "consider passing specific arguments to scripts that need them."
+  description: "Doing this makes it much easier to debug and diagnose which"
+  description: "scripts use which properties."
+  deadline: "2024-06-01"
+  google_issue { id: 332776173 }
+}
+
+warning {
+  name: "PATH_EQ_DEPRECATED"
+  description: "api.path.eq() is deprecated."
+  description: ""
+  description: "Use the == operator instead."
+  deadline: "2024-07-01"
+  google_issue { id: 335898567 }
+}
+
+warning {
+  name: "PATH_GETITEM_DEPRECATED"
+  description: "Accessors like api.path['start_dir'] are deprecated."
+  description: ""
+  description: "Use a member like api.path.start_dir instead"
+  deadline: "2024-05-15"
+  google_issue { id: 329113288 }
+}
+
+warning {
+  name: "PYTHON2_DEPRECATED"
+  description: "Python2 is deprecated."
+  description: ""
+  description: "The indicated step is invoking vpython or python2."
+  description: "Please switch this to `vpython3` or `python3`."
+}
+
+warning {
+  name: "SET_BUILDBUCKET_HOST_DEPRECATED"
+  description: "api.buildbucket.set_buildbucket_host() is deprecated."
+  description: ""
+  description: "Use api.buildbucket.host = '...' instead."
+  deadline: "2024-06-01"
+  google_issue { id: 332776145 }
+}
+
+warning {
+  name: "STEP_NEST_PRESENTATION_DEPRECATED"
+  description: ".presentation on value yielded by api.step.nest() is deprecated"
+  description: ""
+  description: "Specifically, this is deprecated:"
+  description: ""
+  description: "  with api.step.nest('foo') as foo:"
+  description: "    foo.presentation.step_summary_text = '...'"
+  description: ""
+  description: "Instead, try the following:"
+  description: ""
+  description: "  with api.step.nest('foo') as pres:"
+  description: "    pres.step_summary_text = '...'"
+  deadline: "2024-06-01"
+  google_issue { id: 332773904 }
 }
