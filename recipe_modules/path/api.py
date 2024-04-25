@@ -336,7 +336,7 @@ class PathApi(recipe_api.RecipeApi):
   # future. Do not use this.
   #
   # Use the .checkout_dir @property directly, instead.
-  CheckoutPathName = 'checkout'
+  CheckoutPathName = CheckoutPathName
 
   # This is a frozenset of all the named base paths that this module knows
   # about.
@@ -449,18 +449,6 @@ class PathApi(recipe_api.RecipeApi):
 
   def _ensure_dir(self, path: str) -> None:  # pragma: no cover
     os.makedirs(path, exist_ok=True)
-
-  def _split_path(self, path: str) -> tuple[str, ...]:  # pragma: no cover
-    """Relative or absolute path -> tuple of components."""
-    abs_path: list[str] = os.path.abspath(path).split(self.sep)
-    # Guarantee that the first element is an absolute drive or the posix root.
-    if abs_path[0].endswith(':'):
-      abs_path[0] += '\\'
-    elif abs_path[0] == '':
-      abs_path[0] = '/'
-    else:
-      assert False, 'Got unexpected path format: %r' % abs_path
-    return tuple(abs_path)
 
   def assert_absolute(self, path: config_types.Path | str) -> None:
     """Raises AssertionError if the given path is not an absolute path.
