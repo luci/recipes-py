@@ -3,22 +3,15 @@
 # that can be found in the LICENSE file.
 
 import collections
-import errno
-import fnmatch
-import io
 import json
 import os
-import re
 import shutil
-import sys
 
 import coverage
 import gevent
 import gevent.queue
 
 from google.protobuf import json_format
-
-from recipe_engine import __path__ as RECIPE_ENGINE_PATH
 
 # pylint: disable=import-error
 from PB.recipe_engine.internal.test.runner import Description, Outcome
@@ -167,6 +160,23 @@ def _run(test_results, recipe_deps, use_emoji, test_filter, is_train,
           live_threads.remove(rslt)
           continue
 
+        if rslt.warnings:
+          # Note - we don't just use MergeFrom here because it doesn't work well with
+          # map types, e.g. if you merge:
+          #
+          #    msg { mapval {key: "something" value: 1 value: 2} }
+          #    msg { mapval {key: "something" value: 3 } }
+          #
+          # you will get
+          #
+          #    msg { mapval {key: "something" value: 3 } }
+          #
+          # instead of
+          #
+          #    msg { mapval {key: "something" value: 1 value: 2 value: 3} }
+          for key in rslt.warnings:
+            test_results.warnings[key].MergeFrom(rslt.warnings[key])
+          rslt.warnings.clear()
         test_results.MergeFrom(rslt)
         has_fail = reporter.short_report(rslt, can_abort=True)
         if has_fail and stop:

@@ -23,7 +23,7 @@ class TestCaseResult:
   uncaught_exception = attr.ib(default=None)
 
 
-def execute_test_case(recipe_deps, recipe_name, test_data):
+def execute_test_case(recipe_deps, recipe_name, test_data) -> TestCaseResult:
   """Executes a single test case.
 
   Args:
@@ -42,13 +42,11 @@ def execute_test_case(recipe_deps, recipe_name, test_data):
   from ..step_runner.sim import SimulationStepRunner
   from ..stream.invariants import StreamEngineInvariants
   from ..stream.simulator import SimulationStreamEngine
-  from ..warn.record import WarningRecorder
   from ...util import fix_json_object
 
   step_runner = SimulationStepRunner(test_data)
   simulator = SimulationStreamEngine()
   stream_engine = StreamEngineInvariants.wrap(simulator)
-  warning_recorder = WarningRecorder(recipe_deps)
 
   props = test_data.properties.copy()
   props = fix_json_object(props)
@@ -59,7 +57,7 @@ def execute_test_case(recipe_deps, recipe_name, test_data):
     environ[key] = value
 
   raw_result, uncaught_exception = RecipeEngine.run_steps(
-      recipe_deps, props, stream_engine, step_runner, warning_recorder,
+      recipe_deps, props, stream_engine, step_runner,
       environ, '', test_data.luci_context,
       num_logical_cores=8, memory_mb=16 * (1024**3), test_data=test_data,
       skip_setup_build=True)
@@ -68,6 +66,5 @@ def execute_test_case(recipe_deps, recipe_name, test_data):
       raw_result=raw_result,
       ran_steps=step_runner.export_steps_ran(),
       annotations=simulator.annotations,
-      warnings=warning_recorder.recorded_warnings,
       uncaught_exception=uncaught_exception,
   )

@@ -6,7 +6,6 @@
 file descriptors)."""
 
 import struct
-import os
 
 
 def read_message(in_file, msg_class):

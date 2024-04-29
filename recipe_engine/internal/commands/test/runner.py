@@ -40,6 +40,7 @@ from .... import engine_types
 from ...global_shutdown import GLOBAL_SHUTDOWN
 from ...simple_cfg import RECIPES_CFG_LOCATION_REL
 from ...test import magic_check_fn
+from ...warn import record
 from ...test.execute_test_case import execute_test_case
 
 from ... import debugger
@@ -333,6 +334,7 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
   """
   start_time = time.time()
 
+  record.GLOBAL.reset_recorded_warning_names()
   test_case_result = execute_test_case(
         recipe_deps, test_desc.recipe_name, test_data)
 
@@ -341,8 +343,7 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
       duration_pb2.Duration(
           seconds=int(duration), nanos=int((duration % 1) * (10**9))))
 
-  for name, causes in test_case_result.warnings.items():
-    test_results.warnings[name].causes.extend(causes)
+  test_results.warnings.extend(record.GLOBAL.recorded_warning_names)
 
   raw_expectations = _merge_presentation_updates(test_case_result.ran_steps,
                                                  test_case_result.annotations)
@@ -411,6 +412,9 @@ def main(recipe_deps, cov_file, is_train, cover_module_imports):
 
   main_repo = recipe_deps.main_repo
 
+  # Set up the global warning recorder.
+  record.GLOBAL = record.WarningRecorder(recipe_deps)
+
   cov_data = coverage.CoverageData(basename=cov_file)
   if cover_module_imports:
     cov_data.update(_cover_all_imports(main_repo))
@@ -429,7 +433,14 @@ def main(recipe_deps, cov_file, is_train, cover_module_imports):
 
     test_desc = _read_test_desc()
     if not test_desc:
-      break  # EOF or error
+      # EOF or error - we attempt to write one final Outcome to capture all the
+      # warnings recorded.
+      result = Outcome()
+      for name, causes in record.GLOBAL.recorded_warnings.items():
+        result.warnings[name].causes.extend(causes)
+      # Ignore error from write_message - there is nothing we can do.
+      write_message(sys.stdout.buffer, result)
+      break
 
     result = Outcome()
     try:
@@ -438,6 +449,7 @@ def main(recipe_deps, cov_file, is_train, cover_module_imports):
 
       recipe = main_repo.recipes[test_desc.recipe_name]
 
+      cov = None
       if cov_file:
         # We have to start coverage now because we want to cover the importation
         # of the covered recipe and/or covered recipe modules.
@@ -453,7 +465,7 @@ def main(recipe_deps, cov_file, is_train, cover_module_imports):
       except Exception as ex:  # pylint: disable=broad-except
         test_result.internal_error.append('Uncaught exception: %r' % (ex,))
         test_result.internal_error.extend(traceback.format_exc().splitlines())
-      if cov_file:
+      if cov:
         cov.stop()
         cov_data.update(cov.get_data())
 
@@ -471,7 +483,7 @@ def main(recipe_deps, cov_file, is_train, cover_module_imports):
     cov_data.write()
 
 
-def _read_test_desc():
+def _read_test_desc() -> Description | None:
   try:
     return read_message(sys.stdin.buffer, Description)
   except Exception as ex:  # pylint: disable=broad-except
@@ -667,7 +679,24 @@ class RunnerThread(gevent.Greenlet):
     try:
       while True:
         test_desc = self._description_queue.get()
+
         if not test_desc:
+          # Signal to the process that no more test Descriptions will be coming.
+          # The runner should dump all global warning state and quit now.
+          if not write_message(self._runner_proc.stdin, Description()):
+            self._outcome_queue.put(Outcome(internal_error=[
+              'Unable to send final empty test description from %r' % (
+                test_desc.recipe_name, test_desc.test_name, self.name
+              )
+            ]))
+            return
+
+          # Read back the very last Outcome which will have all our warning
+          # causes.
+          result = read_message(self._runner_proc.stdout, Outcome)
+          if result is not None:
+            self._outcome_queue.put(result)
+
           self._runner_proc.stdout.close()
           try:
             self._runner_proc.stdin.write(b'\0')

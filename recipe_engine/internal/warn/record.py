@@ -4,19 +4,22 @@
 
 """record warnings during recipe executions."""
 
+import inspect
 import os
+import re
 import types
 
 from collections import defaultdict
 from functools import cached_property
 
 import attr
+import gevent
 
 
 from .cause import CallSite, Frame, ImportSite
-from .escape import escape_warning_predicate, IGNORE
+from . import escape
 
-from ..attr_util import attr_type, attr_seq_type
+from ..attr_util import attr_type
 from ..recipe_deps import Recipe, RecipeDeps, RecipeModule
 
 from ...engine_types import FrozenDict
@@ -24,11 +27,23 @@ from ...util import sentinel
 
 
 # The sentinel that instructs recipe engine not to record warnings.
-NULL_WARNING_RECORDER = sentinel('NULL_WARNING_RECORDER',
-    recorded_warnings=FrozenDict(),
-    record_execution_warning=(lambda _self, _name, _frames: None),
-    record_import_warning=(lambda _self, _name, _importer: None),
-)
+class NULL_WARNING_RECORDER:
+  @property
+  def recorded_warnings(self):
+    return FrozenDict()
+
+  def record_execution_warning(self, name, skip=0):
+    pass
+
+  def record_import_warning(self, name, importer):
+    pass
+
+  def reset_recorded_warning_names(self):
+    pass
+
+  @property
+  def recorded_warning_names(self):
+    return frozenset()
 
 
 @attr.s(frozen=True, slots=True)
@@ -56,7 +71,7 @@ class WarningRecorder:
       or recipe module depends on a module with warning declared.
   """
   # The RecipeDeps object for current recipe execution.
-  recipe_deps = attr.ib(validator=attr_type(RecipeDeps))
+  recipe_deps: RecipeDeps = attr.ib(validator=attr_type(RecipeDeps))
 
   # Filter function that all execution warnings will be filtered through
   # before storing. If the function returns False, the warning will be
@@ -69,14 +84,15 @@ class WarningRecorder:
   # to import warnings.
   import_site_filter = attr.ib(default=lambda name, cause: True)
 
-  # Boolean tells whether to preserve entire call stack for execution warning
-  # or not.
-  include_call_stack = attr.ib(validator=attr_type(bool), default=False)
-
   # Internal holder for recorded warnings.
   # key: fully qualified warning name (str)
   # value: Set[CallSite|ImportSite] (defined in cause.py, not the proto message)
-  _recorded_warnings = attr.ib(init=False, factory=lambda: defaultdict(set))
+  _recorded_warnings: dict[str, set] = attr.ib(init=False, factory=lambda: defaultdict(set))
+
+  # Internal, resettable, set of warning names encountered.
+  #
+  # This is used by the test runner to populate Outcome.Results.warnings.
+  _recorded_warning_names: set[str] = attr.ib(init=False, factory=set)
 
   @property
   def recorded_warnings(self):
@@ -94,7 +110,17 @@ class WarningRecorder:
       for (name, sites) in self._recorded_warnings.items()
     }
 
-  def record_execution_warning(self, name, frames):
+  def reset_recorded_warning_names(self):
+    """Called from the test runner immediately prior to executing a test case."""
+    self._recorded_warning_names = set()
+
+  @property
+  def recorded_warning_names(self) -> frozenset[str]:
+    """Used by the test runner to see if any deadline warnings were caught
+    during the execution of a test case."""
+    return frozenset(self._recorded_warning_names)
+
+  def record_execution_warning(self, name: str, skip: int = 0):
     """Record the warning issued during recipe execution and its cause (
     warning_pb.CallSite). A frame will be attributed as call site frame if it
     is the first frame in the supplied frames matching the following
@@ -105,14 +131,33 @@ class WarningRecorder:
         warning.
 
     Args:
-      * name (str): Fully qualified warning name (e.g. repo_name/WARNING_NAME).
-      * frames (List[Frame]): List of frames captured at the time the given
-        warning is issued.
+      * name: Warning name (e.g. repo_name/WARNING_NAME or WARNING_NAME). If the
+        name is not fully qualified, this will resolve the warning name based on
+        the location of the caller of record_execution_warning(). So if the
+        caller is in a file in some recipe repo X, WARNING_NAME will resolve to
+        X/WARNING_NAME.
+      * skip (int): Count of how many stack frames to skip to start
+        attributing the warning to user code. The default of 1 skips the
+        immediate caller.
     """
-    self._validate_warning_name(name)
+    stack = inspect.stack()[skip+1:]
+    # [1] is the frame filename, but unfortunately python2 uses a bare tuple.
+    name = self._resolve_name(name, stack[0][1])
+
+    # grab all the frames and then ensure the stack is freed.
+    frames = [frame_tup[0] for frame_tup in stack]
+    del stack
+
+    # Now make sure the caller of record_execution_warning is immune to
+    # attribution for this warning. This is able to see through multiple
+    # levels of decorators.
+    self._ensure_caller_escaped(name, frames[0])
+
+    frames.extend(getattr(gevent.getcurrent(), 'spawning_frames', ()))
+
     # TODO(yiwzhang): update proto to include skip reason and populate
     call_site_frame, _ = self._attribute_call_site(name, frames)
-    if call_site_frame is IGNORE:
+    if call_site_frame is escape.IGNORE:
       return
     call_site = CallSite(
       site=Frame.from_built_in_frame(call_site_frame) if (
@@ -127,9 +172,8 @@ class WarningRecorder:
       if not call_site.site.file.startswith(self._main_repo_paths):
         return
 
-    if self.include_call_stack or not call_site_frame:
-      # Capture call stack if explicitly requested or attributing call site
-      # fails
+    if not call_site_frame:
+      # Capture call stack if attributing call site fails
       call_site = attr.evolve(
         call_site,
         call_stack=[Frame.from_built_in_frame(f) for f in frames]
@@ -137,6 +181,7 @@ class WarningRecorder:
     if (call_site not in self._recorded_warnings[name]) and (
       self.call_site_filter(name, call_site.cause_pb)):
       self._recorded_warnings[name].add(call_site)
+      self._recorded_warning_names.add(name)
 
   def record_import_warning(self, name, importer):
     """Record the warning issued during DEPS resolution and its cause (
@@ -168,6 +213,52 @@ class WarningRecorder:
     if (import_site not in self._recorded_warnings[name]) and (
         self.import_site_filter(name, import_site.cause_pb)):
       self._recorded_warnings[name].add(import_site)
+      self._recorded_warning_names.add(name)
+
+  def _resolve_name(self, name, issuer_file):
+    """Returns the fully-qualified, validated warning name for the given
+    warning.
+
+    The repo that contains the issuer_file is considered as where the
+    warning is defined.
+
+    Args:
+      * name (str): the warning name to be resolved. If fully-qualified name
+        is provided, returns as it is.
+      * issuer_file (str): The file path where warning is issued.
+
+    Raise ValueError if none of the repo contains the issuer_file.
+    """
+    if '/' in name:
+      self._validate_warning_name(name)
+      return name
+
+    abs_issuer_path = os.path.abspath(issuer_file)
+    for _, (repo_name, repo_path) in enumerate(self._repo_paths):
+      if abs_issuer_path.startswith(repo_path):
+        name = '/'.join((repo_name, name))
+        self._validate_warning_name(name)
+        return name
+    raise ValueError('Failed to resolve warning: %r issued in %s. To '
+        'disambiguate, please provide fully-qualified warning name '
+        '(i.e. $repo_name/WARNING_NAME)' % (name, abs_issuer_path))
+
+  @staticmethod
+  def _ensure_caller_escaped(name, frame):
+    """Ensures that the function associated with `frame` is immune to
+    attribution from the `name` warning.
+
+    Args:
+      * name - fully-qualified, validated warning name.
+      * frame - the inspect stack frame of the function to immunize.
+    """
+    loc = escape.FuncLoc.from_code_obj(frame.f_code)
+    pattern = re.compile('^%s$' % name)
+
+    escaped_warnings = escape.WARNING_ESCAPE_REGISTRY.get(loc, ())
+    if pattern not in escaped_warnings:
+      escaped_warnings = (pattern,) + escaped_warnings
+    escape.WARNING_ESCAPE_REGISTRY[loc] = escaped_warnings
 
   def _validate_warning_name(self, name):
     """Checks whether the given warning name is fully-qualified and defined in
@@ -179,6 +270,21 @@ class WarningRecorder:
       repo, warning = name.split('/', 1)
       raise ValueError(
           'warning "%s" is not defined in recipe repo %s' % (warning, repo))
+
+  @cached_property
+  def _repo_paths(self):
+    """A list of (repo name, repo path) inverse sorted by length of repo path.
+
+    A repo may locate inside another repo (e.g. generally, deps repos are
+    inside main repo). So we should start with the repo with the longest
+    path to decide which repo contains the issuer file.
+    """
+    return sorted(
+        ((repo_name, repo.path)
+        for repo_name, repo in self.recipe_deps.repos.items()),
+        key=lambda r: r[1],
+        reverse=True,
+    )
 
   @cached_property
   def _skip_frame_predicates(self):
@@ -198,7 +304,7 @@ class WarningRecorder:
     """
     return (
       self._non_recipe_code_predicate,
-      escape_warning_predicate
+      escape.escape_warning_predicate
     )
 
   def _attribute_call_site(self, name, frames):
@@ -217,8 +323,8 @@ class WarningRecorder:
     for frame in frames:
       lazy_skip_reasons = (p(name, frame) for p in self._skip_frame_predicates)
       reason = next((r for r in lazy_skip_reasons if r is not None), None)
-      if reason is IGNORE:
-        return IGNORE, IGNORE
+      if reason is escape.IGNORE:
+        return escape.IGNORE, escape.IGNORE
       if reason is None:
         return frame, skipped_frames # culprit found
       skipped_frames.append(_AnnotatedFrame(frame=frame, skip_reason=reason))
@@ -254,3 +360,8 @@ class WarningRecorder:
       if code_file_path.startswith(repo_path):
         return None
     return 'non recipe code'
+
+
+# The global warning recorder. This is set by each test runner to an instance of
+# WarningRecorder.
+GLOBAL: NULL_WARNING_RECORDER|WarningRecorder = NULL_WARNING_RECORDER()

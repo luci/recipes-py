@@ -26,7 +26,6 @@ from ...global_shutdown import install_signal_handlers
 from ...step_runner.subproc import SubprocessStepRunner
 from ...stream.annotator import AnnotatorStreamEngine
 from ...stream.invariants import StreamEngineInvariants
-from ...warn.record import NULL_WARNING_RECORDER
 
 from ....third_party import luci_context
 
@@ -67,7 +66,6 @@ def _main_impl(args):
       properties,
       StreamEngineInvariants.wrap(stream_engine),
       SubprocessStepRunner(),
-      NULL_WARNING_RECORDER,
       os.environ,
       os.path.abspath(workdir),
       luci_context.read_full(),

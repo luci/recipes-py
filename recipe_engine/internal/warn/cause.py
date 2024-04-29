@@ -16,8 +16,6 @@ from functools import cached_property
 
 import attr
 
-from PB.recipe_engine import warning as warning_pb
-
 from ..attr_util import attr_type, attr_value_is, attr_list_type
 from ...engine_types import freeze
 
@@ -40,6 +38,8 @@ class Frame:
   @cached_property
   def frame_pb(self):
     """The equivalent warning_pb.Frame proto message instance"""
+    from PB.recipe_engine import warning as warning_pb
+
     return warning_pb.Frame(file=self.file, line=self.line)
 
   @classmethod
@@ -72,6 +72,8 @@ class CallSite:
   @cached_property
   def cause_pb(self):
     """The equivalent warning_pb.Cause proto message instance"""
+    from PB.recipe_engine import warning as warning_pb
+
     ret = warning_pb.Cause()
     ret.call_site.site.CopyFrom(self.site.frame_pb)
     for f in self.call_stack:
@@ -108,6 +110,8 @@ class ImportSite:
   @cached_property
   def cause_pb(self):
     """The equivalent warning_pb.Cause proto message instance"""
+    from PB.recipe_engine import warning as warning_pb
+
     ret = warning_pb.Cause()
     ret.import_site.repo = self.repo
     if self.module:

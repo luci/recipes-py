@@ -960,7 +960,8 @@ class Recipe:
     resolved_deps = _resolve(
       self.repo.recipe_deps, self.normalized_DEPS, 'API', engine, test_data)
     for _, (warning, importer) in enumerate(_collect_import_warnings(self)):
-      engine.record_import_warning(warning, importer)
+      from .warn import record
+      record.GLOBAL.record_import_warning(warning, importer)
     api.__dict__.update({
       local_name: resolved_dep
       for local_name, resolved_dep in resolved_deps.items()

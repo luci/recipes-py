@@ -9,7 +9,11 @@ package recipe_engine.internal.test;
 import "recipe_engine/warning.proto";
 import "google/protobuf/duration.proto";
 
-// Description of test to run (for runner subprocess)
+// Description of test to run (for runner subprocess))
+//
+// As a special case, if recipe_name and test_name are both empty, then the
+// runner process should dump all global test state. This state is currently
+// just collected warnings.
 message Description {
   // The fully qualified name of the recipe in the main repo:
   //    path/to/recipe
@@ -57,20 +61,23 @@ message Outcome {
     // Error messages from internal failures.
     repeated string internal_error = 7;
 
-    // Warnings issued during test execution and its causes.
-    map<string, recipe_engine.Causes> warnings = 8;
-
     // Wall clock time of how long this test case took to execute.
     // If tests are executed in parallel, this value may not directly correspond
     // to how much actual 'work' was done in this test.
-    google.protobuf.Duration duration = 11;
+    google.protobuf.Duration duration = 8;
+
+    // This is a set of all warning names encountered during test execution. See
+    // Outcome.warnings for all accumulated warning Causes.
+    repeated string warnings = 9;
 
     // Warnings issued outside of the 'recipe code' environment (which should be
-    // captured by warnings above). Examples would be warnings about syntactic
+    // captured by Outcome.warnings). Examples would be warnings about syntactic
     // use in the recipe/module, usage of deprecated file-level APIs (e.g. from
     // recipe_engine import ...), or warnings about the format of the test
     // itself.
-    repeated string global_warnings = 12;
+    //
+    // TODO - fold these into Outcome.warnings, which is now global anyway.
+    repeated string global_warnings = 10;
   }
 
   // Maps full test names (i.e. 'recipe_name.test_case') to test result details.
@@ -93,4 +100,11 @@ message Outcome {
   // Error messages from internal failures not associated with any individual
   // test.
   repeated string internal_error = 5;
+
+  // Warnings issued during test execution and its causes.
+  //
+  // This is currently issued as an Outcome.Results message all by itself as
+  // the very last Results which is triggered by the orchestrator sending an
+  // empty Description{}.
+  map<string, recipe_engine.Causes> warnings = 6;
 }

@@ -24,7 +24,6 @@ from ...global_shutdown import install_signal_handlers
 from ...step_runner.subproc import SubprocessStepRunner
 from ...stream.invariants import StreamEngineInvariants
 from ...stream.luci import LUCIStreamEngine
-from ...warn.record import NULL_WARNING_RECORDER
 
 from . import RunBuildContractViolation
 
@@ -106,9 +105,9 @@ def _main_impl(args):
     try:
       raw_result, _ = RecipeEngine.run_steps(
         args.recipe_deps, properties, stream_engine,
-        SubprocessStepRunner(), NULL_WARNING_RECORDER,
-        os.environ, os.getcwd(), luci_context.read_full(),
-        psutil.cpu_count(), psutil.virtual_memory().total)
+        SubprocessStepRunner(), os.environ, os.getcwd(),
+        luci_context.read_full(), psutil.cpu_count(),
+        psutil.virtual_memory().total)
       stream_engine.write_result(raw_result)
     except:
       LOG.exception("RecipeEngine.run_steps uncaught exception.")

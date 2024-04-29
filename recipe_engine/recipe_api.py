@@ -279,80 +279,42 @@ class ConcurrencyClient:
     return self._spawn_impl(func, args, kwargs, greenlet_name)
 
 
-class WarningClient:
-  IDENT = 'warning'
-
-  def __init__(self, recorder, recipe_deps: 'recipe_deps.RecipeDeps'):
-    from .internal.warn import record  # Avoid early proto import
-    if recorder != record.NULL_WARNING_RECORDER and (
-        not isinstance(recorder, record.WarningRecorder)):
-      raise ValueError('Expected either an instance of WarningRecorder '
-                       'or NULL_WARNING_RECORDER sentinel. Got type '
-                       '(%s): %r' % (type(recorder), recorder))
-    self._recorder = recorder
-    # A repo may locate inside another repo (e.g. generally, deps repos are
-    # inside main repo). So we should start with the repo with the longest
-    # path to decide which repo contains the issuer file.
-    self._repo_paths = sorted(
-        ((repo_name, repo.path)
-        for repo_name, repo in recipe_deps.repos.items()),
-        key=lambda r: r[1],
-        reverse=True,
-    )
-
-  @escape.escape_all_warnings
-  def record_execution_warning(self, name):
-    """Captures the current stack and records an execution warning."""
-    cur_stack = [frame_tup[0] for frame_tup in inspect.stack()]
-    cur_stack.extend(getattr(gevent.getcurrent(), 'spawning_frames', ()))
-    self._recorder.record_execution_warning(name, cur_stack)
-
-  def record_import_warning(self, name, importer):
-    """Records import warning during DEPS resolution."""
-    self._recorder.record_import_warning(name, importer)
-
-  def resolve_warning(self, name, issuer_file):
-    """Returns the fully-qualified warning name for the given warning.
-
-    The repo that contains the issuer_file is considered as where the
-    warning is defined.
-
-    Args:
-      * name (str): the warning name to be resolved. If fully-qualified name
-        is provided, returns as it is.
-      * issuer_file (str): The file path where warning is issued.
-
-    Raise ValueError if none of the repo contains the issuer_file.
-    """
-    if '/' in name:
-      return name
-
-    abs_issuer_path = os.path.abspath(issuer_file)
-    for _, (repo_name, repo_path) in enumerate(self._repo_paths):
-      if abs_issuer_path.startswith(repo_path):
-        return '/'.join((repo_name, name))
-    raise ValueError('Failed to resolve warning: %r issued in %s. To '
-        'disambiguate, please provide fully-qualified warning name '
-        '(i.e. $repo_name/WARNING_NAME)' % (name, abs_issuer_path))
-
-  def escape_frame_function(self, warning, frame):
-    """Escapes the function the given frame executes from warning attribution.
-    """
-    loc = escape.FuncLoc.from_code_obj(frame.f_code)
-    if '/' in warning:
-      pattern = re.compile('^%s$' % warning)
-    else:
-      pattern = re.compile('^.+/%s$' % warning)
-    escaped_warnings = escape.WARNING_ESCAPE_REGISTRY.get(loc, ())
-    if pattern not in escaped_warnings:
-      escaped_warnings = (pattern,) + escaped_warnings
-    escape.WARNING_ESCAPE_REGISTRY[loc] = escaped_warnings
-
-
 # Exports warning escape decorators
+
+# escape_warnings is a function decorator which will cause warnings matching any
+# of the given regexps to be attributed to the decorated function's caller
+# instead of the decorated function itself.
+#
+#   escape_warnings(*warning_name_regexps)
 escape_warnings = escape.escape_warnings
+
+# escape_all_warnings is a function decorator which is equivalent to
+# `escape_warnings(".*")`
 escape_all_warnings = escape.escape_all_warnings
+
+# ignore_warnings is a function decorator which will cause warnings matching any
+# of the given regexps to be ignored (i.e. swallowed).
+#
+#   ignore_warnings(*warning_name_regexps)
 ignore_warnings = escape.ignore_warnings
+
+
+def record_execution_warning(warning_name, skip=0):
+  """Records a warning during testing.
+
+  No-op in production contexts.
+
+  Args:
+    * name - the name of a pre-defined warning in a recipe.warnings file.
+      If this is absolute (i.e. "repo/WARNING"), then it's used as-is.
+      Otherwise "WARNING" would be resolved against the recipe repo containing
+      the function which calls this one.
+    * skip - the number of stack frames to skip before starting attribution.
+      A value of 0 indicates that your frame is skipped, so 1 would skip your
+      caller's frame, etc.
+  """
+  from recipe_engine.internal.warn.record import GLOBAL
+  GLOBAL.record_execution_warning(warning_name, skip+1)
 
 
 class StepFailure(Exception):

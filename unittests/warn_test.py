@@ -176,46 +176,40 @@ class TestWarningRecorder(test_env.RecipeEngineUnitTest):
     mock_deps.main_repo.name = self.repo_name
     mock_deps.main_repo.recipes_dir = os.path.dirname(self.test_file_path)
     mock_deps.main_repo.modules_dir = os.path.dirname(self.test_file_path)
+    mock_deps.main_repo.path = os.path.dirname(self.test_file_path)
+    mock_deps.repos = {"recipe_engine": mock_deps.main_repo}
     self.recorder = record.WarningRecorder(mock_deps)
     # This test should NOT test the functionality of any predicate
     # implementation
     self._override_skip_frame_predicates(tuple())
 
+
   def test_record_execution_warning(self):
-    with create_test_frames(self.test_file_path) as test_frames:
+    with create_test_frames(self.test_file_path):
       self.recorder.record_execution_warning(
-        'recipe_engine/SOME_WARNING', test_frames)
+        'recipe_engine/SOME_WARNING')
 
     expected_cause = warning_pb.Cause()
     expected_cause.call_site.site.file = self.test_file_path
-    expected_cause.call_site.site.line = 3
+    expected_cause.call_site.site.line = 4
     self.assert_has_warning('recipe_engine/SOME_WARNING', expected_cause)
 
   def test_record_execution_warning_filter(self):
     self.recorder.call_site_filter = lambda name, cause: False
-    with create_test_frames(self.test_file_path) as test_frames:
+    with create_test_frames(self.test_file_path):
       self.recorder.record_execution_warning(
-        'recipe_engine/SOME_WARNING', test_frames)
+        'recipe_engine/SOME_WARNING')
 
     self.assertFalse(
       self.recorder.recorded_warnings['recipe_engine/SOME_WARNING'])
-
-  def test_record_execution_warning_include_call_stack(self):
-    self.recorder.include_call_stack = True
-    with create_test_frames(self.test_file_path) as test_frames:
-      self.recorder.record_execution_warning(
-        'recipe_engine/SOME_WARNING', test_frames)
-
-    cause = self.recorder.recorded_warnings['recipe_engine/SOME_WARNING'][0]
-    self.assertTrue(cause.call_site.call_stack)
 
   def test_record_execution_warning_skip_frame(self):
     def line_number_less_than_4(_name, frame):
       return 'line number is less then 4' if frame.f_lineno < 4 else None
     self._override_skip_frame_predicates((line_number_less_than_4,))
-    with create_test_frames(self.test_file_path) as test_frames:
+    with create_test_frames(self.test_file_path):
       self.recorder.record_execution_warning(
-        'recipe_engine/SOME_WARNING', test_frames)
+        'recipe_engine/SOME_WARNING')
 
     # attribute to frame on line 4
     expected_cause = warning_pb.Cause()
@@ -226,9 +220,9 @@ class TestWarningRecorder(test_env.RecipeEngineUnitTest):
   def test_record_empty_site_for_execution_warning(self):
     self._override_skip_frame_predicates((
       lambda _name, _frame: 'skip all frames', ))
-    with create_test_frames(self.test_file_path) as test_frames:
+    with create_test_frames(self.test_file_path):
       self.recorder.record_execution_warning(
-        'recipe_engine/SOME_WARNING', test_frames)
+        'recipe_engine/SOME_WARNING')
     self.assertIn('recipe_engine/SOME_WARNING', self.recorder.recorded_warnings)
     cause = self.recorder.recorded_warnings['recipe_engine/SOME_WARNING'][0]
     self.assertEqual(cause.call_site.site.file, '')
@@ -236,11 +230,11 @@ class TestWarningRecorder(test_env.RecipeEngineUnitTest):
     self.assertTrue(cause.call_site.call_stack)
 
   def test_no_duplicate_execution_warning(self):
-    with create_test_frames(self.test_file_path) as test_frames:
+    with create_test_frames(self.test_file_path):
       self.recorder.record_execution_warning(
-        'recipe_engine/SOME_WARNING', test_frames)
+        'recipe_engine/SOME_WARNING')
       self.recorder.record_execution_warning(
-        'recipe_engine/SOME_WARNING', test_frames)
+        'recipe_engine/SOME_WARNING')
 
     self.assertEqual(1, len(
       self.recorder.recorded_warnings['recipe_engine/SOME_WARNING']))
@@ -295,29 +289,13 @@ class TestWarningRecorder(test_env.RecipeEngineUnitTest):
     self.assertEqual(1, len(
       self.recorder.recorded_warnings['recipe_engine/SOME_WARNING']))
 
-  def test_record_non_fully_qualified_warning(self):
-    # execution warning
-    with create_test_frames(self.test_file_path) as test_frames:
-      with self.assertRaisesRegex(
-          ValueError,
-          'expected fully-qualified warning name, got SOME_WARNING'):
-        self.recorder.record_execution_warning('SOME_WARNING', test_frames)
-    # import warning
-    with self.assertRaisesRegex(
-        ValueError, 'expected fully-qualified warning name, got SOME_WARNING'):
-      self.recorder.record_import_warning(
-          'SOME_WARNING',
-          self._create_mock_recipe('test_module:path/to/recipe', self.repo_name),
-      )
-
   def test_record_not_defined_execution_warning(self):
     # execution warning
-    with create_test_frames(self.test_file_path) as test_frames:
+    with create_test_frames(self.test_file_path):
       with self.assertRaisesRegex(
           ValueError,
           'warning "COOL_WARNING" is not defined in recipe repo infra'):
-        self.recorder.record_execution_warning('infra/COOL_WARNING',
-                                               test_frames)
+        self.recorder.record_execution_warning('infra/COOL_WARNING')
     # import warning
     with self.assertRaisesRegex(
         ValueError,
@@ -359,8 +337,8 @@ class TestWarningRecorder(test_env.RecipeEngineUnitTest):
 
 @contextlib.contextmanager
 def create_test_frames(frame_file):
-  """Execute a program and return a list of stack frames for testing
-  purpose as follows.
+  """Execute a program and mock `inspect.stack` to return the list of
+  frames.
   [
     file: frame_file, line: 3,
     file: frame_file, line: 4,
@@ -372,14 +350,15 @@ def create_test_frames(frame_file):
   program="""
 def outer():
   def inner():
-    return [frame_tuple[0] for frame_tuple in inspect.stack()]
+    return inspect.stack()
   return inner()
 frames = outer()
   """.strip()
   try:
     ns = {}
     exec(compile(program, frame_file, 'exec'), globals(), ns)
-    yield ns['frames']
+    with mock.patch('inspect.stack', mock.Mock(return_value=ns["frames"])):
+      yield
   finally:
     del ns['frames']
 

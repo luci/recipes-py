@@ -4,16 +4,11 @@
 
 """Allows recipe modules to issue warnings in simulation test."""
 
-import inspect
-
 from recipe_engine import recipe_api
 
 
 class WarningApi(recipe_api.RecipeApi):
-  warning_client = recipe_api.RequireClient('warning')
-
-  @recipe_api.escape_all_warnings
-  def issue(self, name):
+  def issue(self, name):  # pragma: no cover
     """Issues an execution warning.
 
     `name` MAY either be a fully qualified "repo_name/WARNING_NAME" or a short
@@ -25,13 +20,5 @@ class WarningApi(recipe_api.RecipeApi):
     It is recommended to use the short name if the warning is defined in the
     same repo as the issue() call.
     """
-    if self._test_data.enabled: # pragma: no cover
-      issuer_frame, issuer_file, _, _, _, _ = inspect.stack()[1]
-      try:
-        fq_name = self.warning_client.resolve_warning(name, issuer_file)
-        # Escapes the function that issues the warning so that we can attribute
-        # call site to the caller of that function.
-        self.warning_client.escape_frame_function(fq_name, issuer_frame)
-      finally:
-        del issuer_frame
-      self.warning_client.record_execution_warning(fq_name)
+    if self._test_data.enabled:
+      recipe_api.record_execution_warning(name, 1)

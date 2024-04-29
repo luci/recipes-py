@@ -288,12 +288,11 @@ def _print_summary_info(recipe_deps, verbose, use_emoji, test_name, test_result,
   if not icon:
     success = True
     for warning_name in test_result.warnings:
+      verbose_msg = 'warnings'
       if recipe_deps.warning_definitions[warning_name].deadline:
         icon = '🟡' if use_emoji else 'W'
         verbose_msg = 'warnings with deadline'
         break
-    else:
-      verbose_msg = 'warnings'
 
   if not icon:
     icon = '.'
@@ -350,13 +349,12 @@ def _collect_warning_result(outcome_msg):
   each warning.
   """
   result = defaultdict(PerWarningResult)
-  for _, test_result in outcome_msg.test_results.items():
-    for name, causes in test_result.warnings.items():
-      for cause in causes.causes:
-        if cause.WhichOneof('oneof_cause') == 'call_site':
-          result[name].call_sites.add(CallSite.from_cause_pb(cause))
-        else:
-          result[name].import_sites.add(ImportSite.from_cause_pb(cause))
+  for name, causes in outcome_msg.warnings.items():
+    for cause in causes.causes:
+      if cause.WhichOneof('oneof_cause') == 'call_site':
+        result[name].call_sites.add(CallSite.from_cause_pb(cause))
+      else:
+        result[name].import_sites.add(ImportSite.from_cause_pb(cause))
   return result
 
 
