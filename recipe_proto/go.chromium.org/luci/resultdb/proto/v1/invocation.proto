@@ -20,6 +20,7 @@ import "google/api/field_behavior.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/common.proto";
+import "go.chromium.org/luci/resultdb/proto/v1/instruction.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/predicate.proto";
 
 option go_package = "go.chromium.org/luci/resultdb/proto/v1;resultpb";
@@ -29,7 +30,7 @@ option go_package = "go.chromium.org/luci/resultdb/proto/v1;resultpb";
 // buildbucket build, CQ attempt.
 // Composable: can include other invocations, see inclusion.proto.
 //
-// Next id: 17.
+// Next id: 22.
 message Invocation {
   reserved 3; // bool interrupted, crbug.com/1078696.
 
@@ -82,8 +83,18 @@ message Invocation {
 
   // == Finalization ===========================================================
 
+  // When the invocation started to finalize, i.e. transitioned to FINALIZING
+  // state. This means the invocation is immutable but directly or indirectly
+  // included invocations may not be.
+  //
+  // Output only.
+  google.protobuf.Timestamp finalize_start_time = 19
+      [ (google.api.field_behavior) = OUTPUT_ONLY ];
+
   // When the invocation was finalized, i.e. transitioned to FINALIZED state.
-  // If this field is set, implies that the invocation is finalized.
+  // If this field is set, implies that the invocation is finalized. This
+  // means the invocation and directly or indirectly included invocations
+  // are immutable.
   //
   // Output only.
   google.protobuf.Timestamp finalize_time = 6
@@ -118,8 +129,26 @@ message Invocation {
   // all other cases.
   repeated string included_invocations = 8;
 
+  // Whether this invocation is a root of the invocation graph for export purposes.
+  //
+  // To help downstream systems (like LUCI Analysis) make sense of test results,
+  // and gather overall context for a result, ResultDB data export is centered
+  // around export roots.
+  // The export roots typically represent a top-level buildbucket build, like a
+  // postsubmit build or presubmit tryjob. Test results are only exported if
+  // they are included from a root. They may be exported multiple times of they
+  // are included by multiple roots (e.g. in case of re-used test results).
+  // Re-used test results can be identified because the parent invocation of the
+  // test result will be the same even though the export root will be different.
+  //
+  // N.B. Export roots do not affect legacy BigQuery exports configured by the
+  // BigQueryExports field.
+  bool is_export_root = 21;
+
   // bigquery_exports indicates what BigQuery table(s) that results in this
   // invocation should export to.
+  //
+  // Legacy feature: Prefer to use LUCI Analysis exports instead.
   repeated BigQueryExport bigquery_exports = 9;
 
   // LUCI identity (e.g. "user:<email>") who created the invocation.
@@ -147,7 +176,7 @@ message Invocation {
   // Arbitrary JSON object that contains structured, domain-specific properties
   // of the invocation.
   //
-  // The serialized size must be <= 4096 bytes.
+  // The serialized size must be <= 16 KB.
   google.protobuf.Struct properties = 14;
 
   // The code sources which were tested by this invocation.
@@ -157,14 +186,33 @@ message Invocation {
   // The sources specified here applies only to:
   // - the test results directly contained in this invocation, and
   // - any directly included invocations which set their source_spec.inherit to
-  // true.
+  //   true.
   //
   // Clients should be careful to ensure the uploaded source spec is consistent
   // between included invocations that upload the same test variants.
   // Verdicts are associated with the sources of *any* of their constituent
   // test results, so if there is inconsistency between included invocations,
   // the position of the verdict becomes not well defined.
+  //
+  // Note that the sources specified here are shared with included invocations
+  // regardless of the realm of those included invocations.
+  //
+  // Attempting to update this field to a value other than its current value
+  // after is_source_spec_final is set will generate an error.
   SourceSpec source_spec = 15;
+
+  // Whether the code sources specified by source_spec are final (immutable).
+  //
+  // To facilitate rapid export of invocations inheriting sources from this
+  // invocation, this property should be set to true as soon as possible
+  // after the invocation's sources are fixed. In most cases, clients
+  // will want to set this property to true at the same time as they set
+  // source_spec.
+  //
+  // This field is client owned. Consistent with https://google.aip.dev/129,
+  // it will not be forced to true when the invocation starts to finalize, even
+  // if its effective value will always be true at that point.
+  bool is_source_spec_final = 20;
 
   // A user-specified baseline identifier that maps to a set of test variants.
   // Often, this will be the source that generated the test result, such as the
@@ -183,6 +231,16 @@ message Invocation {
   // The caller must have `resultdb.baselines.put` to be able to
   // modify this field.
   string baseline_id = 16;
+
+  // Instruction for the invocation.
+  // Only applicable to test results directly contained in this invocation,
+  // i.e. it does not apply to test results in included invocations.
+  Instruction test_instruction = 17;
+
+  // Instructions for the steps.
+  // Only useful for a build-level invocation.
+  // It contains all instructions of steps which belong to the build.
+  Instructions step_instructions = 18;
 }
 
 // BigQueryExport indicates that results in this invocation should be exported
