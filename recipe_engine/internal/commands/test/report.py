@@ -457,7 +457,7 @@ def _collect_duration_result(
     duration = datetime.timedelta(
         milliseconds=test_result.duration.ToMilliseconds()
     )
-    if duration >= datetime.timedelta(seconds=10):
+    if duration >= datetime.timedelta(seconds=5):
       result[name] = duration
 
   return result
