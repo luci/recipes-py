@@ -364,6 +364,8 @@ class Path:
         *[p for p in itertools.chain(self.pieces, pieces) if p])
 
   def join(self, *pieces: str) -> Path:
+    from recipe_engine.internal.warn import record
+    record.GLOBAL.record_execution_warning('PATH_JOIN_DEPRECATED')
     return self.joinpath(*pieces)
 
   def is_parent_of(self, other: Path) -> bool:
