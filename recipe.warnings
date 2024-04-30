@@ -114,6 +114,20 @@ warning {
 }
 
 warning {
+  name: "PATH_IS_PARENT_OF_DEPRECATED"
+  description: "config_types.Path.is_parent_of() is deprecated."
+  description: ""
+  description: "Use 'x in path.parents' instead."
+  description: ""
+  description: "This is part of a larger effort to replace config_types.Path"
+  description: "with pathlib.Path. Since the interfaces of the two classes are"
+  description: "not identical, config_types.Path is being made to look more"
+  description: "like pathlib.Path."
+  deadline: "2024-06-01"
+  google_issue { id: 329113288 }
+}
+
+warning {
   name: "PYTHON2_DEPRECATED"
   description: "Python2 is deprecated."
   description: ""

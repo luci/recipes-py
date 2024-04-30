@@ -368,6 +368,8 @@ class Path:
 
   def is_parent_of(self, other: Path) -> bool:
     """True if |other| is in a subdirectory of this Path."""
+    from recipe_engine.internal.warn import record
+    record.GLOBAL.record_execution_warning('PATH_IS_PARENT_OF_DEPRECATED')
     spath = self
     opath = other
     # If they are BOTH CheckoutBasePath we can use them directly, otherwise we
