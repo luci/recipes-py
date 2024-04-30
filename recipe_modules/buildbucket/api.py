@@ -351,6 +351,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       fields=DEFAULT_FIELDS,
       can_outlive_parent=None,
       as_shadow_if_parent_is_led=False,
+      led_inherit_parent=False,
   ):
     """Creates a new `ScheduleBuildRequest` message with reasonable defaults.
 
@@ -445,6 +446,9 @@ class BuildbucketApi(recipe_api.RecipeApi):
       * if the child build is using a different bucket from the parent, then
         that bucket will be used in both normal and led flow to create the
         child.
+    * led_inherit_parent: flag for if the child led build should inherit
+      agent_input and exe from its parent led build. It only takes effect if
+      the parent is a led build and `as_shadow_if_parent_is_led` is True.
     """
 
     def as_msg(value, typ):
@@ -552,7 +556,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
         # The child build inherits its parent's bucket,
         # convert it to the shadowed_bucket.
         req.builder.bucket = self.shadowed_bucket
-      copy_msg(dict(), req.shadow_input)
+      copy_msg(dict(inherit_from_parent=led_inherit_parent), req.shadow_input)
 
     return req
 
@@ -700,8 +704,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
     ```
 
     Underneath it calls `bb batch` to perform the search, which should have a
-    better performance and memory usage than `bb ls`: since we could get the batch
-    response as a whole and take advantage of the proto recipe for direct
+    better performance and memory usage than `bb ls`: since we could get the
+    batch response as a whole and take advantage of the proto recipe for direct
     encoding/decoding. And the limit could be used as the page_size in
     SearchBuildsRequest.
     """
@@ -805,8 +809,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     step_test_data = None
     if test_data:
-      step_test_data = lambda: self.m.buildbucket.test_api.simulated_search_result_data(
-          test_data)
+      step_test_data = (lambda: self.m.buildbucket.test_api.
+                        simulated_search_result_data(test_data))
 
     step_result = self._run_bb(
         subcommand='ls',

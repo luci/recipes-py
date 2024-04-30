@@ -27,12 +27,14 @@ def RunSteps(api):
   tags = api.properties.get('tags')
   as_shadow = api.properties.get('as_shadow', False)
   child_bucket = api.properties.get('child_bucket', api.buildbucket.INHERIT)
+  led_inherit_parent = api.properties.get('led_inherit_parent', False)
   # This is needed to provide coverage for the tags() method in api.py.
   tags = api.buildbucket.tags(**tags) if tags else tags
   req = api.buildbucket.schedule_request(
       bucket=child_bucket,
       tags=tags,
       as_shadow_if_parent_is_led=as_shadow,
+      led_inherit_parent=led_inherit_parent,
       **req_body)
 
   include_sub_invs = api.properties.get('include_sub_invs', False)
@@ -222,6 +224,9 @@ def GenTests(api):
          api.properties(child_bucket='original') +
          api.post_process(post_process.LogContains, 'buildbucket.schedule',
                           'request', ['original']) +
+         api.post_process(post_process.LogDoesNotContain,
+                          'buildbucket.schedule', 'request',
+                          ['inheritFromParent']) +
          api.post_process(post_process.DropExpectation))
 
   yield (test(
@@ -232,4 +237,13 @@ def GenTests(api):
                           'request', ['special']) +
          api.post_process(post_process.LogDoesNotContain,
                           'buildbucket.schedule', 'request', ['original']) +
+         api.post_process(post_process.DropExpectation))
+
+  yield (test(
+      test_name="schedule shadow child for led inherit parent",
+      shadowed_bucket='original') +
+         api.properties(as_shadow=True, led_inherit_parent=True) +
+         api.properties(child_bucket='original') + api.post_process(
+             post_process.LogContains, 'buildbucket.schedule', 'request',
+             ['original', '"inheritFromParent": true']) +
          api.post_process(post_process.DropExpectation))
