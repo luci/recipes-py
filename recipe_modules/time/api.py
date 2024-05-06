@@ -215,16 +215,20 @@ class TimeApi(recipe_api.RecipeApi):
       random_func = self.m.random.random
     return seconds * (1 + random_func() * (jitter_amount * 2) - jitter_amount)
 
-  def timeout(self, seconds: float):
-    """Provides a context that times out after the given number of seconds.
+  def timeout(self, seconds: float | int | datetime.timedelta = None):
+    """Provides a context that times out after the given time.
 
     Usage:
-    with api.time.timeout(45):
+    with api.time.timeout(datetime.timedelta(minutes=5)):
       # your steps
 
     Look at the "deadline" section of https://chromium.googlesource.com/infra/luci/luci-py/+/HEAD/client/LUCI_CONTEXT.md
     to see how this works.
     """
+
+    if isinstance(seconds, datetime.timedelta):
+      seconds = seconds.total_seconds()
+
     if seconds < 0:
       raise recipe_api.StepFailure('`seconds` cannot be negative')
     current_time = self.time()

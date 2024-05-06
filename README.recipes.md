@@ -4621,12 +4621,12 @@ Args:
 
 Returns current timestamp as a float number of seconds since epoch.
 
-&mdash; **def [timeout](/recipe_modules/time/api.py#218)(self, seconds: float):**
+&mdash; **def [timeout](/recipe_modules/time/api.py#218)(self, seconds: ((float | int) | datetime.timedelta)=None):**
 
-Provides a context that times out after the given number of seconds.
+Provides a context that times out after the given time.
 
 Usage:
-with api.time.timeout(45):
+with api.time.timeout(datetime.timedelta(minutes=5)):
   # your steps
 
 Look at the "deadline" section of https://chromium.googlesource.com/infra/luci/luci-py/+/HEAD/client/LUCI_CONTEXT.md

@@ -24,6 +24,19 @@
     "name": "timeout step"
   },
   {
+    "cmd": [
+      "echo",
+      "\"hello\""
+    ],
+    "luci_context": {
+      "deadline": {
+        "grace_period": 30.0,
+        "soft_deadline": 1337000127.5
+      }
+    },
+    "name": "timeout step (2)"
+  },
+  {
     "name": "$result"
   }
 ]

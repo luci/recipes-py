@@ -76,6 +76,9 @@ def RunSteps(api):
   with api.time.timeout(seconds=100.5):
     api.step('timeout step', ['echo', '"hello"'])
 
+  with api.time.timeout(datetime.timedelta(minutes=2)):
+    api.step('timeout step', ['echo', '"hello"'])
+
   with api.assertions.assertRaises(StepFailure):
     api.time.timeout(seconds=-1.)
 
