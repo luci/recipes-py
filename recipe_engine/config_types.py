@@ -304,9 +304,11 @@ class Path:
       return self
     return self.base.resolve().joinpath(*self.pieces)
 
-  def __eq__(self, other: Path | str) -> bool:
+  def __eq__(self, other: object) -> bool:
     if isinstance(other, str):
       return str(self) == other
+    if not isinstance(other, Path):
+      return NotImplemented
 
     # first, if both bases are checkout, just compare pieces, since we know that
     # CheckoutBasePath, once assigned, will always match.
@@ -323,9 +325,11 @@ class Path:
                        '(CheckoutBasePath vs ResolvedBasePath) '
                        'before checkout_dir is set') from ex
 
-  def __lt__(self, other: Path | str) -> bool:
+  def __lt__(self, other: object) -> bool:
     if isinstance(other, str):
       return str(self) < other
+    if not isinstance(other, Path):
+      return NotImplemented
 
     # first, if both bases are checkout, just compare pieces, since we know that
     # CheckoutBasePath, once assigned, will always match.

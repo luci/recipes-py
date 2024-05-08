@@ -63,6 +63,10 @@ class TestPathsPreGlobalInit(unittest.TestCase):
     # CheckoutBasePath.
     self.assertEqual(a, b)
 
+  def test_path_equality_non_path_type(self):
+    a = Path(ResolvedBasePath('[CACHE]'), 'hello', 'world')
+    self.assertNotEqual(a, None)
+
   def test_path_inequality_resolved(self):
     p = Path(ResolvedBasePath('[CACHE]'))
     self.assertLess(p / 'a', p / 'b')
@@ -74,6 +78,11 @@ class TestPathsPreGlobalInit(unittest.TestCase):
     self.assertLess(p / 'a', p / 'b')
     self.assertLess(p / 'a', p / 'b' / 'c')
     self.assertLess(p / 'a' / 'c', p / 'b' / 'c')
+
+  def test_path_inequality_non_path_type(self):
+    a = Path(ResolvedBasePath('[CACHE]'), 'hello', 'world')
+    with self.assertRaisesRegex(TypeError, "'<' not supported"):
+      a < None
 
   def test_path_inequality_mismatch(self):
     a = Path(CheckoutBasePath())
