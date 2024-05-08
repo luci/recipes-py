@@ -596,5 +596,41 @@ class TestLog(PostProcessUnitTest):
                    "unexpected: 'foo'")
 
 
+class TestProperty(PostProcessUnitTest):
+  """Test case for checks that relate to output properties."""
+
+  @property
+  def step_dict(self) -> dict[str, dict[str, Any]]:
+    """Return a standard step dict for this test case."""
+    return collections.OrderedDict([('step', {
+        'name': 'step',
+        'output_properties': {'x': 'foo', 'y': list('bar')}
+    })])
+
+  def test_property_equals_pass(self):
+    self.expect_pass(post_process.PropertyEquals, 'x', 'foo')
+
+  def test_property_equals_fail(self):
+    failures = self.expect_fails(1, post_process.PropertyEquals, 'x', 'foobar')
+    self.assertHas(failures[0],
+                   'check((build_properties[key] == value))')
+
+  def test_properties_contain_pass(self):
+    self.expect_pass(post_process.PropertiesContain, 'x')
+
+  def test_properties_contain_fail(self):
+    failures = self.expect_fails(1, post_process.PropertiesContain, 'q')
+    self.assertHas(failures[0],
+                   'check((key in build_properties))')
+
+  def test_properties_do_not_contain_pass(self):
+    self.expect_pass(post_process.PropertiesDoNotContain, 'q')
+
+  def test_properties_do_not_contain_fail(self):
+    failures = self.expect_fails(1, post_process.PropertiesDoNotContain, 'x')
+    self.assertHas(failures[0],
+                   'check((key not in build_properties))')
+
+
 if __name__ == '__main__':
   test_env.main()
