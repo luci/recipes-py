@@ -6,11 +6,17 @@
 RecipeTestApi.post_process method in GenTests.
 """
 
-from past.builtins import basestring
-
-import re
+from __future__ import annotations
 
 from collections import defaultdict, OrderedDict, namedtuple
+import re
+from typing import Callable, Mapping, TYPE_CHECKING
+
+from past.builtins import basestring
+
+if TYPE_CHECKING:
+  from recipe_engine import post_process_inputs
+  from recipe_engine.internal.test import magic_check_fn
 
 
 _filterRegexEntry = namedtuple('_filterRegexEntry', 'at_most at_least fields')
@@ -568,6 +574,56 @@ def PropertyEquals(check, step_odict, key, value):
   # https://crbug.com/946015.
   if check(key in build_properties):
     check(build_properties[key] == value)
+
+
+def PropertyMatchesRE(
+    check: magic_check_fn.Checker,
+    step_odict: Mapping[str, post_process_inputs.Step],
+    key: str,
+    pattern: str | re.Pattern,
+):
+  """Assert that a recipe's output property `key` value matches `pattern`.
+
+  Args:
+    key - The key to look for in output properties.
+    pattern - The pattern for comparison.
+
+  Usage:
+    yield api.test(
+        ...,
+        api.post_process(PropertyMatchesRE, 'key', r'.*value.*'),
+    )
+  """
+  build_properties = GetBuildProperties(step_odict)
+
+  if check(key in build_properties):
+    if check(isinstance(build_properties[key], str)):
+      check(re.search(pattern, build_properties[key]))
+
+
+def PropertyMatchesCallable(
+    check: magic_check_fn.Checker,
+    step_odict: Mapping[str, post_process_inputs.Step],
+    key: str,
+    matcher: Callable[[Any], bool],
+):
+  """Assert that a recipe's output property `key` meets conditions of `matcher`.
+
+  Args:
+    key - The key to look for in output properties.
+    matcher - A callable that evaluates the property.
+
+  Usage:
+    yield api.test(
+        ...,
+        api.post_process(PropertyMatchesCallable, 'key', lamdda x: 'foo' in x),
+    )
+  """
+  build_properties = GetBuildProperties(step_odict)
+
+  if check(key in build_properties):
+    check(matcher(build_properties[key]))
+
 
 def PropertiesContain(check, step_odict, key):
   """Assert that a recipe's output properties contain `key`.

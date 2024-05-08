@@ -612,24 +612,44 @@ class TestProperty(PostProcessUnitTest):
 
   def test_property_equals_fail(self):
     failures = self.expect_fails(1, post_process.PropertyEquals, 'x', 'foobar')
+    self.assertHas(failures[0], 'check((build_properties[key] == value))')
+
+  def test_property_matches_regex_pass(self):
+    self.expect_pass(post_process.PropertyMatchesRE, 'x', r'^fo+$')
+
+  def test_property_matches_regex_not_str(self):
+    failures = self.expect_fails(1, post_process.PropertyMatchesRE, 'y',
+                                 r'^fo+$')
+    self.assertHas(failures[0], 'check(isinstance(build_properties[key], str))')
+
+  def test_property_matches_regex_fail(self):
+    failures = self.expect_fails(1, post_process.PropertyMatchesRE, 'x',
+                                 r'^fooo+$')
     self.assertHas(failures[0],
-                   'check((build_properties[key] == value))')
+                   'check(re.search(pattern, build_properties[key]))')
+
+  def test_property_matches_callable_pass(self):
+    self.expect_pass(post_process.PropertyMatchesCallable, 'y',
+                     lambda i: ''.join(i) == 'bar')
+
+  def test_property_matches_callable_fail(self):
+    failures = self.expect_fails(1, post_process.PropertyMatchesCallable, 'y',
+                                 lambda i: ''.join(i) == 'foo')
+    self.assertHas(failures[0], 'check(matcher(build_properties[key]))')
 
   def test_properties_contain_pass(self):
     self.expect_pass(post_process.PropertiesContain, 'x')
 
   def test_properties_contain_fail(self):
     failures = self.expect_fails(1, post_process.PropertiesContain, 'q')
-    self.assertHas(failures[0],
-                   'check((key in build_properties))')
+    self.assertHas(failures[0], 'check((key in build_properties))')
 
   def test_properties_do_not_contain_pass(self):
     self.expect_pass(post_process.PropertiesDoNotContain, 'q')
 
   def test_properties_do_not_contain_fail(self):
     failures = self.expect_fails(1, post_process.PropertiesDoNotContain, 'x')
-    self.assertHas(failures[0],
-                   'check((key not in build_properties))')
+    self.assertHas(failures[0], 'check((key not in build_properties))')
 
 
 if __name__ == '__main__':
