@@ -7,7 +7,7 @@ warning {
   description: "api.buildbucket.builder_id is deprecated."
   description: ""
   description: "Use api.buildbucket.build.builder instead."
-  deadline: "2024-06-01"
+  deadline: "2024-06-03"
   google_issue { id: 332774996 }
 }
 
@@ -16,7 +16,7 @@ warning {
   description: "api.buildbucket.build_id is deprecated."
   description: ""
   description: "Use api.buildbucket.build.id instead."
-  deadline: "2024-06-01"
+  deadline: "2024-06-03"
   google_issue { id: 332774996 }
 }
 
@@ -25,7 +25,7 @@ warning {
   description: "api.buildbucket.build_input is deprecated."
   description: ""
   description: "Use api.buildbucket.build.input instead."
-  deadline: "2024-06-01"
+  deadline: "2024-06-03"
   google_issue { id: 332774996 }
 }
 
@@ -61,7 +61,7 @@ warning {
   description: "If you pick this third path, please consider making this global"
   description: "only assignable once, and making it a hard error (e.g. raise"
   description: "ValueError) if this is accessed prior to assignment."
-  deadline: "2024-06-15"
+  deadline: "2024-06-24"
   google_issue { id: 329113288 }
 }
 
@@ -79,7 +79,7 @@ warning {
   description: "api.json.read() is deprecated."
   description: ""
   description: "Use api.file.read_json() instead."
-  deadline: "2024-06-01"
+  deadline: "2024-06-06"
   google_issue { id: 332774562 }
 }
 
@@ -91,7 +91,7 @@ warning {
   description: "consider passing specific arguments to scripts that need them."
   description: "Doing this makes it much easier to debug and diagnose which"
   description: "scripts use which properties."
-  deadline: "2024-06-01"
+  deadline: "2024-06-07"
   google_issue { id: 332776173 }
 }
 
@@ -123,7 +123,7 @@ warning {
   description: "with pathlib.Path. Since the interfaces of the two classes are"
   description: "not identical, config_types.Path is being made to look more"
   description: "like pathlib.Path."
-  deadline: "2024-06-01"
+  deadline: "2024-06-10"
   google_issue { id: 329113288 }
 }
 
@@ -138,7 +138,7 @@ warning {
   description: "with pathlib.Path. Since the interfaces of the two classes are"
   description: "not identical, config_types.Path is being made to look more"
   description: "like pathlib.Path."
-  deadline: "2024-06-01"
+  deadline: "2024-06-10"
   google_issue { id: 329113288 }
 }
 
@@ -155,7 +155,7 @@ warning {
   description: "api.buildbucket.set_buildbucket_host() is deprecated."
   description: ""
   description: "Use api.buildbucket.host = '...' instead."
-  deadline: "2024-06-01"
+  deadline: "2024-06-13"
   google_issue { id: 332776145 }
 }
 
@@ -172,6 +172,6 @@ warning {
   description: ""
   description: "  with api.step.nest('foo') as pres:"
   description: "    pres.step_summary_text = '...'"
-  deadline: "2024-06-01"
+  deadline: "2024-06-17"
   google_issue { id: 332773904 }
 }
