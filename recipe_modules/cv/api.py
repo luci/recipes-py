@@ -124,8 +124,11 @@ class CVApi(recipe_api.RecipeApi):
     msg.CopyFrom(self._input)
     msg.top_level = False
     return {
+        '$recipe_engine/cv':
+            json_pb.MessageToDict(msg, preserving_proto_field_name=True),
+        # TODO(crbug.com/333811087) Remove the cq recipe module props.
         '$recipe_engine/cq':
-            json_pb.MessageToDict(msg, preserving_proto_field_name=True)
+            json_pb.MessageToDict(msg, preserving_proto_field_name=True),
     }
 
   @property

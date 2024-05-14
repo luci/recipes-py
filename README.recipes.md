@@ -1564,16 +1564,16 @@ This module provides recipe API of LUCI CV, a pre-commit testing system.
 
 Returns whether CQ is active for this build.
 
-&mdash; **def [allow\_reuse\_for](/recipe_modules/cv/api.py#246)(self, \*modes):**
+&mdash; **def [allow\_reuse\_for](/recipe_modules/cv/api.py#249)(self, \*modes):**
 
 Instructs CQ that this build can be reused in a future Run if
 and only if its mode is in the provided modes.
 
 Overwrites all previously set values.
 
-&emsp; **@property**<br>&mdash; **def [allowed\_reuse\_modes](/recipe_modules/cv/api.py#242)(self):**
+&emsp; **@property**<br>&mdash; **def [allowed\_reuse\_modes](/recipe_modules/cv/api.py#245)(self):**
 
-&emsp; **@property**<br>&mdash; **def [attempt\_key](/recipe_modules/cv/api.py#131)(self):**
+&emsp; **@property**<br>&mdash; **def [attempt\_key](/recipe_modules/cv/api.py#134)(self):**
 
 Returns a string that is unique for a CV attempt.
 
@@ -1583,7 +1583,7 @@ attempt.
 Raises:
   CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [cl\_group\_key](/recipe_modules/cv/api.py#143)(self):**
+&emsp; **@property**<br>&mdash; **def [cl\_group\_key](/recipe_modules/cv/api.py#146)(self):**
 
 Returns a string that is unique for a current set of Gerrit change
 patchsets (or, equivalently, buildsets).
@@ -1594,7 +1594,7 @@ same set of changes at a different time.
 Raises:
   CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [cl\_owners](/recipe_modules/cv/api.py#169)(self):**
+&emsp; **@property**<br>&mdash; **def [cl\_owners](/recipe_modules/cv/api.py#172)(self):**
 
 Returns string(s) of the owner's email addresses used for the patchset.
 
@@ -1604,9 +1604,9 @@ will be returned.
 Raises:
   CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [do\_not\_retry\_build](/recipe_modules/cv/api.py#224)(self):**
+&emsp; **@property**<br>&mdash; **def [do\_not\_retry\_build](/recipe_modules/cv/api.py#227)(self):**
 
-&emsp; **@property**<br>&mdash; **def [equivalent\_cl\_group\_key](/recipe_modules/cv/api.py#156)(self):**
+&emsp; **@property**<br>&mdash; **def [equivalent\_cl\_group\_key](/recipe_modules/cv/api.py#159)(self):**
 
 Returns a string that is unique for a given set of Gerrit changes
 disregarding trivial patchset differences.
@@ -1637,7 +1637,7 @@ applied or submitted.
 Raises:
   CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [owner\_is\_googler](/recipe_modules/cv/api.py#264)(self):**
+&emsp; **@property**<br>&mdash; **def [owner\_is\_googler](/recipe_modules/cv/api.py#267)(self):**
 
 Returns whether the Run/Attempt owner is a Googler.
 
@@ -1668,7 +1668,7 @@ api.cv.record_triggered_builds(*child_builds)
 The contents of returned dict should be treated as opaque blob,
 it may be changed without notice.
 
-&mdash; **def [record\_triggered\_build\_ids](/recipe_modules/cv/api.py#208)(self, \*build_ids):**
+&mdash; **def [record\_triggered\_build\_ids](/recipe_modules/cv/api.py#211)(self, \*build_ids):**
 
 Adds the given Buildbucket build IDs to the list of triggered build IDs.
 
@@ -1677,7 +1677,7 @@ Must be called after some step.
 Args:
   * build_ids (list of int or string): Buildbucket build IDs.
 
-&mdash; **def [record\_triggered\_builds](/recipe_modules/cv/api.py#192)(self, \*builds):**
+&mdash; **def [record\_triggered\_builds](/recipe_modules/cv/api.py#195)(self, \*builds):**
 
 Adds IDs of given Buildbucket builds to the list of triggered build IDs.
 
@@ -1699,7 +1699,7 @@ Returns the mode(str) of the CQ Run that triggers this build.
 Raises:
   CQInactive if CQ is not active for this build.
 
-&mdash; **def [set\_do\_not\_retry\_build](/recipe_modules/cv/api.py#228)(self):**
+&mdash; **def [set\_do\_not\_retry\_build](/recipe_modules/cv/api.py#231)(self):**
 
 Instruct CQ to not retry this build.
 
@@ -1715,7 +1715,7 @@ Can be spoofed. *DO NOT USE FOR SECURITY CHECKS.*
 Raises:
   CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [triggered\_build\_ids](/recipe_modules/cv/api.py#187)(self):**
+&emsp; **@property**<br>&mdash; **def [triggered\_build\_ids](/recipe_modules/cv/api.py#190)(self):**
 
 Returns recorded Buildbucket build IDs as a list of integers.
 ### *recipe_modules* / [defer](/recipe_modules/defer)
