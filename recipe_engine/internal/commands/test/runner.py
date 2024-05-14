@@ -600,7 +600,7 @@ class RunnerThread(gevent.Greenlet):
         # Assuming ANY of those things are still a thing at that point :).
         sys.executable,
         '-u',
-        os.path.join(engine_path, 'main.py'),
+        os.path.join(engine_path, 'recipe_engine', 'main.py'),
         '--package',
         os.path.join(recipe_deps.main_repo.path, RECIPES_CFG_LOCATION_REL),
         '--proto-override',

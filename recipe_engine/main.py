@@ -55,11 +55,27 @@ def _hack_lookup_codecs():
 _hack_lookup_codecs()
 del _hack_lookup_codecs
 
+# Hack 4; Drop sys.path[0], which is ROOT_DIR/recipe_engine. This prevents user
+# recipe code from doing things like `import util` and getting
+# recipe_engine/util.py.
+#
+# This is needed because main.py lives inside of the recipe_engine folder; when
+# recipes.py invokes this as `python path/to/recipe_engine/main.py`, python puts
+# this directory at the front of sys.path.
+#
+# A better long-term fix would be to move main.py up one level so that the
+# automatically-prepended directory would remove the need for this and the
+# ROOT_DIR bit below.
+sys.path = sys.path[1:]
+
 try:
   import urllib3.contrib.pyopenssl
   urllib3.contrib.pyopenssl.inject_into_urllib3()
 except ImportError:
   pass
+
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT_DIR)
 
 from recipe_engine.internal import debugger
 

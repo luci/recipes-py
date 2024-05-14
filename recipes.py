@@ -252,7 +252,7 @@ def main():
       '-vpython-spec',
       os.path.join(engine_path, spec),
       '-u',
-      os.path.join(engine_path, 'main.py'),
+      os.path.join(engine_path, 'recipe_engine', 'main.py'),
   ] + args)
 
   if IS_WIN:
