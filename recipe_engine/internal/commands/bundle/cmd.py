@@ -153,13 +153,11 @@ def export_protos(recipe_deps, destination):
 
 # pylint: disable=line-too-long
 TEMPLATE3_SH = """#!/usr/bin/env bash
-export PYTHONPATH=${BASH_SOURCE[0]%/*}/recipe_engine
-exec vpython3 -u ${BASH_SOURCE[0]%/*}/recipe_engine/recipe_engine/main.py
+exec vpython3 -u ${BASH_SOURCE[0]%/*}/recipe_engine/main.py
 """.strip()
 
 TEMPLATE3_BAT = """@echo off
-set PYTHONPATH="%~dp0\\recipe_engine"
-call vpython3.bat -u "%~dp0\\recipe_engine\\recipe_engine\\main.py"
+call vpython3.bat -u "%~dp0\\recipe_engine\\main.py"
 """.strip()
 # pylint: enable=line-too-long
 

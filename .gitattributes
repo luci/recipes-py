@@ -1,4 +1,5 @@
 /recipes.py         recipes
+/main.py            recipes
 /recipe_engine/**   recipes
 /**/unittests/**   -recipes
 .vpython3           recipes
