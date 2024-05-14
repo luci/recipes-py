@@ -173,6 +173,21 @@ class BuildbucketApi(recipe_api.RecipeApi):
       raise self.m.step.InfraFailure('The build has no bucket')
     return '%s:%s' % (self._build.builder.project, self._build.builder.bucket)
 
+  def builder_url(
+      self,
+      *,
+      host: str | None = None,
+      project: str | None = None,
+      bucket: str | None = None,
+      builder: str | None = None,
+  ) -> str:
+    """Returns url to a builder. Defaults to current builder."""
+    host = host or self.host
+    project = project or self.build.builder.project
+    bucket = bucket or self.build.builder.bucket
+    builder = builder or self.build.builder.builder
+    return f'https://{host}/builder/{project}/{bucket}/{builder}'
+
   def build_url(self, host=None, build_id=None):
     """Returns url to a build. Defaults to current build."""
     return 'https://%s/build/%s' % (

@@ -48,10 +48,7 @@ class LedApi(recipe_api.RecipeApi):
     def build_url(self):
       if not self.build_id:  # pragma: no cover
         return None
-      milo_host = "ci.chromium.org"
-      if '-dev' in self.buildbucket_hostname:  # pragma: no cover
-        milo_host = "luci-milo-dev.appspot.com"
-      return 'https://%s/b/%s' % (milo_host, self.build_id)
+      return 'https://%s/build/%s' % (self.buildbucket_hostname, self.build_id)
 
   class LedResult:
     """Holds the result of a led operation. Can be chained using |then|."""

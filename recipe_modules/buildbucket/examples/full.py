@@ -102,8 +102,13 @@ def RunSteps(api):
   api.buildbucket.set_output_gitiles_commit(c)
   assert api.buildbucket.build.output.gitiles_commit == c
 
-  api.step('build_url', cmd=None).presentation.step_text = (
-      api.buildbucket.build_url())
+  api.step(
+      'builder_url', cmd=None).presentation.step_text = (
+          api.buildbucket.builder_url())
+
+  api.step(
+      'build_url', cmd=None).presentation.step_text = (
+          api.buildbucket.build_url())
 
   api.step('builder_cache', cmd=None).presentation.step_text = (
       str(api.buildbucket.builder_cache_path)

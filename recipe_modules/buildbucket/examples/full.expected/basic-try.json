@@ -275,6 +275,13 @@
   },
   {
     "cmd": [],
+    "name": "builder_url",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@https://cr-buildbucket-test.appspot.com/builder/proj/try/try-builder@@@"
+    ]
+  },
+  {
+    "cmd": [],
     "name": "build_url",
     "~followup_annotations": [
       "@@@STEP_TEXT@https://cr-buildbucket-test.appspot.com/build/8945511751514863184@@@"
