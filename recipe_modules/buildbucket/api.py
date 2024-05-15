@@ -616,9 +616,14 @@ class BuildbucketApi(recipe_api.RecipeApi):
     if not schedule_build_requests:
       return []
 
+    if not include_sub_invs:
+      for r in schedule_build_requests:
+        # Make the schedule build's invocation its own export root, as
+        # it is not being included in the invocation for this build.
+        r.resultdb.is_export_root_override = True
+
     batch_req = builds_service_pb2.BatchRequest(
-        requests=[dict(schedule_build=r) for r in schedule_build_requests]
-    )
+        requests=[dict(schedule_build=r) for r in schedule_build_requests])
 
     test_res = builds_service_pb2.BatchResponse()
     for r in schedule_build_requests:

@@ -198,6 +198,12 @@ def GenTests(api):
   )
 
   yield (test(
+      test_name="if not sub invocation then marked export root in ResultDB") +
+         api.properties(include_sub_invs=False) +
+         api.post_process(post_process.LogContains, 'buildbucket.schedule',
+                          'request', ['"isExportRootOverride": true']))
+
+  yield (test(
       test_name="schedule regular child for led by default",
       shadowed_bucket='original') + api.properties() +
          api.post_process(post_process.LogDoesNotContain,
