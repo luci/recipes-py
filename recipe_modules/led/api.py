@@ -420,7 +420,7 @@ class LedApi(recipe_api.RecipeApi):
           kwargs['step_test_data'] = lambda: self.test_api.m.json.output_stream(
               {
                   'buildbucket': {
-                      'host_name': 'buildbucket@appspot.com',
+                      'host_name': 'buildbucket.appspot.com',
                       'build_id': build_id,
                   }
               })
