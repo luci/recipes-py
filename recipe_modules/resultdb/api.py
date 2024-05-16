@@ -515,7 +515,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
                         parent_inv='',
                         step_name=None,
                         source_spec=None,
-                        baseline_id=None):
+                        baseline_id=None,
+                        instructions=None):
     """Makes a call to the UpdateInvocation API to update the invocation
 
     Args:
@@ -526,18 +527,25 @@ class ResultDBAPI(recipe_api.RecipeApi):
       baseline_id (str): Baseline identifier for this invocation, usually of
         the format {buildbucket bucket}:{buildbucket builder name}. For example,
         'try:linux-rel'. Baselines are used to detect new tests in invocations.
+      instructions (luci.resultdb.v1.Instructions): The reproduction
+        instructions for this invocation. It may contain step instructions and
+        test result instructions. The test instructions may contain instructions
+        for test results in this invocation and in included invocations.
     """
     field_mask_paths = []
     if source_spec:
       field_mask_paths.append('source_spec')
     if baseline_id:
       field_mask_paths.append('baseline_id')
+    if instructions:
+      field_mask_paths.append('instructions')
 
     req = recorder.UpdateInvocationRequest(
         invocation=invocation_pb2.Invocation(
             name=parent_inv or self.current_invocation,
             source_spec=source_spec,
-            baseline_id=baseline_id),
+            baseline_id=baseline_id,
+            instructions=instructions),
         update_mask=field_mask_pb2.FieldMask(paths=field_mask_paths),
     )
     self._rpc(

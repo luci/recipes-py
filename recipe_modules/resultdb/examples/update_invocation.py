@@ -8,6 +8,7 @@ from recipe_engine.recipe_api import Property
 
 from PB.go.chromium.org.luci.resultdb.proto.v1 import invocation as invocation_pb
 from PB.go.chromium.org.luci.resultdb.proto.v1 import common as common_pb
+from PB.go.chromium.org.luci.resultdb.proto.v1 import instruction as instruction_pb
 
 DEPS = [
     'resultdb',
@@ -33,7 +34,52 @@ def RunSteps(api, invocation, gitiles_commit, gerrit_changes):
               gitiles_commit=gitiles_commit,
               changelists=gerrit_changes,
           )),
-      baseline_id='try:linux-rel')
+      baseline_id='try:linux-rel',
+      instructions=instruction_pb.Instructions(
+          instructions=[
+              instruction_pb.Instruction(
+                  id="step_instruction",
+                  type=instruction_pb.InstructionType.STEP_INSTRUCTION,
+                  targeted_instructions=[
+                      instruction_pb.TargetedInstruction(
+                          targets=[
+                              instruction_pb.InstructionTarget.LOCAL,
+                          ],
+                          content="this is step content",
+                          dependencies=[
+                              instruction_pb.InstructionDependency(
+                                  invocation_id="another_inv_id",
+                                  instruction_id="another_instruction",
+                              )
+                          ],
+                      ),
+                  ],
+              ),
+              instruction_pb.Instruction(
+                  id="test_instruction",
+                  type=instruction_pb.InstructionType.TEST_RESULT_INSTRUCTION,
+                  targeted_instructions=[
+                      instruction_pb.TargetedInstruction(
+                          targets=[
+                              instruction_pb.InstructionTarget.LOCAL,
+                          ],
+                          content="this is test content",
+                          dependencies=[
+                              instruction_pb.InstructionDependency(
+                                  invocation_id="another_inv_id",
+                                  instruction_id="another_instruction",
+                              )
+                          ],
+                      ),
+                  ],
+                  instruction_filter=instruction_pb.InstructionFilter(
+                      invocation_ids=instruction_pb
+                      .InstructionFilterByInvocationID(
+                          invocation_ids=["swarming-task-1"],
+                          recursive=False,
+                      ),),
+              ),
+          ],))
 
 
 def GenTests(api):

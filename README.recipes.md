@@ -3559,7 +3559,7 @@ A module for interacting with ResultDB.
 
 &mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#50)(self):**
 
-&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#762)(self, column_keys=(), grouping_keys=('status',)):**
+&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#770)(self, column_keys=(), grouping_keys=('status',)):**
 
 Specifies how the test results should be rendered.
 
@@ -3774,7 +3774,7 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
-&mdash; **def [update\_invocation](/recipe_modules/resultdb/api.py#514)(self, parent_inv='', step_name=None, source_spec=None, baseline_id=None):**
+&mdash; **def [update\_invocation](/recipe_modules/resultdb/api.py#514)(self, parent_inv='', step_name=None, source_spec=None, baseline_id=None, instructions=None):**
 
 Makes a call to the UpdateInvocation API to update the invocation
 
@@ -3786,6 +3786,10 @@ Args:
   baseline_id (str): Baseline identifier for this invocation, usually of
     the format {buildbucket bucket}:{buildbucket builder name}. For example,
     'try:linux-rel'. Baselines are used to detect new tests in invocations.
+  instructions (luci.resultdb.v1.Instructions): The reproduction
+    instructions for this invocation. It may contain step instructions and
+    test result instructions. The test instructions may contain instructions
+    for test results in this invocation and in included invocations.
 
 &mdash; **def [upload\_invocation\_artifacts](/recipe_modules/resultdb/api.py#297)(self, artifacts, parent_inv=None, step_name=None):**
 
@@ -3807,7 +3811,7 @@ Returns:
   A BatchCreateArtifactsResponse proto message listing the artifacts that
   were created.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#613)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file='', inherit_sources=False, sources='', sources_file='', baseline_id=''):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#621)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file='', inherit_sources=False, sources='', sources_file='', baseline_id=''):**
 
 Wraps the command with ResultSink.
 
@@ -5896,10 +5900,10 @@ Test to cover legacy aspects of PathTestApi.
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/test_presentation_default.py#9)(api):**
 ### *recipes* / [resultdb:examples/update\_invocation](/recipe_modules/resultdb/examples/update_invocation.py)
 
-[DEPS](/recipe_modules/resultdb/examples/update_invocation.py#12): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/update_invocation.py#13): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/update_invocation.py#24)(api, invocation, gitiles_commit, gerrit_changes):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/update_invocation.py#25)(api, invocation, gitiles_commit, gerrit_changes):**
 ### *recipes* / [resultdb:examples/upload\_invocation\_artifacts](/recipe_modules/resultdb/examples/upload_invocation_artifacts.py)
 
 [DEPS](/recipe_modules/resultdb/examples/upload_invocation_artifacts.py#10): [resultdb](#recipe_modules-resultdb)
