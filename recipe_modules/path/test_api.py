@@ -73,6 +73,9 @@ class PathTestApi(recipe_test_api.RecipeTestApi):
       * checkout_dir (but use of checkout_dir is generally discouraged - just
       pass the Paths around instead of using this global variable).
     """
+
+    self.m.warning.issue('PATH_GETITEM_DEPRECATED')
+
     match name:
       case 'cache':
         return self.cache_dir

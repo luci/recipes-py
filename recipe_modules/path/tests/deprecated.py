@@ -25,6 +25,8 @@ def RunSteps(api):
 
 
 def GenTests(api):
+
+  @recipe_api.ignore_warnings('recipe_engine/PATH_GETITEM_DEPRECATED')
   def equals(name):
     return api.post_process(post_process.StepTextEquals, name, api.path[name])
 
