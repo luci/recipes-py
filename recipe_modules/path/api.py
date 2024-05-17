@@ -593,22 +593,6 @@ class PathApi(recipe_api.RecipeApi):
       return bool(self._checkout_dir)
     return pathname in self.NamedBasePaths
 
-  @recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED')
-  def __setitem__(self, pathname: CheckoutPathNameType,
-                  path: config_types.Path) -> None:
-    """Sets the checkout path.
-
-    DEPRECATED - Assign directly to `api.path.checkout_dir` instead.
-
-    The only valid value of `pathname` is the literal string CheckoutPathName.
-    """
-    if pathname != self.CheckoutPathName:
-      raise ValueError(
-          f'The only valid dynamic path value is `{self.CheckoutPathName}`. '
-          f'Got {pathname!r}. Use `api.path.checkout_dir = <path>` instead.'
-      )
-    self.checkout_dir = path
-
   @property
   def checkout_dir(self) -> config_types.Path|None:
     """Returns the Path which was assigned to this checkout_dir property."""
@@ -649,58 +633,6 @@ class PathApi(recipe_api.RecipeApi):
     if self._test_data.enabled:
       assert isinstance(self._path_mod, fake_path)
       self._path_mod._mock_path_exists.mark_checkout_dir_set()
-
-  # We can always ignore checkout_dir warnings from this method because all
-  # uses of this method produce PATH_GETITEM_DEPRECATED warnings. When those
-  # get fixed, callers will be accessing api.path.checkout_dir directly and
-  # will then hit the CHECKOUT_DIR_DEPRECATED warning.
-  @recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED')
-  def get(self, name: NamedBasePathsType, *,
-          skip_deprecation=False) -> config_types.Path:
-    """Gets the base path named `name`. See module docstring for more info.
-
-    DEPRECATED: Use the following @properties on this module instead:
-      * start_dir
-      * tmp_base_dir
-      * cache_dir
-      * cleanup_dir
-      * home_dir
-      * checkout_dir (but use of checkout_dir is generally discouraged - just
-      pass the Paths around instead of using this global variable).
-    """
-    if not skip_deprecation:
-      self.m.warning.issue('PATH_GETITEM_DEPRECATED')
-
-    match name:
-      case 'cache':
-        return self.cache_dir
-      case 'checkout':
-        return self.checkout_dir
-      case 'cleanup':
-        return self.cleanup_dir
-      case 'home':
-        return self.home_dir
-      case 'start_dir':
-        return self.start_dir
-      case 'tmp_base':
-        return self.tmp_base_dir
-
-    raise ValueError(f'Unable to api.path.get({name!r}) - unknown base path.')
-
-  def __getitem__(self, name: NamedBasePathsType) -> config_types.Path:
-    """Gets the base path named `name`. See module docstring for more info.
-
-    DEPRECATED: Use the following @properties on this module instead:
-      * start_dir
-      * tmp_base_dir
-      * cache_dir
-      * cleanup_dir
-      * home_dir
-      * checkout_dir (but use of checkout_dir is generally discouraged - just
-      pass the Paths around instead of using this global variable).
-    """
-    self.m.warning.issue('PATH_GETITEM_DEPRECATED')
-    return self.get(name, skip_deprecation=True)
 
   @property
   def start_dir(self) -> config_types.Path:

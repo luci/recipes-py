@@ -89,32 +89,6 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
     self._test_cmd(deps, ['run', 'foo'],
         asserts=assert_syntaxerror, retcode=1)
 
-  def test_missing_path(self):
-    deps = self.FakeRecipeDeps()
-    with deps.main_repo.write_recipe('missing_path') as recipe:
-      recipe.DEPS.append('recipe_engine/path')
-      recipe.RunSteps.write('''
-        api.step('do it, joe', ['echo', 'JOE'],
-                 cwd=api.path['bippityboppityboo'])
-      ''')
-      recipe.GenTests.write('''
-        yield api.test('basic')
-      ''')
-
-    def _assert_error(output):
-      self.assertRegex(output, "bippityboppityboo.*unknown base path")
-
-    self._test_cmd(
-        deps, ['test', 'train', '--filter', 'missing_path'],
-        asserts=_assert_error,
-        retcode=1)
-    self._test_cmd(
-        deps, ['test', 'run', '--filter', 'missing_path'],
-        asserts=_assert_error,
-        retcode=1)
-    self._test_cmd(
-        deps, ['run', 'missing_path'], asserts=_assert_error, retcode=1)
-
   def test_engine_failure(self):
     deps = self.FakeRecipeDeps()
     with deps.main_repo.write_recipe('print_step_error') as recipe:

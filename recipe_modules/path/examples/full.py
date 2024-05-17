@@ -17,7 +17,6 @@ from builtins import range, zip
 
 @recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED',
                             'recipe_engine/PATH_EQ_DEPRECATED',
-                            'recipe_engine/PATH_GETITEM_DEPRECATED',
                             'recipe_engine/PATH_IS_PARENT_OF_DEPRECATED')
 def RunSteps(api):
   api.step('step1', ['/bin/echo', str(api.path.tmp_base_dir / 'foo')])
@@ -36,14 +35,6 @@ def RunSteps(api):
   assert 'checkout' not in api.path
   api.path.checkout_dir = api.path.tmp_base_dir / 'checkout'
   assert 'checkout' in api.path
-
-  # Test missing/default value.
-  assert 'nonexistent' not in api.path
-  try:
-    api.path.get('nonexistent')
-    assert False, "We should never get here"  # pragma: no cover
-  except ValueError as ex:
-    assert 'unknown base path' in str(ex), str(ex)
 
   # Global dynamic paths (see config.py example for declaration):
   dynamic_path = api.path.checkout_dir / 'jerky'

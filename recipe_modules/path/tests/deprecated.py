@@ -10,19 +10,10 @@ DEPS = [
 ]
 
 
-@recipe_api.ignore_warnings(
-    'recipe_engine/CHECKOUT_DIR_DEPRECATED',
-    'recipe_engine/PATH_GETITEM_DEPRECATED',
-)
+@recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED')
 def RunSteps(api):
-  assert api.path['cache'] == api.path.cache_dir
-  assert api.path['cleanup'] == api.path.cleanup_dir
-  assert api.path['home'] == api.path.home_dir
-  assert api.path['start_dir'] == api.path.start_dir
-  assert api.path['tmp_base'] == api.path.tmp_base_dir
-
-  api.path['checkout'] = api.path.start_dir
-  assert api.path['checkout'] == api.path.checkout_dir
+  api.path.checkout_dir = api.path.start_dir
+  assert api.path.checkout_dir == api.path.start_dir
 
   api.step.empty('cache', step_text=str(api.path.cache_dir))
   api.step.empty('cleanup', step_text=str(api.path.cleanup_dir))

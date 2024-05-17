@@ -24,12 +24,6 @@ def RunSteps(api):
   except ValueError as ex:
     assert 'cannot be rooted in checkout_dir' in str(ex), str(ex)
 
-  try:
-    api.path['something'] = api.path.start_dir / 'coolstuff'
-    assert False, 'able to assign path to non-dynamic path?'  # pragma: no cover
-  except ValueError as ex:
-    assert 'The only valid dynamic path value is `checkout`' in str(ex), str(ex)
-
   # OK!
   api.path.checkout_dir = api.path.start_dir / 'coolstuff'
 
