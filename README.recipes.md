@@ -4070,7 +4070,7 @@ Usage:
 StepWarning is a subclass of StepFailure, and will translate to a yellow
 build.
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#625)(self, name: str, cmd: (list[(((int | str) | Placeholder) | Path)] | None), ok_ret: ((Sequence[int] | Literal['any']) | Literal['all'])=(0,), infra_step: bool=False, raise_on_failure: bool=True, wrapper: Sequence[(((int | str) | Placeholder) | Path)]=(), timeout: ((int | timedelta) | None)=None, stdout: (Placeholder | None)=None, stderr: (Placeholder | None)=None, stdin: (Placeholder | None)=None, step_test_data: (Callable[([], StepTestData)] | None)=None, cost: _ResourceCost=_ResourceCost()):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#635)(self, name: str, cmd: (list[(((int | str) | Placeholder) | Path)] | None), ok_ret: ((Sequence[int] | Literal['any']) | Literal['all'])=(0,), infra_step: bool=False, raise_on_failure: bool=True, wrapper: Sequence[(((int | str) | Placeholder) | Path)]=(), timeout: ((int | timedelta) | None)=None, stdout: (Placeholder | None)=None, stderr: (Placeholder | None)=None, stdin: (Placeholder | None)=None, step_test_data: (Callable[([], StepTestData)] | None)=None, cost: _ResourceCost=_ResourceCost()):**
 
 Runs a step (subprocess).
 
@@ -4169,7 +4169,7 @@ context (if any).
 
 No-op if there's no currently active non-nest step.
 
-&mdash; **def [empty](/recipe_modules/step/api.py#323)(self, name, status='SUCCESS', step_text=None, log_text=None, log_name='stdout', raise_on_failure=True):**
+&mdash; **def [empty](/recipe_modules/step/api.py#333)(self, name, status='SUCCESS', step_text=None, log_text=None, log_name='stdout', raise_on_failure=True):**
 
 Runs an "empty" step (one without any command).
 
@@ -4191,7 +4191,7 @@ Args:
 
 Returns step_data.StepData.
 
-&mdash; **def [funcall](/recipe_modules/step/api.py#737)(self, name, func, \*args, \*\*kwargs):**
+&mdash; **def [funcall](/recipe_modules/step/api.py#747)(self, name, func, \*args, \*\*kwargs):**
 
 Call a function and store the results and exception in a step.
 
@@ -4212,8 +4212,9 @@ step_links, etc.) or set the step's status. If you do not set the status,
 it will be calculated from the status' of all the steps run within this one
 according to the `status` algorithm selected.
   1. If there's an active exception when leaving the `with` statement, the
-     status will be one of FAILURE, WARNING or EXCEPTION (depending on the
-     type of exception).
+     status will be one of FAILURE, WARNING, EXCEPTION, or CANCELED
+     (depending on the type of exception and whether it resulted from the
+     child step being canceled).
   2. Otherwise:
      1. If the status algorithm is 'worst', it will assume the status of the
         worst child step. This is useful for when your nest step runs e.g.
@@ -4267,7 +4268,7 @@ Args:
 Yields a StepPresentation for this dummy step, which you may update as you
 please.
 
-&mdash; **def [raise\_on\_failure](/recipe_modules/step/api.py#466)(self, result, status_override=None):**
+&mdash; **def [raise\_on\_failure](/recipe_modules/step/api.py#476)(self, result, status_override=None):**
 
 Raise an appropriate exception if a step is not successful.
 
@@ -4289,7 +4290,7 @@ Raises:
   * StepWarning if the step's status is WARNING
   * InfraFailure if the step's status is EXCEPTION or CANCELED
 
-&mdash; **def [sub\_build](/recipe_modules/step/api.py#497)(self, name: str, cmd: (((int | str) | Placeholder) | Path), build: build_pb2.Build, raise_on_failure: bool=True, output_path: ((str | Path) | None)=None, legacy_global_namespace=False, timeout=None, step_test_data=None, cost=_ResourceCost()):**
+&mdash; **def [sub\_build](/recipe_modules/step/api.py#507)(self, name: str, cmd: (((int | str) | Placeholder) | Path), build: build_pb2.Build, raise_on_failure: bool=True, output_path: ((str | Path) | None)=None, legacy_global_namespace=False, timeout=None, step_test_data=None, cost=_ResourceCost()):**
 
 Launch a sub-build by invoking a LUCI executable. All steps in the
 sub-build will appear as child steps of this step (Merge Step).

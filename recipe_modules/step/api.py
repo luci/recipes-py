@@ -240,8 +240,9 @@ class StepApi(recipe_api.RecipeApi):
     it will be calculated from the status' of all the steps run within this one
     according to the `status` algorithm selected.
       1. If there's an active exception when leaving the `with` statement, the
-         status will be one of FAILURE, WARNING or EXCEPTION (depending on the
-         type of exception).
+         status will be one of FAILURE, WARNING, EXCEPTION, or CANCELED
+         (depending on the type of exception and whether it resulted from the
+         child step being canceled).
       2. Otherwise:
          1. If the status algorithm is 'worst', it will assume the status of the
             worst child step. This is useful for when your nest step runs e.g.
@@ -298,16 +299,25 @@ class StepApi(recipe_api.RecipeApi):
       try:
         yield self._StepPresentationProxy(self.m, pres)
       except:
-        caught_exc = sys.exc_info()[0]
+        caught_exc = sys.exc_info()[1]
         raise
       finally:
         # If they didn't set a presentation.status, calculate one.
         if pres.status is None:
           if caught_exc:
-            pres.status = {
-              recipe_api.StepFailure: self.FAILURE,
-              recipe_api.StepWarning: self.WARNING,
-            }.get(caught_exc, self.EXCEPTION)
+            if not isinstance(caught_exc, recipe_api.StepFailure):
+              pres.status = self.EXCEPTION
+            elif isinstance(caught_exc, recipe_api.StepWarning):
+              pres.status = self.WARNING
+            elif caught_exc.was_cancelled:
+              # Both `InfraFailures` and non-infra `StepFailures` can have
+              # `was_cancelled=True`, hence this check needs to come before the
+              # `InfraFailure` check.
+              pres.status = 'CANCELED'
+            elif isinstance(caught_exc, recipe_api.InfraFailure):
+              pres.status = self.EXCEPTION
+            else:
+              pres.status = self.FAILURE
           elif children_presentations:
             if status == 'worst':
               worst = self.SUCCESS

@@ -102,6 +102,25 @@
   },
   {
     "cmd": [],
+    "name": "infra failure status",
+    "~followup_annotations": [
+      "@@@STEP_EXCEPTION@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "echo",
+      "fail"
+    ],
+    "infra_step": true,
+    "name": "infra failure status.I infra-fail",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_EXCEPTION@@@"
+    ]
+  },
+  {
+    "cmd": [],
     "name": "timeout status",
     "~followup_annotations": [
       "@@@STEP_FAILURE@@@"
@@ -117,6 +136,41 @@
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "warning status",
+    "~followup_annotations": [
+      "@@@STEP_WARNINGS@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "echo",
+      "the chillest"
+    ],
+    "name": "warning status.I am fine",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "canceled status",
+    "~followup_annotations": [
+      "@@@STEP_EXCEPTION@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "echo",
+      "cancel"
+    ],
+    "name": "canceled status.I get canceled",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_EXCEPTION@@@"
     ]
   },
   {
