@@ -3519,7 +3519,7 @@ A module for interacting with ResultDB.
 
 &mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#50)(self):**
 
-&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#770)(self, column_keys=(), grouping_keys=('status',)):**
+&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#784)(self, column_keys=(), grouping_keys=('status',)):**
 
 Specifies how the test results should be rendered.
 
@@ -3720,6 +3720,16 @@ Returns:
 
   For value format, see [`QueryTestVariantsResponse` message]
   (http://shortn/_hv3edsXidO)
+
+&mdash; **def [unwrap](/recipe_modules/resultdb/api.py#770)(self, cmd: list[str]):**
+
+Reverses the wrap command
+
+If the command is wrapped with the rdb command and delimiter this will
+return the unwrapped command.
+
+Args:
+  cmd (list of strings): the command line to attempt to unwrap
 
 &mdash; **def [update\_included\_invocations](/recipe_modules/resultdb/api.py#66)(self, add_invocations=None, remove_invocations=None, step_name=None):**
 

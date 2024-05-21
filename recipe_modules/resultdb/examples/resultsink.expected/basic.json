@@ -385,6 +385,43 @@
     "name": "test with baseline_id"
   },
   {
+    "cmd": [
+      "unwrapped"
+    ],
+    "luci_context": {
+      "realm": {
+        "name": "proj:realm"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "unwrapped command"
+  },
+  {
+    "cmd": [
+      "not",
+      "wrapped"
+    ],
+    "luci_context": {
+      "realm": {
+        "name": "proj:realm"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "unwrapped command that was not wrapped"
+  },
+  {
     "name": "$result"
   }
 ]

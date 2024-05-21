@@ -767,6 +767,20 @@ class ResultDBAPI(recipe_api.RecipeApi):
     ret += ['--'] + list(cmd)
     return ret
 
+  def unwrap(self, cmd: list[str]) -> list[str]:
+    """Reverses the wrap command
+
+    If the command is wrapped with the rdb command and delimiter this will
+    return the unwrapped command.
+
+    Args:
+      cmd (list of strings): the command line to attempt to unwrap
+    """
+
+    if len(cmd) < 1 or cmd[0] != 'rdb' or '--' not in cmd:
+      return cmd
+    return cmd[cmd.index('--') + 1:]
+
   def config_test_presentation(self, column_keys=(), grouping_keys=('status',)):
     """Specifies how the test results should be rendered.
 

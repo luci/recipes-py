@@ -110,6 +110,12 @@ def RunSteps(api):
           baseline_id='try:linux-rel',
       ))
 
+  api.step('unwrapped command',
+           api.resultdb.unwrap(['rdb', 'stream', '--', 'unwrapped']))
+
+  api.step('unwrapped command that was not wrapped',
+           api.resultdb.unwrap(['not', 'wrapped']))
+
 
 def GenTests(api):
   yield api.test(
