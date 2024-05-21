@@ -76,7 +76,8 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       execution_timeout=None,
       start_time=None,
       on_backend=False,
-      backend_target="swarming://chromium-swarm"):
+      backend_target="swarming://chromium-swarm",
+      ancestor_ids=None):
     """Returns a typical buildbucket CI build scheduled by luci-scheduler."""
     git_repo = git_repo or self._default_git_repo(project)
     gitiles_host, gitiles_project = util.parse_gitiles_repo_url(git_repo)
@@ -117,7 +118,9 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
                 id=revision,
             ),
             experiments=experiments),
-        infra=infra)
+        infra=infra,
+        ancestor_ids=ancestor_ids,
+    )
 
     if execution_timeout:
       build.execution_timeout.FromSeconds(execution_timeout)
@@ -169,7 +172,8 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       start_time=None,
       properties=None,
       on_backend=False,
-      backend_target="swarming://chromium-swarm"):
+      backend_target="swarming://chromium-swarm",
+      ancestor_ids=None):
     """Emulate typical buildbucket try build scheduled by CQ.
 
     Usage:
@@ -237,6 +241,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
             experiments=experiments,
             properties=properties),
         infra=infra,
+        ancestor_ids=ancestor_ids,
     )
 
     if execution_timeout:
