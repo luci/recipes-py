@@ -132,8 +132,7 @@ def DoesNotRun(check, step_odict, *steps):
   """Asserts that the given steps don't run.
 
   Usage:
-    yield TEST + api.post_process(DoesNotRun, 'step_a', 'step_b')
-
+    yield api.test(..., api.post_process(DoesNotRun, 'step_a', 'step_b'))
   """
   banSet = set(steps)
   for step_name in step_odict:
@@ -147,7 +146,9 @@ def DoesNotRunRE(check, step_odict, *step_regexes):
     step_regexes (str) - The step name regexes to ban.
 
   Usage:
-    yield TEST + api.post_process(DoesNotRunRE, '.*with_patch.*', '.*compile.*')
+    yield api.test(
+        ...,
+        api.post_process(DoesNotRunRE, '.*with_patch.*', '.*compile.*'))
 
   """
   step_regexes = [re.compile(r) for r in step_regexes]
@@ -163,7 +164,7 @@ def MustRun(check, step_odict, *steps):
     steps (str) - The steps that must have run.
 
   Usage:
-    yield TEST + api.post_process(MustRun, 'step_a', 'step_b')
+    yield api.test(..., api.post_process(MustRun, 'step_a', 'step_b'))
   """
   for step_name in steps:
     check(step_name in step_odict)
@@ -181,7 +182,8 @@ def MustRunRE(check, step_odict, step_regex, at_least=1, at_most=None):
       more than this is a CHECK failure.
 
   Usage:
-    yield TEST + api.post_process(MustRunRE, r'.*with_patch.*', at_most=2)
+    yield api.test(...,
+                   api.post_process(MustRunRE, r'.*with_patch.*', at_most=2))
   """
   step_regex = re.compile(step_regex)
   matches = 0
@@ -200,10 +202,7 @@ def StepSuccess(check, step_odict, step):
     step (str) - The step to check for success.
 
   Usage:
-    yield (
-        TEST
-        + api.post_process(StepSuccess, 'step-name')
-    )
+    yield api.test(..., api.post_process(StepSuccess, 'step-name'))
   """
   check(step_odict[step].status == 'SUCCESS')
 
@@ -215,10 +214,7 @@ def StepWarning(check, step_odict, step):
     step (str) - The step to check for warning.
 
   Usage:
-    yield (
-        TEST
-        + api.post_process(StepWarning, 'step-name')
-    )
+    yield api.test(..., api.post_process(StepWarning, 'step-name'))
   """
   check(step_odict[step].status == 'WARNING')
 
@@ -230,10 +226,7 @@ def StepFailure(check, step_odict, step):
     step (str) - The step to check for a failure.
 
   Usage:
-    yield (
-        TEST
-        + api.post_process(StepFailure, 'step-name')
-    )
+    yield api.test(..., api.post_process(StepFailure, 'step-name'))
   """
   check(step_odict[step].status == 'FAILURE')
 
@@ -245,10 +238,7 @@ def StepException(check, step_odict, step):
     step (str) - The step to check for an exception.
 
   Usage:
-    yield (
-        TEST
-        + api.post_process(StepException, 'step-name')
-    )
+    yield api.test(..., api.post_process(StepException, 'step-name'))
   """
   check(step_odict[step].status == 'EXCEPTION')
 
@@ -260,10 +250,7 @@ def StepCanceled(check, step_odict, step):
     step (str) - The step to check for an exception.
 
   Usage:
-    yield (
-        TEST
-        + api.post_process(StepCanceled, 'step-name')
-    )
+    yield api.test(..., api.post_process(StepCanceled, 'step-name'))
   """
   check(step_odict[step].status == 'CANCELED')
 
@@ -282,11 +269,9 @@ def StepCommandEquals(check, step_odict, step, expected_cmd):
       command.
 
   Usage:
-    yield (
-        TEST
-        + api.post_process(StepCommandEquals, 'step-name',
-                           ['my', 'command'])
-    )
+    yield api.test(...,
+                   api.post_process(StepCommandEquals, 'step-name',
+                                    ['my', 'command']))
   """
   assert all((isinstance(elem, str) for elem in expected_cmd)), \
       'expected_cmd must be an iterable of strings'
@@ -305,11 +290,9 @@ def StepCommandRE(check, step_odict, step, expected_patterns):
       not match the entire argument string, it is a CHECK failure.
 
   Usage:
-    yield (
-        TEST
-        + api.post_process(StepCommandRE, 'step-name',
-                           ['my', 'command', '.*'])
-    )
+    yield api.test(...,
+                   api.post_process(StepCommandRE, 'step-name',
+                                    ['my', 'command', '.*']))
   """
   cmd = step_odict[step].cmd
   for expected, actual in zip(expected_patterns, cmd):
@@ -329,6 +312,9 @@ def StepCommandContains(check, step_odict, step, argument_sequence):
       will be matched using the search method. The check will pass if the step's
       command contains a subsequence where the elements are matched by the
       corresponding elements of argument_sequence.
+
+  Usage:
+    yield api.test(..., StepCommandContains, 'step-name', ['--force'])
   """
   check('command line for step %s contained %s' % (step, argument_sequence),
         argument_sequence in step_odict[step].cmd)
@@ -344,6 +330,9 @@ def StepCommandDoesNotContain(check, step_odict, step, argument_sequence):
       should not exist. The check will fail if the step's command contains a
       subsequence where the elements are matched by the corresponding elements
       of argument_sequence.
+
+  Usage:
+    yield api.test(..., StepCommandDoesNotContain, 'step-name', ['--force'])
   """
   check(
       'command line for step %s does not contain  %s' %
@@ -357,7 +346,7 @@ def StepCommandEmpty(check, step_odict, step):
     step (str) - The name of the step to check the command of.
 
   Usage:
-    yield (TEST + api.post_process(StepCommandEmpty, 'step-name')
+    yield api.test(..., api.post_process(StepCommandEmpty, 'step-name'))
   """
   check(not step_odict[step].cmd)
 
@@ -370,7 +359,8 @@ def StepTextEquals(check, step_odict, step, expected):
     expected (str) - The expected value of the step_text.
 
   Usage:
-    yield TEST + api.post_process(StepTextEquals, 'step-name', 'expected-text')
+    yield api.test(
+        ..., api.post_process(StepTextEquals, 'step-name', 'expected-text'))
   """
   check(step_odict[step].step_text == expected)
 
@@ -384,11 +374,9 @@ def StepTextContains(check, step_odict, step, expected_substrs):
         contain.
 
   Usage:
-    yield (
-        TEST
-        + api.post_process(StepTextContains, 'step-name',
-                           ['substr1', 'substr2'])
-    )
+    yield api.test(...,
+                   api.post_process(StepTextContains, 'step-name',
+                                    ['substr1', 'substr2']))
   """
   assert not isinstance(expected_substrs, basestring), \
       'expected_substrs must be an iterable of strings and must not be a string'
@@ -404,8 +392,8 @@ def StepSummaryEquals(check, step_odict, step, expected):
     expected (str) - The expected value of the step_text
 
   Usage:
-    yield TEST + \
-        api.post_process(StepSummaryEquals, 'step-name', 'expected-text')
+    yield api.test(
+        ..., api.post_process(StepSummaryEquals, 'step-name', 'expected-text'))
   """
   check(step_odict[step].step_summary_text == expected)
 
@@ -418,6 +406,10 @@ def StepEnvContains(check, step_odict, step, env_dict):
     env_dict (Dict[str, str]) - The expected key/value pairs to look for. The
       check will pass if the steps's env contains all of the given key/value
       pairs.
+
+  Usage:
+    yield api.test(
+        ..., api.post_process(StepEnvContains, 'step-name', {'FOO': 'BAR'}))
   """
   for k, v in env_dict.items():
     check('env for step %s contained %s: %s' % (step, k, v),
@@ -432,6 +424,11 @@ def StepEnvDoesNotContain(check, step_odict, step, env_dict):
     env_dict (Dict[str, str]) - The key/value pairs that should not be present.
       The check will pass if the step's env does not contain any of the given
       key/value pairs.
+
+  Usage:
+    yield api.test(
+        ...,
+        api.post_process(StepEnvDoesNotContain, 'step-name', {'FOO': 'BAR'}))
   """
   for k, v in env_dict.items():
     check('env for step %s did not contain %s: %s' % (step, k, v),
@@ -445,6 +442,10 @@ def StepEnvEquals(check, step_odict, step, env_dict):
     step (str) - The name of the step to check the env of.
     env_dict (Dict[str, str]) - The expected key/value pairs to look for. The
       check will pass if the given env_dict is equal to the step's env.
+
+  Usage:
+    yield api.test(
+        ..., api.post_process(StepEnvEquals, 'step-name', {'FOO': 'BAR'}))
   """
   check('env for step %s equaled %s' % (step, env_dict),
         step_odict[step].env == env_dict)
@@ -458,10 +459,7 @@ def HasLog(check, step_odict, step, log):
     log (str) - The name of the log to check.
 
   Usage:
-    yield (
-        TEST
-         + api.post_process(HasLog, 'step-name', 'log-name')
-    )
+    yield api.test(... api.post_process(HasLog, 'step-name', 'log-name'))
   """
   check(log in step_odict[step].logs)
 
@@ -474,10 +472,8 @@ def DoesNotHaveLog(check, step_odict, step, log):
     log (str) - The name of the log to check.
 
   Usage:
-    yield (
-        TEST
-         + api.post_process(DoesNotHaveLog, 'step-name', 'log-name')
-    )
+    yield api.test(...,
+                   api.post_process(DoesNotHaveLog, 'step-name', 'log-name'))
   """
   check(log not in step_odict[step].logs)
 
@@ -491,10 +487,9 @@ def LogEquals(check, step_odict, step, log, expected):
     expected (str) - The expected value of the log.
 
   Usage:
-    yield (
-        TEST
-         + api.post_process(LogEquals, 'step-name', 'log-name', 'expected-text')
-    )
+    yield api.test(
+        ...,
+        api.post_process(LogEquals, 'step-name', 'log-name', 'expected-text'))
   """
   check(step_odict[step].logs[log] == expected)
 
@@ -509,11 +504,9 @@ def LogContains(check, step_odict, step, log, expected_substrs):
         contain.
 
   Usage:
-    yield (
-        TEST
-         + api.post_process(LogEquals, 'step-name', 'log-name',
-                            ['substr1', 'substr2'])
-    )
+    yield api.test(...,
+                   api.post_process(LogEquals, 'step-name', 'log-name',
+                                    ['substr1', 'substr2']))
   """
   assert not isinstance(expected_substrs, basestring), \
       'expected_substrs must be an iterable of strings and must not be a string'
@@ -531,11 +524,10 @@ def LogDoesNotContain(check, step_odict, step, log, unexpected_substrs):
         not contain.
 
   Usage:
-    yield (
-        TEST
-         + api.post_process(LogDoesNotContain, 'step-name', 'log-name',
-                            ['substr1', 'substr2'])
-    )
+    yield api.test(
+        ...,
+        api.post_process(LogDoesNotContain, 'step-name', 'log-name',
+                         ['substr1', 'substr2']))
   """
   assert not isinstance(unexpected_substrs, basestring), (
       'unexpected_substrs must be an iterable of strings and must not be a '
@@ -563,10 +555,7 @@ def PropertyEquals(check, step_odict, key, value):
     value (jsonish) - The value to look for in output properties.
 
   Usage:
-    yield (
-        TEST
-         + api.post_process(PropertyEquals, 'do_not_retry', True)
-    )
+    yield api.test(..., api.post_process(PropertyEquals, 'do_not_retry', True))
   """
   build_properties = GetBuildProperties(step_odict)
 
@@ -632,10 +621,7 @@ def PropertiesContain(check, step_odict, key):
     key (str) - The key to check for.
 
   Usage:
-    yield (
-        TEST
-         + api.post_process(PropertiesContain, 'property_key')
-    )
+    yield api.test(..., api.post_process(PropertiesContain, 'property_key'))
   """
   build_properties = GetBuildProperties(step_odict)
   check(key in build_properties)
@@ -647,10 +633,8 @@ def PropertiesDoNotContain(check, step_odict, key):
     key (str) - The key to check for.
 
   Usage:
-    yield (
-        TEST
-         + api.post_process(PropertiesDoNotContain, 'property_key')
-    )
+    yield api.test(...,
+                   api.post_process(PropertiesDoNotContain, 'property_key'))
   """
   build_properties = GetBuildProperties(step_odict)
   check(key not in build_properties)
@@ -733,6 +717,9 @@ def SummaryMarkdown(check, step_odict, summary):
 
   Args:
     summary (str): the string to match.
+
+  Usage:
+    yield api.test(..., api.post_process(SummaryMarkdown, 'summary'))
   """
   result = step_odict['$result']
   actual_summary = result.get('failure').get('humanReason') if (
@@ -750,6 +737,9 @@ def SummaryMarkdownRE(check, step_odict, summary_regex):
 
   Args:
     summary_regex (str): the regular expression to match.
+
+  Usage:
+    yield api.test(..., api.post_process(SummaryMarkdownRE, 'summary: .*'))
   """
   result = step_odict['$result']
   actual_summary = result.get('failure').get('humanReason') if (
@@ -766,8 +756,10 @@ def DropExpectation(_check, _step_odict):
   """Using this post-process hook will drop the expectations for this test
   completely.
 
-  Usage:
-    yield TEST + api.post_process(DropExpectation)
+  This must be the last post-process check—there will be no steps left for other
+  post-process checks to evaluate.
 
+  Usage:
+    yield api.test(..., api.post_process(DropExpectation))
   """
   return {}
