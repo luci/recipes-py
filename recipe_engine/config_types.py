@@ -345,24 +345,29 @@ class Path:
                        '(CheckoutBasePath vs ResolvedBasePath) '
                        'before checkout_dir is set') from ex
 
-  def __truediv__(self, piece: str) -> Path:
+  def __truediv__(self, piece: str | Path) -> Path:
     """Adds the shorthand '/'-operator for .joinpath(), returning a new path."""
     return self.joinpath(piece)
 
-  def joinpath(self, *pieces: str) -> Path:
+  def joinpath(self, *pieces: str | Path) -> Path:
     """Appends *pieces to this Path, returning a new Path.
 
     Empty values ('', None) in pieces will be omitted.
 
     Args:
-      pieces: The components of the path relative to base. The normal Path
-      __init__ rules for '..' and '.' apply.
+      pieces: The components of the path relative to base. If a component is a
+        Path instance, the returned path will be equivalent to calling joinpath
+        on that component with any following components. The normal Path
+        __init__ rules for '..' and '.' apply.
 
     Returns:
       The new Path.
     """
     if not pieces:
       return self
+    for (i, p) in enumerate(pieces):
+      if isinstance(p, Path):
+        return p.joinpath(*pieces[i+1:])
     return Path(
         self.base,
         *[p for p in itertools.chain(self.pieces, pieces) if p])

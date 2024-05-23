@@ -129,6 +129,11 @@ class TestPathsPreGlobalInit(unittest.TestCase):
     reference_path = base_path.joinpath('foo').joinpath('bar')
     self.assertEqual(base_path / 'foo' / 'bar', reference_path)
 
+  def test_path_joinpath_with_path(self):
+    start_path = Path(ResolvedBasePath('[START_DIR]'))
+    cache_path = Path(ResolvedBasePath('[CACHE]'))
+    self.assertEqual(start_path.joinpath('foo', cache_path, 'bar'), cache_path / 'bar')
+
   def test_is_parent_of(self):
     p = Path(ResolvedBasePath('[CACHE]'))
 
