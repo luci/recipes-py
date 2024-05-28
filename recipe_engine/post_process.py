@@ -128,6 +128,22 @@ class Filter:
     return ret
 
 
+def attach_recipe_warning(*warnings: str):
+  """Attach a recipe warning to a post-process check.
+
+  Don't immediately issue a recipe warning but simply attach it to the
+  post-process check. When the check is added to a test with
+  TestData.post_process() in recipe_test_api.py the warning will be issued.
+  """
+  def decorator(func):
+    if not hasattr(func, 'recipe_warnings'):
+      func.recipe_warnings = []
+    func.recipe_warnings.extend(warnings)
+    return func
+
+  return decorator
+
+
 def DoesNotRun(check, step_odict, *steps):
   """Asserts that the given steps don't run.
 
@@ -640,6 +656,7 @@ def PropertiesDoNotContain(check, step_odict, key):
   check(key not in build_properties)
 
 
+@attach_recipe_warning('POST_PROCESS_STATUSCODEIN_DEPRECATED')
 def StatusCodeIn(check, step_odict, *codes):
   """Assert that recipe result status code is within expected codes.
 
@@ -689,6 +706,7 @@ def StatusException(check, step_odict):
         'failure' not in result['failure'])
 
 
+@attach_recipe_warning('POST_PROCESS_RESULTREASON_DEPRECATED')
 def ResultReason(check, step_odict, reason):
   """Assert that recipe result reason matches given reason.
 
@@ -701,6 +719,7 @@ def ResultReason(check, step_odict, reason):
   SummaryMarkdown(check, step_odict, reason)
 
 
+@attach_recipe_warning('POST_PROCESS_RESULTREASON_DEPRECATED')
 def ResultReasonRE(check, step_odict, reason_regex):
   """Assert that recipe result reason contains given regex.
 

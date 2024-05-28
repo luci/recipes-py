@@ -143,6 +143,24 @@ warning {
 }
 
 warning {
+  name: "POST_PROCESS_STATUSCODEIN_DEPRECATED"
+  description: "StatusCodeIn is deprecated."
+  description: ""
+  description: "Use StatusSuccess or StatusFailure instead."
+  deadline: "2024-08-01"
+  google_issue { id: 339834630 }
+}
+
+warning {
+  name: "POST_PROCESS_RESULTREASON_DEPRECATED"
+  description: "ResultReason and ResultReasonRE are deprecated."
+  description: ""
+  description: "Use StatusAnyFailure + SummaryMarkdown(RE) instead."
+  deadline: "2024-08-01"
+  google_issue { id: 339834630 }
+}
+
+warning {
   name: "PYTHON2_DEPRECATED"
   description: "Python2 is deprecated."
   description: ""

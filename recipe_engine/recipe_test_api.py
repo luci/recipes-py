@@ -11,6 +11,7 @@ from past.builtins import basestring
 
 from recipe_engine.internal import recipe_deps
 
+from .internal.warn import escape
 from .util import ModuleInjectionSite
 from .util import ModuleInjectionError
 from .util import static_call
@@ -301,7 +302,10 @@ class TestData(BaseTestData):
                        'exception class name')
     self.expected_exceptions.append(exception)
 
+  @escape.escape_warnings('.*')
   def post_process(self, func, args, kwargs, context):
+    for warning in getattr(func, 'recipe_warnings', ()):
+      record_execution_warning(warning)
     self.post_process_hooks.append(PostprocessHook(func, args, kwargs, context))
 
   def __repr__(self):
@@ -886,3 +890,41 @@ class RecipeTestApi:
     context = PostprocessHookContext(func, args, kwargs, filename, lineno)
     ret.post_process(post_check, (func,) + args, kwargs, context)
     return ret
+
+
+# Exports warning escape decorators
+
+# escape_warnings is a function decorator which will cause warnings matching any
+# of the given regexps to be attributed to the decorated function's caller
+# instead of the decorated function itself.
+#
+#   escape_warnings(*warning_name_regexps)
+escape_warnings = escape.escape_warnings
+
+# escape_all_warnings is a function decorator which is equivalent to
+# `escape_warnings(".*")`
+escape_all_warnings = escape.escape_all_warnings
+
+# ignore_warnings is a function decorator which will cause warnings matching any
+# of the given regexps to be ignored (i.e. swallowed).
+#
+#   ignore_warnings(*warning_name_regexps)
+ignore_warnings = escape.ignore_warnings
+
+
+def record_execution_warning(warning_name, skip=0):
+  """Records a warning during testing.
+
+  No-op in production contexts.
+
+  Args:
+    * name - the name of a pre-defined warning in a recipe.warnings file.
+      If this is absolute (i.e. "repo/WARNING"), then it's used as-is.
+      Otherwise "WARNING" would be resolved against the recipe repo containing
+      the function which calls this one.
+    * skip - the number of stack frames to skip before starting attribution.
+      A value of 0 indicates that your frame is skipped, so 1 would skip your
+      caller's frame, etc.
+  """
+  from recipe_engine.internal.warn.record import GLOBAL
+  GLOBAL.record_execution_warning(warning_name, skip+1)
