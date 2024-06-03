@@ -503,18 +503,6 @@ much information as possible. Some fields may be left empty, violating
 the rules described in the .proto files.
 If the current build is not a buildbucket build, returned `build.id` is 0.
 
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#1302)(self):**
-
-*** note
-**DEPRECATED**: use build.id instead.
-***
-
-&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#1308)(self):**
-
-*** note
-**DEPRECATED**: use build.input instead.
-***
-
 &mdash; **def [build\_url](/recipe_modules/buildbucket/api.py#191)(self, host=None, build_id=None):**
 
 Returns url to a build. Defaults to current build.
@@ -531,12 +519,6 @@ https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/pr
 &emsp; **@property**<br>&mdash; **def [builder\_full\_name](/recipe_modules/buildbucket/api.py#153)(self):**
 
 Returns the full builder name: {project}/{bucket}/{builder}.
-
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#1314)(self):**
-
-*** note
-**DEPRECATED**: Use build.builder instead.
-***
 
 &emsp; **@property**<br>&mdash; **def [builder\_name](/recipe_modules/buildbucket/api.py#148)(self):**
 
@@ -892,7 +874,7 @@ Args:
 
 Can be called at most once per build.
 
-&emsp; **@property**<br>&mdash; **def [shadowed\_bucket](/recipe_modules/buildbucket/api.py#1320)(self):**
+&emsp; **@property**<br>&mdash; **def [shadowed\_bucket](/recipe_modules/buildbucket/api.py#1300)(self):**
 
 &emsp; **@property**<br>&mdash; **def [swarming\_bot\_dimensions](/recipe_modules/buildbucket/api.py#1226)(self):**
 
