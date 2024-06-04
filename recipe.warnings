@@ -52,7 +52,7 @@ warning {
   description: "api.json.read() is deprecated."
   description: ""
   description: "Use api.file.read_json() instead."
-  deadline: "2024-06-06"
+  deadline: "2024-07-10"
   google_issue { id: 332774562 }
 }
 
