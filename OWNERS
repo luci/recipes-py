@@ -5,5 +5,6 @@ bryner@google.com
 fancl@chromium.org
 
 per-file README.recipes.md=*
+per-file **.expected/*.json=*
 
 # COMPONENT: Infra>Platform>Recipes
