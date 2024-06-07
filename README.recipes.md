@@ -3260,21 +3260,7 @@ random-access global variable).
 PropertiesApi implements all the standard Mapping functions, so you
 can use it like a read-only dict.
 
-&mdash; **def [legacy](/recipe_modules/properties/api.py#53)(self):**
-
-*** note
-**DEPRECATED**: Returns a set of properties, possibly used by legacy
-scripts.
-***
-
-This excludes any recipe module-specific properties (i.e. those beginning
-with `$`).
-
-Instead of passing all of the properties as a blob, please consider passing
-specific arguments to scripts that need them. Doing this makes it much
-easier to debug and diagnose which scripts use which properties.
-
-&mdash; **def [thaw](/recipe_modules/properties/api.py#79)(self):**
+&mdash; **def [thaw](/recipe_modules/properties/api.py#53)(self):**
 
 Returns a read-write copy of all of the properties.
 ### *recipe_modules* / [proto](/recipe_modules/proto)

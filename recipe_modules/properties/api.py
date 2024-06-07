@@ -50,32 +50,6 @@ class PropertiesApi(recipe_api.RecipeApi, collections.abc.Mapping):
   def __iter__(self):
     return iter(self._properties)
 
-  def legacy(self):  # pragma: no cover
-    """DEPRECATED: Returns a set of properties, possibly used by legacy
-    scripts.
-
-    This excludes any recipe module-specific properties (i.e. those beginning
-    with `$`).
-
-    Instead of passing all of the properties as a blob, please consider passing
-    specific arguments to scripts that need them. Doing this makes it much
-    easier to debug and diagnose which scripts use which properties.
-    """
-
-    self.m.warning.issue('LEGACY_PROPERTIES_DEPRECATED')
-
-    # Add all properties to this blacklist that are required for testing, but
-    # not used by any legacy scripts, in order to avoid vast expectation
-    # changes.
-    blacklist = set([
-      'buildbotURL',
-    ])
-    props = {k: v for k, v in self.items()
-             if k not in blacklist and not k.startswith('$')}
-    if props.get('bot_id') and not props.get('slavename'):
-      props['slavename'] = props['bot_id']
-    return props
-
   def thaw(self):
     """Returns a read-write copy of all of the properties."""
     return self.properties_client.get_properties()
