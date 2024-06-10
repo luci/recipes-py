@@ -10,6 +10,7 @@ import os
 import re
 import sys
 import tempfile
+import textwrap
 import time
 import traceback
 
@@ -221,11 +222,19 @@ def _check_status(raw_result, test_data, test_results, enforce_status_check):
     # TODO (crbug.com/1426908): This will need to be happen without the config
     #  prop on all builds once tests are updated:
     if enforce_status_check:
+      summary_info = ''
+      # Print the summary_markdown alongside the status mismatch warning if the
+      # recipe unexpectedly failed, since the summary_markdown will often
+      # explain *why* the recipe failed. The summary_markdown is less likely to
+      # be useful if the recipe passed, since it probably won't indicate where
+      # the recipe was expected to fail but didn't.
+      if raw_result.summary_markdown and raw_result.status != Status.SUCCESS:
+        summary_info = '\nsummary_markdown:\n%s' % textwrap.indent(
+            raw_result.summary_markdown, '  ')
       test_results.crash_mismatch.append(
           'Status mismatch in RunSteps. The test expected %r but '
-          'the status was %r.' % (Status.Name(expected_status),
-                                  Status.Name(build_status))
-      )
+          'the status was %r.%s' % (Status.Name(expected_status),
+                                    Status.Name(build_status), summary_info))
     else:
       test_results.global_warnings.append(
           'expected %s, got %s' % (Status.Name(expected_status),
