@@ -16,8 +16,7 @@ from builtins import range, zip
 
 
 @recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED',
-                            'recipe_engine/PATH_EQ_DEPRECATED',
-                            'recipe_engine/PATH_IS_PARENT_OF_DEPRECATED')
+                            'recipe_engine/PATH_EQ_DEPRECATED')
 def RunSteps(api):
   api.step('step1', ['/bin/echo', str(api.path.tmp_base_dir / 'foo')])
 
@@ -231,7 +230,6 @@ def RunSteps(api):
 
   slashy_file = api.path.start_dir.joinpath(
       f'foo{api.path.sep}bar{api.path.sep}baz.txt')
-  assert separated_path.is_parent_of(slashy_file)
   assert api.path.is_parent_of(separated_path, slashy_file)
   assert list(slashy_file.parents) == [
       separated_path,

@@ -75,35 +75,6 @@ warning {
 }
 
 warning {
-  name: "PATH_IS_PARENT_OF_DEPRECATED"
-  description: "config_types.Path.is_parent_of() is deprecated."
-  description: ""
-  description: "Use 'x in path.parents' instead."
-  description: ""
-  description: "This is part of a larger effort to replace config_types.Path"
-  description: "with pathlib.Path. Since the interfaces of the two classes are"
-  description: "not identical, config_types.Path is being made to look more"
-  description: "like pathlib.Path."
-  deadline: "2024-06-10"
-  google_issue { id: 329113288 }
-}
-
-warning {
-  name: "PATH_JOIN_DEPRECATED"
-  description: "config_types.Path.join() is deprecated."
-  description: ""
-  description: "Use config_types.Path.joinpath() instead. Or, use"
-  description: "api.path.join(), or the / operator."
-  description: ""
-  description: "This is part of a larger effort to replace config_types.Path"
-  description: "with pathlib.Path. Since the interfaces of the two classes are"
-  description: "not identical, config_types.Path is being made to look more"
-  description: "like pathlib.Path."
-  deadline: "2024-06-10"
-  google_issue { id: 329113288 }
-}
-
-warning {
   name: "POST_PROCESS_STATUSCODEIN_DEPRECATED"
   description: "StatusCodeIn is deprecated."
   description: ""

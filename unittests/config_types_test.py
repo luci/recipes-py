@@ -111,8 +111,8 @@ class TestPathsPreGlobalInit(unittest.TestCase):
         # and joins to them in multiple methods, so while we would never see
         # such a construction all in one line like this, it's possible that
         # a Path is logically constructed in multiple places in this fashion.
-        (p / 'some/path/to/stuff' / '../..').join('etc', '..////.', '..',
-                                                  'hello'))
+        (p / 'some/path/to/stuff' / '../..').joinpath('etc', '..////.', '..',
+                                                      'hello'))
 
   def test_path_dots_removal_error(self):
     p = Path(ResolvedBasePath('[CACHE]'))
@@ -137,31 +137,31 @@ class TestPathsPreGlobalInit(unittest.TestCase):
   def test_is_parent_of(self):
     p = Path(ResolvedBasePath('[CACHE]'))
 
-    self.assertTrue(p.is_parent_of(p / 'a'))
-    self.assertTrue(p.is_parent_of(p / 'a' / 'b' / 'c'))
-    self.assertTrue((p / 'a').is_parent_of(p / 'a' / 'b' / 'c'))
+    self.assertTrue(p in (p / 'a').parents)
+    self.assertTrue(p in (p / 'a' / 'b' / 'c').parents)
+    self.assertTrue(p / 'a' in (p / 'a' / 'b' / 'c').parents)
 
   def test_is_parent_of_mismatch(self):
     p1 = Path(ResolvedBasePath('[CACHE]'))
     p2 = Path(ResolvedBasePath('[CLEANUP]'))
 
-    self.assertFalse(p1.is_parent_of(p2))
-    self.assertFalse(p2.is_parent_of(p1))
+    self.assertFalse(p1 in p2.parents)
+    self.assertFalse(p2 in p1.parents)
 
   def test_is_parent_of_checkout(self):
     p1 = Path(CheckoutBasePath(), 'some')
     p2 = Path(ResolvedBasePath('[CACHE]'), 'builder', 'src', 'some', 'thing')
 
-    with self.assertRaisesRegex(ValueError, 'checkout_dir is unset'):
-      p1.is_parent_of(p2)
-    with self.assertRaisesRegex(ValueError, 'checkout_dir is unset'):
-      p2.is_parent_of(p1)
+    with self.assertRaisesRegex(ValueError, 'before checkout_dir is set'):
+      p1 in p2.parents
+    with self.assertRaisesRegex(ValueError, 'before checkout_dir is set'):
+      p2 in p1.parents
 
     CheckoutBasePath._resolved = Path(
         ResolvedBasePath('[CACHE]'), 'builder', 'src')
 
-    self.assertTrue(p1.is_parent_of(p2))
-    self.assertFalse(p2.is_parent_of(p1))
+    self.assertTrue(p1 in p2.parents)
+    self.assertFalse(p2 in p1.parents)
 
   def test_is_parent_of_checkout_mismatch(self):
     p1 = Path(CheckoutBasePath(), 'some')
@@ -170,12 +170,13 @@ class TestPathsPreGlobalInit(unittest.TestCase):
     CheckoutBasePath._resolved = Path(
         ResolvedBasePath('[CACHE]'), 'builder', 'src')
 
-    self.assertFalse(p1.is_parent_of(p2))
-    self.assertFalse(p2.is_parent_of(p1))
+    self.assertFalse(p1 in p2.parents)
+    self.assertFalse(p2 in p1.parents)
 
-  def test_is_parent_of_sanity(self):
+  def test_is_parent_of_check(self):
     p = Path(ResolvedBasePath('[CLEANUP]'))
-    self.assertFalse((p / 'a').is_parent_of(p / 'ab'))
+    self.assertFalse(p / 'a' in (p / 'ab').parents)
+    self.assertFalse(p / 'ab' in (p / 'a').parents)
 
 
 class TestPathsPostGlobalInit(unittest.TestCase):

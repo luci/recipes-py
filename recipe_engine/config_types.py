@@ -372,35 +372,6 @@ class Path:
         self.base,
         *[p for p in itertools.chain(self.pieces, pieces) if p])
 
-  def join(self, *pieces: str) -> Path:
-    from recipe_engine.internal.warn import record
-    record.GLOBAL.record_execution_warning('PATH_JOIN_DEPRECATED')
-    return self.joinpath(*pieces)
-
-  def is_parent_of(self, other: Path) -> bool:
-    """True if |other| is in a subdirectory of this Path."""
-    from recipe_engine.internal.warn import record
-    record.GLOBAL.record_execution_warning('PATH_IS_PARENT_OF_DEPRECATED')
-    spath = self
-    opath = other
-    # If they are BOTH CheckoutBasePath we can use them directly, otherwise we
-    # need to resolve them (which may raise)
-    if not (isinstance(self.base, CheckoutBasePath) and
-            isinstance(other.base, CheckoutBasePath)):
-      spath = self._resolve()
-      opath = other._resolve()
-
-    # NOTE: This assumes that none of the ResolvedBasePath's overlap, which is
-    # currently true, and simplifies things quite a bit.
-    if spath.base != opath.base:
-      return False
-
-    # They have the same base, so return True if the paths have a matching prefix.
-    #
-    # If spath.pieces is longer than opath.pieces, this will be False, which is
-    # correct.
-    return spath.pieces == opath.pieces[:len(spath.pieces)]
-
   def __str__(self) -> str:
     if self._str is None:
       if not self._OS_SEP:
