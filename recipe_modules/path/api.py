@@ -441,7 +441,7 @@ class PathApi(recipe_api.RecipeApi):
       # underneath of the working directory is transient and will be purged in
       # between builds.
       if not self._cleanup_dir:
-        self._cleanup_dir = os.path.join(self._start_dir, 'recipe_cleanup')
+        self._cleanup_dir = os.path.join(self._start_dir, 'rc')
 
       self._ensure_dir(self._temp_dir)
       self._ensure_dir(self._cache_dir)
