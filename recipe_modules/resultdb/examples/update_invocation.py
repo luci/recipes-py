@@ -34,6 +34,7 @@ def RunSteps(api, invocation, gitiles_commit, gerrit_changes):
               gitiles_commit=gitiles_commit,
               changelists=gerrit_changes,
           )),
+      is_source_spec_final=True,
       baseline_id='try:linux-rel',
       instructions=instruction_pb.Instructions(
           instructions=[

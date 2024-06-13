@@ -515,6 +515,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
                         parent_inv='',
                         step_name=None,
                         source_spec=None,
+                        is_source_spec_final=None,
                         baseline_id=None,
                         instructions=None):
     """Makes a call to the UpdateInvocation API to update the invocation
@@ -524,6 +525,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
       step_name (str): name of the step.
       source_spec (luci.resultdb.v1.SourceSpec): The source information
         to apply to the given invocation.
+      is_source_spec_final (bool): Whether the source spec is final and won't
+        be changed again.
       baseline_id (str): Baseline identifier for this invocation, usually of
         the format {buildbucket bucket}:{buildbucket builder name}. For example,
         'try:linux-rel'. Baselines are used to detect new tests in invocations.
@@ -535,6 +538,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
     field_mask_paths = []
     if source_spec:
       field_mask_paths.append('source_spec')
+    if is_source_spec_final:
+      field_mask_paths.append('is_source_spec_final')
     if baseline_id:
       field_mask_paths.append('baseline_id')
     if instructions:
@@ -544,6 +549,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
         invocation=invocation_pb2.Invocation(
             name=parent_inv or self.current_invocation,
             source_spec=source_spec,
+            is_source_spec_final=is_source_spec_final,
             baseline_id=baseline_id,
             instructions=instructions),
         update_mask=field_mask_pb2.FieldMask(paths=field_mask_paths),
