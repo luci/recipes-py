@@ -23,7 +23,6 @@ DEPS = [
 ]
 
 
-@recipe_api.ignore_warnings('recipe_engine/SET_BUILDBUCKET_HOST_DEPRECATED')
 def RunSteps(api):
   build = api.buildbucket.build
   if build.builder.bucket == 'try':
@@ -80,7 +79,7 @@ def RunSteps(api):
   mac_req.builder.builder = 'mac_perf_bisect'
 
   # Setting values for expectations coverage only, also tests host context.
-  api.buildbucket.set_buildbucket_host('cr-buildbucket-test.appspot.com')
+  api.buildbucket.host = 'cr-buildbucket-test.appspot.com'
   assert api.buildbucket.host == 'cr-buildbucket-test.appspot.com'
 
   with api.buildbucket.with_host('cr-buildbucket-test2.appspot.com'):
