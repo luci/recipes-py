@@ -60,13 +60,6 @@
   },
   {
     "cmd": [],
-    "name": "extra_nonsense",
-    "~followup_annotations": [
-      "@@@STEP_TEXT@Just use the yielded object as StepPresentation directly, do notuse the `.presentation` accessor.@@@"
-    ]
-  },
-  {
-    "cmd": [],
     "name": "exception status",
     "~followup_annotations": [
       "@@@STEP_EXCEPTION@@@"

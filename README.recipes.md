@@ -4044,7 +4044,7 @@ Usage:
 StepWarning is a subclass of StepFailure, and will translate to a yellow
 build.
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#635)(self, name: str, cmd: (list[(((int | str) | Placeholder) | Path)] | None), ok_ret: ((Sequence[int] | Literal['any']) | Literal['all'])=(0,), infra_step: bool=False, raise_on_failure: bool=True, wrapper: Sequence[(((int | str) | Placeholder) | Path)]=(), timeout: ((int | timedelta) | None)=None, stdout: (Placeholder | None)=None, stderr: (Placeholder | None)=None, stdin: (Placeholder | None)=None, step_test_data: (Callable[([], StepTestData)] | None)=None, cost: _ResourceCost=_ResourceCost()):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#600)(self, name: str, cmd: (list[(((int | str) | Placeholder) | Path)] | None), ok_ret: ((Sequence[int] | Literal['any']) | Literal['all'])=(0,), infra_step: bool=False, raise_on_failure: bool=True, wrapper: Sequence[(((int | str) | Placeholder) | Path)]=(), timeout: ((int | timedelta) | None)=None, stdout: (Placeholder | None)=None, stderr: (Placeholder | None)=None, stdin: (Placeholder | None)=None, step_test_data: (Callable[([], StepTestData)] | None)=None, cost: _ResourceCost=_ResourceCost()):**
 
 Runs a step (subprocess).
 
@@ -4143,7 +4143,7 @@ context (if any).
 
 No-op if there's no currently active non-nest step.
 
-&mdash; **def [empty](/recipe_modules/step/api.py#333)(self, name, status='SUCCESS', step_text=None, log_text=None, log_name='stdout', raise_on_failure=True):**
+&mdash; **def [empty](/recipe_modules/step/api.py#298)(self, name, status='SUCCESS', step_text=None, log_text=None, log_name='stdout', raise_on_failure=True):**
 
 Runs an "empty" step (one without any command).
 
@@ -4165,7 +4165,7 @@ Args:
 
 Returns step_data.StepData.
 
-&mdash; **def [funcall](/recipe_modules/step/api.py#747)(self, name, func, \*args, \*\*kwargs):**
+&mdash; **def [funcall](/recipe_modules/step/api.py#712)(self, name, func, \*args, \*\*kwargs):**
 
 Call a function and store the results and exception in a step.
 
@@ -4173,7 +4173,7 @@ Sample usage:
 
 >>> api.step.funcall(None, some_function, 4, json=True)
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [nest](/recipe_modules/step/api.py#230)(self, name, status='worst'):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [nest](/recipe_modules/step/api.py#200)(self, name, status='worst'):**
 
 Nest allows you to nest steps hierarchically on the build UI.
 
@@ -4227,13 +4227,6 @@ Example:
       # stuff!
       presentation.status = 'FAILURE'  # or whatever
 
-*** note
-**DEPRECATED**: The object yielded also has a '.presentation' field to be
-compatible with code that treats the yielded object as a StepData object. If
-you see such code, please update it to treat the yielded object directly as
-StepPresentation instead.
-***
-
 Args:
   * name (str): The name of this step.
   * status ('worst'|'last'): The algorithm to use to pick a
@@ -4242,7 +4235,7 @@ Args:
 Yields a StepPresentation for this dummy step, which you may update as you
 please.
 
-&mdash; **def [raise\_on\_failure](/recipe_modules/step/api.py#476)(self, result, status_override=None):**
+&mdash; **def [raise\_on\_failure](/recipe_modules/step/api.py#441)(self, result, status_override=None):**
 
 Raise an appropriate exception if a step is not successful.
 
@@ -4264,7 +4257,7 @@ Raises:
   * StepWarning if the step's status is WARNING
   * InfraFailure if the step's status is EXCEPTION or CANCELED
 
-&mdash; **def [sub\_build](/recipe_modules/step/api.py#507)(self, name: str, cmd: (((int | str) | Placeholder) | Path), build: build_pb2.Build, raise_on_failure: bool=True, output_path: ((str | Path) | None)=None, legacy_global_namespace=False, timeout=None, step_test_data=None, cost=_ResourceCost()):**
+&mdash; **def [sub\_build](/recipe_modules/step/api.py#472)(self, name: str, cmd: (((int | str) | Placeholder) | Path), build: build_pb2.Build, raise_on_failure: bool=True, output_path: ((str | Path) | None)=None, legacy_global_namespace=False, timeout=None, step_test_data=None, cost=_ResourceCost()):**
 
 Launch a sub-build by invoking a LUCI executable. All steps in the
 sub-build will appear as child steps of this step (Merge Step).
@@ -5910,7 +5903,7 @@ This file is a recipe demonstrating reading triggers of the current build.
 [DEPS](/recipe_modules/step/tests/nested.py#10): [context](#recipe_modules-context), [step](#recipe_modules-step)
 
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/STEP_NEST_PRESENTATION_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/step/tests/nested.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/nested.py#16)(api):**
 ### *recipes* / [step:tests/raise\_on\_failure](/recipe_modules/step/tests/raise_on_failure.py)
 
 [DEPS](/recipe_modules/step/tests/raise_on_failure.py#7): [properties](#recipe_modules-properties), [step](#recipe_modules-step)

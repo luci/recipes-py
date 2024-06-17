@@ -13,7 +13,6 @@ DEPS = [
 ]
 
 
-@recipe_api.ignore_warnings('recipe_engine/STEP_NEST_PRESENTATION_DEPRECATED')
 def RunSteps(api):
   # Nest all steps below this.
   with api.step.nest('complicated thing'):
@@ -31,13 +30,6 @@ def RunSteps(api):
     with api.step.nest('failpants') as failpants_presentation:
       failpants_presentation.status = api.step.EXCEPTION
     api.step('everything OK', ['echo', 'hi'])
-
-  # DEPRECATED; DO NOT USE
-  with api.step.nest('extra_nonsense') as fake_step_data:
-    fake_step_data.presentation.step_text = (
-      'Just use the yielded object as StepPresentation directly, do not'
-      'use the `.presentation` accessor.'
-    )
 
   # Exceptions bubbling out take precedence.
   try:
@@ -118,10 +110,6 @@ def GenTests(api):
     api.test('basic')
     + api.post_process(StepException, 'inherit status')
     + api.post_process(StepSuccess, 'last status')
-
-    + api.post_check(lambda check, steps: check(
-        'StepPresentation' in steps['extra_nonsense'].step_text
-    ))
 
     + api.post_process(StepException, 'exception status')
 

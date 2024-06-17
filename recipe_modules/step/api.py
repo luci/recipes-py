@@ -197,36 +197,6 @@ class StepApi(recipe_api.RecipeApi):
     """
     return self.step_client.close_non_parent_step()
 
-  # TODO(iannucci): Historically `nest` returned a StepData; there's tons of
-  # code which does:
-  #
-  #    with api.step.nest(...) as nest:
-  #      nest.presentation....
-  #
-  # But we want this code to be:
-  #
-  #    with api.step.nest(...) as presentation:
-  #      presentation....
-  #
-  # To make migration smoother, we yield a hacky object which passes through
-  # everything to the real presentation, except for `.presentation` which
-  # returns the StepPresentation directly. Ick.
-  class _StepPresentationProxy:
-    def __init__(self, api, presentation):
-      object.__setattr__(self, '_api', api)
-      object.__setattr__(self, '_presentation', presentation)
-
-    @property
-    def presentation(self):
-      self._api.warning.issue('STEP_NEST_PRESENTATION_DEPRECATED')
-      return self._presentation
-
-    def __getattr__(self, name):
-      return getattr(self._presentation, name)
-
-    def __setattr__(self, name, value):
-      setattr(self._presentation, name, value)
-
   @contextlib.contextmanager
   def nest(self, name, status='worst'):
     """Nest allows you to nest steps hierarchically on the build UI.
@@ -279,11 +249,6 @@ class StepApi(recipe_api.RecipeApi):
           # stuff!
           presentation.status = 'FAILURE'  # or whatever
 
-    DEPRECATED: The object yielded also has a '.presentation' field to be
-    compatible with code that treats the yielded object as a StepData object. If
-    you see such code, please update it to treat the yielded object directly as
-    StepPresentation instead.
-
     Args:
       * name (str): The name of this step.
       * status ('worst'|'last'): The algorithm to use to pick a
@@ -297,7 +262,7 @@ class StepApi(recipe_api.RecipeApi):
     with self.step_client.parent_step(name) as (pres, children_presentations):
       caught_exc = None
       try:
-        yield self._StepPresentationProxy(self.m, pres)
+        yield pres
       except:
         caught_exc = sys.exc_info()[1]
         raise
