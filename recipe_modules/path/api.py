@@ -915,4 +915,5 @@ class PathApi(recipe_api.RecipeApi):
 
     DEPRECATED: Just use `parent in child.parents`.
     """
+    self.m.warning.issue('PATH_IS_PARENT_OF_DEPRECATED')
     return parent in child.parents

@@ -75,6 +75,15 @@ warning {
 }
 
 warning {
+  name: "PATH_IS_PARENT_OF_DEPRECATED"
+  description: "api.path.is_parent_of(parent, child) is deprecated."
+  description: ""
+  description: "Use 'parent in child.parents' instead."
+  deadline: "2024-08-05"
+  google_issue { id: 348378567 }
+}
+
+warning {
   name: "POST_PROCESS_STATUSCODEIN_DEPRECATED"
   description: "StatusCodeIn is deprecated."
   description: ""
