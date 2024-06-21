@@ -134,6 +134,12 @@ class TestPathsPreGlobalInit(unittest.TestCase):
     cache_path = Path(ResolvedBasePath('[CACHE]'))
     self.assertEqual(start_path.joinpath('foo', cache_path, 'bar'), cache_path / 'bar')
 
+  def test_path_joinpath_with_none(self):
+    base_path = Path(ResolvedBasePath('[START_DIR]'))
+    with self.assertRaisesRegex(
+        ValueError, 'Variadic arguments to Path must only be `str`'):
+      base_path.joinpath(None)
+
   def test_is_parent_of(self):
     p = Path(ResolvedBasePath('[CACHE]'))
 

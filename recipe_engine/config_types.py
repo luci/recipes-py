@@ -370,7 +370,9 @@ class Path:
         return p.joinpath(*pieces[i+1:])
     return Path(
         self.base,
-        *[p for p in itertools.chain(self.pieces, pieces) if p])
+        # Propagate None here so that accidental joins with None raise an error
+        # rather than getting silently ignored
+        *[p for p in itertools.chain(self.pieces, pieces) if p or p is None])
 
   def __str__(self) -> str:
     if self._str is None:
