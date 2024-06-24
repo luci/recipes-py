@@ -260,9 +260,12 @@ class LuciAnalysisTestApi(recipe_test_api.RecipeTestApi):
                 }]
             },
             "flakeRate": {
+                "isMet": True,
                 "totalVerdicts": 134,
                 "startPosition": "93206",
-                "endPosition": "93552"
+                "endPosition": "93552",
+                "runFlakyVerdicts1wd": 3,
+                "runFlakyVerdicts12h": 1
             }
         }],
         "criteria": {
