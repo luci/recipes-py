@@ -34,7 +34,7 @@ warning {
   description: "If you pick this third path, please consider making this global"
   description: "only assignable once, and making it a hard error (e.g. raise"
   description: "ValueError) if this is accessed prior to assignment."
-  deadline: "2024-06-24"
+  deadline: "2024-09-01"
   google_issue { id: 329113288 }
 }
 
