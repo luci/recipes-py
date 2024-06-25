@@ -368,8 +368,18 @@ enum CustomBuildMetricBase {
 //
 // Builders can then reference a custom metric by name to report their build
 // metrics.
+//
+// Note: if you ever want to remove a custom metric, the best practice is to
+// remove its references from builders first, then remove it from the service
+// config. Otherwise any change to a builder config refers to this custom metric
+// would fail validation (for using an unregistered custom metric). But this
+// is not a hard error for build creation or event reporting: missing metric
+// would just be silently ignored.
 message CustomMetric {
   // Name of the metric.
+  //
+  // Each builder that uses this metric needs to add a CustomBuildMetric entry in
+  // their config, with the same name as here.
   //
   // Must be unique globally across all LUCI projects.
   // Must conform to ^(/[a-zA-Z0-9_-]+)+$ (See
@@ -381,8 +391,10 @@ message CustomMetric {
 
   // Metric field names.
   //
-  // Each builder uses this metric must specify how to populate the values of
-  // each field in their configurations.
+  // Each builder that uses this metric must specify how to populate each
+  // field's value in their configurations, see BuilderConfig.CustomBuildMetric.Fields.
+  //
+  // Must not have duplicates.
   //
   // The value type of all metric fields is always string.
   // Each Field must conform to ^[A-Za-z_][A-Za-z0-9_]*$ (See
