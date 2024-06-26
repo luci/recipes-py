@@ -643,6 +643,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
       sources='',
       sources_file='',
       baseline_id='',
+      inv_extended_properties_dir='',
   ):
     """Wraps the command with ResultSink.
 
@@ -698,6 +699,11 @@ class ResultDBAPI(recipe_api.RecipeApi):
       baseline_id(string): Baseline identifier for this invocation, usually of
         the format {buildbucket bucket}:{buildbucket builder name}.
         For example, 'try:linux-rel'.
+      inv_extended_properties_dir(str): Path to a directory that contains files
+        for the invocation's extended_properties in JSON format.
+        Only files directly under this dir with the extension ".jsonpb" will be
+        read. The filename after removing ".jsonpb" and the file content will be
+        added as a key-value pair to the invocation's extended_properties map.
     """
     if require_build_inv:
       self.assert_enabled()
@@ -715,13 +721,15 @@ class ResultDBAPI(recipe_api.RecipeApi):
     assert isinstance(
         exonerate_unexpected_pass, bool), exonerate_unexpected_pass
     assert isinstance(inv_properties, (type(None), str)), inv_properties
-    assert isinstance(
-      inv_properties_file, (type(None), str)), inv_properties_file
+    assert isinstance(inv_properties_file,
+                      (type(None), str)), inv_properties_file
     assert not (inv_properties and inv_properties_file), inv_properties_file
     assert isinstance(inherit_sources, bool), inherit_sources
     assert isinstance(sources, (type(None), str)), sources
     assert isinstance(sources_file, (type(None), str)), sources_file
     assert isinstance(baseline_id, (type(None), str)), baseline_id
+    assert isinstance(inv_extended_properties_dir,
+                      (type(None), str)), inv_extended_properties_dir
 
     ret = ['rdb', 'stream']
 
@@ -769,6 +777,9 @@ class ResultDBAPI(recipe_api.RecipeApi):
 
     if baseline_id:
       ret += ['-baseline-id', baseline_id]
+
+    if inv_extended_properties_dir:
+      ret += ['-inv-extended-properties-dir', inv_extended_properties_dir]
 
     ret += ['--'] + list(cmd)
     return ret

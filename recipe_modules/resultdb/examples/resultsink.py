@@ -110,6 +110,11 @@ def RunSteps(api):
           baseline_id='try:linux-rel',
       ))
 
+  api.step('test with inv_extended_properties_dir', api.resultdb.wrap(
+    ['echo', 'suppose its a test'],
+    inv_extended_properties_dir='/tmp/invocations/',
+  ))
+
   api.step('unwrapped command',
            api.resultdb.unwrap(['rdb', 'stream', '--', 'unwrapped']))
 

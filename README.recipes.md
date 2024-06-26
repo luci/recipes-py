@@ -3481,7 +3481,7 @@ A module for interacting with ResultDB.
 
 &mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#50)(self):**
 
-&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#790)(self, column_keys=(), grouping_keys=('status',)):**
+&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#801)(self, column_keys=(), grouping_keys=('status',)):**
 
 Specifies how the test results should be rendered.
 
@@ -3683,7 +3683,7 @@ Returns:
   For value format, see [`QueryTestVariantsResponse` message]
   (http://shortn/_hv3edsXidO)
 
-&mdash; **def [unwrap](/recipe_modules/resultdb/api.py#776)(self, cmd: list[str]):**
+&mdash; **def [unwrap](/recipe_modules/resultdb/api.py#787)(self, cmd: list[str]):**
 
 Reverses the wrap command
 
@@ -3745,7 +3745,7 @@ Returns:
   A BatchCreateArtifactsResponse proto message listing the artifacts that
   were created.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#627)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file='', inherit_sources=False, sources='', sources_file='', baseline_id=''):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#627)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file='', inherit_sources=False, sources='', sources_file='', baseline_id='', inv_extended_properties_dir=''):**
 
 Wraps the command with ResultSink.
 
@@ -3801,6 +3801,11 @@ Args:
   baseline_id(string): Baseline identifier for this invocation, usually of
     the format {buildbucket bucket}:{buildbucket builder name}.
     For example, 'try:linux-rel'.
+  inv_extended_properties_dir(str): Path to a directory that contains files
+    for the invocation's extended_properties in JSON format.
+    Only files directly under this dir with the extension ".jsonpb" will be
+    read. The filename after removing ".jsonpb" and the file content will be
+    added as a key-value pair to the invocation's extended_properties map.
 ### *recipe_modules* / [runtime](/recipe_modules/runtime)
 
 

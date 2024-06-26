@@ -386,6 +386,30 @@
   },
   {
     "cmd": [
+      "rdb",
+      "stream",
+      "-inv-extended-properties-dir",
+      "/tmp/invocations/",
+      "--",
+      "echo",
+      "suppose its a test"
+    ],
+    "luci_context": {
+      "realm": {
+        "name": "proj:realm"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "test with inv_extended_properties_dir"
+  },
+  {
+    "cmd": [
       "unwrapped"
     ],
     "luci_context": {
