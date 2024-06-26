@@ -35,6 +35,7 @@ ALLOWED_MODULES = [
     r're',
     r'string',
     r'textwrap',
+    r'typing',
     r'urlparse',
     r'zlib',
 
