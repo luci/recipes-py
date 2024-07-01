@@ -57,15 +57,6 @@ warning {
 }
 
 warning {
-  name: "PATH_EQ_DEPRECATED"
-  description: "api.path.eq() is deprecated."
-  description: ""
-  description: "Use the == operator instead."
-  deadline: "2024-07-01"
-  google_issue { id: 335898567 }
-}
-
-warning {
   name: "PATH_GETITEM_DEPRECATED"
   description: "Accessors like api.path['start_dir'] are deprecated."
   description: ""

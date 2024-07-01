@@ -2976,14 +2976,6 @@ Args:
 
 Returns dirname of path
 
-&mdash; **def [eq](/recipe_modules/path/api.py#904)(self, path1: config_types.Path, path2: config_types.Path):**
-
-Check whether path1 points to the same path as path2.
-
-*** note
-**DEPRECATED**: Just directly compare path1 and path2 with `==`.
-***
-
 &mdash; **def [exists](/recipe_modules/path/api.py#844)(self, path):**
 
 Equivalent to os.path.exists.
@@ -3009,7 +3001,7 @@ that the recipe is non-hermetic.
 This is called by the recipe engine immediately after __init__(), but
 with `self._paths_client` initialized.
 
-&mdash; **def [is\_parent\_of](/recipe_modules/path/api.py#912)(self, parent: config_types.Path, child: config_types.Path):**
+&mdash; **def [is\_parent\_of](/recipe_modules/path/api.py#904)(self, parent: config_types.Path, child: config_types.Path):**
 
 Check whether child is contained within parent.
 
@@ -5684,7 +5676,7 @@ Tests for query_variants.
 [DEPS](/recipe_modules/path/examples/full.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED', 'recipe_engine/PATH_EQ_DEPRECATED', 'recipe_engine/PATH_IS_PARENT_OF_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/path/examples/full.py#18)(api):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED', 'recipe_engine/PATH_IS_PARENT_OF_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/path/examples/full.py#18)(api):**
 ### *recipes* / [path:tests/cast\_to\_path](/recipe_modules/path/tests/cast_to_path.py)
 
 [DEPS](/recipe_modules/path/tests/cast_to_path.py#8): [path](#recipe_modules-path), [platform](#recipe_modules-platform)

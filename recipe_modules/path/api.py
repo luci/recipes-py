@@ -901,14 +901,6 @@ class PathApi(recipe_api.RecipeApi):
     if self._test_data.enabled:
       self._path_mod.mock_remove_paths(path, should_remove)
 
-  def eq(self, path1: config_types.Path, path2: config_types.Path) -> bool:
-    """Check whether path1 points to the same path as path2.
-
-    DEPRECATED: Just directly compare path1 and path2 with `==`.
-    """
-    self.m.warning.issue('PATH_EQ_DEPRECATED')
-    return path1 == path2
-
   def is_parent_of(self, parent: config_types.Path,
                    child: config_types.Path) -> bool:
     """Check whether child is contained within parent.
