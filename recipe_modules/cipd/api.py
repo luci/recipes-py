@@ -233,6 +233,10 @@ class Metadata:
     return ['-metadata', '%s:%s' % (key, self._value)]
 
 
+class UnrecognizedArchitecture(ValueError):
+  pass
+
+
 class CIPDApi(recipe_api.RecipeApi):
   """CIPDApi provides basic support for CIPD.
 
@@ -246,6 +250,7 @@ class CIPDApi(recipe_api.RecipeApi):
   PackageDefinition = PackageDefinition
   EnsureFile = EnsureFile
   Metadata = Metadata
+  UnrecognizedArchitecture = UnrecognizedArchitecture
 
   # A CIPD pin.
   Pin = namedtuple('Pin', [
@@ -1045,3 +1050,23 @@ class CIPDApi(recipe_api.RecipeApi):
       executable_path = basename
 
     return package_dir / executable_path
+
+  def _full_arch(self, arch: str, bits: int | str) -> str:
+    bits = int(bits)
+    assert bits in (32, 64)
+
+    if arch == 'intel':
+      return 'amd64' if bits == 64 else '386'
+
+    if arch == 'arm':
+      return 'arm64' if bits == 64 else 'armv6l'
+
+    raise UnrecognizedArchitecture(arch)  # pragma: no cover
+
+  @property
+  def platform(self):
+    """Returns the CIPD platform string, equivalent to '${platform}'."""
+
+    os_part = self.m.platform.name.replace('win', 'windows')
+    arch_part = self._full_arch(self.m.platform.arch, self.m.platform.bits)
+    return f'{os_part}-{arch_part}'
