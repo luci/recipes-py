@@ -17,6 +17,28 @@ from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 class MiloApi(recipe_api.RecipeApi):
   """A module for interacting with Milo."""
 
+  HOST_PROD = 'https://ci.chromium.org'
+  HOST_DEV = 'https://luci-milo-dev.appspot.com'
+
+  @property
+  def host(self):
+    """Hostname of Milo instance corresponding to the current build.
+
+    Defaults to the prod instance, but will try to detect when using dev.
+    """
+    if self.m.buildbucket.host == self.m.buildbucket.HOST_DEV:
+      return self.HOST_DEV
+    return self.HOST_PROD
+
+  @property
+  def current_results_url(self):
+    """Returns a Milo URL to view the current invocation's results.
+
+    eg: https://luci-milo.appspot.com/ui/inv/some-inv-name
+    """
+    inv_name = self.m.resultdb.current_invocation.removeprefix('invocations/')
+    return f'{self.host}/ui/inv/{inv_name}'
+
   def show_blamelist_for(self, gitiles_commits):
     """Specifies which commits and repos Milo should show a blamelist for.
 

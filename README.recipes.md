@@ -2772,7 +2772,7 @@ Returns:
     projects/{project}/clusters/{cluster_algorithm}/{cluster_id}.
 ### *recipe_modules* / [milo](/recipe_modules/milo)
 
-[DEPS](/recipe_modules/milo/__init__.py#5): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
+[DEPS](/recipe_modules/milo/__init__.py#5): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [resultdb](#recipe_modules-resultdb), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
 
 
 API for specifying Milo behavior.
@@ -2781,7 +2781,19 @@ API for specifying Milo behavior.
 
 A module for interacting with Milo.
 
-&mdash; **def [show\_blamelist\_for](/recipe_modules/milo/api.py#20)(self, gitiles_commits):**
+&emsp; **@property**<br>&mdash; **def [current\_results\_url](/recipe_modules/milo/api.py#33)(self):**
+
+Returns a Milo URL to view the current invocation's results.
+
+eg: https://luci-milo.appspot.com/ui/inv/some-inv-name
+
+&emsp; **@property**<br>&mdash; **def [host](/recipe_modules/milo/api.py#23)(self):**
+
+Hostname of Milo instance corresponding to the current build.
+
+Defaults to the prod instance, but will try to detect when using dev.
+
+&mdash; **def [show\_blamelist\_for](/recipe_modules/milo/api.py#42)(self, gitiles_commits):**
 
 Specifies which commits and repos Milo should show a blamelist for.
 
@@ -5672,10 +5684,10 @@ Tests for query_variants.
 &mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/test_query_variants.py#16)(api):**
 ### *recipes* / [milo:examples/full](/recipe_modules/milo/examples/full.py)
 
-[DEPS](/recipe_modules/milo/examples/full.py#7): [milo](#recipe_modules-milo)
+[DEPS](/recipe_modules/milo/examples/full.py#7): [buildbucket](#recipe_modules-buildbucket), [milo](#recipe_modules-milo)
 
 
-&mdash; **def [RunSteps](/recipe_modules/milo/examples/full.py#11)(api):**
+&mdash; **def [RunSteps](/recipe_modules/milo/examples/full.py#12)(api):**
 ### *recipes* / [nodejs:examples/full](/recipe_modules/nodejs/examples/full.py)
 
 [DEPS](/recipe_modules/nodejs/examples/full.py#5): [nodejs](#recipe_modules-nodejs), [platform](#recipe_modules-platform), [step](#recipe_modules-step)

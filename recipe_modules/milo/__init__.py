@@ -3,11 +3,13 @@
 # that can be found in the LICENSE file.
 
 DEPS = [
-  'json',
-  'path',
-  'platform',
-  'raw_io',
-  'runtime',
-  'step',
-  'uuid',
+    'buildbucket',
+    'json',
+    'path',
+    'platform',
+    'raw_io',
+    'resultdb',
+    'runtime',
+    'step',
+    'uuid',
 ]
