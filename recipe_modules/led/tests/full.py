@@ -72,8 +72,7 @@ def RunSteps(api, get_cmd, child_properties, sloppy_child_properties,
   api.step('print rbh value', ['echo', intermediate.edit_rbh_value])
 
   final_result = intermediate.then('launch')
-  api.step('print task id', [
-      'echo', final_result.launch_result.task_id])
+  api.step('print build id', ['echo', final_result.launch_result.build_id])
 
 
 def GenTests(api):

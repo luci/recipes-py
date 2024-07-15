@@ -33,16 +33,8 @@ class LedApi(recipe_api.RecipeApi):
 
   @attr.s(frozen=True, slots=True)
   class LedLaunchData:
-    swarming_hostname = attr.ib()
-    task_id = attr.ib()
     buildbucket_hostname = attr.ib()
     build_id = attr.ib()
-
-    @property
-    def swarming_task_url(self):
-      if not self.task_id:
-        return None
-      return 'https://%s/task?id=%s' % (self.swarming_hostname, self.task_id)
 
     @property
     def build_url(self):
@@ -53,8 +45,7 @@ class LedApi(recipe_api.RecipeApi):
   class LedResult:
     """Holds the result of a led operation. Can be chained using |then|."""
 
-    def __init__(self, result, module, led_build):
-      self._led_build = led_build
+    def __init__(self, result, module):
       if isinstance(result, LedApi.LedLaunchData):
         self._launch_result = result
         self._result = result
@@ -130,10 +121,8 @@ class LedApi(recipe_api.RecipeApi):
       if self._module is None: # pragma: no cover
         raise ValueError(
             'Cannot call LedResult.then on the result of `led launch`')
-      res, is_led_real_build = self._module._run_command(
-          self._result, self._led_build, *cmd)
-      return self.__class__(
-          res, self._module, is_led_real_build)
+      res = self._module._run_command(self._result, *cmd)
+      return self.__class__(res, self._module)
 
   def __init__(self, props, **kwargs):
     super(LedApi, self).__init__(**kwargs)
@@ -213,8 +202,8 @@ class LedApi(recipe_api.RecipeApi):
 
   def __call__(self, *cmd):
     """Runs led with the given arguments. Wraps result in a `LedResult`."""
-    res, is_led_real_build = self._run_command(None, self.led_build, *cmd)
-    return self.LedResult(res, self, is_led_real_build)
+    res = self._run_command(None, *cmd)
+    return self.LedResult(res, self)
 
   def inject_input_recipes(self, led_result):
     """Sets the version of recipes used by led to correspond to the version
@@ -235,7 +224,6 @@ class LedApi(recipe_api.RecipeApi):
       bucket_name,
       builder_name,
       properties,
-      real_build=False,
   ):
     """Trigger a builder using led.
 
@@ -253,8 +241,6 @@ class LedApi(recipe_api.RecipeApi):
       * bucket_name - The bucket that configures the builder.
       * builder_name - Name of the builder to trigger.
       * properties - Dict with properties to pass to the triggered build.
-      * real_build - Bool flag indicates if led should trigger a real
-        Buildbucket build for the led job (rather than a raw swarming task).
     """
     property_args = []
     for k, v in sorted(properties.items()):
@@ -271,23 +257,11 @@ class LedApi(recipe_api.RecipeApi):
       builder_id = '{}/{}/{}'.format(project_name, bucket_name, builder_name)
       step_name = 'trigger {}'.format(builder_id)
       with self.m.step.nest(step_name) as builder_presentation:
-        if real_build:
-          led_job = self('get-builder', '-real-build', builder_id)
-          led_job = led_job.with_injected_input_recipes()
-          led_job = led_job.then('edit', *property_args)
-          result = led_job.then('launch', '-real-build').launch_result
-          builder_presentation.links['build'] = result.build_url
-
-        else:
-          led_builder_id = '{}/{}:{}'.format(project_name, bucket_name,
-                                             builder_name)
-          led_job = self('get-builder', led_builder_id)
-          led_job = led_job.with_injected_input_recipes()
-          led_job = led_job.then('edit', *property_args)
-          result = led_job.then('launch').launch_result
-
-          swarming_task_url = result.swarming_task_url
-          builder_presentation.links['swarming task'] = swarming_task_url
+        led_job = self('get-builder', builder_id)
+        led_job = led_job.with_injected_input_recipes()
+        led_job = led_job.then('edit', *property_args)
+        result = led_job.then('launch').launch_result
+        builder_presentation.links['build'] = result.build_url
 
   def _get_mock(self, cmd):
     """Returns a StepTestData for the given command."""
@@ -354,7 +328,7 @@ class LedApi(recipe_api.RecipeApi):
     return ret
 
 
-  def _run_command(self, previous, real_build, *cmd):
+  def _run_command(self, previous, *cmd):
     """Runs led with a given command and arguments.
 
     Args:
@@ -363,67 +337,29 @@ class LedApi(recipe_api.RecipeApi):
       * previous: The previous led step's json result, if any. This can be
         used to chain led commands together. See the tests for an example of
         this.
-      * real_build: Flag for if run led command with `-real-build` flag.
-        Only apply to `led get-build`, `led get-builder` and `led launch`.
 
     Ensures that led is checked out on disk before trying to execute the
     command.
 
     Returns
       * either a job.Definition or a LedLaunchData
-      * a bool indicating if the led command has real_build flag.
-        * If cmd doesn't have `-real-build` flag, this is the same as
-          real_build
-        * If cmd has `-real-build` flag, this is True.
     """
     is_launch = cmd[0] == 'launch'
-    real_build_flag = '-real-build'
-    if real_build_flag in cmd:
-      real_build = True
-    elif real_build:
-      if is_launch:
-        # led launch -real-build
-        cmd = cmd + (real_build_flag,)
-      elif cmd[0] == 'get-build' or cmd[0] == 'get-builder':
-        # led get-build -real-build <build_id>
-        cmd = cmd[:-1] + (real_build_flag, cmd[-1])
 
     if is_launch:
       kwargs = {
         'stdout': self.m.json.output(),
       }
       if self._test_data.enabled:
-        if not real_build:
-          # To allow easier test mocking with e.g. the swarming.collect step, we
-          # take the task_id as build.infra.swarming.task_id, if it's set, and
-          # otherwise use a fixed string.
-          #
-          # We considered hashing the payload to derived the task id, but some
-          # recipes re-launch the same led task multiple times. In that case
-          # they usually need to manually provide the task id anyway.
-          task_id = (
-              previous.buildbucket.bbagent_args.build.infra.swarming.task_id)
-          if not task_id:
-            task_id = 'fake-task-id'
-          kwargs['step_test_data'] = lambda: self.test_api.m.json.output_stream(
-              {
-                  'swarming': {
-                      'host_name': urlparse(
-                          self.m.swarming.current_server).netloc,
-                      'task_id': task_id,
-                  }
-              })
-        else:
-          build_id = previous.buildbucket.bbagent_args.build.id
-          if not build_id:
-            build_id = 87654321
-          kwargs['step_test_data'] = lambda: self.test_api.m.json.output_stream(
-              {
-                  'buildbucket': {
-                      'host_name': 'buildbucket.appspot.com',
-                      'build_id': build_id,
-                  }
-              })
+        build_id = previous.buildbucket.bbagent_args.build.id
+        if not build_id:
+          build_id = 87654321
+        kwargs['step_test_data'] = lambda: self.test_api.m.json.output_stream({
+            'buildbucket': {
+                'host_name': 'buildbucket.appspot.com',
+                'build_id': build_id,
+            }
+        })
     else:
       kwargs = {
         'stdout': self.m.proto.output(job.Definition, 'JSONPB'),
@@ -449,17 +385,12 @@ class LedApi(recipe_api.RecipeApi):
     if is_launch:
       # If we launched a task, add a link to the swarming task.
       retval = self.LedLaunchData(
-          swarming_hostname=result.stdout.get('swarming', {}).get('host_name'),
-          task_id=result.stdout.get('swarming', {}).get('task_id'),
           buildbucket_hostname=result.stdout.get('buildbucket',
                                                  {}).get('host_name'),
           build_id=result.stdout.get('buildbucket', {}).get('build_id'),
       )
-      if retval.swarming_task_url:
-        result.presentation.links['Swarming task'] = retval.swarming_task_url
-      else:
-        result.presentation.links['Build'] = retval.build_url
+      result.presentation.links['Build'] = retval.build_url
     else:
       retval = result.stdout
 
-    return retval, real_build
+    return retval

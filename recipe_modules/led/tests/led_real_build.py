@@ -49,53 +49,20 @@ def GenTests(api):
   def led_props(input_properties):
     return api.properties(**{'$recipe_engine/led': input_properties})
 
-  yield (
-      api.test('get-builder') +
-      api.properties(get_cmd=['get-builder', 'chromium/try:linux-rel']) +
-      led_props(InputProperties(shadowed_bucket='bucket')) +
-      api.post_process(
-          post_process.StepCommandContains, 'led get-builder',
-          ['led', 'get-builder', '-real-build', 'chromium/try:linux-rel']) +
-      api.post_process(
-          post_process.StepCommandContains, 'led launch',
-          ['led', 'launch', '-real-build']) +
-      api.post_process(post_process.DropExpectation)
-  )
+  yield (api.test('get-builder') +
+         api.properties(get_cmd=['get-builder', 'chromium/try:linux-rel']) +
+         led_props(InputProperties(shadowed_bucket='bucket')) +
+         api.post_process(post_process.StepCommandContains, 'led get-builder',
+                          ['led', 'get-builder', 'chromium/try:linux-rel']) +
+         api.post_process(post_process.StepCommandContains, 'led launch',
+                          ['led', 'launch']) +
+         api.post_process(post_process.DropExpectation))
 
-  yield (
-      api.test('get-builder w/ -real-build') +
-      api.properties(
-          get_cmd=['get-builder', '-real-build', 'chromium/try:linux-rel']) +
-      api.post_process(
-          post_process.StepCommandContains, 'led get-builder',
-          ['led', 'get-builder', '-real-build', 'chromium/try:linux-rel']) +
-      api.post_process(
-          post_process.StepCommandContains, 'led launch',
-          ['led', 'launch', '-real-build']) +
-      api.post_process(post_process.DropExpectation)
-  )
-
-  yield (
-      api.test('get-build') +
-      api.properties(get_cmd=['get-build', '87654321']) +
-      led_props(InputProperties(shadowed_bucket='bucket')) +
-      api.post_process(
-          post_process.StepCommandContains, 'led get-build',
-          ['led', 'get-build', '-real-build', '87654321']) +
-      api.post_process(
-          post_process.StepCommandContains, 'led launch',
-          ['led', 'launch', '-real-build']) +
-      api.post_process(post_process.DropExpectation)
-  )
-
-  yield (
-      api.test('get-build w/ -real-build') +
-      api.properties(get_cmd=['get-build', '-real-build', '87654321']) +
-      api.post_process(
-          post_process.StepCommandContains, 'led get-build',
-          ['led', 'get-build', '-real-build', '87654321']) +
-      api.post_process(
-          post_process.StepCommandContains, 'led launch',
-          ['led', 'launch', '-real-build']) +
-      api.post_process(post_process.DropExpectation)
-  )
+  yield (api.test('get-build') +
+         api.properties(get_cmd=['get-build', '87654321']) +
+         led_props(InputProperties(shadowed_bucket='bucket')) +
+         api.post_process(post_process.StepCommandContains, 'led get-build',
+                          ['led', 'get-build', '87654321']) +
+         api.post_process(post_process.StepCommandContains, 'led launch',
+                          ['led', 'launch']) +
+         api.post_process(post_process.DropExpectation))
