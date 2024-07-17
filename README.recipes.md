@@ -174,7 +174,6 @@
   * [nodejs:examples/full](#recipes-nodejs_examples_full)
   * [path:examples/full](#recipes-path_examples_full)
   * [path:tests/cast_to_path](#recipes-path_tests_cast_to_path)
-  * [path:tests/deprecated](#recipes-path_tests_deprecated)
   * [path:tests/dynamic_paths](#recipes-path_tests_dynamic_paths)
   * [path:tests/exists](#recipes-path_tests_exists)
   * [path:tests/test_api_legacy](#recipes-path_tests_test_api_legacy) &mdash; Test to cover legacy aspects of PathTestApi.
@@ -5704,12 +5703,6 @@ Tests for query_variants.
 
 
 &mdash; **def [RunSteps](/recipe_modules/path/tests/cast_to_path.py#14)(api):**
-### *recipes* / [path:tests/deprecated](/recipe_modules/path/tests/deprecated.py)
-
-[DEPS](/recipe_modules/path/tests/deprecated.py#7): [path](#recipe_modules-path), [step](#recipe_modules-step)
-
-
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/path/tests/deprecated.py#13)(api):**
 ### *recipes* / [path:tests/dynamic\_paths](/recipe_modules/path/tests/dynamic_paths.py)
 
 [DEPS](/recipe_modules/path/tests/dynamic_paths.py#8): [path](#recipe_modules-path)

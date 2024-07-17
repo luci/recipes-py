@@ -60,43 +60,6 @@ class PathTestApi(recipe_test_api.RecipeTestApi):
     assert all(isinstance(p, (Path, UnvalidatedPath)) for p in paths)
     return list(paths)
 
-  def __getitem__(self, name: NamedBasePathsType) -> Path:
-    """This gets a Path based on `name` for passing to the `exists`,
-    `files_exist` or `dirs_exist` methods on this test API.
-
-    DEPRECATED: Use the following @properties on this module instead:
-      * start_dir
-      * tmp_base_dir
-      * cache_dir
-      * cleanup_dir
-      * home_dir
-      * checkout_dir (but use of checkout_dir is generally discouraged - just
-      pass the Paths around instead of using this global variable).
-    """
-
-    self.m.warning.issue('PATH_GETITEM_DEPRECATED')
-
-    match name:
-      case 'cache':
-        return self.cache_dir
-      case 'cleanup':
-        return self.cleanup_dir
-      case 'home':
-        return self.home_dir
-      case 'start_dir':
-        return self.start_dir
-      case 'tmp_base':
-        return self.tmp_base_dir
-      case 'checkout':
-        return self.checkout_dir
-
-    # Avoid circular import.
-    from .api import PathApi  # pragma: no cover
-    if name not in PathApi.NamedBasePaths:  # pragma: no cover
-      raise ValueError(
-          f'Unknown base path {name!r} - allowed names are {PathApi.NamedBasePaths!r}'
-      )
-
   @property
   def start_dir(self) -> Path:
     return Path(ResolvedBasePath('[START_DIR]'))
