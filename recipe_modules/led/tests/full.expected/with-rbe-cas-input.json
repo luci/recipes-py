@@ -139,11 +139,11 @@
   {
     "cmd": [
       "led",
-      "edit",
-      "-rbh",
+      "edit-payload",
+      "-cas-ref",
       "examplehash/71"
     ],
-    "name": "led edit",
+    "name": "led edit-payload",
     "stdin": "{\n  \"buildbucket\": {\n    \"bbagent_args\": {\n      \"build\": {\n        \"builder\": {\n          \"bucket\": \"try\",\n          \"builder\": \"linux-rel\",\n          \"project\": \"chromium\"\n        },\n        \"input\": {\n          \"gerrit_changes\": [\n            {\n              \"change\": \"19\",\n              \"host\": \"fake.url\",\n              \"patchset\": \"2\",\n              \"project\": \"project/other\"\n            }\n          ]\n        }\n      }\n    }\n  }\n}",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@proto.output@{@@@",
@@ -200,7 +200,7 @@
       "-name",
       "foobar"
     ],
-    "name": "led edit (2)",
+    "name": "led edit",
     "stdin": "{\n  \"buildbucket\": {\n    \"bbagent_args\": {\n      \"build\": {\n        \"builder\": {\n          \"bucket\": \"try\",\n          \"builder\": \"linux-rel\",\n          \"project\": \"chromium\"\n        },\n        \"infra\": {\n          \"buildbucket\": {\n            \"agent\": {\n              \"input\": {\n                \"data\": {\n                  \"kitchen-checkout\": {\n                    \"cas\": {\n                      \"digest\": {\n                        \"hash\": \"examplehash\",\n                        \"size_bytes\": \"71\"\n                      }\n                    }\n                  }\n                }\n              },\n              \"purposes\": {\n                \"kitchen-checkout\": \"PURPOSE_EXE_PAYLOAD\"\n              }\n            }\n          }\n        },\n        \"input\": {\n          \"gerrit_changes\": [\n            {\n              \"change\": \"19\",\n              \"host\": \"fake.url\",\n              \"patchset\": \"2\",\n              \"project\": \"project/other\"\n            }\n          ]\n        }\n      }\n    }\n  }\n}",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@proto.output@{@@@",

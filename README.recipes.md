@@ -2539,19 +2539,19 @@ The main interface this module provides is a direct call to the led binary:
 
 See the led binary for full documentation of commands.
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/led/api.py#203)(self, \*cmd):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/led/api.py#201)(self, \*cmd):**
 
 Runs led with the given arguments. Wraps result in a `LedResult`.
 
-&emsp; **@property**<br>&mdash; **def [cipd\_input](/recipe_modules/led/api.py#186)(self):**
+&emsp; **@property**<br>&mdash; **def [cipd\_input](/recipe_modules/led/api.py#184)(self):**
 
 The versioned CIPD package containing the recipes code being run.
 
 If set, it will be an `InputProperties.CIPDInput` protobuf; otherwise None.
 
-&mdash; **def [initialize](/recipe_modules/led/api.py#142)(self):**
+&mdash; **def [initialize](/recipe_modules/led/api.py#140)(self):**
 
-&mdash; **def [inject\_input\_recipes](/recipe_modules/led/api.py#208)(self, led_result):**
+&mdash; **def [inject\_input\_recipes](/recipe_modules/led/api.py#206)(self, led_result):**
 
 Sets the version of recipes used by led to correspond to the version
 currently being used.
@@ -2563,36 +2563,36 @@ Args:
   * led_result: The `LedResult` whose job.Definition will be passed into the
     edit command.
 
-&emsp; **@property**<br>&mdash; **def [launched\_by\_led](/recipe_modules/led/api.py#163)(self):**
+&emsp; **@property**<br>&mdash; **def [launched\_by\_led](/recipe_modules/led/api.py#161)(self):**
 
 Whether the current build is a led job.
 
-&emsp; **@property**<br>&mdash; **def [led\_build](/recipe_modules/led/api.py#158)(self):**
+&emsp; **@property**<br>&mdash; **def [led\_build](/recipe_modules/led/api.py#156)(self):**
 
 Whether the current build is a led job as a real Buildbucket build.
 
-&emsp; **@property**<br>&mdash; **def [rbe\_cas\_input](/recipe_modules/led/api.py#177)(self):**
+&emsp; **@property**<br>&mdash; **def [rbe\_cas\_input](/recipe_modules/led/api.py#175)(self):**
 
 The location of the rbe-cas containing the recipes code being run.
 
 If set, it will be a `swarming.v1.CASReference` protobuf;
 otherwise, None.
 
-&emsp; **@property**<br>&mdash; **def [run\_id](/recipe_modules/led/api.py#168)(self):**
+&emsp; **@property**<br>&mdash; **def [run\_id](/recipe_modules/led/api.py#166)(self):**
 
 A unique string identifier for this led job, if it's a raw swarming task.
 
 If the current build is *not* a led job as raw swarming task, value will be
 an empty string.
 
-&emsp; **@property**<br>&mdash; **def [shadowed\_bucket](/recipe_modules/led/api.py#194)(self):**
+&emsp; **@property**<br>&mdash; **def [shadowed\_bucket](/recipe_modules/led/api.py#192)(self):**
 
 The bucket of the original build/builder the led build replicates from.
 
 If set, it will be an `InputProperties.ShadowedBucket` protobuf;
 otherwise None.
 
-&mdash; **def [trigger\_builder](/recipe_modules/led/api.py#221)(self, project_name, bucket_name, builder_name, properties):**
+&mdash; **def [trigger\_builder](/recipe_modules/led/api.py#219)(self, project_name, bucket_name, builder_name, properties):**
 
 Trigger a builder using led.
 
