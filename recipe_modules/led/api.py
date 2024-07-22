@@ -100,9 +100,11 @@ class LedApi(recipe_api.RecipeApi):
       """
       if self._module.rbe_cas_input:
         return self.then(
-            'edit-payload', '-cas-ref',
-            '%s/%s' % (self._module.rbe_cas_input.digest.hash,
-                       self._module.rbe_cas_input.digest.size_bytes))
+          'edit',
+          '-rbh',
+          '%s/%s' % (
+              self._module.rbe_cas_input.digest.hash,
+              self._module.rbe_cas_input.digest.size_bytes))
       if self._module.cipd_input:
         return self.then(
           'edit',

@@ -357,10 +357,10 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
         build.buildbucket.bbagent_args.build.input.properties[k] = val
 
     def _edit_input_recipes(build, cmd, _cwd):
-      payloads = cls.get_arg_values(cmd, 'cas-ref')
-      if payloads:
-        payload = payloads[-1]
-        digest, size_bytes = payload.split('/')
+      rbhs = cls.get_arg_values(cmd, 'rbh')
+      if rbhs:
+        rbh = rbhs[-1]
+        digest, size_bytes = rbh.split('/')
         _set_cas_user_payload(build, digest, int(size_bytes))
         return
 
@@ -435,38 +435,22 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
         bp.input.gerrit_changes.add().CopyFrom(gerrit_change)
 
     return [
-        cls._MockEditData(
-            _apply_properties,
-            cmd_filter=[
-                'edit',
-                Ellipsis,
-                re.compile(r"--?pa?(=.*)?"),
-            ]),
-        cls._MockEditData(
-            _edit_input_recipes,
-            cmd_filter=[
-                'edit',
-                Ellipsis,
-                re.compile(r"--?r(bh|pkg|ver)(=.*)?"),
-            ]),
-        cls._MockEditData(
-            _edit_name,
-            cmd_filter=[
-                'edit',
-                Ellipsis,
-                re.compile(r"--?name(=.*)?"),
-            ]),
-        cls._MockEditData(
-            _edit_recipe_bundle, cmd_filter=[
-                'edit-recipe-bundle',
-            ]),
-        cls._MockEditData(_edit_gerrit_cl, cmd_filter=[
-            'edit-cr-cl',
-        ]),
-        cls._MockEditData(_edit_gerrit_cl, cmd_filter=[
-            'edit-gerrit-cl',
-        ]),
-        cls._MockEditData(_edit_input_recipes, cmd_filter=[
-            'edit-payload',
-        ]),
+      cls._MockEditData(_apply_properties, cmd_filter=[
+        'edit', Ellipsis, re.compile(r"--?pa?(=.*)?"),
+      ]),
+      cls._MockEditData(_edit_input_recipes, cmd_filter=[
+        'edit', Ellipsis, re.compile(r"--?r(bh|pkg|ver)(=.*)?"),
+      ]),
+      cls._MockEditData(_edit_name, cmd_filter=[
+        'edit', Ellipsis, re.compile(r"--?name(=.*)?"),
+      ]),
+      cls._MockEditData(_edit_recipe_bundle, cmd_filter=[
+        'edit-recipe-bundle',
+      ]),
+      cls._MockEditData(_edit_gerrit_cl, cmd_filter=[
+        'edit-cr-cl',
+      ]),
+      cls._MockEditData(_edit_gerrit_cl, cmd_filter=[
+        'edit-gerrit-cl',
+      ]),
     ]
