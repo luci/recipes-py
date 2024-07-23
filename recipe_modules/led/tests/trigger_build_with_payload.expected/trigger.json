@@ -1,0 +1,171 @@
+[
+  {
+    "cmd": [],
+    "name": "trigger chromium/ci/Foo Tester",
+    "~followup_annotations": [
+      "@@@STEP_LINK@build@https://buildbucket.appspot.com/build/87654321@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "led",
+      "get-builder",
+      "chromium/ci/Foo Tester"
+    ],
+    "env": {
+      "SWARMING_TASK_ID": null
+    },
+    "name": "trigger chromium/ci/Foo Tester.led get-builder",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@proto.output@{@@@",
+      "@@@STEP_LOG_LINE@proto.output@  \"buildbucket\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@    \"bbagent_args\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@      \"build\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@        \"builder\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@          \"bucket\": \"ci\",@@@",
+      "@@@STEP_LOG_LINE@proto.output@          \"builder\": \"Foo Tester\",@@@",
+      "@@@STEP_LOG_LINE@proto.output@          \"project\": \"chromium\"@@@",
+      "@@@STEP_LOG_LINE@proto.output@        }@@@",
+      "@@@STEP_LOG_LINE@proto.output@      }@@@",
+      "@@@STEP_LOG_LINE@proto.output@    }@@@",
+      "@@@STEP_LOG_LINE@proto.output@  }@@@",
+      "@@@STEP_LOG_LINE@proto.output@}@@@",
+      "@@@STEP_LOG_END@proto.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "led",
+      "edit-payload",
+      "-cas-ref",
+      "examplehash/71"
+    ],
+    "env": {
+      "SWARMING_TASK_ID": null
+    },
+    "name": "trigger chromium/ci/Foo Tester.led edit-payload",
+    "stdin": "{\n  \"buildbucket\": {\n    \"bbagent_args\": {\n      \"build\": {\n        \"builder\": {\n          \"bucket\": \"ci\",\n          \"builder\": \"Foo Tester\",\n          \"project\": \"chromium\"\n        }\n      }\n    }\n  }\n}",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@proto.output@{@@@",
+      "@@@STEP_LOG_LINE@proto.output@  \"buildbucket\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@    \"bbagent_args\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@      \"build\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@        \"builder\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@          \"bucket\": \"ci\",@@@",
+      "@@@STEP_LOG_LINE@proto.output@          \"builder\": \"Foo Tester\",@@@",
+      "@@@STEP_LOG_LINE@proto.output@          \"project\": \"chromium\"@@@",
+      "@@@STEP_LOG_LINE@proto.output@        },@@@",
+      "@@@STEP_LOG_LINE@proto.output@        \"infra\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@          \"buildbucket\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@            \"agent\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@              \"input\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@                \"data\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@                  \"kitchen-checkout\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@                    \"cas\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@                      \"digest\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@                        \"hash\": \"examplehash\",@@@",
+      "@@@STEP_LOG_LINE@proto.output@                        \"size_bytes\": \"71\"@@@",
+      "@@@STEP_LOG_LINE@proto.output@                      }@@@",
+      "@@@STEP_LOG_LINE@proto.output@                    }@@@",
+      "@@@STEP_LOG_LINE@proto.output@                  }@@@",
+      "@@@STEP_LOG_LINE@proto.output@                }@@@",
+      "@@@STEP_LOG_LINE@proto.output@              },@@@",
+      "@@@STEP_LOG_LINE@proto.output@              \"purposes\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@                \"kitchen-checkout\": \"PURPOSE_EXE_PAYLOAD\"@@@",
+      "@@@STEP_LOG_LINE@proto.output@              }@@@",
+      "@@@STEP_LOG_LINE@proto.output@            }@@@",
+      "@@@STEP_LOG_LINE@proto.output@          }@@@",
+      "@@@STEP_LOG_LINE@proto.output@        }@@@",
+      "@@@STEP_LOG_LINE@proto.output@      }@@@",
+      "@@@STEP_LOG_LINE@proto.output@    }@@@",
+      "@@@STEP_LOG_LINE@proto.output@  }@@@",
+      "@@@STEP_LOG_LINE@proto.output@}@@@",
+      "@@@STEP_LOG_END@proto.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "led",
+      "edit",
+      "-p",
+      "swarm_hashes={\"bar\": \"deadbeef\"}"
+    ],
+    "env": {
+      "SWARMING_TASK_ID": null
+    },
+    "name": "trigger chromium/ci/Foo Tester.led edit",
+    "stdin": "{\n  \"buildbucket\": {\n    \"bbagent_args\": {\n      \"build\": {\n        \"builder\": {\n          \"bucket\": \"ci\",\n          \"builder\": \"Foo Tester\",\n          \"project\": \"chromium\"\n        },\n        \"infra\": {\n          \"buildbucket\": {\n            \"agent\": {\n              \"input\": {\n                \"data\": {\n                  \"kitchen-checkout\": {\n                    \"cas\": {\n                      \"digest\": {\n                        \"hash\": \"examplehash\",\n                        \"size_bytes\": \"71\"\n                      }\n                    }\n                  }\n                }\n              },\n              \"purposes\": {\n                \"kitchen-checkout\": \"PURPOSE_EXE_PAYLOAD\"\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@proto.output@{@@@",
+      "@@@STEP_LOG_LINE@proto.output@  \"buildbucket\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@    \"bbagent_args\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@      \"build\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@        \"builder\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@          \"bucket\": \"ci\",@@@",
+      "@@@STEP_LOG_LINE@proto.output@          \"builder\": \"Foo Tester\",@@@",
+      "@@@STEP_LOG_LINE@proto.output@          \"project\": \"chromium\"@@@",
+      "@@@STEP_LOG_LINE@proto.output@        },@@@",
+      "@@@STEP_LOG_LINE@proto.output@        \"infra\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@          \"buildbucket\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@            \"agent\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@              \"input\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@                \"data\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@                  \"kitchen-checkout\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@                    \"cas\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@                      \"digest\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@                        \"hash\": \"examplehash\",@@@",
+      "@@@STEP_LOG_LINE@proto.output@                        \"size_bytes\": \"71\"@@@",
+      "@@@STEP_LOG_LINE@proto.output@                      }@@@",
+      "@@@STEP_LOG_LINE@proto.output@                    }@@@",
+      "@@@STEP_LOG_LINE@proto.output@                  }@@@",
+      "@@@STEP_LOG_LINE@proto.output@                }@@@",
+      "@@@STEP_LOG_LINE@proto.output@              },@@@",
+      "@@@STEP_LOG_LINE@proto.output@              \"purposes\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@                \"kitchen-checkout\": \"PURPOSE_EXE_PAYLOAD\"@@@",
+      "@@@STEP_LOG_LINE@proto.output@              }@@@",
+      "@@@STEP_LOG_LINE@proto.output@            }@@@",
+      "@@@STEP_LOG_LINE@proto.output@          }@@@",
+      "@@@STEP_LOG_LINE@proto.output@        },@@@",
+      "@@@STEP_LOG_LINE@proto.output@        \"input\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@          \"properties\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@            \"swarm_hashes\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@              \"bar\": \"deadbeef\"@@@",
+      "@@@STEP_LOG_LINE@proto.output@            }@@@",
+      "@@@STEP_LOG_LINE@proto.output@          }@@@",
+      "@@@STEP_LOG_LINE@proto.output@        }@@@",
+      "@@@STEP_LOG_LINE@proto.output@      }@@@",
+      "@@@STEP_LOG_LINE@proto.output@    }@@@",
+      "@@@STEP_LOG_LINE@proto.output@  }@@@",
+      "@@@STEP_LOG_LINE@proto.output@}@@@",
+      "@@@STEP_LOG_END@proto.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "led",
+      "launch"
+    ],
+    "env": {
+      "SWARMING_TASK_ID": null
+    },
+    "name": "trigger chromium/ci/Foo Tester.led launch",
+    "stdin": "{\n  \"buildbucket\": {\n    \"bbagent_args\": {\n      \"build\": {\n        \"builder\": {\n          \"bucket\": \"ci\",\n          \"builder\": \"Foo Tester\",\n          \"project\": \"chromium\"\n        },\n        \"infra\": {\n          \"buildbucket\": {\n            \"agent\": {\n              \"input\": {\n                \"data\": {\n                  \"kitchen-checkout\": {\n                    \"cas\": {\n                      \"digest\": {\n                        \"hash\": \"examplehash\",\n                        \"size_bytes\": \"71\"\n                      }\n                    }\n                  }\n                }\n              },\n              \"purposes\": {\n                \"kitchen-checkout\": \"PURPOSE_EXE_PAYLOAD\"\n              }\n            }\n          }\n        },\n        \"input\": {\n          \"properties\": {\n            \"swarm_hashes\": {\n              \"bar\": \"deadbeef\"\n            }\n          }\n        }\n      }\n    }\n  }\n}",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"buildbucket\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"build_id\": 87654321,@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"host_name\": \"buildbucket.appspot.com\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@Build@https://buildbucket.appspot.com/build/87654321@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]

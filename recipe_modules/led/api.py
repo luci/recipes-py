@@ -89,22 +89,29 @@ class LedApi(recipe_api.RecipeApi):
                 if cas:
                   return "%s/%d" % (cas.digest.hash, cas.digest.size_bytes)
 
-    def with_injected_input_recipes(self):
+    def with_injected_input_recipes(self, use_payload=False):
       """Sets the version of recipes used by led to correspond to the version
       currently being used.
 
       If neither the `rbe_cas_input` nor the `cipd_input` property is set,
       this is a no-op.
 
+      Args:
+      * use_payload - Use edit-payload or edit -rbh to update cas input.
+
       Returns another LedResult object with the output of the command.
       """
       if self._module.rbe_cas_input:
-        return self.then(
-          'edit',
-          '-rbh',
-          '%s/%s' % (
-              self._module.rbe_cas_input.digest.hash,
-              self._module.rbe_cas_input.digest.size_bytes))
+        if use_payload:
+          return self.then(
+              'edit-payload', '-cas-ref',
+              '%s/%s' % (self._module.rbe_cas_input.digest.hash,
+                         self._module.rbe_cas_input.digest.size_bytes))
+        else:
+          return self.then(
+              'edit', '-rbh',
+              '%s/%s' % (self._module.rbe_cas_input.digest.hash,
+                         self._module.rbe_cas_input.digest.size_bytes))
       if self._module.cipd_input:
         return self.then(
           'edit',
@@ -224,6 +231,7 @@ class LedApi(recipe_api.RecipeApi):
       bucket_name,
       builder_name,
       properties,
+      use_payload=False,
   ):
     """Trigger a builder using led.
 
@@ -241,6 +249,7 @@ class LedApi(recipe_api.RecipeApi):
       * bucket_name - The bucket that configures the builder.
       * builder_name - Name of the builder to trigger.
       * properties - Dict with properties to pass to the triggered build.
+      * use_payload - Use edit-payload or edit -rbh to update cas input.
     """
     property_args = []
     for k, v in sorted(properties.items()):
@@ -258,7 +267,7 @@ class LedApi(recipe_api.RecipeApi):
       step_name = 'trigger {}'.format(builder_id)
       with self.m.step.nest(step_name) as builder_presentation:
         led_job = self('get-builder', builder_id)
-        led_job = led_job.with_injected_input_recipes()
+        led_job = led_job.with_injected_input_recipes(use_payload=use_payload)
         led_job = led_job.then('edit', *property_args)
         result = led_job.then('launch').launch_result
         builder_presentation.links['build'] = result.build_url
