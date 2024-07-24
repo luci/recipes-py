@@ -167,6 +167,7 @@
   * [luci_analysis:tests/query_failure_rate_test](#recipes-luci_analysis_tests_query_failure_rate_test) &mdash; Tests for query_failure_rate.
   * [luci_analysis:tests/query_stability_test](#recipes-luci_analysis_tests_query_stability_test) &mdash; Tests for query_stability.
   * [luci_analysis:tests/test_generate_analysis](#recipes-luci_analysis_tests_test_generate_analysis) &mdash; Tests for generate_analysis.
+  * [luci_analysis:tests/test_generate_stability_response](#recipes-luci_analysis_tests_test_generate_stability_response) &mdash; Tests for generate_stability_response.
   * [luci_analysis:tests/test_history_query](#recipes-luci_analysis_tests_test_history_query) &mdash; Tests for query_failure_rate.
   * [luci_analysis:tests/test_lookup_bug](#recipes-luci_analysis_tests_test_lookup_bug) &mdash; Tests for lookup_bug.
   * [luci_analysis:tests/test_query_cluster_failures](#recipes-luci_analysis_tests_test_query_cluster_failures) &mdash; Tests for query_cluster_failres.
@@ -5655,6 +5656,14 @@ Tests for query_stability.
 Tests for generate_analysis.
 
 &mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/test_generate_analysis.py#15)(api):**
+### *recipes* / [luci\_analysis:tests/test\_generate\_stability\_response](/recipe_modules/luci_analysis/tests/test_generate_stability_response.py)
+
+[DEPS](/recipe_modules/luci_analysis/tests/test_generate_stability_response.py#7): [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+
+
+Tests for generate_stability_response.
+
+&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/test_generate_stability_response.py#15)(api):**
 ### *recipes* / [luci\_analysis:tests/test\_history\_query](/recipe_modules/luci_analysis/tests/test_history_query.py)
 
 [DEPS](/recipe_modules/luci_analysis/tests/test_history_query.py#13): [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)

@@ -75,6 +75,46 @@ class LuciAnalysisTestApi(recipe_test_api.RecipeTestApi):
     """
     return {analysis['testId']: analysis for analysis in analysis_list}
 
+  def generate_stability_analysis(
+      self,
+      test_id,
+      failure_rate_is_met=False,
+      flake_rate_is_met=False,
+      run_flaky_verdicts_1wd=0,
+      run_flaky_verdicts_12h=0,
+  ):
+    analysis = self.query_stability_example_analysis()
+    analysis['testId'] = test_id
+    analysis['failureRate']['isMet'] = failure_rate_is_met
+    analysis['flakeRate']['isMet'] = flake_rate_is_met
+    analysis['flakeRate']['runFlakyVerdicts1wd'] = run_flaky_verdicts_1wd
+    analysis['flakeRate']['runFlakyVerdicts12h'] = run_flaky_verdicts_12h
+
+    return analysis
+
+  def generate_stability_response(self, stability_list):
+    """Returns a fake luci.analysis.v1.TestVariants.QueryStabilityResponse
+
+    stability_list: List of stability dicts created from
+                    generate_stability_analysis()
+
+    Returns: Dict
+    """
+    return {
+        "testVariants": stability_list,
+        "criteria": {
+            "failureRate": {
+                "failureThreshold": 6,
+                "consecutiveFailureThreshold": 3
+            },
+            "flakeRate": {
+                "minWindow": 100,
+                "flakeThreshold": 2,
+                "flakeRateThreshold": 0.01
+            }
+        }
+    }
+
   def query_test_history(self,
                          response,
                          test_id,
@@ -215,59 +255,65 @@ class LuciAnalysisTestApi(recipe_test_api.RecipeTestApi):
     }]
 
   @staticmethod
+  def query_stability_example_analysis():
+    return {
+        "testId": "tast.lockscreen.CloseLid.fieldtrial_testing_config_on",
+        "variant": {
+            "def": {
+                "board": "hana",
+                "build_target": "hana"
+            }
+        },
+        "failureRate": {
+            "isMet":
+                True,
+            "unexpectedTestRuns":
+                10,
+            "consecutiveUnexpectedTestRuns":
+                10,
+            "recentVerdicts": [{
+                "position": "93211",
+                "invocations": ["build-8759159713660408161"],
+                "unexpectedRuns": 2,
+                "totalRuns": 2
+            }, {
+                "position": "93210",
+                "invocations": ["build-8759161637520826273"],
+                "unexpectedRuns": 2,
+                "totalRuns": 2
+            }, {
+                "position": "93208",
+                "invocations": ["build-8759165807629055393"],
+                "unexpectedRuns": 2,
+                "totalRuns": 2
+            }, {
+                "position": "93207",
+                "invocations": ["build-8759167441766272785"],
+                "unexpectedRuns": 2,
+                "totalRuns": 2
+            }, {
+                "position": "93206",
+                "invocations": ["build-8759169052502629345"],
+                "unexpectedRuns": 2,
+                "totalRuns": 2
+            }]
+        },
+        "flakeRate": {
+            "isMet": True,
+            "totalVerdicts": 134,
+            "startPosition": "93206",
+            "endPosition": "93552",
+            "runFlakyVerdicts1wd": 3,
+            "runFlakyVerdicts12h": 1
+        }
+    }
+
+  @staticmethod
   def query_stability_example_output():
     return {
-        "testVariants": [{
-            "testId": "tast.lockscreen.CloseLid.fieldtrial_testing_config_on",
-            "variant": {
-                "def": {
-                    "board": "hana",
-                    "build_target": "hana"
-                }
-            },
-            "failureRate": {
-                "isMet":
-                    True,
-                "unexpectedTestRuns":
-                    10,
-                "consecutiveUnexpectedTestRuns":
-                    10,
-                "recentVerdicts": [{
-                    "position": "93211",
-                    "invocations": ["build-8759159713660408161"],
-                    "unexpectedRuns": 2,
-                    "totalRuns": 2
-                }, {
-                    "position": "93210",
-                    "invocations": ["build-8759161637520826273"],
-                    "unexpectedRuns": 2,
-                    "totalRuns": 2
-                }, {
-                    "position": "93208",
-                    "invocations": ["build-8759165807629055393"],
-                    "unexpectedRuns": 2,
-                    "totalRuns": 2
-                }, {
-                    "position": "93207",
-                    "invocations": ["build-8759167441766272785"],
-                    "unexpectedRuns": 2,
-                    "totalRuns": 2
-                }, {
-                    "position": "93206",
-                    "invocations": ["build-8759169052502629345"],
-                    "unexpectedRuns": 2,
-                    "totalRuns": 2
-                }]
-            },
-            "flakeRate": {
-                "isMet": True,
-                "totalVerdicts": 134,
-                "startPosition": "93206",
-                "endPosition": "93552",
-                "runFlakyVerdicts1wd": 3,
-                "runFlakyVerdicts12h": 1
-            }
-        }],
+        "testVariants": [
+            LuciAnalysisTestApi.query_stability_example_analysis()
+        ],
         "criteria": {
             "failureRate": {
                 "failureThreshold": 6,
