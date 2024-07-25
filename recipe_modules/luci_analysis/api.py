@@ -114,6 +114,14 @@ class LuciAnalysisApi(recipe_api.RecipeApi):
           for d in failure_analysis_dicts
       ]
 
+  def _query_stability_step_test_data(self, test_ids):
+    stability_analyses = [
+        self.test_api.generate_stability_analysis(test_id)
+        for test_id in test_ids
+    ]
+    return self.m.json.test_api.output_stream(
+        self.test_api.generate_stability_response(stability_analyses))
+
   def query_stability(self, test_variant_position_list, project='chromium'):
     """Queries LUCI Analysis for test stability.
 
@@ -134,6 +142,8 @@ class LuciAnalysisApi(recipe_api.RecipeApi):
               'project': project,
               'testVariants': test_variant_position_list,
           },
+          step_test_data=lambda: self._query_stability_step_test_data(
+              [t['testId'] for t in test_variant_position_list]),
       )
       # This is not likely to happen, although invalid request may result in a
       # StepFailure directly raised from the above step.
