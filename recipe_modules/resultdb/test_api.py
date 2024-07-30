@@ -46,7 +46,22 @@ class ResultDBTestApi(recipe_test_api.RecipeTestApi):
 
     return self._proto_step_result(inv, step_name)
 
-  def query_test_result_statistics(self, res,
+  def get_invocation_instructions(self,
+                                  instructions,
+                                  step_name='get_invocation_instructions'):
+    """Emulates get_invocation_instructions() step output.
+
+    Args:
+        invs (instruction_pb2.Instructions): Instructions of the invocation to
+          simulate.
+        step_name (str): the name of the step to simulate.
+    """
+    inv = invocation_pb2.Invocation(instructions=instructions)
+
+    return self._proto_step_result(inv, step_name)
+
+  def query_test_result_statistics(self,
+                                   res,
                                    step_name='query_test_result_statistics'):
     """Emulates query_test_result_statistics() return value.
 

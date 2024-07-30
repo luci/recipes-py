@@ -124,6 +124,31 @@ class ResultDBAPI(recipe_api.RecipeApi):
         res, invocation_pb2.Invocation(), ignore_unknown_fields=True)
     return inv_msg.included_invocations or []
 
+  def get_invocation_instructions(self, inv_name=None, step_name=None):
+    """Returns instructions from the input invocation.
+
+    Args:
+      inv_name (str): the name of the input invocation. If input is None, will
+          use current invocation.
+      step_name (str): name of the step.
+
+    Returns:
+      instruction_pb2.Instructions of the invocation requested.
+    """
+    req = resultdb.GetInvocationRequest(
+        name=inv_name or self.current_invocation)
+    res = self._rpc(
+        step_name or 'get_invocation_instructions',
+        'luci.resultdb.v1.ResultDB',
+        'GetInvocation',
+        json_format.MessageToDict(req),
+        include_update_token=True,
+        step_test_data=lambda: self.m.json.test_api.output_stream({}))
+
+    inv_msg = json_format.ParseDict(
+        res, invocation_pb2.Invocation(), ignore_unknown_fields=True)
+    return inv_msg.instructions
+
   def exonerate(self, test_exonerations, step_name=None):
     """Exonerates test variants in the current invocation.
 
