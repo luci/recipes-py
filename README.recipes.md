@@ -4490,7 +4490,7 @@ Allows mockable access to the current time.
 
 #### **class [TimeApi](/recipe_modules/time/api.py#87)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
 
-&mdash; **def [exponential\_retry](/recipe_modules/time/api.py#119)(self, retries, delay, condition=None):**
+&mdash; **def [exponential\_retry](/recipe_modules/time/api.py#122)(self, retries, delay, condition=None):**
 
 Adds exponential retry to a function.
 
@@ -4562,7 +4562,7 @@ def RunSteps(api):
   helper_funciton(api)
 ```
 
-&mdash; **def [ms\_since\_epoch](/recipe_modules/time/api.py#196)(self):**
+&mdash; **def [ms\_since\_epoch](/recipe_modules/time/api.py#199)(self):**
 
 Returns current timestamp as an int number of milliseconds since epoch.
     
@@ -4574,17 +4574,20 @@ Suspend execution of |secs| (float) seconds, waiting for GLOBAL_SHUTDOWN.
 
 Args:
   * secs (number) - The number of seconds to sleep.
-  * with_step (bool|None) - If True (or None and secs>60), emits a step to
-    indicate to users that the recipe is sleeping (not just hanging). False
-    suppresses this.
+  * with_step (bool|None) - If True, emits a step to indicate to users that
+    the recipe is sleeping (not just hanging). If None, then will default to
+    True if sleeping for a long time (>60sec); this can be disabled by
+    setting explicitly to None. If the GLOBAL_SHUTDOWN event has already
+    occurred, then a step will always be emitted in order to force raising
+    an exception.
   * step_result (step_data.StepData|None) - Result of running a step. Should
     be None if with_step is True or None.
 
-&mdash; **def [time](/recipe_modules/time/api.py#188)(self):**
+&mdash; **def [time](/recipe_modules/time/api.py#191)(self):**
 
 Returns current timestamp as a float number of seconds since epoch.
 
-&mdash; **def [timeout](/recipe_modules/time/api.py#218)(self, seconds: ((float | int) | datetime.timedelta)=None):**
+&mdash; **def [timeout](/recipe_modules/time/api.py#221)(self, seconds: ((float | int) | datetime.timedelta)=None):**
 
 Provides a context that times out after the given time.
 
@@ -4595,7 +4598,7 @@ with api.time.timeout(datetime.timedelta(minutes=5)):
 Look at the "deadline" section of https://chromium.googlesource.com/infra/luci/luci-py/+/HEAD/client/LUCI_CONTEXT.md
 to see how this works.
 
-&mdash; **def [utcnow](/recipe_modules/time/api.py#201)(self):**
+&mdash; **def [utcnow](/recipe_modules/time/api.py#204)(self):**
 
 Returns current UTC time as a datetime.datetime.
 ### *recipe_modules* / [tricium](/recipe_modules/tricium)

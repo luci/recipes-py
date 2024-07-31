@@ -99,14 +99,17 @@ class TimeApi(recipe_api.RecipeApi):
 
     Args:
       * secs (number) - The number of seconds to sleep.
-      * with_step (bool|None) - If True (or None and secs>60), emits a step to
-        indicate to users that the recipe is sleeping (not just hanging). False
-        suppresses this.
+      * with_step (bool|None) - If True, emits a step to indicate to users that
+        the recipe is sleeping (not just hanging). If None, then will default to
+        True if sleeping for a long time (>60sec); this can be disabled by
+        setting explicitly to None. If the GLOBAL_SHUTDOWN event has already
+        occurred, then a step will always be emitted in order to force raising
+        an exception.
       * step_result (step_data.StepData|None) - Result of running a step. Should
         be None if with_step is True or None.
     """
-    if with_step is True or (
-        with_step is None and secs > 60): # pragma: no cover
+    if with_step is True or GLOBAL_SHUTDOWN.ready() or (
+        with_step is None and secs > 60):  # pragma: no cover
       assert step_result is None, (
           'do not specify step_result if you want sleep to emit a new step')
       step_result = self.m.step.empty('sleep %d' % (secs,))
