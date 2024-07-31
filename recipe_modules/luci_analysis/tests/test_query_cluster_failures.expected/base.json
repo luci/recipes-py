@@ -7,7 +7,7 @@
     "cmd": [
       "prpc",
       "call",
-      "luci-analysis.appspot.com",
+      "analysis.api.luci.app",
       "luci.analysis.v1.Clusters.QueryClusterFailures"
     ],
     "name": "nest_parent.Query Cluster Failure projects/chromium/clusters/rules/00000000000000000000ffffffffffff",
