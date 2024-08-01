@@ -656,25 +656,6 @@ def PropertiesDoNotContain(check, step_odict, key):
   check(key not in build_properties)
 
 
-@attach_recipe_warning('POST_PROCESS_STATUSCODEIN_DEPRECATED')
-def StatusCodeIn(check, step_odict, *codes):
-  """Assert that recipe result status code is within expected codes.
-
-  DEPRECATED: Use StatusSuccess or StatusFailure instead.
-
-  Args:
-    codes (list): list of expected status codes (int).
-  """
-  check(len(codes) == 1)
-  code = codes[0]
-
-  check(code in (0, 1, 2))
-  if code == 0:
-    StatusSuccess(check, step_odict)
-  else:
-    StatusAnyFailure(check, step_odict)
-
-
 def StatusSuccess(check, step_odict):
   """Assert that the recipe finished successfully."""
   failure = step_odict['$result'].get('failure')
@@ -705,31 +686,6 @@ def StatusException(check, step_odict):
   check('recipe had infra failure (found non-infra failure instead)',
         'failure' not in result['failure'])
 
-
-@attach_recipe_warning('POST_PROCESS_RESULTREASON_DEPRECATED')
-def ResultReason(check, step_odict, reason):
-  """Assert that recipe result reason matches given reason.
-
-  DEPRECATED: Please use StatusAnyFailure + SummaryMarkdown instead.
-
-  Args:
-    reason (str): the string to match.
-  """
-  StatusAnyFailure(check, step_odict)
-  SummaryMarkdown(check, step_odict, reason)
-
-
-@attach_recipe_warning('POST_PROCESS_RESULTREASON_DEPRECATED')
-def ResultReasonRE(check, step_odict, reason_regex):
-  """Assert that recipe result reason contains given regex.
-
-  DEPRECATED: Please use StatusAnyFailure + SummaryMarkdownRE instead.
-
-  Args:
-    reason_regex (str): the regular expression to match.
-  """
-  StatusAnyFailure(check, step_odict)
-  SummaryMarkdownRE(check, step_odict, reason_regex)
 
 def SummaryMarkdown(check, step_odict, summary):
   """Assert that recipe output summary is the same as the given summary.
