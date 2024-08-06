@@ -46,6 +46,8 @@ service TestVariantBranches {
     QueryTestVariantBranchResponse) {};
   // Lists commits and the test verdicts at these commits, starting from a source position.
   rpc QuerySourcePositions(QuerySourcePositionsRequest) returns (QuerySourcePositionsResponse) {};
+  // Lists source verdicts for a test variant branch.
+  rpc QuerySourceVerdicts(QuerySourceVerdictsRequest) returns (QuerySourceVerdictsResponse) {};
   // Query for AI analysis of the possible culprits of a test changepoint.
   // Note: to use this RPC, you must be a member of the group `googlers`.
   rpc QueryChangepointAIAnalysis(QueryChangepointAIAnalysisRequest) returns (QueryChangepointAIAnalysisResponse) {};
@@ -288,6 +290,8 @@ message TestVariantBranch {
 // information about the changepoint which started it.
 // Same structure with bigquery proto here, but make a separate copy to allow it to evolve over time.
 // https://source.chromium.org/chromium/infra/infra/+/main:go/src/go.chromium.org/luci/analysis/proto/bq/test_variant_branch_row.proto;l=80
+//
+// Next ID: 10.
 message Segment {
   // If set, means the segment commenced with a changepoint.
   // If unset, means the segment began with the beginning of recorded
@@ -314,9 +318,42 @@ message Segment {
   // confidence interval. Inclusive.
   // Only set if has_start_changepoint is set.
   // When has_start_changepoint is set, the following invariant holds:
-  // previous_segment.start_position <= start_position_lower_bound_99th <= start_position <= start_position_upper_bound_99th
+  // previous_segment.start_position <= start_position_lower_bound_99th <= start_position_upper_bound_99th <= end_position
   // where previous_segment refers to the chronologically previous segment.
   int64 start_position_upper_bound_99th = 4;
+
+  message PositionDistribution {
+    // Changepoint position cumulative distribution function (CDF) probability
+    // values at which the distribution is characterised. These are values
+    // between 0.0 and 1.0.
+    //
+    // This distribution is guaranteed to have points sufficient to allow
+    // exact extraction of 99.9%, 99%, 95%, 90%, 80%, 70%, 60%, 50% two-tailed
+    // confidence intervals, and the distribution median (CDF = 0.5).
+    //
+    // Usage: to estimate the 99% confidence interval (two-tail), find the
+    // index of the cdf equal to 0.005 (i.e. (1-CI)/2) and the index of the
+    // cdf equal to or greater than 0.995 (i.e. 1-((1-CI)/2)).
+    // Then lookup the corresponding source positions in source_positions.
+    //
+    // This array is sorted in ascending order.
+    repeated double cdfs = 1;
+    // The source positions corresponding to each of the above cdf values.
+    // I.E. source_positions[i] corresponds to cfs[i].
+    //
+    // The probability of a changepoint occuring at or before source_positions[i]
+    // is at least cdfs[i].
+    //
+    // Invariant: length(source_positions) == len(cdfs).
+    //
+    // Because cdfs is in ascending order, this array is also in ascending
+    // order.
+    repeated int64 source_positions = 2;
+  }
+
+  // The starting changepoint position distribution. Only available for new
+  // changepoints detected from ~July 2024 onwards.
+  PositionDistribution start_position_distribution = 9;
 
   // The earliest hour a test run at the indicated start_position
   // was recorded. Gives an approximate upper bound on the timestamp the
@@ -349,14 +386,65 @@ message Segment {
   //
   // Statistics for test results and test runs can be added here when needed.
   message Counts {
+    // The number of unexpected non-skipped test results.
+    int32 unexpected_results = 1;
+
+    // The total number of non-skipped test results.
+    int32 total_results = 2;
+
+    // The number of expected passed test results.
+    int32 expected_passed_results = 3;
+
+    // The number of expected failed test results.
+    int32 expected_failed_results = 4;
+
+    // The number of expected crashed test results.
+    int32 expected_crashed_results = 5;
+
+    // The number of expected aborted test results.
+    int32 expected_aborted_results = 6;
+
+    // The number of unexpected passed test results.
+    int32 unexpected_passed_results = 7;
+
+    // The number of unexpected failed test results.
+    int32 unexpected_failed_results = 8;
+
+    // The number of unexpected crashed test results.
+    int32 unexpected_crashed_results = 9;
+
+    // The number of unexpected aborted test results.
+    int32 unexpected_aborted_results = 10;
+
+    // The number of test runs which had an unexpected test result but were
+    // not retried.
+    int32 unexpected_unretried_runs = 11;
+
+    // The number of test run which had an unexpected test result, were
+    // retried, and still contained only unexpected test results.
+    int32 unexpected_after_retry_runs = 12;
+
+    // The number of test runs which had an unexpected test result, were
+    // retried, and eventually recorded an expected test result.
+    int32 flaky_runs = 13;
+
+    // The total number of test runs.
+    int32 total_runs = 14;
+
     // The number of source verdicts with only unexpected test results.
-    int32 unexpected_verdicts = 1;
+    // A source verdict refers to all test results at a commit position.
+    int32 unexpected_verdicts = 15;
 
     // The number of source verdicts with a mix of expected and unexpected test results.
-    int32 flaky_verdicts = 2;
+    // A source verdict refers to all test results at a commit position.
+    // As such, is a signal of either in- or cross- build flakiness.
+    int32 flaky_verdicts = 16;
 
     // The total number of source verdicts.
-    int32 total_verdicts = 3;
+    // A source verdict refers to all test results at a commit position.
+    // As such, this is also the total number of source positions with
+    // test results in the segment.
+    int32 total_verdicts = 17;
   }
 
   // Total number of test results/runs/verdicts in the segment.
@@ -394,6 +482,81 @@ message QuerySourcePositionsResponse {
   repeated SourcePosition source_positions = 1;
   // A page token for next QuerySourcePositionsRequest to fetch the next page of commits.
   string next_page_token = 2;
+}
+
+message QuerySourceVerdictsRequest {
+  // The name of the test variant branch to query.
+  // It MUST be of the form projects/{PROJECT}/tests/{URL_ESCAPED_TEST_ID}/variants/{VARIANT_HASH}/refs/{REF_HASH}
+  // where:
+  // PROJECT is the LUCI Project of the test variant branch analysis.
+  // URL_ESCAPED_TEST_ID is the test ID, escaped with
+  // https://golang.org/pkg/net/url/#PathEscape. See also https://aip.dev/122.
+  // VARIANT_HASH is the variant hash of the test variant analysis (16 lower-case-character hex string).
+  // REF_HASH is the identity of the branch of the analysis. It is a 16 lower-case-character hex string.
+  string parent = 1;
+  // The source position to start querying from, inclusive. This is the maximum source
+  // position to be returned in the response.
+  //
+  // Note: The start is the maximum source position (not the minimum) as this RPC
+  // is designed for UIs that paginate backwards through source history.
+  int64 start_source_position = 2;
+  // The source position to stop querying at, exclusive. This is an exclusive lower
+  // bound on the source positions returned in the response. As this is a lower bound,
+  // it is required that end_source_position < start_source_position.
+  //
+  // In addition, no more than 1,000 source positions may be requested in one call,
+  // i.e. start_source_position - end_source_position <= 1,000.
+  int64 end_source_position = 3;
+}
+
+message QuerySourceVerdictsResponse {
+  // VerdictStatus represents the status of a verdict as it is
+  // seen by changepoint analysis. Changepoint analysis does not consider skipped
+  // test results or exonerations.
+  enum VerdictStatus {
+    VERDICT_EXPECTATION_STATUS_UNSPECIFIED = 0;
+    // The verdict (excluding skips) has only unexpected results.
+    UNEXPECTED = 1;
+    // The verdict (excluding skips) has only expected results.
+    EXPECTED = 2;
+    // The verdict (excluding skips) has a mix of expected and unexpected results.
+    FLAKY = 3;
+    // The verdict has only skips, and as such was not used in change
+    // point analysis.
+    SKIPPED = 4;
+  }
+  // Test verdict is the aggregation of test results of a test variant in an invocation.
+  message TestVerdict {
+    // The ID of the top-level invocation that the test verdict belongs to.
+    string invocation_id = 1;
+    // The partition time of the test verdict.
+    google.protobuf.Timestamp partition_time = 2;
+    // The status of the test verdict as it is interpreted by changepoint analysis.
+    VerdictStatus status = 3;
+    // The changelist(s) that were tested, if any. If there are more 10, only
+    // the first 10 are returned here.
+    repeated Changelist changelists = 4;
+  }
+  // Source verdict is the aggregation of test results of a test variant at a source position.
+  message SourceVerdict {
+    // The source position.
+    int64 position = 1;
+    // The overall status of the source verdict. Due to limitations in the implementation,
+    // this currently reflects the aggregation of all test verdicts included in the
+    // source verdict, and may include verdicts for unsubmitted code. As such, it may
+    // differ from the actual source verdict status as used in change point analysis.
+    VerdictStatus status = 2;
+    // The test verdicts at the source position. Note some of these test verdicts
+    // may have not been used in change point analysis as they pertain to test results
+    // for unsubmitted code.
+    // Test verdicts will be ordered by ascending partition time, i.e. earliest test
+    // verdict first.
+    // Limited to at most 20 test verdicts.
+    repeated TestVerdict verdicts = 3;
+  }
+  // Source verdicts in descending source position order. Only source verdicts
+  // with test results are returned.
+  repeated SourceVerdict source_verdicts = 1;
 }
 
 // SourcePosition contains the commit and the test verdicts at a source position for a test variant branch.
