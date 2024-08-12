@@ -12,7 +12,6 @@ correctly for all platforms under simulation).
 
 # TODO(luqui): Implement lint for recipe modules also.
 
-import argparse
 import re
 import types
 
@@ -32,6 +31,7 @@ ALLOWED_MODULES = [
     r'itertools',
     r'json',
     r'math',
+    r'plistlib',
     r're',
     r'string',
     r'textwrap',
