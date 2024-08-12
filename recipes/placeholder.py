@@ -93,6 +93,7 @@ def RunSteps(api, properties):
         swarming_parent_run_id=swarming_parent_run_id,
         as_shadow_if_parent_is_led=True,
         led_inherit_parent=True,
+        tags=api.buildbucket.tags(bounded_child=str(can_outlive_parent)),
     )
     return api.buildbucket.schedule([req], step_name=step_name)[0]
 
