@@ -78,12 +78,16 @@ def RunSteps(api, properties):
 
     can_outlive_parent = True
     swarming_parent_run_id = None
+    child_tracking_service = "bb"
+    bounded_child = "False"
     if child_build.life_time == LifeTime.BUILD_BOUND:
-      if ('luci.buildbucket.parent_tracking' in
-          api.buildbucket.build.input.experiments):
+      bounded_child = "True"
+      if ('luci.buildbucket.parent_tracking'
+          in api.buildbucket.build.input.experiments):
         can_outlive_parent = False
       else:
         swarming_parent_run_id = api.swarming.task_id
+        child_tracking_service = "swarming"
 
     req = api.buildbucket.schedule_request(
         builder=builder.builder,
@@ -93,7 +97,9 @@ def RunSteps(api, properties):
         swarming_parent_run_id=swarming_parent_run_id,
         as_shadow_if_parent_is_led=True,
         led_inherit_parent=True,
-        tags=api.buildbucket.tags(bounded_child=str(can_outlive_parent)),
+        tags=api.buildbucket.tags(
+            bounded_child=bounded_child,
+            child_tracking_service=child_tracking_service),
     )
     return api.buildbucket.schedule([req], step_name=step_name)[0]
 
