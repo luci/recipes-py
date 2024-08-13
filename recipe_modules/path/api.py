@@ -900,12 +900,3 @@ class PathApi(recipe_api.RecipeApi):
     """
     if self._test_data.enabled:
       self._path_mod.mock_remove_paths(path, should_remove)
-
-  def is_parent_of(self, parent: config_types.Path,
-                   child: config_types.Path) -> bool:
-    """Check whether child is contained within parent.
-
-    DEPRECATED: Just use `parent in child.parents`.
-    """
-    self.m.warning.issue('PATH_IS_PARENT_OF_DEPRECATED')
-    return parent in child.parents

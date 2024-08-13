@@ -3019,14 +3019,6 @@ that the recipe is non-hermetic.
 This is called by the recipe engine immediately after __init__(), but
 with `self._paths_client` initialized.
 
-&mdash; **def [is\_parent\_of](/recipe_modules/path/api.py#904)(self, parent: config_types.Path, child: config_types.Path):**
-
-Check whether child is contained within parent.
-
-*** note
-**DEPRECATED**: Just use `parent in child.parents`.
-***
-
 &mdash; **def [isdir](/recipe_modules/path/api.py#852)(self, path):**
 
 Equivalent to os.path.isdir.
@@ -5729,7 +5721,7 @@ Tests for query_variants.
 [DEPS](/recipe_modules/path/examples/full.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED', 'recipe_engine/PATH_IS_PARENT_OF_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/path/examples/full.py#18)(api):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/path/examples/full.py#18)(api):**
 ### *recipes* / [path:tests/cast\_to\_path](/recipe_modules/path/tests/cast_to_path.py)
 
 [DEPS](/recipe_modules/path/tests/cast_to_path.py#8): [path](#recipe_modules-path), [platform](#recipe_modules-platform)
