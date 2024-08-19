@@ -542,7 +542,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
                         source_spec=None,
                         is_source_spec_final=None,
                         baseline_id=None,
-                        instructions=None):
+                        instructions=None,
+                        raise_on_failure=True):
     """Makes a call to the UpdateInvocation API to update the invocation
 
     Args:
@@ -559,6 +560,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
         instructions for this invocation. It may contain step instructions and
         test result instructions. The test instructions may contain instructions
         for test results in this invocation and in included invocations.
+      raise_on_failure (bool): If set, and `status` is not SUCCESS, raise
+        the appropriate exception.
     """
     field_mask_paths = []
     if source_spec:
@@ -585,19 +588,21 @@ class ResultDBAPI(recipe_api.RecipeApi):
         'UpdateInvocation',
         req=json_format.MessageToDict(req),
         include_update_token=True,
-        step_test_data=lambda: self.m.json.test_api.output_stream({}))
+        step_test_data=lambda: self.m.json.test_api.output_stream({}),
+        raise_on_failure=raise_on_failure)
 
 
   ##############################################################################
   # Implementation details.
 
   def _rpc(self,
-            step_name,
-            service,
-            method,
-            req,
-            include_update_token=False,
-            step_test_data=None):
+           step_name,
+           service,
+           method,
+           req,
+           include_update_token=False,
+           step_test_data=None,
+           raise_on_failure=True):
     """Makes a ResultDB RPC.
 
     Args:
@@ -608,6 +613,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
       req (dict): request message.
       include_update_token (bool): A flag to indicate if the RPC requires the
         update token of the invocation.
+      raise_on_failure (bool): If set, and `status` is not SUCCESS, raise
+        the appropriate exception.
 
     Returns:
       A dict representation of the response message.
@@ -623,6 +630,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
         stdin=self.m.json.input(req),
         stdout=self.m.json.output(),
         step_test_data=step_test_data,
+        raise_on_failure=raise_on_failure,
     )
     step_res.presentation.logs['json.input'] = self.m.json.dumps(req, indent=2)
 
@@ -635,7 +643,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
                stdin=None,
                stdout=None,
                step_test_data=None,
-               timeout=None):
+               timeout=None,
+               raise_on_failure=True):
     """Runs rdb tool."""
     cmdline = ['rdb', subcommand] + (args or [])
 
@@ -647,6 +656,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
         stdout=stdout,
         step_test_data=step_test_data,
         timeout=timeout,
+        raise_on_failure=raise_on_failure,
     )
 
   def wrap(

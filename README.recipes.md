@@ -3483,7 +3483,7 @@ A module for interacting with ResultDB.
 
 &mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#50)(self):**
 
-&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#826)(self, column_keys=(), grouping_keys=('status',)):**
+&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#836)(self, column_keys=(), grouping_keys=('status',)):**
 
 Specifies how the test results should be rendered.
 
@@ -3697,7 +3697,7 @@ Returns:
   For value format, see [`QueryTestVariantsResponse` message]
   (http://shortn/_hv3edsXidO)
 
-&mdash; **def [unwrap](/recipe_modules/resultdb/api.py#812)(self, cmd: list[str]):**
+&mdash; **def [unwrap](/recipe_modules/resultdb/api.py#822)(self, cmd: list[str]):**
 
 Reverses the wrap command
 
@@ -3720,7 +3720,7 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
-&mdash; **def [update\_invocation](/recipe_modules/resultdb/api.py#539)(self, parent_inv='', step_name=None, source_spec=None, is_source_spec_final=None, baseline_id=None, instructions=None):**
+&mdash; **def [update\_invocation](/recipe_modules/resultdb/api.py#539)(self, parent_inv='', step_name=None, source_spec=None, is_source_spec_final=None, baseline_id=None, instructions=None, raise_on_failure=True):**
 
 Makes a call to the UpdateInvocation API to update the invocation
 
@@ -3738,6 +3738,8 @@ Args:
     instructions for this invocation. It may contain step instructions and
     test result instructions. The test instructions may contain instructions
     for test results in this invocation and in included invocations.
+  raise_on_failure (bool): If set, and `status` is not SUCCESS, raise
+    the appropriate exception.
 
 &mdash; **def [upload\_invocation\_artifacts](/recipe_modules/resultdb/api.py#322)(self, artifacts, parent_inv=None, step_name=None):**
 
@@ -3759,7 +3761,7 @@ Returns:
   A BatchCreateArtifactsResponse proto message listing the artifacts that
   were created.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#652)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file='', inherit_sources=False, sources='', sources_file='', baseline_id='', inv_extended_properties_dir=''):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#662)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file='', inherit_sources=False, sources='', sources_file='', baseline_id='', inv_extended_properties_dir=''):**
 
 Wraps the command with ResultSink.
 
