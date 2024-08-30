@@ -967,7 +967,7 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
 
   caught = None
 
-  exc_details = step_stream.new_log_stream('execution details')
+  exc_details = step_stream.new_log_stream('$execution details')
   try:
     # Write the stack trace of the function call to the debug log
     debug_log.write_line('Stack trace for this step:')

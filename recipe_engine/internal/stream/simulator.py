@@ -49,12 +49,12 @@ class _SimulationStepStream(StreamEngine.StepStream):
     pass
 
   def new_log_stream(self, log_name):
-    # We sink 'execution details' to dev/null. This is the log that the recipe
+    # We sink '$execution details' to dev/null. This is the log that the recipe
     # engine produces that contains the printout of the command, environment,
     # etc.
     #
     # The '$debug' log is conditionally filtered in _merge_presentation_updates.
-    if self._annotations is None or log_name in ('execution details',):
+    if self._annotations is None or log_name in ('$execution details',):
       lines = None
     else:
       # TODO(gbeaty) Remove this?

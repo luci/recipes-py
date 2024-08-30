@@ -509,7 +509,7 @@ happens:
      step.
   1. Open a debug log '$debug'. The progress of the engine running the step will
      be recorded here, along with any exceptions raised.
-  1. Open a log "execution details" which contains all the data associated with
+  1. Open a log "$execution details" which contains all the data associated with
      running the step (command, env, etc.) and also the final exit code of the
      step.
   1. The engine renders all input placeholders attached to the step. This
