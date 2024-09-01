@@ -401,7 +401,7 @@ Args:
   * server_url (Optional[str]) - URL for the local provenance server, the
     broker tool will use default if not specified.
 
-&mdash; **def [report\_sbom](/recipe_modules/bcid_reporter/api.py#129)(self, digest, guri, sbom_subject, server_url=None):**
+&mdash; **def [report\_sbom](/recipe_modules/bcid_reporter/api.py#129)(self, digest, guri, sbom_subjects=[], server_url=None):**
 
 Reports SBOM gcs digest to local provenance server.
 
@@ -413,8 +413,8 @@ Args:
   * digest (str) - The hash of the SBOM.
   * guri (str) - This is the unique GCS URI for the SBOM,
     e.g. gs://bucket/path/to/sbom.
-  * sbom_subject (str) - The hash of the artifact the SBOM was produced
-    for.
+  * sbom_subjects (str list or str) - The hash values corresponding to the
+    artifacts that this SBOM covers.
   * server_url (Optional[str]) - URL for the local provenance server, the
     broker tool will use default if not specified.
 

@@ -27,6 +27,11 @@ def RunSteps(api):
   # Report sbom artifact digest.
   api.bcid_reporter.report_sbom(
       "deadbeef",
+      "gs://bucket/path/to/binary.spdx.jsonl", ["beefdead", "3735928559"],
+      server_url="http://test.local")
+
+  api.bcid_reporter.report_sbom(
+      "deadbeef",
       "gs://bucket/path/to/binary.spdx.jsonl",
       "beefdead",
       server_url="http://test.local")

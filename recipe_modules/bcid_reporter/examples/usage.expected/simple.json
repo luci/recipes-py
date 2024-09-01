@@ -89,10 +89,27 @@
       "gs://bucket/path/to/binary.spdx.jsonl",
       "-sbom-subject",
       "beefdead",
+      "-sbom-subject",
+      "3735928559",
       "-backend-url",
       "http://test.local"
     ],
     "name": "snoop: report_sbom"
+  },
+  {
+    "cmd": [
+      "[START_DIR]/reporter/snoopy_broker",
+      "-report-gcs",
+      "-digest",
+      "deadbeef",
+      "-gcs-uri",
+      "gs://bucket/path/to/binary.spdx.jsonl",
+      "-sbom-subject",
+      "beefdead",
+      "-backend-url",
+      "http://test.local"
+    ],
+    "name": "snoop: report_sbom (2)"
   },
   {
     "name": "$result"

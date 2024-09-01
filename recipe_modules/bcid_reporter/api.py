@@ -126,7 +126,7 @@ class BcidReporterApi(recipe_api.RecipeApi):
 
     self.m.step('snoop: report_gcs', args)
 
-  def report_sbom(self, digest, guri, sbom_subject, server_url=None):
+  def report_sbom(self, digest, guri, sbom_subjects=[], server_url=None):
     """Reports SBOM gcs digest to local provenance server.
 
     This is used to report the SBOM metadata to provenance, along with
@@ -137,8 +137,8 @@ class BcidReporterApi(recipe_api.RecipeApi):
       * digest (str) - The hash of the SBOM.
       * guri (str) - This is the unique GCS URI for the SBOM,
         e.g. gs://bucket/path/to/sbom.
-      * sbom_subject (str) - The hash of the artifact the SBOM was produced
-        for.
+      * sbom_subjects (str list or str) - The hash values corresponding to the
+        artifacts that this SBOM covers.
       * server_url (Optional[str]) - URL for the local provenance server, the
         broker tool will use default if not specified.
     """
@@ -149,9 +149,13 @@ class BcidReporterApi(recipe_api.RecipeApi):
         digest,
         '-gcs-uri',
         guri,
-        '-sbom-subject',
-        sbom_subject,
     ]
+
+    if isinstance(sbom_subjects, list):
+      for s in sbom_subjects:
+        args.extend(['-sbom-subject', s])
+    elif isinstance(sbom_subjects, str):
+      args.extend(['-sbom-subject', sbom_subjects])
 
     if server_url:
       args.extend(['-backend-url', server_url])
