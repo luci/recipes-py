@@ -8,3 +8,6 @@ per-file README.recipes.md=*
 per-file **.expected/*.json=*
 
 # COMPONENT: Infra>Platform>Recipes
+
+# Teams should be able to update their own OWNERS files.
+per-file SECURITY_TEAM_OWNERS=file:SECURITY_TEAM_OWNERS
