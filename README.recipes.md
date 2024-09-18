@@ -4186,7 +4186,7 @@ Args:
 
 Returns step_data.StepData.
 
-&mdash; **def [funcall](/recipe_modules/step/api.py#712)(self, name, func, \*args, \*\*kwargs):**
+&mdash; **def [funcall](/recipe_modules/step/api.py#715)(self, name, func, \*args, \*\*kwargs):**
 
 Call a function and store the results and exception in a step.
 

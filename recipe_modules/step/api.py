@@ -667,6 +667,9 @@ class StepApi(recipe_api.RecipeApi):
 
     Returns a `step_data.StepData` for the running step.
     """
+    if not name:
+      raise ValueError('invalid empty name')  # pragma: no cover
+
     cmd = [] if cmd is None else cmd
     self._validate_cmd_list(cmd)
 
