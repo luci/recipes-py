@@ -39,8 +39,8 @@
     },
     "env_prefixes": {
       "PATH": [
-        "[CACHE]\\npmcache\\pfx\\bin",
-        "[CACHE]\\nodejs\\bin"
+        "[CACHE]\\npmcache\\pfx",
+        "[CACHE]\\nodejs"
       ]
     },
     "name": "npm"

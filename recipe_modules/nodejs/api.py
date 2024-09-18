@@ -67,8 +67,9 @@ class NodeJSApi(recipe_api.RecipeApi):
             # Putting this in front of PATH (before `bin` from the CIPD package)
             # allows doing stuff like `npm install -g npm@8.1.4` and picking up
             # the updated `npm` binary from `<npm_config_prefix>/bin`.
-            env['npm_config_prefix'] / 'bin',
-            path / 'bin',
+            env['npm_config_prefix']
+            if self.m.platform.is_win else env['npm_config_prefix'] / 'bin',
+            path if self.m.platform.is_win else path / 'bin',
         ],
     }
 
