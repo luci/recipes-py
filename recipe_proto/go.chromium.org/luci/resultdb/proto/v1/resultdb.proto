@@ -35,6 +35,9 @@ service ResultDB {
   // Retrieves an invocation.
   rpc GetInvocation(GetInvocationRequest) returns (Invocation) {};
 
+  // Retrieve names of all root invocations for a given invocation.
+  rpc QueryRootInvocationNames(QueryRootInvocationNamesRequest) returns (QueryRootInvocationNamesResponse) {};
+
   // == Test results ===========================================================
 
   // Retrieves a test result.
@@ -184,6 +187,28 @@ message GetInvocationRequest {
   // The name of the invocation to request, see Invocation.name.
   string name = 1 [ (google.api.field_behavior) = REQUIRED ];
 }
+
+// A request message for QueryRootInvocationNames RPC.
+message QueryRootInvocationNamesRequest {
+  // The name of the invocation to request, see Invocation.name.
+  string name = 1 [ (google.api.field_behavior) = REQUIRED ];
+}
+
+// A response message for QueryRootInvocationNames RPC.
+message QueryRootInvocationNamesResponse {
+  // The name of all root invocations to the invocation in the request.
+  // A root either
+  //   - has is_export_root = true, or
+  //   - has no parent invocation.
+  //
+  // If the invocation to request is already a root,
+  // the root_invocation_names will only contains the invocation in the request
+  // (i.e. a invocation can be its own root).
+  //
+  // root_invocation_names can be empty when no root is found (in the presence of cycles).
+  repeated string root_invocation_names = 1;
+}
+
 
 // A request message for GetTestResult RPC.
 message GetTestResultRequest {
@@ -852,6 +877,7 @@ message QueryTestVariantArtifactGroupsRequest {
   IDMatcher artifact_id_matcher = 4;
 
   // The lower bound of the time range to search in UTC time (exclusive) (required).
+  // start_time must not be before 20 July 2024 UTC.
   // start_time must be less than the end time.
   // The duration between start_time and end_time must not be greater than 7 days.
   google.protobuf.Timestamp start_time = 5;
@@ -926,6 +952,7 @@ message QueryTestVariantArtifactsRequest {
   string artifact_id = 5;
 
   // The lower bound of the time range to search in UTC time (exclusive) (required).
+  // start_time must not be before 20 July 2024 UTC.
   // start_time must be less than the end time.
   // The duration between start_time and end_time must not be greater than 7 days.
   google.protobuf.Timestamp start_time = 6;
@@ -969,6 +996,7 @@ message QueryInvocationVariantArtifactGroupsRequest {
   IDMatcher artifact_id_matcher = 3;
 
   // The lower bound of the time range to search in UTC time (exclusive) (required).
+  // start_time must not be before 20 July 2024 UTC.
   // start_time must be less than the end time.
   // The duration between start_time and end_time must not be greater than 7 days.
   google.protobuf.Timestamp start_time = 4;
@@ -1036,6 +1064,7 @@ message QueryInvocationVariantArtifactsRequest {
   string artifact_id = 4;
 
   // The lower bound of the time range to search in UTC time (exclusive) (required).
+  // start_time must not be before 20 July 2024 UTC.
   // start_time must be less than the end time.
   // The duration between start_time and end_time must not be greater than 7 days.
   google.protobuf.Timestamp start_time = 5;
@@ -1083,26 +1112,24 @@ message ArtifactMatchingContent {
   // The test result status, only populated if it is a result level artifact .
   TestStatus test_status = 3;
 
-  // Part of the artifact content that matches the search string.
-	// Size(match) + Size(before_match) + Size(after_match) is at most 10KiB.
-  // Prioritize fiting `match` into the 10KiB first, divided the remaining bytes equally
-  // to display content immediately before and after the matched part.
-  // including at most one more line above and below.
-  // Match is truncated only if it is more than 10KiB. Ellipsis ("...") are added, if it is truncated.
-  // `match`, `before_match`, and `after_match` can be concatenated to form part of the full artifact content.
-  string match = 4;
+  // Part of the artifact content that contains the first occurrence of the match.
+  // The snippet is at most 10 KiB.
+  // Prioritize fiting first match into the 10KiB first, divided the remaining bytes equally
+  // to fit content immediately before and after the first match, including at most one more line above and below.
+  // If the first match is more than 10KiB, it will be truncated.
+  // Ellipsis ("...") are added, if the snippet is truncated.
+  string snippet = 4;
 
-  // Artifact content that immediately before the match. Include at most one additional line.
-  // Size(match) + Size(before_match) + Size(after_match) is at most 10KiB,
-  // see how this 10KB is allocated in `match` field comment.
-  // If before_match is truncated from the front, ellipsis ("...") are added to the front.
-  string before_match = 5;
+  // Represent the byte location of a match in snippet.
+  message Match {
+    // Start byte index of the match, inclusive.
+    int32 start_index = 1;
+    // End byte index of the match, exclusive.
+    int32 end_index = 2;
+  }
 
-  // Artifact content that immediately after the match. Include at most one additional line.
-  // Size(match) + Size(before_match) + Size(after_match) is at most 10KiB,
-  // see how this 10KB is allocated in `match` field comment.
-  // If after_match is truncated, ellipsis ("...") are added..
-  string after_match = 6;
+  // All non-overlapping matches exists in the snippet from front to end in order (i.e. matches[i].end_index <= matches[i+1].start_index).
+  repeated Match matches = 5;
 }
 
 // Used to match a artifact content.
@@ -1111,8 +1138,8 @@ message ArtifactContentMatcher {
     // The string is a regex expression. Use regex match to find matching artifact content.
     string regex_contain = 1;
 
-    // Use equality match with this string to find matching artifact content.
-    string exact_contain = 2;
+    // Use case insensitive equality match with this string to find matching artifact content.
+    string contain = 2;
   }
 }
 
