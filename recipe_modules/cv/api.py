@@ -296,6 +296,7 @@ class CVApi(recipe_api.RecipeApi):
     output = cq_pb2.Output()
     output.CopyFrom(self._output)
     cur_step.presentation.properties['$recipe_engine/cq/output'] = output
+    cur_step.presentation.properties['$recipe_engine/cv/output'] = output
     for k, v in addition_props.items():
       cur_step.presentation.properties[k] = v
 
