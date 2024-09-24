@@ -173,6 +173,11 @@ class StepConfig:
   merge_step = attr.ib(default=False,
                        validator=attr.validators.in_((True, False, "legacy")))
 
+  # If set with `merge_step`, this populates the merge_output_properties_to
+  # field.
+  merge_output_properties_to = attr.ib(
+      default=None, validator=attr_type((type(None), list)))
+
   # Standard handle redirection.
   # If None, stdin is closed and stdout/stderr are routed to the UI.
   # These placeholders require a non-default implementation of `backing_file`.

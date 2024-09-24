@@ -469,6 +469,14 @@ class StepApi(recipe_api.RecipeApi):
       allowed_statuses += [self.WARNING, self.FAILURE, self.EXCEPTION]
     return self._raise_on_disallowed_statuses(ret, allowed_statuses)
 
+  # RootOutputProperties is a special value for:
+  #
+  #   sub_build(merge_output_properties_to=...)
+  #
+  # Which makes the sub-build's output properties merge into the root of the
+  # current build's output properties.
+  RootOutputProperties = [""]
+
   def sub_build(self,
                 name: str,
                 cmd: int | str | Placeholder | Path,
@@ -476,6 +484,7 @@ class StepApi(recipe_api.RecipeApi):
                 raise_on_failure: bool = True,
                 output_path: str | Path | None = None,
                 legacy_global_namespace=False,
+                merge_output_properties_to: None | list[str] = None,
                 timeout=None,
                 step_test_data=None,
                 cost=_ResourceCost()):
@@ -538,6 +547,13 @@ class StepApi(recipe_api.RecipeApi):
       * legacy_global_namespace (bool): If set, activates legacy global
         namespace merging. Only meant for legacy ChromeOS builders.
         See crbug.com/1310155.
+      * merge_output_properties_to: If set, will cause the sub-build's output
+        properties to be merged into THIS build's output properties at the given
+        path. The special token RootOutputProperties on StepApi means to merge
+        the sub-build's properties to the root of this build's output. Otherwise
+        this should be a key path through the output properties' JSON objects.
+        For example if this was ["a", "b"], and the sub build emitted {"hello":
+        100}, then this build would show {"a": {"b": {"hello": 100}}}.
       * timeout (None|int|float|datetime.timedelta): Same as the `timeout`
         parameter in `__call__` method.
       * step_test_data(Callable[[], recipe_test_api.StepTestData]): Same as the
@@ -592,6 +608,7 @@ class StepApi(recipe_api.RecipeApi):
             infra_step=self.m.context.infra_step or False,
             raise_on_failure=raise_on_failure,
             merge_step='legacy' if legacy_global_namespace else True,
+            merge_output_properties_to=merge_output_properties_to,
             # The return code of LUCI executable should be omitted
             ok_ret=self.step_client.StepConfig.ALL_OK,
             step_test_data=step_test_data,

@@ -352,8 +352,7 @@ class RecipeEngine:
 
       active_step = _ActiveStep(
           step_data,
-          self._stream_engine.new_step_stream(name_tokens, False),
-          True)
+          self._stream_engine.new_step_stream(name_tokens, False), True)
       active_step.step_stream.mark_running()
       self._step_stack.append(active_step)
     except:
@@ -399,8 +398,11 @@ class RecipeEngine:
         ret.name
       ))
 
-    step_stream = self._stream_engine.new_step_stream(name_tokens,
-      step_config.allow_subannotations, merge_step=step_config.merge_step)
+    step_stream = self._stream_engine.new_step_stream(
+        name_tokens,
+        step_config.allow_subannotations,
+        merge_step=step_config.merge_step,
+        merge_output_properties_to=step_config.merge_output_properties_to)
     caught = None
     try:
       # initialize presentation to show an exception.

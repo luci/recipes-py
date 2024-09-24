@@ -40,6 +40,7 @@ def RunSteps(api, props):
       input_build,
       output_path=output_path,
       legacy_global_namespace=props.legacy,
+      merge_output_properties_to=['a', 'b'],
       step_test_data= lambda: (
         api.json.test_api.output('{"hello": "world"}') +
         api.step.test_api.sub_build(

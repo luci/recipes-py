@@ -2,27 +2,26 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from recipe_engine import recipe_api, config, post_process
+from recipe_engine import recipe_api, post_process
 
 DEPS = [
-  'context',
-  'json',
-  'path',
-  'properties',
-  'step',
+    'buildbucket',
+    'context',
+    'json',
+    'path',
+    'properties',
+    'step',
 ]
 
-
 PROPERTIES = {
-  'bad_return': recipe_api.Property(default=False),
-  'access_invalid_data': recipe_api.Property(default=False),
-  'access_deep_invalid_data': recipe_api.Property(default=False),
-  'assign_extra_junk': recipe_api.Property(default=False),
-  'timeout': recipe_api.Property(default=0, kind=int),
+    'access_invalid_data': recipe_api.Property(default=False),
+    'access_deep_invalid_data': recipe_api.Property(default=False),
+    'assign_extra_junk': recipe_api.Property(default=False),
+    'timeout': recipe_api.Property(default=0, kind=int),
 }
 
 
-def RunSteps(api, bad_return, access_invalid_data, access_deep_invalid_data,
+def RunSteps(api, access_invalid_data, access_deep_invalid_data,
              assign_extra_junk, timeout):
   if timeout:
     # Timeout causes the recipe engine to raise an exception if your step takes

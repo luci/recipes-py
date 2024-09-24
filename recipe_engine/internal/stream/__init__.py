@@ -117,8 +117,11 @@ class StreamEngine:
       """Only on luciexe and needed when the step is a merge step"""
       return None
 
-  def new_step_stream(self, name_tokens, allow_subannotations,
-                      merge_step=False):
+  def new_step_stream(self,
+                      name_tokens,
+                      allow_subannotations,
+                      merge_step=False,
+                      merge_output_properties_to: None | list[str] = None):
     """Creates a new StepStream in this engine.
 
     The step will be considered started at the moment this method is called.

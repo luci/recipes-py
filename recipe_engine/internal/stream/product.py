@@ -103,14 +103,23 @@ class ProductStreamEngine(StreamEngine):
     set_summary_markdown = _void_product('set_summary_markdown')
     set_step_tag = _void_product('set_step_tag')
 
-  def new_step_stream(self, name_tokens, allow_subannotations,
-                      merge_step=False):
+  def new_step_stream(self,
+                      name_tokens,
+                      allow_subannotations,
+                      merge_step=False,
+                      merge_output_properties_to=None):
     return self.StepStream(
         self._engine_a.new_step_stream(
-          name_tokens, allow_subannotations, merge_step=merge_step),
+            name_tokens,
+            allow_subannotations,
+            merge_step=merge_step,
+            merge_output_properties_to=merge_output_properties_to),
         self._engine_b.new_step_stream(
-          name_tokens, allow_subannotations, merge_step=merge_step),
-      )
+            name_tokens,
+            allow_subannotations,
+            merge_step=merge_step,
+            merge_output_properties_to=merge_output_properties_to),
+    )
 
   def open(self):
     self._engine_a.open()

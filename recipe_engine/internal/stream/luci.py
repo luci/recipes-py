@@ -132,6 +132,19 @@ class LUCIStepStream(StreamEngine.StepStream):
   # The Butler StreamClient. Used to generate logs for individual steps.
   _bsc = attr.ib(validator=attr_type(logdog.stream.StreamClient))
 
+  # If True, after initialization, allocate a log stream '$build.proto' that
+  # points to the 'build.proto' stream of the luciexe this step launches and
+  # set it as step.merge_build.from_logdog_stream. Host application will treat
+  # this step as merge step according to luciexe protocol.
+  #
+  # If this is set to 'legacy', then legacy_global_namespace in the merge_step
+  # will be set to True.
+  #
+  # See: [luciexe recursive invocation](https://pkg.go.dev/go.chromium.org/luci/luciexe?tab=doc#hdr-Recursive_Invocation)
+  _merge_step = attr.ib(validator=attr.validators.in_((False, True, 'legacy')))
+
+  _merge_output_properties_to = attr.ib(validator=attr_type((list, type(None))))
+
   # File-like objects for stdout/stderr (logdog streams).
   #
   # stdhandle is a single handle which will either point to stdout or stderr. In
@@ -144,17 +157,6 @@ class LUCIStepStream(StreamEngine.StepStream):
   _std_handle = attr.ib(default=None)
   _logging = attr.ib(default=None)
 
-  # If True, after initialization, allocate a log stream '$build.proto' that
-  # points to the 'build.proto' stream of the luciexe this step launches and
-  # set it as step.merge_build.from_logdog_stream. Host application will treat
-  # this step as merge step according to luciexe protocol.
-  #
-  # If this is set to 'legacy', then legacy_global_namespace in the merge_step
-  # will be set to True.
-  #
-  # See: [luciexe recursive invocation](https://pkg.go.dev/go.chromium.org/luci/luciexe?tab=doc#hdr-Recursive_Invocation)
-  _merge_step = attr.ib(default=False,
-                        validator=attr.validators.in_((False, True, 'legacy')))
 
   _back_compat_markdown = attr.ib(factory=LUCIStepMarkdownWriter)
 
@@ -207,6 +209,9 @@ class LUCIStepStream(StreamEngine.StepStream):
       self._step.merge_build.from_logdog_stream = stream_name
       if self._merge_step == 'legacy':
         self._step.merge_build.legacy_global_namespace = True
+      if self._merge_output_properties_to:
+        self._step.merge_build._merge_output_properties_to.extend(
+            self._merge_output_properties_to)
       self._change_cb()
 
   def new_log_stream(self, log_name):
@@ -452,19 +457,27 @@ class LUCIStreamEngine(StreamEngine):
   def _send(self):
     self._send_event.set()
 
-  def new_step_stream(self, name_tokens, allow_subannotations,
-                      merge_step=False):
+  def new_step_stream(self,
+                      name_tokens,
+                      allow_subannotations,
+                      merge_step=False,
+                      merge_output_properties_to=None):
     assert not allow_subannotations, (
-      'Subannotations not currently supported in build.proto mode'
-    )
+        'Subannotations not currently supported in build.proto mode')
     step_pb = self._build_proto.steps.add(
         name='|'.join(name_tokens),
         status=common.SCHEDULED)
 
     ret = LUCIStepStream(
-        step_pb, self._build_proto.output.properties, self._build_proto.tags,
-        step_pb.tags, self._build_proto.output.gitiles_commit,
-        self._send, self._bsc, merge_step=merge_step)
+        step_pb,
+        self._build_proto.output.properties,
+        self._build_proto.tags,
+        step_pb.tags,
+        self._build_proto.output.gitiles_commit,
+        self._send,
+        self._bsc,
+        merge_step,
+        merge_output_properties_to)
     self._send()
     return ret
 

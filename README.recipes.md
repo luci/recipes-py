@@ -4065,7 +4065,7 @@ Usage:
 StepWarning is a subclass of StepFailure, and will translate to a yellow
 build.
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#600)(self, name: str, cmd: (list[(((int | str) | Placeholder) | Path)] | None), ok_ret: ((Sequence[int] | Literal['any']) | Literal['all'])=(0,), infra_step: bool=False, raise_on_failure: bool=True, wrapper: Sequence[(((int | str) | Placeholder) | Path)]=(), timeout: ((int | timedelta) | None)=None, stdout: (Placeholder | None)=None, stderr: (Placeholder | None)=None, stdin: (Placeholder | None)=None, step_test_data: (Callable[([], StepTestData)] | None)=None, cost: _ResourceCost=_ResourceCost()):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#617)(self, name: str, cmd: (list[(((int | str) | Placeholder) | Path)] | None), ok_ret: ((Sequence[int] | Literal['any']) | Literal['all'])=(0,), infra_step: bool=False, raise_on_failure: bool=True, wrapper: Sequence[(((int | str) | Placeholder) | Path)]=(), timeout: ((int | timedelta) | None)=None, stdout: (Placeholder | None)=None, stderr: (Placeholder | None)=None, stdin: (Placeholder | None)=None, step_test_data: (Callable[([], StepTestData)] | None)=None, cost: _ResourceCost=_ResourceCost()):**
 
 Runs a step (subprocess).
 
@@ -4186,7 +4186,7 @@ Args:
 
 Returns step_data.StepData.
 
-&mdash; **def [funcall](/recipe_modules/step/api.py#715)(self, name, func, \*args, \*\*kwargs):**
+&mdash; **def [funcall](/recipe_modules/step/api.py#732)(self, name, func, \*args, \*\*kwargs):**
 
 Call a function and store the results and exception in a step.
 
@@ -4278,7 +4278,7 @@ Raises:
   * StepWarning if the step's status is WARNING
   * InfraFailure if the step's status is EXCEPTION or CANCELED
 
-&mdash; **def [sub\_build](/recipe_modules/step/api.py#472)(self, name: str, cmd: (((int | str) | Placeholder) | Path), build: build_pb2.Build, raise_on_failure: bool=True, output_path: ((str | Path) | None)=None, legacy_global_namespace=False, timeout=None, step_test_data=None, cost=_ResourceCost()):**
+&mdash; **def [sub\_build](/recipe_modules/step/api.py#480)(self, name: str, cmd: (((int | str) | Placeholder) | Path), build: build_pb2.Build, raise_on_failure: bool=True, output_path: ((str | Path) | None)=None, legacy_global_namespace=False, merge_output_properties_to: (None | list[str])=None, timeout=None, step_test_data=None, cost=_ResourceCost()):**
 
 Launch a sub-build by invoking a LUCI executable. All steps in the
 sub-build will appear as child steps of this step (Merge Step).
@@ -4339,6 +4339,13 @@ Args:
   * legacy_global_namespace (bool): If set, activates legacy global
     namespace merging. Only meant for legacy ChromeOS builders.
     See crbug.com/1310155.
+  * merge_output_properties_to: If set, will cause the sub-build's output
+    properties to be merged into THIS build's output properties at the given
+    path. The special token RootOutputProperties on StepApi means to merge
+    the sub-build's properties to the root of this build's output. Otherwise
+    this should be a key path through the output properties' JSON objects.
+    For example if this was ["a", "b"], and the sub build emitted {"hello":
+    100}, then this build would show {"a": {"b": {"hello": 100}}}.
   * timeout (None|int|float|datetime.timedelta): Same as the `timeout`
     parameter in `__call__` method.
   * step_test_data(Callable[[], recipe_test_api.StepTestData]): Same as the
@@ -5920,10 +5927,10 @@ This file is a recipe demonstrating reading triggers of the current build.
 &mdash; **def [RunSteps](/recipe_modules/service_account/examples/full.py#21)(api, key_path, scopes):**
 ### *recipes* / [step:examples/full](/recipe_modules/step/examples/full.py)
 
-[DEPS](/recipe_modules/step/examples/full.py#7): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/examples/full.py#7): [buildbucket](#recipe_modules-buildbucket), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/examples/full.py#25)(api, bad_return, access_invalid_data, access_deep_invalid_data, assign_extra_junk, timeout):**
+&mdash; **def [RunSteps](/recipe_modules/step/examples/full.py#24)(api, access_invalid_data, access_deep_invalid_data, assign_extra_junk, timeout):**
 ### *recipes* / [step:tests/active\_result](/recipe_modules/step/tests/active_result.py)
 
 [DEPS](/recipe_modules/step/tests/active_result.py#5): [step](#recipe_modules-step)

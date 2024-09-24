@@ -137,9 +137,12 @@ class SimulationStreamEngine(StreamEngine):
   def supports_concurrency(self):
     return True
 
-  def new_step_stream(self, name_tokens, allow_subannotations,
-                      merge_step=False):
-    del allow_subannotations, merge_step
+  def new_step_stream(self,
+                      name_tokens,
+                      allow_subannotations,
+                      merge_step=False,
+                      merge_output_properties_to=None):
+    del allow_subannotations, merge_step, merge_output_properties_to
 
     # TODO(iannucci): don't skip these. Omitting them for now to reduce the
     # amount of test expectation changes.
