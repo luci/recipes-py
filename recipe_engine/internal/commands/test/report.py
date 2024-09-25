@@ -21,16 +21,16 @@ from itertools import groupby
 import attr
 import coverage
 
-from .fail_tracker import FailTracker
 from ...warn.cause import CallSite, ImportSite
 
 if TYPE_CHECKING:
   import PB.recipe_engine.internal.test.runner as runner_pb2
+  from ...recipe_deps import RecipeDeps
 
 
 @attr.s
 class Reporter:
-  _recipe_deps = attr.ib()
+  _recipe_deps: RecipeDeps = attr.ib()
 
   _use_emoji = attr.ib()
   _is_train = attr.ib()
@@ -190,6 +190,13 @@ class Reporter:
         print('  ', expect_file)
       print()
 
+    err_warnings = set(
+        self._recipe_deps.main_repo.recipes_cfg_pb2.forbidden_warnings)
+    unused_err_warnings = (
+      err_warnings - set(self._recipe_deps.warning_definitions.keys()))
+    err_warnings = err_warnings - unused_err_warnings
+    warnings_fatal = False
+
     warning_result = _collect_warning_result(outcome_msg)
     if warning_result:
       print('------')
@@ -199,7 +206,7 @@ class Reporter:
         print('Found %d warnings' % len(warning_result))
       print()
       if self._enable_warning_details or not fail:
-        _print_warnings(warning_result, self._recipe_deps)
+        warnings_fatal = _print_warnings(warning_result, self._recipe_deps, err_warnings)
       else:
         print('Fix test failures or pass --show-warnings for details.')
       print()
@@ -226,9 +233,20 @@ class Reporter:
         print('\t%s - %s' % (test_name, warning))
       print()
 
-    if fail:
+    if unused_err_warnings:
       print('------')
-      print('FAILED')
+      print('These warnings were listed in //infra/config/recipes.cfg')
+      print('as forbidden_warnings, but the upstream repos no longer')
+      print('generate them. They are safe to remove from recipes.cfg:')
+      for warning in sorted(unused_err_warnings):
+        print(f'\t* {warning}')
+
+    if fail or warnings_fatal:
+      print('------')
+      if not fail:
+        print('FAILED (Forbidden Warnings)')
+      else:
+        print('FAILED')
       print()
       if not self._is_train:
         print('NOTE: You may need to re-train the expectation files by running')
@@ -368,7 +386,13 @@ def _collect_global_warnings_result(outcome_msg):
   return result
 
 
-def _print_warnings(warning_result, recipe_deps):
+def _print_warnings(
+    warning_result: dict[str, PerWarningResult],
+    recipe_deps: RecipeDeps,
+    err_warnings: set[str]) -> bool:
+  """Prints the warnings in warning_result.
+
+  Returns True if one of the warnings was in `err_warnings`."""
   def print_bug_links(definition):
     bug_links = [
       f'https://{bug.host}/p/{bug.project}/issues/detail?id={bug.id}'
@@ -430,10 +454,17 @@ def _print_warnings(warning_result, recipe_deps):
       else:
         print('  %s' % os.path.normpath(repo.recipes[import_site.recipe].path))
 
+  fail = False
   for warning_name in sorted(warning_result):
+    prefix = "WARNING"
+    print_fatal = False
+    if warning_name in err_warnings:
+      fail = True
+      prefix = "WARNING (FORBIDDEN)"
+      print_fatal = True
     causes = warning_result[warning_name]
     print('*' * 70)
-    print('{:^70}'.format('WARNING: %s' % warning_name))
+    print('{:^70}'.format(f'{prefix}: {warning_name}'))
     print('{:^70}'.format('Found %d call sites and %d import sites' % (
         len(causes.call_sites), len(causes.import_sites),)))
     print('*' * 70)
@@ -447,6 +478,13 @@ def _print_warnings(warning_result, recipe_deps):
     print_bug_links(definition)
     print_call_sites(causes.call_sites)
     print_import_sites(causes.import_sites)
+    if print_fatal:
+      print()
+      print("This warning is NOT ALLOWED for this repo.")
+      print("Please fix this warning prior to submitting this change.")
+      print("(see `forbidden_warnings` in //infra/config/recipes.cfg)")
+
+  return fail
 
 
 def _collect_duration_result(

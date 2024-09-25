@@ -13,6 +13,8 @@ repositories and the ability to make commits in them).
 Access this via test_env.RecipeEngineUnitTest.FakeRecipeDeps().
 """
 
+from __future__ import annotations
+
 import contextlib
 import errno
 from io import StringIO
@@ -22,6 +24,7 @@ import shutil
 import subprocess
 import sys
 import textwrap
+from typing import ContextManager, Generator
 
 import attr
 
@@ -61,21 +64,21 @@ class FakeRecipeRepo:
   """Manipulates a recipe repo on disk (as a git repository)."""
 
   # The FakeRecipeDeps which owns this repo.
-  fake_recipe_deps = attr.ib()  # type: FakeRecipeDeps
+  fake_recipe_deps: FakeRecipeDeps = attr.ib()
 
   # The name of this repo.
-  name = attr.ib()  # type: str
+  name: str = attr.ib()
 
   # The absolute path on disk to the root of this repo.
-  path = attr.ib()
+  path: str = attr.ib()
 
   # The GitBackend for this FakeRecipeRepo.
-  backend = attr.ib(default=attr.Factory(
+  backend: GitBackend = attr.ib(default=attr.Factory(
       lambda self: GitBackend(self.path, None),
       takes_self=True))
 
   @contextlib.contextmanager
-  def edit_recipes_cfg_pb2(self):
+  def edit_recipes_cfg_pb2(self) -> Generator[RepoSpec]:
     """Context manager for read/modify/write'ing the recipes.cfg file in this
     repo.
 
@@ -564,17 +567,17 @@ class FakeRecipeDeps:
   #     as a subfolder.
   #   * main/ - The main repo is created here
   #   * main/.recipe_deps - The .recipe_deps folder of the main repo.
-  _root = attr.ib()
+  _root: str = attr.ib()
 
   # A map of repo_name -> FakeRecipeRepo
-  repos = attr.ib(factory=dict)
+  repos: dict[str, FakeRecipeRepo] = attr.ib(factory=dict)
 
   # A list of textwrap.deindent-able python snippets which will be injected into
   # every recipe, module api and test_api written with this FakeRecipeDeps.
   #
   # This is useful to add helper methods and imports which are implicitly
   # available everywhere in the test.
-  ambient_toplevel_code = attr.ib(factory=list)
+  ambient_toplevel_code: list[str] = attr.ib(factory=list)
 
   def _ambient_toplevel_code_dump(self):
     return '\n'.join(map(textwrap.dedent, self.ambient_toplevel_code))
@@ -647,12 +650,12 @@ class FakeRecipeDeps:
     self._create_repo('main', os.path.join(self._root, 'main'))
 
   @property
-  def recipe_deps_path(self):
+  def recipe_deps_path(self) -> str:
     """Returns the absolute path to the `.recipe_deps` folder of the main repo.
     """
     return os.path.join(self.main_repo.path, '.recipe_deps')
 
-  def add_repo(self, name, detached=False):
+  def add_repo(self, name: str, detached=False) -> FakeRecipeRepo:
     """Adds a new repo to the RecipeDeps.
 
     This is created in `{FakeRecipeDeps.recipe_deps_path}/{name}`.
@@ -671,6 +674,6 @@ class FakeRecipeDeps:
     return self.repos[name]
 
   @property
-  def main_repo(self):
+  def main_repo(self) -> FakeRecipeRepo:
     """Returns the main FakeRecipeRepo for this FakeRecipeDeps."""
     return self.repos['main']

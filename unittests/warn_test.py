@@ -795,6 +795,100 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     '''.strip('\n'))
     self.assertRegex(output, expected_regexp)
 
+  def test_cross_repo_forbid(self):
+    upstream = self.deps.add_repo('upstream')
+    with upstream.write_file(RECIPE_WARNING_DEFINITIONS_REL) as d:
+      d.write('''
+      google_issue_default {
+        host: "crbug.com"
+      }
+      warning {
+        name: "DEMO_WARNING"
+        description: "Demo Warning"
+        deadline: "2020-01-01"
+        google_issue {
+          id: 123456
+        }
+      }
+      ''')
+
+    with upstream.write_module('my_mod') as mod:
+      mod.DEPS.append('recipe_engine/warning')
+      mod.WARNINGS.append('DEMO_WARNING')
+      mod.api.write('''
+        def nop(self):
+          pass
+      ''')
+    upstream.commit('add my_mod module')
+
+    with self.deps.main_repo.write_file('recipes/bad.py') as recipe:
+      recipe.write('''
+        DEPS = ['upstream/my_mod']
+        def RunSteps(api):
+          api.my_mod.nop()
+        def GenTests(api):
+          yield api.test('basic')
+      '''.lstrip('\n'))
+    self.deps.main_repo.add_dep('upstream')
+    with self.deps.main_repo.edit_recipes_cfg_pb2() as pb:
+      pb.forbidden_warnings.append('upstream/DEMO_WARNING')
+    self.deps.main_repo.commit('add recipe and upgrade upstream dep')
+
+    output, retcode  = self.deps.main_repo.recipes_py('test', 'train')
+    self.assertEqual(retcode, 1)
+    self.assertIn("WARNING (FORBIDDEN): upstream/DEMO_WARNING", output)
+    self.assertIn("This warning is NOT ALLOWED for this repo.", output)
+    self.assertIn("FAILED (Forbidden Warnings)", output)
+
+  def test_cross_repo_forbid_unused(self):
+    upstream = self.deps.add_repo('upstream')
+    with upstream.write_file(RECIPE_WARNING_DEFINITIONS_REL) as d:
+      d.write('''
+      google_issue_default {
+        host: "crbug.com"
+      }
+      warning {
+        name: "DEMO_WARNING"
+        description: "Demo Warning"
+        deadline: "2020-01-01"
+        google_issue {
+          id: 123456
+        }
+      }
+      ''')
+
+    with upstream.write_module('my_mod') as mod:
+      mod.DEPS.append('recipe_engine/warning')
+      mod.WARNINGS.append('DEMO_WARNING')
+      mod.api.write('''
+        def nop(self):
+          pass
+      ''')
+    upstream.commit('add my_mod module')
+
+    with self.deps.main_repo.write_file('recipes/bad.py') as recipe:
+      recipe.write('''
+        DEPS = ['upstream/my_mod']
+        def RunSteps(api):
+          api.my_mod.nop()
+        def GenTests(api):
+          yield api.test('basic')
+      '''.lstrip('\n'))
+    self.deps.main_repo.add_dep('upstream')
+    with self.deps.main_repo.edit_recipes_cfg_pb2() as pb:
+      pb.forbidden_warnings.append('upstream/FAKE_WARNING')
+    self.deps.main_repo.commit('add recipe and upgrade upstream dep')
+
+    output, retcode  = self.deps.main_repo.recipes_py('test', 'train')
+    self.assertEqual(retcode, 0)
+    msg = textwrap.dedent(r'''
+    These warnings were listed in //infra/config/recipes.cfg
+    as forbidden_warnings, but the upstream repos no longer
+    generate them. They are safe to remove from recipes.cfg:
+    \t* upstream/FAKE_WARNING
+    ''').strip('\n').replace(r'\t', '\t')
+    self.assertIn(msg, output)
+
 
 if __name__ == '__main__':
   test_env.main()
