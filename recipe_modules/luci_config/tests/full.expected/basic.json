@@ -1,0 +1,139 @@
+[
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "[START_DIR]/commit-queue.cfg",
+      "/path/to/tmp/"
+    ],
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "read project commit-queue.cfg",
+    "~followup_annotations": [
+      "@@@STEP_LOG_END@commit-queue.cfg@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "fetch project cr-buildbucket.cfg"
+  },
+  {
+    "cmd": [
+      "prpc",
+      "call",
+      "-format=json",
+      "config.luci.app",
+      "config.service.v2.Configs.GetConfig"
+    ],
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "fetch project cr-buildbucket.cfg.get",
+    "stdin": "{\n  \"config_set\": \"projects/project\",\n  \"path\": \"cr-buildbucket.cfg\"\n}",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@proto.output@{@@@",
+      "@@@STEP_LOG_LINE@proto.output@  \"raw_content\": \"\"@@@",
+      "@@@STEP_LOG_LINE@proto.output@}@@@",
+      "@@@STEP_LOG_END@proto.output@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "fetch project luci-milo.cfg"
+  },
+  {
+    "cmd": [
+      "prpc",
+      "call",
+      "-format=json",
+      "config.luci.app",
+      "config.service.v2.Configs.GetConfig"
+    ],
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "fetch project luci-milo.cfg.get",
+    "stdin": "{\n  \"config_set\": \"projects/project\",\n  \"path\": \"luci-milo.cfg\"\n}",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@proto.output@{@@@",
+      "@@@STEP_LOG_LINE@proto.output@  \"raw_content\": \"Y29uc29sZXMgewogIGlkOiAiZ2xvYmFsX2NpIgp9Cg==\"@@@",
+      "@@@STEP_LOG_LINE@proto.output@}@@@",
+      "@@@STEP_LOG_END@proto.output@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "fetch project luci-scheduler.cfg"
+  },
+  {
+    "cmd": [
+      "prpc",
+      "call",
+      "-format=json",
+      "config.luci.app",
+      "config.service.v2.Configs.GetConfig"
+    ],
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "project:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "fetch project luci-scheduler.cfg.get",
+    "stdin": "{\n  \"config_set\": \"projects/project\",\n  \"path\": \"luci-scheduler.cfg\"\n}",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@proto.output@{@@@",
+      "@@@STEP_LOG_LINE@proto.output@  \"raw_content\": \"\"@@@",
+      "@@@STEP_LOG_LINE@proto.output@}@@@",
+      "@@@STEP_LOG_END@proto.output@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]
