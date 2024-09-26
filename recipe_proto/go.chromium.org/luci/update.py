@@ -32,6 +32,7 @@ SUB_PATHS = [
     'gce/api/config/v1',
     'led/job',
     'lucictx',
+    'milo/proto/projectconfig',
     'resultdb/proto',
     'scheduler/api/scheduler/v1',
     'scheduler/appengine/messages',
