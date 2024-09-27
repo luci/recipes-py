@@ -210,7 +210,7 @@ class LUCIStepStream(StreamEngine.StepStream):
       if self._merge_step == 'legacy':
         self._step.merge_build.legacy_global_namespace = True
       if self._merge_output_properties_to:
-        self._step.merge_build._merge_output_properties_to.extend(
+        self._step.merge_build.merge_output_properties_to.extend(
             self._merge_output_properties_to)
       self._change_cb()
 
