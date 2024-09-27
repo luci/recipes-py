@@ -2790,11 +2790,11 @@ Module for polling and parsing luci config files via the luci-config API.
 Depends on `prpc` binary being available in $PATH:
     https://godoc.org/go.chromium.org/luci/grpc/cmd/prpc
 
-&mdash; **def [buildbucket](/recipe_modules/luci_config/api.py#128)(self, \*\*kwargs):**
+&mdash; **def [buildbucket](/recipe_modules/luci_config/api.py#131)(self, \*\*kwargs):**
 
-&mdash; **def [commit\_queue](/recipe_modules/luci_config/api.py#132)(self, config_name=None, \*\*kwargs):**
+&mdash; **def [commit\_queue](/recipe_modules/luci_config/api.py#135)(self, config_name=None, \*\*kwargs):**
 
-&mdash; **def [fetch\_config](/recipe_modules/luci_config/api.py#56)(self, config_name, message_type, project=None, local_dir=None, allow_unknown_fields=False):**
+&mdash; **def [fetch\_config](/recipe_modules/luci_config/api.py#59)(self, config_name, message_type, project=None, local_dir=None, allow_unknown_fields=False):**
 
 Fetch and parse config file from the luci-config API as a proto.
 
@@ -2831,9 +2831,9 @@ Args:
         file will be read from the corresponding local file rather
         than fetching it from the LUCI Config service.
 
-&mdash; **def [milo](/recipe_modules/luci_config/api.py#139)(self, \*\*kwargs):**
+&mdash; **def [milo](/recipe_modules/luci_config/api.py#142)(self, \*\*kwargs):**
 
-&mdash; **def [scheduler](/recipe_modules/luci_config/api.py#142)(self, \*\*kwargs):**
+&mdash; **def [scheduler](/recipe_modules/luci_config/api.py#145)(self, \*\*kwargs):**
 ### *recipe_modules* / [milo](/recipe_modules/milo)
 
 [DEPS](/recipe_modules/milo/__init__.py#5): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [resultdb](#recipe_modules-resultdb), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)

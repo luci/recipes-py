@@ -44,6 +44,9 @@ class LuciConfigApi(recipe_api.RecipeApi):
     """
     if not project:
       project = self.m.buildbucket.build.builder.project
+      # Make this easier to use in recipe testing.
+      if self._test_data.enabled:
+        project = project or "project"
       assert project, "buildbucket input has no project set"
 
     if local_dir:
