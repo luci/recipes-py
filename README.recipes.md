@@ -71,6 +71,7 @@
   * [buildbucket:tests/search](#recipes-buildbucket_tests_search)
   * [cas:examples/full](#recipes-cas_examples_full)
   * [cas_input:examples/full](#recipes-cas_input_examples_full)
+  * [change_verifier:tests/match_config](#recipes-change_verifier_tests_match_config)
   * [change_verifier:tests/search](#recipes-change_verifier_tests_search)
   * [cipd:examples/full](#recipes-cipd_examples_full)
   * [cipd:tests/platform](#recipes-cipd_tests_platform)
@@ -1006,7 +1007,7 @@ Returns:
 &emsp; **@property**<br>&mdash; **def [input\_caches](/recipe_modules/cas_input/api.py#28)(self):**
 ### *recipe_modules* / [change\_verifier](/recipe_modules/change_verifier)
 
-[DEPS](/recipe_modules/change_verifier/__init__.py#5): [proto](#recipe_modules-proto), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/change_verifier/__init__.py#5): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [luci\_config](#recipe_modules-luci_config), [proto](#recipe_modules-proto), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
 Recipe API for LUCI Change Verifier.
@@ -1023,11 +1024,15 @@ subject to change in the future. Please reach out to the LUCI team first if you
 want to use this recipe module; file a ticket at:
 https://bugs.chromium.org/p/chromium/issues/entry?components=Infra%3ELUCI%3EBuildService%3EPresubmit%3ECV
 
-#### **class [ChangeVerifierApi](/recipe_modules/change_verifier/api.py#28)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
+#### **class [ChangeVerifierApi](/recipe_modules/change_verifier/api.py#32)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
 
 This module provides recipe API of LUCI Change Verifier.
 
-&mdash; **def [search\_runs](/recipe_modules/change_verifier/api.py#34)(self, project, cls=None, limit=None, step_name=None, dev=False):**
+&mdash; **def [match\_config](/recipe_modules/change_verifier/api.py#142)(self, host: str, change: int, project: (str | None)=None):**
+
+Retrieve the applicable CV group for a given change.
+
+&mdash; **def [search\_runs](/recipe_modules/change_verifier/api.py#38)(self, project, cls=None, limit=None, step_name=None, dev=False):**
 
 Searches for Runs.
 
@@ -5049,6 +5054,12 @@ This recipe tests the buildbucket.set_output_gitiles_commit function.
 
 
 &mdash; **def [RunSteps](/recipe_modules/cas_input/examples/full.py#16)(api):**
+### *recipes* / [change\_verifier:tests/match\_config](/recipe_modules/change_verifier/tests/match_config.py)
+
+[DEPS](/recipe_modules/change_verifier/tests/match_config.py#7): [buildbucket](#recipe_modules-buildbucket), [change\_verifier](#recipe_modules-change_verifier), [step](#recipe_modules-step)
+
+
+&mdash; **def [RunSteps](/recipe_modules/change_verifier/tests/match_config.py#14)(api):**
 ### *recipes* / [change\_verifier:tests/search](/recipe_modules/change_verifier/tests/search.py)
 
 [DEPS](/recipe_modules/change_verifier/tests/search.py#8): [change\_verifier](#recipe_modules-change_verifier), [proto](#recipe_modules-proto)

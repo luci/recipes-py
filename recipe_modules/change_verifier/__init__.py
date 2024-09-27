@@ -3,6 +3,10 @@
 # that can be found in the LICENSE file.
 
 DEPS = [
-  'proto',
-  'step',
+  'recipe_engine/buildbucket',
+  'recipe_engine/cipd',
+  'recipe_engine/luci_config',
+  'recipe_engine/proto',
+  'recipe_engine/raw_io',
+  'recipe_engine/step',
 ]

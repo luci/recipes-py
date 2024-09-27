@@ -17,6 +17,10 @@ want to use this recipe module; file a ticket at:
 https://bugs.chromium.org/p/chromium/issues/entry?components=Infra%3ELUCI%3EBuildService%3EPresubmit%3ECV
 """
 
+# Take revision from
+# https://ci.chromium.org/p/infra-internal/g/infra-packagers/console
+DEFAULT_CIPD_VERSION = 'git_revision:18f9ec7b61710fcadb722de6bd26bb36c89d8075'
+
 from google.protobuf import json_format
 
 from PB.go.chromium.org.luci.cv.api.v0 import run as run_pb
@@ -123,3 +127,58 @@ class ChangeVerifierApi(recipe_api.RecipeApi):
         stdout=self.m.proto.output(output_class, 'JSONPB'),
         infra_step=True)
     return step_result.stdout
+
+  @property
+  def _version(self):
+    if self._test_data.enabled:
+      return 'swarming_module_pin'
+    return DEFAULT_CIPD_VERSION  # pragma: no cover
+
+  @property
+  def _luci_cv(self):
+    return self.m.cipd.ensure_tool('infra/tools/luci-cv/${platform}',
+                                   self._version)
+
+  def match_config(self,
+                   host: str,
+                   change: int,
+                   project: str | None = None) -> str | None:
+    """Retrieve the applicable CV group for a given change."""
+    assert host.endswith('-review.googlesource.com'), host
+    assert isinstance(change, int), change
+    config = self.m.luci_config.fetch_config_raw('commit-queue.cfg',
+                                                 project=project)
+
+    change_url = f'{host}/{change}'
+    cmd = [
+        self._luci_cv,
+        'match-config',
+        change_url,
+        self.m.raw_io.input_text(config),
+    ]
+
+    try:
+      # TODO: b/369924790 - Switch to a JSON output option.
+      step = self.m.step(
+          'match-config',
+          cmd,
+          stdout=self.m.raw_io.output_text(),
+          step_test_data=lambda: self.m.raw_io.test_api.stream_output_text('''
+https://chromium-review.googlesource.com/123456:
+  Location: Host: chromium-review.googlesource.com, Repo: chromium/src, Ref: refs/heads/main
+  Matched: chromium-src
+          '''),
+      )
+
+    except self.m.step.StepFailure:
+      return None
+
+    step.presentation.links['gerrit'] = change_url
+    for line in step.stdout.splitlines():
+      matched = 'Matched:'
+      if line.strip().startswith(matched):
+        result = line.strip().removeprefix(matched).strip()
+        step.presentation.step_summary_text = result
+        return result
+
+    return None  # pragma: no cover
