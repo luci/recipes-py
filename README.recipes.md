@@ -2783,20 +2783,23 @@ Returns:
 [DEPS](/recipe_modules/luci_config/__init__.py#5): [buildbucket](#recipe_modules-buildbucket), [file](#recipe_modules-file), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
 
 
-#### **class [LuciConfigApi](/recipe_modules/luci_config/api.py#19)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
+#### **class [LuciConfigApi](/recipe_modules/luci_config/api.py#20)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
 
 Module for polling and parsing luci config files via the luci-config API.
 
 Depends on `prpc` binary being available in $PATH:
     https://godoc.org/go.chromium.org/luci/grpc/cmd/prpc
 
-&mdash; **def [buildbucket](/recipe_modules/luci_config/api.py#131)(self, \*\*kwargs):**
+&mdash; **def [buildbucket](/recipe_modules/luci_config/api.py#139)(self, \*\*kwargs):**
 
-&mdash; **def [commit\_queue](/recipe_modules/luci_config/api.py#135)(self, config_name=None, \*\*kwargs):**
+&mdash; **def [commit\_queue](/recipe_modules/luci_config/api.py#143)(self, config_name=None, \*\*kwargs):**
 
-&mdash; **def [fetch\_config](/recipe_modules/luci_config/api.py#59)(self, config_name, message_type, project=None, local_dir=None, allow_unknown_fields=False):**
+&mdash; **def [fetch\_config](/recipe_modules/luci_config/api.py#64)(self, config_name, message_type, project=None, local_dir=None, allow_unknown_fields=False):**
 
 Fetch and parse config file from the luci-config API as a proto.
+
+Since configs are unlikely to change significantly during a build and to
+simplify test data, results are cached.
 
 Args:
     config_name (str): The name of the config file to fetch, e.g.
@@ -2816,9 +2819,12 @@ Args:
         into the recipes repo may be out of date. This option should be
         used with care, as it strips potentially important information.
 
-&mdash; **def [fetch\_config\_raw](/recipe_modules/luci_config/api.py#26)(self, config_name, project=None, local_dir=None):**
+&emsp; **@functools.cache**<br>&mdash; **def [fetch\_config\_raw](/recipe_modules/luci_config/api.py#27)(self, config_name, project=None, local_dir=None):**
 
 Fetch and parse config file from the luci-config API as a proto.
+
+Since configs are unlikely to change significantly during a build and to
+simplify test data, results are cached.
 
 Args:
     config_name (str): The name of the config file to fetch, e.g.
@@ -2831,9 +2837,9 @@ Args:
         file will be read from the corresponding local file rather
         than fetching it from the LUCI Config service.
 
-&mdash; **def [milo](/recipe_modules/luci_config/api.py#142)(self, \*\*kwargs):**
+&mdash; **def [milo](/recipe_modules/luci_config/api.py#150)(self, \*\*kwargs):**
 
-&mdash; **def [scheduler](/recipe_modules/luci_config/api.py#145)(self, \*\*kwargs):**
+&mdash; **def [scheduler](/recipe_modules/luci_config/api.py#153)(self, \*\*kwargs):**
 ### *recipe_modules* / [milo](/recipe_modules/milo)
 
 [DEPS](/recipe_modules/milo/__init__.py#5): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [resultdb](#recipe_modules-resultdb), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)

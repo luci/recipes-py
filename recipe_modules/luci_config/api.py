@@ -3,6 +3,7 @@
 # that can be found in the LICENSE file.
 
 import base64
+import functools
 
 from google.protobuf import text_format as textpb
 
@@ -23,6 +24,7 @@ class LuciConfigApi(recipe_api.RecipeApi):
       https://godoc.org/go.chromium.org/luci/grpc/cmd/prpc
   """
 
+  @functools.cache
   def fetch_config_raw(
       self,
       config_name,
@@ -30,6 +32,9 @@ class LuciConfigApi(recipe_api.RecipeApi):
       local_dir=None,
   ):
     """Fetch and parse config file from the luci-config API as a proto.
+
+    Since configs are unlikely to change significantly during a build and to
+    simplify test data, results are cached.
 
     Args:
         config_name (str): The name of the config file to fetch, e.g.
@@ -65,6 +70,9 @@ class LuciConfigApi(recipe_api.RecipeApi):
       allow_unknown_fields=False,
   ):
     """Fetch and parse config file from the luci-config API as a proto.
+
+    Since configs are unlikely to change significantly during a build and to
+    simplify test data, results are cached.
 
     Args:
         config_name (str): The name of the config file to fetch, e.g.
