@@ -13,7 +13,7 @@ class CasApi(recipe_api.RecipeApi):
   """A module for interacting with cas client."""
 
   def __init__(self, env_properties, **kwargs):
-    super(CasApi, self).__init__(**kwargs)
+    super().__init__(**kwargs)
 
     self._instance = None
     self._cached_version = None

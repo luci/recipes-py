@@ -16,12 +16,12 @@ from PB.recipe_engine.recipes_cfg import RepoSpec
 
 class BaseCommitTest(test_env.RecipeEngineUnitTest):
   def __init__(self, *args, **kwargs):
-    super(BaseCommitTest, self).__init__(*args, **kwargs)
+    super().__init__(*args, **kwargs)
     self.cm_counter = 0
     self.cm_timestamp = 0
 
   def setUp(self):
-    super(BaseCommitTest, self).setUp()
+    super().setUp()
     self.cm_counter = 0
     self.cm_timestamp = 1501807893
 

@@ -190,7 +190,7 @@ class GitBackend(Backend):
     GIT_BINARY = 'git'
 
   def __init__(self, *args, **kwargs):
-    super(GitBackend, self).__init__(*args, **kwargs)
+    super().__init__(*args, **kwargs)
     self._did_ensure = False
     self._resolved_refspecs = {}
     self._gitattr_checker = gitattr_checker.AttrChecker(self.checkout_dir)

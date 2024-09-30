@@ -44,7 +44,7 @@ def combineify(name, dest, a, b, overwrite=False):
 
 class BaseTestData:
   def __init__(self, enabled=True):
-    super(BaseTestData, self).__init__()
+    super().__init__()
     self._enabled = enabled
 
   @property
@@ -54,7 +54,7 @@ class BaseTestData:
 
 class PlaceholderTestData(BaseTestData):
   def __init__(self, data=None, name=None):
-    super(PlaceholderTestData, self).__init__()
+    super().__init__()
     self.data = data
     self.name = name
 
@@ -73,7 +73,7 @@ class StepTestData(BaseTestData):
   annotated_run.run_steps).
   """
   def __init__(self):
-    super(StepTestData, self).__init__()
+    super().__init__()
     # { (module, placeholder, name) -> data }. Data are for output placeholders.
     self.placeholder_data = defaultdict(dict)
     self.override = False
@@ -216,7 +216,7 @@ class ModuleTestData(BaseTestData, dict):
     return ret
 
   def __repr__(self):
-    return "ModuleTestData(%r)" % super(ModuleTestData, self).__repr__()
+    return "ModuleTestData(%r)" % super().__repr__()
 
 
 PostprocessHookContext = namedtuple(
@@ -236,7 +236,7 @@ and kwargs.
 
 class TestData(BaseTestData):
   def __init__(self, name=None):
-    super(TestData, self).__init__()
+    super().__init__()
     self.name = name
     self.properties = {}  # key -> val
     self.environ = {}  # key -> val
@@ -323,7 +323,7 @@ class TestData(BaseTestData):
 
 class DisabledTestData(BaseTestData):
   def __init__(self):
-    super(DisabledTestData, self).__init__(False)
+    super().__init__(False)
 
   def __getattr__(self, name):
     return self

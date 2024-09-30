@@ -431,7 +431,7 @@ class TestVerifySubset(test_env.RecipeEngineUnitTest):
     ])
 
   def setUp(self):
-    super(TestVerifySubset, self).setUp()
+    super().setUp()
     self.v = VerifySubset
     self.d = self.mkData('a', 'b', 'c')
     self.c = copy.deepcopy(self.d)

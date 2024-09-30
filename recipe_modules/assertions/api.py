@@ -21,7 +21,7 @@ def make_assertion(assertion_method, **test_case_attrs):
       # class that is the test to run. We're not going to run a test, we just
       # want access to the assertion methods, so just put some method.
       def __init__(self):
-        super(Asserter, self).__init__('__init__')
+        super().__init__('__init__')
 
       def _formatMessage(self, msg, standardMsg):
         if msg:
@@ -34,7 +34,7 @@ def make_assertion(assertion_method, **test_case_attrs):
           format_args = {k: v for k, v in call_args.items()
                          if k not in ('self', 'msg')}
           msg = msg.format(**format_args)
-        return super(Asserter, self)._formatMessage(msg, standardMsg)
+        return super()._formatMessage(msg, standardMsg)
 
     asserter = Asserter()
     for a, v in test_case_attrs.items():
@@ -135,7 +135,7 @@ class AssertionsApi(recipe_api.RecipeApi):
   ]
 
   def __init__(self, *args, **kwargs):
-    super(AssertionsApi, self).__init__(*args, **kwargs)
+    super().__init__(*args, **kwargs)
     if not self._test_data.enabled:  # pragma: no cover
       raise Exception('assertions module is only for use in tests')
     # The __init__ method of TestCase requires the name of a method on the class

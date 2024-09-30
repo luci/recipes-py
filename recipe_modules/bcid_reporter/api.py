@@ -15,7 +15,7 @@ class BcidReporterApi(recipe_api.RecipeApi):
   """API for interacting with Provenance server using the broker tool."""
 
   def __init__(self, **kwargs):
-    super(BcidReporterApi, self).__init__(**kwargs)
+    super().__init__(**kwargs)
     self._broker_bin = None
 
     if self._test_data.enabled:

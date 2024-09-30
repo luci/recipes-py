@@ -20,7 +20,7 @@ from PB.recipe_engine.analyze import Input, Output
 
 class AnalyzeTest(test_env.RecipeEngineUnitTest):
   def setUp(self):
-    super(AnalyzeTest, self).setUp()
+    super().setUp()
     self.git_attr_patcher = mock.patch(
         'recipe_engine.internal.commands.analyze.cmd.get_git_attribute_files',
         side_effect=self.git_attr)
@@ -30,7 +30,7 @@ class AnalyzeTest(test_env.RecipeEngineUnitTest):
   def tearDown(self):
     self.git_attr_patcher.stop()
     self.git_attr_files = None
-    super(AnalyzeTest, self).tearDown()
+    super().tearDown()
 
   def git_attr(self, repo_root):
     return [os.path.join(repo_root, path) for path in self.git_attr_files]

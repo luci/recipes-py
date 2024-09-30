@@ -454,7 +454,7 @@ from recipe_engine import recipe_api
 
 class HelloApi(recipe_api.RecipeApi):
   def __init__(self, target_of_admiration, *args, **kwargs):
-    super(HelloApi, self).__init__(*args, **kwargs)
+    super().__init__(*args, **kwargs)
     self._target = target_of_admiration
 
   def greet(self, default_verb=None):
@@ -681,7 +681,7 @@ from recipe_engine import recipe_api
 
 class HelloApi(recipe_api.RecipeApi):
   def __init__(self, target_of_admiration, *args, **kwargs):
-    super(HelloApi, self).__init__(*args, **kwargs)
+    super().__init__(*args, **kwargs)
     self._target = target_of_admiration
 
   def get_config_defaults(self):

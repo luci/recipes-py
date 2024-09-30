@@ -22,12 +22,12 @@ class AnnotatorStreamEngine(StreamEngine):
     self.final_result = Result()
 
   def open(self):
-    super(AnnotatorStreamEngine, self).open()
+    super().open()
     self.output_current_time()
     self.output_root_annotation('HONOR_ZERO_RETURN_CODE')
 
   def close(self):
-    super(AnnotatorStreamEngine, self).close()
+    super().close()
     self.output_current_time()
 
   @property
@@ -64,7 +64,7 @@ class AnnotatorStreamEngine(StreamEngine):
 
   class StepStream(StreamEngine.StepStream):
     def __init__(self, engine, outstream, step_name):
-      super(AnnotatorStreamEngine.StepStream, self).__init__()
+      super().__init__()
 
       self._engine = engine
       self._outstream = outstream

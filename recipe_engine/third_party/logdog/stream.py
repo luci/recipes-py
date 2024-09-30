@@ -179,7 +179,7 @@ class StreamClient:
     """Wraps a basic file descriptor, offering "write" and "close"."""
 
     def __init__(self, stream_client, params, fd):
-      super(StreamClient._BasicStream, self).__init__(stream_client, params)
+      super().__init__(stream_client, params)
       self._fd = fd
 
     @property
@@ -200,7 +200,7 @@ class StreamClient:
     """Extends _BasicStream, ensuring data written is UTF-8 text."""
 
     def __init__(self, stream_client, params, fd):
-      super(StreamClient._TextStream, self).__init__(stream_client, params, fd)
+      super().__init__(stream_client, params, fd)
       self._fd = fd
 
     def write(self, data):
@@ -223,7 +223,7 @@ class StreamClient:
     """Wraps a stream object to write length-prefixed datagrams."""
 
     def __init__(self, stream_client, params, fd):
-      super(StreamClient._DatagramStream, self).__init__(stream_client, params)
+      super().__init__(stream_client, params)
       self._fd = fd
 
     def send(self, data):
@@ -527,7 +527,7 @@ class _NamedPipeStreamClient(StreamClient):
     Args:
       name (str): The name of the Windows named pipe to use (e.g., "\\.\name")
     """
-    super(_NamedPipeStreamClient, self).__init__(**kwargs)
+    super().__init__(**kwargs)
     self._name = '\\\\.\\pipe\\' + name
 
   @classmethod
@@ -579,7 +579,7 @@ class _UnixDomainSocketStreamClient(StreamClient):
     Args:
       path (str): The path to the named UNIX domain socket.
     """
-    super(_UnixDomainSocketStreamClient, self).__init__(**kwargs)
+    super().__init__(**kwargs)
     self._path = path
 
   @classmethod

@@ -22,12 +22,12 @@ class UrlApi(recipe_api.RecipeApi):
 
   class HTTPError(recipe_api.StepFailure):
     def __init__(self, msg, response):
-      super(UrlApi.HTTPError, self).__init__(msg)
+      super().__init__(msg)
       self.response = response
 
   class InfraHTTPError(recipe_api.InfraFailure):
     def __init__(self, msg, response):
-      super(UrlApi.InfraHTTPError, self).__init__(msg)
+      super().__init__(msg)
       self.response = response
 
   # Status JSON output from "pycurl.py" resource.

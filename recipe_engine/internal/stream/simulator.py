@@ -27,7 +27,7 @@ class _SimulationStepStream(StreamEngine.StepStream):
       annotations - The dictionary to map annotations into. If None, annotations
           will be ignored.
     """
-    super(_SimulationStepStream, self).__init__()
+    super().__init__()
     self._annotations = annotations
 
   def _dict_annotation(self, field):
@@ -127,7 +127,7 @@ class SimulationStreamEngine(StreamEngine):
 
   def __init__(self):
     self._annotations_map = collections.OrderedDict()
-    super(SimulationStreamEngine, self).__init__()
+    super().__init__()
 
   @property
   def annotations(self):

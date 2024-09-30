@@ -166,7 +166,7 @@ class TestWarningRecorder(test_env.RecipeEngineUnitTest):
   test_file_path = '/path/to/test.py'
 
   def setUp(self):
-    super(TestWarningRecorder, self).setUp()
+    super().setUp()
     mock_deps = mock.Mock(
       warning_definitions={
         'recipe_engine/SOME_WARNING': warning_pb.Definition()
@@ -406,7 +406,7 @@ class EscapeWarningPredicateTest(test_env.RecipeEngineUnitTest):
 
 class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
   def setUp(self):
-    super(WarningIntegrationTests, self).setUp()
+    super().setUp()
     self.deps = self.FakeRecipeDeps()
     with self.deps.main_repo.write_file(RECIPE_WARNING_DEFINITIONS_REL) as d:
       d.write('''

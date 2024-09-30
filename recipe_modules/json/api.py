@@ -73,7 +73,7 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
         'add_json_log=%r' % add_json_log)
     self.raw = api.m.raw_io.output_text('.json', leak_to=leak_to)
     self.add_json_log = add_json_log
-    super(JsonOutputPlaceholder, self).__init__(name=name)
+    super().__init__(name=name)
 
   @property
   def backing_file(self):

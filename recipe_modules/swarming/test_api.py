@@ -16,7 +16,7 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
   TaskState = TaskState
 
   def __init__(self, *args, **kwargs):
-    super(SwarmingTestApi, self).__init__(*args, **kwargs)
+    super().__init__(*args, **kwargs)
     self._task_id_count = 0
     self._saved_task_for_show_request = None
 

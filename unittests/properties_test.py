@@ -113,7 +113,7 @@ class TestProperties(test_env.RecipeEngineUnitTest):
 
 class TestProtoProperties(test_env.RecipeEngineUnitTest):
   def setUp(self):
-    super(TestProtoProperties, self).setUp()
+    super().setUp()
     self.deps = self.FakeRecipeDeps()
 
     main = self.deps.main_repo
@@ -165,7 +165,7 @@ class TestProtoProperties(test_env.RecipeEngineUnitTest):
       mod.ENV_PROPERTIES = 'props.EnvProps'
       mod.api.write('''
         def __init__(self, props, global_props, env_props, **kwargs):
-          super(ModnameApi, self).__init__(**kwargs)
+          super().__init__(**kwargs)
           self.value = global_props.best_prop
           self.mod_value = props.mod_prop
           self.env_value_str = env_props.STR_ENVVAR

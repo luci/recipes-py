@@ -22,23 +22,23 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
     def __init__(self, step_name, bad_keys):
       reason = 'Step(%r) generated step with bad keys %r' % (
         step_name, bad_keys)
-      super(GeneratorScriptApi.UnknownKey, self).__init__(
+      super().__init__(
           reason)
       self.bad_keys = frozenset(bad_keys)
 
   class MalformedStepList(recipe_api.StepFailure):
     def __init__(self, step_name):
-      super(GeneratorScriptApi.MalformedStepList, self).__init__(
+      super().__init__(
         'Step(%r) generated non-list JSON output' % (step_name,))
 
   class MalformedStep(recipe_api.StepFailure):
     def __init__(self, step_name):
-      super(GeneratorScriptApi.MalformedStep, self).__init__(
+      super().__init__(
         'Step(%r) generated step without "name" or "cmd"' % (step_name,))
 
   class MalformedCmd(recipe_api.StepFailure):
     def __init__(self, step_name):
-      super(GeneratorScriptApi.MalformedCmd, self).__init__(
+      super().__init__(
         'Step(%r) generated step with "cmd" containing non-strings' % (
           step_name,))
 

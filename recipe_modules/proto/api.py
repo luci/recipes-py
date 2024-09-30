@@ -23,7 +23,7 @@ class ProtoOutputPlaceholder(recipe_util.OutputPlaceholder):
     self._msg_class = msg_class
     self._codec = codec
     self._decoding_kwargs = decoding_kwargs
-    super(ProtoOutputPlaceholder, self).__init__(name=name)
+    super().__init__(name=name)
 
   @property
   def backing_file(self):

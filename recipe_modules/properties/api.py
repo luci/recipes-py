@@ -31,7 +31,7 @@ class PropertiesApi(recipe_api.RecipeApi, collections.abc.Mapping):
   properties_client = recipe_api.RequireClient('properties')
 
   def __init__(self, **kwargs):
-    super(PropertiesApi, self).__init__(**kwargs)
+    super().__init__(**kwargs)
     self._frozen_properties = None
 
   @property

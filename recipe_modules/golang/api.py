@@ -9,7 +9,7 @@ from recipe_engine import recipe_api
 
 class GolangApi(recipe_api.RecipeApi):
   def __init__(self, **kwargs):
-    super(GolangApi, self).__init__(**kwargs)
+    super().__init__(**kwargs)
     self._installed = {}  # {Path: installed Go version there}
 
   @contextlib.contextmanager

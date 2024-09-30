@@ -9,7 +9,7 @@ from recipe_engine import recipe_api
 
 class NodeJSApi(recipe_api.RecipeApi):
   def __init__(self, **kwargs):
-    super(NodeJSApi, self).__init__(**kwargs)
+    super().__init__(**kwargs)
     self._installed = {}  # {Path: installed nodejs version there}
 
   @contextlib.contextmanager

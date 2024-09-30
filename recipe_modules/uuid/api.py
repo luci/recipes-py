@@ -10,7 +10,7 @@ from recipe_engine import recipe_api
 
 class UuidApi(recipe_api.RecipeApi):
   def __init__(self, **kwargs):
-    super(UuidApi, self).__init__(**kwargs)
+    super().__init__(**kwargs)
     self._fake_time = None
     self._fake_step = None
     if self._test_data.enabled:

@@ -16,7 +16,7 @@ from recipe_engine.internal.simple_cfg import RECIPES_CFG_LOCATION_REL
 
 class TestProtoSupport(test_env.RecipeEngineUnitTest):
   def setUp(self):
-    super(TestProtoSupport, self).setUp()
+    super().setUp()
     self.deps = self.FakeRecipeDeps()
     self.deps.ambient_toplevel_code = [
       '''

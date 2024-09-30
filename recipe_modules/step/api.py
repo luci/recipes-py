@@ -29,7 +29,7 @@ class StepApi(recipe_api.RecipeApi):
   step_client = recipe_api.RequireClient('step')
 
   def __init__(self, step_properties, **kwargs):
-    super(StepApi, self).__init__(**kwargs)
+    super().__init__(**kwargs)
     self._prefix_path = step_properties.get('prefix_path', [])
 
   # Valid step status values.

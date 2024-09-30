@@ -67,5 +67,5 @@ class CrashEngine(BaseException):
   This exception should only be handled by the recipe engine.
   """
   def __init__(self, reason):
-    super(CrashEngine, self).__init__(reason)
+    super().__init__(reason)
     self.reason = reason

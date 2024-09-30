@@ -73,7 +73,7 @@ class InputDataPlaceholder(recipe_util.InputPlaceholder):
     self.data = data
     self.suffix = suffix
     self._backing_file = None
-    super(InputDataPlaceholder, self).__init__(name=name)
+    super().__init__(name=name)
 
   @property
   def backing_file(self):
@@ -113,7 +113,7 @@ class InputTextPlaceholder(InputDataPlaceholder):
   """A input placeholder which expects to write out text."""
 
   def __init__(self, data, suffix, name=None):
-    super(InputTextPlaceholder, self).__init__(data, suffix, name=name)
+    super().__init__(data, suffix, name=name)
     assert isinstance(data, str)
 
   def write_data(self, fd): # pragma: no cover
@@ -134,7 +134,7 @@ class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
     self.leak_to = leak_to
     self.add_output_log = add_output_log
     self._backing_file = None
-    super(OutputDataPlaceholder, self).__init__(name=name)
+    super().__init__(name=name)
 
   @property
   def backing_file(self):
@@ -252,7 +252,7 @@ class OutputDataDirPlaceholder(recipe_util.OutputPlaceholder):
     self._backing_dir = backing_dir
 
     self._used = False
-    super(OutputDataDirPlaceholder, self).__init__(name=name)
+    super().__init__(name=name)
 
   @property
   def backing_file(self):  # pragma: no cover

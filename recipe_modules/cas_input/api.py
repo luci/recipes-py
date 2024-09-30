@@ -21,7 +21,7 @@ class CasInputApi(recipe_api.RecipeApi):
   """A module for downloading CAS inputs to a recipe."""
 
   def __init__(self, props, **kwargs):
-    super(CasInputApi, self).__init__(**kwargs)
+    super().__init__(**kwargs)
 
     self._module_props = props
 

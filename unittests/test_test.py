@@ -152,7 +152,7 @@ class Common(test_env.RecipeEngineUnitTest):
     return jsonpb.MessageToDict(ret, preserving_proto_field_name=True)
 
   def setUp(self):
-    super(Common, self).setUp()
+    super().setUp()
     self.deps = self.FakeRecipeDeps()
     self.main = self.deps.main_repo
 

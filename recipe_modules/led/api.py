@@ -132,7 +132,7 @@ class LedApi(recipe_api.RecipeApi):
       return self.__class__(res, self._module)
 
   def __init__(self, props, **kwargs):
-    super(LedApi, self).__init__(**kwargs)
+    super().__init__(**kwargs)
     self._run_id = props.led_run_id
     self._shadowed_bucket = props.shadowed_bucket
 

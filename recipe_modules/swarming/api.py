@@ -1206,7 +1206,7 @@ class SwarmingApi(recipe_api.RecipeApi):
   TaskResult = TaskResult
 
   def __init__(self, env_properties, *args, **kwargs):
-    super(SwarmingApi, self).__init__(*args, **kwargs)
+    super().__init__(*args, **kwargs)
     self._server = env_properties.SWARMING_SERVER
     self._env_properties = env_properties
     # Stores TaskRequests by tuple of (task_id, server)

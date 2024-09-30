@@ -116,7 +116,7 @@ class RecipeEngineUnitTest(unittest.TestCase):
     """Override the parent's assertDictEqual to strip out unicode objects.
 
     This leads to much more readable diffs when debugging tests."""
-    super(RecipeEngineUnitTest, self).assertDictEqual(
+    super().assertDictEqual(
         fix_json_object(d1), fix_json_object(d2),
         msg)
 
@@ -124,7 +124,7 @@ class RecipeEngineUnitTest(unittest.TestCase):
     """Override the parent's assertListEqual to strip out unicode objects.
 
     This leads to much more readable diffs when debugging tests."""
-    super(RecipeEngineUnitTest, self).assertListEqual(
+    super().assertListEqual(
         fix_json_object(d1), fix_json_object(d2),
         msg)
 

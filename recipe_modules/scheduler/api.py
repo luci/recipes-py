@@ -28,7 +28,7 @@ class SchedulerApi(recipe_api.RecipeApi):
   """A module for interacting with LUCI Scheduler service."""
 
   def __init__(self, init_state, **kwargs):
-    super(SchedulerApi, self).__init__(**kwargs)
+    super().__init__(**kwargs)
     self._host = init_state.get('hostname') or 'luci-scheduler.appspot.com'
     self._job_id = init_state.get('job')
     self._invocation_id = init_state.get('invocation')
@@ -196,7 +196,7 @@ class SchedulerApi(recipe_api.RecipeApi):
         `api.buildbucket.tags_for_child_build` api.
     """
     def __init__(self, repo, ref, revision, **kwargs):
-      super(SchedulerApi.GitilesTrigger, self).__init__(**kwargs)
+      super().__init__(**kwargs)
       self._repo = repo
       self._ref = ref
       self._revision = revision

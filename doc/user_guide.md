@@ -533,7 +533,7 @@ Example:
 
     class MyApi(RecipeApi):
       def __init__(self, props, globals, envvars, **kwargs):
-        super(MyApi, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self.prop = props.some_string
         self.global_prop = globals.global_string

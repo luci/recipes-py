@@ -248,7 +248,7 @@ class _resolved(ast.AST):
   errors e.g. a dictionary value replaced with its keys because the values
   aren't relevant to the check failure."""
   def __init__(self, representation, value, valid=True):
-    super(_resolved, self).__init__()
+    super().__init__()
     self.representation = representation
     self.value = value
     self.valid = valid

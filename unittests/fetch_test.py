@@ -41,7 +41,7 @@ def multi(*side_effect_funcs):
 class TestGit(test_env.RecipeEngineUnitTest):
 
   def setUp(self):
-    super(TestGit, self).setUp()
+    super().setUp()
     fetch.Backend._GIT_METADATA_CACHE = {}
     mock.patch(fetch.__name__+'.GitBackend.GIT_BINARY', 'GIT').start()
     self.addCleanup(mock.patch.stopall)

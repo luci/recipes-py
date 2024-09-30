@@ -45,7 +45,7 @@ class FuturesApi(RecipeApi):
   concurrency_client = RequireClient('concurrency')
 
   def __init__(self, *args, **kwargs):
-    super(FuturesApi, self).__init__(*args, **kwargs)
+    super().__init__(*args, **kwargs)
     self._future_id = 0
 
   class Timeout(Exception):

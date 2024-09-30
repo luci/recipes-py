@@ -150,7 +150,7 @@ class _StringSequence(collections.UserList):
   # of operators to avoid re-fix_stringlike'ing `items` here, but not worth the
   # implementation complexity.
   def __init__(self, initlist=None):
-    super(_StringSequence, self).__init__()
+    super().__init__()
     if initlist is not None:
       self.data = [_fix_stringlike(i) for i in initlist]
 
@@ -215,7 +215,7 @@ class _OrderedDictString(collections.OrderedDict):
           "data as log value: %r" % (type(value),)
       )
 
-    return super(_OrderedDictString, self).__setitem__(key, value)
+    return super().__setitem__(key, value)
 
   def setdefault(self, key, default):
     if key in self:
@@ -648,7 +648,7 @@ class PerGreenletState(local):
   """
 
   def __new__(cls, *args, **kwargs):
-    ret = super(PerGreenletState, cls).__new__(cls, *args, **kwargs)
+    ret = super().__new__(cls, *args, **kwargs)
     PerGreentletStateRegistry.append(ret)
     return ret
 

@@ -55,7 +55,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
   INHERIT = object()
 
   def __init__(self, props, glob_props, *args, **kwargs):
-    super(BuildbucketApi, self).__init__(*args, **kwargs)
+    super().__init__(*args, **kwargs)
     self._service_account_key = None
     self._host = props.build.infra.buildbucket.hostname or self.HOST_PROD
     self._runtime_tags = {}

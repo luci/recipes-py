@@ -86,7 +86,7 @@ class exponential_retry:
 
 class TimeApi(recipe_api.RecipeApi):
   def __init__(self, **kwargs):
-    super(TimeApi, self).__init__(**kwargs)
+    super().__init__(**kwargs)
     self._fake_time = None
     self._fake_step = None
     if self._test_data.enabled:

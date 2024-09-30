@@ -12,7 +12,7 @@ from recipe_engine.internal.engine_env import merge_envs
 
 class TestMergeEnvs(test_env.RecipeEngineUnitTest):
   def setUp(self):
-    super(TestMergeEnvs, self).setUp()
+    super().setUp()
     self.original = {
         'FOO': 'foo',
     }

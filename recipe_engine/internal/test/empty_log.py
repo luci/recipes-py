@@ -8,7 +8,7 @@ class _EmptyLog(str):
   distinguish logs with no lines and logs containing a single empty line.
   """
   def __new__(cls):
-    return super(_EmptyLog, cls).__new__(cls, '')
+    return super().__new__(cls, '')
 
   def __copy__(self):
     return self

@@ -21,7 +21,7 @@ from PB.go.chromium.org.luci.buildbucket.proto import common
 
 class LedTestApi(recipe_test_api.RecipeTestApi):
   def __init__(self, *args, **kwargs):
-    super(LedTestApi, self).__init__(*args, **kwargs)
+    super().__init__(*args, **kwargs)
 
     # The ModuleTestData system provided by the recipe engine essentially gives
     # us a `dict` that gets passed to the module's __init__ method during test

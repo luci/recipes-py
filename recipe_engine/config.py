@@ -395,7 +395,7 @@ class ConfigGroup(ConfigBase):
 
   def __init__(self, hidden=AutoHide, **type_map):
     """Expects type_map to be {python_name -> ConfigBase} instance."""
-    super(ConfigGroup, self).__init__(hidden)
+    super().__init__(hidden)
     assert type_map, 'A ConfigGroup with no type_map is meaningless.'
 
     object.__setattr__(self, '_type_map', type_map)
@@ -469,7 +469,7 @@ class ConfigGroupSchema(ConfigSchemaBase):
 
   def __init__(self, **type_map):
     """Expects type_map to be {python_name -> ConfigBase} instance."""
-    super(ConfigGroupSchema, self).__init__()
+    super().__init__()
     if not type_map:
       raise ValueError('A ConfigGroup with no type_map is meaningless.')
 
@@ -518,7 +518,7 @@ class ConfigList(ConfigBase, collections.abc.MutableSequence):
       item_schema: The schema of each object. Should be a function which returns
                    an instance of ConfigGroup.
     """
-    super(ConfigList, self).__init__(hidden=hidden)
+    super().__init__(hidden=hidden)
     typeAssert(item_schema, types.FunctionType)
     typeAssert(item_schema(), ConfigGroup)
     self.item_schema = item_schema
@@ -591,7 +591,7 @@ class Dict(ConfigBase, collections.abc.MutableMapping):
         assigned to this dictionary. If None, the value can be any type.
       hidden - See ConfigBase.
     """
-    super(Dict, self).__init__(hidden)
+    super().__init__(hidden)
     self.value_type = value_type
     self.item_fn = item_fn
     self.jsonish_fn = jsonish_fn
@@ -663,7 +663,7 @@ class List(ConfigBase, collections.abc.MutableSequence):
         python datatype. Defaults to list().
       hidden - See ConfigBase.
     """
-    super(List, self).__init__(hidden)
+    super().__init__(hidden)
     self.inner_type = inner_type
     self.jsonish_fn = jsonish_fn
     self.data = []
@@ -725,7 +725,7 @@ class Set(ConfigBase, collections.abc.MutableSet):
         python datatype. Defaults to list().
       hidden - See ConfigBase.
     """
-    super(Set, self).__init__(hidden)
+    super().__init__(hidden)
     self.inner_type = inner_type
     self.jsonish_fn = jsonish_fn
     self.data = set()
@@ -791,7 +791,7 @@ class Single(ConfigBase):
         non-empty_val in order for it to be considered complete().
       hidden - See ConfigBase.
     """
-    super(Single, self).__init__(hidden)
+    super().__init__(hidden)
     self.inner_type = inner_type
     self.jsonish_fn = jsonish_fn
     self.empty_val = empty_val
@@ -835,7 +835,7 @@ class Static(ConfigBase):
   """
 
   def __init__(self, value, hidden=AutoHide):
-    super(Static, self).__init__(hidden=hidden)
+    super().__init__(hidden=hidden)
     # HACK: Paths are functionally immutable, but cannot have their __hash__
     # execute correctly until the checkout_dir has actually been set (because
     # the __hash__ implementation when a Path is based on checkout_dir wants to
@@ -891,7 +891,7 @@ class Enum(ConfigBase):
         value in order for it to be considered complete().
       hidden - See ConfigBase.
     """
-    super(Enum, self).__init__(kwargs.get('hidden', AutoHide))
+    super().__init__(kwargs.get('hidden', AutoHide))
     if not values:
       raise ValueError("Enumerations cannot be empty")
     self.values = values

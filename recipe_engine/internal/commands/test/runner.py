@@ -590,7 +590,7 @@ def _make_path_cleaner(recipe_deps):
 class RunnerThread(gevent.Greenlet):
   def __init__(self, recipe_deps, description_queue, outcome_queue, is_train,
                cov_file, cover_module_imports):
-    super(RunnerThread, self).__init__()
+    super().__init__()
 
     self.cov_file = cov_file
     self.exit_code = None

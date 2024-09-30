@@ -86,7 +86,7 @@ def _to_encodable(obj):
 
 class MultipleLUCIContextException(Exception):
   def __init__(self):
-    super(MultipleLUCIContextException, self).__init__(
+    super().__init__(
       'Attempted to write LUCI_CONTEXT in multiple threads')
 
 

@@ -16,7 +16,7 @@ from recipe_engine.internal import gitattr_checker
 
 class AttrCheckerEquivalenceTests(test_env.RecipeEngineUnitTest):
   def setUp(self):
-    super(AttrCheckerEquivalenceTests, self).setUp()
+    super().setUp()
     self.git_repo = self.tempdir()
     self.git('init', '-q')
     self.attr_checker = gitattr_checker.AttrChecker(self.git_repo, False)
@@ -272,7 +272,7 @@ class AttrCheckerEquivalenceTests(test_env.RecipeEngineUnitTest):
 
 class AttrCheckerMockTests(test_env.RecipeEngineUnitTest):
   def setUp(self):
-    super(AttrCheckerMockTests, self).setUp()
+    super().setUp()
     self._attr_checker = gitattr_checker.AttrChecker('repo', False)
     self._blobs = {
         'blob1': [

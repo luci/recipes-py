@@ -40,7 +40,7 @@ class StreamEngineInvariants(StreamEngine):
 
   class StepStream(StreamEngine.StepStream):
     def __init__(self, engine, step_name):
-      super(StreamEngineInvariants.StepStream, self).__init__()
+      super().__init__()
       self._engine = engine
       self._step_name = step_name
       self._open = True

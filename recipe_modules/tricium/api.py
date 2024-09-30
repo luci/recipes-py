@@ -41,7 +41,7 @@ class TriciumApi(recipe_api.RecipeApi):
     Initializes an empty list of comments for use with
     add_comment and write_comments.
     """
-    super(TriciumApi, self).__init__(**kwargs)
+    super().__init__(**kwargs)
     self._comments = []
 
   def add_comment(self,

@@ -29,7 +29,7 @@ from recipe_engine import recipe_api
 
 class RandomApi(recipe_api.RecipeApi):
   def __init__(self, module_properties, **kwargs):
-    super(RandomApi, self).__init__(**kwargs)
+    super().__init__(**kwargs)
     self._random = random.Random(
         module_properties.get('seed',
                               1234 if self._test_data.enabled else None))

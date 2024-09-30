@@ -90,7 +90,7 @@ class FileApi(recipe_api.RecipeApi):
 
     def __init__(self, step_name, errno_name, message):
       reason = 'Step(%r) failed %r with: %s' % (step_name, errno_name, message)
-      super(FileApi.Error, self).__init__(reason)
+      super().__init__(reason)
       self.errno_name = errno_name
 
   def _assert_absolute_path_or_placeholder(self, path_or_placeholder):

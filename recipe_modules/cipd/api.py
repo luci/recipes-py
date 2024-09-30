@@ -297,7 +297,7 @@ class CIPDApi(recipe_api.RecipeApi):
 
     def __init__(self, step_name, message):
       reason = 'CIPD(%r) failed with: %s' % (step_name, message)
-      super(CIPDApi.Error, self).__init__(reason)
+      super().__init__(reason)
 
   def __init__(self, **kwargs):
     super().__init__(**kwargs)

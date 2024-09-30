@@ -79,7 +79,7 @@ class ContextApi(recipe_api.RecipeApi):
 
   # TODO(iannucci): move implementation of these data directly into this class.
   def __init__(self, **kwargs):
-    super(ContextApi, self).__init__(**kwargs)
+    super().__init__(**kwargs)
 
     self._state = State()
     self._test_counter = 0

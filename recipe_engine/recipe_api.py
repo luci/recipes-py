@@ -51,7 +51,7 @@ class UnknownRequirementError:
   """
 
   def __init__(self, req):
-    super(UnknownRequirementError, self).__init__(
+    super().__init__(
         'Unknown requirement [%s]' % (req,))
     self.typ = req._typ
     self.name = req._name
@@ -344,7 +344,7 @@ class StepFailure(Exception):
       self.result = None
       self.reason = name_or_reason
 
-    super(StepFailure, self).__init__(self.reason)
+    super().__init__(self.reason)
 
   def reason_message(self):
     return 'Step({!r})'.format(self.name)
@@ -446,7 +446,7 @@ class RecipeApi:
                test_data=DisabledTestData(),
                **_kwargs):
     """Note: Injected dependencies are NOT available in __init__()."""
-    super(RecipeApi, self).__init__()
+    super().__init__()
 
     assert module
     self._module = module
