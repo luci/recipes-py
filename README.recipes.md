@@ -1007,7 +1007,7 @@ Returns:
 &emsp; **@property**<br>&mdash; **def [input\_caches](/recipe_modules/cas_input/api.py#28)(self):**
 ### *recipe_modules* / [change\_verifier](/recipe_modules/change_verifier)
 
-[DEPS](/recipe_modules/change_verifier/__init__.py#5): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [luci\_config](#recipe_modules-luci_config), [proto](#recipe_modules-proto), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/change_verifier/__init__.py#5): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [cv](#recipe_modules-cv), [luci\_config](#recipe_modules-luci_config), [proto](#recipe_modules-proto), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
 Recipe API for LUCI Change Verifier.
@@ -1024,15 +1024,15 @@ subject to change in the future. Please reach out to the LUCI team first if you
 want to use this recipe module; file a ticket at:
 https://bugs.chromium.org/p/chromium/issues/entry?components=Infra%3ELUCI%3EBuildService%3EPresubmit%3ECV
 
-#### **class [ChangeVerifierApi](/recipe_modules/change_verifier/api.py#32)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
+#### **class [ChangeVerifierApi](/recipe_modules/change_verifier/api.py#33)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
 
 This module provides recipe API of LUCI Change Verifier.
 
-&mdash; **def [match\_config](/recipe_modules/change_verifier/api.py#142)(self, host: str, change: int, project: (str | None)=None):**
+&mdash; **def [match\_config](/recipe_modules/change_verifier/api.py#143)(self, host: str, change: int, project: (str | None)=None, config_name: str=cv_api.CONFIG_FILE):**
 
 Retrieve the applicable CV group for a given change.
 
-&mdash; **def [search\_runs](/recipe_modules/change_verifier/api.py#38)(self, project, cls=None, limit=None, step_name=None, dev=False):**
+&mdash; **def [search\_runs](/recipe_modules/change_verifier/api.py#39)(self, project, cls=None, limit=None, step_name=None, dev=False):**
 
 Searches for Runs.
 
@@ -1550,24 +1550,24 @@ Apply non-default value cq module properties to the cv module.
 
 Recipe API for LUCI CV, the pre-commit testing system.
 
-#### **class [CVApi](/recipe_modules/cv/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
+#### **class [CVApi](/recipe_modules/cv/api.py#18)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
 
 This module provides recipe API of LUCI CV, a pre-commit testing system.
 
-&emsp; **@property**<br>&mdash; **def [active](/recipe_modules/cv/api.py#46)(self):**
+&emsp; **@property**<br>&mdash; **def [active](/recipe_modules/cv/api.py#50)(self):**
 
 Returns whether CQ is active for this build.
 
-&mdash; **def [allow\_reuse\_for](/recipe_modules/cv/api.py#249)(self, \*modes):**
+&mdash; **def [allow\_reuse\_for](/recipe_modules/cv/api.py#253)(self, \*modes):**
 
 Instructs CQ that this build can be reused in a future Run if
 and only if its mode is in the provided modes.
 
 Overwrites all previously set values.
 
-&emsp; **@property**<br>&mdash; **def [allowed\_reuse\_modes](/recipe_modules/cv/api.py#245)(self):**
+&emsp; **@property**<br>&mdash; **def [allowed\_reuse\_modes](/recipe_modules/cv/api.py#249)(self):**
 
-&emsp; **@property**<br>&mdash; **def [attempt\_key](/recipe_modules/cv/api.py#134)(self):**
+&emsp; **@property**<br>&mdash; **def [attempt\_key](/recipe_modules/cv/api.py#138)(self):**
 
 Returns a string that is unique for a CV attempt.
 
@@ -1577,7 +1577,7 @@ attempt.
 Raises:
   CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [cl\_group\_key](/recipe_modules/cv/api.py#146)(self):**
+&emsp; **@property**<br>&mdash; **def [cl\_group\_key](/recipe_modules/cv/api.py#150)(self):**
 
 Returns a string that is unique for a current set of Gerrit change
 patchsets (or, equivalently, buildsets).
@@ -1588,7 +1588,7 @@ same set of changes at a different time.
 Raises:
   CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [cl\_owners](/recipe_modules/cv/api.py#172)(self):**
+&emsp; **@property**<br>&mdash; **def [cl\_owners](/recipe_modules/cv/api.py#176)(self):**
 
 Returns string(s) of the owner's email addresses used for the patchset.
 
@@ -1598,9 +1598,9 @@ will be returned.
 Raises:
   CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [do\_not\_retry\_build](/recipe_modules/cv/api.py#227)(self):**
+&emsp; **@property**<br>&mdash; **def [do\_not\_retry\_build](/recipe_modules/cv/api.py#231)(self):**
 
-&emsp; **@property**<br>&mdash; **def [equivalent\_cl\_group\_key](/recipe_modules/cv/api.py#159)(self):**
+&emsp; **@property**<br>&mdash; **def [equivalent\_cl\_group\_key](/recipe_modules/cv/api.py#163)(self):**
 
 Returns a string that is unique for a given set of Gerrit changes
 disregarding trivial patchset differences.
@@ -1611,7 +1611,7 @@ cl_group_key will change but the equivalent_cl_group_key will stay the same.
 Raises:
   CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [experimental](/recipe_modules/cv/api.py#61)(self):**
+&emsp; **@property**<br>&mdash; **def [experimental](/recipe_modules/cv/api.py#65)(self):**
 
 Returns whether this build is triggered for a CQ experimental builder.
 
@@ -1621,9 +1621,9 @@ config](https://chromium.googlesource.com/infra/luci/luci-go/+/main/cv/api/confi
 Raises:
   CQInactive if CQ is not active for this build.
 
-&mdash; **def [initialize](/recipe_modules/cv/api.py#36)(self):**
+&mdash; **def [initialize](/recipe_modules/cv/api.py#40)(self):**
 
-&emsp; **@property**<br>&mdash; **def [ordered\_gerrit\_changes](/recipe_modules/cv/api.py#86)(self):**
+&emsp; **@property**<br>&mdash; **def [ordered\_gerrit\_changes](/recipe_modules/cv/api.py#90)(self):**
 
 Returns list[bb_common_pb2.GerritChange] in order in which CLs should be
 applied or submitted.
@@ -1631,7 +1631,7 @@ applied or submitted.
 Raises:
   CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [owner\_is\_googler](/recipe_modules/cv/api.py#267)(self):**
+&emsp; **@property**<br>&mdash; **def [owner\_is\_googler](/recipe_modules/cv/api.py#271)(self):**
 
 Returns whether the Run/Attempt owner is a Googler.
 
@@ -1641,7 +1641,7 @@ Raises:
   CQInactive if CQ is not active for this build.
   ValueError if the builder is not in Chrome project.
 
-&emsp; **@property**<br>&mdash; **def [props\_for\_child\_build](/recipe_modules/cv/api.py#100)(self):**
+&emsp; **@property**<br>&mdash; **def [props\_for\_child\_build](/recipe_modules/cv/api.py#104)(self):**
 
 Returns properties dict meant to be passed to child builds.
 
@@ -1662,7 +1662,7 @@ api.cv.record_triggered_builds(*child_builds)
 The contents of returned dict should be treated as opaque blob,
 it may be changed without notice.
 
-&mdash; **def [record\_triggered\_build\_ids](/recipe_modules/cv/api.py#211)(self, \*build_ids):**
+&mdash; **def [record\_triggered\_build\_ids](/recipe_modules/cv/api.py#215)(self, \*build_ids):**
 
 Adds the given Buildbucket build IDs to the list of triggered build IDs.
 
@@ -1671,7 +1671,7 @@ Must be called after some step.
 Args:
   * build_ids (list of int or string): Buildbucket build IDs.
 
-&mdash; **def [record\_triggered\_builds](/recipe_modules/cv/api.py#195)(self, \*builds):**
+&mdash; **def [record\_triggered\_builds](/recipe_modules/cv/api.py#199)(self, \*builds):**
 
 Adds IDs of given Buildbucket builds to the list of triggered build IDs.
 
@@ -1686,21 +1686,21 @@ Args:
   * [`Build`](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto)
     objects, typically returned by `api.buildbucket.schedule`.
 
-&emsp; **@property**<br>&mdash; **def [run\_mode](/recipe_modules/cv/api.py#51)(self):**
+&emsp; **@property**<br>&mdash; **def [run\_mode](/recipe_modules/cv/api.py#55)(self):**
 
 Returns the mode(str) of the CQ Run that triggers this build.
 
 Raises:
   CQInactive if CQ is not active for this build.
 
-&mdash; **def [set\_do\_not\_retry\_build](/recipe_modules/cv/api.py#231)(self):**
+&mdash; **def [set\_do\_not\_retry\_build](/recipe_modules/cv/api.py#235)(self):**
 
 Instruct CQ to not retry this build.
 
 This mechanism is used to reduce duration of CQ attempt and save testing
 capacity if retrying will likely return an identical result.
 
-&emsp; **@property**<br>&mdash; **def [top\_level](/recipe_modules/cv/api.py#74)(self):**
+&emsp; **@property**<br>&mdash; **def [top\_level](/recipe_modules/cv/api.py#78)(self):**
 
 Returns whether CQ triggered this build directly.
 
@@ -1709,7 +1709,7 @@ Can be spoofed. *DO NOT USE FOR SECURITY CHECKS.*
 Raises:
   CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [triggered\_build\_ids](/recipe_modules/cv/api.py#190)(self):**
+&emsp; **@property**<br>&mdash; **def [triggered\_build\_ids](/recipe_modules/cv/api.py#194)(self):**
 
 Returns recorded Buildbucket build IDs as a list of integers.
 ### *recipe_modules* / [defer](/recipe_modules/defer)

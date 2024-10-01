@@ -12,6 +12,8 @@ from PB.go.chromium.org.luci.cv.api.recipe.v1 import cq as cq_pb2
 
 from recipe_engine import recipe_api
 
+CONFIG_FILE = 'commit-queue.cfg'
+
 
 class CVApi(recipe_api.RecipeApi):
   """This module provides recipe API of LUCI CV, a pre-commit testing system."""
@@ -21,6 +23,8 @@ class CVApi(recipe_api.RecipeApi):
   DRY_RUN = 'DRY_RUN'
   QUICK_DRY_RUN = 'QUICK_DRY_RUN'
   FULL_RUN = 'FULL_RUN'
+
+  CONFIG_FILE = CONFIG_FILE
 
   class CVInactive(Exception):
     """Incorrect usage of CVApi method requiring active CV."""

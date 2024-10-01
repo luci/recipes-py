@@ -5,6 +5,7 @@
 DEPS = [
   'recipe_engine/buildbucket',
   'recipe_engine/cipd',
+  'recipe_engine/cv',
   'recipe_engine/luci_config',
   'recipe_engine/proto',
   'recipe_engine/raw_io',

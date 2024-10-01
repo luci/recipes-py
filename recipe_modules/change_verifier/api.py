@@ -27,6 +27,7 @@ from PB.go.chromium.org.luci.cv.api.v0 import run as run_pb
 from PB.go.chromium.org.luci.cv.api.v0 import service_runs as service_runs_pb
 
 from recipe_engine import recipe_api
+from RECIPE_MODULES.recipe_engine.cv import api as cv_api
 
 
 class ChangeVerifierApi(recipe_api.RecipeApi):
@@ -142,12 +143,12 @@ class ChangeVerifierApi(recipe_api.RecipeApi):
   def match_config(self,
                    host: str,
                    change: int,
-                   project: str | None = None) -> str | None:
+                   project: str | None = None,
+                   config_name: str = cv_api.CONFIG_FILE) -> str | None:
     """Retrieve the applicable CV group for a given change."""
     assert host.endswith('-review.googlesource.com'), host
     assert isinstance(change, int), change
-    config = self.m.luci_config.fetch_config_raw('commit-queue.cfg',
-                                                 project=project)
+    config = self.m.luci_config.fetch_config_raw(config_name, project=project)
 
     change_url = f'{host}/{change}'
     cmd = [
