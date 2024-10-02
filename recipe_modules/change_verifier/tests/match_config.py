@@ -29,6 +29,8 @@ def GenTests(api):
       'pass',
       api.buildbucket.ci_build(),
       api.post_process(post_process.MustRun, 'group found'),
+      api.post_process(post_process.MustRun, 'chromium-src'),
+      api.post_process(post_process.DropExpectation),
   )
 
   yield api.test(
@@ -36,4 +38,5 @@ def GenTests(api):
       api.buildbucket.ci_build(),
       api.step_data('match-config', retcode=1),
       api.post_process(post_process.MustRun, 'group not found'),
+      api.post_process(post_process.DropExpectation),
   )
