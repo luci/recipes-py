@@ -13,7 +13,7 @@ DEPS = [
 
 def RunSteps(api):
   group = api.change_verifier.match_config(
-      'https://chromium-review.googlesource.com',
+      'chromium-review.googlesource.com',
       123456)
 
   if group:

@@ -151,11 +151,14 @@ class ChangeVerifierApi(recipe_api.RecipeApi):
     config = self.m.luci_config.fetch_config_raw(config_name, project=project)
 
     change_url = f'{host}/{change}'
+    if not change_url.startswith('https://'):
+      change_url = f'https://{change_url}'
+
     cmd = [
         self._luci_cv,
         'match-config',
-        change_url,
         self.m.raw_io.input_text(config),
+        change_url,
     ]
 
     try:
