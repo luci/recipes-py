@@ -180,6 +180,7 @@ class FileApi(recipe_api.RecipeApi):
     Raises: file.Error
     """
     self.m.path.assert_absolute(path)
+    assert isinstance(mode, str)
     cmd = ['chmod', path, '--mode', mode]
     if recursive:
       cmd.append('--recursive')

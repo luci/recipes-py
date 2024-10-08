@@ -27,7 +27,7 @@
       "chmod",
       "file.txt",
       "--mode",
-      "511"
+      "777"
     ],
     "infra_step": true,
     "name": "Changing file permissions for file.txt"
@@ -42,7 +42,7 @@
       "chmod",
       "[START_DIR]",
       "--mode",
-      "511",
+      "777",
       "--recursive"
     ],
     "infra_step": true,
@@ -58,7 +58,7 @@
       "chmod",
       "non-existent-file.txt",
       "--mode",
-      "511"
+      "777"
     ],
     "infra_step": true,
     "name": "File does not exist",
