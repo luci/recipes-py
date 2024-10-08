@@ -12,6 +12,9 @@ def RunSteps(api):
   api.file.write_text('Writing text to file.txt', 'file.txt', 'abcd')
   api.file.chmod('Changing file permissions for file.txt', 'file.txt', 0o777)
 
+  api.file.chmod('Changing file permissions for start dir', api.path.start_dir,
+                 0o777, recursive=True)
+
   try:
     api.file.chmod('File does not exist', 'non-existent-file.txt', 0o777)
   except Exception as e:

@@ -40,6 +40,22 @@
       "--json-output",
       "/path/to/tmp/json",
       "chmod",
+      "[START_DIR]",
+      "--mode",
+      "511",
+      "--recursive"
+    ],
+    "infra_step": true,
+    "name": "Changing file permissions for start dir"
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "chmod",
       "non-existent-file.txt",
       "--mode",
       "511"

@@ -1783,18 +1783,19 @@ File manipulation (read/write/delete/glob) methods.
 
 #### **class [FileApi](/recipe_modules/file/api.py#84)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
 
-&mdash; **def [chmod](/recipe_modules/file/api.py#166)(self, name, path, mode):**
+&mdash; **def [chmod](/recipe_modules/file/api.py#166)(self, name: str, path: (config_types.Path | str), mode: str, recursive: bool=False):**
 
 Set the access mode for a file or directory.
 
 Args:
-  * name (str): The name of the step.
-  * path (str): The path of the file or directory.
-  * mode (str): The access mode in octal.
+  * name: The name of the step.
+  * path: The path of the file or directory.
+  * mode: The access mode in octal.
+  * recursive: Whether to run chmod recursively.
 
 Raises: file.Error
 
-&mdash; **def [compute\_hash](/recipe_modules/file/api.py#226)(self, name, paths, base_path, test_data=''):**
+&mdash; **def [compute\_hash](/recipe_modules/file/api.py#235)(self, name, paths, base_path, test_data=''):**
 
 Computes hash of contents of a directory/file.
 
@@ -1864,7 +1865,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#557)(self, name, dest, mode=511):**
+&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#566)(self, name, dest, mode=511):**
 
 Ensures that `dest` exists and is a directory.
 
@@ -1877,7 +1878,7 @@ Args:
 
 Raises: file.Error if the path exists but is not a directory.
 
-&mdash; **def [file\_hash](/recipe_modules/file/api.py#197)(self, file_path, test_data=''):**
+&mdash; **def [file\_hash](/recipe_modules/file/api.py#206)(self, file_path, test_data=''):**
 
 Computes hash of contents of a single file.
 
@@ -1893,7 +1894,7 @@ Returns (str):
 Raises:
   file.Error and ValueError if passed paths input is not str or Path.
 
-&mdash; **def [filesizes](/recipe_modules/file/api.py#573)(self, name, files, test_data=None):**
+&mdash; **def [filesizes](/recipe_modules/file/api.py#582)(self, name, files, test_data=None):**
 
 Returns list of filesizes for the given files.
 
@@ -1903,7 +1904,7 @@ Args:
 
 Returns list[int], size of each file in bytes.
 
-&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#713)(self, name, path):**
+&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#722)(self, name, path):**
 
 Flattens singular directories, starting at path.
 
@@ -1932,7 +1933,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [glob\_paths](/recipe_modules/file/api.py#461)(self, name, source, pattern, include_hidden=False, test_data=()):**
+&mdash; **def [glob\_paths](/recipe_modules/file/api.py#470)(self, name, source, pattern, include_hidden=False, test_data=()):**
 
 Performs glob expansion on `pattern`.
 
@@ -1962,7 +1963,7 @@ Returns (list[Path]): All paths found.
 
 Raises: file.Error.
 
-&mdash; **def [listdir](/recipe_modules/file/api.py#520)(self, name, source, recursive=False, test_data=(), include_log=True):**
+&mdash; **def [listdir](/recipe_modules/file/api.py#529)(self, name, source, recursive=False, test_data=(), include_log=True):**
 
 Lists all files inside a directory.
 
@@ -1984,7 +1985,7 @@ Returns list[Path]
 
 Raises: file.Error.
 
-&mdash; **def [move](/recipe_modules/file/api.py#179)(self, name, source, dest):**
+&mdash; **def [move](/recipe_modules/file/api.py#188)(self, name, source, dest):**
 
 Moves a file or directory.
 
@@ -1997,7 +1998,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [read\_json](/recipe_modules/file/api.py#353)(self, name, source, test_data='', include_log=True):**
+&mdash; **def [read\_json](/recipe_modules/file/api.py#362)(self, name, source, test_data='', include_log=True):**
 
 Reads a file as UTF-8 encoded json.
 
@@ -2012,7 +2013,7 @@ Returns (object): The content of the file.
 
 Raise file.Error
 
-&mdash; **def [read\_proto](/recipe_modules/file/api.py#390)(self, name, source, msg_class, codec, test_proto=None, include_log=True, decoding_kwargs=None):**
+&mdash; **def [read\_proto](/recipe_modules/file/api.py#399)(self, name, source, msg_class, codec, test_proto=None, include_log=True, decoding_kwargs=None):**
 
 Reads a file into a proto message.
 
@@ -2027,7 +2028,7 @@ Args:
   * decoding_kwargs (dict): Passed directly to the chosen encoder. See proto
     module for details.
 
-&mdash; **def [read\_raw](/recipe_modules/file/api.py#277)(self, name, source, test_data=''):**
+&mdash; **def [read\_raw](/recipe_modules/file/api.py#286)(self, name, source, test_data=''):**
 
 Reads a file as raw data.
 
@@ -2041,7 +2042,7 @@ Returns (str): The unencoded (binary) contents of the file.
 
 Raises: file.Error
 
-&mdash; **def [read\_text](/recipe_modules/file/api.py#311)(self, name, source, test_data='', include_log=True):**
+&mdash; **def [read\_text](/recipe_modules/file/api.py#320)(self, name, source, test_data='', include_log=True):**
 
 Reads a file as UTF-8 encoded text.
 
@@ -2056,7 +2057,7 @@ Returns (str): The content of the file.
 
 Raises: file.Error
 
-&mdash; **def [remove](/recipe_modules/file/api.py#505)(self, name, source):**
+&mdash; **def [remove](/recipe_modules/file/api.py#514)(self, name, source):**
 
 Removes a file.
 
@@ -2068,7 +2069,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmcontents](/recipe_modules/file/api.py#612)(self, name, source):**
+&mdash; **def [rmcontents](/recipe_modules/file/api.py#621)(self, name, source):**
 
 Similar to rmtree, but removes only contents not the directory.
 
@@ -2083,7 +2084,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmglob](/recipe_modules/file/api.py#630)(self, name, source, pattern, recursive=True, include_hidden=True):**
+&mdash; **def [rmglob](/recipe_modules/file/api.py#639)(self, name, source, pattern, recursive=True, include_hidden=True):**
 
 Removes all entries in `source` matching the glob `pattern`.
 
@@ -2113,7 +2114,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmtree](/recipe_modules/file/api.py#595)(self, name, source):**
+&mdash; **def [rmtree](/recipe_modules/file/api.py#604)(self, name, source):**
 
 Recursively removes a directory.
 
@@ -2127,7 +2128,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [symlink](/recipe_modules/file/api.py#675)(self, name, source, linkname):**
+&mdash; **def [symlink](/recipe_modules/file/api.py#684)(self, name, source, linkname):**
 
 Creates a symlink on the local filesystem.
 
@@ -2140,14 +2141,14 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#692)(self, root):**
+&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#701)(self, root):**
 
 Creates a SymlinkTree, given a root directory.
 
 Args:
   * root (Path): root of a tree of symlinks.
 
-&mdash; **def [truncate](/recipe_modules/file/api.py#700)(self, name, path, size_mb=100):**
+&mdash; **def [truncate](/recipe_modules/file/api.py#709)(self, name, path, size_mb=100):**
 
 Creates an empty file with path and size_mb on the local filesystem.
 
@@ -2158,7 +2159,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [write\_json](/recipe_modules/file/api.py#372)(self, name, dest, data, indent=None, include_log=True, sort_keys=True):**
+&mdash; **def [write\_json](/recipe_modules/file/api.py#381)(self, name, dest, data, indent=None, include_log=True, sort_keys=True):**
 
 Write the given json serializable `data` to `dest`.
 
@@ -2173,7 +2174,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [write\_proto](/recipe_modules/file/api.py#430)(self, name, dest, proto_msg, codec, include_log=True, encoding_kwargs=None):**
+&mdash; **def [write\_proto](/recipe_modules/file/api.py#439)(self, name, dest, proto_msg, codec, include_log=True, encoding_kwargs=None):**
 
 Writes the given proto message to `dest`.
 
@@ -2186,7 +2187,7 @@ Args:
   * encoding_kwargs (dict): Passed directly to the chosen encoder. See
     proto module for details.
 
-&mdash; **def [write\_raw](/recipe_modules/file/api.py#297)(self, name, dest, data):**
+&mdash; **def [write\_raw](/recipe_modules/file/api.py#306)(self, name, dest, data):**
 
 Write the given `data` to `dest`.
 
@@ -2197,7 +2198,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [write\_text](/recipe_modules/file/api.py#335)(self, name, dest, text_data, include_log=True):**
+&mdash; **def [write\_text](/recipe_modules/file/api.py#344)(self, name, dest, text_data, include_log=True):**
 
 Write the given UTF-8 encoded `text_data` to `dest`.
 

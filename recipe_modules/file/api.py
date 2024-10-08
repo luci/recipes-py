@@ -163,18 +163,27 @@ class FileApi(recipe_api.RecipeApi):
     self._run(name, ['copytree'] + args + [source, dest])
     self.m.path.mock_copy_paths(source, dest)
 
-  def chmod(self, name, path, mode):
+  def chmod(
+      self,
+      name: str,
+      path: config_types.Path | str,
+      mode: str,
+      recursive: bool = False):
     """Set the access mode for a file or directory.
 
     Args:
-      * name (str): The name of the step.
-      * path (str): The path of the file or directory.
-      * mode (str): The access mode in octal.
+      * name: The name of the step.
+      * path: The path of the file or directory.
+      * mode: The access mode in octal.
+      * recursive: Whether to run chmod recursively.
 
     Raises: file.Error
     """
     self.m.path.assert_absolute(path)
-    self._run(name, ['chmod', path, '--mode', mode])
+    cmd = ['chmod', path, '--mode', mode]
+    if recursive:
+      cmd.append('--recursive')
+    self._run(name, cmd)
 
   def move(self, name, source, dest):
     """Moves a file or directory.
