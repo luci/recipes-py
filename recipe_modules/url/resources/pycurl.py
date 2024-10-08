@@ -24,7 +24,12 @@ from requests.packages.urllib3.util.retry import Retry
 CHUNK_SIZE = 1024 * 1024 * 4
 
 
-def _download(url, outfile, headers, transient_retry, strip_prefix):
+def _download(url,
+              outfile,
+              headers,
+              transient_retry,
+              strip_prefix=None,
+              cert=None):
   s = requests.Session()
   s.headers['User-Agent'] = 'luci.recipes-py.url.pycurl/1.0'
   if headers:
@@ -46,7 +51,7 @@ def _download(url, outfile, headers, transient_retry, strip_prefix):
 
 
   logging.info('Connecting to %s ...', url)
-  r = s.get(url, stream=True)
+  r = s.get(url, stream=True, cert=cert)
   if r.status_code != requests.codes.ok:
     r.raise_for_status()
 
@@ -104,6 +109,8 @@ def main():
   parser.add_argument('--outfile', help='write output to this file')
   parser.add_argument('--strip-prefix', action='store', type=json.loads,
       help='Expect this string at the beginning of the response, and strip it.')
+  parser.add_argument(
+      '--cert', help='Certificate to pin', type=str, default=None)
 
   args = parser.parse_args()
 
@@ -117,14 +124,14 @@ def main():
 
   status = {}
   try:
-    status_code, size = _download(
-        args.url, args.outfile, headers, args.transient_retry,
-        args.strip_prefix)
+    status_code, size = _download(args.url, args.outfile, headers,
+                                  args.transient_retry, args.strip_prefix,
+                                  args.cert)
     status = {
-      'status_code': status_code,
-      'success': True,
-      'size': size,
-      'error_body': None,
+        'status_code': status_code,
+        'success': True,
+        'size': size,
+        'error_body': None,
     }
   except requests.HTTPError as e:
     body = e.response.text

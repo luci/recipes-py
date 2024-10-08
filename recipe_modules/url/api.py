@@ -11,7 +11,6 @@ import collections
 
 from recipe_engine import recipe_api
 
-
 class UrlApi(recipe_api.RecipeApi):
   quote = staticmethod(quote)
   unquote = staticmethod(unquote)
@@ -128,8 +127,14 @@ class UrlApi(recipe_api.RecipeApi):
           'URL must specify a network location ({!r})'.format(v))
     return u.scheme.lower() == 'https'
 
-  def get_file(self, url, path, step_name=None, headers=None,
-               transient_retry=True, strip_prefix=None):
+  def get_file(self,
+               url,
+               path,
+               step_name=None,
+               headers=None,
+               transient_retry=True,
+               strip_prefix=None,
+               cert: str | None = None):
     """GET data at given URL and writes it to file.
 
     Args:
@@ -145,6 +150,9 @@ class UrlApi(recipe_api.RecipeApi):
       * strip_prefix (str or None): If not None, this prefix must be present at
           the beginning of the response, and will be stripped from the resulting
           content (e.g., GERRIT_JSON_PREFIX).
+      * cert (str): Optional path to a CA_BUNDLE file or directory with
+          certificates of trusted CAs. If provided, pinned to the given cert or
+          certs.
 
     Returns (UrlApi.Response):
       Response with "path" as its "output" value.
@@ -160,10 +168,16 @@ class UrlApi(recipe_api.RecipeApi):
         headers=headers,
         transient_retry=transient_retry,
         strip_prefix=strip_prefix,
-        default_test_data='')
+        default_test_data='',
+        cert=cert)
 
-  def get_text(self, url, step_name=None, headers=None, transient_retry=True,
-               default_test_data=None):
+  def get_text(self,
+               url,
+               step_name=None,
+               headers=None,
+               transient_retry=True,
+               default_test_data=None,
+               cert: str | None = None):
     """GET data at given URL and writes it to file.
 
     Args:
@@ -177,6 +191,9 @@ class UrlApi(recipe_api.RecipeApi):
           retries have exponential backoff applied.
       * default_test_data (str): If provided, use this as the text output when
           testing if no overriding data is available.
+      * cert (str): Optional path to a CA_BUNDLE file or directory with
+          certificates of trusted CAs. If provided, pinned to the given cert or
+          certs.
 
     Returns (UrlApi.Response): Response with the content as its output value.
 
@@ -190,10 +207,16 @@ class UrlApi(recipe_api.RecipeApi):
         step_name=step_name,
         headers=headers,
         transient_retry=transient_retry,
-        default_test_data=default_test_data)
+        default_test_data=default_test_data,
+        cert=cert)
 
-  def get_raw(self, url, step_name=None, headers=None, transient_retry=True,
-              default_test_data=None):
+  def get_raw(self,
+              url,
+              step_name=None,
+              headers=None,
+              transient_retry=True,
+              default_test_data=None,
+              cert: str | None = None):
     """GET data at given URL and writes it to file.
 
     Args:
@@ -207,6 +230,9 @@ class UrlApi(recipe_api.RecipeApi):
           retries have exponential backoff applied.
       * default_test_data (str): If provided, use this as the text output when
           testing if no overriding data is available.
+      * cert (str): Optional path to a CA_BUNDLE file or directory with
+          certificates of trusted CAs. If provided, pinned to the given cert or
+          certs.
 
     Returns (UrlApi.Response): Response with the content as its output value.
 
@@ -221,10 +247,18 @@ class UrlApi(recipe_api.RecipeApi):
         headers=headers,
         transient_retry=transient_retry,
         default_test_data=default_test_data,
+        cert=cert,
         as_bytes=True)
 
-  def get_json(self, url, step_name=None, headers=None, transient_retry=True,
-               strip_prefix=None, log=False, default_test_data=None):
+  def get_json(self,
+               url,
+               step_name=None,
+               headers=None,
+               transient_retry=True,
+               strip_prefix=None,
+               log=False,
+               default_test_data=None,
+               cert: str | None = None):
     """GET data at given URL and writes it to file.
 
     Args:
@@ -242,6 +276,9 @@ class UrlApi(recipe_api.RecipeApi):
       * log (bool): If True, emit the JSON content as a log.
       * default_test_data (jsonish): If provided, use this as the unmarshalled
           JSON result when testing if no overriding data is available.
+      * cert (str): Optional path to a CA_BUNDLE file or directory with
+          certificates of trusted CAs. If provided, pinned to the given cert or
+          certs.
 
     Returns (UrlApi.Response): Response with the JSON as its "output" value.
 
@@ -258,9 +295,17 @@ class UrlApi(recipe_api.RecipeApi):
         as_json='log' if log else True,
         default_test_data=default_test_data)
 
-  def _get_step(self, url, step_name, headers, transient_retry, path=None,
-                strip_prefix=None, as_json=False, as_bytes=False,
-                default_test_data=None):
+  def _get_step(self,
+                url,
+                step_name,
+                headers,
+                transient_retry,
+                path=None,
+                strip_prefix=None,
+                as_json=False,
+                as_bytes=False,
+                default_test_data=None,
+                cert: str | None = None):
 
     step_name = step_name or 'GET %s' % url
     is_secure = self.validate_url(url)
@@ -303,11 +348,17 @@ class UrlApi(recipe_api.RecipeApi):
     elif transient_retry is not True:
       args += ['--transient-retry', str(transient_retry)]
 
+    if cert:
+      assert isinstance(cert, str)
+      args += ['--cert', cert]
+
     result = self.m.step(
         step_name,
         ['vpython3', '-u', self.resource('pycurl.py')] + args,
         step_test_data=self.test_api._get_step_test_data(
-            status_cls=self._PyCurlStatus, is_json=as_json, is_bytes=as_bytes,
+            status_cls=self._PyCurlStatus,
+            is_json=as_json,
+            is_bytes=as_bytes,
             test_data=default_test_data))
 
     output = path

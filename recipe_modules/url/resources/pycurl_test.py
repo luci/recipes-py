@@ -77,6 +77,23 @@ class PyCurlTest(unittest.TestCase):
                                    ")]}'\n")
     self.assertTrue(outfile.read(), b'ok')
 
+  def testCert(self):
+    r = requests.Session().get()
+    r.status_code = requests.codes.ok
+    r.headers = {'Content-Length': '2'}
+    r.raw = io.BytesIO(b'ok')
+    r.iter_content.return_value = r.raw
+
+    # Nothing passed when not specified
+    code, total = pycurl._download('https://test/', os.devnull, None, 0)
+    requests.Session().get.assert_called_with(
+        'https://test/', stream=True, cert=None)
+
+    # `verify` is passed through
+    code, total = pycurl._download(
+        'https://test/', os.devnull, None, 0, cert="path/to/some/cert.pem")
+    requests.Session().get.assert_called_with(
+        'https://test/', stream=True, cert="path/to/some/cert.pem")
 
 if __name__ == '__main__':
   if '-v' in sys.argv:

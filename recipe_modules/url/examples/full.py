@@ -106,6 +106,11 @@ def RunSteps(api):
         api.url.get_text(bad_cert)
       raises(test_bad_cert, api.step.StepFailure)
 
+    def test_cert():
+      api.url.get_text(TEST_HTTPS_URL, step_name='cert', cert='example.pem')
+
+    raises(test_cert, api.step.StepFailure)
+
 
 def GenTests(api):
   def name(prefix, url):
@@ -123,4 +128,5 @@ def GenTests(api):
   )
   for bad_cert in TEST_BAD_CERTS:
     test += api.step_data(name('errors', bad_cert), retcode=1)
+  test += api.step_data('errors.cert', retcode=1)
   yield test
