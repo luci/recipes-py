@@ -253,6 +253,16 @@ def _CalculateHash(path):
   print(sha.hexdigest())
   return 0
 
+def _Chmod(path, mode, recursive):
+  if not recursive:
+    os.chmod(path, mode)
+    return
+
+  for dirpath, _, filenames in os.walk(path):
+    os.chmod(dirpath, mode)
+    for filename in filenames:
+      os.chmod(os.path.join(dirpath, filename), mode)
+
 def main(args):
   parser = argparse.ArgumentParser()
   parser.add_argument('--json-output', required=True,
@@ -274,7 +284,12 @@ def main(args):
       '--mode',
       help='The octal mode of the file or directory.',
       type=lambda s: int(s, 8))
-  subparser.set_defaults(func=lambda opts: os.chmod(opts.path, opts.mode))
+  subparser.add_argument(
+      '--recursive',
+      help='Modify permissions recursively.',
+      action='store_true')
+  subparser.set_defaults(func=lambda opts: _Chmod(opts.path, opts.mode,
+                                                  opts.recursive))
 
   # Subcommand: rmcontents
   subparser = subparsers.add_parser('rmcontents',
