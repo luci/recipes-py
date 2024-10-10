@@ -211,6 +211,7 @@
   * [service_account:examples/full](#recipes-service_account_examples_full)
   * [step:examples/full](#recipes-step_examples_full)
   * [step:tests/active_result](#recipes-step_tests_active_result)
+  * [step:tests/drop_expectation](#recipes-step_tests_drop_expectation)
   * [step:tests/empty](#recipes-step_tests_empty)
   * [step:tests/inject_paths](#recipes-step_tests_inject_paths)
   * [step:tests/nested](#recipes-step_tests_nested)
@@ -6035,6 +6036,12 @@ This file is a recipe demonstrating reading triggers of the current build.
 
 
 &mdash; **def [RunSteps](/recipe_modules/step/tests/active_result.py#10)(api):**
+### *recipes* / [step:tests/drop\_expectation](/recipe_modules/step/tests/drop_expectation.py)
+
+[DEPS](/recipe_modules/step/tests/drop_expectation.py#10): [step](#recipe_modules-step)
+
+
+&mdash; **def [RunSteps](/recipe_modules/step/tests/drop_expectation.py#15)(api):**
 ### *recipes* / [step:tests/empty](/recipe_modules/step/tests/empty.py)
 
 [DEPS](/recipe_modules/step/tests/empty.py#16): [step](#recipe_modules-step)

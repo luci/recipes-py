@@ -13,9 +13,9 @@ import re
 from typing import Callable, Mapping, TYPE_CHECKING
 
 from past.builtins import basestring
+from recipe_engine import post_process_inputs
 
 if TYPE_CHECKING:
-  from recipe_engine import post_process_inputs
   from recipe_engine.internal.test import magic_check_fn
 
 
@@ -727,14 +727,42 @@ def SummaryMarkdownRE(check, step_odict, summary_regex):
       (summary_regex, actual_summary), re.search(summary_regex, actual_summary))
 
 
-def DropExpectation(_check, _step_odict):
-  """Using this post-process hook will drop the expectations for this test
-  completely.
+def DropExpectation(_check, step_odict, *prefixes):
+  """Using this post-process hook will drop expectations for this test.
 
-  This must be the last post-process check—there will be no steps left for other
-  post-process checks to evaluate.
+  With no arguments this must be the last post-process check—there will be no
+  steps left for other post-process checks to evaluate.
+
+  With arguments, this will only drop steps that begin with those exact
+  prefixes. Specifically, where the full name of the step or one of its parents
+  matches the given prefix.
+
+  For example "abc.def" matches prefix "abc" if "abc" is a parent step and
+  "def" is a child, but not if "abc.def" is a top-level step. An example is at
+  https://chromium.googlesource.com/infra/luci/recipes-py/+/main/recipe_modules/step/tests/drop_expectation.expected/basic.json.
 
   Usage:
     yield api.test(..., api.post_process(DropExpectation))
+    yield api.test(..., api.post_process(DropExpectation, 'checkout'))
   """
-  return {}
+  if not prefixes:
+    return {}
+
+  result_steps = OrderedDict()
+  step_stack = []
+
+  for name, step in step_odict.items():
+    if not isinstance(step, post_process_inputs.Step):
+      result_steps[name] = step
+      continue
+
+    step_stack = step_stack[0:step.nest_level]
+    step_stack.append(name)
+
+    for prefix in prefixes:
+      if prefix in step_stack:
+        break
+    else:
+      result_steps[name] = step
+
+  return result_steps
