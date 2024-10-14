@@ -63,15 +63,3 @@ warning {
   description: "The indicated step is invoking vpython or python2."
   description: "Please switch this to `vpython3` or `python3`."
 }
-
-warning {
-  name: "STEP_NEST_NAME_REQUIRED"
-  description: "The name argument to api.step.nest() must not be empty."
-  description: ""
-  description: "Buildbucket has always required a non-empty name argument to "
-  description: "api.step.nest(), but the recipe engine has not required it. "
-  description: "This leads to errors in builds that are not reproducible in "
-  description: "recipe testing."
-  deadline: "2024-10-14"
-  google_issue { id: 369586985 }
-}

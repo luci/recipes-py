@@ -257,8 +257,7 @@ class StepApi(recipe_api.RecipeApi):
     Yields a StepPresentation for this dummy step, which you may update as you
     please.
     """
-    if not name:
-      self.m.warning.issue("STEP_NEST_NAME_REQUIRED")  # pragma: no cover
+    assert name, 'invalid empty name'
 
     assert status in ('worst', 'last'), 'Got bad status: %r' % (status,)
 
