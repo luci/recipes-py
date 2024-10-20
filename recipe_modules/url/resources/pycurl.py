@@ -51,7 +51,7 @@ def _download(url,
 
 
   logging.info('Connecting to %s ...', url)
-  r = s.get(url, stream=True, cert=cert)
+  r = s.get(url, stream=True, verify=cert)
   if r.status_code != requests.codes.ok:
     r.raise_for_status()
 
