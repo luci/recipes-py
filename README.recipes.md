@@ -1782,9 +1782,9 @@ with api.defer.context() as defer:
 
 File manipulation (read/write/delete/glob) methods.
 
-#### **class [FileApi](/recipe_modules/file/api.py#84)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
+#### **class [FileApi](/recipe_modules/file/api.py#96)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
 
-&mdash; **def [chmod](/recipe_modules/file/api.py#166)(self, name: str, path: (config_types.Path | str), mode: str, recursive: bool=False):**
+&mdash; **def [chmod](/recipe_modules/file/api.py#207)(self, name: str, path: (config_types.Path | str), mode: str, recursive: bool=False):**
 
 Set the access mode for a file or directory.
 
@@ -1796,7 +1796,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [compute\_hash](/recipe_modules/file/api.py#236)(self, name, paths, base_path, test_data=''):**
+&mdash; **def [compute\_hash](/recipe_modules/file/api.py#288)(self, name: str, paths: Sequence[(config_types.Path | str)], base_path: (config_types.Path | str), test_data: str=''):**
 
 Computes hash of contents of a directory/file.
 
@@ -1820,21 +1820,21 @@ world
 ```
 
 Args:
-  * name (str): The name of the step.
-  * paths (list[Path|str]): Path of directory/file(s) to compute hash.
-  * base_path (Path|str): Base directory to calculating hash relative to
-    absolute path. For e.g. `start_dir` of a recipe execution can be used.
-  * test_data (str): Some default data for this step to return when running
-    under simulation. If no test data is provided, we compute test_data as
-    sha256 of concatenated relative paths passed.
+  * name: The name of the step.
+  * paths: Path of directory/file(s) to compute hash.
+  * base_path: Base directory to calculating hash relative to absolute path.
+    For e.g. `start_dir` of a recipe execution can be used.
+  * test_data: Some default data for this step to return when running under
+    simulation. If no test data is provided, we compute test_data as sha256
+    of concatenated relative paths passed.
 
-Returns (str):
+Returns:
   Hex encoded hash of directory/file content.
 
 Raises:
   file.Error and ValueError if passed paths input is not str or Path.
 
-&mdash; **def [copy](/recipe_modules/file/api.py#125)(self, name, source, dest):**
+&mdash; **def [copy](/recipe_modules/file/api.py#153)(self, name: str, source: ((config_types.Path | str) | recipe_api.Placeholder), dest: ((config_types.Path | str) | recipe_api.Placeholder)):**
 
 Copies a file (including mode bits) from source to destination on the
 local filesystem.
@@ -1842,15 +1842,15 @@ local filesystem.
 Behaves identically to shutil.copy.
 
 Args:
-  * name (str): The name of the step.
-  * source (Path|Placeholder): The path to the file you want to copy.
-  * dest (Path|Placeholder): The path to the destination file name. If this
-    path exists and is a directory, the basename of `source` will be
-    appended to derive a path to a destination file.
+  * name: The name of the step.
+  * source: The path to the file you want to copy.
+  * dest: The path to the destination file name. If this path exists and is
+    a directory, the basename of `source` will be appended to derive a path
+    to a destination file.
 
 Raises: file.Error
 
-&mdash; **def [copytree](/recipe_modules/file/api.py#145)(self, name, source, dest, symlinks=False):**
+&mdash; **def [copytree](/recipe_modules/file/api.py#179)(self, name: str, source: (config_types.Path | str), dest: (config_types.Path | str), symlinks: bool=False):**
 
 Recursively copies a directory tree.
 
@@ -1866,46 +1866,47 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#567)(self, name, dest, mode=511):**
+&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#676)(self, name: str, dest: (config_types.Path | str), mode: int=511):**
 
 Ensures that `dest` exists and is a directory.
 
 Args:
-  * name (str): The name of the step.
-  * dest (Path): The directory to ensure.
-  * mode (int): The mode to use if the directory doesn't exist. This method
-    does not ensure the mode if the directory already exists (if you need
-    that behaviour, file a bug).
+  * name: The name of the step.
+  * dest: The directory to ensure.
+  * mode: The mode to use if the directory doesn't exist. This method does
+    not ensure the mode if the directory already exists (if you need that
+    behaviour, file a bug).
 
 Raises: file.Error if the path exists but is not a directory.
 
-&mdash; **def [file\_hash](/recipe_modules/file/api.py#207)(self, file_path, test_data=''):**
+&mdash; **def [file\_hash](/recipe_modules/file/api.py#255)(self, file_path: (config_types.Path | str), test_data: str=''):**
 
 Computes hash of contents of a single file.
 
 Args:
-  * file_path (Path|str): Path of file to compute hash.
-  * test_data (str): Some default data for this step to return when running
-    under simulation. If no test data is provided, we compute test_data as
-    sha256 of path passed.
+  * file_path: Path of file to compute hash.
+  * test_data: Some default data for this step to return when running under
+    simulation. If no test data is provided, we compute test_data as sha256
+    of path passed.
 
-Returns (str):
+Returns:
   Hex encoded hash of file content.
 
 Raises:
   file.Error and ValueError if passed paths input is not str or Path.
 
-&mdash; **def [filesizes](/recipe_modules/file/api.py#583)(self, name, files, test_data=None):**
+&mdash; **def [filesizes](/recipe_modules/file/api.py#698)(self, name: str, files: Sequence[(config_types.Path | str)], test_data: (Sequence[int] | None)=None):**
 
 Returns list of filesizes for the given files.
 
 Args:
-  * name (str): The name of the step.
-  * files (list[Path]): Paths to files.
+  * name: The name of the step.
+  * files: Paths to files.
+  * test_data: List of filesizes to use in tests.
 
-Returns list[int], size of each file in bytes.
+Returns size of each file in bytes.
 
-&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#723)(self, name, path):**
+&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#872)(self, name: str, path: (config_types.Path | str)):**
 
 Flattens singular directories, starting at path.
 
@@ -1929,12 +1930,12 @@ hard-code/find the subfolder name after extraction (not all archives are
 even named after the subfolder they extract to).
 
 Args:
-  * name (str): The name of the step.
-  * path (Path|str): The absolute path to begin flattening.
+  * name: The name of the step.
+  * path: The absolute path to begin flattening.
 
 Raises: file.Error
 
-&mdash; **def [glob\_paths](/recipe_modules/file/api.py#471)(self, name, source, pattern, include_hidden=False, test_data=()):**
+&mdash; **def [glob\_paths](/recipe_modules/file/api.py#571)(self, name: str, source: (config_types.Path | str), pattern: str, include_hidden: bool=False, test_data: Sequence[config_types.Path]=()):**
 
 Performs glob expansion on `pattern`.
 
@@ -1960,11 +1961,11 @@ Args:
     when running under simulation. This should be the list of file items
     found in this directory.
 
-Returns (list[Path]): All paths found.
+Returns all paths found.
 
 Raises: file.Error.
 
-&mdash; **def [listdir](/recipe_modules/file/api.py#530)(self, name, source, recursive=False, test_data=(), include_log=True):**
+&mdash; **def [listdir](/recipe_modules/file/api.py#637)(self, name: str, source: (config_types.Path | str), recursive: bool=False, test_data: Sequence[str]=(), include_log: bool=True):**
 
 Lists all files inside a directory.
 
@@ -1972,21 +1973,21 @@ If the source dir contains non-unicode file or dir names, the corresponding
 bad characters will be replace with "?" mark.
 
 Args:
-  * name (str): The name of the step.
-  * source (Path): The directory to list.
-  * recursive (bool): If True, do not emit subdirectory entries but recurse
+  * name: The name of the step.
+  * source: The directory to list.
+  * recursive: If True, do not emit subdirectory entries but recurse
     into them instead, emitting paths relative to `source`. Doesn't follow
     symlinks. Very slow for large directories.
-  * test_data (iterable[str]): Some default data for this step to return
-    when running under simulation. This should be the list of relative paths
-    found in this directory.
-  * include_log (bool): Include step log of read text.
+  * test_data: Some default data for this step to return
+    when running under simulation. This should be the list of relative
+    paths found in this directory.
+  * include_log: Include step log of read text.
 
-Returns list[Path]
+Returns list of entries
 
 Raises: file.Error.
 
-&mdash; **def [move](/recipe_modules/file/api.py#189)(self, name, source, dest):**
+&mdash; **def [move](/recipe_modules/file/api.py#231)(self, name: str, source: (config_types.Path | str), dest: (config_types.Path | str)):**
 
 Moves a file or directory.
 
@@ -1999,66 +2000,66 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [read\_json](/recipe_modules/file/api.py#363)(self, name, source, test_data='', include_log=True):**
+&mdash; **def [read\_json](/recipe_modules/file/api.py#445)(self, name: str, source: (config_types.Path | str), test_data: Any='', include_log: bool=True):**
 
 Reads a file as UTF-8 encoded json.
 
 Args:
-  * name (str): The name of the step.
-  * source (Path): The path of the file to read.
-  * test_data (object): Some default json serializable data for this step
-    to return when running under simulation.
-  * include_log (bool): Include step log of read json.
+  * name: The name of the step.
+  * source: The path of the file to read.
+  * test_data: Some default json serializable data for this step to return
+    when running under simulation.
+  * include_log: Include step log of read json.
 
-Returns (object): The content of the file.
+Returns: The content of the file.
 
 Raise file.Error
 
-&mdash; **def [read\_proto](/recipe_modules/file/api.py#400)(self, name, source, msg_class, codec, test_proto=None, include_log=True, decoding_kwargs=None):**
+&mdash; **def [read\_proto](/recipe_modules/file/api.py#495)(self, name: str, source: (config_types.Path | str), msg_class: type, codec: ProtoCodec, test_proto: Any=None, include_log: bool=True, decoding_kwargs: (dict | None)=None):**
 
 Reads a file into a proto message.
 
 Args:
-  * name (str): The name of the step.
-  * source (Path): The path of the file to read.
-  * msg_class (protobuf Message subclass): The message type to be read.
-  * codec ('BINARY'|'JSONPB'|'TEXTPB'): The encoder to use.
-  * test_proto (protobuf Message): A default proto message for this step to
-    return when running under simulation.
-  * include_log (bool): Include step log of read proto.
-  * decoding_kwargs (dict): Passed directly to the chosen encoder. See proto
+  * name: The name of the step.
+  * source: The path of the file to read.
+  * msg_class: The message type to be read.
+  * codec: The encoder to use.
+  * test_proto: A default proto message for this step to return when
+    running under simulation.
+  * include_log: Include step log of read proto.
+  * decoding_kwargs: Passed directly to the chosen encoder. See proto
     module for details.
 
-&mdash; **def [read\_raw](/recipe_modules/file/api.py#287)(self, name, source, test_data=''):**
+&mdash; **def [read\_raw](/recipe_modules/file/api.py#345)(self, name: str, source: (config_types.Path | str), test_data: bytes=''):**
 
 Reads a file as raw data.
 
 Args:
-  * name (str): The name of the step.
-  * source (Path): The path of the file to read.
-  * test_data (str): Some default data for this step to return when running
-    under simulation.
+  * name: The name of the step.
+  * source: The path of the file to read.
+  * test_data: Some default data for this step to return when running under
+    simulation.
 
-Returns (str): The unencoded (binary) contents of the file.
+Returns: The unencoded (binary) contents of the file.
 
 Raises: file.Error
 
-&mdash; **def [read\_text](/recipe_modules/file/api.py#321)(self, name, source, test_data='', include_log=True):**
+&mdash; **def [read\_text](/recipe_modules/file/api.py#390)(self, name: str, source: (config_types.Path | str), test_data: str='', include_log: bool=True):**
 
 Reads a file as UTF-8 encoded text.
 
 Args:
-  * name (str): The name of the step.
-  * source (Path): The path of the file to read.
-  * test_data (str): Some default data for this step to return when running
-    under simulation.
-  * include_log (bool): Include step log of read text.
+  * name: The name of the step.
+  * source: The path of the file to read.
+  * test_data: Some default data for this step to return when running under
+    simulation.
+  * include_log: Include step log of read text.
 
-Returns (str): The content of the file.
+Returns: The content of the file.
 
 Raises: file.Error
 
-&mdash; **def [remove](/recipe_modules/file/api.py#515)(self, name, source):**
+&mdash; **def [remove](/recipe_modules/file/api.py#617)(self, name: str, source: (config_types.Path | str)):**
 
 Removes a file.
 
@@ -2070,7 +2071,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmcontents](/recipe_modules/file/api.py#622)(self, name, source):**
+&mdash; **def [rmcontents](/recipe_modules/file/api.py#748)(self, name: str, source: (config_types.Path | str)):**
 
 Similar to rmtree, but removes only contents not the directory.
 
@@ -2085,7 +2086,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmglob](/recipe_modules/file/api.py#640)(self, name, source, pattern, recursive=True, include_hidden=True):**
+&mdash; **def [rmglob](/recipe_modules/file/api.py#771)(self, name: str, source: (config_types.Path | str), pattern: str, recursive: bool=True, include_hidden: bool=True):**
 
 Removes all entries in `source` matching the glob `pattern`.
 
@@ -2103,19 +2104,18 @@ other/foo.py => NO MATCH
 ```
 
 Args:
-  * name (str): The name of the step.
-  * source (Path): The directory whose contents should be filtered and
-    removed.
-  * pattern (str): The glob pattern to apply under `source`. Anything
-    matching this pattern will be removed.
-  * recursive (bool): Recursively remove entries under `source`.
+  * name: The name of the step.
+  * source: The directory whose contents should be filtered and removed.
+  * pattern: The glob pattern to apply under `source`. Anything matching
+    this pattern will be removed.
+  * recursive: Recursively remove entries under `source`.
       TODO: Remove this option. Use `**` syntax instead.
-  * include_hidden (bool): Include files beginning with `.`.
+  * include_hidden: Include files beginning with `.`.
       TODO: Set to False by default to be consistent with file.glob.
 
 Raises: file.Error.
 
-&mdash; **def [rmtree](/recipe_modules/file/api.py#605)(self, name, source):**
+&mdash; **def [rmtree](/recipe_modules/file/api.py#726)(self, name: str, source: (config_types.Path | str)):**
 
 Recursively removes a directory.
 
@@ -2124,12 +2124,12 @@ issues w.r.t. path lengths and read-only attributes. If the directory is
 gone already, this returns without error.
 
 Args:
-  * name (str): The name of the step.
-  * source (Path): The directory to remove.
+  * name: The name of the step.
+  * source: The directory to remove.
 
 Raises: file.Error.
 
-&mdash; **def [symlink](/recipe_modules/file/api.py#685)(self, name, source, linkname):**
+&mdash; **def [symlink](/recipe_modules/file/api.py#823)(self, name: str, source: ((config_types.Path | str) | recipe_api.Placeholder), linkname: ((config_types.Path | str) | recipe_api.Placeholder)):**
 
 Creates a symlink on the local filesystem.
 
@@ -2142,72 +2142,72 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#702)(self, root):**
+&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#846)(self, root: (config_types.Path | str)):**
 
 Creates a SymlinkTree, given a root directory.
 
 Args:
-  * root (Path): root of a tree of symlinks.
+  * root: root of a tree of symlinks.
 
-&mdash; **def [truncate](/recipe_modules/file/api.py#710)(self, name, path, size_mb=100):**
+&mdash; **def [truncate](/recipe_modules/file/api.py#854)(self, name: str, path: (config_types.Path | str), size_mb: int=100):**
 
 Creates an empty file with path and size_mb on the local filesystem.
 
 Args:
-  * name (str): The name of the step.
-  * path (Path|str): The absolute path to create.
-  * size_mb (int): The size of the file in megabytes. Defaults to 100
+  * name: The name of the step.
+  * path: The absolute path to create.
+  * size_mb: The size of the file in megabytes. Defaults to 100
 
 Raises: file.Error
 
-&mdash; **def [write\_json](/recipe_modules/file/api.py#382)(self, name, dest, data, indent=None, include_log=True, sort_keys=True):**
+&mdash; **def [write\_json](/recipe_modules/file/api.py#470)(self, name: str, dest: (config_types.Path | str), data: Any, indent: ((int | str) | None)=None, include_log: bool=True, sort_keys: bool=True):**
 
 Write the given json serializable `data` to `dest`.
 
 Args:
-  * name (str): The name of the step.
-  * dest (Path): The path of the file to write.
-  * data (object): Json serializable data to write.
-  * indent (None|int|str): The indent of the written JSON. See
+  * name: The name of the step.
+  * dest: The path of the file to write.
+  * data: Json serializable data to write.
+  * indent: The indent of the written JSON. See
     https://docs.python.org/3/library/json.html#json.dump for more details.
-  * include_log (bool): Include step log of written json.
-  * sort_keys (bool): Sort they keys in `data`. See api.json.input().
+  * include_log: Include step log of written json.
+  * sort_keys: Sort they keys in `data`. See api.json.input().
 
 Raises: file.Error.
 
-&mdash; **def [write\_proto](/recipe_modules/file/api.py#440)(self, name, dest, proto_msg, codec, include_log=True, encoding_kwargs=None):**
+&mdash; **def [write\_proto](/recipe_modules/file/api.py#537)(self, name: str, dest: (config_types.Path | str), proto_msg: google.protobuf.message, codec: ProtoCodec, include_log: bool=True, encoding_kwargs: (dict | None)=None):**
 
 Writes the given proto message to `dest`.
 
 Args:
-  * name (str): The name of thhe step.
-  * dest (Path): The path of the file to write.
-  * proto_msg (protobuf Message): Message to write.
-  * codec ('BINARY'|'JSONPB'|'TEXTPB'): The encoder to use.
-  * include_log (bool): Include step log of written proto.
-  * encoding_kwargs (dict): Passed directly to the chosen encoder. See
-    proto module for details.
+  * name: The name of thhe step.
+  * dest: The path of the file to write.
+  * proto_msg: Message to write.
+  * codec: The encoder to use.
+  * include_log: Include step log of written proto.
+  * encoding_kwargs: Passed directly to the chosen encoder. See proto
+    module for details.
 
-&mdash; **def [write\_raw](/recipe_modules/file/api.py#307)(self, name, dest, data):**
+&mdash; **def [write\_raw](/recipe_modules/file/api.py#370)(self, name: str, dest: (config_types.Path | str), data: bytes):**
 
 Write the given `data` to `dest`.
 
 Args:
-  * name (str): The name of the step.
-  * dest (Path): The path of the file to write.
-  * data (str): The data to write.
+  * name: The name of the step.
+  * dest: The path of the file to write.
+  * data: The data to write.
 
 Raises: file.Error.
 
-&mdash; **def [write\_text](/recipe_modules/file/api.py#345)(self, name, dest, text_data, include_log=True):**
+&mdash; **def [write\_text](/recipe_modules/file/api.py#420)(self, name: str, dest: (config_types.Path | str), text_data: str, include_log: bool=True):**
 
 Write the given UTF-8 encoded `text_data` to `dest`.
 
 Args:
-  * name (str): The name of the step.
-  * dest (Path): The path of the file to write.
-  * text_data (str): The UTF-8 encoded data to write.
-  * include_log (bool): Include step log of written text.
+  * name: The name of the step.
+  * dest: The path of the file to write.
+  * text_data: The UTF-8 encoded data to write.
+  * include_log: Include step log of written text.
 
 Raises: file.Error.
 ### *recipe_modules* / [futures](/recipe_modules/futures)
