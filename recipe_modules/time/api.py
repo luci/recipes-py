@@ -4,15 +4,18 @@
 
 """Allows mockable access to the current time."""
 
-from recipe_engine import recipe_api
+from __future__ import annotations
 
 import datetime
 import functools
 import time
+from typing import TypeVar
 
 import gevent
-
+from recipe_engine import recipe_api
 from recipe_engine.internal.global_shutdown import GLOBAL_SHUTDOWN
+
+ReturnType = TypeVar('ReturnType')
 
 
 class exponential_retry:
@@ -21,7 +24,10 @@ class exponential_retry:
   See TimeApi.exponential_retry for full documentation.
   """
 
-  def __init__(self, retries, delay, condition=None, time_api=None):
+  def __init__(self, retries: int,
+               delay: datetime.timedelta,
+               condition: Callable[[Exception], bool] | None = None,
+               time_api: TimeApi = None):
     """Creates a new exponential retry decorator.
 
     Args:
@@ -52,9 +58,10 @@ class exponential_retry:
     self.delay = delay
     self.condition = condition or (lambda e: True)
 
-  def __call__(self, f):
+  def __call__(self,
+               f: Callable[[...], ReturnType]) -> Callable[[...], ReturnType]:
     @functools.wraps(f)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args, **kwargs) -> ReturnType:
       time_api = self.time_api
       if time_api is None:
         try:
@@ -87,26 +94,27 @@ class exponential_retry:
 class TimeApi(recipe_api.RecipeApi):
   def __init__(self, **kwargs):
     super().__init__(**kwargs)
-    self._fake_time = None
-    self._fake_step = None
+    self._fake_time: float | None = None
+    self._fake_step: float | None = None
     if self._test_data.enabled:
       self._fake_time = self._test_data.get('seed', 1337000000.0)
       self._fake_step = self._test_data.get('step', 1.5)
 
-  def sleep(self, secs, with_step=None, step_result=None):
+  def sleep(self, secs: float | int, with_step: bool | None = None,
+            step_result: step_data.StepData | None = None) -> None:
     """Suspend execution of |secs| (float) seconds, waiting for GLOBAL_SHUTDOWN.
       Does nothing in testing.
 
     Args:
-      * secs (number) - The number of seconds to sleep.
-      * with_step (bool|None) - If True, emits a step to indicate to users that
-        the recipe is sleeping (not just hanging). If None, then will default to
-        True if sleeping for a long time (>60sec); this can be disabled by
-        setting explicitly to None. If the GLOBAL_SHUTDOWN event has already
-        occurred, then a step will always be emitted in order to force raising
-        an exception.
-      * step_result (step_data.StepData|None) - Result of running a step. Should
-        be None if with_step is True or None.
+      * secs - The number of seconds to sleep.
+      * with_step - If True, emits a step to indicate to users that the recipe is
+        sleeping (not just hanging). If None, then will default to True if
+        sleeping for a long time (>60sec); this can be disabled by setting
+        explicitly to None. If the GLOBAL_SHUTDOWN event has already occurred,
+        then a step will always be emitted in order to force raising an
+        exception.
+      * step_result - Result of running a step. Should be None if with_step is
+        True or None.
     """
     if with_step is True or GLOBAL_SHUTDOWN.ready() or (
         with_step is None and secs > 60):  # pragma: no cover
@@ -119,7 +127,12 @@ class TimeApi(recipe_api.RecipeApi):
     if GLOBAL_SHUTDOWN.ready() and step_result:
       step_result.presentation.status = "CANCELED"
 
-  def exponential_retry(self, retries, delay, condition=None):
+  def exponential_retry(
+      self,
+      retries: int,
+      delay: datetime.timedelta,
+      condition: Callable[[Exception], bool] = None,
+  ) -> exponential_retry:
     """Adds exponential retry to a function.
 
     Decorator which retries the function with exponential backoff.
@@ -188,7 +201,7 @@ class TimeApi(recipe_api.RecipeApi):
     """
     return exponential_retry(retries, delay, condition, self)
 
-  def time(self):
+  def time(self) -> float:
     """Returns current timestamp as a float number of seconds since epoch."""
     if self._test_data.enabled:
       self._fake_time += self._fake_step
@@ -196,12 +209,12 @@ class TimeApi(recipe_api.RecipeApi):
     else:  # pragma: no cover
       return time.time()
 
-  def ms_since_epoch(self):
+  def ms_since_epoch(self) -> int:
     """Returns current timestamp as an int number of milliseconds since epoch.
     """
     return int(round(self.time() * 1000))
 
-  def utcnow(self):
+  def utcnow(self) -> datetime.datetime:
     """Returns current UTC time as a datetime.datetime."""
     if self._test_data.enabled:
       self._fake_time += self._fake_step
@@ -209,7 +222,8 @@ class TimeApi(recipe_api.RecipeApi):
     else:  # pragma: no cover
       return datetime.datetime.utcnow()
 
-  def _jitter(self, seconds, jitter_amount, random_func=None):
+  def _jitter(self, seconds: float, jitter_amount: float,
+              random_func: Callable[[], float] | None = None) -> float:
     """Returns the provided seconds jittered by the jitter amount provided.
 
     random_func allows for manually providing the random value in tests.

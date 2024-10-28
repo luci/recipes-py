@@ -32,7 +32,7 @@
       "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
       "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/time/examples/full.py\", line 72, in RunSteps",
       "    helper_fn_that_needs_retries(\"\")",
-      "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/time/api.py\", line 61, in wrapper",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/time/api.py\", line 68, in wrapper",
       "    time_api = args[0].m.time",
       "               ^^^^^^^^^",
       "AttributeError: 'str' object has no attribute 'm'"
