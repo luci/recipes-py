@@ -17,17 +17,23 @@ want to use this recipe module; file a ticket at:
 https://bugs.chromium.org/p/chromium/issues/entry?components=Infra%3ELUCI%3EBuildService%3EPresubmit%3ECV
 """
 
-# Take revision from
-# https://ci.chromium.org/p/infra-internal/g/infra-packagers/console
-DEFAULT_CIPD_VERSION = 'git_revision:18f9ec7b61710fcadb722de6bd26bb36c89d8075'
+from __future__ import annotations
+
+from typing import Sequence
 
 from google.protobuf import json_format
 
-from PB.go.chromium.org.luci.cv.api.v0 import run as run_pb
-from PB.go.chromium.org.luci.cv.api.v0 import service_runs as service_runs_pb
+from PB.go.chromium.org.luci.cv.api.v0 import (
+    run as run_pb,
+    service_runs as service_runs_pb,
+)
 
 from recipe_engine import recipe_api
 from RECIPE_MODULES.recipe_engine.cv import api as cv_api
+
+# Take revision from
+# https://ci.chromium.org/p/infra-internal/g/infra-packagers/console
+DEFAULT_CIPD_VERSION = 'git_revision:18f9ec7b61710fcadb722de6bd26bb36c89d8075'
 
 
 class ChangeVerifierApi(recipe_api.RecipeApi):
@@ -36,19 +42,26 @@ class ChangeVerifierApi(recipe_api.RecipeApi):
   PROD_HOST = 'luci-change-verifier.appspot.com'
   DEV_HOST = 'luci-change-verifier-dev.appspot.com'
 
-  def search_runs(self, project, cls=None, limit=None, step_name=None,
-                  dev=False):
+  GerritChange = tuple[str, int]
+
+  def search_runs(
+      self,
+      project: str,
+      cls: Sequence[GerritChange] | GerritChange | None = None,
+      limit: int | None = None,
+      step_name: str | None = None,
+      dev: bool = False,
+  ):
     """Searches for Runs.
 
     Args:
       * project: LUCI project name.
-      * cls (list[tuple[str, int]]|tuple[str, int]|None): CLs, specified as
-        (host, change number) tuples. A single tuple may also be passed. All
-        Runs returned must include all of the given CLs, and Runs may also
-        contain other CLs.
-      * limit (int): max number of Runs to return. Defaults to 32.
-      * step_name (string): optional custom step name in RPC steps.
-      * dev (bool): whether to use the dev instance of Change Verifier.
+      * cls: CLs, specified as (host, change number) tuples. A single tuple may
+        also be passed. All Runs returned must include all of the given CLs, and
+        Runs may also contain other CLs.
+      * limit: max number of Runs to return. Defaults to 32.
+      * step_name: optional custom step name in RPC steps.
+      * dev: whether to use the dev instance of Change Verifier.
 
     Returns:
       A list of CV Runs ordered newest to oldest that match the given criteria.
@@ -95,23 +108,23 @@ class ChangeVerifierApi(recipe_api.RecipeApi):
     return runs[:limit]
 
   def _rpc(self,
-           host,
-           service,
-           method,
+           host: str,
+           service: str,
+           method: str,
            input_message,
            output_class,
-           step_name=None):
+           step_name: str | None = None):
     """Makes a RPC to the Change Verifier service.
 
     TODO(qyearsley): prpc could be encapsulated in a separate module.
 
     Args:
-      * host (string): Service host, e.g. "luci-change-verifier.appspot.com".
-      * service (string): the full service name, e.g. "cv.v0.Runs".
-      * method (string): the name of the method, e.g. "SearchRuns".
+      * host: Service host, e.g. "luci-change-verifier.appspot.com".
+      * service: the full service name, e.g. "cv.v0.Runs".
+      * method: the name of the method, e.g. "SearchRuns".
       * input_message (proto message): A request proto message.
       * output_class (proto message class): The expected output proto class.
-      * step_name (string): optional custom step name.
+      * step_name: optional custom step name.
 
     Returns:
       A proto message (if successful).
@@ -130,13 +143,13 @@ class ChangeVerifierApi(recipe_api.RecipeApi):
     return step_result.stdout
 
   @property
-  def _version(self):
+  def _version(self) -> str:
     if self._test_data.enabled:
       return 'swarming_module_pin'
     return DEFAULT_CIPD_VERSION  # pragma: no cover
 
   @property
-  def _luci_cv(self):
+  def _luci_cv(self) -> config_types.Path:
     return self.m.cipd.ensure_tool('infra/tools/luci-cv/${platform}',
                                    self._version)
 

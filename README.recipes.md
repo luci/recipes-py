@@ -1007,27 +1007,26 @@ subject to change in the future. Please reach out to the LUCI team first if you
 want to use this recipe module; file a ticket at:
 https://bugs.chromium.org/p/chromium/issues/entry?components=Infra%3ELUCI%3EBuildService%3EPresubmit%3ECV
 
-#### **class [ChangeVerifierApi](/recipe_modules/change_verifier/api.py#33)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
+#### **class [ChangeVerifierApi](/recipe_modules/change_verifier/api.py#39)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
 
 This module provides recipe API of LUCI Change Verifier.
 
-&mdash; **def [match\_config](/recipe_modules/change_verifier/api.py#143)(self, host: str, change: int, project: (str | None)=None, config_name: str=cv_api.CONFIG_FILE):**
+&mdash; **def [match\_config](/recipe_modules/change_verifier/api.py#156)(self, host: str, change: int, project: (str | None)=None, config_name: str=cv_api.CONFIG_FILE):**
 
 Retrieve the applicable CV group for a given change.
 
-&mdash; **def [search\_runs](/recipe_modules/change_verifier/api.py#39)(self, project, cls=None, limit=None, step_name=None, dev=False):**
+&mdash; **def [search\_runs](/recipe_modules/change_verifier/api.py#47)(self, project: str, cls: ((Sequence[GerritChange] | GerritChange) | None)=None, limit: (int | None)=None, step_name: (str | None)=None, dev: bool=False):**
 
 Searches for Runs.
 
 Args:
   * project: LUCI project name.
-  * cls (list[tuple[str, int]]|tuple[str, int]|None): CLs, specified as
-    (host, change number) tuples. A single tuple may also be passed. All
-    Runs returned must include all of the given CLs, and Runs may also
-    contain other CLs.
-  * limit (int): max number of Runs to return. Defaults to 32.
-  * step_name (string): optional custom step name in RPC steps.
-  * dev (bool): whether to use the dev instance of Change Verifier.
+  * cls: CLs, specified as (host, change number) tuples. A single tuple may
+    also be passed. All Runs returned must include all of the given CLs, and
+    Runs may also contain other CLs.
+  * limit: max number of Runs to return. Defaults to 32.
+  * step_name: optional custom step name in RPC steps.
+  * dev: whether to use the dev instance of Change Verifier.
 
 Returns:
   A list of CV Runs ordered newest to oldest that match the given criteria.
