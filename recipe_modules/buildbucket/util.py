@@ -42,7 +42,7 @@ def is_sha1_hex(sha1):
   return sha1 and re.match('^[0-9a-f]{40}$', sha1)
 
 
-def tags(**tags):
+def tags(**tags) -> list[common_pb2.StringPair]:
   """Helper method to generate a list of StringPair messages.
 
   This method is useful to prepare tags argument for ci/try_build above and

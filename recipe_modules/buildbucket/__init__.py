@@ -14,9 +14,6 @@ DEPS = [
   'warning',
 ]
 
-from recipe_engine.recipe_api import Property
-from recipe_engine.config import ConfigGroup, Dict, Single
-
 from PB.recipe_modules.recipe_engine.buildbucket import properties
 
 PROPERTIES = properties.InputProperties

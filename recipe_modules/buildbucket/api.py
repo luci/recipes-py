@@ -6,28 +6,42 @@
 
 Requires `buildbucket` command in `$PATH`:
 https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
-
-`url_title_fn` parameter used in this module is a function that accepts a
-`build_pb2.Build` and returns a link title.
-If it returns `None`, the link is not reported. Default link title is build ID.
 """
 
-from contextlib import contextmanager
+from __future__ import annotations
+
+from collections.abc import Mapping, Sequence, Set
+import contextlib
+import enum
+from typing import Any, Callable, Generator
+
 from google import protobuf
 from google.protobuf import field_mask_pb2
 from google.protobuf import json_format
+from recipe_engine import config_types, engine_types, recipe_api
+from PB.go.chromium.org.luci.buildbucket.proto import (
+    build as build_pb2,
+    builds_service as builds_service_pb2,
+    common as common_pb2,
+    task as task_pb2,
+)
+from PB.recipe_modules.recipe_engine.buildbucket import properties
 
-from recipe_engine import recipe_api
-
-from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
-from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
-from PB.go.chromium.org.luci.buildbucket.proto \
-  import builds_service as builds_service_pb2
 from . import util
+
+# Returns a link title or None. If None, no link is reported.
+UrlTitleFunction = Callable[[build_pb2.Build], str | None]
+
+# Sentinel to indicate that a child build launched by `schedule_request()`
+# should use the same value as its parent for a specific attribute.
+class Inherit(enum.Enum):
+  INHERIT = 1
 
 
 class BuildbucketApi(recipe_api.RecipeApi):
   """A module for interacting with buildbucket."""
+
+  INHERIT = Inherit.INHERIT
 
   HOST_PROD = 'cr-buildbucket.appspot.com'
   HOST_DEV = 'cr-buildbucket-dev.appspot.com'
@@ -50,11 +64,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
       'infra',
   })
 
-  # Sentinel to indicate that a child build launched by `schedule_request()`
-  # should use the same value as its parent for a specific attribute.
-  INHERIT = object()
-
-  def __init__(self, props, glob_props, *args, **kwargs):
+  def __init__(self, props: properties.InputProperties,
+               glob_props: properties.LegacyInputProperties, *args, **kwargs):
     super().__init__(*args, **kwargs)
     self._service_account_key = None
     self._host = props.build.infra.buildbucket.hostname or self.HOST_PROD
@@ -86,7 +97,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     self._next_test_build_id = 8922054662172514000
 
   @property
-  def host(self):
+  def host(self) -> str:
     """Hostname of buildbucket to use in API calls.
 
     Defaults to the hostname that the current build is originating from.
@@ -94,11 +105,11 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return self._host
 
   @host.setter
-  def host(self, value):
+  def host(self, value: str) -> None:
     self._host = value
 
-  @contextmanager
-  def with_host(self, host):
+  @contextlib.contextmanager
+  def with_host(self, host: str) -> Generator[None, None, None]:
     """Set the buildbucket host while in context, then reverts it."""
     previous_host = self.host
     try:
@@ -107,7 +118,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     finally:
       self.host = previous_host
 
-  def use_service_account_key(self, key_path):
+  def use_service_account_key(self, key_path: config_types.Path | str) -> None:
     """Tells this module to start using given service account key for auth.
 
     Otherwise the module is using the default account (when running on LUCI or
@@ -117,12 +128,12 @@ class BuildbucketApi(recipe_api.RecipeApi):
     should not use this.
 
     Args:
-    *  key_path (str): a path to JSON file with service account credentials.
+    *  key_path: a path to JSON file with service account credentials.
     """
     self._service_account_key = key_path
 
   @property
-  def build(self):
+  def build(self) -> build_pb2.Build:
     """Returns current build as a `buildbucket.v2.Build` protobuf message.
 
     For value format, see `Build` message in
@@ -141,12 +152,12 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return self._build
 
   @property
-  def builder_name(self):
+  def builder_name(self) ->  str:
     """Returns builder name. Shortcut for `.build.builder.builder`."""
     return self.build.builder.builder
 
   @property
-  def builder_full_name(self):
+  def builder_full_name(self) -> str:
     """Returns the full builder name: {project}/{bucket}/{builder}."""
     builder = self.build.builder
     if not self._build.builder.project:
@@ -156,7 +167,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return '%s/%s/%s' % (builder.project, builder.bucket, builder.builder)
 
   @property
-  def builder_realm(self):
+  def builder_realm(self) -> str:
     """Returns the LUCI realm name of the current build.
 
     Raises `InfraFailure` if the build proto doesn't have `project` or `bucket`
@@ -183,13 +194,14 @@ class BuildbucketApi(recipe_api.RecipeApi):
     builder = builder or self.build.builder.builder
     return f'https://{host}/builder/{project}/{bucket}/{builder}'
 
-  def build_url(self, host=None, build_id=None):
+  def build_url(self, host: str | None = None,
+                build_id: int | str | None = None) -> str:
     """Returns url to a build. Defaults to current build."""
     return 'https://%s/build/%s' % (
       host or self._host, build_id or self._build.id)
 
   @property
-  def gitiles_commit(self):
+  def gitiles_commit(self) -> common_pb2.GitilesCommit:
     """Returns input gitiles commit. Shortcut for `.build.input.gitiles_commit`.
 
     For value format, see
@@ -199,13 +211,14 @@ class BuildbucketApi(recipe_api.RecipeApi):
     """
     return self.build.input.gitiles_commit
 
-  def is_critical(self, build=None):
+  def is_critical(self, build: build_pb2.Build | None = None) -> bool:
     """Returns True if the build is critical. Build defaults to the current one.
     """
     build = build or self.build
     return build.critical in (common_pb2.UNSET, common_pb2.YES)
 
-  def set_output_gitiles_commit(self, gitiles_commit):
+  def set_output_gitiles_commit(
+      self, gitiles_commit: common_pb2.GitilesCommit) -> None:
     """Sets `buildbucket.v2.Build.output.gitiles_commit` field.
 
     This will tell other systems, consuming the build, what version of the code
@@ -213,7 +226,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     relative to other builds of the same builder.
 
     Args:
-    * gitiles_commit(buildbucket.common_pb2.GitilesCommit): the commit that was
+    * gitiles_commit: the commit that was
       actually checked out. Must have host, project and id.
       ID must match r'^[0-9a-f]{40}$' (git revision).
       If position is present, the build can be ordered along commits.
@@ -255,17 +268,17 @@ class BuildbucketApi(recipe_api.RecipeApi):
         gitiles_commit)
 
   @staticmethod
-  def tags(**tags):
+  def tags(**tags: list[str] | str) -> list[common_pb2.StringPair]:
     """Alias for tags in util.py. See doc there."""
     return util.tags(**tags)
 
-  def add_tags_to_current_build(self, tags):
+  def add_tags_to_current_build(self,
+                                tags: list[common_pb2.StringPair]) -> None:
     """Adds arbitrary tags during the runtime of a build.
 
     Args:
-    * tags(list of common_pb2.StringPair): tags to add. May contain duplicates.
-      Empty tag values won't remove existing tags with matching keys, since tags
-      can only be added.
+    * tags: tags to add. May contain duplicates. Empty tag values won't remove
+      existing tags with matching keys, since tags can only be added.
     """
     assert isinstance(tags, list), (
       'Expected type for tags is list; got %s' % type(tags))
@@ -280,12 +293,14 @@ class BuildbucketApi(recipe_api.RecipeApi):
     res.presentation.properties['$recipe_engine/buildbucket/runtime-tags'] = (
       self._runtime_tags)
 
-  def hide_current_build_in_gerrit(self):
+  def hide_current_build_in_gerrit(self) -> None:
     """Hides the build in UI"""
-    self.add_tags_to_current_build(self.tags(**{'hide-in-gerrit': 'pointless'}))
+    self.add_tags_to_current_build(
+        self.tags(**{'hide-in-gerrit': 'pointless'})
+    )
 
   @property
-  def builder_cache_path(self):
+  def builder_cache_path(self) -> config_types.Path:
     """Path to the builder cache directory.
 
     Such directory can be used to cache builder-specific data.
@@ -297,7 +312,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   # RPCs.
 
-  def _make_field_mask(self, paths=DEFAULT_FIELDS, path_prefix=''):
+  def _make_field_mask(self, paths: Set[str] = DEFAULT_FIELDS,
+                       path_prefix: str = ''):
     """Returns a FieldMask message to use in requests."""
     paths = set(paths)
     if 'id' not in paths:
@@ -307,14 +323,14 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   def run(
       self,
-      schedule_build_requests,
-      collect_interval=None,
-      timeout=None,
-      url_title_fn=None,
-      step_name=None,
-      raise_if_unsuccessful=False,
-      eager=False,
-  ):
+      schedule_build_requests: Sequence[builds_service_pb2.ScheduleBuildRequest],
+      collect_interval: int | None = None,
+      timeout: int | None= None,
+      url_title_fn: UrlTitleFunction | None = None,
+      step_name: str | None = None,
+      raise_if_unsuccessful: bool = False,
+      eager: bool = False,
+  ) -> list[build_pb2.Build]:
     """Runs builds and returns results.
 
     A shortcut for schedule() and collect_builds().
@@ -343,26 +359,26 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   def schedule_request(
       self,
-      builder,
-      project=INHERIT,
-      bucket=INHERIT,
-      properties=None,
-      experimental=INHERIT,
-      experiments=None,
-      gitiles_commit=INHERIT,
-      gerrit_changes=INHERIT,
-      tags=None,
-      inherit_buildsets=True,
-      swarming_parent_run_id=None,
-      dimensions=None,
-      priority=INHERIT,
-      critical=INHERIT,
-      exe_cipd_version=None,
-      fields=DEFAULT_FIELDS,
-      can_outlive_parent=None,
-      as_shadow_if_parent_is_led=False,
-      led_inherit_parent=False,
-  ):
+      builder: str,
+      project: str | Inherit = INHERIT,
+      bucket: str | Inherit = INHERIT,
+      properties: Mapping[str, Any] = None,
+      experimental: bool | common_pb2.Trinary | Inherit = INHERIT,
+      experiments: Mapping[str, bool] | None = None,
+      gitiles_commit: common_pb2.GitilesCommit | Inherit = INHERIT,
+      gerrit_changes: Sequence[common_pb2.GerritChange] | Inherit = INHERIT,
+      tags: Sequence[common_pb2.StringPair] | None = None,
+      inherit_buildsets: bool = True,
+      swarming_parent_run_id: str | None = None,
+      dimensions: Sequence[common_pb2.RequestedDimension] | None = None,
+      priority: int | None | Inherit = INHERIT,
+      critical: bool | common_pb2.Trinary | Inherit = INHERIT,
+      exe_cipd_version: str | Inherit | None = None,
+      fields: Set[str] = DEFAULT_FIELDS,
+      can_outlive_parent: bool | None = None,
+      as_shadow_if_parent_is_led: bool = False,
+      led_inherit_parent: bool = False,
+  ) -> builds_service_pb2.ScheduleBuildRequest:
     """Creates a new `ScheduleBuildRequest` message with reasonable defaults.
 
     This is a convenience function to create a `ScheduleBuildRequest` message.
@@ -378,56 +394,45 @@ class BuildbucketApi(recipe_api.RecipeApi):
         build = api.buildbucket.schedule([request])[0]
 
     Args:
-    * builder (str): name of the destination builder.
-    * project (str|INHERIT): project containing the destination builder.
-      Defaults to the project of the current build.
-    * bucket (str|INHERIT): bucket containing the destination builder.
-      Defaults to the bucket of the current build.
-    * properties (dict): input properties for the new build.
-    * experimental (common_pb2.Trinary|INHERIT): whether the build is allowed
-      to affect prod.
-      Defaults to the value of the current build.
-      Read more about
+    * builder: name of the destination builder.
+    * project: project containing the destination builder. Defaults to the
+      project of the current build.
+    * bucket: bucket containing the destination builder. Defaults to the bucket
+      of the current build.
+    * properties: input properties for the new build.
+    * experimental: whether the build is allowed to affect prod. Defaults to the
+      value of the current build. Read more about
       [`experimental` field](https://cs.chromium.org/chromium/infra/go/src/go.chromium.org/luci/buildbucket/proto/build.proto?q="bool experimental").
-    * experiments (Dict[str, bool]|None): enabled and disabled experiments
-      for the new build. Overrides the result computed from experiments defined
-      in builder config.
-    * gitiles_commit (common_pb2.GitilesCommit|INHERIT): input commit.
-      Defaults to the input commit of the current build.
-      Read more about
+    * experiments: enabled and disabled experiments for the new build. Overrides
+      the result computed from experiments defined in builder config.
+    * gitiles_commit: input commit. Defaults to the input commit of the current
+      build. Read more about
       [`gitiles_commit`](https://cs.chromium.org/chromium/infra/go/src/go.chromium.org/luci/buildbucket/proto/build.proto?q=Input.gitiles_commit).
-    * gerrit_changes (list of common_pb2.GerritChange|INHERIT): list of input
-      CLs.
-      Defaults to gerrit changes of the current build.
-      Read more about
+    * gerrit_changes: list of input CLs. Defaults to gerrit changes of the
+      current build. Read more about
       [`gerrit_changes`](https://cs.chromium.org/chromium/infra/go/src/go.chromium.org/luci/buildbucket/proto/build.proto?q=Input.gerrit_changes).
-    * tags (list of common_pb2.StringPair): tags for the new build.
-    * inherit_buildsets (bool): if `True` (default), the returned request will
-      include buildset tags from the current build.
-    * swarming_parent_run_id (str|NoneType): associate the new build as child of
-      the given swarming run id.
-      Defaults to `None` meaning no association.
+    * tags: tags for the new build.
+    * inherit_buildsets: if `True` (default), the returned request will include
+      buildset tags from the current build.
+    * swarming_parent_run_id: associate the new build as child of the given
+      swarming run id. Defaults to `None` meaning no association.
       If passed, must be a valid swarming *run* id (specific execution of a
       task) for the swarming instance on which build will execute. Typically,
       you'd want to set it to
       [`api.swarming.task_id`](https://cs.chromium.org/chromium/infra/recipes-py/recipe_modules/swarming/api.py?type=cs&q=recipe_modules/swarming/api.py+%22def+task_id%22&sq=package:chromium&g=0&l=924).
       Read more about
       [`parent_run_id`](https://cs.chromium.org/chromium/infra/go/src/go.chromium.org/luci/buildbucket/proto/rpc.proto?type=cs&q="string+parent_run_id").
-    * dimensions (list of common_pb2.RequestedDimension): override dimensions
-      defined on the server.
-    * priority (int|NoneType|INHERIT): Swarming task priority.
-      The lower the more important. Valid values are `[20..255]`.
-      Defaults to the value of the current build.
+    * dimensions: override dimensions defined on the server.
+    * priority: Swarming task priority. The lower the more important. Valid
+      values are `[20..255]`. Defaults to the value of the current build.
       Pass `None` to use the priority of the destination builder.
-    * critical (bool|common_pb2.Trinary|INHERIT): whether the build status
-      should not be used to assess correctness of the commit/CL.
-      Defaults to .build.critical.
+    * critical: whether the build status should not be used to assess
+      correctness of the commit/CL. Defaults to .build.critical.
       See also Build.critical in
       https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto
-    * exe_cipd_version (NoneType|str|INHERIT): CIPD version of the LUCI
-      Executable (e.g. recipe) to use. Pass `None` to use the server configured
-      one.
-    * fields (list of strs): a list of fields to include in the response, names
+    * exe_cipd_version: CIPD version of the LUCI Executable (e.g. recipe) to
+      use. Pass `None` to use the server configured one.
+    * fields: a list of fields to include in the response, names
       relative to `build_pb2.Build` (e.g. ["tags", "infra.swarming"]).
     * can_outlive_parent: flag for if the scheduled child build can outlive
       the current build or not (as enforced by Buildbucket;
@@ -572,10 +577,10 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   def schedule(
       self,
-      schedule_build_requests,
-      url_title_fn=None,
-      step_name=None,
-      include_sub_invs=True):
+      schedule_build_requests: Sequence[builds_service_pb2.ScheduleBuildRequest],
+      url_title_fn: UrlTitleFunction | None = None,
+      step_name: str | None = None,
+      include_sub_invs: bool = True) -> list[build_pb2.Build]:
     """Schedules a batch of builds.
 
     Example:
@@ -658,7 +663,12 @@ class BuildbucketApi(recipe_api.RecipeApi):
     # Return Build messages.
     return [r.schedule_build for r in batch_res.responses]
 
-  def _report_build_maybe(self, step_result, build, url_title_fn=None):
+  def _report_build_maybe(
+      self,
+      step_result: step_data.StepData,
+      build: build_pb2.Build,
+      url_title_fn: UrlTitleFunction | None = None,
+  ) -> None:
     """Reports a build in the step presentation.
 
     url_title_fn is a function that accepts a `build_pb2.Build` and returns a
@@ -670,7 +680,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
       pres = step_result.presentation
       pres.links[str(build_title)] = self.build_url(build_id=build.id)
 
-  def list_builders(self, project, bucket, step_name=None):
+  def list_builders(self, project: str, bucket: str,
+                    step_name: str | None = None) -> list[str]:
     """Lists configured builders in a bucket.
 
     Args:
@@ -696,15 +707,17 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     return ret
 
-  def search(self,
-             predicate,
-             limit=None,
-             url_title_fn=None,
-             report_build=True,
-             step_name=None,
-             fields=DEFAULT_FIELDS,
-             timeout=None,
-             test_data=None):
+  def search(
+      self,
+      predicate: builds_service_pb2.BuildPredicate,
+      limit: int | None = None,
+      url_title_fn: UrlTitleFunction | None = None,
+      report_build: bool = True,
+      step_name: str | None = None,
+      fields: Set[str] = DEFAULT_FIELDS,
+      timeout: int | None= None,
+      test_data: Callable[[], Sequence[build_pb2.Build]] | None= None,
+  ) -> list[build_pb2.Build]:
     """Searches builds with one predicate.
 
     Example: find all builds of the current CL.
@@ -758,15 +771,17 @@ class BuildbucketApi(recipe_api.RecipeApi):
       raise self.m.step.InfraFailure('Search builds failed')
     return ret
 
-  def search_with_multiple_predicates(self,
-                                      predicate,
-                                      limit=None,
-                                      url_title_fn=None,
-                                      report_build=True,
-                                      step_name=None,
-                                      fields=DEFAULT_FIELDS,
-                                      timeout=None,
-                                      test_data=None):
+  def search_with_multiple_predicates(
+      self,
+      predicate: Sequence[builds_service_pb2.BuildPredicate],
+      limit: int | None = None,
+      url_title_fn: UrlTitleFunction | None = None,
+      report_build: bool = True,
+      step_name: str | None = None,
+      fields: Set[str] = DEFAULT_FIELDS,
+      timeout: int | None= None,
+      test_data: Callable[[], Sequence[build_pb2.Build]] | None= None,
+  ) -> list[build_pb2.Build]:
     """Searches for builds with multiple predicates.
 
     Example: find all builds with one tag OR another.
@@ -804,7 +819,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     Returns:
       A list of builds ordered newest-to-oldest.
     """
-    assert isinstance(predicate, list), predicate
+    assert isinstance(predicate, Sequence), predicate
     assert all(
         isinstance(p, builds_service_pb2.BuildPredicate) for p in predicate)
     assert isinstance(limit, (type(None), int))
@@ -850,15 +865,18 @@ class BuildbucketApi(recipe_api.RecipeApi):
         'bb ls returns %d builds when limit set to %d' % (len(ret), limit))
     return ret
 
-  def cancel_build(self, build_id, reason=' ', step_name=None):
+  def cancel_build(
+      self,
+      build_id: int | str,
+      reason: str | None = None,
+      step_name: str | None = None,
+  ) -> None:
     """Cancel the build associated with the provided build ID.
 
     Args:
-    *   `build_id` (int|str): a buildbucket build ID.
-                   It should be either an integer(e.g. 123456789 or '123456789')
-                   or the numeric value in string format.
-    *   `reason` (str): reason for canceling the given build.
-                  Can't be None or Empty. Markdown is supported.
+    *   `build_id`: a buildbucket build ID. It should be either an integer or
+        the numeric value in string format (e.g. 123456789 or '123456789').
+    *   `reason`: reason for canceling the given build. Markdown is supported.
 
     Returns:
       None if build is successfully canceled. Otherwise, an InfraFailure will
@@ -871,7 +889,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
                 # Expecting `id` to be of type int64 according to the proto
                 # definition.
                 id=int(build_id),
-                summary_markdown=str(reason)))
+                summary_markdown=str(reason or ' ')))
     ])
     test_res = builds_service_pb2.BatchResponse(
       responses=[
@@ -887,10 +905,16 @@ class BuildbucketApi(recipe_api.RecipeApi):
         'Failed to cancel build [%s]. Message: %s' %(
           build_id, batch_res.responses[0].error.message))
 
-    return None
+    return
 
-  def get_multi(self, build_ids, url_title_fn=None, step_name=None,
-                fields=DEFAULT_FIELDS, test_data=None):
+  def get_multi(
+      self,
+      build_ids: Sequence[int | str],
+      url_title_fn: UrlTitleFunction | None = None,
+      step_name: str | None = None,
+      fields: Set[str] = DEFAULT_FIELDS,
+      test_data: Sequence[build_pb2.Build] | None = None,
+  ) -> tuple[step_data.StepData, dict[int, build_pb2.Build]]:
     """Gets multiple builds.
 
     Args:
@@ -907,14 +931,20 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return self._get_multi(build_ids, url_title_fn, step_name, fields,
                            test_data)[1]
 
-  def _get_multi(self, build_ids, url_title_fn, step_name, fields,
-                 test_data=None):
+  def _get_multi(
+      self,
+      build_ids: Sequence[int | str],
+      url_title_fn: UrlTitleFunction | None,
+      step_name: str | None,
+      fields: Set[str],
+      test_data: Sequence[build_pb2.Build] | None = None,
+  ) -> tuple[step_data.StepData, dict[int, build_pb2.Build]]:
     """Implements get_multi, but also returns StepResult."""
     batch_req = builds_service_pb2.BatchRequest(
         requests=[
             dict(
                 get_build=dict(
-                    id=id, fields=self._make_field_mask(paths=fields)))
+                    id=int(id), fields=self._make_field_mask(paths=fields)))
             for id in build_ids
         ],)
 
@@ -925,7 +955,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     else:
       test_res = builds_service_pb2.BatchResponse(
           responses=[
-              dict(get_build=dict(id=id, status=common_pb2.SUCCESS))
+              dict(get_build=dict(id=int(id), status=common_pb2.SUCCESS))
               for id in build_ids
           ]
       )
@@ -941,8 +971,14 @@ class BuildbucketApi(recipe_api.RecipeApi):
       raise self.m.step.InfraFailure('Getting builds failed')
     return step_res, ret
 
-  def get(self, build_id, url_title_fn=None, step_name=None,
-           fields=DEFAULT_FIELDS, test_data=None):
+  def get(
+      self,
+      build_id: int | str,
+      url_title_fn: UrlTitleFunction | None = None,
+      step_name: str | None = None,
+      fields: Set[str] = DEFAULT_FIELDS,
+      test_data: build_pb2.Build | None = None,
+  ) -> build_pb2.Build | None:
     """Gets a build.
 
     Args:
@@ -964,7 +1000,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
         test_data=[test_data] if test_data else None)
     return builds[build_id]
 
-  def collect_build(self, build_id, **kwargs):
+  def collect_build(self, build_id: str,
+                    **kwargs: Any) -> dict[int, build_pb2.Build]:
     """Shorthand for `collect_builds` below, but for a single build only.
 
     Args:
@@ -979,17 +1016,17 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   def collect_builds(
       self,
-      build_ids,
-      interval=None,
-      timeout=None,
-      step_name=None,
-      raise_if_unsuccessful=False,
-      url_title_fn=None,
-      mirror_status=False,
-      fields=DEFAULT_FIELDS,
-      cost=None,
-      eager=False,
-  ):
+      build_ids: Sequence[int | str],
+      interval: int | None = None,
+      timeout: int | None = None,
+      step_name: str | None = None,
+      raise_if_unsuccessful: bool = False,
+      url_title_fn: UrlTitleFunction | None = None,
+      mirror_status: bool = False,
+      fields: Set[str] = DEFAULT_FIELDS,
+      cost: engine_types.ResourceCost | None = None,
+      eager: bool = False,
+  ) -> dict[int, build_pb2.Build]:
     """Waits for a set of builds to end and returns their details.
 
     Args:
@@ -1065,10 +1102,16 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   # Internal.
 
-  def _batch_request(self, step_name, request, test_response, timeout=None):
+  def _batch_request(
+      self,
+      step_name: str,
+      request: builds_service_pb2.BatchRequest,
+      test_response: builds_service_pb2.BatchResponse,
+      timeout: int | None = None,
+  ) -> tuple[step_data.StepData, builds_service_pb2.BatchResponse, bool]:
     """Makes a Builds.Batch request.
 
-    Returns (StepResult, builds_service_pb2.BatchResponse, has_errors) tuple.
+    Returns (StepData, BatchResponse, has_errors) tuple.
     """
     request_dict = json_format.MessageToDict(request)
     try:
@@ -1122,8 +1165,16 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return (step_res, batch_res, has_errors)
 
   def _run_bb(
-      self, subcommand, step_name=None, args=None, stdin=None, stdout=None,
-      step_test_data=None, timeout=None, cost=None):
+      self,
+      subcommand: str,
+      step_name: str | None = None,
+      args: Sequence[str] | None = None,
+      stdin: config_types.Path | recipe_api.Placeholder | None = None,
+      stdout: config_types.Path | recipe_api.Placeholder | None = None,
+      step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
+      timeout: int | None = None,
+      cost: engine_types.ResourceCost | None = None,
+  ) -> step_data.StepData:
     cmdline = [
       'bb', subcommand,
       '-host', self._host,
@@ -1150,7 +1201,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
         **kwargs,
     )
 
-  def _check_build_id(self, build_id):
+  def _check_build_id(self, build_id: int | str) -> None:
     """Raise ValueError if the given build ID is not a number or a string
     that represents numeric value.
     """
@@ -1160,7 +1211,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       raise ValueError('Expected a numeric build ID, got %s' % (build_id,))
 
   @property
-  def bucket_v1(self):
+  def bucket_v1(self) -> str:
     """Returns bucket name in v1 format.
 
     Mostly useful for scheduling new builds using v1 API.
@@ -1178,7 +1229,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
   # build.infra.backend.
 
   @property
-  def backend_hostname(self):
+  def backend_hostname(self) -> str:
     """Returns the backend hostname for the build.
     If it is legacy swarming build then the swarming hostname will be returned.
     """
@@ -1187,12 +1238,15 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return self.build.infra.swarming.hostname
 
   @property
-  def backend_task_dimensions(self):
+  def backend_task_dimensions(self) -> build_pb2.RequestedDimension:
     """Returns the task dimensions used by the task for the build.
     """
     return self.backend_task_dimensions_from_build()
 
-  def backend_task_dimensions_from_build(self, build=None):
+  def backend_task_dimensions_from_build(
+      self,
+      build: build_pb2.Build | None = None,
+  ) -> build_pb2.RequestedDimension:
     """Returns the task dimensions for the provided build.
     If no build is provided, then self.build will be used.
     """
@@ -1203,12 +1257,15 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return build.infra.backend.task_dimensions
 
   @property
-  def backend_task_id(self):
+  def backend_task_id(self) -> str:
     """Returns the task id of the task for the build.
     """
     return self.backend_task_id_from_build()
 
-  def backend_task_id_from_build(self, build=None):
+  def backend_task_id_from_build(
+      self,
+      build: build_pb2.Build | None = None,
+  ) -> str:
     """Returns the task id of the task for the provided build.
     If no build is provided, then self.build will be used.
     """
@@ -1219,12 +1276,15 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return build.infra.backend.task.id.id
 
   @property
-  def swarming_bot_dimensions(self):
+  def swarming_bot_dimensions(self) -> list[common_pb2.StringPair] | None:
     """Returns the swarming bot dimensions for the build.
     """
     return self.swarming_bot_dimensions_from_build()
 
-  def swarming_bot_dimensions_from_build(self, build=None):
+  def swarming_bot_dimensions_from_build(
+      self,
+      build: build_pb2.Build | None = None,
+  ) -> list[common_pb2.StringPair] | None:
     """Returns the swarming bot dimensions for the provided build.
     If no build is provided, then self.build will be used.
     """
@@ -1245,7 +1305,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return bot_dimensions
 
   @property
-  def swarming_parent_run_id(self):
+  def swarming_parent_run_id(self) -> str | None:
     """Returns the parent_run_id (swarming specific) used in the task.
     """
     # A "parent_task_id" tag should be populated for both builds on swarming and
@@ -1264,7 +1324,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return backend_config['parent_run_id']
 
   @property
-  def swarming_priority(self):
+  def swarming_priority(self) -> int | None:
     """Returns the priority (swarming specific) of the task.
     """
     if self.build.infra.swarming.priority:
@@ -1278,7 +1338,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return int(backend_config['priority'])
 
   @property
-  def swarming_task_service_account(self):
+  def swarming_task_service_account(self) -> str | None:
     """Returns the swarming specific service account used in the task.
     """
     if self.build.infra.swarming.task_service_account:
@@ -1293,7 +1353,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return backend_config['service_account']
 
   @property
-  def shadowed_bucket(self):  # pragma: no cover
+  def shadowed_bucket(self) -> str:  # pragma: no cover
     for prop, value in self.build.input.properties.items():
       if prop != '$recipe_engine/led':
         continue

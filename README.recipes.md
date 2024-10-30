@@ -445,55 +445,50 @@ API for interacting with the buildbucket service.
 Requires `buildbucket` command in `$PATH`:
 https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 
-`url_title_fn` parameter used in this module is a function that accepts a
-`build_pb2.Build` and returns a link title.
-If it returns `None`, the link is not reported. Default link title is build ID.
-
-#### **class [BuildbucketApi](/recipe_modules/buildbucket/api.py#29)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
+#### **class [BuildbucketApi](/recipe_modules/buildbucket/api.py#41)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
 
 A module for interacting with buildbucket.
 
-&mdash; **def [add\_tags\_to\_current\_build](/recipe_modules/buildbucket/api.py#262)(self, tags):**
+&mdash; **def [add\_tags\_to\_current\_build](/recipe_modules/buildbucket/api.py#275)(self, tags: list[common_pb2.StringPair]):**
 
 Adds arbitrary tags during the runtime of a build.
 
 Args:
-* tags(list of common_pb2.StringPair): tags to add. May contain duplicates.
-  Empty tag values won't remove existing tags with matching keys, since tags
-  can only be added.
+* tags: tags to add. May contain duplicates. Empty tag values won't remove
+  existing tags with matching keys, since tags can only be added.
 
-&emsp; **@property**<br>&mdash; **def [backend\_hostname](/recipe_modules/buildbucket/api.py#1180)(self):**
+&emsp; **@property**<br>&mdash; **def [backend\_hostname](/recipe_modules/buildbucket/api.py#1231)(self):**
 
 Returns the backend hostname for the build.
 If it is legacy swarming build then the swarming hostname will be returned.
 
-&emsp; **@property**<br>&mdash; **def [backend\_task\_dimensions](/recipe_modules/buildbucket/api.py#1189)(self):**
+&emsp; **@property**<br>&mdash; **def [backend\_task\_dimensions](/recipe_modules/buildbucket/api.py#1240)(self):**
 
 Returns the task dimensions used by the task for the build.
     
 
-&mdash; **def [backend\_task\_dimensions\_from\_build](/recipe_modules/buildbucket/api.py#1195)(self, build=None):**
+&mdash; **def [backend\_task\_dimensions\_from\_build](/recipe_modules/buildbucket/api.py#1246)(self, build: (build_pb2.Build | None)=None):**
 
 Returns the task dimensions for the provided build.
 If no build is provided, then self.build will be used.
 
-&emsp; **@property**<br>&mdash; **def [backend\_task\_id](/recipe_modules/buildbucket/api.py#1205)(self):**
+&emsp; **@property**<br>&mdash; **def [backend\_task\_id](/recipe_modules/buildbucket/api.py#1259)(self):**
 
 Returns the task id of the task for the build.
     
 
-&mdash; **def [backend\_task\_id\_from\_build](/recipe_modules/buildbucket/api.py#1211)(self, build=None):**
+&mdash; **def [backend\_task\_id\_from\_build](/recipe_modules/buildbucket/api.py#1265)(self, build: (build_pb2.Build | None)=None):**
 
 Returns the task id of the task for the provided build.
 If no build is provided, then self.build will be used.
 
-&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#1162)(self):**
+&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#1213)(self):**
 
 Returns bucket name in v1 format.
 
 Mostly useful for scheduling new builds using v1 API.
 
-&emsp; **@property**<br>&mdash; **def [build](/recipe_modules/buildbucket/api.py#124)(self):**
+&emsp; **@property**<br>&mdash; **def [build](/recipe_modules/buildbucket/api.py#135)(self):**
 
 Returns current build as a `buildbucket.v2.Build` protobuf message.
 
@@ -510,11 +505,11 @@ much information as possible. Some fields may be left empty, violating
 the rules described in the .proto files.
 If the current build is not a buildbucket build, returned `build.id` is 0.
 
-&mdash; **def [build\_url](/recipe_modules/buildbucket/api.py#186)(self, host=None, build_id=None):**
+&mdash; **def [build\_url](/recipe_modules/buildbucket/api.py#197)(self, host: (str | None)=None, build_id: ((int | str) | None)=None):**
 
 Returns url to a build. Defaults to current build.
 
-&emsp; **@property**<br>&mdash; **def [builder\_cache\_path](/recipe_modules/buildbucket/api.py#287)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_cache\_path](/recipe_modules/buildbucket/api.py#302)(self):**
 
 Path to the builder cache directory.
 
@@ -523,41 +518,39 @@ It remains on the bot from build to build.
 See "Builder cache" in
 https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/project_config.proto
 
-&emsp; **@property**<br>&mdash; **def [builder\_full\_name](/recipe_modules/buildbucket/api.py#148)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_full\_name](/recipe_modules/buildbucket/api.py#159)(self):**
 
 Returns the full builder name: {project}/{bucket}/{builder}.
 
-&emsp; **@property**<br>&mdash; **def [builder\_name](/recipe_modules/buildbucket/api.py#143)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_name](/recipe_modules/buildbucket/api.py#154)(self):**
 
 Returns builder name. Shortcut for `.build.builder.builder`.
 
-&emsp; **@property**<br>&mdash; **def [builder\_realm](/recipe_modules/buildbucket/api.py#158)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_realm](/recipe_modules/buildbucket/api.py#169)(self):**
 
 Returns the LUCI realm name of the current build.
 
 Raises `InfraFailure` if the build proto doesn't have `project` or `bucket`
 set. This can happen in tests that don't properly mock build proto.
 
-&mdash; **def [builder\_url](/recipe_modules/buildbucket/api.py#171)(self, \*, host: (str | None)=None, project: (str | None)=None, bucket: (str | None)=None, builder: (str | None)=None):**
+&mdash; **def [builder\_url](/recipe_modules/buildbucket/api.py#182)(self, \*, host: (str | None)=None, project: (str | None)=None, bucket: (str | None)=None, builder: (str | None)=None):**
 
 Returns url to a builder. Defaults to current builder.
 
-&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#853)(self, build_id, reason=' ', step_name=None):**
+&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#868)(self, build_id: (int | str), reason: (str | None)=None, step_name: (str | None)=None):**
 
 Cancel the build associated with the provided build ID.
 
 Args:
-*   `build_id` (int|str): a buildbucket build ID.
-               It should be either an integer(e.g. 123456789 or '123456789')
-               or the numeric value in string format.
-*   `reason` (str): reason for canceling the given build.
-              Can't be None or Empty. Markdown is supported.
+*   `build_id`: a buildbucket build ID. It should be either an integer or
+    the numeric value in string format (e.g. 123456789 or '123456789').
+*   `reason`: reason for canceling the given build. Markdown is supported.
 
 Returns:
   None if build is successfully canceled. Otherwise, an InfraFailure will
   be raised
 
-&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#967)(self, build_id, \*\*kwargs):**
+&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#1003)(self, build_id: str, \*\*kwargs: Any):**
 
 Shorthand for `collect_builds` below, but for a single build only.
 
@@ -568,7 +561,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto).
   for the ended build.
 
-&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#980)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False, url_title_fn=None, mirror_status=False, fields=DEFAULT_FIELDS, cost=None, eager=False):**
+&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#1017)(self, build_ids: Sequence[(int | str)], interval: (int | None)=None, timeout: (int | None)=None, step_name: (str | None)=None, raise_if_unsuccessful: bool=False, url_title_fn: (UrlTitleFunction | None)=None, mirror_status: bool=False, fields: Set[str]=DEFAULT_FIELDS, cost: (engine_types.ResourceCost | None)=None, eager: bool=False):**
 
 Waits for a set of builds to end and returns their details.
 
@@ -595,7 +588,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto)
   for all specified builds.
 
-&mdash; **def [get](/recipe_modules/buildbucket/api.py#944)(self, build_id, url_title_fn=None, step_name=None, fields=DEFAULT_FIELDS, test_data=None):**
+&mdash; **def [get](/recipe_modules/buildbucket/api.py#974)(self, build_id: (int | str), url_title_fn: (UrlTitleFunction | None)=None, step_name: (str | None)=None, fields: Set[str]=DEFAULT_FIELDS, test_data: (build_pb2.Build | None)=None):**
 
 Gets a build.
 
@@ -610,7 +603,7 @@ Args:
 Returns:
   A build_pb2.Build.
 
-&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#892)(self, build_ids, url_title_fn=None, step_name=None, fields=DEFAULT_FIELDS, test_data=None):**
+&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#910)(self, build_ids: Sequence[(int | str)], url_title_fn: (UrlTitleFunction | None)=None, step_name: (str | None)=None, fields: Set[str]=DEFAULT_FIELDS, test_data: (Sequence[build_pb2.Build] | None)=None):**
 
 Gets multiple builds.
 
@@ -625,7 +618,7 @@ Args:
 Returns:
   A dict {build_id: build_pb2.Build}.
 
-&emsp; **@property**<br>&mdash; **def [gitiles\_commit](/recipe_modules/buildbucket/api.py#191)(self):**
+&emsp; **@property**<br>&mdash; **def [gitiles\_commit](/recipe_modules/buildbucket/api.py#203)(self):**
 
 Returns input gitiles commit. Shortcut for `.build.input.gitiles_commit`.
 
@@ -634,18 +627,18 @@ For value format, see
 
 Never returns None, but sub-fields may be empty.
 
-&mdash; **def [hide\_current\_build\_in\_gerrit](/recipe_modules/buildbucket/api.py#283)(self):**
+&mdash; **def [hide\_current\_build\_in\_gerrit](/recipe_modules/buildbucket/api.py#296)(self):**
 
 Hides the build in UI
 
-&emsp; **@host.setter**<br>&mdash; **def [host](/recipe_modules/buildbucket/api.py#96)(self, value):**
+&emsp; **@host.setter**<br>&mdash; **def [host](/recipe_modules/buildbucket/api.py#107)(self, value: str):**
 
-&mdash; **def [is\_critical](/recipe_modules/buildbucket/api.py#202)(self, build=None):**
+&mdash; **def [is\_critical](/recipe_modules/buildbucket/api.py#214)(self, build: (build_pb2.Build | None)=None):**
 
 Returns True if the build is critical. Build defaults to the current one.
     
 
-&mdash; **def [list\_builders](/recipe_modules/buildbucket/api.py#673)(self, project, bucket, step_name=None):**
+&mdash; **def [list\_builders](/recipe_modules/buildbucket/api.py#683)(self, project: str, bucket: str, step_name: (str | None)=None):**
 
 Lists configured builders in a bucket.
 
@@ -657,7 +650,7 @@ Returns:
   A list of builder names, excluding the project and bucket
   (e.g. 'betty-pi-arc-release-main').
 
-&mdash; **def [run](/recipe_modules/buildbucket/api.py#308)(self, schedule_build_requests, collect_interval=None, timeout=None, url_title_fn=None, step_name=None, raise_if_unsuccessful=False, eager=False):**
+&mdash; **def [run](/recipe_modules/buildbucket/api.py#324)(self, schedule_build_requests: Sequence[builds_service_pb2.ScheduleBuildRequest], collect_interval: (int | None)=None, timeout: (int | None)=None, url_title_fn: (UrlTitleFunction | None)=None, step_name: (str | None)=None, raise_if_unsuccessful: bool=False, eager: bool=False):**
 
 Runs builds and returns results.
 
@@ -669,7 +662,7 @@ Returns:
   [Builds](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto)
   in the same order as schedule_build_requests.
 
-&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#573)(self, schedule_build_requests, url_title_fn=None, step_name=None, include_sub_invs=True):**
+&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#578)(self, schedule_build_requests: Sequence[builds_service_pb2.ScheduleBuildRequest], url_title_fn: (UrlTitleFunction | None)=None, step_name: (str | None)=None, include_sub_invs: bool=True):**
 
 Schedules a batch of builds.
 
@@ -700,7 +693,7 @@ Returns:
 Raises:
   `InfraFailure` if any of the requests fail.
 
-&mdash; **def [schedule\_request](/recipe_modules/buildbucket/api.py#344)(self, builder, project=INHERIT, bucket=INHERIT, properties=None, experimental=INHERIT, experiments=None, gitiles_commit=INHERIT, gerrit_changes=INHERIT, tags=None, inherit_buildsets=True, swarming_parent_run_id=None, dimensions=None, priority=INHERIT, critical=INHERIT, exe_cipd_version=None, fields=DEFAULT_FIELDS, can_outlive_parent=None, as_shadow_if_parent_is_led=False, led_inherit_parent=False):**
+&mdash; **def [schedule\_request](/recipe_modules/buildbucket/api.py#360)(self, builder: str, project: (str | Inherit)=INHERIT, bucket: (str | Inherit)=INHERIT, properties: Mapping[(str, Any)]=None, experimental: ((bool | common_pb2.Trinary) | Inherit)=INHERIT, experiments: (Mapping[(str, bool)] | None)=None, gitiles_commit: (common_pb2.GitilesCommit | Inherit)=INHERIT, gerrit_changes: (Sequence[common_pb2.GerritChange] | Inherit)=INHERIT, tags: (Sequence[common_pb2.StringPair] | None)=None, inherit_buildsets: bool=True, swarming_parent_run_id: (str | None)=None, dimensions: (Sequence[common_pb2.RequestedDimension] | None)=None, priority: ((int | None) | Inherit)=INHERIT, critical: ((bool | common_pb2.Trinary) | Inherit)=INHERIT, exe_cipd_version: ((str | Inherit) | None)=None, fields: Set[str]=DEFAULT_FIELDS, can_outlive_parent: (bool | None)=None, as_shadow_if_parent_is_led: bool=False, led_inherit_parent: bool=False):**
 
 Creates a new `ScheduleBuildRequest` message with reasonable defaults.
 
@@ -717,56 +710,45 @@ Example:
     build = api.buildbucket.schedule([request])[0]
 
 Args:
-* builder (str): name of the destination builder.
-* project (str|INHERIT): project containing the destination builder.
-  Defaults to the project of the current build.
-* bucket (str|INHERIT): bucket containing the destination builder.
-  Defaults to the bucket of the current build.
-* properties (dict): input properties for the new build.
-* experimental (common_pb2.Trinary|INHERIT): whether the build is allowed
-  to affect prod.
-  Defaults to the value of the current build.
-  Read more about
+* builder: name of the destination builder.
+* project: project containing the destination builder. Defaults to the
+  project of the current build.
+* bucket: bucket containing the destination builder. Defaults to the bucket
+  of the current build.
+* properties: input properties for the new build.
+* experimental: whether the build is allowed to affect prod. Defaults to the
+  value of the current build. Read more about
   [`experimental` field](https://cs.chromium.org/chromium/infra/go/src/go.chromium.org/luci/buildbucket/proto/build.proto?q="bool experimental").
-* experiments (Dict[str, bool]|None): enabled and disabled experiments
-  for the new build. Overrides the result computed from experiments defined
-  in builder config.
-* gitiles_commit (common_pb2.GitilesCommit|INHERIT): input commit.
-  Defaults to the input commit of the current build.
-  Read more about
+* experiments: enabled and disabled experiments for the new build. Overrides
+  the result computed from experiments defined in builder config.
+* gitiles_commit: input commit. Defaults to the input commit of the current
+  build. Read more about
   [`gitiles_commit`](https://cs.chromium.org/chromium/infra/go/src/go.chromium.org/luci/buildbucket/proto/build.proto?q=Input.gitiles_commit).
-* gerrit_changes (list of common_pb2.GerritChange|INHERIT): list of input
-  CLs.
-  Defaults to gerrit changes of the current build.
-  Read more about
+* gerrit_changes: list of input CLs. Defaults to gerrit changes of the
+  current build. Read more about
   [`gerrit_changes`](https://cs.chromium.org/chromium/infra/go/src/go.chromium.org/luci/buildbucket/proto/build.proto?q=Input.gerrit_changes).
-* tags (list of common_pb2.StringPair): tags for the new build.
-* inherit_buildsets (bool): if `True` (default), the returned request will
-  include buildset tags from the current build.
-* swarming_parent_run_id (str|NoneType): associate the new build as child of
-  the given swarming run id.
-  Defaults to `None` meaning no association.
+* tags: tags for the new build.
+* inherit_buildsets: if `True` (default), the returned request will include
+  buildset tags from the current build.
+* swarming_parent_run_id: associate the new build as child of the given
+  swarming run id. Defaults to `None` meaning no association.
   If passed, must be a valid swarming *run* id (specific execution of a
   task) for the swarming instance on which build will execute. Typically,
   you'd want to set it to
   [`api.swarming.task_id`](https://cs.chromium.org/chromium/infra/recipes-py/recipe_modules/swarming/api.py?type=cs&q=recipe_modules/swarming/api.py+%22def+task_id%22&sq=package:chromium&g=0&l=924).
   Read more about
   [`parent_run_id`](https://cs.chromium.org/chromium/infra/go/src/go.chromium.org/luci/buildbucket/proto/rpc.proto?type=cs&q="string+parent_run_id").
-* dimensions (list of common_pb2.RequestedDimension): override dimensions
-  defined on the server.
-* priority (int|NoneType|INHERIT): Swarming task priority.
-  The lower the more important. Valid values are `[20..255]`.
-  Defaults to the value of the current build.
+* dimensions: override dimensions defined on the server.
+* priority: Swarming task priority. The lower the more important. Valid
+  values are `[20..255]`. Defaults to the value of the current build.
   Pass `None` to use the priority of the destination builder.
-* critical (bool|common_pb2.Trinary|INHERIT): whether the build status
-  should not be used to assess correctness of the commit/CL.
-  Defaults to .build.critical.
+* critical: whether the build status should not be used to assess
+  correctness of the commit/CL. Defaults to .build.critical.
   See also Build.critical in
   https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto
-* exe_cipd_version (NoneType|str|INHERIT): CIPD version of the LUCI
-  Executable (e.g. recipe) to use. Pass `None` to use the server configured
-  one.
-* fields (list of strs): a list of fields to include in the response, names
+* exe_cipd_version: CIPD version of the LUCI Executable (e.g. recipe) to
+  use. Pass `None` to use the server configured one.
+* fields: a list of fields to include in the response, names
   relative to `build_pb2.Build` (e.g. ["tags", "infra.swarming"]).
 * can_outlive_parent: flag for if the scheduled child build can outlive
   the current build or not (as enforced by Buildbucket;
@@ -799,7 +781,7 @@ Args:
   agent_input and exe from its parent led build. It only takes effect if
   the parent is a led build and `as_shadow_if_parent_is_led` is True.
 
-&mdash; **def [search](/recipe_modules/buildbucket/api.py#699)(self, predicate, limit=None, url_title_fn=None, report_build=True, step_name=None, fields=DEFAULT_FIELDS, timeout=None, test_data=None):**
+&mdash; **def [search](/recipe_modules/buildbucket/api.py#710)(self, predicate: builds_service_pb2.BuildPredicate, limit: (int | None)=None, url_title_fn: (UrlTitleFunction | None)=None, report_build: bool=True, step_name: (str | None)=None, fields: Set[str]=DEFAULT_FIELDS, timeout: (int | None)=None, test_data: (Callable[([], Sequence[build_pb2.Build])] | None)=None):**
 
 Searches builds with one predicate.
 
@@ -819,7 +801,7 @@ batch response as a whole and take advantage of the proto recipe for direct
 encoding/decoding. And the limit could be used as the page_size in
 SearchBuildsRequest.
 
-&mdash; **def [search\_with\_multiple\_predicates](/recipe_modules/buildbucket/api.py#761)(self, predicate, limit=None, url_title_fn=None, report_build=True, step_name=None, fields=DEFAULT_FIELDS, timeout=None, test_data=None):**
+&mdash; **def [search\_with\_multiple\_predicates](/recipe_modules/buildbucket/api.py#774)(self, predicate: Sequence[builds_service_pb2.BuildPredicate], limit: (int | None)=None, url_title_fn: (UrlTitleFunction | None)=None, report_build: bool=True, step_name: (str | None)=None, fields: Set[str]=DEFAULT_FIELDS, timeout: (int | None)=None, test_data: (Callable[([], Sequence[build_pb2.Build])] | None)=None):**
 
 Searches for builds with multiple predicates.
 
@@ -857,7 +839,7 @@ Args:
 Returns:
   A list of builds ordered newest-to-oldest.
 
-&mdash; **def [set\_output\_gitiles\_commit](/recipe_modules/buildbucket/api.py#208)(self, gitiles_commit):**
+&mdash; **def [set\_output\_gitiles\_commit](/recipe_modules/buildbucket/api.py#220)(self, gitiles_commit: common_pb2.GitilesCommit):**
 
 Sets `buildbucket.v2.Build.output.gitiles_commit` field.
 
@@ -866,7 +848,7 @@ was actually used in this build and what is the position of this build
 relative to other builds of the same builder.
 
 Args:
-* gitiles_commit(buildbucket.common_pb2.GitilesCommit): the commit that was
+* gitiles_commit: the commit that was
   actually checked out. Must have host, project and id.
   ID must match r'^[0-9a-f]{40}$' (git revision).
   If position is present, the build can be ordered along commits.
@@ -875,38 +857,38 @@ Args:
 
 Can be called at most once per build.
 
-&emsp; **@property**<br>&mdash; **def [shadowed\_bucket](/recipe_modules/buildbucket/api.py#1295)(self):**
+&emsp; **@property**<br>&mdash; **def [shadowed\_bucket](/recipe_modules/buildbucket/api.py#1355)(self):**
 
-&emsp; **@property**<br>&mdash; **def [swarming\_bot\_dimensions](/recipe_modules/buildbucket/api.py#1221)(self):**
+&emsp; **@property**<br>&mdash; **def [swarming\_bot\_dimensions](/recipe_modules/buildbucket/api.py#1278)(self):**
 
 Returns the swarming bot dimensions for the build.
     
 
-&mdash; **def [swarming\_bot\_dimensions\_from\_build](/recipe_modules/buildbucket/api.py#1227)(self, build=None):**
+&mdash; **def [swarming\_bot\_dimensions\_from\_build](/recipe_modules/buildbucket/api.py#1284)(self, build: (build_pb2.Build | None)=None):**
 
 Returns the swarming bot dimensions for the provided build.
 If no build is provided, then self.build will be used.
 
-&emsp; **@property**<br>&mdash; **def [swarming\_parent\_run\_id](/recipe_modules/buildbucket/api.py#1247)(self):**
+&emsp; **@property**<br>&mdash; **def [swarming\_parent\_run\_id](/recipe_modules/buildbucket/api.py#1307)(self):**
 
 Returns the parent_run_id (swarming specific) used in the task.
     
 
-&emsp; **@property**<br>&mdash; **def [swarming\_priority](/recipe_modules/buildbucket/api.py#1266)(self):**
+&emsp; **@property**<br>&mdash; **def [swarming\_priority](/recipe_modules/buildbucket/api.py#1326)(self):**
 
 Returns the priority (swarming specific) of the task.
     
 
-&emsp; **@property**<br>&mdash; **def [swarming\_task\_service\_account](/recipe_modules/buildbucket/api.py#1280)(self):**
+&emsp; **@property**<br>&mdash; **def [swarming\_task\_service\_account](/recipe_modules/buildbucket/api.py#1340)(self):**
 
 Returns the swarming specific service account used in the task.
     
 
-&emsp; **@staticmethod**<br>&mdash; **def [tags](/recipe_modules/buildbucket/api.py#257)(\*\*tags):**
+&emsp; **@staticmethod**<br>&mdash; **def [tags](/recipe_modules/buildbucket/api.py#270)(\*\*tags: (list[str] | str)):**
 
 Alias for tags in util.py. See doc there.
 
-&mdash; **def [use\_service\_account\_key](/recipe_modules/buildbucket/api.py#110)(self, key_path):**
+&mdash; **def [use\_service\_account\_key](/recipe_modules/buildbucket/api.py#121)(self, key_path: (config_types.Path | str)):**
 
 Tells this module to start using given service account key for auth.
 
@@ -917,9 +899,9 @@ Exists mostly to support Buildbot environment. Recipe for LUCI environment
 should not use this.
 
 Args:
-*  key_path (str): a path to JSON file with service account credentials.
+*  key_path: a path to JSON file with service account credentials.
 
-&emsp; **@contextmanager**<br>&mdash; **def [with\_host](/recipe_modules/buildbucket/api.py#100)(self, host):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [with\_host](/recipe_modules/buildbucket/api.py#111)(self, host: str):**
 
 Set the buildbucket host while in context, then reverts it.
 ### *recipe_modules* / [cas](/recipe_modules/cas)
