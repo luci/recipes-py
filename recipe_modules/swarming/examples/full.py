@@ -196,6 +196,11 @@ def RunSteps(api):
       'trigger on original server', requests=[request], verbose=True)
   api.swarming.collect('collect on original server', ['0'])
 
+  api.swarming.trigger(
+      'trigger on other server',
+      requests=[request],
+      server='http://other-swarming.appspot.com')
+
 
 def GenTests(api):
   # For coverage

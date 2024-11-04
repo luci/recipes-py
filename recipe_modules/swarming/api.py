@@ -1298,7 +1298,7 @@ class SwarmingApi(recipe_api.RecipeApi):
     """
     return TaskRequest(self.m)._from_jsonish(json_d)
 
-  def trigger(self, step_name, requests, verbose=False):
+  def trigger(self, step_name, requests, verbose=False, server=None):
     """Triggers a set of Swarming tasks.
 
     Args:
@@ -1306,6 +1306,9 @@ class SwarmingApi(recipe_api.RecipeApi):
       requests (seq[TaskRequest]): A sequence of task request objects
         representing the tasks we want to trigger.
       verbose (bool): Whether to use verbose logs.
+      server (string): Address of the server to trigger the task on, e.g.
+        https://chromium-swarm.appspot.com. If not set, the server the current
+        task is running on is used.
 
     Returns:
       A list of TaskRequestMetadata objects.
@@ -1313,11 +1316,14 @@ class SwarmingApi(recipe_api.RecipeApi):
     assert requests
     assert self._server
 
+    if not server:
+      server = self._server
+
     requests_dict = {'requests': [req.to_jsonish() for req in requests]}
     cmd = [
         'spawn-tasks',
         '-server',
-        self._server,
+        server,
         '-json-input',
         self.m.json.input(requests_dict),
         '-json-output',
@@ -1336,10 +1342,10 @@ class SwarmingApi(recipe_api.RecipeApi):
 
     metadata_objs = []
     for task_json in trigger_resp['tasks']:
-      metadata_objs.append(TaskRequestMetadata(self._server, task_json))
+      metadata_objs.append(TaskRequestMetadata(server, task_json))
 
     for idx, req in enumerate(requests):
-      self._task_requests[(metadata_objs[idx].id, self._server)] = req
+      self._task_requests[(metadata_objs[idx].id, server)] = req
 
     metadata_objs.sort(key=lambda obj: obj.name)
     for obj in metadata_objs:

@@ -4435,7 +4435,7 @@ add this path to the named cache for their builder.
 
 Swarming bot ID executing this task.
 
-&mdash; **def [collect](/recipe_modules/swarming/api.py#1352)(self, name, tasks, output_dir=None, task_output_stdout='json', timeout=None, eager=False, verbose=False):**
+&mdash; **def [collect](/recipe_modules/swarming/api.py#1358)(self, name, tasks, output_dir=None, task_output_stdout='json', timeout=None, eager=False, verbose=False):**
 
 Waits on a set of Swarming tasks.
 
@@ -4469,7 +4469,7 @@ Swarming server executing this task.
 
 &mdash; **def [initialize](/recipe_modules/swarming/api.py#1230)(self):**
 
-&mdash; **def [list\_bots](/recipe_modules/swarming/api.py#1495)(self, step_name, dimensions=None, fields=None):**
+&mdash; **def [list\_bots](/recipe_modules/swarming/api.py#1501)(self, step_name, dimensions=None, fields=None):**
 
 List bots matching the given options.
 
@@ -4493,7 +4493,7 @@ Example:
     with api.swarming.on_path():
       # do your steps which require the swarming binary on path
 
-&mdash; **def [show\_request](/recipe_modules/swarming/api.py#1458)(self, name, task):**
+&mdash; **def [show\_request](/recipe_modules/swarming/api.py#1464)(self, name, task):**
 
 Retrieve the TaskRequest for a Swarming task.
 
@@ -4526,7 +4526,7 @@ Creates a new TaskRequest object from a JSON-serializable dict.
 The input argument should match the schema as the output of
 TaskRequest.to_jsonish().
 
-&mdash; **def [trigger](/recipe_modules/swarming/api.py#1301)(self, step_name, requests, verbose=False):**
+&mdash; **def [trigger](/recipe_modules/swarming/api.py#1301)(self, step_name, requests, verbose=False, server=None):**
 
 Triggers a set of Swarming tasks.
 
@@ -4535,6 +4535,9 @@ Args:
   requests (seq[TaskRequest]): A sequence of task request objects
     representing the tasks we want to trigger.
   verbose (bool): Whether to use verbose logs.
+  server (string): Address of the server to trigger the task on, e.g.
+    https://chromium-swarm.appspot.com. If not set, the server the current
+    task is running on is used.
 
 Returns:
   A list of TaskRequestMetadata objects.
