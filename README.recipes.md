@@ -3277,7 +3277,7 @@ Returns the current platform name which will be in:
 * mac
 * linux
 
-&emsp; **@staticmethod**<br>&mdash; **def [normalize\_platform\_name](/recipe_modules/platform/api.py#127)(plat):**
+&emsp; **@staticmethod**<br>&mdash; **def [normalize\_platform\_name](/recipe_modules/platform/api.py#127)(plat: str):**
 
 One of python's sys.platform values -> 'win', 'linux' or 'mac'.
 

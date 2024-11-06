@@ -12,7 +12,7 @@ import psutil
 from recipe_engine import recipe_api
 
 
-def norm_bits(arch):
+def norm_bits(arch: str):
   return 64 if '64' in str(arch) else 32
 
 
@@ -68,22 +68,22 @@ class PlatformApi(recipe_api.RecipeApi):
       self._memory_bytes = psutil.virtual_memory().total
 
   @property
-  def is_win(self):
+  def is_win(self) -> bool:
     """Returns True iff the recipe is running on Windows."""
     return self.name == 'win'
 
   @property
-  def is_mac(self):
+  def is_mac(self) -> bool:
     """Returns True iff the recipe is running on OS X."""
     return self.name == 'mac'
 
   @property
-  def is_linux(self):
+  def is_linux(self) -> bool:
     """Returns True iff the recipe is running on Linux."""
     return self.name == 'linux'
 
   @property
-  def name(self):
+  def name(self) -> str:
     """Returns the current platform name which will be in:
       * win
       * mac
@@ -92,7 +92,7 @@ class PlatformApi(recipe_api.RecipeApi):
     return self._name
 
   @property
-  def bits(self):
+  def bits(self) -> int:
     """Returns the bitness of the userland for the current system (either 32 or
     64 bit).
 
@@ -102,7 +102,7 @@ class PlatformApi(recipe_api.RecipeApi):
     return self._bits
 
   @property
-  def arch(self):
+  def arch(self) -> str:
     """Returns the current CPU architecture.
 
     Can return "arm" or "intel".
@@ -110,7 +110,7 @@ class PlatformApi(recipe_api.RecipeApi):
     return self._arch
 
   @property
-  def total_memory(self):
+  def total_memory(self) -> int:
     """The total physical memory in MiB.
 
     Return type is int.
@@ -119,13 +119,13 @@ class PlatformApi(recipe_api.RecipeApi):
     return self._memory_bytes // (1024 ** 2)
 
   @property
-  def cpu_count(self):
+  def cpu_count(self) -> int:
     """The number of logical CPU cores (i.e. including hyper-threaded cores),
     according to `psutil.cpu_count(True)`."""
     return self._num_logical_cores
 
   @staticmethod
-  def normalize_platform_name(plat):
+  def normalize_platform_name(plat: str) -> str:
     """One of python's sys.platform values -> 'win', 'linux' or 'mac'."""
     if plat.startswith('linux'):
       return 'linux'
@@ -134,4 +134,4 @@ class PlatformApi(recipe_api.RecipeApi):
     elif plat.startswith(('darwin', 'mac')):
       return 'mac'
     else:  # pragma: no cover
-      raise ValueError('Don\'t understand platform "%s"' % plat)
+      raise ValueError(f"Don't understand platform {plat!r}")
