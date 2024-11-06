@@ -251,7 +251,7 @@ class TestData(BaseTestData):
     self.expect_file = None
 
   def __add__(self, other):
-    assert isinstance(other, TestData)
+    assert isinstance(other, TestData), repr(other)
 
     ret = TestData(self.name or other.name)
 

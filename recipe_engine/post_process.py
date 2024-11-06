@@ -621,7 +621,7 @@ def PropertyMatchesCallable(
   Usage:
     yield api.test(
         ...,
-        api.post_process(PropertyMatchesCallable, 'key', lamdda x: 'foo' in x),
+        api.post_process(PropertyMatchesCallable, 'key', lambda x: 'foo' in x),
     )
   """
   build_properties = GetBuildProperties(step_odict)
