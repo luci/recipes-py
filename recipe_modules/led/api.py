@@ -4,15 +4,20 @@
 
 """An interface to call the led tool."""
 
+from __future__ import annotations
+
 from urllib.parse import urlparse
 
 import attr
 
-from recipe_engine import recipe_api
-from recipe_engine import recipe_test_api
+from recipe_engine import recipe_api, recipe_test_api
 
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb
 from PB.go.chromium.org.luci.led.job import job
+from PB.go.chromium.org.luci.swarming.proto.api_v2 import (
+    swarming as swarming_pb
+)
+from PB.recipe_modules.recipe_engine.led import properties
 
 
 class LedApi(recipe_api.RecipeApi):
@@ -33,11 +38,11 @@ class LedApi(recipe_api.RecipeApi):
 
   @attr.s(frozen=True, slots=True)
   class LedLaunchData:
-    buildbucket_hostname = attr.ib()
-    build_id = attr.ib()
+    buildbucket_hostname: str = attr.ib()
+    build_id: str = attr.ib()
 
     @property
-    def build_url(self):
+    def build_url(self) -> str:
       if not self.build_id:  # pragma: no cover
         return None
       return 'https://%s/build/%s' % (self.buildbucket_hostname, self.build_id)
@@ -45,7 +50,7 @@ class LedApi(recipe_api.RecipeApi):
   class LedResult:
     """Holds the result of a led operation. Can be chained using |then|."""
 
-    def __init__(self, result, module):
+    def __init__(self, result: LedLaunchData | job.Definition, module: LedApi):
       if isinstance(result, LedApi.LedLaunchData):
         self._launch_result = result
         self._result = result
@@ -56,7 +61,7 @@ class LedApi(recipe_api.RecipeApi):
         self._module = module
 
     @property
-    def result(self):
+    def result(self) -> job.Definition:
       """The mutable job.Definition proto message from the previous led call.
 
       If the previous led call was `launch`, then this will be None, and
@@ -65,13 +70,13 @@ class LedApi(recipe_api.RecipeApi):
       return self._result
 
     @property
-    def launch_result(self):
+    def launch_result(self) -> LedLaunchData:
       """A LedLaunchData object. Only set when the previous led call was
       'led launch'."""
       return self._launch_result
 
     @property
-    def edit_rbh_value(self):
+    def edit_rbh_value(self) -> str | None:
       """Returns either the user_payload or cas_user_payload value suitable to
       pass to `led edit -rbh`.
 
@@ -89,7 +94,8 @@ class LedApi(recipe_api.RecipeApi):
                 if cas:
                   return "%s/%d" % (cas.digest.hash, cas.digest.size_bytes)
 
-    def with_injected_input_recipes(self, use_payload=False):
+    def with_injected_input_recipes(self,
+                                    use_payload: bool = False) -> LedResult:
       """Sets the version of recipes used by led to correspond to the version
       currently being used.
 
@@ -120,7 +126,7 @@ class LedApi(recipe_api.RecipeApi):
       # TODO(iannucci): Check for/inject buildbucket exe package/version
       return self
 
-    def then(self, *cmd):
+    def then(self, *cmd: str) -> LedResult:
       """Invoke led, passing it the current `result` data as input.
 
       Returns another LedResult object with the output of the command.
@@ -131,7 +137,7 @@ class LedApi(recipe_api.RecipeApi):
       res = self._module._run_command(self._result, *cmd)
       return self.__class__(res, self._module)
 
-  def __init__(self, props, **kwargs):
+  def __init__(self, props: properties.InputProperties, **kwargs):
     super().__init__(**kwargs)
     self._run_id = props.led_run_id
     self._shadowed_bucket = props.shadowed_bucket
@@ -146,7 +152,7 @@ class LedApi(recipe_api.RecipeApi):
     else:
       self._cipd_input = None
 
-  def initialize(self):
+  def initialize(self) -> None:
     if self._test_data.enabled:
       self._get_mocks = {
         key[len('get:'):]: value
@@ -163,17 +169,17 @@ class LedApi(recipe_api.RecipeApi):
       self._mock_edits.extend(value for _, value in sorted_edits)
 
   @property
-  def led_build(self):
+  def led_build(self) -> bool:
     """Whether the current build is a led job as a real Buildbucket build."""
     return bool(self._shadowed_bucket)
 
   @property
-  def launched_by_led(self):
+  def launched_by_led(self) -> bool:
     """Whether the current build is a led job."""
     return bool(self._run_id) or self.led_build
 
   @property
-  def run_id(self):
+  def run_id(self) -> str:
     """A unique string identifier for this led job, if it's a raw swarming task.
 
     If the current build is *not* a led job as raw swarming task, value will be
@@ -182,7 +188,7 @@ class LedApi(recipe_api.RecipeApi):
     return self._run_id
 
   @property
-  def rbe_cas_input(self):
+  def rbe_cas_input(self) -> swarming_pb.CASReference | None:
     """The location of the rbe-cas containing the recipes code being run.
 
     If set, it will be a `swarming.v1.CASReference` protobuf;
@@ -191,7 +197,7 @@ class LedApi(recipe_api.RecipeApi):
     return self._rbe_cas_input
 
   @property
-  def cipd_input(self):
+  def cipd_input(self) -> properties.InputProperties.CIPDInput | None:
     """The versioned CIPD package containing the recipes code being run.
 
     If set, it will be an `InputProperties.CIPDInput` protobuf; otherwise None.
@@ -199,20 +205,20 @@ class LedApi(recipe_api.RecipeApi):
     return self._cipd_input
 
   @property
-  def shadowed_bucket(self):
+  def shadowed_bucket(self) -> str | None:
     """The bucket of the original build/builder the led build replicates from.
 
     If set, it will be an `InputProperties.ShadowedBucket` protobuf;
     otherwise None.
     """
-    return self._shadowed_bucket
+    return self._shadowed_bucket or None
 
-  def __call__(self, *cmd):
+  def __call__(self, *cmd: str) -> LedResult:
     """Runs led with the given arguments. Wraps result in a `LedResult`."""
     res = self._run_command(None, *cmd)
     return self.LedResult(res, self)
 
-  def inject_input_recipes(self, led_result):
+  def inject_input_recipes(self, led_result: LedResult) -> LedResult:
     """Sets the version of recipes used by led to correspond to the version
     currently being used.
 
@@ -227,12 +233,12 @@ class LedApi(recipe_api.RecipeApi):
 
   def trigger_builder(
       self,
-      project_name,
-      bucket_name,
-      builder_name,
-      properties,
-      use_payload=False,
-  ):
+      project_name: str,
+      bucket_name: str,
+      builder_name: str,
+      properties: dict,
+      use_payload: bool = False,
+  ) -> None:
     """Trigger a builder using led.
 
     This can be used by recipes instead of buildbucket or scheduler triggers
@@ -272,11 +278,11 @@ class LedApi(recipe_api.RecipeApi):
         result = led_job.then('launch').launch_result
         builder_presentation.links['build'] = result.build_url
 
-  def _get_mock(self, cmd):
+  def _get_mock(self, cmd: list[str]) -> recipe_test_api.StepTestData:
     """Returns a StepTestData for the given command."""
     job_def = None
 
-    def _pick_mock(prefix, specific_key):
+    def _pick_mock(prefix: str, specific_key: str) -> job.Definition:
       # We do multiple lookups potentially, depending on what level of
       # specificity the user has mocked with.
       toks = specific_key.split('/')
@@ -337,7 +343,8 @@ class LedApi(recipe_api.RecipeApi):
     return ret
 
 
-  def _run_command(self, previous, *cmd):
+  def _run_command(self, previous: LedResult,
+                   *cmd: str) -> job.Definition | LedLaunchData:
     """Runs led with a given command and arguments.
 
     Args:
