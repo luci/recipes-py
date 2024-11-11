@@ -45,12 +45,7 @@ That would include all .py files, but exclude all _test.py files. See the page
 For more information on how gitattributes work.
 """
 
-from builtins import map
 import os
-import re
-import sys
-
-from gevent import subprocess
 
 
 def add_arguments(parser):
@@ -59,19 +54,7 @@ def add_arguments(parser):
       type=os.path.abspath,
       help='The directory of where to put the bundle (default: %(default)r).')
 
-  def _postprocess_func(error, _args):
-    raw = subprocess.check_output([
-      'git.bat' if sys.platform == 'win32' else 'git',
-      'version',
-    ]).decode('utf-8')
-    match = re.match(r'git version (\d+\.\d+\.\d+).*', raw)
-    if not match:
-      error('could not parse git version from %r' % raw)
-    vers = tuple(map(int, match.group(1).split('.')))
-    if vers < (2, 13, 0):
-      error('git version %r is too old (need 2.13+)' % vers)
-
   def _launch(args):
     from .cmd import main
     return main(args)
-  parser.set_defaults(func=_launch, postprocess_func=_postprocess_func)
+  parser.set_defaults(func=_launch)
