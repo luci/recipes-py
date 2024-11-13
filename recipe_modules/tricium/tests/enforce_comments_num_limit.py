@@ -9,6 +9,7 @@ from PB.recipe_modules.recipe_engine.tricium.tests.enforce_comments_num_limit im
 
 DEPS = [
     'assertions',
+    'buildbucket',
     'properties',
     'proto',
     'tricium',
@@ -33,11 +34,12 @@ def RunSteps(api, props):
 
 
 def GenTests(api):
-  yield (api.test('basic') + api.properties(
-      InputProps(
-          expected_results=Data.Results(comments=[
-              Data.Comment(
-                  category='test',
-                  message='test message',
-                  path='path/to/file_%d' % i) for i in range(5)
-          ]))) + api.post_process(post_process.DropExpectation))
+  yield (api.test('basic', api.buildbucket.try_build(project='chrome')) +
+         api.properties(
+             InputProps(
+                 expected_results=Data.Results(comments=[
+                     Data.Comment(
+                         category='test',
+                         message='test message',
+                         path='path/to/file_%d' % i) for i in range(5)
+                 ]))) + api.post_process(post_process.DropExpectation))

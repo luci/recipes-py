@@ -21,6 +21,7 @@ from recipe_engine import recipe_api
 from . import legacy_analyzers
 
 from PB.tricium.data import Data
+from PB.go.chromium.org.luci.common.proto.findings import findings as findings_pb
 
 
 class TriciumApi(recipe_api.RecipeApi):
@@ -43,6 +44,7 @@ class TriciumApi(recipe_api.RecipeApi):
     """
     super().__init__(**kwargs)
     self._comments = []
+    self._findings = []
 
   def add_comment(self,
                   category,
@@ -58,6 +60,7 @@ class TriciumApi(recipe_api.RecipeApi):
     For semantics of start_line, start_char, end_line, end_char, see Gerrit doc
     https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#comment-range
     """
+    # Tricium comment
     comment = Data.Comment()
     comment.category = category
     comment.message = message
@@ -66,10 +69,36 @@ class TriciumApi(recipe_api.RecipeApi):
     comment.end_line = end_line
     comment.start_char = start_char
     comment.end_char = end_char
+
+    # AyeAye Findings
+    finding = None
+    if not self.m.buildbucket.build.input.gerrit_changes:
+      # TODO(crbug.com/372748699) uncomment below if crbug.com/378735139 is
+      # done.
+      #  raise ValueError('missing gerrit_changes in the build input')
+      pass
+    else:
+      cl = self.m.buildbucket.build.input.gerrit_changes[0]
+      loc = findings_pb.Location(
+          gerrit_change_ref=findings_pb.Location.GerritChangeReference(
+              host=cl.host,
+              project=cl.project,
+              change=cl.change,
+              patchset=cl.patchset,
+          ),
+          file_path=(path or 'COMMIT_MSG'),
+      )
+      _set_finding_range(loc.range, start_line, end_line, start_char, end_char)
+      finding = findings_pb.Finding(
+          category=category,
+          location=loc,
+          severity_level=findings_pb.Finding.SeverityLevel.WARNING,
+      )
+
     for s in suggestions:
       json_format.ParseDict(s, comment.suggestions.add())
     self.validate_comment(comment)
-    self._add_comment(comment)
+    self._add_comment(comment, finding)
 
   @staticmethod
   def validate_comment(comment):
@@ -108,9 +137,12 @@ class TriciumApi(recipe_api.RecipeApi):
       raise ValueError('path must be relative to the input directory, but '
                        'got absolute path %s' % (comment.path))
 
-  def _add_comment(self, comment):
+  def _add_comment(self, comment, finding=None):
     if comment not in self._comments:
       self._comments.append(comment)
+
+    if finding and finding not in self._findings:
+      self._findings.append(finding)
 
   def write_comments(self):
     """Emit the results accumulated by `add_comment` and `run_legacy`."""
@@ -295,3 +327,38 @@ def _matches_path_filters(files, patterns):
     if any(fnmatch.fnmatch(f, p) for f in files):
       return True
   return False
+
+
+def _set_finding_range(finding_range, start_line, end_line, start_char,
+                       end_char):
+  """Sets the given findings_pb.Location.Range() based on the Tricium range.
+
+  Args:
+    * finding_range (finding_pb.Location.Range): The range objection to set
+    * start_line (1-based int): The start line
+      If 0, the range refers to the entire file
+    * end_line   (1-based int): The start line
+      If 0, the range ends at the end of the file.
+    * start_char (0-based int): The start column
+      If 0, the range starts from the first character of the start_line.
+    * end_char (0-based int): The end column
+      If 0, the range ends at the end of the line, specified by end_line.
+  """
+  if start_line == 0:
+    # the comment is for the whole file; nothing to set.
+    return
+
+  finding_range.start_line = start_line
+  # This could set start_column = start_char +1 *unconditionally*.
+  #
+  # However, this is done conditionally just in case the below range have
+  # different meaning in Gerrit. That is, keep (1) as (1).
+  # 1. {start_char: 0, end_char: 0}
+  # 2. {start_char: 1, end_char: 0}
+  #
+  # However, this will turn all (2) occurrences to (1).
+  finding_range.start_column = start_char + 1 if start_char else 0
+
+  if end_line > 0:
+    finding_range.end_line = end_line
+    finding_range.end_column = end_char + 1 if end_char else 0

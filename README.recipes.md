@@ -4663,7 +4663,7 @@ to see how this works.
 Returns current UTC time as a datetime.datetime.
 ### *recipe_modules* / [tricium](/recipe_modules/tricium)
 
-[DEPS](/recipe_modules/tricium/__init__.py#5): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/tricium/__init__.py#5): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
 
 
 API for Tricium analyzers to use.
@@ -4674,25 +4674,25 @@ analyzer recipes, including:
   * Recipes that accumulate comments one by one.
   * Recipes that wrap other tools and parse their output.
 
-#### **class [TriciumApi](/recipe_modules/tricium/api.py#26)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
+#### **class [TriciumApi](/recipe_modules/tricium/api.py#27)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
 
 TriciumApi provides basic support for Tricium.
 
-&mdash; **def [\_\_init\_\_](/recipe_modules/tricium/api.py#38)(self, \*\*kwargs):**
+&mdash; **def [\_\_init\_\_](/recipe_modules/tricium/api.py#39)(self, \*\*kwargs):**
 
 Sets up the API.
 
 Initializes an empty list of comments for use with
 add_comment and write_comments.
 
-&mdash; **def [add\_comment](/recipe_modules/tricium/api.py#47)(self, category, message, path, start_line=0, end_line=0, start_char=0, end_char=0, suggestions=()):**
+&mdash; **def [add\_comment](/recipe_modules/tricium/api.py#49)(self, category, message, path, start_line=0, end_line=0, start_char=0, end_char=0, suggestions=()):**
 
 Adds one comment to accumulate.
 
 For semantics of start_line, start_char, end_line, end_char, see Gerrit doc
 https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#comment-range
 
-&mdash; **def [run\_legacy](/recipe_modules/tricium/api.py#138)(self, analyzers, input_base, affected_files, commit_message, emit=True):**
+&mdash; **def [run\_legacy](/recipe_modules/tricium/api.py#170)(self, analyzers, input_base, affected_files, commit_message, emit=True):**
 
 Runs legacy analyzers.
 
@@ -4715,13 +4715,13 @@ Args:
     analyzers (using `add_comment()` to store comments) and legacy
     analyzers.
 
-&emsp; **@staticmethod**<br>&mdash; **def [validate\_comment](/recipe_modules/tricium/api.py#74)(comment):**
+&emsp; **@staticmethod**<br>&mdash; **def [validate\_comment](/recipe_modules/tricium/api.py#103)(comment):**
 
 Validates comment to comply with Tricium/Gerrit requirements.
 
 Raise ValueError on the first detected problem.
 
-&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#115)(self):**
+&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#147)(self):**
 
 Emit the results accumulated by `add_comment` and `run_legacy`.
 ### *recipe_modules* / [url](/recipe_modules/url)
@@ -6144,10 +6144,12 @@ This file is a recipe demonstrating reading triggers of the current build.
 &mdash; **def [RunSteps](/recipe_modules/time/examples/jitter.py#20)(api, properties):**
 ### *recipes* / [tricium:examples/add\_comment](/recipe_modules/tricium/examples/add_comment.py)
 
-[DEPS](/recipe_modules/tricium/examples/add_comment.py#8): [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
+[DEPS](/recipe_modules/tricium/examples/add_comment.py#13): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [tricium](#recipe_modules-tricium)
 
 
-&mdash; **def [RunSteps](/recipe_modules/tricium/examples/add_comment.py#15)(api, trigger_type_error):**
+&mdash; **def [CreateExpectedFinding](/recipe_modules/tricium/examples/add_comment.py#69)(api, input_comment):**
+
+&mdash; **def [RunSteps](/recipe_modules/tricium/examples/add_comment.py#98)(api, trigger_type_error):**
 ### *recipes* / [tricium:examples/wrapper](/recipe_modules/tricium/examples/wrapper.py)
 
 [DEPS](/recipe_modules/tricium/examples/wrapper.py#12): [file](#recipe_modules-file), [path](#recipe_modules-path), [tricium](#recipe_modules-tricium)
@@ -6158,16 +6160,16 @@ An example of a recipe wrapping legacy analyzers.
 &mdash; **def [RunSteps](/recipe_modules/tricium/examples/wrapper.py#19)(api):**
 ### *recipes* / [tricium:tests/add\_comment\_validation](/recipe_modules/tricium/tests/add_comment_validation.py)
 
-[DEPS](/recipe_modules/tricium/tests/add_comment_validation.py#8): [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
+[DEPS](/recipe_modules/tricium/tests/add_comment_validation.py#8): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
 
 
 &mdash; **def [RunSteps](/recipe_modules/tricium/tests/add_comment_validation.py#41)(api, case):**
 ### *recipes* / [tricium:tests/enforce\_comments\_num\_limit](/recipe_modules/tricium/tests/enforce_comments_num_limit.py)
 
-[DEPS](/recipe_modules/tricium/tests/enforce_comments_num_limit.py#10): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [tricium](#recipe_modules-tricium)
+[DEPS](/recipe_modules/tricium/tests/enforce_comments_num_limit.py#10): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [tricium](#recipe_modules-tricium)
 
 
-&mdash; **def [RunSteps](/recipe_modules/tricium/tests/enforce_comments_num_limit.py#20)(api, props):**
+&mdash; **def [RunSteps](/recipe_modules/tricium/tests/enforce_comments_num_limit.py#21)(api, props):**
 ### *recipes* / [url:examples/full](/recipe_modules/url/examples/full.py)
 
 [DEPS](/recipe_modules/url/examples/full.py#5): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step), [url](#recipe_modules-url)

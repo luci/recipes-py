@@ -5,7 +5,7 @@
 from recipe_engine import post_process
 from recipe_engine.recipe_api import Property
 
-DEPS = ['tricium', 'properties']
+DEPS = ['buildbucket', 'tricium', 'properties']
 
 PROPERTIES = {
     'case': Property(kind=str),
@@ -53,12 +53,18 @@ def RunSteps(api, case):
     assert 'unknown case', case
   api.tricium.add_comment(**kwargs)
 
+  # ensure that it adds objects to both
+  assert api.tricium._comments
+  assert api.tricium._findings
+
 
 def GenTests(api):
   for name in _BAD_CASES:
     yield api.test(name, api.properties(case=name),
                    api.expect_exception(ValueError.__name__),
-                   api.post_process(post_process.DropExpectation))
+                   api.post_process(post_process.DropExpectation),
+                   api.buildbucket.try_build(project='chrome'))
   for name in _OK_CASES:
     yield api.test(name, api.properties(case=name),
-                   api.post_process(post_process.DropExpectation))
+                   api.post_process(post_process.DropExpectation),
+                   api.buildbucket.try_build(project='chrome'))

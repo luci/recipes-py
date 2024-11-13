@@ -2,41 +2,138 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import json
+
 from recipe_engine import post_process
 from recipe_engine.recipe_api import Property
 
-DEPS = ['tricium', 'properties']
+from PB.tricium.data import Data
+from PB.go.chromium.org.luci.common.proto.findings import findings as findings_pb
+
+DEPS = ['buildbucket', 'proto', 'properties', 'tricium']
 
 PROPERTIES = {
     'trigger_type_error': Property(kind=bool, default=False),
 }
 
+COMMENT_1 = {
+    'category': 'test category',
+    'message': 'test message',
+    'path': 'path/to/file',
+}
+
+COMMENT_2 = {
+    'category':
+        'another category',
+    'message':
+        'another test message',
+    'path':
+        'path/to/file/2',
+    'start_line':
+        1,
+    'start_char':
+        10,
+    'end_line':
+        1,
+    'end_char':
+        20,
+    'suggestions': [
+        {
+            'description':
+                'please fix this',
+            'replacements': [{
+                'path': 'hello.cc',
+                'replacement': 'hello()',
+                'start_line': 123,
+                'start_char': 10,
+                'end_line': 441,
+                'end_char': 20,
+            }],
+        },
+        {
+            'description':
+                'commit message typo',
+            'replacements': [{
+                'path': '',
+                'replacement': 's/tyop/typo',
+                'start_line': 1,
+                'start_char': 1,
+                'end_line': 1,
+                'end_char': 20,
+            }],
+        },
+    ],
+}
+
+
+def CreateExpectedFinding(api, input_comment):
+  cl = api.buildbucket.build.input.gerrit_changes[0]
+  gerrit_ref = {
+      'host': cl.host,
+      'project': cl.project,
+      'change': cl.change,
+      'patchset': cl.patchset,
+  }
+  expected = {
+      'category': input_comment['category'],
+      'location': {
+          'gerrit_change_ref': gerrit_ref,
+          'file_path': input_comment['path'],
+      },
+      'severity_level': 'WARNING',
+  }
+  if input_comment.get('start_line', 0) > 0:
+    expected['location']['range'] = {
+        'start_line': input_comment['start_line'],
+        'start_column': input_comment['start_char'] + 1,
+        'end_line': input_comment['end_line'],
+        'end_column': input_comment['end_char'] + 1,
+    }
+
+  for s in input_comment.get('suggestions', []):
+    expected.setdefault('fix', [])
+  return expected
+
 
 def RunSteps(api, trigger_type_error):
   filename = 'path/to/file'
-  api.tricium.add_comment('test', 'test message', filename)
+  if trigger_type_error:
+    COMMENT_2['start_line'] = str(COMMENT_2['start_line'])
+
+  api.tricium.add_comment(**COMMENT_1)
+  api.tricium.add_comment(**COMMENT_2)
+
   # Duplicate comments aren't entered.
-  api.tricium.add_comment('test', 'test message', filename)
+  api.tricium.add_comment(**COMMENT_1)
 
-  # Suggestions are given as JSON.
-  suggestions = [{'description': 'please fix this'}]
+  # verify the produced comments/findings
+  expected_comments = [
+      Data.Comment(**COMMENT_1),
+      Data.Comment(**COMMENT_2),
+  ]
 
-  api.tricium.add_comment(
-      'another',
-      'another test message',
-      'path/to/file/2',
-      start_line=1,
-      end_line=1,
-      start_char='10' if trigger_type_error else 10,
-      end_char=20,
-      suggestions=suggestions,
-  )
+  if api.buildbucket.build.input.gerrit_changes:
+    expected_finding1 = CreateExpectedFinding(api, COMMENT_1)
+    expected_finding2 = CreateExpectedFinding(api, COMMENT_2)
+    expected_findings = [
+        api.proto.decode(
+            json.dumps(expected_finding1), findings_pb.Finding, 'JSONPB'),
+        api.proto.decode(
+            json.dumps(expected_finding2), findings_pb.Finding, 'JSONPB'),
+    ]
+    assert api.tricium._findings == expected_findings, (
+        'findings: %s\nexpected: %s' %
+        (api.tricium._findings, expected_findings))
+  else:
+    assert not api.tricium._findings
 
   api.tricium.write_comments()
 
 
 def GenTests(api):
-  yield api.test('basic')
-  yield (api.test('type_error') + api.properties(trigger_type_error=True) +
+  yield api.test('basic', api.buildbucket.try_build(project='chrome'))
+  yield (api.test('type_error', api.buildbucket.try_build(project='chrome')) +
+         api.properties(trigger_type_error=True) +
          api.expect_exception('TypeError') +
          api.post_process(post_process.DropExpectation))
+  yield (api.test('no_gerrit_change'))
