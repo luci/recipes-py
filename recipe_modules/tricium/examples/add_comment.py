@@ -152,4 +152,5 @@ def GenTests(api):
          api.properties(trigger_type_error=True) +
          api.expect_exception('TypeError') +
          api.post_process(post_process.DropExpectation))
-  yield (api.test('no_gerrit_change'))
+  yield (api.test('no_gerrit_change') +
+         api.post_process(post_process.DropExpectation))
