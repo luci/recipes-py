@@ -39,6 +39,10 @@ def _bundle_recipe(recipe_deps: RecipeDeps, dest: str) -> None:
       os.path.join(install_root, 'bundle_recipe'),
       '-repo-root', recipe_deps.main_repo.path,
       '-dest', dest]
+  for repo_name, repo in recipe_deps.repos.items():
+    if repo_name != recipe_deps.main_repo_id:
+      bundle_cmd.extend(['-overrides', f'{repo_name}={repo.path}'])
+
   LOGGER.debug('running %s' % bundle_cmd)
   subprocess.run(bundle_cmd,check=True)
   LOGGER.info('done!')
