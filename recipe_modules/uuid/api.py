@@ -11,13 +11,13 @@ from recipe_engine import recipe_api
 class UuidApi(recipe_api.RecipeApi):
   def __init__(self, **kwargs):
     super().__init__(**kwargs)
-    self._fake_time = None
-    self._fake_step = None
+    self._fake_time: int | None = None
+    self._fake_step: int | None = None
     if self._test_data.enabled:
       self._fake_uuid = self._test_data.get('seed', 4916)
       self._fake_step = self._test_data.get('step', 3)
 
-  def random(self):
+  def random(self) -> str:
     """Returns a random UUID string."""
     if self._test_data.enabled:
       self._fake_uuid += self._fake_step
