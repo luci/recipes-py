@@ -39,8 +39,6 @@ COMMENT_2 = {
         20,
     'suggestions': [
         {
-            'description':
-                'please fix this',
             'replacements': [{
                 'path': 'hello.cc',
                 'replacement': 'hello()',
@@ -91,7 +89,25 @@ def CreateExpectedFinding(api, input_comment):
     }
 
   for s in input_comment.get('suggestions', []):
-    expected.setdefault('fix', [])
+    fix = {'description': s.get('description', ''), 'replacements': []}
+    for r in s['replacements']:
+      fix['replacements'].append({
+          'location': {
+              'gerrit_change_ref': gerrit_ref,
+              'file_path': r['path'] if r['path'] else 'COMMIT_MSG',
+          },
+          'new_content': r['replacement'],
+      })
+      if r.get('start_line', 0) > 0:
+        fix['replacements'][-1]['location']['range'] = {
+            'start_line': r['start_line'],
+            'start_column': r['start_char'] + 1,
+            'end_line': r['end_line'],
+            'end_column': r['end_char'] + 1,
+        }
+
+    expected.setdefault('fixes', []).append(fix)
+
   return expected
 
 

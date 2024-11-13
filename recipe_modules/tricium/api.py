@@ -79,13 +79,14 @@ class TriciumApi(recipe_api.RecipeApi):
       pass
     else:
       cl = self.m.buildbucket.build.input.gerrit_changes[0]
+      gerrit_change_ref = findings_pb.Location.GerritChangeReference(
+          host=cl.host,
+          project=cl.project,
+          change=cl.change,
+          patchset=cl.patchset,
+      )
       loc = findings_pb.Location(
-          gerrit_change_ref=findings_pb.Location.GerritChangeReference(
-              host=cl.host,
-              project=cl.project,
-              change=cl.change,
-              patchset=cl.patchset,
-          ),
+          gerrit_change_ref=gerrit_change_ref,
           file_path=(path or 'COMMIT_MSG'),
       )
       _set_finding_range(loc.range, start_line, end_line, start_char, end_char)
@@ -97,6 +98,31 @@ class TriciumApi(recipe_api.RecipeApi):
 
     for s in suggestions:
       json_format.ParseDict(s, comment.suggestions.add())
+
+      # TODO(crbug.com/372748699) remove below if crbug.com/378735139 is
+      # done.
+      if not self.m.buildbucket.build.input.gerrit_changes:
+        continue
+
+      # AyeAye Fix
+      fix = finding.fixes.add(description=s.get('description', ''))
+      for tr_rep in s['replacements']:
+        loc = findings_pb.Location(
+            gerrit_change_ref=gerrit_change_ref,
+            file_path=(tr_rep['path'] or 'COMMIT_MSG'),
+        )
+        _set_finding_range(
+            loc.range,
+            tr_rep.get('start_line', 0),
+            tr_rep.get('end_line', 0),
+            tr_rep.get('start_char', 0),
+            tr_rep.get('end_char', 0),
+        )
+        fix.replacements.add(
+            location=loc,
+            new_content=tr_rep['replacement'],
+        )
+
     self.validate_comment(comment)
     self._add_comment(comment, finding)
 
