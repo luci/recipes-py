@@ -7,6 +7,47 @@
     ]
   },
   {
+    "cmd": [
+      "rdb",
+      "rpc",
+      "luci.resultdb.v1.Recorder",
+      "BatchCreateArtifacts",
+      "-include-update-token"
+    ],
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "chrome:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "upload findings as an invocation artifact",
+    "stdin": "{\"requests\": [{\"artifact\": {\"artifactId\": \"findings-8945511751514863184\", \"contentType\": \"vnd.google.protobuf+gzip\", \"contents\": \"H4sIAAAAAAACA+MK5uItSS0uUUhOLElNzy+qFHLgMuBSSM4oys/NLM3VLUoty0wt10vPz0/PSS3OLy1KTtVLzs8VYgOrSJU4cIRdgV2IpyCxJEO/JF8/LTMnVYGJawUTl0BiXn5JRmoRwmAfMgzmQzZY30iKg4NRgFuCUUFUgckqRCiIy50MMzkyUnNy8vWSk6U4OaqBpu1kVhAVYgcLamha5XEJA7XkZpYo5KYWFyempyqUVBbkC4VzeZBhFZezv6+vZ0i8b7A72OlMIKcLcRfrl1TmF+iDDAYAZkwkQYABAAA=\"}, \"parent\": \"invocations/build:8945511751514863184\"}]}",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LOG_LINE@json.input@{@@@",
+      "@@@STEP_LOG_LINE@json.input@  \"requests\": [@@@",
+      "@@@STEP_LOG_LINE@json.input@    {@@@",
+      "@@@STEP_LOG_LINE@json.input@      \"artifact\": {@@@",
+      "@@@STEP_LOG_LINE@json.input@        \"artifactId\": \"findings-8945511751514863184\",@@@",
+      "@@@STEP_LOG_LINE@json.input@        \"contentType\": \"vnd.google.protobuf+gzip\",@@@",
+      "@@@STEP_LOG_LINE@json.input@        \"contents\": \"H4sIAAAAAAACA+MK5uItSS0uUUhOLElNzy+qFHLgMuBSSM4oys/NLM3VLUoty0wt10vPz0/PSS3OLy1KTtVLzs8VYgOrSJU4cIRdgV2IpyCxJEO/JF8/LTMnVYGJawUTl0BiXn5JRmoRwmAfMgzmQzZY30iKg4NRgFuCUUFUgckqRCiIy50MMzkyUnNy8vWSk6U4OaqBpu1kVhAVYgcLamha5XEJA7XkZpYo5KYWFyempyqUVBbkC4VzeZBhFZezv6+vZ0i8b7A72OlMIKcLcRfrl1TmF+iDDAYAZkwkQYABAAA=\"@@@",
+      "@@@STEP_LOG_LINE@json.input@      },@@@",
+      "@@@STEP_LOG_LINE@json.input@      \"parent\": \"invocations/build:8945511751514863184\"@@@",
+      "@@@STEP_LOG_LINE@json.input@    }@@@",
+      "@@@STEP_LOG_LINE@json.input@  ]@@@",
+      "@@@STEP_LOG_LINE@json.input@}@@@",
+      "@@@STEP_LOG_END@json.input@@@"
+    ]
+  },
+  {
     "name": "$result"
   }
 ]

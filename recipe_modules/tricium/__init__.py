@@ -11,5 +11,6 @@ DEPS = [
     'path',
     'properties',
     'proto',
+    'resultdb',
     'step',
 ]

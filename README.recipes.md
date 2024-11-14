@@ -4663,7 +4663,7 @@ to see how this works.
 Returns current UTC time as a datetime.datetime.
 ### *recipe_modules* / [tricium](/recipe_modules/tricium)
 
-[DEPS](/recipe_modules/tricium/__init__.py#5): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/tricium/__init__.py#5): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
 
 API for Tricium analyzers to use.
@@ -4692,7 +4692,7 @@ Adds one comment to accumulate.
 For semantics of start_line, start_char, end_line, end_char, see Gerrit doc
 https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#comment-range
 
-&mdash; **def [run\_legacy](/recipe_modules/tricium/api.py#196)(self, analyzers, input_base, affected_files, commit_message, emit=True):**
+&mdash; **def [run\_legacy](/recipe_modules/tricium/api.py#214)(self, analyzers, input_base, affected_files, commit_message, emit=True):**
 
 Runs legacy analyzers.
 
@@ -4715,13 +4715,13 @@ Args:
     analyzers (using `add_comment()` to store comments) and legacy
     analyzers.
 
-&emsp; **@staticmethod**<br>&mdash; **def [validate\_comment](/recipe_modules/tricium/api.py#129)(comment):**
+&emsp; **@staticmethod**<br>&mdash; **def [validate\_comment](/recipe_modules/tricium/api.py#131)(comment):**
 
 Validates comment to comply with Tricium/Gerrit requirements.
 
 Raise ValueError on the first detected problem.
 
-&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#173)(self):**
+&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#178)(self):**
 
 Emit the results accumulated by `add_comment` and `run_legacy`.
 ### *recipe_modules* / [url](/recipe_modules/url)

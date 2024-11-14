@@ -12,16 +12,16 @@ analyzer recipes, including:
 """
 
 import fnmatch
+import gzip
 import os
 
 from google.protobuf import json_format
-
 from recipe_engine import recipe_api
 
-from . import legacy_analyzers
-
-from PB.tricium.data import Data
 from PB.go.chromium.org.luci.common.proto.findings import findings as findings_pb
+from PB.tricium.data import Data
+
+from . import legacy_analyzers
 
 
 class TriciumApi(recipe_api.RecipeApi):
@@ -46,15 +46,17 @@ class TriciumApi(recipe_api.RecipeApi):
     self._comments = []
     self._findings = []
 
-  def add_comment(self,
-                  category,
-                  message,
-                  path,
-                  start_line=0,
-                  end_line=0,
-                  start_char=0,
-                  end_char=0,
-                  suggestions=()):
+  def add_comment(
+      self,
+      category,
+      message,
+      path,
+      start_line=0,
+      end_line=0,
+      start_char=0,
+      end_char=0,
+      suggestions=(),
+  ):
     """Adds one comment to accumulate.
 
     For semantics of start_line, start_char, end_line, end_char, see Gerrit doc
@@ -156,9 +158,12 @@ class TriciumApi(recipe_api.RecipeApi):
         comment.start_char >= comment.end_char and comment.end_char > 0):
       raise ValueError(
           '(start_line, start_char) must be before (end_line, end_char), '
-          'but (%d,%d) .. (%d,%d) given' %
-          (comment.start_line, comment.start_char, comment.end_line,
-           comment.end_char))
+          'but (%d,%d) .. (%d,%d) given' % (
+              comment.start_line,
+              comment.start_char,
+              comment.end_line,
+              comment.end_char,
+          ))
     if os.path.isabs(comment.path):
       raise ValueError('path must be relative to the input directory, but '
                        'got absolute path %s' % (comment.path))
@@ -191,6 +196,19 @@ class TriciumApi(recipe_api.RecipeApi):
     # The "tricium" output property is read by the Tricium service.
     step.presentation.properties['tricium'] = self.m.proto.encode(
         results, 'JSONPB', indent=0, preserving_proto_field_name=False)
+
+    if self.m.resultdb.enabled and self._findings:
+      findings = findings_pb.Findings(findings=self._findings)
+      contents = gzip.compress(self.m.proto.encode(findings, 'BINARY'), mtime=0)
+      self.m.resultdb.upload_invocation_artifacts(
+          {
+              'findings-%d' % self.m.buildbucket.build.id: {
+                  'content_type': 'vnd.google.protobuf+gzip',
+                  'contents': contents,
+              },
+          },
+          step_name='upload findings as an invocation artifact')
+
     return step
 
   def run_legacy(self,
