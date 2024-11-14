@@ -26,14 +26,17 @@ with api.context(cwd=api.path.start_dir / 'subdir'):
 ```
 """
 
-import collections
-import copy
+from __future__ import annotations
 
-from contextlib import contextmanager
+import collections
+from collections.abc import Mapping
+import contextlib
+import copy
+from typing import Sequence
 
 from google.protobuf import json_format as jsonpb
 
-from recipe_engine import recipe_api
+from recipe_engine import config_types, recipe_api
 from recipe_engine.config_types import Path
 from recipe_engine.engine_types import PerGreenletState, freeze
 
@@ -48,11 +51,11 @@ def check_type(name, var, expect):
 class State(PerGreenletState):
   # Default to immutable types to prevent these from accidentally becoming
   # global variables.
-  cwd = None
-  env_prefixes = freeze({})
-  env_suffixes = freeze({})
-  env = freeze({})
-  infra_steps = False
+  cwd: config_types.Path | None = None
+  env_prefixes: dict[str, Sequence[str]] = freeze({})
+  env_suffixes: dict[str, Sequence[str]] = freeze({})
+  env: dict[str, str] = freeze({})
+  infra_steps: bool = False
   luci_context = freeze({})
 
   def _get_setter_on_spawn(self):
@@ -82,9 +85,9 @@ class ContextApi(recipe_api.RecipeApi):
     super().__init__(**kwargs)
 
     self._state = State()
-    self._test_counter = 0
+    self._test_counter: int = 0
 
-  def initialize(self):
+  def initialize(self) -> None:
     ctx = self._lucictx_client.initial_context
     if ctx:
       # Add other LUCI_CONTEXT sections in the following dict to support
@@ -106,35 +109,43 @@ class ContextApi(recipe_api.RecipeApi):
                                section_msg_class(),
                                ignore_unknown_fields=True))
 
-  @contextmanager
-  def __call__(self, cwd=None, env_prefixes=None, env_suffixes=None, env=None,
-               infra_steps=None, luciexe=None, realm=None, deadline=None):
+  @contextlib.contextmanager
+  def __call__(
+      self,
+      cwd: config_types.Path | None = None,
+      env_prefixes: Mapping[str, Sequence[str]] | None = None,
+      env_suffixes: Mapping[str, Sequence[str]] | None = None,
+      env: Mapping[str, str] | None = None,
+      infra_steps: bool | None = None,
+      luciexe: sections_pb2.LUCIExe | None = None,
+      realm: str = None,
+      deadline: sections_pb2.Deadline | None = None,
+  ):
     """Allows adjustment of multiple context values in a single call.
 
     Args:
-      * cwd (Path) - the current working directory to use for all steps.
+      * cwd - the current working directory to use for all steps.
         To 'reset' to the original cwd at the time recipes started, pass
         `api.path.start_dir`.
-      * env_prefixes (dict) - Environmental variable prefix augmentations. See
-          below for more info.
-      * env_suffixes (dict) - Environmental variable suffix augmentations. See
-          below for more info.
-      * env (dict) - Environmental variable overrides. See below for more info.
-      * infra_steps (bool) - if steps in this context should be considered
+      * env_prefixes - Environmental variable prefix augmentations. See below
+        for more info.
+      * env_suffixes - Environmental variable suffix augmentations. See below
+        for more info.
+      * env - Environmental variable overrides. See below for more info.
+      * infra_steps - if steps in this context should be considered
         infrastructure steps. On failure, these will raise InfraFailure
         exceptions instead of StepFailure exceptions.
-      * luciexe (sections_pb2.LUCIExe) - The override value for 'luciexe'
-        section in LUCI_CONTEXT. This is currently used to modify the
-        `cache_dir` for all launched LUCI Executable (via
-        `api.step.sub_build(...)`).
-      * realm (str) - allows changing the current LUCI realm. It is used when
+      * luciexe - The override value for 'luciexe' section in LUCI_CONTEXT.
+        This is currently used to modify the `cache_dir` for all launched LUCI
+        Executable (via `api.step.sub_build(...)`).
+      * realm - allows changing the current LUCI realm. It is used when
         creating new LUCI resources (e.g. spawning new Swarming tasks). Pass an
         empty string to disassociate the context from a realm, emulating an
-        environment prior to LUCI realms. This is useful during the transitional
-        period.
-      * deadline (sections_pb2.Deadline) - Deadline information to set; See
-        LUCI_CONTEXT documentation for how this section works. Automatically
-        adjusted by steps with `timeout` set.
+        environment prior to LUCI realms. This is useful during the
+        transitional period.
+      * deadline - Deadline information to set; See LUCI_CONTEXT documentation
+        for how this section works. Automatically adjusted by steps with
+        `timeout` set.
 
     Environmental Variable Overrides:
 
@@ -161,14 +172,14 @@ class ContextApi(recipe_api.RecipeApi):
     # Mapping of state member to value to assign on exit of this function.
     deferred_assignments = {}
 
-    def _push(state_member, new):
+    def _push(state_member: str, new: Any):
       deferred_assignments[state_member] = _get_current(state_member)
       setattr(self._state, state_member, new)
 
-    def _get_current(state_member):
+    def _get_current(state_member: str):
       return getattr(self._state, state_member)
 
-    def _add_to_context(state_member, to_add, adder_func):
+    def _add_to_context(state_member: str, to_add, adder_func):
       if to_add is not None and to_add:
         check_type(state_member, to_add, dict)
         new = dict(_get_current(state_member))
@@ -250,7 +261,7 @@ class ContextApi(recipe_api.RecipeApi):
         setattr(self._state, state_member, val)
 
   @property
-  def cwd(self):
+  def cwd(self) -> config_types.Path | None:
     """Returns the current working directory that steps will run in.
 
     **Returns (Path|None)** - The current working directory. A value of None is
@@ -260,7 +271,7 @@ class ContextApi(recipe_api.RecipeApi):
     return self._state.cwd
 
   @property
-  def env(self):
+  def env(self) -> dict[str, str]:
     """Returns modifications to the environment.
 
     By default this is empty. If you want to observe the program's startup
@@ -275,7 +286,7 @@ class ContextApi(recipe_api.RecipeApi):
     return dict(self._state.env)
 
   @property
-  def env_prefixes(self):
+  def env_prefixes(self) -> dict[str, tuple[str]]:
     """Returns Path prefix modifications to the environment.
 
     This will return a mapping of environment key to Path tuple for Path
@@ -289,7 +300,7 @@ class ContextApi(recipe_api.RecipeApi):
     return dict(self._state.env_prefixes)
 
   @property
-  def env_suffixes(self):
+  def env_suffixes(self) -> dict[str, tuple[str]]:
     """Returns Path suffix modifications to the environment.
 
     This will return a mapping of environment key to Path tuple for Path
@@ -303,7 +314,7 @@ class ContextApi(recipe_api.RecipeApi):
     return dict(self._state.env_suffixes)
 
   @property
-  def infra_step(self):
+  def infra_step(self) -> bool:
     """Returns the current value of the infra_step setting.
 
     **Returns (bool)** - True iff steps are currently considered infra steps.
@@ -323,7 +334,7 @@ class ContextApi(recipe_api.RecipeApi):
     return ret
 
   @property
-  def luciexe(self):
+  def luciexe(self) -> sections_pb2.LUCIExe | None:
     """Returns the current value (sections_pb2.LUCIExe) of luciexe section in
     the current LUCI_CONTEXT. Returns None if luciexe is not defined."""
     ret = None
@@ -333,7 +344,7 @@ class ContextApi(recipe_api.RecipeApi):
     return ret
 
   @property
-  def realm(self):
+  def realm(self) -> str | None:
     """Returns the LUCI realm of the current context.
 
     May return None if the task is not running in the realm-aware mode. This is
@@ -343,7 +354,7 @@ class ContextApi(recipe_api.RecipeApi):
     return sec.name if sec and sec.name else None
 
   @property
-  def deadline(self):
+  def deadline(self) -> sections_pb2.Deadline:
     """Returns the current value (sections_pb2.Deadline) of deadline section in
     the current LUCI_CONTEXT. Returns `{grace_period: 30}` if deadline is not
     defined, per LUCI_CONTEXT spec."""
@@ -354,7 +365,7 @@ class ContextApi(recipe_api.RecipeApi):
     return sections_pb2.Deadline(grace_period=30)
 
   @property
-  def resultdb_invocation_name(self):
+  def resultdb_invocation_name(self) -> str:
     """Returns the ResultDB invocation name of the current context.
 
     Returns None if resultdb is not defined.

@@ -1381,36 +1381,35 @@ with api.context(cwd=api.path.start_dir / 'subdir'):
   api.step("cat subdir/foo", ['cat', './foo'])
 ```
 
-#### **class [ContextApi](/recipe_modules/context/api.py#77)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
+#### **class [ContextApi](/recipe_modules/context/api.py#80)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
 
-&emsp; **@contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/context/api.py#109)(self, cwd=None, env_prefixes=None, env_suffixes=None, env=None, infra_steps=None, luciexe=None, realm=None, deadline=None):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/context/api.py#112)(self, cwd: (config_types.Path | None)=None, env_prefixes: (Mapping[(str, Sequence[str])] | None)=None, env_suffixes: (Mapping[(str, Sequence[str])] | None)=None, env: (Mapping[(str, str)] | None)=None, infra_steps: (bool | None)=None, luciexe: (sections_pb2.LUCIExe | None)=None, realm: str=None, deadline: (sections_pb2.Deadline | None)=None):**
 
 Allows adjustment of multiple context values in a single call.
 
 Args:
-  * cwd (Path) - the current working directory to use for all steps.
+  * cwd - the current working directory to use for all steps.
     To 'reset' to the original cwd at the time recipes started, pass
     `api.path.start_dir`.
-  * env_prefixes (dict) - Environmental variable prefix augmentations. See
-      below for more info.
-  * env_suffixes (dict) - Environmental variable suffix augmentations. See
-      below for more info.
-  * env (dict) - Environmental variable overrides. See below for more info.
-  * infra_steps (bool) - if steps in this context should be considered
+  * env_prefixes - Environmental variable prefix augmentations. See below
+    for more info.
+  * env_suffixes - Environmental variable suffix augmentations. See below
+    for more info.
+  * env - Environmental variable overrides. See below for more info.
+  * infra_steps - if steps in this context should be considered
     infrastructure steps. On failure, these will raise InfraFailure
     exceptions instead of StepFailure exceptions.
-  * luciexe (sections_pb2.LUCIExe) - The override value for 'luciexe'
-    section in LUCI_CONTEXT. This is currently used to modify the
-    `cache_dir` for all launched LUCI Executable (via
-    `api.step.sub_build(...)`).
-  * realm (str) - allows changing the current LUCI realm. It is used when
+  * luciexe - The override value for 'luciexe' section in LUCI_CONTEXT.
+    This is currently used to modify the `cache_dir` for all launched LUCI
+    Executable (via `api.step.sub_build(...)`).
+  * realm - allows changing the current LUCI realm. It is used when
     creating new LUCI resources (e.g. spawning new Swarming tasks). Pass an
     empty string to disassociate the context from a realm, emulating an
-    environment prior to LUCI realms. This is useful during the transitional
-    period.
-  * deadline (sections_pb2.Deadline) - Deadline information to set; See
-    LUCI_CONTEXT documentation for how this section works. Automatically
-    adjusted by steps with `timeout` set.
+    environment prior to LUCI realms. This is useful during the
+    transitional period.
+  * deadline - Deadline information to set; See LUCI_CONTEXT documentation
+    for how this section works. Automatically adjusted by steps with
+    `timeout` set.
 
 Environmental Variable Overrides:
 
@@ -1434,7 +1433,7 @@ as the last path component if it is not empty.
 
 Look at the examples in "examples/" for examples of context module usage.
 
-&emsp; **@property**<br>&mdash; **def [cwd](/recipe_modules/context/api.py#252)(self):**
+&emsp; **@property**<br>&mdash; **def [cwd](/recipe_modules/context/api.py#263)(self):**
 
 Returns the current working directory that steps will run in.
 
@@ -1442,13 +1441,13 @@ Returns the current working directory that steps will run in.
 equivalent to api.path.start_dir, though only occurs if no cwd has been
 set (e.g. in the outermost context of RunSteps).
 
-&emsp; **@property**<br>&mdash; **def [deadline](/recipe_modules/context/api.py#345)(self):**
+&emsp; **@property**<br>&mdash; **def [deadline](/recipe_modules/context/api.py#356)(self):**
 
 Returns the current value (sections_pb2.Deadline) of deadline section in
 the current LUCI_CONTEXT. Returns `{grace_period: 30}` if deadline is not
 defined, per LUCI_CONTEXT spec.
 
-&emsp; **@property**<br>&mdash; **def [env](/recipe_modules/context/api.py#262)(self):**
+&emsp; **@property**<br>&mdash; **def [env](/recipe_modules/context/api.py#273)(self):**
 
 Returns modifications to the environment.
 
@@ -1459,7 +1458,7 @@ https://chromium.googlesource.com/infra/luci/recipes-py/+/refs/heads/main/doc/us
 **Returns (dict)** - The env-key -> value mapping of current environment
   modifications.
 
-&emsp; **@property**<br>&mdash; **def [env\_prefixes](/recipe_modules/context/api.py#277)(self):**
+&emsp; **@property**<br>&mdash; **def [env\_prefixes](/recipe_modules/context/api.py#288)(self):**
 
 Returns Path prefix modifications to the environment.
 
@@ -1469,7 +1468,7 @@ prefixes registered with the environment.
 **Returns (dict)** - The env-key -> value(Path) mapping of current
 environment prefix modifications.
 
-&emsp; **@property**<br>&mdash; **def [env\_suffixes](/recipe_modules/context/api.py#291)(self):**
+&emsp; **@property**<br>&mdash; **def [env\_suffixes](/recipe_modules/context/api.py#302)(self):**
 
 Returns Path suffix modifications to the environment.
 
@@ -1479,34 +1478,34 @@ suffixes registered with the environment.
 **Returns (dict)** - The env-key -> value(Path) mapping of current
 environment suffix modifications.
 
-&emsp; **@property**<br>&mdash; **def [infra\_step](/recipe_modules/context/api.py#305)(self):**
+&emsp; **@property**<br>&mdash; **def [infra\_step](/recipe_modules/context/api.py#316)(self):**
 
 Returns the current value of the infra_step setting.
 
 **Returns (bool)** - True iff steps are currently considered infra steps.
 
-&mdash; **def [initialize](/recipe_modules/context/api.py#87)(self):**
+&mdash; **def [initialize](/recipe_modules/context/api.py#90)(self):**
 
-&emsp; **@property**<br>&mdash; **def [luci\_context](/recipe_modules/context/api.py#313)(self):**
+&emsp; **@property**<br>&mdash; **def [luci\_context](/recipe_modules/context/api.py#324)(self):**
 
 Returns the currently tracked LUCI_CONTEXT sections as a dict of proto
 messages.
 
 Only contains `luciexe`, `realm`, 'resultdb' and `deadline`.
 
-&emsp; **@property**<br>&mdash; **def [luciexe](/recipe_modules/context/api.py#325)(self):**
+&emsp; **@property**<br>&mdash; **def [luciexe](/recipe_modules/context/api.py#336)(self):**
 
 Returns the current value (sections_pb2.LUCIExe) of luciexe section in
 the current LUCI_CONTEXT. Returns None if luciexe is not defined.
 
-&emsp; **@property**<br>&mdash; **def [realm](/recipe_modules/context/api.py#335)(self):**
+&emsp; **@property**<br>&mdash; **def [realm](/recipe_modules/context/api.py#346)(self):**
 
 Returns the LUCI realm of the current context.
 
 May return None if the task is not running in the realm-aware mode. This is
 a transitional period. Eventually all tasks will be associated with realms.
 
-&emsp; **@property**<br>&mdash; **def [resultdb\_invocation\_name](/recipe_modules/context/api.py#356)(self):**
+&emsp; **@property**<br>&mdash; **def [resultdb\_invocation\_name](/recipe_modules/context/api.py#367)(self):**
 
 Returns the ResultDB invocation name of the current context.
 
