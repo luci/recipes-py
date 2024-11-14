@@ -7,7 +7,7 @@
 import fnmatch
 import hashlib
 import os
-from typing import Any, Callable, Literal, Sequence
+from typing import Any, Callable, Literal, Sequence, TypeVar
 
 import google.protobuf
 from recipe_engine import config_types, recipe_api, recipe_test_api, step_data
@@ -492,16 +492,18 @@ class FileApi(recipe_api.RecipeApi):
     text_data = self.m.json.dumps(data, indent=indent, sort_keys=sort_keys)
     return self.write_text(name, dest, text_data, include_log=include_log)
 
+  ProtoMessage = TypeVar('ProtoMessage', bound=google.protobuf.message.Message)
+
   def read_proto(
       self,
       name: str,
       source: config_types.Path | str,
-      msg_class: type,
+      msg_class: type[ProtoMessage],
       codec: ProtoCodec,
       test_proto: Any = None,
       include_log: bool = True,
       decoding_kwargs: dict | None = None,
-  ) -> google.protobuf.message:
+  ) -> ProtoMessage:
     """Reads a file into a proto message.
 
     Args:

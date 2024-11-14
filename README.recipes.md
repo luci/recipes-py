@@ -1846,7 +1846,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#676)(self, name: str, dest: (config_types.Path | str), mode: int=511):**
+&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#678)(self, name: str, dest: (config_types.Path | str), mode: int=511):**
 
 Ensures that `dest` exists and is a directory.
 
@@ -1875,7 +1875,7 @@ Returns:
 Raises:
   file.Error and ValueError if passed paths input is not str or Path.
 
-&mdash; **def [filesizes](/recipe_modules/file/api.py#698)(self, name: str, files: Sequence[(config_types.Path | str)], test_data: (Sequence[int] | None)=None):**
+&mdash; **def [filesizes](/recipe_modules/file/api.py#700)(self, name: str, files: Sequence[(config_types.Path | str)], test_data: (Sequence[int] | None)=None):**
 
 Returns list of filesizes for the given files.
 
@@ -1886,7 +1886,7 @@ Args:
 
 Returns size of each file in bytes.
 
-&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#872)(self, name: str, path: (config_types.Path | str)):**
+&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#874)(self, name: str, path: (config_types.Path | str)):**
 
 Flattens singular directories, starting at path.
 
@@ -1915,7 +1915,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [glob\_paths](/recipe_modules/file/api.py#571)(self, name: str, source: (config_types.Path | str), pattern: str, include_hidden: bool=False, test_data: Sequence[config_types.Path]=()):**
+&mdash; **def [glob\_paths](/recipe_modules/file/api.py#573)(self, name: str, source: (config_types.Path | str), pattern: str, include_hidden: bool=False, test_data: Sequence[config_types.Path]=()):**
 
 Performs glob expansion on `pattern`.
 
@@ -1945,7 +1945,7 @@ Returns all paths found.
 
 Raises: file.Error.
 
-&mdash; **def [listdir](/recipe_modules/file/api.py#637)(self, name: str, source: (config_types.Path | str), recursive: bool=False, test_data: Sequence[str]=(), include_log: bool=True):**
+&mdash; **def [listdir](/recipe_modules/file/api.py#639)(self, name: str, source: (config_types.Path | str), recursive: bool=False, test_data: Sequence[str]=(), include_log: bool=True):**
 
 Lists all files inside a directory.
 
@@ -1995,7 +1995,7 @@ Returns: The content of the file.
 
 Raise file.Error
 
-&mdash; **def [read\_proto](/recipe_modules/file/api.py#495)(self, name: str, source: (config_types.Path | str), msg_class: type, codec: ProtoCodec, test_proto: Any=None, include_log: bool=True, decoding_kwargs: (dict | None)=None):**
+&mdash; **def [read\_proto](/recipe_modules/file/api.py#497)(self, name: str, source: (config_types.Path | str), msg_class: type[ProtoMessage], codec: ProtoCodec, test_proto: Any=None, include_log: bool=True, decoding_kwargs: (dict | None)=None):**
 
 Reads a file into a proto message.
 
@@ -2039,7 +2039,7 @@ Returns: The content of the file.
 
 Raises: file.Error
 
-&mdash; **def [remove](/recipe_modules/file/api.py#617)(self, name: str, source: (config_types.Path | str)):**
+&mdash; **def [remove](/recipe_modules/file/api.py#619)(self, name: str, source: (config_types.Path | str)):**
 
 Removes a file.
 
@@ -2051,7 +2051,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmcontents](/recipe_modules/file/api.py#748)(self, name: str, source: (config_types.Path | str)):**
+&mdash; **def [rmcontents](/recipe_modules/file/api.py#750)(self, name: str, source: (config_types.Path | str)):**
 
 Similar to rmtree, but removes only contents not the directory.
 
@@ -2066,7 +2066,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmglob](/recipe_modules/file/api.py#771)(self, name: str, source: (config_types.Path | str), pattern: str, recursive: bool=True, include_hidden: bool=True):**
+&mdash; **def [rmglob](/recipe_modules/file/api.py#773)(self, name: str, source: (config_types.Path | str), pattern: str, recursive: bool=True, include_hidden: bool=True):**
 
 Removes all entries in `source` matching the glob `pattern`.
 
@@ -2095,7 +2095,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmtree](/recipe_modules/file/api.py#726)(self, name: str, source: (config_types.Path | str)):**
+&mdash; **def [rmtree](/recipe_modules/file/api.py#728)(self, name: str, source: (config_types.Path | str)):**
 
 Recursively removes a directory.
 
@@ -2109,7 +2109,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [symlink](/recipe_modules/file/api.py#823)(self, name: str, source: ((config_types.Path | str) | recipe_api.Placeholder), linkname: ((config_types.Path | str) | recipe_api.Placeholder)):**
+&mdash; **def [symlink](/recipe_modules/file/api.py#825)(self, name: str, source: ((config_types.Path | str) | recipe_api.Placeholder), linkname: ((config_types.Path | str) | recipe_api.Placeholder)):**
 
 Creates a symlink on the local filesystem.
 
@@ -2122,14 +2122,14 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#846)(self, root: (config_types.Path | str)):**
+&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#848)(self, root: (config_types.Path | str)):**
 
 Creates a SymlinkTree, given a root directory.
 
 Args:
   * root: root of a tree of symlinks.
 
-&mdash; **def [truncate](/recipe_modules/file/api.py#854)(self, name: str, path: (config_types.Path | str), size_mb: int=100):**
+&mdash; **def [truncate](/recipe_modules/file/api.py#856)(self, name: str, path: (config_types.Path | str), size_mb: int=100):**
 
 Creates an empty file with path and size_mb on the local filesystem.
 
@@ -2155,7 +2155,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [write\_proto](/recipe_modules/file/api.py#537)(self, name: str, dest: (config_types.Path | str), proto_msg: google.protobuf.message, codec: ProtoCodec, include_log: bool=True, encoding_kwargs: (dict | None)=None):**
+&mdash; **def [write\_proto](/recipe_modules/file/api.py#539)(self, name: str, dest: (config_types.Path | str), proto_msg: google.protobuf.message, codec: ProtoCodec, include_log: bool=True, encoding_kwargs: (dict | None)=None):**
 
 Writes the given proto message to `dest`.
 
