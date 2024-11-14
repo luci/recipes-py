@@ -4691,7 +4691,7 @@ Adds one comment to accumulate.
 For semantics of start_line, start_char, end_line, end_char, see Gerrit doc
 https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#comment-range
 
-&mdash; **def [run\_legacy](/recipe_modules/tricium/api.py#214)(self, analyzers, input_base, affected_files, commit_message, emit=True):**
+&mdash; **def [run\_legacy](/recipe_modules/tricium/api.py#215)(self, analyzers, input_base, affected_files, commit_message, emit=True):**
 
 Runs legacy analyzers.
 
@@ -4714,13 +4714,13 @@ Args:
     analyzers (using `add_comment()` to store comments) and legacy
     analyzers.
 
-&emsp; **@staticmethod**<br>&mdash; **def [validate\_comment](/recipe_modules/tricium/api.py#131)(comment):**
+&emsp; **@staticmethod**<br>&mdash; **def [validate\_comment](/recipe_modules/tricium/api.py#132)(comment):**
 
 Validates comment to comply with Tricium/Gerrit requirements.
 
 Raise ValueError on the first detected problem.
 
-&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#178)(self):**
+&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#179)(self):**
 
 Emit the results accumulated by `add_comment` and `run_legacy`.
 ### *recipe_modules* / [url](/recipe_modules/url)
@@ -6148,7 +6148,7 @@ This file is a recipe demonstrating reading triggers of the current build.
 
 &mdash; **def [CreateExpectedFinding](/recipe_modules/tricium/examples/add_comment.py#67)(api, input_comment):**
 
-&mdash; **def [RunSteps](/recipe_modules/tricium/examples/add_comment.py#114)(api, trigger_type_error):**
+&mdash; **def [RunSteps](/recipe_modules/tricium/examples/add_comment.py#115)(api, trigger_type_error):**
 ### *recipes* / [tricium:examples/wrapper](/recipe_modules/tricium/examples/wrapper.py)
 
 [DEPS](/recipe_modules/tricium/examples/wrapper.py#12): [file](#recipe_modules-file), [path](#recipe_modules-path), [tricium](#recipe_modules-tricium)

@@ -79,6 +79,7 @@ def CreateExpectedFinding(api, input_comment):
           'file_path': input_comment['path'],
       },
       'severity_level': 'WARNING',
+      'message': input_comment['message'],
   }
   if input_comment.get('start_line', 0) > 0:
     expected['location']['range'] = {

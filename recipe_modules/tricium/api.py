@@ -95,6 +95,7 @@ class TriciumApi(recipe_api.RecipeApi):
       finding = findings_pb.Finding(
           category=category,
           location=loc,
+          message = message,
           severity_level=findings_pb.Finding.SeverityLevel.WARNING,
       )
 
