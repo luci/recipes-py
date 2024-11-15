@@ -204,7 +204,7 @@ class TriciumApi(recipe_api.RecipeApi):
       self.m.resultdb.upload_invocation_artifacts(
           {
               'findings-%d' % self.m.buildbucket.build.id: {
-                  'content_type': 'vnd.google.protobuf+gzip',
+                  'content_type': 'application/vnd.google.protobuf+gzip',
                   'contents': contents,
               },
           },
