@@ -91,7 +91,11 @@ class TriciumApi(recipe_api.RecipeApi):
           gerrit_change_ref=gerrit_change_ref,
           file_path=(path or 'COMMIT_MSG'),
       )
-      _set_finding_range(loc.range, start_line, end_line, start_char, end_char)
+      if start_line:
+        loc.range.start_line = start_line
+        loc.range.start_column = start_char
+        loc.range.end_line = end_line
+        loc.range.end_column = end_char
       finding = findings_pb.Finding(
           category=category,
           location=loc,
@@ -114,13 +118,11 @@ class TriciumApi(recipe_api.RecipeApi):
             gerrit_change_ref=gerrit_change_ref,
             file_path=(tr_rep['path'] or 'COMMIT_MSG'),
         )
-        _set_finding_range(
-            loc.range,
-            tr_rep.get('start_line', 0),
-            tr_rep.get('end_line', 0),
-            tr_rep.get('start_char', 0),
-            tr_rep.get('end_char', 0),
-        )
+        if tr_rep.get('start_line', 0):
+          loc.range.start_line = tr_rep.get('start_line', 0)
+          loc.range.start_column = tr_rep.get('start_char', 0)
+          loc.range.end_line = tr_rep.get('end_line', 0)
+          loc.range.end_column = tr_rep.get('end_char', 0)
         fix.replacements.add(
             location=loc,
             new_content=tr_rep['replacement'],
@@ -372,38 +374,3 @@ def _matches_path_filters(files, patterns):
     if any(fnmatch.fnmatch(f, p) for f in files):
       return True
   return False
-
-
-def _set_finding_range(finding_range, start_line, end_line, start_char,
-                       end_char):
-  """Sets the given findings_pb.Location.Range() based on the Tricium range.
-
-  Args:
-    * finding_range (finding_pb.Location.Range): The range objection to set
-    * start_line (1-based int): The start line
-      If 0, the range refers to the entire file
-    * end_line   (1-based int): The start line
-      If 0, the range ends at the end of the file.
-    * start_char (0-based int): The start column
-      If 0, the range starts from the first character of the start_line.
-    * end_char (0-based int): The end column
-      If 0, the range ends at the end of the line, specified by end_line.
-  """
-  if start_line == 0:
-    # the comment is for the whole file; nothing to set.
-    return
-
-  finding_range.start_line = start_line
-  # This could set start_column = start_char +1 *unconditionally*.
-  #
-  # However, this is done conditionally just in case the below range have
-  # different meaning in Gerrit. That is, keep (1) as (1).
-  # 1. {start_char: 0, end_char: 0}
-  # 2. {start_char: 1, end_char: 0}
-  #
-  # However, this will turn all (2) occurrences to (1).
-  finding_range.start_column = start_char + 1 if start_char else 0
-
-  if end_line > 0:
-    finding_range.end_line = end_line
-    finding_range.end_column = end_char + 1 if end_char else 0

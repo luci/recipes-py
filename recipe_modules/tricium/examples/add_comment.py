@@ -84,9 +84,9 @@ def CreateExpectedFinding(api, input_comment):
   if input_comment.get('start_line', 0) > 0:
     expected['location']['range'] = {
         'start_line': input_comment['start_line'],
-        'start_column': input_comment['start_char'] + 1,
+        'start_column': input_comment['start_char'],
         'end_line': input_comment['end_line'],
-        'end_column': input_comment['end_char'] + 1,
+        'end_column': input_comment['end_char'],
     }
 
   for s in input_comment.get('suggestions', []):
@@ -102,9 +102,9 @@ def CreateExpectedFinding(api, input_comment):
       if r.get('start_line', 0) > 0:
         fix['replacements'][-1]['location']['range'] = {
             'start_line': r['start_line'],
-            'start_column': r['start_char'] + 1,
+            'start_column': r['start_char'],
             'end_line': r['end_line'],
-            'end_column': r['end_char'] + 1,
+            'end_column': r['end_char'],
         }
 
     expected.setdefault('fixes', []).append(fix)
