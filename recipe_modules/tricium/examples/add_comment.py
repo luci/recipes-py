@@ -78,7 +78,7 @@ def CreateExpectedFinding(api, input_comment):
           'gerrit_change_ref': gerrit_ref,
           'file_path': input_comment['path'],
       },
-      'severity_level': 'WARNING',
+      'severity_level': 'SEVERITY_LEVEL_WARNING',
       'message': input_comment['message'],
   }
   if input_comment.get('start_line', 0) > 0:

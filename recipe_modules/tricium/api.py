@@ -96,7 +96,7 @@ class TriciumApi(recipe_api.RecipeApi):
         category=category,
         location=loc,
         message = message,
-        severity_level=findings_pb.Finding.SeverityLevel.WARNING,
+        severity_level=findings_pb.Finding.SEVERITY_LEVEL_WARNING,
     )
 
     for s in suggestions:
