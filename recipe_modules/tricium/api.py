@@ -85,7 +85,7 @@ class TriciumApi(recipe_api.RecipeApi):
     )
     loc = findings_pb.Location(
         gerrit_change_ref=gerrit_change_ref,
-        file_path=(path or 'COMMIT_MSG'),
+        file_path=(path or '/COMMIT_MSG'),
     )
     if start_line:
       loc.range.start_line = start_line
@@ -107,7 +107,7 @@ class TriciumApi(recipe_api.RecipeApi):
       for tr_rep in s['replacements']:
         loc = findings_pb.Location(
             gerrit_change_ref=gerrit_change_ref,
-            file_path=(tr_rep['path'] or 'COMMIT_MSG'),
+            file_path=(tr_rep['path'] or '/COMMIT_MSG'),
         )
         if tr_rep.get('start_line', 0):
           loc.range.start_line = tr_rep.get('start_line', 0)

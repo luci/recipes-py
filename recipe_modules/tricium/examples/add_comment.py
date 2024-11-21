@@ -76,7 +76,7 @@ def CreateExpectedFinding(api, input_comment):
       'category': input_comment['category'],
       'location': {
           'gerrit_change_ref': gerrit_ref,
-          'file_path': input_comment['path'],
+          'file_path': input_comment['path'] or '/COMMIT_MSG',
       },
       'severity_level': 'SEVERITY_LEVEL_WARNING',
       'message': input_comment['message'],
@@ -95,7 +95,7 @@ def CreateExpectedFinding(api, input_comment):
       fix['replacements'].append({
           'location': {
               'gerrit_change_ref': gerrit_ref,
-              'file_path': r['path'] if r['path'] else 'COMMIT_MSG',
+              'file_path': r['path'] or '/COMMIT_MSG',
           },
           'new_content': r['replacement'],
       })
