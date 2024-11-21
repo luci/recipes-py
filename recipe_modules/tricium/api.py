@@ -72,46 +72,37 @@ class TriciumApi(recipe_api.RecipeApi):
     comment.start_char = start_char
     comment.end_char = end_char
 
-    # AyeAye Findings
-    finding = None
+    # convert to LUCI Findings
     if not self.m.buildbucket.build.input.gerrit_changes:
-      # TODO(crbug.com/372748699) uncomment below if crbug.com/378735139 is
-      # done.
-      #  raise ValueError('missing gerrit_changes in the build input')
-      pass
-    else:
-      cl = self.m.buildbucket.build.input.gerrit_changes[0]
-      gerrit_change_ref = findings_pb.Location.GerritChangeReference(
-          host=cl.host,
-          project=cl.project,
-          change=cl.change,
-          patchset=cl.patchset,
-      )
-      loc = findings_pb.Location(
-          gerrit_change_ref=gerrit_change_ref,
-          file_path=(path or 'COMMIT_MSG'),
-      )
-      if start_line:
-        loc.range.start_line = start_line
-        loc.range.start_column = start_char
-        loc.range.end_line = end_line
-        loc.range.end_column = end_char
-      finding = findings_pb.Finding(
-          category=category,
-          location=loc,
-          message = message,
-          severity_level=findings_pb.Finding.SeverityLevel.WARNING,
-      )
+      raise ValueError('missing gerrit_changes in the build input')
+
+    cl = self.m.buildbucket.build.input.gerrit_changes[0]
+    gerrit_change_ref = findings_pb.Location.GerritChangeReference(
+        host=cl.host,
+        project=cl.project,
+        change=cl.change,
+        patchset=cl.patchset,
+    )
+    loc = findings_pb.Location(
+        gerrit_change_ref=gerrit_change_ref,
+        file_path=(path or 'COMMIT_MSG'),
+    )
+    if start_line:
+      loc.range.start_line = start_line
+      loc.range.start_column = start_char
+      loc.range.end_line = end_line
+      loc.range.end_column = end_char
+    finding = findings_pb.Finding(
+        category=category,
+        location=loc,
+        message = message,
+        severity_level=findings_pb.Finding.SeverityLevel.WARNING,
+    )
 
     for s in suggestions:
       json_format.ParseDict(s, comment.suggestions.add())
 
-      # TODO(crbug.com/372748699) remove below if crbug.com/378735139 is
-      # done.
-      if not self.m.buildbucket.build.input.gerrit_changes:
-        continue
-
-      # AyeAye Fix
+      # convert to LUCI Finding fixes.
       fix = finding.fixes.add(description=s.get('description', ''))
       for tr_rep in s['replacements']:
         loc = findings_pb.Location(

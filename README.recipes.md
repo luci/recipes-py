@@ -4691,7 +4691,7 @@ Adds one comment to accumulate.
 For semantics of start_line, start_char, end_line, end_char, see Gerrit doc
 https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#comment-range
 
-&mdash; **def [run\_legacy](/recipe_modules/tricium/api.py#217)(self, analyzers, input_base, affected_files, commit_message, emit=True):**
+&mdash; **def [run\_legacy](/recipe_modules/tricium/api.py#208)(self, analyzers, input_base, affected_files, commit_message, emit=True):**
 
 Runs legacy analyzers.
 
@@ -4714,13 +4714,13 @@ Args:
     analyzers (using `add_comment()` to store comments) and legacy
     analyzers.
 
-&emsp; **@staticmethod**<br>&mdash; **def [validate\_comment](/recipe_modules/tricium/api.py#134)(comment):**
+&emsp; **@staticmethod**<br>&mdash; **def [validate\_comment](/recipe_modules/tricium/api.py#125)(comment):**
 
 Validates comment to comply with Tricium/Gerrit requirements.
 
 Raise ValueError on the first detected problem.
 
-&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#181)(self):**
+&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#172)(self):**
 
 Emit the results accumulated by `add_comment` and `run_legacy`.
 ### *recipe_modules* / [url](/recipe_modules/url)

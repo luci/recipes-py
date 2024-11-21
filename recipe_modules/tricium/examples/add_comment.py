@@ -124,25 +124,17 @@ def RunSteps(api, trigger_type_error):
   api.tricium.add_comment(**COMMENT_1)
 
   # verify the produced comments/findings
-  expected_comments = [
-      Data.Comment(**COMMENT_1),
-      Data.Comment(**COMMENT_2),
+  expected_finding1 = CreateExpectedFinding(api, COMMENT_1)
+  expected_finding2 = CreateExpectedFinding(api, COMMENT_2)
+  expected_findings = [
+      api.proto.decode(
+          json.dumps(expected_finding1), findings_pb.Finding, 'JSONPB'),
+      api.proto.decode(
+          json.dumps(expected_finding2), findings_pb.Finding, 'JSONPB'),
   ]
-
-  if api.buildbucket.build.input.gerrit_changes:
-    expected_finding1 = CreateExpectedFinding(api, COMMENT_1)
-    expected_finding2 = CreateExpectedFinding(api, COMMENT_2)
-    expected_findings = [
-        api.proto.decode(
-            json.dumps(expected_finding1), findings_pb.Finding, 'JSONPB'),
-        api.proto.decode(
-            json.dumps(expected_finding2), findings_pb.Finding, 'JSONPB'),
-    ]
-    assert api.tricium._findings == expected_findings, (
-        'findings: %s\nexpected: %s' %
-        (api.tricium._findings, expected_findings))
-  else:
-    assert not api.tricium._findings
+  assert api.tricium._findings == expected_findings, (
+      'findings: %s\nexpected: %s' %
+      (api.tricium._findings, expected_findings))
 
   api.tricium.write_comments()
 
@@ -154,4 +146,5 @@ def GenTests(api):
          api.expect_exception('TypeError') +
          api.post_process(post_process.DropExpectation))
   yield (api.test('no_gerrit_change') +
+         api.expect_exception('ValueError') +
          api.post_process(post_process.DropExpectation))
