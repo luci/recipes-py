@@ -12,6 +12,7 @@
       "-json-output",
       "/path/to/tmp/json"
     ],
+    "infra_step": true,
     "name": "ensure_installed",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -36,6 +37,7 @@
       "-json-output",
       "/path/to/tmp/json"
     ],
+    "infra_step": true,
     "name": "cipd ensure-file-resolve",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -67,6 +69,7 @@
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
     },
+    "infra_step": true,
     "name": "cipd search public/package/${platform} git_revision:40-chars-long-hash",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -90,6 +93,7 @@
       "-json-output",
       "/path/to/tmp/json"
     ],
+    "infra_step": true,
     "name": "cipd describe public/package/${platform}",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -97,12 +101,11 @@
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
-      "@@@STEP_FAILURE@@@"
+      "@@@STEP_EXCEPTION@@@"
     ]
   },
   {
     "failure": {
-      "failure": {},
       "humanReason": "CIPD('cipd describe public/package/${platform}') failed with: package \"public/package/linux-amd64-ubuntu14_04\" not registered"
     },
     "name": "$result"

@@ -208,7 +208,7 @@ def GenTests(api):
           api.cipd.example_error(
               'package "public/package/linux-amd64-ubuntu14_04" not registered',
           )),
-      status='FAILURE',
+      status='INFRA_FAILURE',
   )
 
   yield api.test(

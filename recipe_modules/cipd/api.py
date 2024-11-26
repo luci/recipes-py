@@ -293,7 +293,7 @@ class CIPDApi(recipe_api.RecipeApi):
   CompressionLevel = CompressionLevel
   InstallMode = InstallMode
 
-  class Error(recipe_api.StepFailure):
+  class Error(recipe_api.InfraFailure):
 
     def __init__(self, step_name, message):
       reason = 'CIPD(%r) failed with: %s' % (step_name, message)
@@ -326,7 +326,8 @@ class CIPDApi(recipe_api.RecipeApi):
   def _run(self, name, args, step_test_data=None):
     cmd = [self.executable] + args + ['-json-output', self.m.json.output()]
     try:
-      return self.m.step(name, cmd, step_test_data=step_test_data)
+      return self.m.step(
+          name, cmd, step_test_data=step_test_data, infra_step=True)
     except self.m.step.StepFailure:
       step_result = self.m.step.active_result
       if step_result.json.output and 'error' in step_result.json.output:
