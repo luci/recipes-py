@@ -52,7 +52,8 @@ class GolangApi(recipe_api.RecipeApi):
   def _ensure_installed(self, version, path, cache):
     if self._installed.get(path) != version:
       pkgs = self.m.cipd.EnsureFile()
-      pkgs.add_package('infra/3pp/tools/go/${platform}', 'version:2@' + version)
+      pkgs.add_package('infra/3pp/tools/go/${platform}',
+                       'version:%s@%s' % (_3pp_epoch(version), version))
       self.m.cipd.ensure(path, pkgs)
       self._installed[path] = version
 
@@ -85,3 +86,18 @@ class GolangApi(recipe_api.RecipeApi):
     }
 
     return env, env_prefixes, env_suffixes
+
+
+def _3pp_epoch(version):
+  """Returns 3pp version epoch number given the Go toolset package version.
+
+  There's no deep logic here, this is just a look up table, e.g. a 3pp epoch
+  was bumped somewhere between go1.22.4 and go1.22.5 releases.
+  """
+  ver = []
+  for chunk in version.split('.'):
+    try:
+      ver.append(int(chunk))
+    except ValueError:  # pragma: no cover
+      ver.append(0)
+  return 2 if tuple(ver[:3]) <= (1, 22, 4) else 3
