@@ -1,0 +1,104 @@
+[
+  {
+    "cmd": [],
+    "name": "upload 1 findings to ResultDB",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@artifact_id: findings-00000000-0000-0000-0000-000000001337@@@",
+      "@@@STEP_LOG_LINE@findings.json@{@@@",
+      "@@@STEP_LOG_LINE@findings.json@  \"findings\": [@@@",
+      "@@@STEP_LOG_LINE@findings.json@    {@@@",
+      "@@@STEP_LOG_LINE@findings.json@      \"category\": \"SpellChecker\",@@@",
+      "@@@STEP_LOG_LINE@findings.json@      \"fixes\": [@@@",
+      "@@@STEP_LOG_LINE@findings.json@        {@@@",
+      "@@@STEP_LOG_LINE@findings.json@          \"description\": \"fix desc\",@@@",
+      "@@@STEP_LOG_LINE@findings.json@          \"replacements\": [@@@",
+      "@@@STEP_LOG_LINE@findings.json@            {@@@",
+      "@@@STEP_LOG_LINE@findings.json@              \"location\": {@@@",
+      "@@@STEP_LOG_LINE@findings.json@                \"file_path\": \"test-file-path\",@@@",
+      "@@@STEP_LOG_LINE@findings.json@                \"gerrit_change_ref\": {@@@",
+      "@@@STEP_LOG_LINE@findings.json@                  \"change\": \"123456\",@@@",
+      "@@@STEP_LOG_LINE@findings.json@                  \"host\": \"chromium-review.googlesource.com\",@@@",
+      "@@@STEP_LOG_LINE@findings.json@                  \"patchset\": \"7\",@@@",
+      "@@@STEP_LOG_LINE@findings.json@                  \"project\": \"infra\"@@@",
+      "@@@STEP_LOG_LINE@findings.json@                },@@@",
+      "@@@STEP_LOG_LINE@findings.json@                \"range\": {@@@",
+      "@@@STEP_LOG_LINE@findings.json@                  \"end_column\": 6,@@@",
+      "@@@STEP_LOG_LINE@findings.json@                  \"end_line\": 1,@@@",
+      "@@@STEP_LOG_LINE@findings.json@                  \"start_column\": 2,@@@",
+      "@@@STEP_LOG_LINE@findings.json@                  \"start_line\": 1@@@",
+      "@@@STEP_LOG_LINE@findings.json@                }@@@",
+      "@@@STEP_LOG_LINE@findings.json@              },@@@",
+      "@@@STEP_LOG_LINE@findings.json@              \"new_content\": \"typo\"@@@",
+      "@@@STEP_LOG_LINE@findings.json@            }@@@",
+      "@@@STEP_LOG_LINE@findings.json@          ]@@@",
+      "@@@STEP_LOG_LINE@findings.json@        }@@@",
+      "@@@STEP_LOG_LINE@findings.json@      ],@@@",
+      "@@@STEP_LOG_LINE@findings.json@      \"location\": {@@@",
+      "@@@STEP_LOG_LINE@findings.json@        \"file_path\": \"test-file-path\",@@@",
+      "@@@STEP_LOG_LINE@findings.json@        \"gerrit_change_ref\": {@@@",
+      "@@@STEP_LOG_LINE@findings.json@          \"change\": \"123456\",@@@",
+      "@@@STEP_LOG_LINE@findings.json@          \"host\": \"chromium-review.googlesource.com\",@@@",
+      "@@@STEP_LOG_LINE@findings.json@          \"patchset\": \"7\",@@@",
+      "@@@STEP_LOG_LINE@findings.json@          \"project\": \"infra\"@@@",
+      "@@@STEP_LOG_LINE@findings.json@        },@@@",
+      "@@@STEP_LOG_LINE@findings.json@        \"range\": {@@@",
+      "@@@STEP_LOG_LINE@findings.json@          \"end_column\": 6,@@@",
+      "@@@STEP_LOG_LINE@findings.json@          \"end_line\": 1,@@@",
+      "@@@STEP_LOG_LINE@findings.json@          \"start_column\": 2,@@@",
+      "@@@STEP_LOG_LINE@findings.json@          \"start_line\": 1@@@",
+      "@@@STEP_LOG_LINE@findings.json@        }@@@",
+      "@@@STEP_LOG_LINE@findings.json@      },@@@",
+      "@@@STEP_LOG_LINE@findings.json@      \"message\": \"This is a typo\",@@@",
+      "@@@STEP_LOG_LINE@findings.json@      \"severity_level\": \"SEVERITY_LEVEL_INFO\"@@@",
+      "@@@STEP_LOG_LINE@findings.json@    }@@@",
+      "@@@STEP_LOG_LINE@findings.json@  ]@@@",
+      "@@@STEP_LOG_LINE@findings.json@}@@@",
+      "@@@STEP_LOG_END@findings.json@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "rdb",
+      "rpc",
+      "luci.resultdb.v1.Recorder",
+      "BatchCreateArtifacts",
+      "-include-update-token"
+    ],
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "infra:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "upload 1 findings to ResultDB.upload_invocation_artifacts",
+    "stdin": "{\"requests\": [{\"artifact\": {\"artifactId\": \"findings-00000000-0000-0000-0000-000000001337\", \"contentType\": \"application/vnd.google.protobuf+gzip\", \"contents\": \"H4sIAAAAAAACA+M6x8jFE1yQmpPjnJGanJ1aJOTNpc+lkJxRlJ+bWZqrW5Ralplarpeen5+ek1qcX1qUnKqXnJ8rxJqZl1aUKHHgCLsCuxBfSWpxiW5aZk6qbkFiSYYUBwejAJMEowKbFF9IRmaxAhAlKpRUFuQrMGrFc3GkZVYopKQWJwsFc1HTMiEWkBUA+xMMpdEAAAA=\"}, \"parent\": \"invocations/build:8945511751514863184\"}]}",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@json.output@{}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LOG_LINE@json.input@{@@@",
+      "@@@STEP_LOG_LINE@json.input@  \"requests\": [@@@",
+      "@@@STEP_LOG_LINE@json.input@    {@@@",
+      "@@@STEP_LOG_LINE@json.input@      \"artifact\": {@@@",
+      "@@@STEP_LOG_LINE@json.input@        \"artifactId\": \"findings-00000000-0000-0000-0000-000000001337\",@@@",
+      "@@@STEP_LOG_LINE@json.input@        \"contentType\": \"application/vnd.google.protobuf+gzip\",@@@",
+      "@@@STEP_LOG_LINE@json.input@        \"contents\": \"H4sIAAAAAAACA+M6x8jFE1yQmpPjnJGanJ1aJOTNpc+lkJxRlJ+bWZqrW5Ralplarpeen5+ek1qcX1qUnKqXnJ8rxJqZl1aUKHHgCLsCuxBfSWpxiW5aZk6qbkFiSYYUBwejAJMEowKbFF9IRmaxAhAlKpRUFuQrMGrFc3GkZVYopKQWJwsFc1HTMiEWkBUA+xMMpdEAAAA=\"@@@",
+      "@@@STEP_LOG_LINE@json.input@      },@@@",
+      "@@@STEP_LOG_LINE@json.input@      \"parent\": \"invocations/build:8945511751514863184\"@@@",
+      "@@@STEP_LOG_LINE@json.input@    }@@@",
+      "@@@STEP_LOG_LINE@json.input@  ]@@@",
+      "@@@STEP_LOG_LINE@json.input@}@@@",
+      "@@@STEP_LOG_END@json.input@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]
