@@ -15,6 +15,9 @@ class FindingsAPI(recipe_api.RecipeApi):
   def __init__(self, **kwargs):
     super().__init__(**kwargs)
 
+  # file path used in the finding location to represent commit message.
+  COMMIT_MESSAGE_FILE_PATH = '/COMMIT_MSG'
+
   def upload_findings(
       self,
       findings: list[findings_pb.Finding],
@@ -91,7 +94,8 @@ class FindingsAPI(recipe_api.RecipeApi):
 
     if not loc.file_path:
       raise ValueError('file path is required')
-    if loc.file_path != '/COMMIT_MSG' and os.path.isabs(loc.file_path):
+    if loc.file_path != FindingsAPI.COMMIT_MESSAGE_FILE_PATH and os.path.isabs(
+        loc.file_path):
       raise ValueError(f'file_path must be relative, got {loc.file_path}')
 
     if loc.HasField('range'):

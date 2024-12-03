@@ -2200,7 +2200,7 @@ Raises: file.Error.
 
 #### **class [FindingsAPI](/recipe_modules/findings/api.py#13)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
 
-&mdash; **def [populate\_source\_from\_current\_build](/recipe_modules/findings/api.py#131)(self, location: findings_pb.Location):**
+&mdash; **def [populate\_source\_from\_current\_build](/recipe_modules/findings/api.py#135)(self, location: findings_pb.Location):**
 
 Set the location source based on the input of the current build.
 
@@ -2208,7 +2208,7 @@ This can be used for finding.location or replacement.location. Currently,
 only works for build with exactly one Gerrit change. Raise ValueError
 otherwise.
 
-&mdash; **def [upload\_findings](/recipe_modules/findings/api.py#18)(self, findings: list[findings_pb.Finding], step_name: (str | None)=None):**
+&mdash; **def [upload\_findings](/recipe_modules/findings/api.py#21)(self, findings: list[findings_pb.Finding], step_name: (str | None)=None):**
 
 Uploads code findings to ResultDB.
 
