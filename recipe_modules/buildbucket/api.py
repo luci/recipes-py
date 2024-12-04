@@ -186,12 +186,14 @@ class BuildbucketApi(recipe_api.RecipeApi):
       project: str | None = None,
       bucket: str | None = None,
       builder: str | None = None,
+      build: build_pb2.Build | None = None,
   ) -> str:
     """Returns url to a builder. Defaults to current builder."""
-    host = host or self.host
-    project = project or self.build.builder.project
-    bucket = bucket or self.build.builder.bucket
-    builder = builder or self.build.builder.builder
+    build = build or self.build
+    host = host or build.infra.buildbucket.hostname or self.host
+    project = project or build.builder.project
+    bucket = bucket or build.builder.bucket
+    builder = builder or build.builder.builder
     return f'https://{host}/builder/{project}/{bucket}/{builder}'
 
   def build_url(self, host: str | None = None,
