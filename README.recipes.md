@@ -6,6 +6,7 @@
   * [archive](#recipe_modules-archive)
   * [assertions](#recipe_modules-assertions)
   * [bcid_reporter](#recipe_modules-bcid_reporter)
+  * [bcid_verifier](#recipe_modules-bcid_verifier) &mdash; API for interacting with BCID Verifier via the OnePlatform API.
   * [buildbucket](#recipe_modules-buildbucket) &mdash; API for interacting with the buildbucket service.
   * [cas](#recipe_modules-cas) &mdash; API for interacting with cas client.
   * [cas_input](#recipe_modules-cas_input) &mdash; Simple API for handling CAS inputs to a recipe.
@@ -56,6 +57,7 @@
   * [assertions:tests/long_message](#recipes-assertions_tests_long_message)
   * [assertions:tests/max_diff](#recipes-assertions_tests_max_diff)
   * [bcid_reporter:examples/usage](#recipes-bcid_reporter_examples_usage)
+  * [bcid_verifier:tests/test-verify](#recipes-bcid_verifier_tests_test-verify)
   * [buildbucket:examples/full](#recipes-buildbucket_examples_full) &mdash; This file is a recipe demonstrating the buildbucket recipe module.
   * [buildbucket:run/multi](#recipes-buildbucket_run_multi) &mdash; Launches multiple builds at the same revision.
   * [buildbucket:tests/add_build_tags](#recipes-buildbucket_tests_add_build_tags)
@@ -438,6 +440,34 @@ Args:
     Valid stages: (start, fetch, compile, upload, upload-complete, test).
   * server_url (Optional[str]) - URL for the local provenance server, the
     broker tool will use default if not specified.
+### *recipe_modules* / [bcid\_verifier](/recipe_modules/bcid_verifier)
+
+[DEPS](/recipe_modules/bcid_verifier/__init__.py#5): [file](#recipe_modules-file), [path](#recipe_modules-path)
+
+
+API for interacting with BCID Verifier via the OnePlatform API.
+
+To successfully authenticate to this API, you must have the
+https://www.googleapis.com/auth/bcid_verify OAuth scope.
+
+#### **class [BcidVerifierApi](/recipe_modules/bcid_verifier/api.py#20)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
+
+API for interacting with the BCID for Software One Platform API.
+
+&mdash; **def [verify\_provenance](/recipe_modules/bcid_verifier/api.py#60)(self, bcid_policy: str, artifact_path: str, attestation_path: str, log_only_mode: bool=False):**
+
+Calls the BCID Software Verifier OnePlatformAPI to verify provenance for an
+artifact.
+
+Args:
+  bcid_policy: Name of the BCID policy name to verify provenance with.
+  artifact_path: local file path to the artifact to be verified.
+  attestation_path: local file path to the attestation (intoto.jsonl) file
+    for the provided artifact.
+  log_only_mode:
+    Whether to verify provenance in log only mode, and skip enforcement.
+    Enforcement fails closed, and if unable to receive a response from
+    Software Verifier, it will constitute a rejection.
 ### *recipe_modules* / [buildbucket](/recipe_modules/buildbucket)
 
 [DEPS](/recipe_modules/buildbucket/__init__.py#5): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [resultdb](#recipe_modules-resultdb), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid), [warning](#recipe_modules-warning)
@@ -4988,6 +5018,12 @@ same repo as the issue() call.
 
 
 &mdash; **def [RunSteps](/recipe_modules/bcid_reporter/examples/usage.py#10)(api):**
+### *recipes* / [bcid\_verifier:tests/test-verify](/recipe_modules/bcid_verifier/tests/test-verify.py)
+
+[DEPS](/recipe_modules/bcid_verifier/tests/test-verify.py#7): [assertions](#recipe_modules-assertions), [bcid\_verifier](#recipe_modules-bcid_verifier), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+
+
+&mdash; **def [RunSteps](/recipe_modules/bcid_verifier/tests/test-verify.py#15)(api):**
 ### *recipes* / [buildbucket:examples/full](/recipe_modules/buildbucket/examples/full.py)
 
 [DEPS](/recipe_modules/buildbucket/examples/full.py#15): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
