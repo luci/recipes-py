@@ -90,7 +90,12 @@ class TriciumApi(recipe_api.RecipeApi):
     if start_line:
       loc.range.start_line = start_line
       loc.range.start_column = start_char
-      loc.range.end_line = end_line
+      # Tricium allows specifying start_line but leave end_line empty.
+      # This will use the line field in the RoboCommentInput
+      # https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#robot-comment-input.
+      # However, such combination is not allowed in range. Therefore, explicitly
+      # set the end_line to start_line if end_line is not empty.
+      loc.range.end_line = end_line or start_line
       loc.range.end_column = end_char
     finding = findings_pb.Finding(
         category=category,
@@ -192,16 +197,7 @@ class TriciumApi(recipe_api.RecipeApi):
         results, 'JSONPB', indent=0, preserving_proto_field_name=False)
 
     if self.m.resultdb.enabled and self._findings:
-      findings = findings_pb.Findings(findings=self._findings)
-      contents = gzip.compress(self.m.proto.encode(findings, 'BINARY'), mtime=0)
-      self.m.resultdb.upload_invocation_artifacts(
-          {
-              'findings-%d' % self.m.buildbucket.build.id: {
-                  'content_type': 'application/vnd.google.protobuf+gzip',
-                  'contents': contents,
-              },
-          },
-          step_name='upload findings as an invocation artifact')
+      self.m.findings.upload_findings(self._findings)
 
     return step
 

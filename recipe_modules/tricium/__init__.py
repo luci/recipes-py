@@ -7,6 +7,7 @@ DEPS = [
     'cipd',
     'context',
     'file',
+    'findings',
     'json',
     'path',
     'properties',
