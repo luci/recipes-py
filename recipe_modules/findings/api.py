@@ -7,6 +7,7 @@ import os
 
 from recipe_engine import recipe_api
 
+from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 from PB.go.chromium.org.luci.common.proto.findings import findings as findings_pb
 
 
@@ -14,6 +15,7 @@ class FindingsAPI(recipe_api.RecipeApi):
 
   def __init__(self, **kwargs):
     super().__init__(**kwargs)
+    self._tagged_current_build = False
 
   # file path used in the finding location to represent commit message.
   COMMIT_MESSAGE_FILE_PATH = '/COMMIT_MSG'
@@ -43,6 +45,14 @@ class FindingsAPI(recipe_api.RecipeApi):
     with self.m.step.nest(
         step_name or
         f'upload {len(findings)} findings to ResultDB') as presentation:
+      # TODO - crbug/382600891: update the ResultDB invocation tag instead.
+      if not self._tagged_current_build:
+        self.m.buildbucket.add_tags_to_current_build(
+            [common_pb2.StringPair(
+                key='has_code_findings',
+                value='true',
+            )])
+        self._tagged_current_build = True
       findings = findings_pb.Findings(findings=findings)
       artifact_id = f'findings-{self.m.uuid.random()}'
       presentation.step_text = f'artifact_id: {artifact_id}'

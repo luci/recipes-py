@@ -57,6 +57,14 @@
     ]
   },
   {
+    "cmd": [],
+    "name": "upload 1 findings to ResultDB.buildbucket.add_tags_to_current_build",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@SET_BUILD_PROPERTY@$recipe_engine/buildbucket/runtime-tags@{\"has_code_findings\": [\"true\"]}@@@"
+    ]
+  },
+  {
     "cmd": [
       "rdb",
       "rpc",
