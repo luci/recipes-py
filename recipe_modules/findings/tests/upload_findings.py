@@ -451,30 +451,3 @@ def GenTests(api):
          api.post_process(post_process.SummaryMarkdownRE,
                           'finding fix MUST contain at least 1 replacement') +
          api.post_process(post_process.DropExpectation))
-
-  yield (api.test('empty new_content in replacement') +
-         api.buildbucket.try_build(project='infra') + api.properties(
-             findings_pb.Findings(findings=[
-                 findings_pb.Finding(
-                     category='SpellChecker',
-                     location=findings_pb.Location(
-                         gerrit_change_ref=gerrit_change_ref,
-                         file_path='test-file-path',
-                     ),
-                     message='This is a typo',
-                     severity_level=findings_pb.Finding.SEVERITY_LEVEL_INFO,
-                     fixes=[
-                         findings_pb.Fix(
-                             description='fix desc',
-                             replacements=[
-                                 findings_pb.Fix.Replacement(
-                                     location=findings_pb.Location(
-                                         gerrit_change_ref=gerrit_change_ref,
-                                         file_path='test-file-path',
-                                     ),),
-                             ])
-                     ])
-             ])) + api.expect_exception('ValueError') +
-         api.post_process(post_process.SummaryMarkdownRE,
-                          'replacement new_content is required') +
-         api.post_process(post_process.DropExpectation))

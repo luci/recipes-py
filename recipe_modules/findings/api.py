@@ -76,8 +76,6 @@ class FindingsAPI(recipe_api.RecipeApi):
         raise ValueError('finding fix MUST contain at least 1 replacement')
       for replacement in fix.replacements:
         self._validate_location(replacement.location)
-        if not replacement.new_content:
-          raise ValueError('replacement new_content is required')
 
   def _validate_location(self, loc: findings_pb.Location):
     if not loc.HasField('source'):

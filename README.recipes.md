@@ -2230,7 +2230,7 @@ Raises: file.Error.
 
 #### **class [FindingsAPI](/recipe_modules/findings/api.py#13)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
 
-&mdash; **def [populate\_source\_from\_current\_build](/recipe_modules/findings/api.py#135)(self, location: findings_pb.Location):**
+&mdash; **def [populate\_source\_from\_current\_build](/recipe_modules/findings/api.py#133)(self, location: findings_pb.Location):**
 
 Set the location source based on the input of the current build.
 
