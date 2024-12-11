@@ -10,6 +10,7 @@ from recipe_engine import post_process
 from PB.tricium.data import Data
 
 DEPS = [
+    'buildbucket',
     'file',
     'path',
     'tricium',
@@ -44,16 +45,19 @@ def GenTests(api):
     ])
     return json_format.MessageToJson(results)
 
-  yield (api.test('success') + api.step_data(
-      'Spacey.read results', api.file.read_text(results_json(num_comments=1))) +
+  yield (api.test('success') + api.buildbucket.try_build(project='chrome') +
+         api.step_data('Spacey.read results',
+                       api.file.read_text(results_json(num_comments=1))) +
          api.post_check(post_process.StatusSuccess) +
          api.post_process(post_process.DropExpectation))
 
   yield (api.test('with_failure') +
+         api.buildbucket.try_build(project='chrome') +
          api.step_data('Spacey.run analyzer', retcode=1) +
          api.post_process(post_process.DropExpectation))
 
   yield (api.test('many_comments') +
+         api.buildbucket.try_build(project='chrome') +
          api.step_data('Pylint.read results',
                        api.file.read_text(results_json(num_comments=51))) +
          api.post_process(post_process.DropExpectation))

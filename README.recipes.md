@@ -6228,12 +6228,12 @@ This file is a recipe demonstrating reading triggers of the current build.
 &mdash; **def [RunSteps](/recipe_modules/tricium/examples/add_comment.py#115)(api, trigger_type_error):**
 ### *recipes* / [tricium:examples/wrapper](/recipe_modules/tricium/examples/wrapper.py)
 
-[DEPS](/recipe_modules/tricium/examples/wrapper.py#12): [file](#recipe_modules-file), [path](#recipe_modules-path), [tricium](#recipe_modules-tricium)
+[DEPS](/recipe_modules/tricium/examples/wrapper.py#12): [buildbucket](#recipe_modules-buildbucket), [file](#recipe_modules-file), [path](#recipe_modules-path), [tricium](#recipe_modules-tricium)
 
 
 An example of a recipe wrapping legacy analyzers.
 
-&mdash; **def [RunSteps](/recipe_modules/tricium/examples/wrapper.py#19)(api):**
+&mdash; **def [RunSteps](/recipe_modules/tricium/examples/wrapper.py#20)(api):**
 ### *recipes* / [tricium:tests/add\_comment\_validation](/recipe_modules/tricium/tests/add_comment_validation.py)
 
 [DEPS](/recipe_modules/tricium/tests/add_comment_validation.py#8): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
