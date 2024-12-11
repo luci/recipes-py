@@ -6,7 +6,7 @@
   * [archive](#recipe_modules-archive)
   * [assertions](#recipe_modules-assertions)
   * [bcid_reporter](#recipe_modules-bcid_reporter)
-  * [bcid_verifier](#recipe_modules-bcid_verifier) &mdash; API for interacting with BCID Verifier via the OnePlatform API.
+  * [bcid_verifier](#recipe_modules-bcid_verifier) &mdash; API for interacting with Software Verifier.
   * [buildbucket](#recipe_modules-buildbucket) &mdash; API for interacting with the buildbucket service.
   * [cas](#recipe_modules-cas) &mdash; API for interacting with cas client.
   * [cas_input](#recipe_modules-cas_input) &mdash; Simple API for handling CAS inputs to a recipe.
@@ -442,32 +442,41 @@ Args:
     broker tool will use default if not specified.
 ### *recipe_modules* / [bcid\_verifier](/recipe_modules/bcid_verifier)
 
-[DEPS](/recipe_modules/bcid_verifier/__init__.py#5): [file](#recipe_modules-file), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/bcid_verifier/__init__.py#5): [cipd](#recipe_modules-cipd), [file](#recipe_modules-file), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
 
-API for interacting with BCID Verifier via the OnePlatform API.
+API for interacting with Software Verifier.
 
 To successfully authenticate to this API, you must have the
 https://www.googleapis.com/auth/bcid_verify OAuth scope.
 
-#### **class [BcidVerifierApi](/recipe_modules/bcid_verifier/api.py#20)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
+#### **class [BcidVerifierApi](/recipe_modules/bcid_verifier/api.py#21)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
 
-API for interacting with the BCID for Software One Platform API.
+API for interacting with Software Verifier
 
-&mdash; **def [verify\_provenance](/recipe_modules/bcid_verifier/api.py#60)(self, bcid_policy: str, artifact_path: str, attestation_path: str, log_only_mode: bool=False):**
+&emsp; **@property**<br>&mdash; **def [bcid\_verifier\_path](/recipe_modules/bcid_verifier/api.py#29)(self):**
 
-Calls the BCID Software Verifier OnePlatformAPI to verify provenance for an
+Returns the path to the bcid_verifier binary.
+
+When the property is accessed the first time, the latest stable, released
+version of bcid_verifier will be installed using CIPD.
+
+&mdash; **def [verify\_provenance](/recipe_modules/bcid_verifier/api.py#47)(self, bcid_policy: str, artifact_path: str, attestation_path: str, log_only_mode: bool=False):**
+
+Calls the BCID Software Verifier API to verify provenance for an
 artifact.
 
 Args:
-  bcid_policy: Name of the BCID policy name to verify provenance with.
-  artifact_path: local file path to the artifact to be verified.
-  attestation_path: local file path to the attestation (intoto.jsonl) file
+  * bcid_policy: Name of the BCID policy name to verify provenance with.
+  * artifact_path: Local file path to the artifact to be verified.
+  * attestation_path: Local file path to the attestation (intoto.jsonl) file
     for the provided artifact.
-  log_only_mode:
+  * log_only_mode:
     Whether to verify provenance in log only mode, and skip enforcement.
     Enforcement fails closed, and if unable to receive a response from
-    Software Verifier, it will constitute a rejection.
+    Software Verifier, it will constitute a rejection. In log only mode,
+    a failed request or a failure to verify will not be considered a
+    failure.
 ### *recipe_modules* / [buildbucket](/recipe_modules/buildbucket)
 
 [DEPS](/recipe_modules/buildbucket/__init__.py#5): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [resultdb](#recipe_modules-resultdb), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid), [warning](#recipe_modules-warning)

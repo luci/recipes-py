@@ -1,7 +1,7 @@
 # Copyright 2024 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
-"""API for interacting with BCID Verifier via the OnePlatform API.
+"""API for interacting with Software Verifier.
 
 To successfully authenticate to this API, you must have the
 https://www.googleapis.com/auth/bcid_verify OAuth scope.
@@ -9,53 +9,40 @@ https://www.googleapis.com/auth/bcid_verify OAuth scope.
 
 from recipe_engine import recipe_api
 
-# This is not used for any type of enforcement, and is a free text string which
-# describes the origin of the verification request.
-_VERIFICATION_POINT_NAME = "luci-bcid-verifier"
-# Verification Types
-_VERIFY_FOR_ENFORCEMENT = "VERIFY_FOR_ENFORCEMENT"
-_VERIFY_FOR_LOGGING = "VERIFY_FOR_LOGGING"
+# TODO: b/378784466 - Use this to set the version.
+# Usage of the bcid_verifier recipe_module will have significant downstream
+# impact and to avoid any production outage, we pin the latest known good build
+# of the tool here. Upstream changes are intentionally left out.
+# _LATEST_STABLE_VERSION = 'git_revision:44e2461314c93f1dd5fc3cd12b00a575e660f090'
 
+VERIFY_FOR_ENFORCEMENT = "VERIFY_FOR_ENFORCEMENT"
+VERIFY_FOR_LOGGING = "VERIFY_FOR_LOGGING"
 
 class BcidVerifierApi(recipe_api.RecipeApi):
-  """API for interacting with the BCID for Software One Platform API."""
+  """API for interacting with Software Verifier"""
 
   def __init__(self, **kwargs):
     super().__init__(**kwargs)
+    self._verifier_bin = None
+    self.verification_mode = VERIFY_FOR_ENFORCEMENT
 
-    self.verification_mode = _VERIFY_FOR_ENFORCEMENT
+  @property
+  def bcid_verifier_path(self):
+    """Returns the path to the bcid_verifier binary.
 
-  def _form_request_data(
-      self,
-      bcid_policy: str,
-      artifact_hash: str,
-      attestation: str,
-  ) -> dict:
+    When the property is accessed the first time, the latest stable, released
+    version of bcid_verifier will be installed using CIPD.
     """
-    Forms the HTTP request for the OnePlatform API.
-
-    Args:
-      bcid_policy: Name of the BCID policy name to verify provenance with
-      artifact_hash: The SHA256 of the artifact which is being verified.
-      attestation: The content of the artifact attestation.
-
-    Returns:
-      A dictionary of data populated with context expected by the Software
-      Verifier OnePlatform API endpoint.
-    """
-    return {
-        "resourceToVerify": bcid_policy,
-        "context": {
-            "verificationPurpose": f"{self.verification_mode}",
-            "enforcementPointName": _VERIFICATION_POINT_NAME,
-        },
-        "artifactInfo": {
-            "digests": {
-                "sha256": f"{artifact_hash}"
-            },
-            "attestations": [f"{attestation}"],
-        },
-    }
+    if self._verifier_bin is None:
+      verifier_dir = self.m.path.start_dir / 'verifier'
+      # TODO: b/378784466 - Change this to use _LATEST_STABLE_VERSION, when
+      # testing is complete.
+      ensure_file = self.m.cipd.EnsureFile().add_package(
+          'infra/tools/security/bcid_verifier/${platform}',
+          'latest')
+      self.m.cipd.ensure(verifier_dir, ensure_file)
+      self._verifier_bin = verifier_dir / 'main'
+    return self._verifier_bin
 
   def verify_provenance(
       self,
@@ -65,35 +52,34 @@ class BcidVerifierApi(recipe_api.RecipeApi):
       log_only_mode: bool = False,
   ):
     """
-    Calls the BCID Software Verifier OnePlatformAPI to verify provenance for an
+    Calls the BCID Software Verifier API to verify provenance for an
     artifact.
 
     Args:
-      bcid_policy: Name of the BCID policy name to verify provenance with.
-      artifact_path: local file path to the artifact to be verified.
-      attestation_path: local file path to the attestation (intoto.jsonl) file
+      * bcid_policy: Name of the BCID policy name to verify provenance with.
+      * artifact_path: Local file path to the artifact to be verified.
+      * attestation_path: Local file path to the attestation (intoto.jsonl) file
         for the provided artifact.
-      log_only_mode:
+      * log_only_mode:
         Whether to verify provenance in log only mode, and skip enforcement.
         Enforcement fails closed, and if unable to receive a response from
-        Software Verifier, it will constitute a rejection.
+        Software Verifier, it will constitute a rejection. In log only mode,
+        a failed request or a failure to verify will not be considered a
+        failure.
     """
     if log_only_mode:
-      self.verification_mode = _VERIFY_FOR_LOGGING
+      self.verification_mode = VERIFY_FOR_LOGGING
 
-    # Compute the SHA265 for the artifact we intend to verify.
-    artifact_hash = self.m.file.file_hash(artifact_path)
-
-    attestation_name = self.m.path.basename(attestation_path)
-    attestation_content = self.m.file.read_text(
-        f"Read provenance file: {attestation_name}", attestation_path)
-
-    request_data = self._form_request_data(
+    args = [
+        self.bcid_verifier_path,
+        '-bcid-policy',
         bcid_policy,
-        artifact_hash,
-        attestation_content,
-    )
+        '-artifact-path',
+        artifact_path,
+        '-attestation-path',
+        attestation_path,
+        'verification-mode',
+        self.verification_mode,
+    ]
 
-    # TODO: Get appropriate OAuth token and make HTTP request to OnePlatform
-    # API. Ensure that requests include a reasonable timeout and if verification
-    # is enforced, this causes a failure.
+    self.m.step('bcid_verifier: verify provenance', args)

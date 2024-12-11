@@ -23,11 +23,43 @@ def RunSteps(api):
 def GenTests(api):
   yield api.test(
       'enforce-verify',
+      api.post_check(post_process.MustRun, 'ensure_installed'),
+      api.post_check(
+          post_process.StepCommandContains,
+          'bcid_verifier: verify provenance',
+          [
+              "[START_DIR]/verifier/main",
+              "-bcid-policy",
+              "bcid_policy://default",
+              "-artifact-path",
+              "/archive_dir/artifact",
+              "-attestation-path",
+              "/archive_dir/attestation.intoto.jsonl",
+              "verification-mode",
+              "VERIFY_FOR_ENFORCEMENT",
+          ],
+      ),
       api.post_process(post_process.DropExpectation),
   )
 
   yield api.test(
       'logging-verify',
       api.properties(log_only=True),
+      api.post_check(post_process.MustRun, 'ensure_installed'),
+      api.post_check(
+          post_process.StepCommandContains,
+          'bcid_verifier: verify provenance',
+          [
+              "[START_DIR]/verifier/main",
+              "-bcid-policy",
+              "bcid_policy://default",
+              "-artifact-path",
+              "/archive_dir/artifact",
+              "-attestation-path",
+              "/archive_dir/attestation.intoto.jsonl",
+              "verification-mode",
+              "VERIFY_FOR_LOGGING",
+          ],
+      ),
       api.post_process(post_process.DropExpectation),
   )
