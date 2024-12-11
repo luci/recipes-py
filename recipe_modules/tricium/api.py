@@ -249,6 +249,10 @@ class TriciumApi(recipe_api.RecipeApi):
           # Show step results. If there are too many comments, don't include
           # them. If one analyzer fails, continue running the rest.
           for comment in results.comments:
+            suggestions = [
+              json_format.MessageToDict(s)
+              for s in comment.suggestions or ()
+            ]
             self.add_comment(
                 comment.category,
                 comment.message,
@@ -257,7 +261,7 @@ class TriciumApi(recipe_api.RecipeApi):
                 end_line=comment.end_line,
                 start_char=comment.start_char,
                 end_char=comment.end_char,
-                suggestions=comment.suggestions)
+                suggestions=suggestions)
           num_comments = len(results.comments)
           presentation.step_text = '%s comment(s)' % num_comments
           presentation.logs['result'] = self.m.proto.encode(
