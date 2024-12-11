@@ -109,10 +109,10 @@ class TriciumApi(recipe_api.RecipeApi):
 
       # convert to LUCI Finding fixes.
       fix = finding.fixes.add(description=s.get('description', ''))
-      for tr_rep in s['replacements']:
+      for tr_rep in s.get('replacements', []):
         loc = findings_pb.Location(
             gerrit_change_ref=gerrit_change_ref,
-            file_path=(tr_rep['path'] or '/COMMIT_MSG'),
+            file_path=(tr_rep.get('path', None) or '/COMMIT_MSG'),
         )
         if tr_rep.get('start_line', 0):
           loc.range.start_line = tr_rep.get('start_line', 0)
@@ -121,7 +121,7 @@ class TriciumApi(recipe_api.RecipeApi):
           loc.range.end_column = tr_rep.get('end_char', 0)
         fix.replacements.add(
             location=loc,
-            new_content=tr_rep['replacement'],
+            new_content=tr_rep.get('replacement', ''),
         )
 
     self.validate_comment(comment)
