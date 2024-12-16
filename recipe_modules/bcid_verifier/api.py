@@ -23,7 +23,6 @@ class BcidVerifierApi(recipe_api.RecipeApi):
 
   def __init__(self, **kwargs):
     super().__init__(**kwargs)
-    self._verifier_bin = None
     self.verification_mode = VERIFY_FOR_ENFORCEMENT
 
   @property
@@ -33,16 +32,8 @@ class BcidVerifierApi(recipe_api.RecipeApi):
     When the property is accessed the first time, the latest stable, released
     version of bcid_verifier will be installed using CIPD.
     """
-    if self._verifier_bin is None:
-      verifier_dir = self.m.path.start_dir / 'verifier'
-      # TODO: b/378784466 - Change this to use _LATEST_STABLE_VERSION, when
-      # testing is complete.
-      ensure_file = self.m.cipd.EnsureFile().add_package(
-          'infra/tools/security/bcid_verifier/${platform}',
-          'latest')
-      self.m.cipd.ensure(verifier_dir, ensure_file)
-      self._verifier_bin = verifier_dir / 'main'
-    return self._verifier_bin
+    return self.m.cipd.ensure_tool(
+        "infra/tools/security/bcid_verifier/${platform}", "latest")
 
   def verify_provenance(
       self,
