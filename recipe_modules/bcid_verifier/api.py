@@ -9,11 +9,10 @@ https://www.googleapis.com/auth/bcid_verify OAuth scope.
 
 from recipe_engine import recipe_api
 
-# TODO: b/378784466 - Use this to set the version.
 # Usage of the bcid_verifier recipe_module will have significant downstream
 # impact and to avoid any production outage, we pin the latest known good build
 # of the tool here. Upstream changes are intentionally left out.
-# _LATEST_STABLE_VERSION = 'git_revision:44e2461314c93f1dd5fc3cd12b00a575e660f090'
+_LATEST_STABLE_VERSION = 'git_revision:c83273f7e3850f045420d836d5d92d64dcad3667'
 
 VERIFY_FOR_ENFORCEMENT = "VERIFY_FOR_ENFORCEMENT"
 VERIFY_FOR_LOGGING = "VERIFY_FOR_LOGGING"
@@ -33,7 +32,7 @@ class BcidVerifierApi(recipe_api.RecipeApi):
     version of bcid_verifier will be installed using CIPD.
     """
     return self.m.cipd.ensure_tool(
-        "infra/tools/security/bcid_verifier/${platform}", "latest")
+        "infra/tools/security/bcid_verifier/${platform}", _LATEST_STABLE_VERSION)
 
   def verify_provenance(
       self,

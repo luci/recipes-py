@@ -450,18 +450,18 @@ API for interacting with Software Verifier.
 To successfully authenticate to this API, you must have the
 https://www.googleapis.com/auth/bcid_verify OAuth scope.
 
-#### **class [BcidVerifierApi](/recipe_modules/bcid_verifier/api.py#21)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
+#### **class [BcidVerifierApi](/recipe_modules/bcid_verifier/api.py#20)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
 
 API for interacting with Software Verifier
 
-&emsp; **@property**<br>&mdash; **def [bcid\_verifier\_path](/recipe_modules/bcid_verifier/api.py#28)(self):**
+&emsp; **@property**<br>&mdash; **def [bcid\_verifier\_path](/recipe_modules/bcid_verifier/api.py#27)(self):**
 
 Returns the path to the bcid_verifier binary.
 
 When the property is accessed the first time, the latest stable, released
 version of bcid_verifier will be installed using CIPD.
 
-&mdash; **def [verify\_provenance](/recipe_modules/bcid_verifier/api.py#38)(self, bcid_policy: str, artifact_path: str, attestation_path: str, log_only_mode: bool=False):**
+&mdash; **def [verify\_provenance](/recipe_modules/bcid_verifier/api.py#37)(self, bcid_policy: str, artifact_path: str, attestation_path: str, log_only_mode: bool=False):**
 
 Calls the BCID Software Verifier API to verify provenance for an
 artifact.
