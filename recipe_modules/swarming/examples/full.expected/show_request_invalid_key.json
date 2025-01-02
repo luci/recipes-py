@@ -263,7 +263,7 @@
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output (invalid)@swarming: failed to get task request. task ID = 0: failed to call TaskRequest: googleapi: Error 400: 0 is an invalid key.@@@",
       "@@@STEP_LOG_END@json.output (invalid)@@@",
-      "@@@STEP_LOG_LINE@json.output (exception)@No JSON object could be decoded@@@",
+      "@@@STEP_LOG_LINE@json.output (exception)@Expecting value: line 1 column 1 (char 0)@@@",
       "@@@STEP_LOG_END@json.output (exception)@@@",
       "@@@STEP_EXCEPTION@@@"
     ]

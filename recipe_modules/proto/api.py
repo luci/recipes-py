@@ -63,9 +63,7 @@ class ProtoOutputPlaceholder(recipe_util.OutputPlaceholder):
       invalid_error = str(ex)
       jsonErrPrefix = 'Failed to load JSON: '
       if test.enabled and invalid_error.startswith(jsonErrPrefix):
-        invalid_error = (
-            jsonErrPrefix +
-            recipe_util.unify_json_load_err(invalid_error[len(jsonErrPrefix):]))
+        invalid_error = jsonErrPrefix + invalid_error[len(jsonErrPrefix):]
 
     if self.add_json_log is True or (
         self.add_json_log == 'on_failure' and presentation.status != 'SUCCESS'):

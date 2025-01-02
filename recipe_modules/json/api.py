@@ -102,8 +102,6 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
       valid = True
     except ValueError as ex:
       invalid_error = str(ex)
-      if test.enabled:
-        invalid_error = recipe_util.unify_json_load_err(invalid_error)
 
     if self.add_json_log is True or (
         self.add_json_log == 'on_failure' and presentation.status != 'SUCCESS'):

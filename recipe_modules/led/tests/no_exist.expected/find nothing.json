@@ -8,7 +8,7 @@
     "name": "led get-builder",
     "~followup_annotations": [
       "@@@STEP_LOG_END@proto.output (invalid)@@@",
-      "@@@STEP_LOG_LINE@proto.output (exception)@Failed to load JSON: No JSON object could be decoded@@@",
+      "@@@STEP_LOG_LINE@proto.output (exception)@Failed to load JSON: Expecting value: line 1 column 1 (char 0).@@@",
       "@@@STEP_LOG_END@proto.output (exception)@@@",
       "@@@STEP_FAILURE@@@"
     ]
@@ -22,7 +22,7 @@
     "name": "led get-build",
     "~followup_annotations": [
       "@@@STEP_LOG_END@proto.output (invalid)@@@",
-      "@@@STEP_LOG_LINE@proto.output (exception)@Failed to load JSON: No JSON object could be decoded@@@",
+      "@@@STEP_LOG_LINE@proto.output (exception)@Failed to load JSON: Expecting value: line 1 column 1 (char 0).@@@",
       "@@@STEP_LOG_END@proto.output (exception)@@@",
       "@@@STEP_FAILURE@@@"
     ]
@@ -36,7 +36,7 @@
     "name": "led get-swarm",
     "~followup_annotations": [
       "@@@STEP_LOG_END@proto.output (invalid)@@@",
-      "@@@STEP_LOG_LINE@proto.output (exception)@Failed to load JSON: No JSON object could be decoded@@@",
+      "@@@STEP_LOG_LINE@proto.output (exception)@Failed to load JSON: Expecting value: line 1 column 1 (char 0).@@@",
       "@@@STEP_LOG_END@proto.output (exception)@@@",
       "@@@STEP_FAILURE@@@"
     ]

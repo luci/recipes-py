@@ -2525,16 +2525,16 @@ Args:
 
 Methods for producing and consuming JSON.
 
-#### **class [JsonApi](/recipe_modules/json/api.py#132)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
+#### **class [JsonApi](/recipe_modules/json/api.py#130)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
 
-&emsp; **@staticmethod**<br>&mdash; **def [dumps](/recipe_modules/json/api.py#133)(\*args, \*\*kwargs):**
+&emsp; **@staticmethod**<br>&mdash; **def [dumps](/recipe_modules/json/api.py#131)(\*args, \*\*kwargs):**
 
 Works like `json.dumps`.
 
 By default this sorts dictionary keys (see discussion in `input()`), but you
 can pass sort_keys=False to override this behavior.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#160)**<br>&mdash; **def [input](/recipe_modules/json/api.py#160)(self, data, sort_keys=True):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#160)**<br>&mdash; **def [input](/recipe_modules/json/api.py#158)(self, data, sort_keys=True):**
 
 A placeholder which will expand to a file path containing <data>.
 
@@ -2544,11 +2544,11 @@ so this is no longer necessary for determinism, and in some cases (such as
 SPDX), the 'pretty' output is in non-alphabetical order. The default remains
 `True`, however, to avoid breaking all downstream tests.
 
-&mdash; **def [is\_serializable](/recipe_modules/json/api.py#152)(self, obj):**
+&mdash; **def [is\_serializable](/recipe_modules/json/api.py#150)(self, obj):**
 
 Returns True if the object is JSON-serializable.
 
-&emsp; **@staticmethod**<br>&mdash; **def [loads](/recipe_modules/json/api.py#142)(data, \*\*kwargs):**
+&emsp; **@staticmethod**<br>&mdash; **def [loads](/recipe_modules/json/api.py#140)(data, \*\*kwargs):**
 
 Works like `json.loads`, but:
 * strips out unicode objects (replacing them with utf8-encoded str
@@ -2556,7 +2556,7 @@ Works like `json.loads`, but:
 * replaces 'int-like' floats with ints. These are floats whose magnitude
   is less than (2**53-1) and which don't have a decimal component.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#160)**<br>&mdash; **def [output](/recipe_modules/json/api.py#172)(self, add_json_log=True, name=None, leak_to=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#160)**<br>&mdash; **def [output](/recipe_modules/json/api.py#170)(self, add_json_log=True, name=None, leak_to=None):**
 
 A placeholder which will expand to '/tmp/file'.
 
@@ -2569,7 +2569,7 @@ Args:
     to a step link named `name`. If this is 'on_failure', only create this
     log when the step has a non-SUCCESS status.
 
-&mdash; **def [read](/recipe_modules/json/api.py#187)(self, name, path, add_json_log=True, output_name=None, \*\*kwargs):**
+&mdash; **def [read](/recipe_modules/json/api.py#185)(self, name, path, add_json_log=True, output_name=None, \*\*kwargs):**
 
 Returns a step that reads a JSON file.
 
@@ -3390,9 +3390,9 @@ Returns a read-write copy of all of the properties.
 Methods for producing and consuming protobuf data to/from steps and the
 filesystem.
 
-#### **class [ProtoApi](/recipe_modules/proto/api.py#83)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
+#### **class [ProtoApi](/recipe_modules/proto/api.py#81)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
 
-&emsp; **@staticmethod**<br>&mdash; **def [decode](/recipe_modules/proto/api.py#161)(data, msg_class, codec, \*\*decoding_kwargs):**
+&emsp; **@staticmethod**<br>&mdash; **def [decode](/recipe_modules/proto/api.py#159)(data, msg_class, codec, \*\*decoding_kwargs):**
 
 Decodes a proto message from a string.
 
@@ -3404,7 +3404,7 @@ Args:
 
 Returns the decoded proto object.
 
-&emsp; **@staticmethod**<br>&mdash; **def [encode](/recipe_modules/proto/api.py#146)(proto_msg, codec, \*\*encoding_kwargs):**
+&emsp; **@staticmethod**<br>&mdash; **def [encode](/recipe_modules/proto/api.py#144)(proto_msg, codec, \*\*encoding_kwargs):**
 
 Encodes a proto message to a string.
 
@@ -3415,7 +3415,7 @@ Args:
 
 Returns the encoded proto message.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#160)**<br>&mdash; **def [input](/recipe_modules/proto/api.py#85)(self, proto_msg, codec, \*\*encoding_kwargs):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#160)**<br>&mdash; **def [input](/recipe_modules/proto/api.py#83)(self, proto_msg, codec, \*\*encoding_kwargs):**
 
 A placeholder which will expand to a file path containing the encoded
 `proto_msg`.
@@ -3439,7 +3439,7 @@ Args:
 
 Returns an InputPlaceholder.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#160)**<br>&mdash; **def [output](/recipe_modules/proto/api.py#116)(self, msg_class, codec, add_json_log=True, name=None, leak_to=None, \*\*decoding_kwargs):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#160)**<br>&mdash; **def [output](/recipe_modules/proto/api.py#114)(self, msg_class, codec, add_json_log=True, name=None, leak_to=None, \*\*decoding_kwargs):**
 
 A placeholder which expands to a file path and then reads an encoded
 proto back from that location when the step finishes.
