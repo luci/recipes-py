@@ -36,7 +36,7 @@ ALLOWED_MODULES = [
     r'string',
     r'textwrap',
     r'typing',
-    r'urlparse',
+    r'urllib\.parse',
     r'zlib',
 
     # non stdlib
