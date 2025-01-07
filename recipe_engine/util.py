@@ -4,14 +4,11 @@
 
 from io import StringIO
 
-import contextlib
 import datetime
 import functools
 import logging
-import os
 import re
 import gevent
-import traceback
 
 from builtins import map, range
 from past.builtins import basestring
@@ -261,11 +258,3 @@ def fix_json_object(obj):
     return new_obj
 
   return obj
-
-
-def format_ex(ex):
-  """Return the same format of string representation for Exception objects in
-  both python2 and python3.
-  """
-  return "%s(%s)" % (type(ex).__name__, ', '.join(
-      "'%s'" % str(arg) for arg in ex.args))

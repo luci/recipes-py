@@ -572,7 +572,7 @@ class RecipeEngine:
       # TODO(iannucci): differentiate infra failure and user failure; will
       # result in expectation changes, but that should be safe in its own CL.
       result.status = common_pb2.INFRA_FAILURE
-      result.summary_markdown = 'Uncaught exception: ' + util.format_ex(ex)
+      result.summary_markdown = 'Uncaught exception: ' + repr(ex)
       return result, uncaught_exception
 
     # TODO(iannucci): Don't skip this during tests (but maybe filter it out from
@@ -583,7 +583,7 @@ class RecipeEngine:
       except Exception as ex:
         _log_crash(stream_engine, 'setup_build')
         result.status = common_pb2.INFRA_FAILURE
-        result.summary_markdown = 'Uncaught Exception: ' + util.format_ex(ex)
+        result.summary_markdown = 'Uncaught Exception: ' + repr(ex)
         return result, uncaught_exception
 
     try:
@@ -663,13 +663,13 @@ class RecipeEngine:
 
       _log_crash(stream_engine, 'Uncaught exception')
       result.status = common_pb2.INFRA_FAILURE
-      result.summary_markdown = 'Uncaught Exception: ' + util.format_ex(ex)
+      result.summary_markdown = 'Uncaught Exception: ' + repr(ex)
       uncaught_exception = sys.exc_info()
 
     except CrashEngine as ex:
       _log_crash(stream_engine, 'Engine Crash')
       result.status = common_pb2.INFRA_FAILURE
-      result.summary_markdown = util.format_ex(ex)
+      result.summary_markdown = repr(ex)
 
     return result, uncaught_exception
 

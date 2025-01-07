@@ -40,7 +40,7 @@
   },
   {
     "failure": {
-      "humanReason": "Uncaught Exception: AttributeError(''str' object has no attribute 'm'')"
+      "humanReason": "Uncaught Exception: AttributeError(\"'str' object has no attribute 'm'\")"
     },
     "name": "$result"
   }

@@ -39,7 +39,7 @@
   },
   {
     "failure": {
-      "humanReason": "Uncaught Exception: ExceptionGroup('multiple exceptions', '[ValueError('BAD DOGE'), TypeError('BAD DOGE')]')"
+      "humanReason": "Uncaught Exception: ExceptionGroup('multiple exceptions', [ValueError('BAD DOGE'), TypeError('BAD DOGE')])"
     },
     "name": "$result"
   }

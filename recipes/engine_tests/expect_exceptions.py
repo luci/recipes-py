@@ -33,4 +33,4 @@ def GenTests(api):
       api.post_process(
           post_process.SummaryMarkdown,
           "Uncaught Exception: ExceptionGroup('multiple exceptions', "
-          "'[ValueError('BAD DOGE'), TypeError('BAD DOGE')]')"))
+          "[ValueError('BAD DOGE'), TypeError('BAD DOGE')])"))
