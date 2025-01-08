@@ -3,14 +3,14 @@
 # that can be found in the LICENSE file.
 """Runs a function but defers the result until a later time."""
 
+from collections.abc import Sequence
 import contextlib
 import dataclasses
 import functools
 import traceback
-from typing import Any, Callable, Generic, Sequence, TypeVar
+from typing import Any, Callable, Generator, Generic, TypeVar
 
 from recipe_engine import recipe_api
-
 
 T = TypeVar('T')
 
@@ -49,11 +49,11 @@ class DeferredResult(Generic[T]):
 
 
 class DeferContext:
-  def __init__(self, api, *args, **kwargs):
+  def __init__(self, api: recipe_api.RecipeApi, *args, **kwargs):
     super().__init__(*args, **kwargs)
     self.api = api
-    self.results = []
-    self.suppressed_results = []
+    self.results: list[DeferredResult[T]] = []
+    self.suppressed_results: list[DeferredResult[T]] = []
 
   def __call__(
       self, callable: Callable[..., T], *args, **kwargs
@@ -63,14 +63,14 @@ class DeferContext:
     self.results.append(result)
     return result
 
-  def is_ok(self):
+  def is_ok(self) -> bool:
     """Return True iff all results passed."""
     for result in self.results:
       if not result.is_ok():
         return False
     return True
 
-  def suppress(self):
+  def suppress(self) -> None:
     """Suppress errors from existing results, unless they're the only errors.
 
     This is intended to be used when there was a previous failure, but the
@@ -89,7 +89,7 @@ class DeferContext:
     self.suppressed_results.extend(self.results)
     self.results.clear()
 
-  def collect(self, step_name: str | None = None):
+  def collect(self, step_name: str | None = None) -> None:
     """Raise all deferred failures.
 
     Only raise failures from suppressed steps if there are no failures in
@@ -127,7 +127,10 @@ class DeferApi(recipe_api.RecipeApi):
   DeferredResult = DeferredResult
 
   @contextlib.contextmanager
-  def context(self, collect_step_name: str | None = None):
+  def context(
+      self,
+      collect_step_name: str | None = None,
+  ) -> Generator[DeferContext, None, None]:
     """Creates a context that tracks deferred calls.
 
     Usage:
@@ -203,7 +206,7 @@ class DeferApi(recipe_api.RecipeApi):
     failures = [x for x in results if not x.is_ok()]
 
     if step_name:
-      traces_by_name = {}
+      traces_by_name: dict[str, str] = {}
       for result in failures:
         name = repr(result._exc)
         traces_by_name.setdefault(name, [])

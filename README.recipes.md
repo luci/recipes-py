@@ -1763,7 +1763,7 @@ https://docs.python.org/3/tutorial/errors.html#raising-and-handling-multiple-unr
 If there are no failures, api.defer.collect() returns a Sequence of the
 return values of the functions passed into api.defer().
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/defer/api.py#168)(self, func: Callable[(..., T)], \*args, \*\*kwargs):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/defer/api.py#171)(self, func: Callable[(..., T)], \*args, \*\*kwargs):**
 
 Calls func(*args, **kwargs) but catches all exceptions.
 
@@ -1774,7 +1774,7 @@ contains that exception.
 The DeferredResult is expected to be passed into api.defer.collect(), but
 DeferredResult.result() does similar processing.
 
-&mdash; **def [collect](/recipe_modules/defer/api.py#185)(self, results: Sequence[DeferredResult], step_name: (str | None)=None):**
+&mdash; **def [collect](/recipe_modules/defer/api.py#188)(self, results: Sequence[DeferredResult], step_name: (str | None)=None):**
 
 Raise any exceptions in the given list of DeferredResults.
 
