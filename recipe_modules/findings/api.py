@@ -133,11 +133,11 @@ class FindingsAPI(recipe_api.RecipeApi):
                          f'got {loc.range.end_column}')
       elif loc.range.start_line > loc.range.end_line or (
           loc.range.start_line == loc.range.end_line and
-          loc.range.start_column >= loc.range.end_column and
+          loc.range.start_column > loc.range.end_column and
           loc.range.end_column > 0):
         raise ValueError(
-            '(start_line, start_column) must be after (end_line, end_column), '
-            f'got ({loc.range.start_line}, {loc.range.start_column}) .. '
+            '(start_line, start_column) must not be after (end_line, end_column'
+            f'), got ({loc.range.start_line}, {loc.range.start_column}) .. '
             f'({loc.range.end_line}, {loc.range.end_column})')
 
   def populate_source_from_current_build(

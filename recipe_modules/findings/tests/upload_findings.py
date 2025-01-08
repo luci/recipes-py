@@ -399,7 +399,7 @@ def GenTests(api):
                  )
              ])) + api.expect_exception('ValueError') + api.post_process(
                  post_process.SummaryMarkdownRE,
-                 r'\(start_line, start_column\) must be after '
+                 r'\(start_line, start_column\) must not be after '
                  r'\(end_line, end_column\)') +
          api.post_process(post_process.DropExpectation))
 
