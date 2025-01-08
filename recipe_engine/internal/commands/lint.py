@@ -57,7 +57,16 @@ def ImportsTest(recipe, allowed_modules):
 
   for _, val in sorted(recipe.global_symbols.items()):
     if isinstance(val, types.ModuleType):
+      while True:
+        attrs = [x for x in dir(val) if not x.startswith('__')]
+        if len(attrs) != 1:
+          break
+        mod = getattr(val, attrs[0])
+        if not isinstance(mod, types.ModuleType):
+          break
+        val = mod
       module_name = val.__name__
+
       for pattern in allowed_modules:
         if pattern.match(module_name):
           break
