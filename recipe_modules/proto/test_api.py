@@ -6,8 +6,19 @@ from google.protobuf import message
 
 from recipe_engine import recipe_test_api
 
+from .api import ProtoApi
+
 
 class ProtoTestApi(recipe_test_api.RecipeTestApi):
+  @staticmethod
+  def encode(proto_msg, codec, **encoding_kwargs): # pragma: no cover
+    """Same as `ProtoApi.encode`"""
+    return ProtoApi.encode(proto_msg, codec, **encoding_kwargs)
+
+  @staticmethod
+  def decode(data, msg_class, codec, **decoding_kwargs): # pragma: no cover
+    """Same as `ProtoApi.decode`"""
+    return ProtoApi.decode(data, msg_class, codec, **decoding_kwargs)
 
   @recipe_test_api.placeholder_step_data
   @staticmethod
