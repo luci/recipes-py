@@ -4788,7 +4788,7 @@ Validates comment to comply with Tricium/Gerrit requirements.
 
 Raise ValueError on the first detected problem.
 
-&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#177)(self):**
+&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#177)(self, upload_findings=True):**
 
 Emit the results accumulated by `add_comment` and `run_legacy`.
 ### *recipe_modules* / [url](/recipe_modules/url)

@@ -174,7 +174,7 @@ class TriciumApi(recipe_api.RecipeApi):
     if finding and finding not in self._findings:
       self._findings.append(finding)
 
-  def write_comments(self):
+  def write_comments(self, upload_findings=True):
     """Emit the results accumulated by `add_comment` and `run_legacy`."""
     results = Data.Results()
     results.comments.extend(self._comments)
@@ -196,7 +196,7 @@ class TriciumApi(recipe_api.RecipeApi):
     step.presentation.properties['tricium'] = self.m.proto.encode(
         results, 'JSONPB', indent=0, preserving_proto_field_name=False)
 
-    if self.m.resultdb.enabled and self._findings:
+    if self.m.resultdb.enabled and upload_findings and self._findings:
       self.m.findings.upload_findings(self._findings)
 
     return step
