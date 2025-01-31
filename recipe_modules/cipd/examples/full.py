@@ -7,6 +7,7 @@ from recipe_engine.config import List, Single, ConfigList, ConfigGroup
 from recipe_engine.recipe_api import Property
 
 DEPS = [
+  'buildbucket',
   'cipd',
   'json',
   'path',
@@ -188,11 +189,11 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
 
 
 def GenTests(api):
-  yield api.test('basic', api.platform('linux', 64))
+  yield api.test('basic', api.buildbucket.ci_build(), api.platform('linux', 64))
 
-  yield api.test('mac64', api.platform('mac', 64))
+  yield api.test('mac64', api.buildbucket.ci_build(), api.platform('mac', 64))
 
-  yield api.test('win64', api.platform('win', 64))
+  yield api.test('win64', api.buildbucket.ci_build(), api.platform('win', 64))
 
   yield api.test(
       'max-threads',

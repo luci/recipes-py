@@ -232,6 +232,10 @@ class Metadata:
       return ['-metadata-from-file', '%s:%s' % (key, self._value_from_file)]
     return ['-metadata', '%s:%s' % (key, self._value)]
 
+  @property
+  def key(self):
+    return self._key
+
 
 class UnrecognizedArchitecture(ValueError):
   pass
@@ -486,8 +490,7 @@ class CIPDApi(recipe_api.RecipeApi):
     result = step_result.json.output['result']
     return self.Pin(**result)
 
-  @staticmethod
-  def _metadata_opts(refs=None, tags=None, metadata=None, pkg_vars=None):
+  def _metadata_opts(self, refs=None, tags=None, metadata=None, pkg_vars=None):
     """Computes a list of -ref, -tag, -metadata and -pkg-var CLI flags."""
     refs = [] if refs is None else refs
     tags = {} if tags is None else tags
@@ -497,6 +500,11 @@ class CIPDApi(recipe_api.RecipeApi):
     check_dict_type('tags', tags, basestring, basestring)
     check_list_type('metadata', metadata, Metadata)
     check_dict_type('pkg_vars', pkg_vars, basestring, basestring)
+
+    build_id = str(self.m.buildbucket.build.id)
+    if all(x.key != 'build_id' for x in metadata):
+      metadata.append(Metadata('build_id', build_id))
+
     ret = []
     for ref in refs:
       ret.extend(['-ref', ref])
