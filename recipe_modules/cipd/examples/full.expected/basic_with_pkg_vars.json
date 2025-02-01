@@ -516,8 +516,6 @@
       "fake-package-path",
       "-hash-algo",
       "sha256",
-      "-metadata",
-      "build_id:0",
       "-pkg-var",
       "pkg_var_1:pkg_val_1",
       "-pkg-var",

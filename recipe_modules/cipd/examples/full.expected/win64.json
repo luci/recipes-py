@@ -696,8 +696,6 @@
       "fake-package-path",
       "-hash-algo",
       "sha256",
-      "-metadata",
-      "build_id:8945511751514863184",
       "-compression-level",
       "9",
       "-json-output",

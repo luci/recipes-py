@@ -516,8 +516,6 @@
       "fake-package-path",
       "-hash-algo",
       "sha256",
-      "-metadata",
-      "build_id:0",
       "-json-output",
       "/path/to/tmp/json"
     ],

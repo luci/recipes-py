@@ -378,7 +378,8 @@ class CIPDApi(recipe_api.RecipeApi):
         '-hash-algo',
         'sha256',
     ]
-    cmd.extend(self._metadata_opts(pkg_vars=pkg_vars))
+    cmd.extend(
+        self._metadata_opts(pkg_vars=pkg_vars, add_build_id_metadata=False))
     cmd.extend(self._compression_level_opts(compression_level))
 
     step_result = self._run(
@@ -490,7 +491,8 @@ class CIPDApi(recipe_api.RecipeApi):
     result = step_result.json.output['result']
     return self.Pin(**result)
 
-  def _metadata_opts(self, refs=None, tags=None, metadata=None, pkg_vars=None):
+  def _metadata_opts(self, refs=None, tags=None, metadata=None, pkg_vars=None,
+                     add_build_id_metadata=True):
     """Computes a list of -ref, -tag, -metadata and -pkg-var CLI flags."""
     refs = [] if refs is None else refs
     tags = {} if tags is None else tags
@@ -501,9 +503,10 @@ class CIPDApi(recipe_api.RecipeApi):
     check_list_type('metadata', metadata, Metadata)
     check_dict_type('pkg_vars', pkg_vars, basestring, basestring)
 
-    build_id = str(self.m.buildbucket.build.id)
-    if all(x.key != 'build_id' for x in metadata):
-      metadata.append(Metadata('build_id', build_id))
+    if add_build_id_metadata:
+      build_id = str(self.m.buildbucket.build.id)
+      if all(x.key != 'build_id' for x in metadata):
+        metadata.append(Metadata('build_id', build_id))
 
     ret = []
     for ref in refs:
