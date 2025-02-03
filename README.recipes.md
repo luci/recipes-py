@@ -4741,25 +4741,27 @@ analyzer recipes, including:
   * Recipes that accumulate comments one by one.
   * Recipes that wrap other tools and parse their output.
 
-#### **class [TriciumApi](/recipe_modules/tricium/api.py#27)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
+#### **class [TriciumApi](/recipe_modules/tricium/api.py#28)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
 
 TriciumApi provides basic support for Tricium.
 
-&mdash; **def [\_\_init\_\_](/recipe_modules/tricium/api.py#39)(self, \*\*kwargs):**
+&mdash; **def [\_\_init\_\_](/recipe_modules/tricium/api.py#40)(self, \*\*kwargs):**
 
 Sets up the API.
 
 Initializes an empty list of comments for use with
 add_comment and write_comments.
 
-&mdash; **def [add\_comment](/recipe_modules/tricium/api.py#49)(self, category, message, path, start_line=0, end_line=0, start_char=0, end_char=0, suggestions=()):**
+&mdash; **def [add\_comment](/recipe_modules/tricium/api.py#50)(self, category, message, path, start_line=0, end_line=0, start_char=0, end_char=0, suggestions=()):**
 
 Adds one comment to accumulate.
 
 For semantics of start_line, start_char, end_line, end_char, see Gerrit doc
 https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#comment-range
 
-&mdash; **def [run\_legacy](/recipe_modules/tricium/api.py#204)(self, analyzers, input_base, affected_files, commit_message, emit=True):**
+&mdash; **def [is\_binary](/recipe_modules/tricium/api.py#279)(self, path):**
+
+&mdash; **def [run\_legacy](/recipe_modules/tricium/api.py#205)(self, analyzers, input_base, affected_files, commit_message, emit=True):**
 
 Runs legacy analyzers.
 
@@ -4782,13 +4784,13 @@ Args:
     analyzers (using `add_comment()` to store comments) and legacy
     analyzers.
 
-&emsp; **@staticmethod**<br>&mdash; **def [validate\_comment](/recipe_modules/tricium/api.py#130)(comment):**
+&emsp; **@staticmethod**<br>&mdash; **def [validate\_comment](/recipe_modules/tricium/api.py#131)(comment):**
 
 Validates comment to comply with Tricium/Gerrit requirements.
 
 Raise ValueError on the first detected problem.
 
-&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#177)(self, upload_findings=True):**
+&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#178)(self, upload_findings=True):**
 
 Emit the results accumulated by `add_comment` and `run_legacy`.
 ### *recipe_modules* / [url](/recipe_modules/url)

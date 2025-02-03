@@ -21,6 +21,7 @@ def RunSteps(api):
   checkout_base = api.path.cleanup_dir / 'checkout'
   api.file.write_text('one', checkout_base / 'one.txt', 'one')
   api.file.write_text('two', checkout_base / 'foo' / 'two.txt', 'two')
+  api.file.write_text('png', checkout_base / 'image.png', 'png')
 
   analyzers = [
       api.tricium.analyzers.SPACEY,
@@ -32,7 +33,7 @@ def RunSteps(api):
   analyzers.append(api.tricium.analyzers.by_name()['Eslint'])
 
   api.tricium.run_legacy(
-      analyzers, checkout_base, ['one.py', 'foo/two.py'], commit_message='msg')
+      analyzers, checkout_base, ['one.py', 'foo/two.py', 'image.png'], commit_message='msg')
 
 
 def GenTests(api):

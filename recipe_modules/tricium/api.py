@@ -23,6 +23,7 @@ from PB.tricium.data import Data
 
 from . import legacy_analyzers
 
+BINARY_FILE_EXTENSIONS = ['.png']
 
 class TriciumApi(recipe_api.RecipeApi):
   """TriciumApi provides basic support for Tricium."""
@@ -275,6 +276,10 @@ class TriciumApi(recipe_api.RecipeApi):
     if emit:
       self.write_comments()
 
+  def is_binary(self, path):
+    _, ext = self.m.path.splitext(self.m.path.basename(path))
+    return ext in BINARY_FILE_EXTENSIONS
+
   def _write_files_data(self, affected_files, commit_message, base_dir):
     """Writes a Files input message to a file.
 
@@ -291,6 +296,7 @@ class TriciumApi(recipe_api.RecipeApi):
       # Analyzers use these fields to determine whether to skip files.
       f = files.files.add()
       f.path = path
+      f.is_binary = self.is_binary(path)
     data_dir = self._ensure_data_dir(base_dir)
     self.m.file.write_proto(
         'write files.json',
