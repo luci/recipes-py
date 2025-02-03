@@ -1107,7 +1107,7 @@ Returns True if the caller has given roles, False otherwise.
 
 &mdash; **def [add\_instance\_link](/recipe_modules/cipd/api.py#613)(self, step_result):**
 
-&mdash; **def [build](/recipe_modules/cipd/api.py#441)(self, input_dir, output_package, package_name, compression_level: (CompressionLevel | None)=None, install_mode: (InstallMode | None)=None, preserve_mtime: bool=False, preserve_writable: bool=False):**
+&mdash; **def [build](/recipe_modules/cipd/api.py#440)(self, input_dir, output_package, package_name, compression_level: (CompressionLevel | None)=None, install_mode: (InstallMode | None)=None, preserve_mtime: bool=False, preserve_writable: bool=False):**
 
 Builds, but does not upload, a cipd package from a directory.
 
@@ -1126,7 +1126,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [build\_from\_pkg](/recipe_modules/cipd/api.py#418)(self, pkg_def, output_package, compression_level: (CompressionLevel | None)=None):**
+&mdash; **def [build\_from\_pkg](/recipe_modules/cipd/api.py#417)(self, pkg_def, output_package, compression_level: (CompressionLevel | None)=None):**
 
 Builds a package based on a PackageDefinition object.
 
@@ -1139,7 +1139,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#392)(self, pkg_def, output_package, pkg_vars=None, compression_level: (CompressionLevel | None)=None):**
+&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#391)(self, pkg_def, output_package, pkg_vars=None, compression_level: (CompressionLevel | None)=None):**
 
 Builds a package based on on-disk YAML package definition file.
 
@@ -1311,7 +1311,7 @@ Returns a Pin for the downloaded package.
 
 Returns the CIPD platform string, equivalent to '${platform}'.
 
-&mdash; **def [register](/recipe_modules/cipd/api.py#543)(self, package_name, package_path, refs=None, tags=None, metadata=None, verification_timeout=None):**
+&mdash; **def [register](/recipe_modules/cipd/api.py#542)(self, package_name, package_path, refs=None, tags=None, metadata=None, verification_timeout=None):**
 
 Uploads and registers package instance in the package repository.
 

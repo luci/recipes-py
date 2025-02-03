@@ -378,8 +378,7 @@ class CIPDApi(recipe_api.RecipeApi):
         '-hash-algo',
         'sha256',
     ]
-    cmd.extend(
-        self._metadata_opts(pkg_vars=pkg_vars, add_build_id_metadata=False))
+    cmd.extend(self._metadata_opts(pkg_vars=pkg_vars))
     cmd.extend(self._compression_level_opts(compression_level))
 
     step_result = self._run(
@@ -492,7 +491,7 @@ class CIPDApi(recipe_api.RecipeApi):
     return self.Pin(**result)
 
   def _metadata_opts(self, refs=None, tags=None, metadata=None, pkg_vars=None,
-                     add_build_id_metadata=True):
+                     add_build_id_metadata=False):
     """Computes a list of -ref, -tag, -metadata and -pkg-var CLI flags."""
     refs = [] if refs is None else refs
     tags = {} if tags is None else tags
@@ -596,7 +595,8 @@ class CIPDApi(recipe_api.RecipeApi):
         '-hash-algo',
         'sha256',
     ]
-    cmd.extend(self._metadata_opts(refs, tags, metadata, pkg_vars))
+    cmd.extend(self._metadata_opts(refs, tags, metadata, pkg_vars,
+                                   add_build_id_metadata=True))
     cmd.extend(self._compression_level_opts(compression_level))
     cmd.extend(self._verification_timeout_opts(verification_timeout))
 

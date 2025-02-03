@@ -476,8 +476,6 @@
       "cipd",
       "pkg-register",
       "fake-package-path",
-      "-metadata",
-      "build_id:0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -526,8 +524,6 @@
       "cipd",
       "pkg-register",
       "fake-package-path",
-      "-metadata",
-      "build_id:0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -585,8 +581,6 @@
       "dead:beaf",
       "-tag",
       "more:value",
-      "-metadata",
-      "build_id:0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -618,8 +612,6 @@
       "any",
       "-ref",
       "some",
-      "-metadata",
-      "build_id:0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -722,8 +714,6 @@
       "fake-package",
       "-version",
       "latest",
-      "-metadata",
-      "build_id:0",
       "-metadata",
       "key1:val1",
       "-metadata",
