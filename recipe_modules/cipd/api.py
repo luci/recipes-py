@@ -563,7 +563,7 @@ class CIPDApi(recipe_api.RecipeApi):
       The CIPDApi.Pin instance.
     """
     cmd = ['pkg-register', package_path]
-    cmd.extend(self._metadata_opts(refs, tags, metadata))
+    cmd.extend(self._metadata_opts(refs, tags, metadata, add_build_id_metadata=True))
     cmd.extend(self._verification_timeout_opts(verification_timeout))
 
     step_result = self._run(

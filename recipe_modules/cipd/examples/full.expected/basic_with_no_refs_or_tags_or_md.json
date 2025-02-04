@@ -476,6 +476,8 @@
       "cipd",
       "pkg-register",
       "fake-package-path",
+      "-metadata",
+      "build_id:0",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -524,6 +526,8 @@
       "cipd",
       "pkg-register",
       "fake-package-path",
+      "-metadata",
+      "build_id:0",
       "-json-output",
       "/path/to/tmp/json"
     ],
