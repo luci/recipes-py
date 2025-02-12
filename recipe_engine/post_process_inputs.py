@@ -30,15 +30,12 @@ class Command(list):
     [re.compile('o$'), 'bar', re.compile('^b')]
          in Command(['foo', 'bar', 'baz'])
 
-  You may also provide a literal `Ellipsis` in the list to mean "zero or more
+  You may also provide a literal `...` in the list to mean "zero or more
   tokens here" to allow matching commands with gaps between matching parts.
 
   For example, this would return True:
-    ['foo', Ellipsis, 'bar'] in Command(['foo', 'monkey', 'stuff, 'bar'])
-    ['foo', Ellipsis, 'bar'] in Command(['foo', 'bar'])
-
-  TODO(iannucci): when recipe engine is in python3, update this to specify `...`
-  instead.
+    ['foo', ..., 'bar'] in Command(['foo', 'monkey', 'stuff, 'bar'])
+    ['foo', ..., 'bar'] in Command(['foo', 'bar'])
   """
   def __contains__(self, item):
     # Get a function that can be used for matching against an element

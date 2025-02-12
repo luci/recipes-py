@@ -131,6 +131,7 @@
   * [engine_tests/proto_output_properties](#recipes-engine_tests_proto_output_properties) &mdash; Tests that output properties can be a proto message.
   * [engine_tests/proto_properties](#recipes-engine_tests_proto_properties)
   * [engine_tests/recipe_paths](#recipes-engine_tests_recipe_paths) &mdash; Tests that recipes have access to names, resources and their repo.
+  * [engine_tests/recipe_test_data](#recipes-engine_tests_recipe_test_data) &mdash; Tests that we can pass data via api.
   * [engine_tests/sort_properties](#recipes-engine_tests_sort_properties) &mdash; Tests that step presentation properties can be ordered.
   * [engine_tests/undeclared_method](#recipes-engine_tests_undeclared_method)
   * [engine_tests/unicode](#recipes-engine_tests_unicode)
@@ -5541,6 +5542,14 @@ Tests that output properties can be a proto message.
 Tests that recipes have access to names, resources and their repo.
 
 &mdash; **def [RunSteps](/recipes/engine_tests/recipe_paths.py#12)(api):**
+### *recipes* / [engine\_tests/recipe\_test\_data](/recipes/engine_tests/recipe_test_data.py)
+
+[DEPS](/recipes/engine_tests/recipe_test_data.py#9): [step](#recipe_modules-step)
+
+
+Tests that we can pass data via api.recipe_test_data.
+
+&mdash; **def [RunSteps](/recipes/engine_tests/recipe_test_data.py#14)(api):**
 ### *recipes* / [engine\_tests/sort\_properties](/recipes/engine_tests/sort_properties.py)
 
 [DEPS](/recipes/engine_tests/sort_properties.py#7): [step](#recipe_modules-step)

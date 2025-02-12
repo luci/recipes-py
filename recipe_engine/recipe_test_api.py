@@ -6,6 +6,7 @@ import inspect
 from collections import defaultdict
 from collections import namedtuple
 from functools import reduce
+from os import stat
 
 from past.builtins import basestring
 
@@ -632,6 +633,33 @@ class RecipeTestApi:
     This is the identity of the + operator for combining TestData.
     """
     return TestData()
+
+  @staticmethod
+  def recipe_test_data(**kwargs) -> TestData:
+    """Returns TestData which gets plumbed through to RunSteps' `api`.
+
+    Example:
+
+       def RunSteps(api):
+         mock_data = None
+         if api._test_data.enabled:
+           mock_data = api._test_data.get('mock_data', None)
+
+         api.m.something(..., test_data=mock_data)
+
+       def GenTests(api):
+         # mock_data is 'a'
+         yield api.test('a', api.recipe_test_data(mock_data='a'))
+
+         # mock_data is 'b'
+         yield api.test('b', api.recipe_test_data(mock_data='b'))
+
+         # mock_data is None
+         yield api.test('c')
+    """
+    ret = TestData()
+    ret.mod_data[None].update(kwargs)
+    return ret
 
   @staticmethod
   def _step_data(name, *data, **kwargs):
