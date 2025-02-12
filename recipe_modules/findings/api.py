@@ -2,8 +2,9 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import gzip
 import os
+import struct
+import zlib
 
 from recipe_engine import recipe_api
 
@@ -19,6 +20,25 @@ class FindingsAPI(recipe_api.RecipeApi):
 
   # file path used in the finding location to represent commit message.
   COMMIT_MESSAGE_FILE_PATH = '/COMMIT_MSG'
+
+  @staticmethod
+  def _gzip_compress_deterministic(data: bytes) -> bytes:
+    """This is a copy of gzip.compress from python3.13 which is deterministic.
+
+    In 3.11 a regression was introduced which included the "OS" gzip header bit
+    set to the current OS, making blobs returned from gzip non-deterministic
+    across platforms, even with mtime=0.
+
+    TODO: This can be removed and replaced with `gzip.compress` once recipes are
+    on python >3.11.
+    """
+    # Wbits=31 automatically includes a gzip header and trailer.
+    gzip_data = zlib.compress(data, level=9, wbits=31)
+    mtime = 0
+    # Reuse gzip header created by zlib, replace mtime and OS byte for
+    # consistency.
+    header = struct.pack("<4sLBB", gzip_data, int(mtime), gzip_data[8], 255)
+    return header + gzip_data[10:]
 
   def upload_findings(
       self,
@@ -58,7 +78,8 @@ class FindingsAPI(recipe_api.RecipeApi):
       presentation.step_text = f'artifact_id: {artifact_id}'
       presentation.logs['findings.json'] = self.m.proto.encode(
           findings, 'JSONPB')
-      contents = gzip.compress(self.m.proto.encode(findings, 'BINARY'), mtime=0)
+      contents = self._gzip_compress_deterministic(
+          self.m.proto.encode(findings, 'BINARY'))
       self.m.resultdb.upload_invocation_artifacts(
           {
               artifact_id: {

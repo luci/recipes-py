@@ -86,7 +86,7 @@
       }
     },
     "name": "upload 1 findings to ResultDB.upload_invocation_artifacts",
-    "stdin": "{\"requests\": [{\"artifact\": {\"artifactId\": \"findings-00000000-0000-0000-0000-000000001337\", \"contentType\": \"application/vnd.google.protobuf+gzip\", \"contents\": \"H4sIAAAAAAACA+M6x8jFE1yQmpPjnJGanJ1aJOTNpc+lkJxRlJ+bWZqrW5Ralplarpeen5+ek1qcX1qUnKqXnJ8rxJqZl1aUKHHgCLsCuxBfSWpxiW5aZk6qbkFiSYYUBwejAJMEowKbFF9IRmaxAhAlKpRUFuQrMGrFc3GkZVYopKQWJwsFc1HTMiEWkBUA+xMMpdEAAAA=\"}, \"parent\": \"invocations/build:8945511751514863184\"}]}",
+    "stdin": "{\"requests\": [{\"artifact\": {\"artifactId\": \"findings-00000000-0000-0000-0000-000000001337\", \"contentType\": \"application/vnd.google.protobuf+gzip\", \"contents\": \"H4sIAAAAAAAC/+M6x8jFE1yQmpPjnJGanJ1aJOTNpc+lkJxRlJ+bWZqrW5Ralplarpeen5+ek1qcX1qUnKqXnJ8rxJqZl1aUKHHgCLsCuxBfSWpxiW5aZk6qbkFiSYYUBwejAJMEowKbFF9IRmaxAhAlKpRUFuQrMGrFc3GkZVYopKQWJwsFc1HTMiEWkBUA+xMMpdEAAAA=\"}, \"parent\": \"invocations/build:8945511751514863184\"}]}",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{}@@@",
@@ -97,7 +97,7 @@
       "@@@STEP_LOG_LINE@json.input@      \"artifact\": {@@@",
       "@@@STEP_LOG_LINE@json.input@        \"artifactId\": \"findings-00000000-0000-0000-0000-000000001337\",@@@",
       "@@@STEP_LOG_LINE@json.input@        \"contentType\": \"application/vnd.google.protobuf+gzip\",@@@",
-      "@@@STEP_LOG_LINE@json.input@        \"contents\": \"H4sIAAAAAAACA+M6x8jFE1yQmpPjnJGanJ1aJOTNpc+lkJxRlJ+bWZqrW5Ralplarpeen5+ek1qcX1qUnKqXnJ8rxJqZl1aUKHHgCLsCuxBfSWpxiW5aZk6qbkFiSYYUBwejAJMEowKbFF9IRmaxAhAlKpRUFuQrMGrFc3GkZVYopKQWJwsFc1HTMiEWkBUA+xMMpdEAAAA=\"@@@",
+      "@@@STEP_LOG_LINE@json.input@        \"contents\": \"H4sIAAAAAAAC/+M6x8jFE1yQmpPjnJGanJ1aJOTNpc+lkJxRlJ+bWZqrW5Ralplarpeen5+ek1qcX1qUnKqXnJ8rxJqZl1aUKHHgCLsCuxBfSWpxiW5aZk6qbkFiSYYUBwejAJMEowKbFF9IRmaxAhAlKpRUFuQrMGrFc3GkZVYopKQWJwsFc1HTMiEWkBUA+xMMpdEAAAA=\"@@@",
       "@@@STEP_LOG_LINE@json.input@      },@@@",
       "@@@STEP_LOG_LINE@json.input@      \"parent\": \"invocations/build:8945511751514863184\"@@@",
       "@@@STEP_LOG_LINE@json.input@    }@@@",

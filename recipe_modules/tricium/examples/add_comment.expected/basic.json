@@ -129,7 +129,7 @@
       }
     },
     "name": "upload 2 findings to ResultDB.upload_invocation_artifacts",
-    "stdin": "{\"requests\": [{\"artifact\": {\"artifactId\": \"findings-00000000-0000-0000-0000-000000001337\", \"contentType\": \"application/vnd.google.protobuf+gzip\", \"contents\": \"H4sIAAAAAAACA+NK5OItSS0uUUhOLElNzy+qFHLgMuBSSM4oys/NLM3VLUoty0wt10vPz0/PSS3OLy1KTtVLzs8VYgOrSJU4cIRdgV2IpyCxJEO/JF8/LTMnVYoHbGBuanFxYnqqAhPXfiYugcS8/JKM1CKENT5kWMOHbI2+kRQHB6MAlwSjgoiUCMx8VKu1QoSCuNzJsIkjIzUnJ18vOVmKk6MaaMdOZgURIXawoIamVj6XMFBLbibCppLKgnyhCC5PMqzi1nf29/X1DIn3DXYH+4gR5CMh7mL9ksr8An2QyQCYv8FgpQEAAA==\"}, \"parent\": \"invocations/build:8945511751514863184\"}]}",
+    "stdin": "{\"requests\": [{\"artifact\": {\"artifactId\": \"findings-00000000-0000-0000-0000-000000001337\", \"contentType\": \"application/vnd.google.protobuf+gzip\", \"contents\": \"H4sIAAAAAAAC/+NK5OItSS0uUUhOLElNzy+qFHLgMuBSSM4oys/NLM3VLUoty0wt10vPz0/PSS3OLy1KTtVLzs8VYgOrSJU4cIRdgV2IpyCxJEO/JF8/LTMnVYoHbGBuanFxYnqqAhPXfiYugcS8/JKM1CKENT5kWMOHbI2+kRQHB6MAlwSjgoiUCMx8VKu1QoSCuNzJsIkjIzUnJ18vOVmKk6MaaMdOZgURIXawoIamVj6XMFBLbibCppLKgnyhCC5PMqzi1nf29/X1DIn3DXYH+4gR5CMh7mL9ksr8An2QyQCYv8FgpQEAAA==\"}, \"parent\": \"invocations/build:8945511751514863184\"}]}",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{}@@@",
@@ -140,7 +140,7 @@
       "@@@STEP_LOG_LINE@json.input@      \"artifact\": {@@@",
       "@@@STEP_LOG_LINE@json.input@        \"artifactId\": \"findings-00000000-0000-0000-0000-000000001337\",@@@",
       "@@@STEP_LOG_LINE@json.input@        \"contentType\": \"application/vnd.google.protobuf+gzip\",@@@",
-      "@@@STEP_LOG_LINE@json.input@        \"contents\": \"H4sIAAAAAAACA+NK5OItSS0uUUhOLElNzy+qFHLgMuBSSM4oys/NLM3VLUoty0wt10vPz0/PSS3OLy1KTtVLzs8VYgOrSJU4cIRdgV2IpyCxJEO/JF8/LTMnVYoHbGBuanFxYnqqAhPXfiYugcS8/JKM1CKENT5kWMOHbI2+kRQHB6MAlwSjgoiUCMx8VKu1QoSCuNzJsIkjIzUnJ18vOVmKk6MaaMdOZgURIXawoIamVj6XMFBLbibCppLKgnyhCC5PMqzi1nf29/X1DIn3DXYH+4gR5CMh7mL9ksr8An2QyQCYv8FgpQEAAA==\"@@@",
+      "@@@STEP_LOG_LINE@json.input@        \"contents\": \"H4sIAAAAAAAC/+NK5OItSS0uUUhOLElNzy+qFHLgMuBSSM4oys/NLM3VLUoty0wt10vPz0/PSS3OLy1KTtVLzs8VYgOrSJU4cIRdgV2IpyCxJEO/JF8/LTMnVYoHbGBuanFxYnqqAhPXfiYugcS8/JKM1CKENT5kWMOHbI2+kRQHB6MAlwSjgoiUCMx8VKu1QoSCuNzJsIkjIzUnJ18vOVmKk6MaaMdOZgURIXawoIamVj6XMFBLbibCppLKgnyhCC5PMqzi1nf29/X1DIn3DXYH+4gR5CMh7mL9ksr8An2QyQCYv8FgpQEAAA==\"@@@",
       "@@@STEP_LOG_LINE@json.input@      },@@@",
       "@@@STEP_LOG_LINE@json.input@      \"parent\": \"invocations/build:8945511751514863184\"@@@",
       "@@@STEP_LOG_LINE@json.input@    }@@@",

@@ -2237,9 +2237,9 @@ Raises: file.Error.
 [DEPS](/recipe_modules/findings/__init__.py#5): [buildbucket](#recipe_modules-buildbucket), [proto](#recipe_modules-proto), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
 
 
-#### **class [FindingsAPI](/recipe_modules/findings/api.py#14)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
+#### **class [FindingsAPI](/recipe_modules/findings/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
 
-&mdash; **def [populate\_source\_from\_current\_build](/recipe_modules/findings/api.py#143)(self, location: findings_pb.Location):**
+&mdash; **def [populate\_source\_from\_current\_build](/recipe_modules/findings/api.py#164)(self, location: findings_pb.Location):**
 
 Set the location source based on the input of the current build.
 
@@ -2247,7 +2247,7 @@ This can be used for finding.location or replacement.location. Currently,
 only works for build with exactly one Gerrit change. Raise ValueError
 otherwise.
 
-&mdash; **def [upload\_findings](/recipe_modules/findings/api.py#23)(self, findings: list[findings_pb.Finding], step_name: (str | None)=None):**
+&mdash; **def [upload\_findings](/recipe_modules/findings/api.py#43)(self, findings: list[findings_pb.Finding], step_name: (str | None)=None):**
 
 Uploads code findings to ResultDB.
 
