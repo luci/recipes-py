@@ -10,7 +10,13 @@ DEPS = [
 
 
 def RunSteps(api):
-  with api.nodejs(version='6.6.6'):
+  with api.nodejs(version='17.9.9'):
+    api.step('npm', ['npm', 'version'])
+  with api.nodejs(version='18.0.0'):
+    api.step('npm', ['npm', 'version'])
+  with api.nodejs(version='18.0.666'):
+    api.step('npm', ['npm', 'version'])
+  with api.nodejs(version='23.0.0'):
     api.step('npm', ['npm', 'version'])
 
 

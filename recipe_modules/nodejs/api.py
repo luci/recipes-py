@@ -51,7 +51,7 @@ class NodeJSApi(recipe_api.RecipeApi):
     if self._installed.get(path) != version:
       pkgs = self.m.cipd.EnsureFile()
       pkgs.add_package(
-          'infra/3pp/tools/nodejs/${platform}', 'version:2@' + version)
+          'infra/3pp/tools/nodejs/${platform}', _3pp_version(version))
       self.m.cipd.ensure(path, pkgs)
       self._installed[path] = version
 
@@ -74,3 +74,100 @@ class NodeJSApi(recipe_api.RecipeApi):
     }
 
     return env, env_prefixes
+
+
+def _3pp_version(version):
+  """Returns 3pp CIPD package version given the nodejs version.
+
+  This is just a look up table. Everything <=v17 is "version:v2@". Everything
+  >=v23 is "version:v3@". In between there's a mess which we hardcode.
+  """
+  major = int(version.split('.')[0])
+  if major <= 17:
+    return 'version:2@' + version
+  if major >=23:
+    return 'version:3@' + version
+
+  KNOWN_EPOCH2_VERSIONS = [
+      '18.0.0',
+      '18.1.0',
+      '18.2.0',
+      '18.3.0',
+      '18.4.0',
+      '18.5.0',
+      '18.6.0',
+      '18.7.0',
+      '18.8.0',
+      '18.9.0',
+      '18.9.1',
+      '18.10.0',
+      '18.11.0',
+      '18.16.0',
+      '18.16.1',
+      '18.17.0',
+      '18.17.1',
+      '18.18.0',
+      '18.18.1',
+      '18.18.2',
+      '18.19.0',
+      '18.19.1',
+      '18.20.0',
+      '18.20.1',
+      '18.20.2',
+      '19.0.0',
+      '19.0.1',
+      '19.1.0',
+      '19.2.0',
+      '19.3.0',
+      '19.4.0',
+      '19.5.0',
+      '19.6.0',
+      '19.6.1',
+      '19.7.0',
+      '19.8.0',
+      '19.8.1',
+      '19.9.0',
+      '20.0.0',
+      '20.1.0',
+      '20.2.0',
+      '20.3.0',
+      '20.3.1',
+      '20.4.0',
+      '20.5.0',
+      '20.5.1',
+      '20.6.0',
+      '20.6.1',
+      '20.7.0',
+      '20.8.0',
+      '20.8.1',
+      '20.10.0',
+      '20.11.0',
+      '20.11.1',
+      '20.12.0',
+      '20.12.1',
+      '20.12.2',
+      '20.13.0',
+      '20.13.1',
+      '20.14.0',
+      '21.0.0',
+      '21.1.0',
+      '21.2.0',
+      '21.3.0',
+      '21.4.0',
+      '21.5.0',
+      '21.6.0',
+      '21.6.1',
+      '21.6.2',
+      '21.7.0',
+      '21.7.1',
+      '21.7.2',
+      '21.7.3',
+      '22.0.0',
+      '22.1.0',
+      '22.2.0',
+      '22.3.0',
+  ]
+
+  if version in KNOWN_EPOCH2_VERSIONS:
+    return 'version:2@' + version
+  return 'version:3@' + version

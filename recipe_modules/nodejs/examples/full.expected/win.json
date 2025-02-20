@@ -6,7 +6,7 @@
       "-root",
       "[CACHE]\\nodejs",
       "-ensure-file",
-      "infra/3pp/tools/nodejs/${platform} version:2@6.6.6",
+      "infra/3pp/tools/nodejs/${platform} version:2@17.9.9",
       "-max-threads",
       "0",
       "-json-output",
@@ -19,7 +19,7 @@
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
       "@@@STEP_LOG_LINE@json.output@      {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-version:2@6.6.6-\",@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-version:2@17.9.9\",@@@",
       "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/3pp/tools/nodejs/resolved-platform\"@@@",
       "@@@STEP_LOG_LINE@json.output@      }@@@",
       "@@@STEP_LOG_LINE@json.output@    ]@@@",
@@ -44,6 +44,144 @@
       ]
     },
     "name": "npm"
+  },
+  {
+    "cmd": [
+      "cipd.bat",
+      "ensure",
+      "-root",
+      "[CACHE]\\nodejs",
+      "-ensure-file",
+      "infra/3pp/tools/nodejs/${platform} version:2@18.0.0",
+      "-max-threads",
+      "0",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "infra_step": true,
+    "name": "ensure_installed (2)",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-version:2@18.0.0\",@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/3pp/tools/nodejs/resolved-platform\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "npm",
+      "version"
+    ],
+    "env": {
+      "npm_config_cache": "[CACHE]\\npmcache\\npm",
+      "npm_config_prefix": "[CACHE]\\npmcache\\pfx"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "[CACHE]\\npmcache\\pfx",
+        "[CACHE]\\nodejs"
+      ]
+    },
+    "name": "npm (2)"
+  },
+  {
+    "cmd": [
+      "cipd.bat",
+      "ensure",
+      "-root",
+      "[CACHE]\\nodejs",
+      "-ensure-file",
+      "infra/3pp/tools/nodejs/${platform} version:3@18.0.666",
+      "-max-threads",
+      "0",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "infra_step": true,
+    "name": "ensure_installed (3)",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-version:3@18.0.6\",@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/3pp/tools/nodejs/resolved-platform\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "npm",
+      "version"
+    ],
+    "env": {
+      "npm_config_cache": "[CACHE]\\npmcache\\npm",
+      "npm_config_prefix": "[CACHE]\\npmcache\\pfx"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "[CACHE]\\npmcache\\pfx",
+        "[CACHE]\\nodejs"
+      ]
+    },
+    "name": "npm (3)"
+  },
+  {
+    "cmd": [
+      "cipd.bat",
+      "ensure",
+      "-root",
+      "[CACHE]\\nodejs",
+      "-ensure-file",
+      "infra/3pp/tools/nodejs/${platform} version:3@23.0.0",
+      "-max-threads",
+      "0",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "infra_step": true,
+    "name": "ensure_installed (4)",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-version:3@23.0.0\",@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/3pp/tools/nodejs/resolved-platform\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "npm",
+      "version"
+    ],
+    "env": {
+      "npm_config_cache": "[CACHE]\\npmcache\\npm",
+      "npm_config_prefix": "[CACHE]\\npmcache\\pfx"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "[CACHE]\\npmcache\\pfx",
+        "[CACHE]\\nodejs"
+      ]
+    },
+    "name": "npm (4)"
   },
   {
     "name": "$result"
