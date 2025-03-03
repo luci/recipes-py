@@ -2,27 +2,44 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from PB.recipe_modules.recipe_engine.file.examples.copytree import Properties
+
 DEPS = [
-  "file",
-  "path",
+    "file",
+    "path",
+    "properties",
 ]
 
+PROPERTIES = Properties
 
-def RunSteps(api):
+
+def RunSteps(api, properties):
   file_names = ['a', 'aa', 'b', 'bb', 'c', 'cc']
 
-  dest = api.path.start_dir / 'some dir'
+  test_base_dir = api.path.mkdtemp()
+
+  dest = test_base_dir / 'some dir'
   api.file.ensure_directory('ensure "some dir"', dest)
   for fname in file_names:
     api.file.write_text('write %s' % fname, dest / fname, fname)
+  api.file.symlink('create symlink', dest / 'bb', dest / 'symlink_bb')
   api.file.filesizes('check filesizes', [dest / f for f in file_names])
 
-  dest2 = api.path.start_dir / 'some other dir'
+  dest2 = test_base_dir / 'some other dir'
   api.file.rmtree('make sure dest is gone', dest2)
-  api.file.copytree('copy it', dest, dest2)
 
-  paths = api.file.listdir('list new dir', dest2, test_data=file_names)
-  assert paths == [dest2 / n for n in file_names], paths
+  # Note: on test, actual copying is done by the mock method, so that the
+  # arguments don't matter.
+  api.file.copytree(
+      'copy it',
+      dest,
+      dest2,
+      symlinks=properties.symlinks,
+      hardlink=properties.hardlink)
+
+  dest_file_names = file_names + ['symlink_bb']
+  paths = api.file.listdir('list new dir', dest2, test_data=dest_file_names)
+  assert paths == [dest2 / n for n in dest_file_names], paths
 
   paths = api.file.glob_paths('glob *a', dest2, '*a', test_data=['a', 'aa'])
   assert paths == [dest2 / 'a', dest2 / 'aa'], paths
@@ -30,11 +47,13 @@ def RunSteps(api):
   for pth in paths:
     assert api.file.read_text('read %s' % pth, pth, pth.name)
 
+  assert api.file.read_text('read %s' % pth, dest2 / 'symlink_bb', 'bb')
+
   api.file.remove('rm a', dest2 / 'a')
   paths = api.file.glob_paths('glob *a', dest2, '*a', test_data=['aa'])
   assert paths == [dest2 / 'aa'], paths
 
-  api.file.rmglob('rm b*', dest2, 'b*')
+  api.file.rmglob('rm *b', dest2, '*b')
   paths = api.file.listdir('list new dir', dest2, test_data=['aa', 'c', 'cc'])
   assert paths == [dest2 / p for p in ['aa', 'c', 'cc']], paths
 
@@ -43,4 +62,6 @@ def RunSteps(api):
 
 
 def GenTests(api):
-  yield api.test('basic')
+  yield api.test('basic', api.properties(Properties(hardlink=False)))
+  yield api.test('hardlink', api.properties(Properties(hardlink=True)))
+  yield api.test('symlinks', api.properties(Properties(symlinks=True)))

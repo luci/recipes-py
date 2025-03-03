@@ -29,7 +29,8 @@ def _RmGlob(file_wildcard, root, include_hidden):
 
   An exception is thrown if root doesn't exist."""
   wildcard = os.path.join(os.path.realpath(root), file_wildcard)
-  for item in glob.glob(wildcard, recursive=True, include_hidden=include_hidden):
+  for item in glob.glob(
+      wildcard, recursive=True, include_hidden=include_hidden):
     try:
       os.remove(item)
     except OSError as e:
@@ -144,7 +145,10 @@ def _EnsureDir(mode, dest):
 
 def _Glob(base, pattern, include_hidden):
   base = os.path.realpath(base)
-  hits = glob.glob(os.path.join(base, pattern), recursive=True, include_hidden=include_hidden)
+  hits = glob.glob(
+      os.path.join(base, pattern),
+      recursive=True,
+      include_hidden=include_hidden)
   if hits:
     print('\n'.join(sorted((os.path.relpath(hit, start=base) for hit in hits))))
 
@@ -319,10 +323,18 @@ def main(args):
       help='Recursively copy a file tree. Behaves like shutil.copytree().')
   subparser.add_argument('--symlinks', action='store_true',
                          help='Copy symlinks as symlinks.')
+  subparser.add_argument(
+      '--hardlink',
+      action='store_true',
+      help='Create hardlinks instead of copying files.')
   subparser.add_argument('source', help='The directory to copy.')
   subparser.add_argument('dest', help='The destination directory to copy to.')
-  subparser.set_defaults(
-      func=lambda opts: shutil.copytree(opts.source, opts.dest, opts.symlinks))
+  subparser.set_defaults(func=lambda opts: shutil.copytree(
+      opts.source,
+      opts.dest,
+      symlinks=opts.symlinks,
+      # shutil.copy2() for default copy, or os.link() for optional hardlink.
+      copy_function=os.link if opts.hardlink else shutil.copy2))
 
   # Subcommand: move
   subparser = subparsers.add_parser('move',

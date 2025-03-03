@@ -182,6 +182,7 @@ class FileApi(recipe_api.RecipeApi):
       source: config_types.Path | str,
       dest: config_types.Path | str,
       symlinks: bool = False,
+      hardlink: bool = False,
   ) -> step_data.StepData:
     """Recursively copies a directory tree.
 
@@ -194,12 +195,18 @@ class FileApi(recipe_api.RecipeApi):
       * dest (Path): The place where you want the recursive copy to show up.
         This must not already exist.
       * symlinks (bool): Preserve symlinks. No effect on Windows.
+      * hardlink (bool): Create hardlinks using os.link(), instead of copying
+        the files.
 
     Raises: file.Error
     """
     self.m.path.assert_absolute(source)
     self.m.path.assert_absolute(dest)
-    args = ['--symlinks'] if symlinks else []
+    args = []
+    if symlinks:
+      args += ['--symlinks']
+    if hardlink:
+      args += ['--hardlink']
     result = self._run(name, ['copytree'] + args + [source, dest])
     self.m.path.mock_copy_paths(source, dest)
     return result

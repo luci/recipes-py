@@ -184,6 +184,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "copytree",
+      "--hardlink",
       "[CLEANUP]/tmp_tmp_1/some dir",
       "[CLEANUP]/tmp_tmp_1/some other dir"
     ],
