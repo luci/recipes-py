@@ -82,6 +82,15 @@ def RunSteps(api):
   with api.assertions.assertRaises(StepFailure):
     api.time.timeout(seconds=-1.)
 
+  # This does not actually have the intended effect of extending the timeout,
+  # but it should be allowed to nest a higher timeout within a lower timeout,
+  # since the outer timeout may vary depending on the situation (e.g. depending
+  # on the builder's execution_timeout), so the lower-level timeout may still be
+  # valid in some cases.
+  with api.time.timeout(seconds=10):
+    with api.time.timeout(seconds=20):
+      api.step('foo', ['echo', '"hello"'])
+
 
 def GenTests(api):
   yield api.test('defaults')

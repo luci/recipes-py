@@ -241,6 +241,11 @@ class TimeApi(recipe_api.RecipeApi):
 
     Look at the "deadline" section of https://chromium.googlesource.com/infra/luci/luci-py/+/HEAD/client/LUCI_CONTEXT.md
     to see how this works.
+
+    If the new deadline would be later than the old deadline (if any), the
+    deadline will not be updated, making this a no-op. For example, if
+    `api.time.timeout(timedelta(minutes=10))` is used in a builder that has a
+    5-minute execution timeout, it will not have any effect.
     """
 
     if isinstance(seconds, datetime.timedelta):
@@ -250,8 +255,19 @@ class TimeApi(recipe_api.RecipeApi):
       raise recipe_api.StepFailure('`seconds` cannot be negative')
     current_time = self.time()
 
-    # Make the deadline
-    deadline = self.m.context.deadline
-    deadline.soft_deadline = current_time + seconds
+    # Update the deadline, but make sure not to extend it since that's not
+    # allowed and would raise an exception. Raising an exception is undesirable
+    # because the code that calls `timeout()` may run in different situations
+    # (different recipes or builders) with different higher-level timeouts, so
+    # just because the timeout is a no-op in one situation doesn't mean it won't
+    # have an effect in other situations.
+    #
+    # Plus, this function is generally only used to increase the strictness of
+    # the time limit for a sequence of operations, so if the time limit is
+    # already stricter than requested, it's reasonable to no-op.
+    new_deadline = current_time + seconds
+    dl = self.m.context.deadline
+    if not dl.soft_deadline or new_deadline < dl.soft_deadline:
+      dl.soft_deadline = new_deadline
 
-    return self.m.context(deadline=deadline)
+    return self.m.context(deadline=dl)

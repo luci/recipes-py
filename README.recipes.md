@@ -4728,6 +4728,11 @@ with api.time.timeout(datetime.timedelta(minutes=5)):
 Look at the "deadline" section of https://chromium.googlesource.com/infra/luci/luci-py/+/HEAD/client/LUCI_CONTEXT.md
 to see how this works.
 
+If the new deadline would be later than the old deadline (if any), the
+deadline will not be updated, making this a no-op. For example, if
+`api.time.timeout(timedelta(minutes=10))` is used in a builder that has a
+5-minute execution timeout, it will not have any effect.
+
 &mdash; **def [utcnow](/recipe_modules/time/api.py#217)(self):**
 
 Returns current UTC time as a datetime.datetime.
