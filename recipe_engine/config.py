@@ -99,8 +99,7 @@ class ConfigContext:
     self.CONFIG_SCHEMA = CONFIG_SCHEMA
     self.ROOT_CONFIG_ITEM = None
 
-  def __call__(self, group=None, includes=None, deps=None,
-               is_root=False, config_vars=None):
+  def __call__(self, group=None, includes=None, deps=None, is_root=False):
     """
     A decorator for functions which modify a given schema of configs.
     Examples continue using the schema and config_items defined in the module
@@ -151,9 +150,6 @@ class ConfigContext:
         'basis' item for all other configurations in this group. That means that
         it will be implicitly included in all other config_items. There may only
         ever be one root item.
-
-      config_vars(dict) - A dictionary mapping of { CONFIG_VAR: <value> }. This
-        sets the input contidions for the CONFIG_SCHEMA.
 
     Returns a new decorated version of this function (see inner()).
     """
@@ -239,16 +235,6 @@ class ConfigContext:
         return config
       inner.WRAPPED = f
       inner.INCLUDES = includes or []
-
-      def default_config_vars():
-        ret = {}
-        for include in includes or []:
-          item = self.CONFIG_ITEMS[include]
-          ret.update(item.DEFAULT_CONFIG_VARS())
-        if config_vars:
-          ret.update(config_vars)
-        return ret
-      inner.DEFAULT_CONFIG_VARS = default_config_vars
 
       assert name not in self.CONFIG_ITEMS, (
           '%s is already in CONFIG_ITEMS' % name)

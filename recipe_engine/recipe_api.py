@@ -514,13 +514,8 @@ class RecipeApi:
     The params have the following order of precedence. Each subsequent param
     is dict.update'd into the final parameters, so the order is from lowest to
     highest precedence on a per-key basis:
-      * if config_name in CONFIG_CTX
-        * get_config_defaults()
-        * CONFIG_CTX[config_name].DEFAULT_CONFIG_VARS()
-        * CONFIG_VARS
-      * else
-        * get_config_defaults()
-        * CONFIG_VARS
+      * get_config_defaults()
+      * CONFIG_VARS
     """
     generic_params = self.get_config_defaults()  # generic defaults
     generic_params.update(CONFIG_VARS)           # per-invocation values
@@ -536,8 +531,6 @@ class RecipeApi:
       itm = self._get_config_item(config_name, optional)
       if not itm:
         return None, generic_params
-    if itm:
-      params.update(itm.DEFAULT_CONFIG_VARS())  # per-item defaults
     params.update(CONFIG_VARS)                  # per-invocation values
 
     base = ctx.CONFIG_SCHEMA(**params)
