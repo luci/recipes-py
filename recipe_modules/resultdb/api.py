@@ -682,6 +682,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
       inv_extended_properties_dir='',
       previous_test_id_prefix=None,
       test_id_prefix='',
+      shorten_ids=False,
   ):
     """Wraps the command with ResultSink.
 
@@ -753,6 +754,11 @@ class ResultDBAPI(recipe_api.RecipeApi):
         with the legacy test ID reported to ResultSink's ReportTestResults RPC
         to populate test_metadata.previous_test_id. Note that empty string ('')
         is a valid prior prefix and can be set for this option.
+      shorten_ids(bool): flag to enable shortening of test IDs. When set, the
+        uploaded test_id/test_id_structured will be limited to 350 bytes.
+        Set this flag cautiously as processes may depend on the test ID matching
+        the harness-reported value (e.g. for re-run instructions) and shortening
+        will break this.
     """
     if require_build_inv:
       self.assert_enabled()
@@ -783,6 +789,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
     assert isinstance(test_id_prefix, (type(None), str)), test_id_prefix
     assert isinstance(previous_test_id_prefix,
                       (type(None), str)), previous_test_id_prefix
+    assert isinstance(shorten_ids, bool), shorten_ids
 
     ret = ['rdb', 'stream']
 
@@ -842,6 +849,9 @@ class ResultDBAPI(recipe_api.RecipeApi):
 
     if previous_test_id_prefix is not None:
       ret += ['-previous-test-id-prefix', previous_test_id_prefix]
+
+    if shorten_ids:
+      ret += ['-shorten-ids']
 
     ret += ['--'] + list(cmd)
     return ret

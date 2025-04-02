@@ -132,6 +132,12 @@ def RunSteps(api):
     inv_extended_properties_dir='/tmp/invocations/',
   ))
 
+  api.step('test with shorten_ids',
+           api.resultdb.wrap(
+               ['echo', 'suppose its a test'],
+               shorten_ids=True,
+           ))
+
   api.step('unwrapped command',
            api.resultdb.unwrap(['rdb', 'stream', '--', 'unwrapped']))
 
