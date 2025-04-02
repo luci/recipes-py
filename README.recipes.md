@@ -3609,7 +3609,7 @@ A module for interacting with ResultDB.
 
 &mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#50)(self):**
 
-&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#836)(self, column_keys=(), grouping_keys=('status',)):**
+&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#863)(self, column_keys=(), grouping_keys=('status',)):**
 
 Specifies how the test results should be rendered.
 
@@ -3823,7 +3823,7 @@ Returns:
   For value format, see [`QueryTestVariantsResponse` message]
   (http://shortn/_hv3edsXidO)
 
-&mdash; **def [unwrap](/recipe_modules/resultdb/api.py#822)(self, cmd: list[str]):**
+&mdash; **def [unwrap](/recipe_modules/resultdb/api.py#849)(self, cmd: list[str]):**
 
 Reverses the wrap command
 
@@ -3887,7 +3887,7 @@ Returns:
   A BatchCreateArtifactsResponse proto message listing the artifacts that
   were created.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#662)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file='', inherit_sources=False, sources='', sources_file='', baseline_id='', inv_extended_properties_dir=''):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#662)(self, cmd, module_name='', module_scheme='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file='', inherit_sources=False, sources='', sources_file='', baseline_id='', inv_extended_properties_dir='', previous_test_id_prefix=None, test_id_prefix=''):**
 
 Wraps the command with ResultSink.
 
@@ -3898,8 +3898,11 @@ environment. For example:
 
 Args:
   cmd (list of strings): the command line to run.
-  test_id_prefix (str): a prefix to prepend to test IDs of test results
-    reported by cmd.
+  module_name(str): Module name to upload results to. Requires command to
+    supply structured test IDs to ResultSink's ReportTestResults RPC.
+    Do not set in conjunction with test_id_prefix.
+  module_scheme(str): Module scheme to upload results to.
+    See go/resultdb-schemes. Must be set whenever module_name is set.
   base_variant (dict): variant key-value pairs to attach to all test results
     reported by cmd. If both base_variant and a reported variant have a
     value for the same key, the reported one wins.
@@ -3948,6 +3951,14 @@ Args:
     Only files directly under this dir with the extension ".jsonpb" will be
     read. The filename after removing ".jsonpb" and the file content will be
     added as a key-value pair to the invocation's extended_properties map.
+  test_id_prefix (str): Deprecated. A prefix to prepend to test IDs of test
+    results reported by cmd. Requires command to supply legacy test IDs to
+    ResultSink's ReportTestResults RPC.
+  previous_test_id_prefix(str): Sets the test ID prefix that was previously
+    used for these tests (i.e. test_id_prefix). This prefix will be combined
+    with the legacy test ID reported to ResultSink's ReportTestResults RPC
+    to populate test_metadata.previous_test_id. Note that empty string ('')
+    is a valid prior prefix and can be set for this option.
 ### *recipe_modules* / [runtime](/recipe_modules/runtime)
 
 

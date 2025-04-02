@@ -25,6 +25,60 @@
     "cmd": [
       "rdb",
       "stream",
+      "-module-name",
+      "mymodule",
+      "-module-scheme",
+      "junit",
+      "--",
+      "echo",
+      "suppose its a test"
+    ],
+    "luci_context": {
+      "realm": {
+        "name": "proj:realm"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "test with module"
+  },
+  {
+    "cmd": [
+      "rdb",
+      "stream",
+      "-module-name",
+      "mymodule",
+      "-module-scheme",
+      "junit",
+      "-previous-test-id-prefix",
+      "prefix",
+      "--",
+      "echo",
+      "suppose its a test"
+    ],
+    "luci_context": {
+      "realm": {
+        "name": "proj:realm"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "test with module (in migration from test_id_prefix)"
+  },
+  {
+    "cmd": [
+      "rdb",
+      "stream",
       "-test-id-prefix",
       "prefix",
       "--",

@@ -15,6 +15,23 @@ DEPS = [
 def RunSteps(api):
   api.step('test', api.resultdb.wrap(['echo', 'suppose its a test']))
 
+  api.step(
+      'test with module',
+      api.resultdb.wrap(
+          ['echo', 'suppose its a test'],
+          module_name='mymodule',
+          module_scheme='junit',
+      ))
+
+  api.step(
+      'test with module (in migration from test_id_prefix)',
+      api.resultdb.wrap(
+          ['echo', 'suppose its a test'],
+          module_name='mymodule',
+          module_scheme='junit',
+          previous_test_id_prefix='prefix',
+      ))
+
   api.step('test with test_id_prefix', api.resultdb.wrap(
     ['echo', 'suppose its a test'],
     test_id_prefix='prefix',

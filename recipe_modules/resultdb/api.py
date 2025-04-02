@@ -662,7 +662,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
   def wrap(
       self,
       cmd,
-      test_id_prefix='',
+      module_name='',
+      module_scheme='',
       base_variant=None,
       test_location_base='',
       base_tags=None,
@@ -679,6 +680,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
       sources_file='',
       baseline_id='',
       inv_extended_properties_dir='',
+      previous_test_id_prefix=None,
+      test_id_prefix='',
   ):
     """Wraps the command with ResultSink.
 
@@ -689,8 +692,11 @@ class ResultDBAPI(recipe_api.RecipeApi):
 
     Args:
       cmd (list of strings): the command line to run.
-      test_id_prefix (str): a prefix to prepend to test IDs of test results
-        reported by cmd.
+      module_name(str): Module name to upload results to. Requires command to
+        supply structured test IDs to ResultSink's ReportTestResults RPC.
+        Do not set in conjunction with test_id_prefix.
+      module_scheme(str): Module scheme to upload results to.
+        See go/resultdb-schemes. Must be set whenever module_name is set.
       base_variant (dict): variant key-value pairs to attach to all test results
         reported by cmd. If both base_variant and a reported variant have a
         value for the same key, the reported one wins.
@@ -739,10 +745,19 @@ class ResultDBAPI(recipe_api.RecipeApi):
         Only files directly under this dir with the extension ".jsonpb" will be
         read. The filename after removing ".jsonpb" and the file content will be
         added as a key-value pair to the invocation's extended_properties map.
+      test_id_prefix (str): Deprecated. A prefix to prepend to test IDs of test
+        results reported by cmd. Requires command to supply legacy test IDs to
+        ResultSink's ReportTestResults RPC.
+      previous_test_id_prefix(str): Sets the test ID prefix that was previously
+        used for these tests (i.e. test_id_prefix). This prefix will be combined
+        with the legacy test ID reported to ResultSink's ReportTestResults RPC
+        to populate test_metadata.previous_test_id. Note that empty string ('')
+        is a valid prior prefix and can be set for this option.
     """
     if require_build_inv:
       self.assert_enabled()
-    assert isinstance(test_id_prefix, (type(None), str)), test_id_prefix
+    assert isinstance(module_name, (type(None), str)), module_name
+    assert isinstance(module_scheme, (type(None), str)), module_scheme
     assert isinstance(base_variant, (type(None), dict)), base_variant
     assert isinstance(cmd, (tuple, list)), cmd
     assert isinstance(test_location_base, (type(None), str)), test_location_base
@@ -765,8 +780,17 @@ class ResultDBAPI(recipe_api.RecipeApi):
     assert isinstance(baseline_id, (type(None), str)), baseline_id
     assert isinstance(inv_extended_properties_dir,
                       (type(None), str)), inv_extended_properties_dir
+    assert isinstance(test_id_prefix, (type(None), str)), test_id_prefix
+    assert isinstance(previous_test_id_prefix,
+                      (type(None), str)), previous_test_id_prefix
 
     ret = ['rdb', 'stream']
+
+    if module_name:
+      ret += ['-module-name', module_name]
+
+    if module_scheme:
+      ret += ['-module-scheme', module_scheme]
 
     if test_id_prefix:
       ret += ['-test-id-prefix', test_id_prefix]
@@ -815,6 +839,9 @@ class ResultDBAPI(recipe_api.RecipeApi):
 
     if inv_extended_properties_dir:
       ret += ['-inv-extended-properties-dir', inv_extended_properties_dir]
+
+    if previous_test_id_prefix is not None:
+      ret += ['-previous-test-id-prefix', previous_test_id_prefix]
 
     ret += ['--'] + list(cmd)
     return ret
