@@ -20,6 +20,8 @@ class FindingsAPI(recipe_api.RecipeApi):
 
   # file path used in the finding location to represent commit message.
   COMMIT_MESSAGE_FILE_PATH = '/COMMIT_MSG'
+  # file path used in the finding location to represent a top-level comment.
+  PATCHSET_LEVEL_FILE_PATH = '/PATCHSET_LEVEL'
 
   @staticmethod
   def _gzip_compress_deterministic(data: bytes) -> bytes:
@@ -123,8 +125,9 @@ class FindingsAPI(recipe_api.RecipeApi):
 
     if not loc.file_path:
       raise ValueError('file path is required')
-    if loc.file_path != FindingsAPI.COMMIT_MESSAGE_FILE_PATH and os.path.isabs(
-        loc.file_path):
+    if loc.file_path not in (
+        FindingsAPI.COMMIT_MESSAGE_FILE_PATH,
+        FindingsAPI.PATCHSET_LEVEL_FILE_PATH) and os.path.isabs(loc.file_path):
       raise ValueError(f'file_path must be relative, got {loc.file_path}')
 
     if loc.HasField('range'):
