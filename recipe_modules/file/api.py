@@ -183,6 +183,7 @@ class FileApi(recipe_api.RecipeApi):
       dest: config_types.Path | str,
       symlinks: bool = False,
       hardlink: bool = False,
+      allow_override: bool = False,
   ) -> step_data.StepData:
     """Recursively copies a directory tree.
 
@@ -197,6 +198,9 @@ class FileApi(recipe_api.RecipeApi):
       * symlinks (bool): Preserve symlinks. No effect on Windows.
       * hardlink (bool): Create hardlinks using os.link(), instead of copying
         the files.
+      * allow_override (bool): If True, existing files in `dest` will be
+        overridden. If False or not specified, the copy will be stopped with
+        raising `file.Error` exception if the file exists in `dest`.
 
     Raises: file.Error
     """
@@ -207,6 +211,8 @@ class FileApi(recipe_api.RecipeApi):
       args += ['--symlinks']
     if hardlink:
       args += ['--hardlink']
+    if allow_override:
+      args += ['--allow-override']
     result = self._run(name, ['copytree'] + args + [source, dest])
     self.m.path.mock_copy_paths(source, dest)
     return result

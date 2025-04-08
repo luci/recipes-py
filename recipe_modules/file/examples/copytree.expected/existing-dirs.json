@@ -1,0 +1,404 @@
+[
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0o777",
+      "[CLEANUP]/tmp_tmp_1/some dir"
+    ],
+    "infra_step": true,
+    "name": "ensure \"some dir\""
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "a",
+      "[CLEANUP]/tmp_tmp_1/some dir/a"
+    ],
+    "infra_step": true,
+    "name": "write a",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@a@a@@@",
+      "@@@STEP_LOG_END@a@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "aa",
+      "[CLEANUP]/tmp_tmp_1/some dir/aa"
+    ],
+    "infra_step": true,
+    "name": "write aa",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@aa@aa@@@",
+      "@@@STEP_LOG_END@aa@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "b",
+      "[CLEANUP]/tmp_tmp_1/some dir/b"
+    ],
+    "infra_step": true,
+    "name": "write b",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@b@b@@@",
+      "@@@STEP_LOG_END@b@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "bb",
+      "[CLEANUP]/tmp_tmp_1/some dir/bb"
+    ],
+    "infra_step": true,
+    "name": "write bb",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@bb@bb@@@",
+      "@@@STEP_LOG_END@bb@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "c",
+      "[CLEANUP]/tmp_tmp_1/some dir/c"
+    ],
+    "infra_step": true,
+    "name": "write c",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@c@c@@@",
+      "@@@STEP_LOG_END@c@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "cc",
+      "[CLEANUP]/tmp_tmp_1/some dir/cc"
+    ],
+    "infra_step": true,
+    "name": "write cc",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@cc@cc@@@",
+      "@@@STEP_LOG_END@cc@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "symlink",
+      "[CLEANUP]/tmp_tmp_1/some dir/bb",
+      "[CLEANUP]/tmp_tmp_1/some dir/symlink_bb"
+    ],
+    "infra_step": true,
+    "name": "create symlink"
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "filesizes",
+      "[CLEANUP]/tmp_tmp_1/some dir/a",
+      "[CLEANUP]/tmp_tmp_1/some dir/aa",
+      "[CLEANUP]/tmp_tmp_1/some dir/b",
+      "[CLEANUP]/tmp_tmp_1/some dir/bb",
+      "[CLEANUP]/tmp_tmp_1/some dir/c",
+      "[CLEANUP]/tmp_tmp_1/some dir/cc"
+    ],
+    "infra_step": true,
+    "name": "check filesizes",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@filesizes@[CLEANUP]/tmp_tmp_1/some dir/a: \t111@@@",
+      "@@@STEP_LOG_LINE@filesizes@[CLEANUP]/tmp_tmp_1/some dir/aa: \t221@@@",
+      "@@@STEP_LOG_LINE@filesizes@[CLEANUP]/tmp_tmp_1/some dir/b: \t333@@@",
+      "@@@STEP_LOG_LINE@filesizes@[CLEANUP]/tmp_tmp_1/some dir/bb: \t438@@@",
+      "@@@STEP_LOG_LINE@filesizes@[CLEANUP]/tmp_tmp_1/some dir/c: \t551@@@",
+      "@@@STEP_LOG_LINE@filesizes@[CLEANUP]/tmp_tmp_1/some dir/cc: \t666@@@",
+      "@@@STEP_LOG_END@filesizes@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "rmtree",
+      "[CLEANUP]/tmp_tmp_1/some other dir"
+    ],
+    "infra_step": true,
+    "name": "make sure dest is gone"
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0o777",
+      "[CLEANUP]/tmp_tmp_1/some other dir"
+    ],
+    "infra_step": true,
+    "name": "ensure \"some other dir\""
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "This text should be overridden.",
+      "[CLEANUP]/tmp_tmp_1/some other dir/a"
+    ],
+    "infra_step": true,
+    "name": "write subdir/a",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@a@This text should be overridden.@@@",
+      "@@@STEP_LOG_END@a@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copytree",
+      "--allow-override",
+      "[CLEANUP]/tmp_tmp_1/some dir",
+      "[CLEANUP]/tmp_tmp_1/some other dir"
+    ],
+    "infra_step": true,
+    "name": "copy it"
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "listdir",
+      "[CLEANUP]/tmp_tmp_1/some other dir"
+    ],
+    "infra_step": true,
+    "name": "list new dir",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@listdir@[CLEANUP]/tmp_tmp_1/some other dir/a@@@",
+      "@@@STEP_LOG_LINE@listdir@[CLEANUP]/tmp_tmp_1/some other dir/aa@@@",
+      "@@@STEP_LOG_LINE@listdir@[CLEANUP]/tmp_tmp_1/some other dir/b@@@",
+      "@@@STEP_LOG_LINE@listdir@[CLEANUP]/tmp_tmp_1/some other dir/bb@@@",
+      "@@@STEP_LOG_LINE@listdir@[CLEANUP]/tmp_tmp_1/some other dir/c@@@",
+      "@@@STEP_LOG_LINE@listdir@[CLEANUP]/tmp_tmp_1/some other dir/cc@@@",
+      "@@@STEP_LOG_LINE@listdir@[CLEANUP]/tmp_tmp_1/some other dir/symlink_bb@@@",
+      "@@@STEP_LOG_END@listdir@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "glob",
+      "[CLEANUP]/tmp_tmp_1/some other dir",
+      "*a"
+    ],
+    "infra_step": true,
+    "name": "glob *a",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@glob@[CLEANUP]/tmp_tmp_1/some other dir/a@@@",
+      "@@@STEP_LOG_LINE@glob@[CLEANUP]/tmp_tmp_1/some other dir/aa@@@",
+      "@@@STEP_LOG_END@glob@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "[CLEANUP]/tmp_tmp_1/some other dir/a",
+      "/path/to/tmp/"
+    ],
+    "infra_step": true,
+    "name": "read [CLEANUP]/tmp_tmp_1/some other dir/a",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@a@a@@@",
+      "@@@STEP_LOG_END@a@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "[CLEANUP]/tmp_tmp_1/some other dir/aa",
+      "/path/to/tmp/"
+    ],
+    "infra_step": true,
+    "name": "read [CLEANUP]/tmp_tmp_1/some other dir/aa",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@aa@aa@@@",
+      "@@@STEP_LOG_END@aa@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "[CLEANUP]/tmp_tmp_1/some other dir/symlink_bb",
+      "/path/to/tmp/"
+    ],
+    "infra_step": true,
+    "name": "read [CLEANUP]/tmp_tmp_1/some other dir/aa (2)",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@symlink_bb@bb@@@",
+      "@@@STEP_LOG_END@symlink_bb@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "remove",
+      "[CLEANUP]/tmp_tmp_1/some other dir/a"
+    ],
+    "infra_step": true,
+    "name": "rm a"
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "glob",
+      "[CLEANUP]/tmp_tmp_1/some other dir",
+      "*a"
+    ],
+    "infra_step": true,
+    "name": "glob *a (2)",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@glob@[CLEANUP]/tmp_tmp_1/some other dir/aa@@@",
+      "@@@STEP_LOG_END@glob@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "rmglob",
+      "[CLEANUP]/tmp_tmp_1/some other dir",
+      "**/*b",
+      "--hidden"
+    ],
+    "infra_step": true,
+    "name": "rm *b"
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "listdir",
+      "[CLEANUP]/tmp_tmp_1/some other dir"
+    ],
+    "infra_step": true,
+    "name": "list new dir (2)",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@listdir@[CLEANUP]/tmp_tmp_1/some other dir/aa@@@",
+      "@@@STEP_LOG_LINE@listdir@[CLEANUP]/tmp_tmp_1/some other dir/c@@@",
+      "@@@STEP_LOG_LINE@listdir@[CLEANUP]/tmp_tmp_1/some other dir/cc@@@",
+      "@@@STEP_LOG_END@listdir@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "rmcontents",
+      "[CLEANUP]/tmp_tmp_1/some other dir"
+    ],
+    "infra_step": true,
+    "name": "remove \"some other dir/*\""
+  },
+  {
+    "name": "$result"
+  }
+]

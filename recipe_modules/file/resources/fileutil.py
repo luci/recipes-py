@@ -267,6 +267,21 @@ def _Chmod(path, mode, recursive):
     for filename in filenames:
       os.chmod(os.path.join(dirpath, filename), mode)
 
+
+def _CopyForCopytree(src, dest, hardlink):
+  if hardlink:
+    # Here no need to check `allow_override`: if the file exists in the
+    # destination, the directory containing the file must exist as well. In
+    # that case, if `allow_override` is False, this callback is not invoked
+    # because `dirs_exist_ok=False` has been passed to `copytree()` method and
+    # the directory exists.
+    if os.path.isfile(dest):
+      # Note: may cause a race if a file is re-created after removal.
+      os.remove(dest)
+    os.link(src, dest)
+  else:
+    shutil.copy2(src, dest)
+
 def main(args):
   parser = argparse.ArgumentParser()
   parser.add_argument('--json-output', required=True,
@@ -327,14 +342,20 @@ def main(args):
       '--hardlink',
       action='store_true',
       help='Create hardlinks instead of copying files.')
+  subparser.add_argument(
+      '--allow-override',
+      action='store_true',
+      help='Does not stop copying when the file exists in the destination.')
   subparser.add_argument('source', help='The directory to copy.')
   subparser.add_argument('dest', help='The destination directory to copy to.')
   subparser.set_defaults(func=lambda opts: shutil.copytree(
       opts.source,
       opts.dest,
       symlinks=opts.symlinks,
-      # shutil.copy2() for default copy, or os.link() for optional hardlink.
-      copy_function=os.link if opts.hardlink else shutil.copy2))
+      dirs_exist_ok=opts.allow_override,
+      # shutil.copy2() for default copy, or _Link() for optional hardlink.
+      copy_function=(lambda src, dest: _CopyForCopytree(
+          src, dest, hardlink=opts.hardlink))))
 
   # Subcommand: move
   subparser = subparsers.add_parser('move',

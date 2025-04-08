@@ -27,6 +27,10 @@ def RunSteps(api, properties):
 
   dest2 = test_base_dir / 'some other dir'
   api.file.rmtree('make sure dest is gone', dest2)
+  if properties.allow_override:
+    api.file.ensure_directory('ensure "some other dir"', dest2)
+    api.file.write_text('write subdir/a', dest2 / 'a',
+                        'This text should be overridden.')
 
   # Note: on test, actual copying is done by the mock method, so that the
   # arguments don't matter.
@@ -35,7 +39,8 @@ def RunSteps(api, properties):
       dest,
       dest2,
       symlinks=properties.symlinks,
-      hardlink=properties.hardlink)
+      hardlink=properties.hardlink,
+      allow_override=properties.allow_override)
 
   dest_file_names = file_names + ['symlink_bb']
   paths = api.file.listdir('list new dir', dest2, test_data=dest_file_names)
@@ -65,3 +70,8 @@ def GenTests(api):
   yield api.test('basic', api.properties(Properties(hardlink=False)))
   yield api.test('hardlink', api.properties(Properties(hardlink=True)))
   yield api.test('symlinks', api.properties(Properties(symlinks=True)))
+
+  yield api.test(
+      'existing-dirs',
+      api.properties(Properties(hardlink=False, allow_override=True)),
+  )
