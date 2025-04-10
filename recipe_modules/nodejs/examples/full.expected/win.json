@@ -34,6 +34,7 @@
       "version"
     ],
     "env": {
+      "UV_USE_IO_URING": "0",
       "npm_config_cache": "[CACHE]\\npmcache\\npm",
       "npm_config_prefix": "[CACHE]\\npmcache\\pfx"
     },
@@ -80,6 +81,7 @@
       "version"
     ],
     "env": {
+      "UV_USE_IO_URING": "0",
       "npm_config_cache": "[CACHE]\\npmcache\\npm",
       "npm_config_prefix": "[CACHE]\\npmcache\\pfx"
     },
@@ -126,6 +128,7 @@
       "version"
     ],
     "env": {
+      "UV_USE_IO_URING": "0",
       "npm_config_cache": "[CACHE]\\npmcache\\npm",
       "npm_config_prefix": "[CACHE]\\npmcache\\pfx"
     },
@@ -172,6 +175,7 @@
       "version"
     ],
     "env": {
+      "UV_USE_IO_URING": "0",
       "npm_config_cache": "[CACHE]\\npmcache\\npm",
       "npm_config_prefix": "[CACHE]\\npmcache\\pfx"
     },

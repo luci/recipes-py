@@ -60,6 +60,8 @@ class NodeJSApi(recipe_api.RecipeApi):
         'npm_config_cache': cache / 'npm',
         # Where packages are installed when using 'npm -g ...'.
         'npm_config_prefix': cache / 'pfx',
+        # Potential workaround for b/409370331.
+        'UV_USE_IO_URING': '0',
     }
 
     env_prefixes = {
