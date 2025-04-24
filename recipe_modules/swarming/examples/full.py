@@ -141,6 +141,9 @@ def RunSteps(api):
   results[0].output_dir
   results[0].text_output_file
   results[0].duration_secs
+  results[0].created_ts
+  results[0].started_ts
+  results[0].completed_ts
   results[0].bot_id
   results[0].raw
 

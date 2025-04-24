@@ -6,6 +6,7 @@
 import base64
 import collections
 import contextlib
+import datetime
 import copy
 import json
 
@@ -933,6 +934,9 @@ class TaskResult:
     self._cas_outputs = None
     self._success = None
     self._duration = None
+    self._created_ts = None
+    self._started_ts = None
+    self._completed_ts = None
     self._output = None
     self._name = None
     self._state = None
@@ -952,6 +956,16 @@ class TaskResult:
         self._success = int(results.get('exit_code', 0)) == 0
 
       self._duration = results.get('duration', 0)
+
+      def parse_datetime(datetime_str):
+        try:
+          return datetime.datetime.fromisoformat(datetime_str)
+        except (TypeError, ValueError):  # pragma: no cover
+          return None
+
+      self._created_ts = parse_datetime(results.get('created_ts'))
+      self._started_ts = parse_datetime(results.get('started_ts'))
+      self._completed_ts = parse_datetime(results.get('completed_ts'))
 
       cas_output_root = results.get('cas_output_root')
       if cas_output_root:
@@ -1016,6 +1030,30 @@ class TaskResult:
     Returns None if an error occurred.
     """
     return self._duration
+
+  @property
+  def created_ts(self):
+    """Returns a datetime corresponding to when the task was created.
+
+    Returns None if an error occurred.
+    """
+    return self._created_ts
+
+  @property
+  def started_ts(self):
+    """Returns a datetime corresponding to when the task started.
+
+    Returns None if an error occurred.
+    """
+    return self._started_ts
+
+  @property
+  def completed_ts(self):
+    """Returns a datetime corresponding to when the task finished.
+
+    Returns None if an error occurred.
+    """
+    return self._completed_ts
 
   @property
   def output(self):

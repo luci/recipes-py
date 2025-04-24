@@ -179,6 +179,9 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
             'task_id': id,
             'state': state.name,
             'duration': duration,
+            'created_ts': '2025-04-23T19:10:21.951949Z',
+            'started_ts': '2025-04-23T19:13:55.431522Z',
+            'completed_ts': '2025-04-23T20:01:13.072079Z',
             'cas_output_root': {
                 'cas_instance':
                     'projects/example-project/instances/default_instance',
