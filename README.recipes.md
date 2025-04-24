@@ -232,6 +232,7 @@
   * [swarming:tests/collect_errors](#recipes-swarming_tests_collect_errors)
   * [swarming:tests/copy](#recipes-swarming_tests_copy)
   * [swarming:tests/list_bots](#recipes-swarming_tests_list_bots)
+  * [swarming:tests/list_tasks](#recipes-swarming_tests_list_tasks)
   * [swarming:tests/realms](#recipes-swarming_tests_realms)
   * [swarming:tests/task_request_from_jsonish](#recipes-swarming_tests_task_request_from_jsonish)
   * [swarming:tests/task_result_from_jsonish](#recipes-swarming_tests_task_result_from_jsonish)
@@ -4572,6 +4573,19 @@ Args:
 Returns:
   A list of BotMetadata objects.
 
+&mdash; **def [list\_tasks](/recipe_modules/swarming/api.py#1589)(self, step_name, start=None, tags=None):**
+
+List tasks matching the given options.
+
+Args:
+  step_name (str): The name of the step.
+  start (None|float): Number of seconds since epoch.
+  tags (None|List[str]): Select tasks that contain the given
+    tags.
+
+Returns:
+  Json listing the resulting tasks.
+
 &emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#1306)(self):**
 
 This context manager ensures the go swarming client is available on
@@ -6232,6 +6246,12 @@ This file is a recipe demonstrating reading triggers of the current build.
 
 
 &mdash; **def [RunSteps](/recipe_modules/swarming/tests/list_bots.py#14)(api):**
+### *recipes* / [swarming:tests/list\_tasks](/recipe_modules/swarming/tests/list_tasks.py)
+
+[DEPS](/recipe_modules/swarming/tests/list_tasks.py#7): [assertions](#recipe_modules-assertions), [swarming](#recipe_modules-swarming), [time](#recipe_modules-time)
+
+
+&mdash; **def [RunSteps](/recipe_modules/swarming/tests/list_tasks.py#14)(api):**
 ### *recipes* / [swarming:tests/realms](/recipe_modules/swarming/tests/realms.py)
 
 [DEPS](/recipe_modules/swarming/tests/realms.py#7): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [context](#recipe_modules-context), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)

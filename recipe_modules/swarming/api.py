@@ -1585,3 +1585,41 @@ class SwarmingApi(recipe_api.RecipeApi):
       step.presentation.logs['Fields to include'] = ', '.join(fields)
 
     return metadata_objs
+
+  def list_tasks(self, step_name, start=None, tags=None):
+    """List tasks matching the given options.
+
+    Args:
+      step_name (str): The name of the step.
+      start (None|float): Number of seconds since epoch.
+      tags (None|List[str]): Select tasks that contain the given
+        tags.
+
+    Returns:
+      Json listing the resulting tasks.
+    """
+    assert self._server
+    cmd = [
+        'tasks',
+        '-server',
+        self._server,
+        '-json',
+        self.m.json.output(),
+    ]
+
+    if tags:
+      for tag in tags:
+        cmd.extend(['-tag', tag])
+    if start:
+      cmd.extend(['-start', str(start)])
+    step = self._run(
+        step_name,
+        cmd,
+        step_test_data=lambda: self.m.json.test_api.output([{
+            'task_id': 12341234,
+            'tags': tags,
+            'completed_ts': '2025-04-21T18:47:23.324102Z',
+            'started_ts': '2025-04-21T18:45:44.426350Z',
+        }]),
+    )
+    return step.json.output
