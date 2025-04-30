@@ -42,12 +42,13 @@ class ChangeVerifierApi(recipe_api.RecipeApi):
   PROD_HOST = 'luci-change-verifier.appspot.com'
   DEV_HOST = 'luci-change-verifier-dev.appspot.com'
 
-  GerritChange = tuple[str, int]
+  GerritChangeTuple = tuple[str, int]
 
   def search_runs(
       self,
       project: str,
-      cls: Sequence[GerritChange] | GerritChange | None = None,
+      cls: (Sequence[GerritChangeTuple | run_pb.GerritChange]
+            | GerritChangeTuple | run_pb.GerritChange | None) = None,
       limit: int | None = None,
       step_name: str | None = None,
       dev: bool = False,
@@ -56,9 +57,10 @@ class ChangeVerifierApi(recipe_api.RecipeApi):
 
     Args:
       * project: LUCI project name.
-      * cls: CLs, specified as (host, change number) tuples. A single tuple may
-        also be passed. All Runs returned must include all of the given CLs, and
-        Runs may also contain other CLs.
+      * cls: CLs, specified as (host, change number) tuples or
+        run_pb.GerritChanges. A single tuple or GerritChange may also be passed.
+        All Runs returned must include all of the given CLs, and Runs may also
+        contain other CLs.
       * limit: max number of Runs to return. Defaults to 32.
       * step_name: optional custom step name in RPC steps.
       * dev: whether to use the dev instance of Change Verifier.
@@ -71,15 +73,22 @@ class ChangeVerifierApi(recipe_api.RecipeApi):
 
     assert isinstance(cls, (list, tuple, type(None))), cls
     gerrit_changes = None
-    if isinstance(cls, tuple):
+    if isinstance(cls, tuple) or isinstance(cls, run_pb.GerritChange):
       cls = [cls]
     if cls is not None:
-      assert all(len(cl_tuple) == 2 for cl_tuple in cls), cls
       gerrit_changes = []
-      for (host, change) in cls:
-        assert host.endswith('-review.googlesource.com'), host
-        assert isinstance(change, int), change
-        gerrit_changes.append(run_pb.GerritChange(host=host, change=change))
+      for cl in cls:
+        if isinstance(cl, tuple):
+          assert len(cl) == 2, cls
+          host, change = cl
+          assert isinstance(change, int), change
+          gerrit_change = run_pb.GerritChange(host=host, change=change)
+        else:
+          assert isinstance(cl, run_pb.GerritChange)
+          gerrit_change = cl
+        assert gerrit_change.host.endswith(
+            '-review.googlesource.com'), gerrit_change.host
+        gerrit_changes.append(gerrit_change)
 
     runs = []
     input_data = service_runs_pb.SearchRunsRequest(

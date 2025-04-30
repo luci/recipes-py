@@ -40,7 +40,7 @@
     ],
     "infra_step": true,
     "name": "search2cls.request page 1",
-    "stdin": "{\n  \"predicate\": {\n    \"gerrit_changes\": [\n      {\n        \"change\": \"123\",\n        \"host\": \"x-review.googlesource.com\"\n      },\n      {\n        \"change\": \"222\",\n        \"host\": \"x-review.googlesource.com\"\n      }\n    ],\n    \"project\": \"prj\"\n  }\n}",
+    "stdin": "{\n  \"predicate\": {\n    \"gerrit_changes\": [\n      {\n        \"change\": \"123\",\n        \"host\": \"x-review.googlesource.com\"\n      },\n      {\n        \"change\": \"222\",\n        \"host\": \"x-review.googlesource.com\",\n        \"patchset\": 2\n      }\n    ],\n    \"project\": \"prj\"\n  }\n}",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@proto.output@{@@@",

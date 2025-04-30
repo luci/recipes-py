@@ -19,9 +19,12 @@ def RunSteps(api):
 
   # Search for Runs that contain 2 particular CLs (and may contain others).
   runs = api.change_verifier.search_runs(
-      'prj',cls=[
+      'prj',
+      cls=[
           ('x-review.googlesource.com', 123),
-          ('x-review.googlesource.com', 222)],
+          run_pb.GerritChange(
+              host="x-review.googlesource.com", change=222, patchset=2),
+      ],
       step_name='search2cls')
   assert len(runs) > 0
 

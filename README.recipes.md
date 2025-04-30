@@ -1055,19 +1055,20 @@ https://bugs.chromium.org/p/chromium/issues/entry?components=Infra%3ELUCI%3EBuil
 
 This module provides recipe API of LUCI Change Verifier.
 
-&mdash; **def [match\_config](/recipe_modules/change_verifier/api.py#156)(self, host: str, change: int, project: (str | None)=None, config_name: str=cv_api.CONFIG_FILE):**
+&mdash; **def [match\_config](/recipe_modules/change_verifier/api.py#165)(self, host: str, change: int, project: (str | None)=None, config_name: str=cv_api.CONFIG_FILE):**
 
 Retrieve the applicable CV group for a given change.
 
-&mdash; **def [search\_runs](/recipe_modules/change_verifier/api.py#47)(self, project: str, cls: ((Sequence[GerritChange] | GerritChange) | None)=None, limit: (int | None)=None, step_name: (str | None)=None, dev: bool=False):**
+&mdash; **def [search\_runs](/recipe_modules/change_verifier/api.py#47)(self, project: str, cls: (((Sequence[(GerritChangeTuple | run_pb.GerritChange)] | GerritChangeTuple) | run_pb.GerritChange) | None)=None, limit: (int | None)=None, step_name: (str | None)=None, dev: bool=False):**
 
 Searches for Runs.
 
 Args:
   * project: LUCI project name.
-  * cls: CLs, specified as (host, change number) tuples. A single tuple may
-    also be passed. All Runs returned must include all of the given CLs, and
-    Runs may also contain other CLs.
+  * cls: CLs, specified as (host, change number) tuples or
+    run_pb.GerritChanges. A single tuple or GerritChange may also be passed.
+    All Runs returned must include all of the given CLs, and Runs may also
+    contain other CLs.
   * limit: max number of Runs to return. Defaults to 32.
   * step_name: optional custom step name in RPC steps.
   * dev: whether to use the dev instance of Change Verifier.
@@ -5191,7 +5192,7 @@ This recipe tests the buildbucket.set_output_gitiles_commit function.
 
 &mdash; **def [RunSteps](/recipe_modules/change_verifier/tests/search.py#14)(api):**
 
-&mdash; **def [make\_runs](/recipe_modules/change_verifier/tests/search.py#34)(count=1):**
+&mdash; **def [make\_runs](/recipe_modules/change_verifier/tests/search.py#37)(count=1):**
 
 Generates response Runs for a test.
 ### *recipes* / [cipd:examples/full](/recipe_modules/cipd/examples/full.py)
