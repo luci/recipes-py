@@ -78,7 +78,7 @@
       }
     },
     "name": "custom-batch-step",
-    "stdin": "{\"batches\": [{\"jobs\": [{\"job\": \"job1\", \"project\": \"proj\"}, {\"job\": \"job2\", \"project\": \"proj\"}], \"trigger\": {\"buildbucket\": {\"properties\": {\"some\": \"none\"}, \"tags\": [\"buildset:commit/gitiles/chromium.googlesource.com/project/+/2d72510e447ab60a9728aeea2362d8be2cbd7789\", \"gitiles_ref:refs/heads/main\", \"parent_buildername:compiler\", \"parent_buildnumber:123\", \"this:test\", \"user_agent:recipe\"]}, \"id\": \"6a0a73b0-070b-492b-9135-9f26a2a00002\", \"title\": \"compiler/123\"}}, {\"jobs\": [{\"job\": \"job1\", \"project\": \"proj3\"}], \"trigger\": {\"gitiles\": {\"ref\": \"refs/branch-heads/1235\", \"repo\": \"https://chromium.googlesource.com/chromium/src\", \"revision\": \"2d2b87e5f9c872902d8508f6377470a4a6fa87e1\", \"tags\": [\"parent_buildername:compiler\", \"parent_buildnumber:123\", \"user_agent:recipe\"]}, \"id\": \"6a0a73b0-070b-492b-9135-9f26a2a00003\", \"title\": \"advanced gitiles trigger\"}}], \"timestamp\": 1337000003000000}",
+    "stdin": "{\"batches\": [{\"jobs\": [{\"job\": \"job1\", \"project\": \"proj\"}, {\"job\": \"job2\", \"project\": \"proj\"}], \"trigger\": {\"buildbucket\": {\"properties\": {\"some\": \"none\"}, \"tags\": [\"buildset:commit/gitiles/chromium.googlesource.com/project/+/2d72510e447ab60a9728aeea2362d8be2cbd7789\", \"gitiles_ref:refs/heads/main\", \"parent_buildername:compiler\", \"parent_buildnumber:123\", \"this:test\", \"user_agent:recipe\"]}, \"id\": \"6a0a73b0-070b-492b-9135-9f26a2a00002\", \"title\": \"compiler/123\", \"url\": \"https://cr-buildbucket.appspot.com/build/8945511751514863184\"}}, {\"jobs\": [{\"job\": \"job1\", \"project\": \"proj3\"}], \"trigger\": {\"gitiles\": {\"ref\": \"refs/branch-heads/1235\", \"repo\": \"https://chromium.googlesource.com/chromium/src\", \"revision\": \"2d2b87e5f9c872902d8508f6377470a4a6fa87e1\", \"tags\": [\"parent_buildername:compiler\", \"parent_buildnumber:123\", \"user_agent:recipe\"]}, \"id\": \"6a0a73b0-070b-492b-9135-9f26a2a00003\", \"title\": \"advanced gitiles trigger\", \"url\": \"https://cr-buildbucket.appspot.com/build/8945511751514863184\"}}], \"timestamp\": 1337000003000000}",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@input@{@@@",
       "@@@STEP_LOG_LINE@input@    \"batches\": [@@@",
@@ -108,7 +108,8 @@
       "@@@STEP_LOG_LINE@input@                    ]@@@",
       "@@@STEP_LOG_LINE@input@                },@@@",
       "@@@STEP_LOG_LINE@input@                \"id\": \"6a0a73b0-070b-492b-9135-9f26a2a00002\",@@@",
-      "@@@STEP_LOG_LINE@input@                \"title\": \"compiler/123\"@@@",
+      "@@@STEP_LOG_LINE@input@                \"title\": \"compiler/123\",@@@",
+      "@@@STEP_LOG_LINE@input@                \"url\": \"https://cr-buildbucket.appspot.com/build/8945511751514863184\"@@@",
       "@@@STEP_LOG_LINE@input@            }@@@",
       "@@@STEP_LOG_LINE@input@        },@@@",
       "@@@STEP_LOG_LINE@input@        {@@@",
@@ -130,7 +131,8 @@
       "@@@STEP_LOG_LINE@input@                    ]@@@",
       "@@@STEP_LOG_LINE@input@                },@@@",
       "@@@STEP_LOG_LINE@input@                \"id\": \"6a0a73b0-070b-492b-9135-9f26a2a00003\",@@@",
-      "@@@STEP_LOG_LINE@input@                \"title\": \"advanced gitiles trigger\"@@@",
+      "@@@STEP_LOG_LINE@input@                \"title\": \"advanced gitiles trigger\",@@@",
+      "@@@STEP_LOG_LINE@input@                \"url\": \"https://cr-buildbucket.appspot.com/build/8945511751514863184\"@@@",
       "@@@STEP_LOG_LINE@input@            }@@@",
       "@@@STEP_LOG_LINE@input@        }@@@",
       "@@@STEP_LOG_LINE@input@    ],@@@",
