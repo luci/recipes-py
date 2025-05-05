@@ -55,7 +55,8 @@
       "@@@STEP_LOG_LINE@request@    }@@@",
       "@@@STEP_LOG_LINE@request@  ]@@@",
       "@@@STEP_LOG_LINE@request@}@@@",
-      "@@@STEP_LOG_END@request@@@"
+      "@@@STEP_LOG_END@request@@@",
+      "@@@STEP_LINK@rpc-explorer@https://cr-buildbucket.appspot.com/rpcexplorer/services/buildbucket.v2.Builds/SearchBuilds?request=%7B%22predicate%22%3A+%7B%22gerritChanges%22%3A+%5B%7B%22host%22%3A+%22chromium-review.googlesource.com%22%2C+%22project%22%3A+%22chromium%2Fsrc%22%2C+%22change%22%3A+%22123456%22%2C+%22patchset%22%3A+%227%22%7D%5D%7D%2C+%22mask%22%3A+%7B%22fields%22%3A+%22builder%2CcreateTime%2Cid%2Cstatus%22%7D%7D@@@"
     ]
   },
   {

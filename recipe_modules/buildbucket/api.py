@@ -13,7 +13,9 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence, Set
 import contextlib
 import enum
+import json
 from typing import Any, Callable, Generator
+import urllib.parse
 
 from google import protobuf
 from google.protobuf import field_mask_pb2
@@ -742,15 +744,16 @@ class BuildbucketApi(recipe_api.RecipeApi):
     assert isinstance(predicate, builds_service_pb2.BuildPredicate), (
       'For searching with a list of predicates, '\
       'use search_with_multiple_predicates() instead')
+
+    query = builds_service_pb2.SearchBuildsRequest()
+    query.predicate.CopyFrom(predicate)
+    query.mask.fields.CopyFrom(self._make_field_mask(paths=fields))
+    if limit is not None:
+      query.page_size = limit  # pragma: no cover
+
     batch_req = builds_service_pb2.BatchRequest(
-        requests=[
-            dict(
-                search_builds=dict(
-                    predicate=predicate,
-                    mask=dict(fields=self._make_field_mask(paths=fields)),
-                    page_size=limit,
-                ))
-        ],)
+        requests=[dict(search_builds=query)],
+    )
 
     if test_data:
       test_res = builds_service_pb2.BatchResponse(
@@ -760,6 +763,14 @@ class BuildbucketApi(recipe_api.RecipeApi):
           responses=[dict(search_builds=dict())])
     step_res, batch_res, has_errors = self._batch_request(
         step_name or 'buildbucket.search', batch_req, test_res, timeout=timeout)
+
+    encoded_query = urllib.parse.urlencode(
+        {'request': json.dumps(json_format.MessageToDict(query))},
+    )
+    step_res.presentation.links['rpc-explorer'] = (
+        f'https://{self.host}/rpcexplorer/services/buildbucket.v2.Builds/'
+        f'SearchBuilds?{encoded_query}'
+    )
 
     ret = []
     for res in batch_res.responses:
