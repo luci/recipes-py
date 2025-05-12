@@ -25,6 +25,7 @@ ALLOWED_MODULES = [
     r'dataclasses',
     r'datetime',
     r'difflib',
+    r'enum',
     r'fnmatch',
     r'functools',
     r'hashlib',
