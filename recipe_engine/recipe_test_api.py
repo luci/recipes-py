@@ -7,6 +7,7 @@ from collections import defaultdict
 from collections import namedtuple
 from functools import reduce
 from os import stat
+from typing import Literal
 
 from past.builtins import basestring
 
@@ -662,31 +663,40 @@ class RecipeTestApi:
     return ret
 
   @staticmethod
-  def _step_data(name, *data, **kwargs):
+  def _step_data(
+      name: str,
+      *data: StepTestData,
+      retcode: int | None = None,
+      stdout: StepTestData | None = None,
+      stderr: StepTestData | None = None,
+      override: bool | None = None,
+      times_out_after: int | None = None,
+      cancel: bool | None = None,
+      global_shutdown_event: Literal['before', 'after'] | None = None,
+  ) -> TestData:
     """Returns a new TestData with the mock data filled in for a single step.
 
     Used by step_data and override_step_data.
 
     Args:
-      name - The name of the step we're providing data for
-      data - Zero or more StepTestData objects. These may fill in output
-             placeholder data for zero or more modules, as well as possibly
-             setting the retcode for this step.
-      retcode=(int or None) - Override the retcode for this step, even if it
-             was set by |data|. This must be set as a keyword arg. In the case
-             of None, if the step completes successfully (not canceled or timed
-             out), then the step's retcode will be 0.
+      name - The name of the step we're providing data for.
+      data - Zero or more StepTestData objects. These may fill in output placeholder
+          data for zero or more modules, as well as possibly setting the retcode for
+          this step.
+      retcode - Override the retcode for this step, even if it was set by |data|.
+          This must be set as a keyword arg. In the case of None, if the step
+          completes successfully (not canceled or timed out), then the step's retcode
+          will be 0.
       stdout - StepTestData object with a single output placeholder datum for a
-             step's stdout.
+          step's stdout.
       stderr - StepTestData object with a single output placeholder datum for a
-             step's stderr.
-      override=(bool) - This step data completely replaces any previously
-             generated step data, instead of adding on to it.
-      times_out_after=(int) - Causes the step to timeout after the given number
-             of seconds.
+          step's stderr.
+      override - This step data completely replaces any previously generated step
+          data, instead of adding on to it.
+      times_out_after - Causes the step to timeout after the given number of seconds.
       cancel=(bool) - Causes the step to indicate that it was canceled.
       global_shutdown_event=(None,'before','after') - Causes a global shutdown
-             either before or after this step runs.
+          either before or after this step runs.
 
     Use in GenTests:
       # Hypothetically, suppose that your recipe has default test data for two
@@ -715,25 +725,28 @@ class RecipeTestApi:
         )
     """
     assert all(isinstance(d, StepTestData) for d in data)
+    assert isinstance(stdout, (StepTestData, type(None)))
+    assert isinstance(stderr, (StepTestData, type(None)))
+
     ret = TestData(None)
     if data:
       ret.step_data[name] = reduce(lambda x,y: x + y, data)
-    if 'retcode' in kwargs:
-      ret.step_data[name].retcode = kwargs['retcode']
-    if 'times_out_after' in kwargs:
-      ret.step_data[name].times_out_after = kwargs['times_out_after']
-    if 'cancel' in kwargs:
-      ret.step_data[name].cancel = kwargs['cancel']
-    if 'global_shutdown_event' in kwargs:
-      ret.step_data[name].global_shutdown_event = (
-        kwargs['global_shutdown_event'])
-    if 'override' in kwargs:
-      ret.step_data[name].override = kwargs['override']
-    for key in ('stdout', 'stderr'):
-      if key in kwargs:
-        stdio_test_data = kwargs[key]
-        assert isinstance(stdio_test_data, StepTestData)
-        setattr(ret.step_data[name], key, stdio_test_data.unwrap_placeholder())
+    if retcode is not None:
+      ret.step_data[name].retcode = retcode
+    if times_out_after is not None:
+      ret.step_data[name].times_out_after = times_out_after
+    if cancel is not None:
+      ret.step_data[name].cancel = cancel
+    if global_shutdown_event is not None:
+      ret.step_data[name].global_shutdown_event = global_shutdown_event
+    if override is not None:
+      ret.step_data[name].override = override
+
+    if stdout is not None:
+      ret.step_data[name].stdout = stdout.unwrap_placeholder()
+    if stderr is not None:
+      ret.step_data[name].stderr = stderr.unwrap_placeholder()
+
     return ret
 
   def step_data(self, name, *data, **kwargs):
