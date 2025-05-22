@@ -571,11 +571,7 @@ class CIPDApi(recipe_api.RecipeApi):
         cmd,
         step_test_data=lambda: self.test_api.example_register(package_name))
     pin = self.Pin(**step_result.json.output['result'])
-    instance_link = '%s/p/%s/+/%s' % (
-        CIPD_SERVER_URL,
-        pin.package,
-        pin.instance_id,
-    )
+    instance_link = self.make_link(pin.package, pin.instance_id)
     step_result.presentation.links[pin.package] = instance_link
     return pin
 
@@ -610,11 +606,13 @@ class CIPDApi(recipe_api.RecipeApi):
     result = step_result.json.output['result']
     return self.Pin(**result)
 
+  def make_link(self, package: str, version: str) -> str:
+    return f'{CIPD_SERVER_URL}/p/{package}/+/{version}'
+
   def add_instance_link(self, step_result):
     result = step_result.json.output['result']
-    step_result.presentation.links[result['instance_id']] = (
-        'https://chrome-infra-packages.appspot.com' +
-        '/p/%(package)s/+/%(instance_id)s' % result)
+    step_result.presentation.links[result['instance_id']] = self.make_link(
+        package=result['package'], version=result['instance_id'])
 
   def create_from_yaml(self,
                        pkg_def,

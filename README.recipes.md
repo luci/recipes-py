@@ -1108,7 +1108,7 @@ Args:
 
 Returns True if the caller has given roles, False otherwise.
 
-&mdash; **def [add\_instance\_link](/recipe_modules/cipd/api.py#613)(self, step_result):**
+&mdash; **def [add\_instance\_link](/recipe_modules/cipd/api.py#612)(self, step_result):**
 
 &mdash; **def [build](/recipe_modules/cipd/api.py#440)(self, input_dir, output_package, package_name, compression_level: (CompressionLevel | None)=None, install_mode: (InstallMode | None)=None, preserve_mtime: bool=False, preserve_writable: bool=False):**
 
@@ -1163,7 +1163,7 @@ environment variable.
 
 If directory is "None", will use no cache directory.
 
-&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#657)(self, pkg_def, refs=None, tags=None, metadata=None, compression_level: (CompressionLevel | None)=None, verification_timeout=None):**
+&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#655)(self, pkg_def, refs=None, tags=None, metadata=None, compression_level: (CompressionLevel | None)=None, verification_timeout=None):**
 
 Builds and uploads a package based on a PackageDefinition object.
 
@@ -1184,7 +1184,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#619)(self, pkg_def, refs=None, tags=None, metadata=None, pkg_vars=None, compression_level: (CompressionLevel | None)=None, verification_timeout=None):**
+&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#617)(self, pkg_def, refs=None, tags=None, metadata=None, pkg_vars=None, compression_level: (CompressionLevel | None)=None, verification_timeout=None):**
 
 Builds and uploads a package based on on-disk YAML package definition
 file.
@@ -1207,7 +1207,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [describe](/recipe_modules/cipd/api.py#876)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
+&mdash; **def [describe](/recipe_modules/cipd/api.py#874)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
 
 Returns information about a package instance given its version:
 who uploaded the instance and when and a list of attached tags.
@@ -1222,7 +1222,7 @@ Args:
 
 Returns the CIPDApi.Description instance describing the package.
 
-&mdash; **def [ensure](/recipe_modules/cipd/api.py#692)(self, root, ensure_file, name='ensure_installed'):**
+&mdash; **def [ensure](/recipe_modules/cipd/api.py#690)(self, root, ensure_file, name='ensure_installed'):**
 
 Ensures that packages are installed in a given root dir.
 
@@ -1233,7 +1233,7 @@ Args:
 
 Returns the map of subdirectories to CIPDApi.Pin instances.
 
-&mdash; **def [ensure\_file\_resolve](/recipe_modules/cipd/api.py#734)(self, ensure_file, name='cipd ensure-file-resolve'):**
+&mdash; **def [ensure\_file\_resolve](/recipe_modules/cipd/api.py#732)(self, ensure_file, name='cipd ensure-file-resolve'):**
 
 Resolves versions of all packages for all verified platforms in an
 ensure file.
@@ -1241,7 +1241,7 @@ ensure file.
 Args:
   * ensure_file (EnsureFile|Path) - Ensure file to resolve.
 
-&mdash; **def [ensure\_tool](/recipe_modules/cipd/api.py#1002)(self, package: str, version: str, executable_path: str=None):**
+&mdash; **def [ensure\_tool](/recipe_modules/cipd/api.py#1000)(self, package: str, version: str, executable_path: str=None):**
 
 Downloads an executable from CIPD.
 
@@ -1268,7 +1268,7 @@ block on a single ensure step.
 
 &emsp; **@property**<br>&mdash; **def [executable](/recipe_modules/cipd/api.py#326)(self):**
 
-&mdash; **def [instances](/recipe_modules/cipd/api.py#911)(self, package_name, limit=None):**
+&mdash; **def [instances](/recipe_modules/cipd/api.py#909)(self, package_name, limit=None):**
 
 Lists instances of a package, most recently uploaded first.
 
@@ -1279,7 +1279,9 @@ Args:
 
 Returns the list of CIPDApi.Instance instance.
 
-&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#978)(self, root, package_file):**
+&mdash; **def [make\_link](/recipe_modules/cipd/api.py#609)(self, package: str, version: str):**
+
+&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#976)(self, root, package_file):**
 
 Deploys the specified package to root.
 
@@ -1293,7 +1295,7 @@ Args:
 
 Returns a Pin for the deployed package.
 
-&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#948)(self, destination, package_name, version):**
+&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#946)(self, destination, package_name, version):**
 
 Downloads the specified package to destination.
 
@@ -1310,7 +1312,7 @@ Args:
 
 Returns a Pin for the downloaded package.
 
-&emsp; **@property**<br>&mdash; **def [platform](/recipe_modules/cipd/api.py#1078)(self):**
+&emsp; **@property**<br>&mdash; **def [platform](/recipe_modules/cipd/api.py#1076)(self):**
 
 Returns the CIPD platform string, equivalent to '${platform}'.
 
@@ -1332,7 +1334,7 @@ Args:
 Returns:
   The CIPDApi.Pin instance.
 
-&mdash; **def [search](/recipe_modules/cipd/api.py#844)(self, package_name, tag, test_instances=None):**
+&mdash; **def [search](/recipe_modules/cipd/api.py#842)(self, package_name, tag, test_instances=None):**
 
 Searches for package instances by tag, optionally constrained by package
 name.
@@ -1348,7 +1350,7 @@ Args:
 
 Returns the list of CIPDApi.Pin instances.
 
-&mdash; **def [set\_metadata](/recipe_modules/cipd/api.py#792)(self, package_name, version, metadata):**
+&mdash; **def [set\_metadata](/recipe_modules/cipd/api.py#790)(self, package_name, version, metadata):**
 
 Attaches metadata to a package instance.
 
@@ -1359,7 +1361,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#818)(self, package_name, version, refs):**
+&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#816)(self, package_name, version, refs):**
 
 Moves a ref to point to a given version.
 
@@ -1370,7 +1372,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#764)(self, package_name, version, tags):**
+&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#762)(self, package_name, version, tags):**
 
 Tags package of a specific version.
 
