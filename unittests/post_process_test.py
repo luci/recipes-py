@@ -4,6 +4,8 @@
 # that can be found in the LICENSE file.
 
 
+from __future__ import annotations
+
 import collections
 from typing import Any, Callable, OrderedDict
 

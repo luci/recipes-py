@@ -16,6 +16,8 @@ the 'archive' recipe module internally. Should not be used elsewhere.
 # >
 # [VPYTHON:END]
 
+from __future__ import annotations
+
 import argparse
 import fnmatch
 import json

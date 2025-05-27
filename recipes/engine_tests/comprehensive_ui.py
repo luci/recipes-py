@@ -8,6 +8,8 @@
 """A fast-running recipe which comprehensively covers all StepPresentation
 features available in the recipe engine."""
 
+from __future__ import annotations
+
 DEPS = [
   'raw_io',
   'step',

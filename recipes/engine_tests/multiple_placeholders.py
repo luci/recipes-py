@@ -4,6 +4,8 @@
 
 """Tests error checking around multiple placeholders in a single step."""
 
+from __future__ import annotations
+
 from recipe_engine.post_process import DropExpectation
 
 DEPS = [

@@ -5,6 +5,8 @@
 # This is not really a test of the step module, but it's the most convenient
 # way to test DropExpectations.
 
+from __future__ import annotations
+
 from recipe_engine import post_process
 
 DEPS = [

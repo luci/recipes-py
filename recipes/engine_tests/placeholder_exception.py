@@ -5,6 +5,8 @@
 """Tests that placeholders can't wreck the world by exhausting the step stack.
 """
 
+from __future__ import annotations
+
 from recipe_engine import post_process
 from recipe_engine.util import InputPlaceholder
 from recipe_engine.recipe_api import StepFailure

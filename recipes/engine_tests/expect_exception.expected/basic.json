@@ -19,9 +19,9 @@
       "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/property_invoker.py\", line 52, in _invoke_with_properties",
       "    return callable_obj(*props, **additional_args)",
       "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-      "  File \"RECIPE_REPO[recipe_engine]/recipes/engine_tests/expect_exception.py\", line 17, in RunSteps",
+      "  File \"RECIPE_REPO[recipe_engine]/recipes/engine_tests/expect_exception.py\", line 19, in RunSteps",
       "    my_function()",
-      "  File \"RECIPE_REPO[recipe_engine]/recipes/engine_tests/expect_exception.py\", line 13, in my_function",
+      "  File \"RECIPE_REPO[recipe_engine]/recipes/engine_tests/expect_exception.py\", line 15, in my_function",
       "    raise TypeError(\"BAD DOGE\")",
       "TypeError: BAD DOGE"
     ]

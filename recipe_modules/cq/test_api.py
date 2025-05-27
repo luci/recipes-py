@@ -3,6 +3,8 @@
 # that can be found in the LICENSE file.
 """Wrapper for CV Test API."""
 
+from __future__ import annotations
+
 from recipe_engine import recipe_test_api
 
 

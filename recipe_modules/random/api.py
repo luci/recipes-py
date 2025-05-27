@@ -23,6 +23,8 @@ Example:
 """
 
 
+from __future__ import annotations
+
 import random
 
 from recipe_engine import recipe_api

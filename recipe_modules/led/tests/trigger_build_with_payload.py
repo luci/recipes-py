@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from __future__ import annotations
+
 from PB.go.chromium.org.luci.swarming.proto.api_v2 import swarming
 from PB.recipe_modules.recipe_engine.led.properties import InputProperties
 

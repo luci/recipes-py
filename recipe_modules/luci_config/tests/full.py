@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from __future__ import annotations
+
 from PB.go.chromium.org.luci.cv.api.config.v2 import config as cv_config_pb2
 from PB.go.chromium.org.luci.milo.proto.projectconfig import project as milo_pb2
 

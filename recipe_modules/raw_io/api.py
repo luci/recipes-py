@@ -5,6 +5,8 @@
 
 """Provides objects for reading and writing raw data to and from steps."""
 
+from __future__ import annotations
+
 from future.utils import raise_
 
 import codecs

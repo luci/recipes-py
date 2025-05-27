@@ -4,6 +4,8 @@
 
 """Allows recipe modules to issue warnings in test definitions."""
 
+from __future__ import annotations
+
 from recipe_engine import recipe_api, recipe_test_api
 
 

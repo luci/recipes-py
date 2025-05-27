@@ -4,6 +4,8 @@
 
 """File manipulation (read/write/delete/glob) methods."""
 
+from __future__ import annotations
+
 import fnmatch
 import hashlib
 import os

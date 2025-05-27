@@ -4,6 +4,8 @@
 
 """This file is a recipe demonstrating the buildbucket recipe module."""
 
+from __future__ import annotations
+
 import copy
 
 from recipe_engine import recipe_api

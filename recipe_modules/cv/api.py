@@ -4,6 +4,8 @@
 """Recipe API for LUCI CV, the pre-commit testing system."""
 
 
+from __future__ import annotations
+
 import re
 
 from google.protobuf import json_format as json_pb

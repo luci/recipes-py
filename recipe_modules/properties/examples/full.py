@@ -3,6 +3,8 @@
 # that can be found in the LICENSE file.
 
 
+from __future__ import annotations
+
 from google.protobuf import struct_pb2, json_format
 
 from recipe_engine import post_process

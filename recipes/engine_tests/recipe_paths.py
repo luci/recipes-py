@@ -4,6 +4,8 @@
 
 """Tests that recipes have access to names, resources and their repo."""
 
+from __future__ import annotations
+
 DEPS = [
   'path',
   'step',

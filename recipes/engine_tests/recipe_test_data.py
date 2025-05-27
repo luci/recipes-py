@@ -4,6 +4,8 @@
 
 """Tests that we can pass data via api.recipe_test_data."""
 
+from __future__ import annotations
+
 from recipe_engine.post_process import DropExpectation
 
 DEPS = [

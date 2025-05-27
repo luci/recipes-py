@@ -7,6 +7,8 @@ this module has tests. The actual test for this module is done via unit test
 because the `issue` method can only be used from recipe_modules, not recipes.
 """
 
+from __future__ import annotations
+
 from recipe_engine import post_process
 
 def RunSteps(api):

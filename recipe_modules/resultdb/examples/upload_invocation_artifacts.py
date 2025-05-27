@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from __future__ import annotations
+
 from recipe_engine.post_process import DropExpectation
 
 from PB.go.chromium.org.luci.resultdb.proto.v1 import artifact

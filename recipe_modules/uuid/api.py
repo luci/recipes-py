@@ -4,6 +4,8 @@
 
 """Allows test-repeatable access to a random UUID."""
 
+from __future__ import annotations
+
 import uuid
 
 from recipe_engine import recipe_api

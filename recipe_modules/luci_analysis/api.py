@@ -8,6 +8,8 @@ test results.
 See go/luci-analysis for more info.
 """
 
+from __future__ import annotations
+
 import re
 import attr
 

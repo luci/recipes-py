@@ -10,6 +10,8 @@ http://src.chromium.org/viewvc/chrome?revision=298072&view=revision
 When this recipe is run (by run_test.py), the _print_step code is exercised.
 """
 
+from __future__ import annotations
+
 import functools
 from recipe_engine import recipe_test_api
 

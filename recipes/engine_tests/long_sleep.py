@@ -5,6 +5,8 @@
 """Simple recipe which sleeps in a subprocess forever to facilitate early
 termination tests."""
 
+from __future__ import annotations
+
 DEPS = [
   'futures',
   'properties',

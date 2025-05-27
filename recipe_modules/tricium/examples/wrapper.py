@@ -3,6 +3,8 @@
 # that can be found in the LICENSE file.
 """An example of a recipe wrapping legacy analyzers."""
 
+from __future__ import annotations
+
 from google.protobuf import json_format
 
 from recipe_engine import post_process

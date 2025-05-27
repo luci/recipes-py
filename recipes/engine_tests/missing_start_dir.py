@@ -4,6 +4,8 @@
 
 """Tests that deleting the current working directory doesn't immediately fail"""
 
+from __future__ import annotations
+
 DEPS = [
   'step',
   'path',

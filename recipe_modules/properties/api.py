@@ -18,6 +18,8 @@ intentionally no API to write property values (lest they become a kind of
 random-access global variable).
 """
 
+from __future__ import annotations
+
 import collections.abc
 
 from recipe_engine import recipe_api

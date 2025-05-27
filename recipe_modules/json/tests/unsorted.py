@@ -4,6 +4,8 @@
 
 """Test to assert that sort_keys=False preserves insertion order."""
 
+from __future__ import annotations
+
 import string
 
 BACKWARDS = ''.join(reversed(string.ascii_lowercase))

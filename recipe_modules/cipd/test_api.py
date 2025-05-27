@@ -3,6 +3,8 @@
 # that can be found in the LICENSE file.
 
 
+from __future__ import annotations
+
 from recipe_engine import recipe_test_api
 
 from .api import EnsureFile

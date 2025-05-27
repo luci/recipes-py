@@ -4,6 +4,8 @@
 
 """This recipe tests the buildbucket.set_output_gitiles_commit function."""
 
+from __future__ import annotations
+
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 
 DEPS = [

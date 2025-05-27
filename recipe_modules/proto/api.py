@@ -5,6 +5,8 @@
 """Methods for producing and consuming protobuf data to/from steps and the
 filesystem."""
 
+from __future__ import annotations
+
 from google.protobuf import message
 
 from recipe_engine import recipe_api, recipe_test_api

@@ -5,6 +5,8 @@
 
 """Runs simulation tests and lint on the standard recipe modules."""
 
+from __future__ import annotations
+
 import os
 import sys
 

@@ -4,6 +4,8 @@
 
 """This tests metadata features of the Future object."""
 
+from __future__ import annotations
+
 DEPS = [
   'futures',
   'step',

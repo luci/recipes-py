@@ -4,6 +4,8 @@
 
 """Implements in-recipe concurrency via green threads."""
 
+from __future__ import annotations
+
 import gevent
 import gevent.lock
 import gevent.queue

@@ -4,6 +4,8 @@
 
 """API for interacting with cas client."""
 
+from __future__ import annotations
+
 import contextlib
 
 from recipe_engine import recipe_api

@@ -4,6 +4,8 @@
 
 """Tests that tests with a single exception are handled correctly."""
 
+from __future__ import annotations
+
 from recipe_engine import post_process
 
 DEPS = [

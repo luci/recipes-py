@@ -4,6 +4,8 @@
 
 """This file is a recipe demonstrating reading triggers of the current build."""
 
+from __future__ import annotations
+
 import json
 
 from google.protobuf import json_format

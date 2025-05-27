@@ -4,6 +4,8 @@
 
 """Tests that step presentation properties can be ordered."""
 
+from __future__ import annotations
+
 DEPS = [
   'step',
 ]

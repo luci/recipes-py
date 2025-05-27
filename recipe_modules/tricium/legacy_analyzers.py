@@ -5,6 +5,8 @@
 """Legacy analyzers which may be used by multiple projects."""
 
 
+from __future__ import annotations
+
 import attr
 from attr.validators import instance_of
 

@@ -5,6 +5,8 @@
 
 """General tests during the python3 transition."""
 
+from __future__ import annotations
+
 import ast
 import difflib
 import linecache

@@ -11,6 +11,8 @@ analyzer recipes, including:
   * Recipes that wrap other tools and parse their output.
 """
 
+from __future__ import annotations
+
 import fnmatch
 import gzip
 import os

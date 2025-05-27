@@ -3,6 +3,8 @@
 # that can be found in the LICENSE file.
 """Runs a function but defers the result until a later time."""
 
+from __future__ import annotations
+
 from collections.abc import Sequence
 import contextlib
 import dataclasses

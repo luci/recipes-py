@@ -4,6 +4,8 @@
 
 """Tests that output properties can be a proto message."""
 
+from __future__ import annotations
+
 from PB.recipes.recipe_engine.engine_tests.proto_output_properties import (
   Output, Msg)
 

@@ -4,6 +4,8 @@
 
 """Tests that engine.py can handle unknown recipe results."""
 
+from __future__ import annotations
+
 from PB.recipe_engine import result as result_pb2
 from PB.recipes.recipe_engine.engine_tests.incorrect_recipe_result import InputProps
 

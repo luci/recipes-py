@@ -9,6 +9,8 @@ handles, because every spawn_immediate would immediately generate all log
 handles for the step, instead of waiting for the step's cost to be available.
 """
 
+from __future__ import annotations
+
 from recipe_engine.post_process import DropExpectation
 
 from PB.recipe_modules.recipe_engine.futures.examples.lottasteps import Input

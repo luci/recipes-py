@@ -19,6 +19,8 @@ don't exist on the real objects (i.e. "path helpers" or things of that nature).
 """
 
 
+from __future__ import annotations
+
 import sys
 import os
 

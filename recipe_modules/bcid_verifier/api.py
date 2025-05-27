@@ -7,6 +7,8 @@ To successfully authenticate to this API, you must have the
 https://www.googleapis.com/auth/bcid_verify OAuth scope.
 """
 
+from __future__ import annotations
+
 from recipe_engine import recipe_api
 
 # Usage of the bcid_verifier recipe_module will have significant downstream

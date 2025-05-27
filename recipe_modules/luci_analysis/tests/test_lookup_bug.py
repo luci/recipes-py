@@ -3,6 +3,8 @@
 # that can be found in the LICENSE file.
 """Tests for lookup_bug."""
 
+from __future__ import annotations
+
 DEPS = [
     'luci_analysis',
     'recipe_engine/assertions',

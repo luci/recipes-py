@@ -3,6 +3,8 @@
 # that can be found in the LICENSE file.
 """Test to cover legacy aspects of PathTestApi."""
 
+from __future__ import annotations
+
 from recipe_engine import recipe_api
 from recipe_engine.post_process import DropExpectation
 

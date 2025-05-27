@@ -5,6 +5,8 @@
 """Thin API for parsing semver strings into comparable object."""
 
 # Keep the legacy behavior of falling back to less-strict version parsing.
+from __future__ import annotations
+
 import packaging_legacy.version
 
 from recipe_engine.recipe_api import RecipeApi

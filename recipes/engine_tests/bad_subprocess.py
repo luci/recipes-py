@@ -4,6 +4,8 @@
 
 """Tests that daemons that hang on to STDOUT can't cause the engine to hang."""
 
+from __future__ import annotations
+
 DEPS = [
   'platform',
   'step',

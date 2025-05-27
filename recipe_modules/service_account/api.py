@@ -10,6 +10,8 @@ https://godoc.org/go.chromium.org/luci/auth/client/cmd/luci-auth).
 Depends on luci-auth to be in PATH.
 """
 
+from __future__ import annotations
+
 from recipe_engine import recipe_api
 
 

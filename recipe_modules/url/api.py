@@ -4,6 +4,8 @@
 
 """Methods for interacting with HTTP(s) URLs."""
 
+from __future__ import annotations
+
 from builtins import int
 from urllib.parse import urlparse, urlencode, quote, unquote
 

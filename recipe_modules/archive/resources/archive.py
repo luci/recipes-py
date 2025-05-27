@@ -14,6 +14,8 @@ the 'archive' recipe module internally. Should not be used elsewhere.
 # >
 # [VPYTHON:END]
 
+from __future__ import annotations
+
 from contextlib import contextmanager
 import json
 import os

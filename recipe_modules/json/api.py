@@ -4,6 +4,8 @@
 
 """Methods for producing and consuming JSON."""
 
+from __future__ import annotations
+
 import functools
 import contextlib
 import json

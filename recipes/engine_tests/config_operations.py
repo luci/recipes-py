@@ -3,6 +3,8 @@
 # that can be found in the LICENSE file.
 
 """Tests that recipes can modify configuration options in various ways."""
+from __future__ import annotations
+
 from past.builtins import basestring
 
 # This code is typically located inside a module/config.py file, but we inline

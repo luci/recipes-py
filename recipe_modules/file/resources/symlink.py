@@ -5,6 +5,8 @@
 
 """Simple script for creating symbolic links for an arbitrary number of path pairs."""
 
+from __future__ import annotations
+
 import argparse
 import errno
 import json

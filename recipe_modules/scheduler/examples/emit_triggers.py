@@ -4,6 +4,8 @@
 
 """This file is a recipe demonstrating emitting triggers to LUCI Scheduler."""
 
+from __future__ import annotations
+
 DEPS = [
   'buildbucket',
   'json',

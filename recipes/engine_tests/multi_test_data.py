@@ -4,6 +4,8 @@
 
 """Tests that step_data can accept multiple specs at once."""
 
+from __future__ import annotations
+
 DEPS = [
   'raw_io',
   'step',

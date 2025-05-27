@@ -14,6 +14,8 @@ download. These can easily be download to disk with the 'download_caches'
 method, and subsequently used by a recipe in whatever relevant manner.
 """
 
+from __future__ import annotations
+
 from recipe_engine import recipe_api
 
 

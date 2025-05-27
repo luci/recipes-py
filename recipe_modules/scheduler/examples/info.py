@@ -4,6 +4,8 @@
 
 """This file is a recipe demonstrating reading/mocking scheduler host."""
 
+from __future__ import annotations
+
 DEPS = [
   'scheduler',
   'step',

@@ -5,6 +5,8 @@
 """Tests that step_data can accept multiple specs at once."""
 
 
+from __future__ import annotations
+
 from recipe_engine import post_process
 from recipe_engine.recipe_api import Property
 from recipe_engine.post_process import Filter, DoesNotRun, MustRun

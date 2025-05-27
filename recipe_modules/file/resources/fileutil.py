@@ -9,6 +9,8 @@ This file was cut from "scripts/common/chromium_utils.py" at:
 91310531c31fa645256b4fb5d44b460c42b3e151
 """
 
+from __future__ import annotations
+
 import argparse
 import errno
 import glob

@@ -5,6 +5,8 @@
 """Simple recipe which runs a bunch of subprocesses which react to early
 termination in different ways."""
 
+from __future__ import annotations
+
 DEPS = [
   'file',
   'futures',

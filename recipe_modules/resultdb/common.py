@@ -3,6 +3,8 @@
 # that can be found in the LICENSE file.
 
 
+from __future__ import annotations
+
 import json
 
 from google.protobuf import json_format

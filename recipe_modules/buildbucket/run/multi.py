@@ -4,6 +4,8 @@
 
 """Launches multiple builds at the same revision."""
 
+from __future__ import annotations
+
 from recipe_engine.config import List
 from recipe_engine.config import Single
 from recipe_engine.recipe_api import Property

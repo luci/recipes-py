@@ -5,6 +5,8 @@
 """Step is the primary API for running steps (external programs, etc.)"""
 
 
+from __future__ import annotations
+
 import contextlib
 from datetime import timedelta
 import sys

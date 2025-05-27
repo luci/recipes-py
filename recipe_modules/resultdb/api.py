@@ -7,6 +7,8 @@
 Requires `rdb` command in `$PATH`:
 https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 """
+from __future__ import annotations
+
 from google.protobuf import field_mask_pb2
 from google.protobuf import json_format
 from google.protobuf import timestamp_pb2

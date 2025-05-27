@@ -10,6 +10,8 @@ owns it.
 This was implemented to aid in refactoring some recipes (crbug.com/782142).
 """
 
+from __future__ import annotations
+
 DEPS = [
   "recipe_engine/path",
   "step",
