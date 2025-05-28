@@ -552,6 +552,116 @@ def LogDoesNotContain(check, step_odict, step, log, unexpected_substrs):
     check(unexpected not in step_odict[step].logs[log])
 
 
+def HasLink(check, step_odict, step: str, link: str):
+  """Check that the step has a link with the given name.
+
+  Args:
+    step - The step to check the links of
+    link - The name of a link expected to exist
+
+  Usage:
+    yield api.test(
+        ..., api.post_process(HasLink, 'step-name', 'link'))
+  """
+  check(step in step_odict)
+  check(link in step_odict[step].links)
+
+
+def DoesNotHaveLink(check, step_odict, step: str, link: str):
+  """Check that the step does not have a link with the given name.
+
+  Args:
+    step - The step to check the links of
+    link - The name of a link expected to not exist
+
+  Usage:
+    yield api.test(
+        ..., api.post_process(DoesNotHaveLink, 'step-name', 'link'))
+  """
+  check(step in step_odict)
+  check(link not in step_odict[step].links)
+
+
+def HasLinkRE(check, step_odict, step: str, link: re.Pattern | str):
+  """Check that the step has a link with the given name.
+
+  Args:
+    step - The step to check the links of
+    link - A pattern of a link name expected to exist
+
+  Usage:
+    yield api.test(
+        ..., api.post_process(HasLinkRE, 'step-name', r'link.*'))
+  """
+  check(step in step_odict)
+  check(any(_fullmatch(link, x) for x in step_odict[step].links))
+
+
+def DoesNotHaveLinkRE(check, step_odict, step: str, link: re.Pattern | str):
+  """Check that the step link does not have a matching link name.
+
+  Args:
+    step - The step to check the links of
+    link - A link name pattern expected to not match any links
+
+  Usage:
+    yield api.test(
+        ..., api.post_process(DoesNotHaveLinkRE, 'step-name', r'link.*'))
+  """
+  check(step in step_odict)
+  check(not any(_fullmatch(link, x) for x in step_odict[step].links))
+
+
+def LinkEquals(check, step_odict, step: str, link: str, expected: str):
+  """Check that the step link has the given value.
+
+  Args:
+    step - The step to check the links of
+    link - The name of the link
+    dest - The expected destination of the link
+
+  Usage:
+    yield api.test(
+        ...,
+        api.post_process(
+            LinkEquals,
+            'step-name',
+            'link',
+            'http://example.com',
+        ),
+    )
+  """
+  check(step in step_odict)
+  check(link in step_odict[step].links)
+  check(step_odict[step].links[link] == expected)
+
+
+def LinkEqualsRE(
+    check, step_odict, step: str, link: str, expected: str | re.Pattern
+):
+  """Check that the step link has a matching value.
+
+  Args:
+    step - The step to check the links of
+    link - The name of the link
+    dest - The expected destination of the link
+
+  Usage:
+    yield api.test(
+        ...,
+        api.post_process(
+            LinkEqualsRE,
+            'step-name',
+            'link',
+            'http://example.com',
+        ),
+    )
+  """
+  check(step in step_odict)
+  check(link in step_odict[step].links)
+  check(_fullmatch(expected, step_odict[step].links[link]))
+
+
 def GetBuildProperties(step_odict):
   """Retrieves the build properties for a recipe."""
   build_properties = {}

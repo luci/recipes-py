@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import collections
+import re
 from typing import Any, Callable, OrderedDict
 
 import test_env
@@ -596,6 +597,82 @@ class TestLog(PostProcessUnitTest):
     self.assertHas(failures[0],
                    'check((unexpected not in step_odict[step].logs[log]))',
                    "unexpected: 'foo'")
+
+
+class TestLink(PostProcessUnitTest):
+  """Test case for checks that relate to links."""
+
+  @property
+  def step_dict(self) -> dict[str, dict[str, Any]]:
+    """Return a standard step dict for this test case."""
+    return collections.OrderedDict(
+        [
+            (
+                'x',
+                {'name': 'x', 'links': {'foo': 'http://foo.com'}},
+            ),
+            (
+                'y',
+                {'name': 'y', 'links': {'bar': 'http://bar.com/bar'}},
+            ),
+        ],
+    )
+
+  def test_has_link_pass(self):
+    self.expect_pass(post_process.HasLink, 'x', 'foo')
+    self.expect_pass(post_process.HasLinkRE, 'x', r'fo+')
+    self.expect_pass(post_process.HasLinkRE, 'x', re.compile(r'fo+'))
+
+  def test_has_link_fail(self):
+    failures = self.expect_fails(1, post_process.HasLink, 'x', 'bar')
+    self.assertHas(failures[0], 'check((link in step_odict[step].links))')
+
+    failures = self.expect_fails(1, post_process.HasLinkRE, 'x', r'ba.*')
+    self.assertHas(
+        failures[0],
+        'check(any((_fullmatch(link, x) for x in step_odict[step].links)))',
+    )
+
+    failures = self.expect_fails(
+        1,
+        post_process.HasLinkRE, 'x', re.compile(r'ba.*'),
+    )
+    self.assertHas(
+        failures[0],
+        'check(any((_fullmatch(link, x) for x in step_odict[step].links)))',
+    )
+
+  def test_does_not_have_link_pass(self):
+    self.expect_pass(post_process.DoesNotHaveLink, 'x', 'fo')
+    self.expect_pass(post_process.DoesNotHaveLinkRE, 'x', r'fo')
+    self.expect_pass(post_process.DoesNotHaveLinkRE, 'x', re.compile(r'fo'))
+
+  def test_does_not_have_link_fail(self):
+    failures = self.expect_fails(1, post_process.DoesNotHaveLink, 'x', 'foo')
+    self.assertHas(failures[0], 'check((link not in step_odict[step].links))')
+
+    failures = self.expect_fails(1, post_process.DoesNotHaveLinkRE, 'x', r'fo+')
+    self.assertHas(
+        failures[0],
+        'check((not any((_fullmatch(link, x) '
+        'for x in step_odict[step].links))))',
+    )
+
+  def test_link_equals_pass(self):
+    self.expect_pass(post_process.LinkEquals, 'x', 'foo', 'http://foo.com')
+    self.expect_pass(post_process.LinkEqualsRE, 'x', 'foo', r'.*/foo.com.*')
+    self.expect_pass(post_process.LinkEqualsRE, 'y', 'bar', r'.*/bar.com/.*')
+
+  def test_link_equals_fail(self):
+    failures = self.expect_fails(1, post_process.LinkEquals,
+                                 'x', 'foo', 'http://bar.com')
+    self.assertHas(failures[0],
+                   'check((step_odict[step].links[link] == expected))')
+
+    failures = self.expect_fails(1, post_process.LinkEqualsRE,
+                                 'x', 'foo', '.*bar.*')
+    self.assertHas(failures[0],
+                   'check(_fullmatch(expected, step_odict[step].links[link]))')
 
 
 class TestProperty(PostProcessUnitTest):
