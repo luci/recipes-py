@@ -952,7 +952,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       fields: Set[str],
       test_data: Sequence[build_pb2.Build] | None = None,
   ) -> tuple[step_data.StepData, dict[int, build_pb2.Build]]:
-    """Implements get_multi, but also returns StepResult."""
+    """Implements get_multi, but also returns StepData."""
     batch_req = builds_service_pb2.BatchRequest(
         requests=[
             dict(
