@@ -24,6 +24,8 @@ import "go.chromium.org/luci/resultdb/proto/v1/invocation.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/test_result.proto";
 
 option go_package = "go.chromium.org/luci/resultdb/proto/v1;resultpb";
+option java_package = "com.google.luci.resultdb.v1";
+option java_multiple_files = true;
 
 // Service to record test results.
 //
@@ -33,6 +35,9 @@ option go_package = "go.chromium.org/luci/resultdb/proto/v1;resultpb";
 //
 // RPCs that mutate an invocation return FAILED_PRECONDITION error code if the
 // invocation is finalized.
+//
+// Use of LUCI is subject to the Google [Terms of Service](https://policies.google.com/terms)
+// and [Privacy Policy](https://policies.google.com/privacy).
 service Recorder {
 
   // == Invocations ============================================================
@@ -150,6 +155,14 @@ message BatchCreateInvocationsResponse {
 // A request message for UpdateInvocation RPC.
 message UpdateInvocationRequest {
   // Invocation to update.
+  // If updating tags, the existing tags will be replaced with the new ones.
+  //
+  // If the state of the invocation is set to FINALIZING (with correct update_mask),
+  // this will trigger the finalization process of the invocation.
+  //
+  // This is useful for the cases when we want the update and the finalization
+  // to happen in the same transaction to prevent update-update race. This will
+  // guarantee eventual consistency.
   Invocation invocation = 1 [ (google.api.field_behavior) = REQUIRED ];
 
   // The list of fields to be updated.
@@ -291,10 +304,17 @@ message BatchCreateTestExonerationsResponse {
 
 // A request message for CreateArtifactRequest.
 message CreateArtifactRequest {
-  // Name of the parent resource where the artifact will be created.
+
+  // Name of the parent invocation, see Invocation.name.
   //
-  // For invocation-level artifacts, it is the invocation name.
-  // For test-result-level artifacts, it is the TestResult name.
+  // To create test result-level artifacts, set test_id_structured and result_id on
+  // the Artifact. Otherwise, to create invocation-level artifacts, leave
+  // test_id_structured and result_id blank.
+  //
+  // Legacy uploaders can also use the name format:
+  // invocations/{INVOCATION_ID}/tests/{URL_ENCODED_TEST_ID}/results/{RESULT_ID}
+  // to create test result-level artifacts (in this case, test_id_structured and
+  // result_id MUST be left blank on the Artifact).
   string parent = 1 [ (google.api.field_behavior) = REQUIRED ];
 
   // Artifact to upload.
@@ -305,11 +325,17 @@ message CreateArtifactRequest {
 }
 
 // A request message for BatchCreateArtifactsRequest.
+// Next ID: 4.
 message BatchCreateArtifactsRequest {
+  // Required. Name of the parent invocation, see Invocation.name.
+  // Can only be empty for legacy uploaders which specify requests[i].parent.
+  string parent = 3 [ (google.api.field_behavior) = REQUIRED ];
+
   // Requests to create Artifacts.
   // The sum of the content lengths MUST be <= 10MiB.
-  // The parents of all the requests must be derived from the same invocation.
-  //
+  // requests[i].parent MUST be either empty or equal to parent in this
+  // message.
+  // For legacy uploader requests[i].parent MUST be derived from the same invocation.
   // Up to 500 requests.
   repeated CreateArtifactRequest requests = 2;
 }

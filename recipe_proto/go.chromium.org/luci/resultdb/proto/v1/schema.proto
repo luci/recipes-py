@@ -1,0 +1,135 @@
+// Copyright 2025 The LUCI Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package luci.resultdb.v1;
+
+option go_package = "go.chromium.org/luci/resultdb/proto/v1;resultpb";
+option java_package = "com.google.luci.resultdb.v1";
+option java_multiple_files = true;
+
+// Service to read test schema.
+//
+// Use of LUCI is subject to the Google [Terms of Service](https://policies.google.com/terms)
+// and [Privacy Policy](https://policies.google.com/privacy).
+service Schemas {
+  // Reads information about the test result schema used on this ResultDB deployment.
+  rpc Get(GetSchemaRequest) returns (Schema) {};
+
+  // Reads information about a particular test scheme.
+  rpc GetScheme(GetSchemeRequest) returns (Scheme) {};
+}
+
+message GetSchemaRequest {
+  // The resource name of the schema to retrieve.
+  // Note: This is currently a https://google.aip.dev/156 singleton resource, so
+  // the only valid resource name is "schema".
+  string name = 1;
+}
+
+// Schema contains information about the schema used for test results.
+message Schema {
+  // The resource name of the schema.
+  // Currently, this is always "schema".
+  string name = 1;
+
+  // The schemes available for use in test identifiers, by scheme identifier.
+  map<string, Scheme> schemes = 2;
+}
+
+message GetSchemeRequest {
+  // The resource name of the scheme to retrieve.
+  // Format: schema/schemes/{scheme_id}.
+  string name = 1;
+}
+
+// A scheme represents a kind of test type. For example, a JUnit tests
+// or Google Tests. Schemes control how tests with that type are
+// presented on the UI.
+//
+// Tests are associated with a type at the module level, via the module
+// type field.
+//
+// Schemes are ResultDB deployment-level configuration.
+//
+// Next id: 6.
+message Scheme {
+  // The resource name of the scheme.
+  // Format: schema/schemes/{id}.
+  string name = 1;
+
+  // The identifier for the scheme, e.g. 'junit'.
+  //
+  // Limited to ^[a-z][a-z0-9]{0,19}$.
+  string id = 2;
+
+  // A human readable name for the scheme, describing the test type.
+  // For example, "JUnit" or "Web Tests".
+  //
+  // Please pay attention to capitalisation (should be similar to examples above)
+  // and avoid any punctuation.
+  string human_readable_name = 3;
+
+  // Configuration for a level of test hierarchy.
+  message Level {
+    // The human readable name for the hierarchy level, as it should appear on the UI.
+    // For example, "Package", "Class" or "Method".
+    //
+    // Please pay attention to capitalisation (should be similar to examples above)
+    // and avoid any punctuation.
+    //
+    // Required.
+    string human_readable_name = 1;
+
+    // The regexp that defines valid values for this field. The value here will be
+    // wrapped in ^...$. Validation will apply to all newly uploaded test results.
+    // Use RE2 syntax.
+    //
+    // If blank, all values are taken to be valid.
+    //
+    // Please take care changing this value, as uploads may start to fail.
+    string validation_regexp = 2;
+  }
+
+  // The coarse level in the test hierarchy. Optional.
+  //
+  // If it is set, this level is enabled and a value for this hierarchy level must be set
+  // for all test results using this scheme.
+  // If it is not set, a value for this hierarchy level must NOT be set for test results
+  // using this scheme.
+  //
+  // Enabling or disabling a hierarchy level after it has been created is not permitted unless
+  // no data has been uploaded for the scheme.
+  //
+  // If only one of coarse and fine hierarchy should be enabled, enable the fine hierarchy
+  // only.
+  Level coarse = 4;
+
+  // The fine level in the test hierarchy. Optional.
+  //
+  // If it is set, this level is enabled and a value for this hierarchy level must be set
+  // for all test results using this scheme.
+  // If it is not set, a value for this hierarchy level must NOT be set for test results
+  // using this scheme.
+  //
+  // Enabling or disabling a hierarchy level on a scheme after it is already being used
+  // will result in existing uploads breaking and break presentation of already uploaded
+  // data. Please use extreme caution if doing this; generally, it is better to define
+  // a new scheme instead.
+  Level fine = 5;
+
+  // The case level in the test hierarchy. This is the finest level. Required.
+  Level case = 6;
+}

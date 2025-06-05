@@ -24,6 +24,8 @@ import "go.chromium.org/luci/resultdb/proto/v1/instruction.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/predicate.proto";
 
 option go_package = "go.chromium.org/luci/resultdb/proto/v1;resultpb";
+option java_package = "com.google.luci.resultdb.v1";
+option java_multiple_files = true;
 
 // A conceptual container of results. Immutable once finalized.
 // It represents all results of some computation; examples: swarming task,
@@ -68,7 +70,12 @@ message Invocation {
   // At creation time this can be set to FINALIZING e.g. if this invocation is
   // a simple wrapper of another and will itself not be modified.
   //
-  // Otherwise this is an output only field.
+  // When updating invocation, this can be set to FINALIZING. If set, this will trigger
+  // the finalization process of the invocation. This is useful for the cases when
+  // we want the update and the finalization to happen in the same transaction to
+  // prevent update-update race. This will guarantee eventual consistency.
+  //
+  // In other cases this is an output only field.
   State state = 2;
 
   // When the invocation was created.
@@ -144,7 +151,7 @@ message Invocation {
   //
   // N.B. Export roots do not affect legacy BigQuery exports configured by the
   // BigQueryExports field.
-  bool is_export_root = 21;
+  bool is_export_root = 21 [ (google.api.field_behavior) = IMMUTABLE ];
 
   // bigquery_exports indicates what BigQuery table(s) that results in this
   // invocation should export to.
@@ -258,9 +265,9 @@ message Invocation {
   //
   // Each key is limited to 63 characters matching
   // ^[a-z]([a-z0-9_]{0,61}[a-z0-9])?$.
-  // The size of each value is limited to <= 20,000 bytes.
+  // The size of each value is limited to <= 512 KB.
   // The total size of the map (as measured by proto.Size())
-  // is limited to <= 100,000 bytes.
+  // is limited to <= 2 MB.
   //
   // The following paths can be used for field masks:
   // * "extended_properties" to target the whole extended_properties,

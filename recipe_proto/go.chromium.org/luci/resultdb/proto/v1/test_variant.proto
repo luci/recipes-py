@@ -20,14 +20,22 @@ import "google/api/field_behavior.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/common.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/test_metadata.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/test_result.proto";
+import "go.chromium.org/luci/resultdb/proto/v1/test_verdict.proto";
 
 option go_package = "go.chromium.org/luci/resultdb/proto/v1;resultpb";
+option java_package = "com.google.luci.resultdb.v1";
+option java_multiple_files = true;
 
 // Represents a matching test variant with its outcomes.
 // Also known as a test verdict.
 message TestVariant {
+  // The structured test identifier.
+  //
+  // Refer to TestResult.test_id_structured for details.
+  TestIdentifier test_id_structured = 11;
+
   // A unique identifier of the test in a LUCI project.
-  // Regex: ^[[::print::]]{1,256}$
+  // Regex: ^[[::print::]]{1,512}$
   //
   // Refer to TestResult.test_id for details.
   string test_id = 1;
@@ -40,8 +48,15 @@ message TestVariant {
   // hex(sha256(sorted(''.join('%s:%s\n' for k, v in variant.items())))).
   string variant_hash = 3;
 
+  // Deprecated: Use status_v2 and status_override.
   // Status of the test variant.
-  TestVariantStatus status = 4;
+  TestVariantStatus status = 4 [ deprecated = true ];
+
+  // Status of the test verdict (v2).
+  TestVerdict.Status status_v2 = 12;
+
+  // The status override, e.g. whether the test was exonerated.
+  TestVerdict.StatusOverride status_override = 13;
 
   // Outcomes of the test variant.
   repeated TestResultBundle results = 5;
@@ -96,6 +111,9 @@ message TestResultBundle {
 }
 
 // Status of a test variant.
+// References to test statuses in the description refer to legacy
+// status values, not status_v2.
+// DEPRECATED: Use luci.resultdb.v1.TestVerdict.Status instead.
 enum TestVariantStatus {
   // a test variant must not have this status.
   // This is only used when filtering variants.

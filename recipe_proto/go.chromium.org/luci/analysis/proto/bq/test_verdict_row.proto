@@ -18,16 +18,19 @@ package luci.analysis.bq;
 
 import "google/protobuf/timestamp.proto";
 
+import "go.chromium.org/luci/analysis/proto/bq/common.proto";
+import "go.chromium.org/luci/analysis/proto/bq/test_metadata.proto";
 import "go.chromium.org/luci/analysis/proto/v1/common.proto";
-import "go.chromium.org/luci/analysis/proto/v1/failure_reason.proto";
 import "go.chromium.org/luci/analysis/proto/v1/sources.proto";
-import "go.chromium.org/luci/analysis/proto/v1/test_metadata.proto";
 import "go.chromium.org/luci/analysis/proto/v1/test_verdict.proto";
+import "go.chromium.org/luci/resultdb/proto/v1/failure_reason.proto";
+import "go.chromium.org/luci/resultdb/proto/v1/test_result.proto";
 import "go.chromium.org/luci/common/bq/pb/options.proto";
 
 option go_package = "go.chromium.org/luci/analysis/proto/bq;bqpb";
 
-// Represents a test verdict exported to BigQuery.
+// Represents a ResultDB test verdict exported to BigQuery, with
+// additional context from LUCI Analysis.
 //
 // A test verdict summarises the results for a test variant
 // (a way of running a test) in an invocation (a container of test
@@ -38,17 +41,29 @@ option go_package = "go.chromium.org/luci/analysis/proto/bq;bqpb";
 //   retain data for 510 days.
 // - Cluster by project, test_id.
 //
-// NextId: 18
+// NextId: 22
 message TestVerdictRow {
   // The LUCI Project. E.g. "chromium".
   string project = 1;
 
-  // Is a unique identifier of the test in a LUCI project.
-  // Refer to TestResult.test_id for details.
+  // The structured test identifier.
+  //
+  // Uniquely identifies the test that was run, including the specific way of running that
+  // test, e.g. build configuration, CPU architecture, OS.
+  TestIdentifier test_id_structured = 18;
+
+  // A unique identifier of the test in a LUCI project, excluding variant.
+  //
+  // This is the flat-form encoding of the structured test variant ID above,
+  // excluding information about the specific way of running test (e.g. build configuration,
+  // CPU architecture). Such information is captured separately in the `variant` field below.
+  //
+  // See TestIdentifier for details how a structured test identifier is converted
+  // to flat test ID.
   string test_id = 2;
 
-  // Describes one specific way of running the test,
-  // e.g. a specific bucket, builder and a test suite.
+  // Description of one specific way of running the test,
+  // e.g. build configuration, CPU architecture, OS.
   //
   // This will be encoded as a JSON object like
   // {"builder":"linux-rel","os":"Ubuntu-18.04",...}
@@ -106,6 +121,12 @@ message TestVerdictRow {
   // UNEXPECTEDLY_SKIPPED, EXONERATED.
   luci.analysis.v1.TestVerdictStatus status = 7;
 
+  // Status of the test verdict (v2), e.g. failed, flaky, passed.
+  luci.analysis.v1.TestVerdict.Status status_v2 = 19;
+
+  // The status override, e.g. whether the test was exonerated.
+  luci.analysis.v1.TestVerdict.StatusOverride status_override = 20;
+
   // ParentInvocationRecord for a test result is the immediate parent invocation
   // that directly contains the test result.
   message ParentInvocationRecord {
@@ -113,7 +134,7 @@ message TestVerdictRow {
     string id = 1;
   }
 
-  // NextId: 13
+  // NextId: 16
   message TestResult {
     // Parent contains info of the result's immediate parent invocation.
     ParentInvocationRecord parent = 1;
@@ -126,12 +147,17 @@ message TestVerdictRow {
     // Identifies a test result in a given invocation and test id.
     string result_id = 2;
 
+    // Deprecated: Use status_v2 instead.
     // Expected is a flag indicating whether the result of test case execution is
     // expected. Refer to TestResult.Expected for details.
-    bool expected = 3;
+    bool expected = 3 [ deprecated = true ];
 
+    // Deprecated: Use status_v2 and framework_extensions instead.
     // Status of the test result.
-    luci.analysis.v1.TestResultStatus status = 4;
+    luci.analysis.v1.TestResultStatus status = 4 [ deprecated = true ];
+
+    // Status of the test result (v2).
+    luci.analysis.v1.TestResult.Status status_v2 = 13;
 
     // A human-readable explanation of the result, in HTML.
     // MUST be sanitized before rendering in the browser.
@@ -149,13 +175,23 @@ message TestVerdictRow {
 
     // Information about failed tests.
     // e.g. the assertion failure message.
-    luci.analysis.v1.FailureReason failure_reason = 9;
+    luci.resultdb.v1.FailureReason failure_reason = 9;
 
+    // Deprecated: Replaced by skipped_reason message.
     // Reasoning behind a test skip, in machine-readable form.
-    // Only set when status is SKIP.
-    // It's the string presentation of luci.analysis.v1.SkipReason when
+    // Used to assist downstream analyses, such as automatic bug-filing.
+    // MUST not be set unless status is SKIP.
+    // It's the string presentation of luci.resultdb.v1.SkipReason when
     // specified, "" when the skip reason is unspecified.
-    string skip_reason = 12;
+    string skip_reason = 12 [ deprecated = true ];
+
+    // Reason why a test was skipped.
+    // The contents of this message should help the user answer:
+    // Why was my test skipped? What can I do to stop it being skipped?
+    luci.resultdb.v1.SkippedReason skipped_reason = 14;
+
+    // Test result framework-specific data model elements.
+    luci.resultdb.v1.FrameworkExtensions framework_extensions = 15;
 
     // Arbitrary JSON object that contains structured, domain-specific properties
     // of the test result. Stored here stringified as this is the only protocol
@@ -184,28 +220,55 @@ message TestVerdictRow {
   // use `ARRAY_LENGTH(exonerations) > 0`.
   repeated Exoneration exonerations = 9;
 
+  // Deprecated: Use CountsV2 instead.
+  // Counts of legacy test result statuses (expected+status).
   message Counts {
     // The total number of unexpected test results in the verdict.
-    int64 unexpected = 1;
+    int64 unexpected = 1 [ deprecated = true ];
 
     // The total number of test results in the verdict.
-    int64 total = 2;
+    int64 total = 2 [ deprecated = true ];
 
     // The total number of unexpected test results in the verdict
     // that are not skips.
-    int64 unexpected_non_skipped = 3;
+    int64 unexpected_non_skipped = 3 [ deprecated = true ];
 
     // The total number of unexpected test results in the verdict
     // that are not skips and not passes.
-    int64 unexpected_non_skipped_non_passed = 4;
+    int64 unexpected_non_skipped_non_passed = 4 [ deprecated = true ];
 
     // The total number of test results in the verdict that
     // are not skips.
-    int64 total_non_skipped = 5;
+    int64 total_non_skipped = 5 [ deprecated = true ];
   }
 
+  // Counts of v2 test result statuses (status_v2).
+  message CountsV2 {
+    // The total number of passed results (status_v2 = passed).
+    int64 passed = 1;
+
+    // The total number of failed results (status_v2 = failed).
+    int64 failed = 2;
+
+    // The total number of skipped results (status_v2 = skipped).
+    int64 skipped = 3;
+
+    // The total number of execution errored results (status_v2 = execution_errored).
+    int64 execution_errored = 4;
+
+    // The total number of precludeud results (status_v2 = precluded).
+    int64 precluded = 5;
+
+    // The total number of results.
+    int64 total = 6;
+  }
+
+  // Deprecated: Use counts_v2 instead.
   // Statistics about the test results that are part of the verdict.
-  Counts counts = 10;
+  Counts counts = 10 [ deprecated = true ];
+
+  // Statistics about the test results that are part of the verdict.
+  CountsV2 counts_v2 = 21;
 
   // Information about the buildbucket build which contained the test result.
   message BuildbucketBuild {
@@ -296,7 +359,7 @@ message TestVerdictRow {
 
   // Metadata of the test case,
   // e.g. the original test name and test location.
-  luci.analysis.v1.TestMetadata test_metadata = 14;
+  TestMetadata test_metadata = 14;
 
   // The time when the server started inserting the row into the BigQuery
   // table.

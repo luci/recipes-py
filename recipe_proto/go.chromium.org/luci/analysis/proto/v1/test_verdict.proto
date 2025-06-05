@@ -65,36 +65,75 @@ enum TestVerdictStatus {
   // a test verdict must not have this status.
   // This is only used when filtering verdicts.
   TEST_VERDICT_STATUS_UNSPECIFIED = 0;
+
   // The test verdict has no exonerations, and all results are unexpected.
   UNEXPECTED = 10;
+
   // The test verdict has no exonerations, and all results are unexpectedly skipped.
   UNEXPECTEDLY_SKIPPED = 20;
+
   // The test verdict has no exonerations, and has both expected and unexpected
   // results.
   FLAKY = 30;
+
   // The test verdict has one or more test exonerations.
   EXONERATED = 40;
+
   // The test verdict has no exonerations, and all results are expected.
   EXPECTED = 50;
 }
 
-// Machine-readable reason that a test execution was skipped.
-// It is a mirror of luci.resultdb.v1.SkipReason, but the right to evolve
-// it independently is reserved.
-enum SkipReason {
-  // Skip reason was not specified.
-  // This represents an unset field which should be used for non-skip test
-  // result statuses.  It can also be used if none of the other statuses
-  // apply.
-  SKIP_REASON_UNSPECIFIED = 0;
-
-  // Disabled automatically in response to a test skipping policy that skips
-  // flaky tests.
-  // Used for ChromeOS CQ test filtering.
-  AUTOMATICALLY_DISABLED_FOR_FLAKINESS = 1;
-}
-
+// A test verdict. The outcome of a test variant in an invocation.
+// As each test variant may be attempted multiple times within an invocation,
+// a test verdict can encapsulate multiple test results.
 message TestVerdict {
+  // The test verdict status.
+  // References to test statuses (passed, failed, skipped, execution_errored, precluded) in
+  // the enum descriptions refer to TestResult.Status values.
+  // A mirror of luci.resultdb.v1.TestVerdict.Status.
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+
+    // The test has failing results and no passing results.
+    FAILED = 10;
+
+    // The test has execution errored results and no
+    // passing, failing or skipped results.
+    EXECUTION_ERRORED = 20;
+
+    // The test has only precluded results.
+    PRECLUDED = 30;
+
+    // The test has both passing and failing results.
+    FLAKY = 40;
+
+    // The test skipped results and no passing or
+    // failing results.
+    SKIPPED = 50;
+
+    // The test has passing results and no failing results.
+    PASSED = 60;
+  }
+
+  // Overrides applying to the test verdict.
+  // A mirror of luci.resultdb.v1.TestVerdict.StatusOverride.
+  enum StatusOverride {
+    STATUS_OVERRIDE_UNSPECIFIED = 0;
+
+    // The test verdict is not overridden.
+    //
+    // To confirm a test is not exonerated prefer to check it is not EXONERATED
+    // rather than check it is NOT_OVERRIDDEN, as this is safe in case of
+    // extensions to this enum.
+    NOT_OVERRIDDEN = 1;
+
+    // The test variant has one or more exonerations, and the
+    // test verdict status was FAILED, EXECUTION_ERRORED OR PRECLUDED.
+    // An exoneration absolves the subject of the invocation (e.g. CL)
+    // from blame and means means the verdict is no longer blocking.
+    EXONERATED = 2;
+  }
+
   // Unique identifier of the test.
   // This has the same value as luci.resultdb.v1.TestResult.test_id.
   string test_id = 1;
@@ -106,8 +145,15 @@ message TestVerdict {
   // ingested.
   string invocation_id = 3;
 
+  // Deprecated: Use status_v2 below instead.
   // The status of the test verdict.
-  TestVerdictStatus status = 4;
+  TestVerdictStatus status = 4 [ deprecated = true ];
+
+  // The status of the test verdict (v2), e.g. passed, flaky, failed.
+  Status status_v2 = 8;
+
+  // The status override applying to the verdict, e.g. if the test was exonerated.
+  StatusOverride status_override = 9;
 
   // The time the verdict's invocation was created in Spanner. This
   // is the start of the test verdict's retention period.

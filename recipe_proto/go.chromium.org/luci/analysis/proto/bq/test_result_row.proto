@@ -18,16 +18,18 @@ package luci.analysis.bq;
 
 import "google/protobuf/timestamp.proto";
 
+import "go.chromium.org/luci/analysis/proto/bq/common.proto";
+import "go.chromium.org/luci/analysis/proto/bq/test_metadata.proto";
 import "go.chromium.org/luci/analysis/proto/v1/common.proto";
-import "go.chromium.org/luci/analysis/proto/v1/failure_reason.proto";
 import "go.chromium.org/luci/analysis/proto/v1/sources.proto";
-import "go.chromium.org/luci/analysis/proto/v1/test_metadata.proto";
 import "go.chromium.org/luci/analysis/proto/v1/test_verdict.proto";
+import "go.chromium.org/luci/resultdb/proto/v1/failure_reason.proto";
+import "go.chromium.org/luci/resultdb/proto/v1/test_result.proto";
 import "go.chromium.org/luci/common/bq/pb/options.proto";
 
 option go_package = "go.chromium.org/luci/analysis/proto/bq;bqpb";
 
-// Represents a test result exported to BigQuery.
+// Represents a ResultDB test result exported to BigQuery.
 //
 // A test result is the outcome of a single execution of a test variant
 // (a way of running a test) in an invocation (a container of test
@@ -38,17 +40,29 @@ option go_package = "go.chromium.org/luci/analysis/proto/bq;bqpb";
 //   retain data for 510 days.
 // - Cluster by project, test_id.
 //
-// NextId: 24
+// NextId: 28
 message TestResultRow {
   // The LUCI Project. E.g. "chromium".
   string project = 1;
 
-  // Is a unique identifier of the test in a LUCI project.
-  // Refer to TestResult.test_id for details.
+  // The structured test identifier.
+  //
+  // Uniquely identifies the test that was run, including the specific way of running that
+  // test, e.g. build configuration, CPU architecture, OS.
+  TestIdentifier test_id_structured = 24;
+
+  // A unique identifier of the test in a LUCI project, excluding variant.
+  //
+  // This is the flat-form encoding of the structured test variant ID above,
+  // excluding information about the specific way of running test (e.g. build configuration,
+  // CPU architecture). Such information is captured separately in the `variant` field below.
+  //
+  // See TestIdentifier for details how a structured test identifier is converted
+  // to flat test ID.
   string test_id = 2;
 
-  // Describes one specific way of running the test,
-  // e.g. a specific bucket, builder and a test suite.
+  // Description of one specific way of running the test,
+  // e.g. build configuration, CPU architecture, OS.
   //
   // This will be encoded as a JSON object like
   // {"builder":"linux-rel","os":"Ubuntu-18.04",...}
@@ -128,6 +142,9 @@ message TestResultRow {
   // Status of the test result.
   luci.analysis.v1.TestResultStatus status = 11;
 
+  // Status of the test result (v2).
+  luci.analysis.v1.TestResult.Status status_v2 = 25;
+
   // A human-readable explanation of the result, in HTML.
   // MUST be sanitized before rendering in the browser.
   string summary_html = 12;
@@ -144,13 +161,18 @@ message TestResultRow {
 
   // Information about failed tests.
   // e.g. the assertion failure message.
-  luci.analysis.v1.FailureReason failure_reason = 16;
+  luci.resultdb.v1.FailureReason failure_reason = 16;
 
+  // Deprecated.
   // Reasoning behind a test skip, in machine-readable form.
   // Only set when status is SKIP.
   // It is the string representation of luci.analysis.v1.SkipReason when
   // specified and "" when the skip reason is unspecified.
   string skip_reason = 17;
+
+  // The reason the test was skipped.
+  // Only set when status is SKIP.
+  luci.resultdb.v1.SkippedReason skipped_reason = 26;
 
   // Arbitrary JSON object that contains structured, domain-specific properties
   // of the test result. Stored here stringified as this is the only protocol
@@ -179,7 +201,10 @@ message TestResultRow {
 
   // Metadata of the test case,
   // e.g. the original test name and test location.
-  luci.analysis.v1.TestMetadata test_metadata = 22;
+  TestMetadata test_metadata = 22;
+
+  // Test result framework-specific data model elements.
+  luci.resultdb.v1.FrameworkExtensions framework_extensions = 27;
 
   // The time when the server started inserting the row into the BigQuery
   // table.

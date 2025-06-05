@@ -81,6 +81,24 @@ message Config {
   // If enabled, the project scoped service account MUST have "Modify Account"
   // capabilities to see the linked Gerrit accounts.
   bool honor_gerrit_linked_accounts = 6;
+
+  enum GerritListenerType {
+    // DON'T use.  The config will be rejected.
+    GERRIT_LISTENER_TYPE_UNSPECIFIED = 0;
+    // Use Gerrit Pubsub to listen to Gerrit CL events.
+    //
+    // See: go/luci/cv/gerrit-pubsub-settings
+    // Pub/Sub subscription MUST be created for all Gerrit hosts this LUCI
+    // Project is watching. Otherwise, large processing latency is expected.
+    GERRIT_LISTENER_TYPE_PUBSUB = 1;
+    // Use the legacy polling mechanism to learn Gerrit CL events.
+    //
+    // It is strongly recommended to use Pub/Sub instead for faster and more
+    // efficient event processing.
+    GERRIT_LISTENER_TYPE_LEGACY_POLLER = 2 [deprecated = true];
+  }
+  // Decides which Gerrit listener to use.
+  GerritListenerType gerrit_listener_type = 7;
 }
 
 
@@ -543,7 +561,7 @@ message Verifiers {
 
   // Tryjob configures builders which CQ may trigger and/or use to verify CL(s).
   message Tryjob {
-    // Next field number: 4
+    // Next field number: 19
 
 
     // Builders on which tryjobs should be triggered.
@@ -560,7 +578,7 @@ message Verifiers {
     Toggle cancel_stale_tryjobs = 3 [deprecated = true];
 
     message Builder {
-      // Next field number: 17
+      // Next field number: 18
       reserved 3; // triggered_by
 
       // The buildbucket host name.
@@ -607,6 +625,13 @@ message Verifiers {
       // additional OWNERS, lint, etc checks which are useful to run against
       // the latest revision of the CL's target branch.
       bool disable_reuse = 2;
+
+      // disable reuse of previous tryjobs if any footer in the commit message
+      // matching one of these keys is added, removed, or has its value changed.
+      //
+      // The provided footers MUST be normalized (dash-case with first letter of
+      // each segment being uppercase. e.g. Bypass-Spell-Checker).
+      repeated string disable_reuse_footers = 18;
 
       // Optional. If YES (default), running or not-yet-started builds of this
       // builder previously triggered by CQ will be cancelled as soon as
@@ -734,6 +759,22 @@ message Verifiers {
       // modes in this list. If unset, it implies that only FULL_RUN and
       // DRY_RUN are allowed. Optional.
       repeated string mode_allowlist = 14;
+
+      // SkipFooter specifies a git footer and its value pattern that if found
+      // in the commit message, this builder will be skipped in all LUCI CV
+      // Runs.
+      message SkipFooter {
+        // The footer key. Required.
+        //
+        // The provided footer key MUST be normalized (dash-case with first
+        // letter of each segment being uppercase. e.g. Bypass-Spell-Checker).
+        string key = 1;
+        // The regexp pattern for the footer value. If unset, `.*` will be used
+        // which implies any value would skip the builder.
+        string value_regexp = 2;
+      }
+      // skip this builder if any footer in the commit message matches.
+      repeated SkipFooter skip_footers = 17;
     }
 
     message EquivalentBuilder {

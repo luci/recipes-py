@@ -1,0 +1,94 @@
+// Copyright 2025 The LUCI Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package luci.resultdb.config;
+
+option go_package = "go.chromium.org/luci/resultdb/proto/config;configpb";
+
+// A scheme represents a kind of test type. For example, a JUnit tests
+// or Google Tests. Schemes control how tests with that type are
+// presented on the UI.
+//
+// Tests are associated with a type at the module level, via the module
+// type field.
+//
+// Schemes are ResultDB deployment-level configuration.
+//
+// Next id: 5.
+message Scheme {
+  // The identifier for the scheme, e.g. 'junit'.
+  //
+  // Limited to ^[a-z][a-z0-9]{0,19}$.
+  string id = 1;
+
+  // A human readable name for the scheme, describing the test type.
+  // For example, "JUnit" or "Web Tests".
+  //
+  // Please pay attention to capitalisation (should be similar to examples above)
+  // and avoid any punctuation.
+  string human_readable_name = 2;
+
+  // Configuration for a level of test hierarchy.
+  message Level {
+    // The human readable name for the hierarchy level, as it should appear on the UI.
+    // For example, "Package", "Class" or "Method".
+    //
+    // Please pay attention to capitalisation (should be similar to examples above)
+    // and avoid any punctuation.
+    //
+    // Required.
+    string human_readable_name = 1;
+
+    // The regexp that defines valid values for this field. The value here must be
+    // wrapped in ^...$. Validation will apply to all newly uploaded test results.
+    // Use RE2 syntax.
+    //
+    // If blank, all values are taken to be valid.
+    //
+    // Please take care changing this value, as uploads may start to fail.
+    string validation_regexp = 2;
+  }
+
+  // The coarse level in the test hierarchy. Optional.
+  //
+  // If it is set, this level is enabled and a value for this hierarchy level must be set
+  // for all test results using this scheme.
+  // If it is not set, a value for this hierarchy level must NOT be set for test results
+  // using this scheme.
+  //
+  // Enabling or disabling a hierarchy level after it has been created is not permitted unless
+  // no data has been uploaded for the scheme.
+  //
+  // If only one of coarse and fine hierarchy should be enabled, enable the fine hierarchy
+  // only.
+  Level coarse = 3;
+
+  // The fine level in the test hierarchy. Optional.
+  //
+  // If it is set, this level is enabled and a value for this hierarchy level must be set
+  // for all test results using this scheme.
+  // If it is not set, a value for this hierarchy level must NOT be set for test results
+  // using this scheme.
+  //
+  // Enabling or disabling a hierarchy level on a scheme after it is already being used
+  // will result in existing uploads breaking and break presentation of already uploaded
+  // data. Please use extreme caution if doing this; generally, it is better to define
+  // a new scheme instead.
+  Level fine = 4;
+
+  // The finest level in the test hierarchy (e.g. test method, test case). Required.
+  Level case = 5;
+}
