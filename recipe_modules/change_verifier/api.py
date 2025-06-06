@@ -33,7 +33,7 @@ from RECIPE_MODULES.recipe_engine.cv import api as cv_api
 
 # Take revision from
 # https://ci.chromium.org/p/infra-internal/g/infra-packagers/console
-DEFAULT_CIPD_VERSION = 'git_revision:9eb3dbc08446d5cbc93d15250a31924df477badb'
+DEFAULT_CIPD_VERSION = 'git_revision:eb3279d25a7fb5b62e5492727891ce8babac98a8'
 
 
 class ChangeVerifierApi(recipe_api.RecipeApi):
