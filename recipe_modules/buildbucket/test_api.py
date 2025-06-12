@@ -60,6 +60,16 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       return 'https://chrome-internal.googlesource.com/' + project
     return 'https://chromium.googlesource.com/' + project
 
+  def _set_time(self, dest, input_time: datetime.datetime | int) -> None:
+    if not input_time:
+      return
+
+    assert isinstance(input_time, (datetime.datetime, int)), input_time
+    if isinstance(input_time, datetime.datetime):
+      dest.FromDatetime(input_time)
+    elif isinstance(input_time, int):
+      dest.FromSeconds(input_time)
+
   def ci_build_message(
       self,
       project='project',
@@ -127,9 +137,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     if execution_timeout:
       build.execution_timeout.FromSeconds(execution_timeout)
 
-    if start_time:
-      assert isinstance(start_time, datetime.datetime), start_time
-      build.start_time.FromDatetime(start_time)
+    self._set_time(build.start_time, start_time)
 
     if status:
       build.status = common_pb2.Status.Value(status)
@@ -249,9 +257,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     if execution_timeout:
       build.execution_timeout.FromSeconds(execution_timeout)
 
-    if start_time:
-      assert isinstance(start_time, datetime.datetime), start_time
-      build.start_time.FromDatetime(start_time)
+    self._set_time(build.start_time, start_time)
 
     if revision:
       c = build.input.gitiles_commit

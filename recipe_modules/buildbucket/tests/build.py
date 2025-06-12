@@ -133,7 +133,7 @@ def GenTests(api):
           git_repo='git.example.com/test/repo',
           experiments=['fake.experiment'],
           execution_timeout=12345,
-          start_time=datetime.datetime(2020, 1, 1),
+          start_time=10000000,
       )
       + api.post_process(post_process.DropExpectation)
   )
