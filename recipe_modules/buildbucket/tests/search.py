@@ -71,6 +71,7 @@ def GenTests(api):
         project='chromium',
         builder='Builder',
         git_repo='https://chromium.googlesource.com/chromium/src',
+        summary_markdown='Summary!',
     )
 
   yield api.test(

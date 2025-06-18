@@ -89,7 +89,8 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       start_time=None,
       on_backend=False,
       backend_target="swarming://chromium-swarm",
-      ancestor_ids=None):
+      ancestor_ids=None,
+      summary_markdown=None):
     """Returns a typical buildbucket CI build scheduled by luci-scheduler."""
     git_repo = git_repo or self._default_git_repo(project)
     gitiles_host, gitiles_project = util.parse_gitiles_repo_url(git_repo)
@@ -142,6 +143,9 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     if status:
       build.status = common_pb2.Status.Value(status)
 
+    if summary_markdown:
+      build.summary_markdown = summary_markdown
+
     if exe:
       build.exe.CopyFrom(exe)
 
@@ -183,7 +187,8 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       properties=None,
       on_backend=False,
       backend_target="swarming://chromium-swarm",
-      ancestor_ids=None):
+      ancestor_ids=None,
+      summary_markdown=None):
     """Emulate typical buildbucket try build scheduled by CQ.
 
     Usage:
@@ -268,6 +273,9 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
 
     if status:
       build.status = common_pb2.Status.Value(status)
+
+    if summary_markdown:
+      build.summary_markdown = summary_markdown
 
     if exe:
       build.exe.CopyFrom(exe)

@@ -42,7 +42,10 @@ def GenTests(api):
         api.buildbucket.try_build_message(
             build_id=9016911228971028737, status='SUCCESS'),
         api.buildbucket.ci_build_message(
-            build_id=123456789012345678, status='FAILURE'),
+            build_id=123456789012345678,
+            status='FAILURE',
+            summary_markdown='Summary!',
+        ),
       ]),
   )
 
