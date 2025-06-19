@@ -57,6 +57,7 @@
   * [assertions:tests/long_message](#recipes-assertions_tests_long_message)
   * [assertions:tests/max_diff](#recipes-assertions_tests_max_diff)
   * [bcid_reporter:examples/usage](#recipes-bcid_reporter_examples_usage)
+  * [bcid_reporter:tests/retry](#recipes-bcid_reporter_tests_retry)
   * [bcid_verifier:tests/test-verify](#recipes-bcid_verifier_tests_test-verify)
   * [buildbucket:examples/full](#recipes-buildbucket_examples_full) &mdash; This file is a recipe demonstrating the buildbucket recipe module.
   * [buildbucket:run/multi](#recipes-buildbucket_run_multi) &mdash; Launches multiple builds at the same revision.
@@ -370,21 +371,21 @@ def GenTests(api):
 ```
 ### *recipe_modules* / [bcid\_reporter](/recipe_modules/bcid_reporter)
 
-[DEPS](/recipe_modules/bcid_reporter/__init__.py#7): [cipd](#recipe_modules-cipd), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/bcid_reporter/__init__.py#7): [cipd](#recipe_modules-cipd), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
 
-#### **class [BcidReporterApi](/recipe_modules/bcid_reporter/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
+#### **class [BcidReporterApi](/recipe_modules/bcid_reporter/api.py#22)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
 
 API for interacting with Provenance server using the broker tool.
 
-&emsp; **@property**<br>&mdash; **def [bcid\_reporter\_path](/recipe_modules/bcid_reporter/api.py#28)(self):**
+&emsp; **@property**<br>&mdash; **def [bcid\_reporter\_path](/recipe_modules/bcid_reporter/api.py#34)(self):**
 
 Returns the path to the broker binary.
 
 When the property is accessed the first time, the latest stable, released
 broker will be installed using cipd.
 
-&mdash; **def [report\_cipd](/recipe_modules/bcid_reporter/api.py#75)(self, digest, pkg, iid, server_url=None):**
+&emsp; **@retry**<br>&mdash; **def [report\_cipd](/recipe_modules/bcid_reporter/api.py#82)(self, digest, pkg, iid, server_url=None):**
 
 Reports cipd digest to local provenance server.
 
@@ -398,7 +399,7 @@ Args:
   * server_url (Optional[str]) - URL for the local provenance server, the
     broker tool will use default if not specified.
 
-&mdash; **def [report\_gcs](/recipe_modules/bcid_reporter/api.py#104)(self, digest, guri, server_url=None):**
+&emsp; **@retry**<br>&mdash; **def [report\_gcs](/recipe_modules/bcid_reporter/api.py#112)(self, digest, guri, server_url=None):**
 
 Reports gcs digest to local provenance server.
 
@@ -412,7 +413,7 @@ Args:
   * server_url (Optional[str]) - URL for the local provenance server, the
     broker tool will use default if not specified.
 
-&mdash; **def [report\_sbom](/recipe_modules/bcid_reporter/api.py#131)(self, digest, guri, sbom_subjects=[], server_url=None):**
+&emsp; **@retry**<br>&mdash; **def [report\_sbom](/recipe_modules/bcid_reporter/api.py#140)(self, digest, guri, sbom_subjects=None, server_url=None):**
 
 Reports SBOM gcs digest to local provenance server.
 
@@ -429,7 +430,7 @@ Args:
   * server_url (Optional[str]) - URL for the local provenance server, the
     broker tool will use default if not specified.
 
-&mdash; **def [report\_stage](/recipe_modules/bcid_reporter/api.py#44)(self, stage, server_url=None):**
+&emsp; **@retry**<br>&mdash; **def [report\_stage](/recipe_modules/bcid_reporter/api.py#50)(self, stage, server_url=None):**
 
 Reports task stage to local provenance server.
 
@@ -5067,6 +5068,12 @@ same repo as the issue() call.
 
 
 &mdash; **def [RunSteps](/recipe_modules/bcid_reporter/examples/usage.py#12)(api):**
+### *recipes* / [bcid\_reporter:tests/retry](/recipe_modules/bcid_reporter/tests/retry.py)
+
+[DEPS](/recipe_modules/bcid_reporter/tests/retry.py#7): [bcid\_reporter](#recipe_modules-bcid_reporter), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io)
+
+
+&mdash; **def [RunSteps](/recipe_modules/bcid_reporter/tests/retry.py#13)(api):**
 ### *recipes* / [bcid\_verifier:tests/test-verify](/recipe_modules/bcid_verifier/tests/test-verify.py)
 
 [DEPS](/recipe_modules/bcid_verifier/tests/test-verify.py#9): [assertions](#recipe_modules-assertions), [bcid\_verifier](#recipe_modules-bcid_verifier), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

@@ -4,14 +4,20 @@
 
 from __future__ import annotations
 
+import datetime
 import os
+
 from recipe_engine import recipe_api
+from RECIPE_MODULES.recipe_engine.time.api import exponential_retry
 
 # Usage of bcid_reporter recipe_module will have significant downstream impact
 # and to avoid any production outage, we are pinning the latest known good build
 # of the tool here. Upstream changes are intentionally left out.
 _LATEST_STABLE_VERSION = 'git_revision:9022d7a188fb08ac5fce88b3bcaff5c9b1dbeee2'
 
+# Spike is failing intermittently due to issues calling the swarming API, this
+# retry can decorate each report method.
+retry = exponential_retry(3, datetime.timedelta(seconds=5))
 
 class BcidReporterApi(recipe_api.RecipeApi):
   """API for interacting with Provenance server using the broker tool."""
@@ -41,6 +47,7 @@ class BcidReporterApi(recipe_api.RecipeApi):
       self._broker_bin = reporter_dir / 'snoopy_broker'
     return self._broker_bin
 
+  @retry
   def report_stage(self, stage, server_url=None):
     """Reports task stage to local provenance server.
 
@@ -72,6 +79,7 @@ class BcidReporterApi(recipe_api.RecipeApi):
 
     self.m.step('snoop: report_stage', args)
 
+  @retry
   def report_cipd(self, digest, pkg, iid, server_url=None):
     """Reports cipd digest to local provenance server.
 
@@ -101,6 +109,7 @@ class BcidReporterApi(recipe_api.RecipeApi):
 
     self.m.step('snoop: report_cipd', args)
 
+  @retry
   def report_gcs(self, digest, guri, server_url=None):
     """Reports gcs digest to local provenance server.
 
@@ -128,7 +137,8 @@ class BcidReporterApi(recipe_api.RecipeApi):
 
     self.m.step('snoop: report_gcs', args)
 
-  def report_sbom(self, digest, guri, sbom_subjects=[], server_url=None):
+  @retry
+  def report_sbom(self, digest, guri, sbom_subjects=None, server_url=None):
     """Reports SBOM gcs digest to local provenance server.
 
     This is used to report the SBOM metadata to provenance, along with
