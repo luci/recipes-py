@@ -201,8 +201,12 @@ class BuildbucketApi(recipe_api.RecipeApi):
   def build_url(self, host: str | None = None,
                 build_id: int | str | None = None) -> str:
     """Returns url to a build. Defaults to current build."""
-    return 'https://%s/build/%s' % (
-      host or self._host, build_id or self._build.id)
+    host = host or self._host
+    build_id = build_id or self._build.id
+    assert isinstance(host, str)
+    # TODO: mohrr - Don't accept str here.
+    assert isinstance(build_id, (int, str))
+    return f'https://{host}/build/{build_id}'
 
   @property
   def gitiles_commit(self) -> common_pb2.GitilesCommit:
