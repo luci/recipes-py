@@ -390,13 +390,12 @@ class RecipeEngine:
 
     try:
       self._step_runner.register_step_config(name_tokens, step_config)
-    except:
+    except Exception as exc:
       # Test data functions are not allowed to raise exceptions. Instead of
       # letting user code catch these, we crash the test immediately.
-      _log_crash(self._stream_engine, "register_step_config(%r)" % (ret.name,))
-      raise CrashEngine("Registering step_config failed for %r." % (
-        ret.name
-      ))
+      _log_crash(self._stream_engine,
+                 f"register_step_config({ret.name}): {exc}")
+      raise CrashEngine(f"Registering step_config failed for {ret.name}: {exc}")
 
     step_stream = self._stream_engine.new_step_stream(
         name_tokens,
