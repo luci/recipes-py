@@ -198,11 +198,13 @@ class BuildbucketApi(recipe_api.RecipeApi):
     builder = builder or build.builder.builder
     return f'https://{host}/builder/{project}/{bucket}/{builder}'
 
-  def build_url(self, host: str | None = None,
-                build_id: int | str | None = None) -> str:
+  def build_url(self, *, host: str | None = None,
+                build_id: int | str | None = None,
+                build: build_pb2.Build | None = None) -> str:
     """Returns url to a build. Defaults to current build."""
     host = host or self._host
-    build_id = build_id or self._build.id
+    build = build or self._build
+    build_id = build_id or build.id
     assert isinstance(host, str)
     # TODO: mohrr - Don't accept str here.
     assert isinstance(build_id, (int, str))
