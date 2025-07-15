@@ -1588,7 +1588,7 @@ class SwarmingApi(recipe_api.RecipeApi):
 
     return metadata_objs
 
-  def list_tasks(self, step_name, start=None, tags=None):
+  def list_tasks(self, step_name, start=None, tags=None, server=None):
     """List tasks matching the given options.
 
     Args:
@@ -1596,15 +1596,21 @@ class SwarmingApi(recipe_api.RecipeApi):
       start (None|float): Number of seconds since epoch.
       tags (None|List[str]): Select tasks that contain the given
         tags.
+      server (string): Address of the server to query, e.g.
+        https://chromium-swarm.appspot.com. If not set, the server the current
+        task is running on is used.
 
     Returns:
       Json listing the resulting tasks.
     """
     assert self._server
+    if not server:
+      server = self._server
+
     cmd = [
         'tasks',
         '-server',
-        self._server,
+        server,
         '-json',
         self.m.json.output(),
     ]

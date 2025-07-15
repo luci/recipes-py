@@ -4570,7 +4570,7 @@ Args:
 Returns:
   A list of BotMetadata objects.
 
-&mdash; **def [list\_tasks](/recipe_modules/swarming/api.py#1591)(self, step_name, start=None, tags=None):**
+&mdash; **def [list\_tasks](/recipe_modules/swarming/api.py#1591)(self, step_name, start=None, tags=None, server=None):**
 
 List tasks matching the given options.
 
@@ -4579,6 +4579,9 @@ Args:
   start (None|float): Number of seconds since epoch.
   tags (None|List[str]): Select tasks that contain the given
     tags.
+  server (string): Address of the server to query, e.g.
+    https://chromium-swarm.appspot.com. If not set, the server the current
+    task is running on is used.
 
 Returns:
   Json listing the resulting tasks.
