@@ -17,6 +17,112 @@ from recipe_engine.recipe_api import RecipeApi, RequireClient
 from recipe_engine.recipe_api import escape_all_warnings
 
 
+class Timeout(Exception):
+  """Raised from Future if the requested operation is not done in time."""
+
+
+@attr.s(frozen=True, slots=True)
+class Future:
+  """Represents a unit of concurrent work.
+
+  Modeled after Python 3's `concurrent.futures.Future`. We can expand this
+  API carefully as we need it.
+  """
+
+  _greenlet = attr.ib(
+      validator=instance_of(gevent.Greenlet))  # type: gevent.Greenlet
+
+  # We would use _greenlet.name for this, except that it's automatically
+  # generated names are not going to be unique within the recipe run. So, we
+  # keep our own counter and assign a UID if the user didn't pass __name.
+  _name = attr.ib()
+
+  _meta = attr.ib()
+
+  @property
+  def name(self):
+    """Returns the name of this Future.
+
+    The name is either the string provided with `__name` at spawn time, or is
+    generated like "Future-%d", where the %d is a globally sequential and
+    unique number which is guaranteed not to be reused within the same recipe
+    run.
+
+    This makes `name` useful for tracking Future objects when getting them
+    back from e.g. iwait.
+
+    Also see `meta` to directly attach metadata to this Future.
+    """
+    return self._name
+
+  @property
+  def meta(self):
+    """Returns metadata associated with this Future.
+
+    This metadata must have been associated with the Future at spawn time with
+    the `__meta` kwarg.
+
+    The meta object is not interpreted or used by the recipe engine in any
+    way. You are free to mutate the meta object, if you wish, but you cannot
+    assign to it. e.g.
+
+       fut = api.futures.spawn(..., __meta={'key': 'value'})
+       fut.meta                    #=> {'key': 'value'}
+       fut.meta['thing'] = 100     # OK
+       fut.meta = "something else" # FAIL
+    """
+    return self._meta
+
+  def result(self, timeout=None):
+    """Blocks until this Future is done, then returns its value, or raises
+    its exception.
+
+    Args:
+      * timeout (None|seconds) - How long to wait for the Future to be done.
+
+    Returns the result if the Future is done.
+
+    Raises the Future's exception, if the Future is done with an error.
+
+    Raises Timeout if the Future is not done within the given timeout.
+    """
+    with gevent.Timeout(timeout, exception=Timeout()):
+      return self._greenlet.get()
+
+  @property
+  def done(self):
+    """Property set to True iff this Future is no longer running."""
+    return self._greenlet.dead
+
+  def cancel(self):
+    """Raises GreenletExit in the underlying greenlet.
+
+    If the greenlet is waiting on a subprocess (step), the subprocess will be
+    killed, and the step's ExecutionResult will have `was_cancelled=True`.
+    This will then raise an InfraFailure exception within the greenlet.
+
+    Does not block on the death of the greenlet.
+    Does not switch away from the current greenlet.
+    """
+    self._greenlet.kill()
+
+  def exception(self, timeout=None):
+    """Blocks until this Future is done, then returns (not raises) this
+    Future's exception (or None if there was no exception).
+
+    Args:
+      * timeout (None|seconds) - How long to wait for the Future to be done.
+
+    Returns the exception instance which would be raised from `result` if
+    the Future is Done, otherwise None.
+
+    Raises Timeout if the Future is not done within the given timeout.
+    """
+    with gevent.Timeout(timeout, exception=Timeout()):
+      done = gevent.wait([self._greenlet])[0]
+      return done.exception
+
+
 class _IWaitWrapper:
   __slots__ = ('_waiter', '_greenlets_to_futures')
 
@@ -50,109 +156,8 @@ class FuturesApi(RecipeApi):
     super().__init__(*args, **kwargs)
     self._future_id = 0
 
-  class Timeout(Exception):
-    """Raised from Future if the requested operation is not done in time."""
-
-  @attr.s(frozen=True, slots=True)
-  class Future:
-    """Represents a unit of concurrent work.
-
-    Modeled after Python 3's `concurrent.futures.Future`. We can expand this
-    API carefully as we need it.
-    """
-
-    _greenlet = attr.ib(
-        validator=instance_of(gevent.Greenlet))  # type: gevent.Greenlet
-
-    # We would use _greenlet.name for this, except that it's automatically
-    # generated names are not going to be unique within the recipe run. So, we
-    # keep our own counter and assign a UID if the user didn't pass __name.
-    _name = attr.ib()
-
-    _meta = attr.ib()
-
-    @property
-    def name(self):
-      """Returns the name of this Future.
-
-      The name is either the string provided with `__name` at spawn time, or is
-      generated like "Future-%d", where the %d is a globally sequential and
-      unique number which is guaranteed not to be reused within the same recipe
-      run.
-
-      This makes `name` useful for tracking Future objects when getting them
-      back from e.g. iwait.
-
-      Also see `meta` to directly attach metadata to this Future.
-      """
-      return self._name
-
-    @property
-    def meta(self):
-      """Returns metadata associated with this Future.
-
-      This metadata must have been associated with the Future at spawn time with
-      the `__meta` kwarg.
-
-      The meta object is not interpreted or used by the recipe engine in any
-      way. You are free to mutate the meta object, if you wish, but you cannot
-      assign to it. e.g.
-
-         fut = api.futures.spawn(..., __meta={'key': 'value'})
-         fut.meta                    #=> {'key': 'value'}
-         fut.meta['thing'] = 100     # OK
-         fut.meta = "something else" # FAIL
-      """
-      return self._meta
-
-    def result(self, timeout=None):
-      """Blocks until this Future is done, then returns its value, or raises
-      its exception.
-
-      Args:
-        * timeout (None|seconds) - How long to wait for the Future to be done.
-
-      Returns the result if the Future is done.
-
-      Raises the Future's exception, if the Future is done with an error.
-
-      Raises Timeout if the Future is not done within the given timeout.
-      """
-      with gevent.Timeout(timeout, exception=FuturesApi.Timeout()):
-        return self._greenlet.get()
-
-    @property
-    def done(self):
-      """Property set to True iff this Future is no longer running."""
-      return self._greenlet.dead
-
-    def cancel(self):
-      """Raises GreenletExit in the underlying greenlet.
-
-      If the greenlet is waiting on a subprocess (step), the subprocess will be
-      killed, and the step's ExecutionResult will have `was_cancelled=True`.
-      This will then raise an InfraFailure exception within the greenlet.
-
-      Does not block on the death of the greenlet.
-      Does not switch away from the current greenlet.
-      """
-      self._greenlet.kill()
-
-    def exception(self, timeout=None):
-      """Blocks until this Future is done, then returns (not raises) this
-      Future's exception (or None if there was no exception).
-
-      Args:
-        * timeout (None|seconds) - How long to wait for the Future to be done.
-
-      Returns the exception instance which would be raised from `result` if
-      the Future is Done, otherwise None.
-
-      Raises Timeout if the Future is not done within the given timeout.
-      """
-      with gevent.Timeout(timeout, exception=FuturesApi.Timeout()):
-        done = gevent.wait([self._greenlet])[0]
-        return done.exception
+  Timeout = Timeout
+  Future = Future
 
   def make_bounded_semaphore(self, value=1):
     """Returns a gevent.BoundedSemaphore with depth `value`.
