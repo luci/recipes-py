@@ -766,6 +766,114 @@ def PropertiesDoNotContain(check, step_odict, key):
   check(key not in build_properties)
 
 
+def NumTagsEquals(
+    check: magic_check_fn.Checker,
+    step_odict: Mapping[str, post_process_inputs.Step],
+    step_name: str,
+    count: int,
+) -> None:
+  """Asserts that the given step has count tags.
+
+  Args:
+    step_name - The step expected to contain tags.
+    count - The number of tags expected to exist.
+
+  Usage:
+    yield api.test(..., api.post_process(HasTag, 'step', 2))
+  """
+  if check(step_name in step_odict):
+    step = step_odict[step_name]
+    check(len(step.tags) == count)
+
+
+def HasTag(
+    check: magic_check_fn.Checker,
+    step_odict: Mapping[str, post_process_inputs.Step],
+    step_name: str,
+    *tag: str,
+) -> None:
+  """Asserts that tags with the given names are attached to the given step.
+
+  Args:
+    step_name - The step expected to contain tags.
+    tag - The tags expected to exist.
+
+  Usage:
+    yield api.test(..., api.post_process(HasTag, 'step', 'tag_1', 'tag_2'))
+  """
+  if check(step_name in step_odict):
+    step = step_odict[step_name]
+    for t in tag:
+      check(t in step.tags)
+
+
+def LacksTag(
+    check: magic_check_fn.Checker,
+    step_odict: Mapping[str, post_process_inputs.Step],
+    step_name: str,
+    *tag: str,
+) -> None:
+  """Asserts that tags with the given names are not attached to the given step.
+
+  Args:
+    step_name - The step expected to contain tags.
+    tag - The tags expected to not exist.
+
+  Usage:
+    yield api.test(..., api.post_process(HasTag, 'step', 'tag_1', 'tag_2'))
+  """
+  if check(step_name in step_odict):
+    step = step_odict[step_name]
+    for t in tag:
+      check(t not in step.tags)
+
+
+def TagEquals(
+    check: magic_check_fn.Checker,
+    step_odict: Mapping[str, post_process_inputs.Step],
+    step_name: str,
+    tag: str,
+    value: str,
+) -> None:
+  """Asserts that a tag on the given step has the given value.
+
+  Args:
+    step_name - The step expected to contain tags.
+    tag - The tag name.
+    value - The expected tag value.
+
+  Usage:
+    yield api.test(..., api.post_process(HasEquals, 'step', 'tag', 'value'))
+  """
+  if check(step_name in step_odict):
+    step = step_odict[step_name]
+    if check(tag in step.tags):
+      check(step.tags[tag] == value)
+
+
+def TagMatchesRE(
+    check: magic_check_fn.Checker,
+    step_odict: Mapping[str, post_process_inputs.Step],
+    step_name: str,
+    tag: str,
+    pattern: str | re.Pattern,
+) -> None:
+  """Asserts that a tag on the given step matches the pattern.
+
+  Args:
+    step_name - The step expected to contain tags.
+    tag - The tag name.
+    value - The expected tag value.
+
+  Usage:
+    yield api.test(..., api.post_process(HasEquals, 'step', 'tag', 'value'))
+  """
+  if check(step_name in step_odict):
+    step = step_odict[step_name]
+    if check(tag in step.tags):
+      check(re.search(pattern, step.tags[tag]))
+
+
 def StatusSuccess(check, step_odict):
   """Assert that the recipe finished successfully."""
   failure = step_odict['$result'].get('failure')

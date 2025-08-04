@@ -731,5 +731,54 @@ class TestProperty(PostProcessUnitTest):
     self.assertHas(failures[0], 'check((key not in build_properties))')
 
 
+class TestTags(PostProcessUnitTest):
+  """Test case for checks that relate to tags."""
+
+  @property
+  def step_dict(self) -> dict[str, dict[str, Any]]:
+    """Return a standard step dict for this test case."""
+    return collections.OrderedDict([('step', {
+        'name': 'step',
+        'tags': {'x': 'foo', 'y': 'bar'},
+    })])
+
+  def test_num_tags_equals_pass(self):
+    self.expect_pass(post_process.NumTagsEquals, 'step', 2)
+
+  def test_num_tags_equals_fail(self):
+    failures = self.expect_fails(1, post_process.NumTagsEquals, 'step', 138)
+    self.assertHas(failures[0], 'check((len(step.tags) == count))')
+
+  def test_has_tag_pass(self):
+    self.expect_pass(post_process.HasTag, 'step', 'x', 'y')
+
+  def test_has_tag_fail(self):
+    failures = self.expect_fails(1, post_process.HasTag, 'step', 'z')
+    self.assertHas(failures[0], 'check((t in step.tags))')
+
+  def test_lacks_tag_pass(self):
+    self.expect_pass(post_process.LacksTag, 'step', 'z')
+
+  def test_lacks_tag_fail(self):
+    failures = self.expect_fails(2, post_process.LacksTag, 'step', 'x', 'y')
+    self.assertHas(failures[0], 'check((t not in step.tags))')
+
+  def test_tag_equals_pass(self):
+    self.expect_pass(post_process.TagEquals, 'step', 'x', 'foo')
+
+  def test_tag_equals_fail(self):
+    failures = self.expect_fails(1, post_process.TagEquals, 'step', 'x', 'foobar')
+    self.assertHas(failures[0], 'check((step.tags[tag] == value))')
+
+  def test_tag_matches_regex_pass(self):
+    self.expect_pass(post_process.TagMatchesRE, 'step', 'x', r'^fo+$')
+
+  def test_tag_matches_regex_fail(self):
+    failures = self.expect_fails(1, post_process.TagMatchesRE, 'step',
+                                 'x', r'^fooo+$')
+    self.assertHas(failures[0],
+                   'check(re.search(pattern, step.tags[tag]))')
+
+
 if __name__ == '__main__':
   test_env.main()
