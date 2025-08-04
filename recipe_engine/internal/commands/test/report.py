@@ -487,6 +487,9 @@ def _print_warnings(
   return fail
 
 
+LONG_DURATION_THRESHOLD = datetime.timedelta(seconds=5)
+
+
 def _collect_duration_result(
     outcome_msg: runner_pb2.Outcome) -> dict[str, datetime.timedelta]:
   """Collects durations from all test outcomes saves the long ones."""
@@ -495,7 +498,7 @@ def _collect_duration_result(
     duration = datetime.timedelta(
         milliseconds=test_result.duration.ToMilliseconds()
     )
-    if duration >= datetime.timedelta(seconds=5):
+    if duration >= LONG_DURATION_THRESHOLD:
       result[name] = duration
 
   return result
