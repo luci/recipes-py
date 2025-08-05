@@ -2,11 +2,25 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from __future__ import annotations
+
 import collections
 import collections.abc
 import copy
 import json
 import operator
+from typing import (
+    Any,
+    Callable,
+    ClassVar,
+    FrozenSet,
+    Iterable,
+    Iterator,
+    Literal,
+    Sequence,
+    TypeVar,
+    TYPE_CHECKING,
+)
 
 from functools import reduce
 
@@ -18,11 +32,17 @@ from google.protobuf import json_format as json_pb
 from google.protobuf import message
 
 from .config_types import Path
-
 from .internal.attr_util import attr_type
 
+if TYPE_CHECKING:
+  from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
+  LogDataType = common_pb2.Log | str | bytes | Iterable[str | bytes]
+  StoredLogDataType = common_pb2.Log | str | _StringSequence
 
-def freeze(obj):
+T = TypeVar('T')
+
+
+def freeze(obj: T) -> Any:
   """Takes a generic object ``obj``, and returns an immutable version of it.
 
   Supported types:
@@ -36,27 +56,24 @@ def freeze(obj):
   """
   if isinstance(obj, dict):
     return FrozenDict((freeze(k), freeze(v)) for k, v in obj.items())
-  elif isinstance(obj, (list, tuple)):
+  if isinstance(obj, (list, tuple)):
     return tuple(freeze(i) for i in obj)
-  elif isinstance(obj, set):
+  if isinstance(obj, set):
     return frozenset(freeze(i) for i in obj)
-  else:
-    # HACK: Paths are functionally immutable, but cannot have their __hash__
-    # execute correctly until the checkout_dir has actually been set (because
-    # the __hash__ implementation when a Path is based on checkout_dir wants to
-    # compute a result identical to the real underlying Path).
-    #
-    # Since we plan to entirely remove all of this config.py contents at some
-    # point, and Paths are the only known exception to the immutability rule
-    # with well-understood semantics we have a special carve-out here.
-    if isinstance(obj, Path):
-      pass
-    else:
-      hash(obj)
-    return obj
+  # HACK: Paths are functionally immutable, but cannot have their __hash__
+  # execute correctly until the checkout_dir has actually been set (because
+  # the __hash__ implementation when a Path is based on checkout_dir wants to
+  # compute a result identical to the real underlying Path).
+  #
+  # Since we plan to entirely remove all of this config.py contents at some
+  # point, and Paths are the only known exception to the immutability rule
+  # with well-understood semantics we have a special carve-out here.
+  if not isinstance(obj, Path):
+    hash(obj)
+  return obj
 
 
-def thaw(obj):
+def thaw(obj: T) -> Any:
   """Takes a a frozen object, and returns a mutable version of it.
 
   Conversions:
@@ -69,20 +86,27 @@ def thaw(obj):
   """
   if isinstance(obj, (dict, collections.OrderedDict, FrozenDict)):
     return {k: thaw(v) for k, v in obj.items()}
-  elif isinstance(obj, (list, tuple)):
+  if isinstance(obj, (list, tuple)):
     return [thaw(i) for i in obj]
-  elif isinstance(obj, (set, frozenset)):
+  if isinstance(obj, (set, frozenset)):
     return {thaw(i) for i in obj}
-  else:
-    return obj
+  return obj
 
 
-class FrozenDict(collections.abc.Mapping):
+K = TypeVar('K')
+V = TypeVar('V')
+
+
+class FrozenDict(collections.abc.Mapping[K, V]):
   """An immutable OrderedDict.
 
   Modified From: http://stackoverflow.com/a/2704866
   """
-  def __init__(self, *args, **kwargs):
+  _d: collections.OrderedDict[K, V]
+  on_missing: Callable[[K], Any]
+  _hash: int
+
+  def __init__(self, *args: Any, **kwargs: Any) -> None:
     self._d = collections.OrderedDict(*args, **kwargs)
 
     # If getitem would raise a KeyError, then call this function back with the
@@ -95,7 +119,7 @@ class FrozenDict(collections.abc.Mapping):
     self._hash = reduce(operator.xor,
                         (hash(i) for i in enumerate(self._d.items())), 0)
 
-  def __eq__(self, other):
+  def __eq__(self, other: Any) -> bool:
     if not isinstance(other, collections.abc.Mapping):
       return NotImplemented
     if self is other:
@@ -107,27 +131,27 @@ class FrozenDict(collections.abc.Mapping):
         return False
     return True
 
-  def __iter__(self):
+  def __iter__(self) -> Iterator[K]:
     return iter(self._d)
 
-  def __len__(self):
+  def __len__(self) -> int:
     return len(self._d)
 
-  def __getitem__(self, key):
+  def __getitem__(self, key: K) -> V:
     try:
       return self._d[key]
     except KeyError:
       self.on_missing(key)
       raise
 
-  def __hash__(self):
+  def __hash__(self) -> int:
     return self._hash
 
-  def __repr__(self):
+  def __repr__(self) -> str:
     return 'FrozenDict(%r)' % (list(self._d.items()),)
 
 
-def _fix_stringlike(value):
+def _fix_stringlike(value: str | bytes) -> str:
   """_fix_stringlike will decode `bytes` with backslashreplace and return
   the decoded value.
 
@@ -145,16 +169,16 @@ def _fix_stringlike(value):
       "Expected object of (str, bytes) but got %s" % (type(value),))
 
 
-class _StringSequence(collections.UserList):
+class _StringSequence(collections.UserList[str]):
   # NOTE: it could potentially be more efficient to implement the __add__ family
   # of operators to avoid re-fix_stringlike'ing `items` here, but not worth the
   # implementation complexity.
-  def __init__(self, initlist=None):
+  def __init__(self, initlist: Iterable[str | bytes] | None = None) -> None:
     super().__init__()
     if initlist is not None:
       self.data = [_fix_stringlike(i) for i in initlist]
 
-  def __iadd__(self, other):
+  def __iadd__(self, other: Iterable[str | bytes]) -> _StringSequence:
     """__iadd__ is called for `_StringSequence() += ...`
 
     We want to make sure `other` is properly fixed first.
@@ -167,10 +191,11 @@ class _StringSequence(collections.UserList):
       self.extend(other)
     return self
 
-  def __setitem__(self, i, item):
+  def __setitem__(self, i: int, item: str | bytes) -> None:
     self.data[i] = _fix_stringlike(item)
 
-  def __setslice__(self, i, j, other):
+  def __setslice__(self, i: int, j: int,
+                   other: Iterable[str | bytes]) -> None:
     i = max(i, 0)
     j = max(j, 0)
     if isinstance(other, _StringSequence):
@@ -178,17 +203,17 @@ class _StringSequence(collections.UserList):
     else:
       self.data[i:j] = [_fix_stringlike(i) for i in other]
 
-  def append(self, item):
+  def append(self, item: str | bytes) -> None:
     self.data.append(_fix_stringlike(item))
 
-  def insert(self, i, item):
+  def insert(self, i: int, item: str | bytes) -> None:
     self.data.insert(i, _fix_stringlike(item))
 
-  def extend(self, other):
+  def extend(self, other: Iterable[str | bytes]) -> None:
     self.data.extend(_fix_stringlike(l) for l in other)
 
 
-class _OrderedDictString(collections.OrderedDict):
+class _OrderedDictString(collections.OrderedDict[str, 'StoredLogDataType']):
   """_OrderedDictString implements some sort of constraints on the insane
   StepPresentation.logs type.
 
@@ -199,7 +224,7 @@ class _OrderedDictString(collections.OrderedDict):
   to str with _fix_stringlike.
   """
 
-  def __setitem__(self, key, value):
+  def __setitem__(self, key: str, value: 'LogDataType') -> None:
     # late proto import
     from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
     if isinstance(value, (common_pb2.Log, text, str, _StringSequence)):
@@ -212,12 +237,12 @@ class _OrderedDictString(collections.OrderedDict):
     else:
       raise ValueError(
           "Attempted to assign non-(bytes/str or sequence(bytes/str)) "
-          "data as log value: %r" % (type(value),)
-      )
+          "data as log value: %r" % (type(value),))
 
     return super().__setitem__(key, value)
 
-  def setdefault(self, key, default):
+  def setdefault(self, key: str,
+                 default: 'LogDataType' | None) -> 'StoredLogDataType':
     if key in self:
       return self[key]
     self[key] = default
@@ -355,68 +380,77 @@ class StepPresentation:
   as a bullet list.
   """
 
-
-  _RAW_STATUSES = (
-    None, 'SUCCESS', 'WARNING', 'FAILURE', 'EXCEPTION', 'CANCELED')
-  STATUSES = frozenset(status for status in _RAW_STATUSES if status)
+  _RAW_STATUSES: tuple[str | None, ...] = (None, 'SUCCESS', 'WARNING', 'FAILURE',
+                                           'EXCEPTION', 'CANCELED')
+  Status = Literal[*_RAW_STATUSES]
+  STATUSES: FrozenSet[str] = frozenset(
+      status for status in _RAW_STATUSES if status)
+  STATUS_TO_BADNESS: ClassVar[FrozenDict[str | None, int]]
 
   # TODO(iannucci): use attr for this
 
   @classmethod
-  def status_worst(cls, status_a, status_b):
+  def status_worst(cls, status_a: str | None,
+                   status_b: str | None) -> str | None:
     """Given two STATUS strings, return the worse of the two."""
     if not hasattr(cls, 'STATUS_TO_BADNESS'):
       cls.STATUS_TO_BADNESS = freeze({
-        status: i for i, status in enumerate(StepPresentation._RAW_STATUSES)})
+          status: i
+          for i, status in enumerate(StepPresentation._RAW_STATUSES)
+      })
 
     if cls.STATUS_TO_BADNESS[status_a] > cls.STATUS_TO_BADNESS[status_b]:
       return status_a
     return status_b
 
-  def __init__(self, step_name):
-    self._name = step_name
-    self._finalized = False
+  def __init__(self, step_name: str) -> None:
+    self._name: str = step_name
+    self._finalized: bool = False
 
-    self._logs = _OrderedDictString()
-    self._links = collections.OrderedDict()
-    self._status = None
-    self._had_timeout = False
-    self._was_cancelled = False
-    self._step_summary_text = ''
-    self._step_text = ''
-    self._properties = {}
-    self._tags = {}
+    self._logs: _OrderedDictString | None = _OrderedDictString()
+    self._links: collections.OrderedDict[str,
+                                          str] = collections.OrderedDict()
+    self._status: Status = None
+    self._had_timeout: bool = False
+    self._was_cancelled: bool = False
+    self._step_summary_text: str | Sequence[str] | None = ''
+    self._step_text: str | Sequence[str] | None = ''
+    self._properties: dict[str, Any] = {}
+    self._tags: dict[str, str] = {}
 
   @property
-  def status(self):
+  def status(self) -> str | None:
     return self._status
 
   @status.setter
-  def status(self, val):
+  def status(self, val: str) -> None:
     assert not self._finalized, 'Changing finalized step %r' % self._name
     assert val in self.STATUSES
     self._status = val
 
-  def set_worse_status(self, status):
+  def set_worse_status(self, status: str) -> None:
     """Sets .status to this value if it's worse than the current status."""
-    self.status = self.status_worst(self.status, status)
+    new_status = self.status_worst(self.status, status)
+    assert new_status is not None, (
+        'internal error: set_worse_status should not result in None')
+    self.status = new_status
 
   @property
-  def had_timeout(self):
+  def had_timeout(self) -> bool:
     return self._had_timeout
 
   @had_timeout.setter
-  def had_timeout(self, val):
+  def had_timeout(self, val: bool) -> None:
     assert not self._finalized, 'Changing finalized step %r' % self._name
     assert isinstance(val, bool)
     self._had_timeout = val
 
   @property
-  def was_cancelled(self):
+  def was_cancelled(self) -> bool:
     return self._was_cancelled
 
   @was_cancelled.setter
-  def was_cancelled(self, val):
+  def was_cancelled(self, val: bool) -> None:
     assert not self._finalized, 'Changing finalized step %r' % self._name
     assert isinstance(val, bool)
     self._was_cancelled = val
@@ -433,7 +467,7 @@ class StepPresentation:
     if isinstance(val, collections.abc.Sequence):
       assert all(isinstance(x, str) for x in val)
     else:
-      assert isinstance(val, type(None))
+      assert val is None
     self._step_text = val
 
   @property
@@ -441,49 +475,48 @@ class StepPresentation:
     return self._step_summary_text
 
   @step_summary_text.setter
-  def step_summary_text(self, val: str | collections.abc.Sequence[str] | None) -> None:
+  def step_summary_text(
+      self, val: str | collections.abc.Sequence[str] | None) -> None:
     assert not self._finalized, 'Changing finalized step %r' % self._name
     # str objects match collections.abc.Sequence, but items from a str are all
     # strs so this still works.
     if isinstance(val, collections.abc.Sequence):
       assert all(isinstance(x, str) for x in val)
     else:
-      assert isinstance(val, type(None))
+      assert val is None
     self._step_summary_text = val
 
   @property
-  def logs(self):
+  def logs(self) -> _OrderedDictString:
     assert not self._finalized, 'Reading logs after finalized %r' % self._name
+    assert self._logs is not None, 'Logs are None for step %r' % self._name
     return self._logs
 
   @property
-  def links(self):
+  def links(self) -> collections.OrderedDict[str, str]:
     if not self._finalized:
       return self._links
-    else:
-      return copy.deepcopy(self._links)
+    return copy.deepcopy(self._links)
 
   @property
-  def properties(self):  # pylint: disable=E0202
+  def properties(self) -> dict[str, Any]:  # pylint: disable=E0202
     if not self._finalized:
       return self._properties
-    else:
-      return copy.deepcopy(self._properties)
+    return copy.deepcopy(self._properties)
 
   @property
-  def tags(self):
+  def tags(self) -> dict[str, str]:
     if not self._finalized:
       return self._tags
-    else:
-      return copy.deepcopy(self._tags)
+    return copy.deepcopy(self._tags)
 
   @properties.setter
-  def properties(self, val):  # pylint: disable=E0202
+  def properties(self, val: dict[str, Any]) -> None:  # pylint: disable=E0202
     assert not self._finalized, 'Changing finalized step %r' % self._name
     assert isinstance(val, dict)
     self._properties = val
 
-  def finalize(self, step_stream):
+  def finalize(self, step_stream: Any) -> None:
     self._finalized = True
 
     # crbug.com/833539: prune all logs from memory when finalizing.
@@ -525,7 +558,7 @@ class StepPresentation:
     step_stream.set_step_status(self.status, self.had_timeout)
 
   @staticmethod
-  def write_data(log_stream, data):
+  def write_data(log_stream: Any, data: str | bytes) -> None:
     """Write the supplied data into the logstream.
 
     Args:
@@ -564,17 +597,17 @@ class ResourceCost:
 
   See `api.step.ResourceCost` for full documentation.
   """
-  cpu = attr.ib(validator=attr_type(int), default=500)
-  memory = attr.ib(validator=attr_type(int), default=50)
-  disk = attr.ib(validator=attr_type(int), default=0)
-  net = attr.ib(validator=attr_type(int), default=0)
+  cpu: int = attr.ib(validator=attr_type(int), default=500)
+  memory: int = attr.ib(validator=attr_type(int), default=50)
+  disk: int = attr.ib(validator=attr_type(int), default=0)
+  net: int = attr.ib(validator=attr_type(int), default=0)
 
   @classmethod
-  def zero(cls):
+  def zero(cls) -> ResourceCost:
     """Returns a ResourceCost with zero for all resources."""
     return cls(0, 0, 0, 0)
 
-  def __attrs_post_init__(self):
+  def __attrs_post_init__(self) -> None:
     if self.cpu < 0:
       raise ValueError('negative cpu amount')
     if self.memory < 0:
@@ -584,10 +617,10 @@ class ResourceCost:
     if self.net < 0 or self.net > 100:
       raise ValueError('net not in [0,100]')
 
-  def __nonzero__(self):
+  def __nonzero__(self) -> bool:
     return not self.fits(0, 0, 0, 0)
 
-  def __str__(self):
+  def __str__(self) -> str:
     bits = []
     if self.cpu > 0:
       cores = ('%0.2f' % (self.cpu / 1000.)).rstrip('0').rstrip('.')
@@ -600,7 +633,7 @@ class ResourceCost:
       bits.append('net=[%d%%]' % (self.net,))
     return ', '.join(bits)
 
-  def fits(self, cpu, memory, disk, net):
+  def fits(self, cpu: int, memory: int, disk: int, net: int) -> bool:
     """Returns True if this Resources fits within the given constraints."""
     return (
       self.cpu <= cpu and
@@ -609,20 +642,6 @@ class ResourceCost:
       self.net <= net
     )
 
-
-# A (global) registry of all PerGreentletState objects.
-#
-# This is used by the recipe engine to call back each
-# PerGreenletState._get_setter_on_spawn when the recipe spawns a new greenlet
-# (via the "recipe_engine/futures" module).
-#
-# Reset in between test runs by the simulator.
-class _PerGreentletStateRegistry(list):
-  def clear(self):
-    """Clears the Registry."""
-    self[:] = []
-
-PerGreentletStateRegistry = _PerGreentletStateRegistry()
 
 class PerGreenletState(local):
   """Subclass from PerGreenletState to get an object whose state is tied to the
@@ -659,12 +678,12 @@ class PerGreenletState(local):
         self._state.neat_thing = "yes"
   """
 
-  def __new__(cls, *args, **kwargs):
+  def __new__(cls, *args: Any, **kwargs: Any) -> PerGreenletState:
     ret = super().__new__(cls, *args, **kwargs)
     PerGreentletStateRegistry.append(ret)
     return ret
 
-  def _get_setter_on_spawn(self):
+  def _get_setter_on_spawn(self) -> Callable[[], None] | None:
     """This method should be overridden by your subclass. It will be invoked by
     the engine immediately BEFORE spawning a new greenlet, and it should return
     a 0-argument function which should repopulate `self` immediately AFTER
@@ -685,4 +704,21 @@ class PerGreenletState(local):
     If this function is not implemented, or returns None, the PerGreenletState
     contents will be reset in the new greenlet.
     """
-    pass
+    return None
+
+
+# A (global) registry of all PerGreentletState objects.
+#
+# This is used by the recipe engine to call back each
+# PerGreenletState._get_setter_on_spawn when the recipe spawns a new greenlet
+# (via the "recipe_engine/futures" module).
+#
+# Reset in between test runs by the simulator.
+class _PerGreentletStateRegistry(list['PerGreenletState']):
+
+  def clear(self) -> None:
+    """Clears the Registry."""
+    self[:] = []
+
+
+PerGreentletStateRegistry = _PerGreentletStateRegistry()
