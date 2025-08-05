@@ -422,21 +422,33 @@ class StepPresentation:
     self._was_cancelled = val
 
   @property
-  def step_text(self):
+  def step_text(self) -> str | collections.abc.Sequence[str] | None:
     return self._step_text
 
   @step_text.setter
-  def step_text(self, val):
+  def step_text(self, val: str | collections.abc.Sequence[str] | None) -> None:
     assert not self._finalized, 'Changing finalized step %r' % self._name
+    # str objects match collections.abc.Sequence, but items from a str are all
+    # strs so this still works.
+    if isinstance(val, collections.abc.Sequence):
+      assert all(isinstance(x, str) for x in val)
+    else:
+      assert isinstance(val, type(None))
     self._step_text = val
 
   @property
-  def step_summary_text(self):
+  def step_summary_text(self) -> str | collections.abc.Sequence[str] | None:
     return self._step_summary_text
 
   @step_summary_text.setter
-  def step_summary_text(self, val):
+  def step_summary_text(self, val: str | collections.abc.Sequence[str] | None) -> None:
     assert not self._finalized, 'Changing finalized step %r' % self._name
+    # str objects match collections.abc.Sequence, but items from a str are all
+    # strs so this still works.
+    if isinstance(val, collections.abc.Sequence):
+      assert all(isinstance(x, str) for x in val)
+    else:
+      assert isinstance(val, type(None))
     self._step_summary_text = val
 
   @property
