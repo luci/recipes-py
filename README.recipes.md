@@ -2279,11 +2279,11 @@ Args:
 
 Implements in-recipe concurrency via green threads.
 
-#### **class [FuturesApi](/recipe_modules/futures/api.py#151)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
+#### **class [FuturesApi](/recipe_modules/futures/api.py#168)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
 
 Provides access to the Recipe concurrency primitives.
 
-&emsp; **@staticmethod**<br>&mdash; **def [iwait](/recipe_modules/futures/api.py#313)(futures, timeout=None, count=None):**
+&emsp; **@staticmethod**<br>&mdash; **def [iwait](/recipe_modules/futures/api.py#369)(futures: Iterable[Future[Any]], timeout: Optional[float]=None, count: Optional[int]=None):**
 
 Iteratively yield up to `count` Futures as they become done.
 
@@ -2326,7 +2326,7 @@ Yields futures in the order in which they complete until we hit the
 timeout or count. May also be used with a context manager to avoid
 leaking resources if you don't plan on consuming the entire iterable.
 
-&mdash; **def [make\_bounded\_semaphore](/recipe_modules/futures/api.py#162)(self, value=1):**
+&mdash; **def [make\_bounded\_semaphore](/recipe_modules/futures/api.py#179)(self, value: int=1):**
 
 Returns a gevent.BoundedSemaphore with depth `value`.
 
@@ -2353,7 +2353,7 @@ could lead to difficult-to-debug deadlocks in your recipe.
 NOTE: This method will raise ValueError if used with @@@annotation@@@ mode.
 ***
 
-&mdash; **def [make\_channel](/recipe_modules/futures/api.py#189)(self):**
+&mdash; **def [make\_channel](/recipe_modules/futures/api.py#207)(self):**
 
 Returns a single-slot communication device for passing data and control
 between concurrent functions.
@@ -2377,7 +2377,7 @@ you carefully consider and avoid the possibility of introducing deadlocks.
 NOTE: This method will raise ValueError if used with @@@annotation@@@ mode.
 ***
 
-&emsp; **@escape_all_warnings**<br>&mdash; **def [spawn](/recipe_modules/futures/api.py#213)(self, func, \*args, \*\*kwargs):**
+&emsp; **@escape_all_warnings**<br>&mdash; **def [spawn](/recipe_modules/futures/api.py#249)(self, func, \*args, \*\*kwargs):**
 
 Prepares a Future to run `func(*args, **kwargs)` concurrently.
 
@@ -2415,7 +2415,7 @@ Kwargs:
 
 Returns a Future of `func`'s result.
 
-&emsp; **@escape_all_warnings**<br>&mdash; **def [spawn\_immediate](/recipe_modules/futures/api.py#263)(self, func, \*args, \*\*kwargs):**
+&emsp; **@escape_all_warnings**<br>&mdash; **def [spawn\_immediate](/recipe_modules/futures/api.py#315)(self, func, \*args, \*\*kwargs):**
 
 Returns a Future to the concurrently running `func(*args, **kwargs)`.
 
@@ -2435,7 +2435,7 @@ Kwargs:
 
 Returns a Future of `func`'s result.
 
-&emsp; **@staticmethod**<br>&mdash; **def [wait](/recipe_modules/futures/api.py#294)(futures, timeout=None, count=None):**
+&emsp; **@staticmethod**<br>&mdash; **def [wait](/recipe_modules/futures/api.py#348)(futures: Iterable[Future[Any]], timeout: Optional[float]=None, count: Optional[int]=None):**
 
 Blocks until `count` `futures` are done (or timeout occurs) then
 returns the list of done futures.

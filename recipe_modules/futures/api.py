@@ -6,6 +6,19 @@
 
 from __future__ import annotations
 
+from typing import (
+    Any,
+    Callable,
+    Generic,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    overload,
+    Type,
+    TypeVar,
+)
+
 import gevent
 import gevent.lock
 import gevent.queue
@@ -16,13 +29,15 @@ from attr.validators import instance_of
 from recipe_engine.recipe_api import RecipeApi, RequireClient
 from recipe_engine.recipe_api import escape_all_warnings
 
+T = TypeVar('T')
+
 
 class Timeout(Exception):
   """Raised from Future if the requested operation is not done in time."""
 
 
 @attr.s(frozen=True, slots=True)
-class Future:
+class Future(Generic[T]):
   """Represents a unit of concurrent work.
 
   Modeled after Python 3's `concurrent.futures.Future`. We can expand this
@@ -35,12 +50,12 @@ class Future:
   # We would use _greenlet.name for this, except that it's automatically
   # generated names are not going to be unique within the recipe run. So, we
   # keep our own counter and assign a UID if the user didn't pass __name.
-  _name = attr.ib()
+  _name: str = attr.ib()
 
-  _meta = attr.ib()
+  _meta: Any = attr.ib()
 
   @property
-  def name(self):
+  def name(self) -> str:
     """Returns the name of this Future.
 
     The name is either the string provided with `__name` at spawn time, or is
@@ -56,7 +71,7 @@ class Future:
     return self._name
 
   @property
-  def meta(self):
+  def meta(self) -> Any:
     """Returns metadata associated with this Future.
 
     This metadata must have been associated with the Future at spawn time with
@@ -73,7 +88,7 @@ class Future:
     """
     return self._meta
 
-  def result(self, timeout=None):
+  def result(self, timeout: Optional[float] = None) -> T:
     """Blocks until this Future is done, then returns its value, or raises
     its exception.
 
@@ -90,11 +105,11 @@ class Future:
       return self._greenlet.get()
 
   @property
-  def done(self):
+  def done(self) -> bool:
     """Property set to True iff this Future is no longer running."""
     return self._greenlet.dead
 
-  def cancel(self):
+  def cancel(self) -> None:
     """Raises GreenletExit in the underlying greenlet.
 
     If the greenlet is waiting on a subprocess (step), the subprocess will be
@@ -106,7 +121,8 @@ class Future:
     """
     self._greenlet.kill()
 
-  def exception(self, timeout=None):
+  def exception(self,
+                timeout: Optional[float] = None) -> Optional[BaseException]:
     """Blocks until this Future is done, then returns (not raises) this
     Future's exception (or None if there was no exception).
 
@@ -123,26 +139,27 @@ class Future:
       return done.exception
 
 
-class _IWaitWrapper:
+class _IWaitWrapper(Iterator[Future[Any]]):
   __slots__ = ('_waiter', '_greenlets_to_futures')
 
-  def __init__(self, futures, timeout, count):
+  def __init__(self, futures: Iterable[Future[Any]],
+               timeout: Optional[float], count: Optional[int]):
     # pylint: disable=protected-access
     self._greenlets_to_futures = {fut._greenlet: fut for fut in futures}
     self._waiter = gevent.iwait(
         list(self._greenlets_to_futures.keys()), timeout, count)
 
-  def __enter__(self):
+  def __enter__(self) -> Iterator[Future[Any]]:
     self._waiter.__enter__()
     return self
 
   def __exit__(self, typ, value, tback):
     return self._waiter.__exit__(typ, value, tback)
 
-  def __iter__(self):
+  def __iter__(self) -> Iterator[Future[Any]]:
     return self
 
-  def __next__(self):
+  def __next__(self) -> Future[Any]:
     return self._greenlets_to_futures[self._waiter.__next__()]
 
   next = __next__
@@ -156,10 +173,11 @@ class FuturesApi(RecipeApi):
     super().__init__(*args, **kwargs)
     self._future_id = 0
 
-  Timeout = Timeout
-  Future = Future
+  Timeout: Type[Timeout] = Timeout
+  Future: Type[Future[Any]] = Future
 
-  def make_bounded_semaphore(self, value=1):
+  def make_bounded_semaphore(self,
+                             value: int = 1) -> gevent.lock.BoundedSemaphore:
     """Returns a gevent.BoundedSemaphore with depth `value`.
 
     This can be used as a context-manager to create concurrency-limited sections
@@ -181,12 +199,12 @@ class FuturesApi(RecipeApi):
 
     NOTE: This method will raise ValueError if used with @@@annotation@@@ mode.
     """
-    if not self.concurrency_client.supports_concurrency: # pragma: no cover
+    if not self.concurrency_client.supports_concurrency:  # pragma: no cover
       # test mode always supports concurrency, hence the nocover
       raise ValueError('BoundedSemaphore not allowed in @@@annotation@@@ mode')
     return gevent.lock.BoundedSemaphore(value=value)
 
-  def make_channel(self):
+  def make_channel(self) -> gevent.queue.Channel:
     """Returns a single-slot communication device for passing data and control
     between concurrent functions.
 
@@ -205,10 +223,28 @@ class FuturesApi(RecipeApi):
 
     NOTE: This method will raise ValueError if used with @@@annotation@@@ mode.
     """
-    if not self.concurrency_client.supports_concurrency: # pragma: no cover
+    if not self.concurrency_client.supports_concurrency:  # pragma: no cover
       # test mode always supports concurrency, hence the nocover
       raise ValueError('Channels are not allowed in @@@annotation@@@ mode')
     return gevent.queue.Channel()
+
+  @overload
+  def spawn(self,
+            func: Callable[..., T],
+            *args: Any,
+            **kwargs: Any) -> Future[T]:
+    ...  # pragma: no cover
+
+  @overload
+  def spawn(
+      self,
+      func: Callable[..., T],
+      *args: Any,
+      __name: Optional[str] = None,
+      __meta: Optional[Any] = None,
+      **kwargs: Any,
+  ) -> Future[T]:
+    ...  # pragma: no cover
 
   @escape_all_warnings
   def spawn(self, func, *args, **kwargs):
@@ -253,12 +289,28 @@ class FuturesApi(RecipeApi):
 
     meta = kwargs.pop('__meta', None)
 
-    ret = self.Future(self.concurrency_client.spawn(
-        func, args, kwargs, name), name, meta)
-    if not self.concurrency_client.supports_concurrency: # pragma: no cover
+    ret = self.Future(
+        self.concurrency_client.spawn(func, args, kwargs, name), name, meta)
+    if not self.concurrency_client.supports_concurrency:  # pragma: no cover
       # test mode always supports concurrency, hence the nocover
       self.wait([ret])
     return ret
+
+  @overload
+  def spawn_immediate(self, func: Callable[..., T], *args: Any,
+                      **kwargs: Any) -> Future[T]:
+    ...  # pragma: no cover
+
+  @overload
+  def spawn_immediate(
+      self,
+      func: Callable[..., T],
+      *args: Any,
+      __name: Optional[str] = None,
+      __meta: Optional[Any] = None,
+      **kwargs: Any,
+  ) -> Future[T]:
+    ...  # pragma: no cover
 
   @escape_all_warnings
   def spawn_immediate(self, func, *args, **kwargs):
@@ -283,16 +335,20 @@ class FuturesApi(RecipeApi):
     name = kwargs.pop('__name', None)
     meta = kwargs.pop('__meta', None)
     chan = self.make_channel()
+
     @escape_all_warnings
     def _immediate_runner():
       chan.get()
       return func(*args, **kwargs)
+
     ret = self.spawn(_immediate_runner, __name=name, __meta=meta)
     chan.put(None)  # Pass execution to _immediate_runner
     return ret
 
   @staticmethod
-  def wait(futures, timeout=None, count=None):
+  def wait(futures: Iterable[Future[Any]],
+           timeout: Optional[float] = None,
+           count: Optional[int] = None) -> List[Future[Any]]:
     """Blocks until `count` `futures` are done (or timeout occurs) then
     returns the list of done futures.
 
@@ -311,7 +367,11 @@ class FuturesApi(RecipeApi):
     return list(_IWaitWrapper(futures, timeout, count))
 
   @staticmethod
-  def iwait(futures, timeout=None, count=None):
+  def iwait(
+      futures: Iterable[Future[Any]],
+      timeout: Optional[float] = None,
+      count: Optional[int] = None
+  ) -> Iterator[Future[Any]]:
     """Iteratively yield up to `count` Futures as they become done.
 
 
