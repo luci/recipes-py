@@ -48,7 +48,18 @@ class BcidVerifierApi(recipe_api.RecipeApi):
     artifact.
 
     Args:
-      * bcid_policy: Name of the BCID policy name to verify provenance with.
+      * bcid_policy: This field name is slightly misleading, and it would be
+        better if it was called resource_uri. This arg represents the full
+        ResourceURI to use when verifying this artifact. It should include both
+        the name of a valid BCID Policy or Resource Prefix, and the unique path
+        to the artifact protected by this verification. As an example, a call to
+        SoftwareVerifier to verify the provenance of a Chrome artifact before
+        signing might use the following structure.
+          bcid_policy: chrome_app://chrome/desktop/win/
+          artifact path: chrome-signed/desktop-5c0tCh/132.0.6834.0/win-clang/chrome.zip
+        Which would result in the following resource URI to use here:
+          chrome_app://chrome/desktop/win/chrome-signed/desktop-5c0tCh/132.0.6834.0/win-clang/chrome.zip
+
       * artifact_path: Local file path to the artifact to be verified.
       * attestation_path: Local file path to the attestation (intoto.jsonl) file
         for the provided artifact.
