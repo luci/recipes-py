@@ -42,8 +42,7 @@ import tempfile
 
 from typing import Any, Callable, Literal
 
-from recipe_engine import recipe_api, recipe_test_api
-from recipe_engine import config_types
+from recipe_engine import config_types, recipe_api, recipe_test_api, util
 
 from . import test_api
 
@@ -841,28 +840,43 @@ class PathApi(recipe_api.RecipeApi):
       return str(self.home_dir)
     raise ValueError("expanduser only supports `~`.")
 
-  def exists(self, path):
+  def exists(
+      self,
+      path: config_types.Path | str | util.InputPlaceholder,
+  ) -> bool:
     """Equivalent to os.path.exists.
 
     The presence or absence of paths can be mocked during the execution of the
     recipe by using the mock_* methods.
     """
+    if isinstance(path, util.InputPlaceholder):
+      return True
     return self._path_mod.exists(str(path))
 
-  def isdir(self, path):
+  def isdir(
+      self,
+      path: config_types.Path | str | util.InputPlaceholder,
+  ) -> bool:
     """Equivalent to os.path.isdir.
 
     The presence or absence of paths can be mocked during the execution of the
     recipe by using the mock_* methods.
     """
+    if isinstance(path, util.InputPlaceholder):
+      return False  # InputPlaceholders are never directories.
     return self._path_mod.isdir(str(path))
 
-  def isfile(self, path):
+  def isfile(
+      self,
+      path: config_types.Path | str | util.InputPlaceholder,
+  ) -> bool:
     """Equivalent to os.path.isfile.
 
     The presence or absence of paths can be mocked during the execution of the
     recipe by using the mock_* methods.
     """
+    if isinstance(path, util.InputPlaceholder):
+      return True
     return self._path_mod.isfile(str(path))
 
   def mock_add_paths(self, path: config_types.Path,

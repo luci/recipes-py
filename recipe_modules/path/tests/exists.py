@@ -7,7 +7,10 @@ from __future__ import annotations
 from recipe_engine import recipe_api
 from recipe_engine.post_process import DropExpectation
 
-DEPS = ['path']
+DEPS = [
+    'recipe_engine/path',
+    'recipe_engine/raw_io',
+]
 
 
 @recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED')
@@ -23,6 +26,10 @@ def RunSteps(api):
   assert api.path.exists(api.path.start_dir / 'a dir')
   assert not api.path.isfile(api.path.start_dir / 'a dir')
   assert api.path.isdir(api.path.start_dir / 'a dir')
+
+  assert api.path.exists(api.raw_io.input('data'))
+  assert not api.path.isdir(api.raw_io.input('data'))
+  assert api.path.isfile(api.raw_io.input('data'))
 
   # Our PathTestApi allows us to mock the existence of paths in the checkout
   # directory. However, the checkout directory still must be set before this
