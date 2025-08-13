@@ -1973,7 +1973,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [glob\_paths](/recipe_modules/file/api.py#588)(self, name: str, source: (config_types.Path | str), pattern: str, include_hidden: bool=False, test_data: Sequence[config_types.Path]=()):**
+&mdash; **def [glob\_paths](/recipe_modules/file/api.py#588)(self, name: str, source: (config_types.Path | str), pattern: str, include_hidden: bool=False, test_data: Sequence[str]=()):**
 
 Performs glob expansion on `pattern`.
 

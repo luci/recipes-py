@@ -591,7 +591,7 @@ class FileApi(recipe_api.RecipeApi):
       source: config_types.Path | str,
       pattern: str,
       include_hidden: bool = False,
-      test_data: Sequence[config_types.Path] = (),
+      test_data: Sequence[str] = (),
   ) -> list[config_types.Path]:
     """Performs glob expansion on `pattern`.
 
