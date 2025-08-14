@@ -22,6 +22,16 @@ def ResetGlobalVariableAssignments():
   Path._OS_SEP = None
 
 
+# These two exception classes inherit from ValueError because the corresponding
+# errors in pathlib in the standard library use ValueError.
+class RelativeToDifferentBases(ValueError):
+  pass
+
+
+class RelativeToNotParent(ValueError):
+  pass
+
+
 @dataclass(frozen=True)
 class CheckoutBasePath:
   """CheckoutBasePath is a placeholder base for Paths relative to
@@ -57,7 +67,7 @@ class CheckoutBasePath:
       return self._resolved
 
   def resolve(self) -> Path:
-    """Resolve this CheckoutBasePath, raise ValueError if it's not yet defined."""
+    """Resolve this CheckoutBasePath, raise ValueError if not yet defined."""
     checkout_dir = self.maybe_resolve()
     if checkout_dir is None:
       raise ValueError(
@@ -87,7 +97,8 @@ class ResolvedBasePath:
   In tests, this will contain a string like "[START_DIR]", "[CACHE]", etc. These
   names come from the recipe_engine/path module.
 
-  In non-tests, this will contain an actual absolute filesystem path as a string.
+  In non-tests, this will contain an actual absolute filesystem path as a
+  string.
   """
   resolved: str
 
@@ -143,8 +154,8 @@ class Path:
   #
   # Why not use @functools.cache on __str__? Unfortunately, this effectively
   # creates a global variable Path.__str__.<wrapper func>.cache, which is a dict
-  # mapping Path instances to their __str__() values. This is 'fine', but it ends
-  # up capturing the value of _OS_SEP which can change multiple times per
+  # mapping Path instances to their __str__() values. This is 'fine', but it
+  # ends up capturing the value of _OS_SEP which can change multiple times per
   # process run (see ResetGlobalVariableAssignments). This can still be used by
   # adding Path.__str__.cache_clear() to ResetGlobalVariableAssignments, but
   # I don't think introducing the extra global variable is necessary or
@@ -158,17 +169,18 @@ class Path:
       base: Either a CheckoutBasePath, which represents a placeholder for
         a ResolvedBasePath, or a ResolvedBasePath.
       *pieces: The components of the path relative to base.
-        - If this recipe is being run on windows, pieces with '/' or '\\' will be
-          split. On non-windows, they will be split only on '/'.
+        - If this recipe is being run on windows, pieces with '/' or '\\' will
+          be split. On non-windows, they will be split only on '/'.
         - Split pieces equaling '..' must not go above the `base`. That is, if
-          you give `Path(ResolvedBasePath('[CACHE]'), '..', 'something')`, this will
-          raise ValueError because the '..' would bring this Path above the
+          you give `Path(ResolvedBasePath('[CACHE]'), '..', 'something')`, this
+          will raise ValueError because the '..' would bring this Path above the
           base. However, `Path(ResolvedBasePath('[CACHE]'), 'something', '..')`
           is OK and would be equivalent to `Path(ResolvedBasePath('[CACHE]'))`.
         - Empty pieces and pieces which are '.' are ignored.
         - If the recipe is not yet running (e.g. you are calling Path from
           GenTests), and you include a '\\' in a piece, this will raise
-          ValueError (just use '/' or separate the pieces yourself in that case).
+          ValueError (just use '/' or separate the pieces yourself in that
+          case).
     """
     super().__init__()
     if not isinstance(base, (CheckoutBasePath, ResolvedBasePath)):
@@ -407,3 +419,43 @@ class Path:
   def __hash__(self) -> int:
     spath = self._resolve()
     return hash(('config_types.Path', spath.base, spath.pieces))
+
+  def relative_to(self, other: Path, *, walk_up: bool = False) -> str:
+    """Give one path relative to another.
+
+    Examples:
+      '[CACHE]/foo/bar'.relative_to('[CACHE]/foo') -> 'bar'
+      '[CACHE]/foo/bar/baz'.relative_to('[CACHE]/foo') -> 'bar/baz'
+      '[CACHE]/foo'.relative_to('[CACHE]/bar') -> ValueError
+      '[CACHE]/foo'.relative_to('[CACHE]/bar', walk_up=True) -> '../foo'
+      '[CACHE]/foo'.relative_to('[CACHE]/foo/bar/baz') -> ValueError
+      '[CACHE]/foo'.relative_to('[CACHE]/foo/bar/baz', walk_up=True) -> '../..'
+      '[CACHE]/foo'.relative_to('[CLEANUP]/bar') -> ValueError
+      '[CACHE]/foo'.relative_to('[CLEANUP]/bar', walk_up=True) -> ValueError
+
+    Assumes other is a directory.
+
+    Args:
+      other: Path to give self relative to.
+      walk_up: Allow '..' in the return value.
+    """
+    if self.base != other.base:
+      raise RelativeToDifferentBases(
+          f'{self!r} and {other!r} have different bases')
+
+    if not walk_up and other not in self.parents:
+      raise RelativeToNotParent(
+          f'{other!r} not in parents of {self!r} and walk_up=False')
+
+    result = []
+
+    for parent in itertools.chain([self], self.parents):
+      if parent != other and parent not in other.parents:
+        result.append(parent.name)
+
+    for parent in itertools.chain([other], other.parents):
+      if parent == self or parent in self.parents:
+        break
+      result.append('..')
+
+    return '/'.join(reversed(result))

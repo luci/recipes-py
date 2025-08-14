@@ -9,8 +9,8 @@ import unittest
 
 import test_env  # for sys.path manipulation
 
+from recipe_engine import config_types
 from recipe_engine.config_types import Path, ResolvedBasePath, CheckoutBasePath
-from recipe_engine.config_types import ResetGlobalVariableAssignments
 
 
 class TestPathsPreGlobalInit(unittest.TestCase):
@@ -186,12 +186,39 @@ class TestPathsPreGlobalInit(unittest.TestCase):
     self.assertFalse(p / 'a' in (p / 'ab').parents)
     self.assertFalse(p / 'ab' in (p / 'a').parents)
 
+  def test_relative_to_parent(self):
+    p1 = Path(ResolvedBasePath('[CLEANUP]'), 'foo', 'bar', 'baz')
+    p2 = Path(ResolvedBasePath('[CLEANUP]'), 'foo')
+    self.assertEqual(p1.relative_to(p2), 'bar/baz')
+    with self.assertRaises(config_types.RelativeToNotParent):
+      p2.relative_to(p1)
+
+  def test_relative_to_different_base(self):
+    p1 = Path(ResolvedBasePath('[CLEANUP]'), 'foo')
+    p2 = Path(ResolvedBasePath('[CACHE]'), 'bar')
+    with self.assertRaises(config_types.RelativeToDifferentBases):
+      p1.relative_to(p2)
+    with self.assertRaises(config_types.RelativeToDifferentBases):
+      p2.relative_to(p1)
+
+  def test_relative_to_walk_up_parent(self):
+    p1 = Path(ResolvedBasePath('[CLEANUP]'), 'foo', 'bar', 'baz')
+    p2 = Path(ResolvedBasePath('[CLEANUP]'), 'foo')
+    self.assertEqual(p1.relative_to(p2, walk_up=True), 'bar/baz')
+    self.assertEqual(p2.relative_to(p1, walk_up=True), '../..')
+
+  def test_relative_to_walk_up_sibling(self):
+    p1 = Path(ResolvedBasePath('[CLEANUP]'), 'foo', 'bar')
+    p2 = Path(ResolvedBasePath('[CLEANUP]'), 'foo', 'baz')
+    self.assertEqual(p1.relative_to(p2, walk_up=True), '../bar')
+    self.assertEqual(p2.relative_to(p1, walk_up=True), '../baz')
+
 
 class TestPathsPostGlobalInit(unittest.TestCase):
   """Test case for config_types.Path."""
 
   def tearDown(self):
-    ResetGlobalVariableAssignments()
+    config_types.ResetGlobalVariableAssignments()
     return super().tearDown()
 
 
