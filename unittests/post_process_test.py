@@ -709,12 +709,13 @@ class TestProperty(PostProcessUnitTest):
 
   def test_property_matches_callable_pass(self):
     self.expect_pass(post_process.PropertyMatchesCallable, 'y',
-                     lambda i: ''.join(i) == 'bar')
+                     lambda check, i: check(''.join(i) == 'bar'))
 
   def test_property_matches_callable_fail(self):
-    failures = self.expect_fails(1, post_process.PropertyMatchesCallable, 'y',
-                                 lambda i: ''.join(i) == 'foo')
-    self.assertHas(failures[0], 'check(matcher(build_properties[key]))')
+    failures = self.expect_fails(2, post_process.PropertyMatchesCallable, 'y',
+                                 lambda check, i: check(''.join(i) == 'foo'))
+    self.assertHas(failures[0], "check((''.join(i) == 'foo'))")
+    self.assertHas(failures[1], 'check(matcher(check, build_properties[key]))')
 
   def test_properties_contain_pass(self):
     self.expect_pass(post_process.PropertiesContain, 'x')

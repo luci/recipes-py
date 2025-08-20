@@ -720,7 +720,7 @@ def PropertyMatchesCallable(
     check: magic_check_fn.Checker,
     step_odict: Mapping[str, post_process_inputs.Step],
     key: str,
-    matcher: Callable[[Any], bool],
+    matcher: Callable[[magic_check_fn.Checker, Any], bool],
 ):
   """Assert that a recipe's output property `key` meets conditions of `matcher`.
 
@@ -731,13 +731,17 @@ def PropertyMatchesCallable(
   Usage:
     yield api.test(
         ...,
-        api.post_process(PropertyMatchesCallable, 'key', lambda x: 'foo' in x),
+        api.post_process(
+            PropertyMatchesCallable,
+            'key',
+            lambda check, x: check('foo' in x),
+        ),
     )
   """
   build_properties = GetBuildProperties(step_odict)
 
   if check(key in build_properties):
-    check(matcher(build_properties[key]))
+    check(matcher(check, build_properties[key]))
 
 
 def PropertiesContain(check, step_odict, key):
