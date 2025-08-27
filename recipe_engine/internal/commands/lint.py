@@ -34,6 +34,7 @@ ALLOWED_MODULES = [
     r'math',
     r'plistlib',
     r're',
+    r'shlex',
     r'string',
     r'textwrap',
     r'typing',
