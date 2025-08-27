@@ -7,6 +7,8 @@ filesystem."""
 
 from __future__ import annotations
 
+from typing import Literal
+
 from google.protobuf import message
 
 from recipe_engine import recipe_api, recipe_test_api
@@ -80,10 +82,21 @@ class ProtoOutputPlaceholder(recipe_util.OutputPlaceholder):
     return ret
 
 
+BINARY = 'BINARY'
+JSONPB = 'JSONPB'
+TEXTPB = 'TEXTPB'
+
+Codec = Literal[BINARY, JSONPB, TEXTPB]
+
+
 class ProtoApi(recipe_api.RecipeApi):
 
+  BINARY = BINARY
+  JSONPB = JSONPB
+  TEXTPB = TEXTPB
+
   @recipe_util.returns_placeholder
-  def input(self, proto_msg, codec, **encoding_kwargs):
+  def input(self, proto_msg, codec: Codec, **encoding_kwargs):
     """A placeholder which will expand to a file path containing the encoded
     `proto_msg`.
 
@@ -94,7 +107,7 @@ class ProtoApi(recipe_api.RecipeApi):
 
     Args:
       * proto_msg (message.Message) - The message data to encode.
-      * codec ('BINARY'|'JSONPB'|'TEXTPB') - The encoder to use.
+      * codec - The encoder to use.
       * encoding_kwargs - Passed directly to the chosen encoder. See:
         - BINARY: google.protobuf.message.Message.SerializeToString
           * 'deterministic' defaults to True.
@@ -114,14 +127,19 @@ class ProtoApi(recipe_api.RecipeApi):
     return self.m.raw_io.input_text(encoded, suffix=suffix)
 
   @recipe_util.returns_placeholder
-  def output(self, msg_class, codec, add_json_log=True, name=None,
-             leak_to=None, **decoding_kwargs):
+  def output(self,
+             msg_class,
+             codec: Codec,
+             add_json_log=True,
+             name=None,
+             leak_to=None,
+             **decoding_kwargs):
     """A placeholder which expands to a file path and then reads an encoded
     proto back from that location when the step finishes.
 
     Args:
       * msg_class (protobuf Message subclass) - The message type to decode.
-      * codec ('BINARY'|'JSONPB'|'TEXTPB') - The encoder to use.
+      * codec - The encoder to use.
       * add_json_log (True|False|'on_failure') - Log a copy of the parsed proto
         in JSONPB form to a step link named `name`. If this is 'on_failure',
         only create this log when the step has a non-SUCCESS status.
@@ -144,11 +162,11 @@ class ProtoApi(recipe_api.RecipeApi):
         self, msg_class, codec, add_json_log, name, leak_to, decoding_kwargs)
 
   @staticmethod
-  def encode(proto_msg, codec, **encoding_kwargs):
+  def encode(proto_msg, codec: Codec, **encoding_kwargs):
     """Encodes a proto message to a string.
 
     Args:
-      * codec ('BINARY'|'JSONPB'|'TEXTPB') - The encoder to use.
+      * codec - The encoder to use.
       * encoding_kwargs - Passed directly to the chosen encoder. See output
         placeholder for details.
 
@@ -159,12 +177,12 @@ class ProtoApi(recipe_api.RecipeApi):
     return proto_codec.do_enc(codec, proto_msg, **encoding_kwargs)
 
   @staticmethod
-  def decode(data, msg_class, codec, **decoding_kwargs):
+  def decode(data, msg_class, codec: Codec, **decoding_kwargs):
     """Decodes a proto message from a string.
 
     Args:
       * msg_class (protobuf Message subclass) - The message type to decode.
-      * codec ('BINARY'|'JSONPB'|'TEXTPB') - The encoder to use.
+      * codec - The encoder to use.
       * decoding_kwargs - Passed directly to the chosen decoder. See input
         placeholder for details.
 

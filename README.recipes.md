@@ -3406,32 +3406,32 @@ Returns a read-write copy of all of the properties.
 Methods for producing and consuming protobuf data to/from steps and the
 filesystem.
 
-#### **class [ProtoApi](/recipe_modules/proto/api.py#83)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
+#### **class [ProtoApi](/recipe_modules/proto/api.py#92)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
 
-&emsp; **@staticmethod**<br>&mdash; **def [decode](/recipe_modules/proto/api.py#161)(data, msg_class, codec, \*\*decoding_kwargs):**
+&emsp; **@staticmethod**<br>&mdash; **def [decode](/recipe_modules/proto/api.py#179)(data, msg_class, codec: Codec, \*\*decoding_kwargs):**
 
 Decodes a proto message from a string.
 
 Args:
   * msg_class (protobuf Message subclass) - The message type to decode.
-  * codec ('BINARY'|'JSONPB'|'TEXTPB') - The encoder to use.
+  * codec - The encoder to use.
   * decoding_kwargs - Passed directly to the chosen decoder. See input
     placeholder for details.
 
 Returns the decoded proto object.
 
-&emsp; **@staticmethod**<br>&mdash; **def [encode](/recipe_modules/proto/api.py#146)(proto_msg, codec, \*\*encoding_kwargs):**
+&emsp; **@staticmethod**<br>&mdash; **def [encode](/recipe_modules/proto/api.py#164)(proto_msg, codec: Codec, \*\*encoding_kwargs):**
 
 Encodes a proto message to a string.
 
 Args:
-  * codec ('BINARY'|'JSONPB'|'TEXTPB') - The encoder to use.
+  * codec - The encoder to use.
   * encoding_kwargs - Passed directly to the chosen encoder. See output
     placeholder for details.
 
 Returns the encoded proto message.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#157)**<br>&mdash; **def [input](/recipe_modules/proto/api.py#85)(self, proto_msg, codec, \*\*encoding_kwargs):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#157)**<br>&mdash; **def [input](/recipe_modules/proto/api.py#98)(self, proto_msg, codec: Codec, \*\*encoding_kwargs):**
 
 A placeholder which will expand to a file path containing the encoded
 `proto_msg`.
@@ -3443,7 +3443,7 @@ Example:
 
 Args:
   * proto_msg (message.Message) - The message data to encode.
-  * codec ('BINARY'|'JSONPB'|'TEXTPB') - The encoder to use.
+  * codec - The encoder to use.
   * encoding_kwargs - Passed directly to the chosen encoder. See:
     - BINARY: google.protobuf.message.Message.SerializeToString
       * 'deterministic' defaults to True.
@@ -3455,14 +3455,14 @@ Args:
 
 Returns an InputPlaceholder.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#157)**<br>&mdash; **def [output](/recipe_modules/proto/api.py#116)(self, msg_class, codec, add_json_log=True, name=None, leak_to=None, \*\*decoding_kwargs):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#157)**<br>&mdash; **def [output](/recipe_modules/proto/api.py#129)(self, msg_class, codec: Codec, add_json_log=True, name=None, leak_to=None, \*\*decoding_kwargs):**
 
 A placeholder which expands to a file path and then reads an encoded
 proto back from that location when the step finishes.
 
 Args:
   * msg_class (protobuf Message subclass) - The message type to decode.
-  * codec ('BINARY'|'JSONPB'|'TEXTPB') - The encoder to use.
+  * codec - The encoder to use.
   * add_json_log (True|False|'on_failure') - Log a copy of the parsed proto
     in JSONPB form to a step link named `name`. If this is 'on_failure',
     only create this log when the step has a non-SUCCESS status.
