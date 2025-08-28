@@ -13,7 +13,7 @@ from typing import Any, Callable, Literal, Sequence, TypeVar
 
 import google.protobuf
 from recipe_engine import config_types, recipe_api, recipe_test_api, step_data
-
+from RECIPE_MODULES.recipe_engine.proto import api as proto_api
 
 class SymlinkTree:
   """A representation of a tree of symlinks."""
@@ -88,8 +88,6 @@ class SymlinkTree:
     return self._api.step(name, args, infra_step=True)
 
 
-ProtoCodec = Literal['BINARY', 'JSONPB', 'TEXTPB']
-
 # TODO(iannucci): Introduce the concept of a 'native step' and implement these
 # directly in the current python interpreter without the need for a subprocess
 # invocation.
@@ -97,7 +95,7 @@ ProtoCodec = Literal['BINARY', 'JSONPB', 'TEXTPB']
 
 class FileApi(recipe_api.RecipeApi):
 
-  ProtoCodec = ProtoCodec
+  ProtoCodec = proto_api.Codec
 
   class Error(recipe_api.StepFailure):
     """Error is a StepFailure, except that it also contains an errno field
