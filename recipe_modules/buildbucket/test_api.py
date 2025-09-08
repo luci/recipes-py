@@ -90,7 +90,8 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       on_backend=False,
       backend_target="swarming://chromium-swarm",
       ancestor_ids=None,
-      summary_markdown=None):
+      summary_markdown=None,
+      created_by='user:luci-scheduler@appspot.gserviceaccount.com'):
     """Returns a typical buildbucket CI build scheduled by luci-scheduler."""
     git_repo = git_repo or self._default_git_repo(project)
     gitiles_host, gitiles_project = util.parse_gitiles_repo_url(git_repo)
@@ -121,7 +122,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
             bucket=bucket,
             builder=builder,
         ),
-        created_by='user:luci-scheduler@appspot.gserviceaccount.com',
+        created_by=created_by,
         create_time=timestamp_pb2.Timestamp(seconds=1527292217),
         input=build_pb2.Build.Input(
             gitiles_commit=common_pb2.GitilesCommit(
@@ -303,7 +304,8 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       build_id=8945511751514863184,
       priority=30,
       tags=None,
-      experiments=()):
+      experiments=(),
+      created_by='user:user@example.com'):
     """Emulates a generic build w/o input GitilesCommit or GerritChanges."""
     build = build_pb2.Build(
         id=build_id,
@@ -314,7 +316,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
             bucket=bucket,
             builder=builder,
         ),
-        created_by='user:user@example.com',
+        created_by=created_by,
         create_time=timestamp_pb2.Timestamp(seconds=1527292217),
         infra=build_pb2.BuildInfra(
             swarming=build_pb2.BuildInfra.Swarming(priority=priority),
