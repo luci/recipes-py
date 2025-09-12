@@ -4853,9 +4853,9 @@ Emit the results accumulated by `add_comment` and `run_legacy`.
 
 Methods for interacting with HTTP(s) URLs.
 
-#### **class [UrlApi](/recipe_modules/url/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
+#### **class [UrlApi](/recipe_modules/url/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
 
-&mdash; **def [get\_file](/recipe_modules/url/api.py#132)(self, url, path, step_name=None, headers=None, transient_retry=True, strip_prefix=None, cert: (str | None)=None):**
+&mdash; **def [get\_file](/recipe_modules/url/api.py#133)(self, url, path, step_name=None, headers=None, transient_retry=True, strip_prefix=None):**
 
 GET data at given URL and writes it to file.
 
@@ -4872,9 +4872,6 @@ Args:
   * strip_prefix (str or None): If not None, this prefix must be present at
       the beginning of the response, and will be stripped from the resulting
       content (e.g., GERRIT_JSON_PREFIX).
-  * cert (str): Optional path to a CA_BUNDLE file or directory with
-      certificates of trusted CAs. If provided, pinned to the given cert or
-      certs.
 
 Returns (UrlApi.Response):
   Response with "path" as its "output" value.
@@ -4883,7 +4880,7 @@ Raises:
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [get\_json](/recipe_modules/url/api.py#255)(self, url, step_name=None, headers=None, transient_retry=True, strip_prefix=None, log=False, default_test_data=None, cert: (str | None)=None):**
+&mdash; **def [get\_json](/recipe_modules/url/api.py#241)(self, url, step_name=None, headers=None, transient_retry=True, strip_prefix=None, log=False, default_test_data=None):**
 
 GET data at given URL and writes it to file.
 
@@ -4902,9 +4899,6 @@ Args:
   * log (bool): If True, emit the JSON content as a log.
   * default_test_data (jsonish): If provided, use this as the unmarshalled
       JSON result when testing if no overriding data is available.
-  * cert (str): Optional path to a CA_BUNDLE file or directory with
-      certificates of trusted CAs. If provided, pinned to the given cert or
-      certs.
 
 Returns (UrlApi.Response): Response with the JSON as its "output" value.
 
@@ -4912,7 +4906,7 @@ Raises:
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [get\_raw](/recipe_modules/url/api.py#215)(self, url, step_name=None, headers=None, transient_retry=True, default_test_data=None, cert: (str | None)=None):**
+&mdash; **def [get\_raw](/recipe_modules/url/api.py#206)(self, url, step_name=None, headers=None, transient_retry=True, default_test_data=None):**
 
 GET data at given URL and writes it to file.
 
@@ -4927,9 +4921,6 @@ Args:
       retries have exponential backoff applied.
   * default_test_data (str): If provided, use this as the text output when
       testing if no overriding data is available.
-  * cert (str): Optional path to a CA_BUNDLE file or directory with
-      certificates of trusted CAs. If provided, pinned to the given cert or
-      certs.
 
 Returns (UrlApi.Response): Response with the content as its output value.
 
@@ -4937,7 +4928,7 @@ Raises:
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [get\_text](/recipe_modules/url/api.py#176)(self, url, step_name=None, headers=None, transient_retry=True, default_test_data=None, cert: (str | None)=None):**
+&mdash; **def [get\_text](/recipe_modules/url/api.py#172)(self, url, step_name=None, headers=None, transient_retry=True, default_test_data=None):**
 
 GET data at given URL and writes it to file.
 
@@ -4952,9 +4943,6 @@ Args:
       retries have exponential backoff applied.
   * default_test_data (str): If provided, use this as the text output when
       testing if no overriding data is available.
-  * cert (str): Optional path to a CA_BUNDLE file or directory with
-      certificates of trusted CAs. If provided, pinned to the given cert or
-      certs.
 
 Returns (UrlApi.Response): Response with the content as its output value.
 
@@ -4962,7 +4950,7 @@ Raises:
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [join](/recipe_modules/url/api.py#94)(self, \*parts):**
+&mdash; **def [join](/recipe_modules/url/api.py#96)(self, \*parts):**
 
 Constructs a URL path from composite parts.
 
@@ -4971,7 +4959,7 @@ Args:
       will be stripped from intermediate strings to ensure that they join
       together. Trailing slashes will not be stripped from the last part.
 
-&mdash; **def [validate\_url](/recipe_modules/url/api.py#110)(self, v):**
+&mdash; **def [validate\_url](/recipe_modules/url/api.py#112)(self, v):**
 
 Validates that "v" is a valid URL.
 
@@ -6335,7 +6323,7 @@ An example of a recipe wrapping legacy analyzers.
 [DEPS](/recipe_modules/url/examples/full.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step), [url](#recipe_modules-url)
 
 
-&mdash; **def [RunSteps](/recipe_modules/url/examples/full.py#29)(api):**
+&mdash; **def [RunSteps](/recipe_modules/url/examples/full.py#30)(api):**
 ### *recipes* / [url:tests/join](/recipe_modules/url/tests/join.py)
 
 [DEPS](/recipe_modules/url/tests/join.py#7): [step](#recipe_modules-step), [url](#recipe_modules-url)

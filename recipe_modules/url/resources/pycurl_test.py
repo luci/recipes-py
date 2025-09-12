@@ -1,4 +1,5 @@
 #!/usr/bin/env vpython3
+
 # Copyright 2023 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -19,6 +20,7 @@ import pycurl
 
 
 class PyCurlTest(unittest.TestCase):
+
   def setUp(self):
     mock.patch('requests.Session').start()
     self.addCleanup(mock.patch.stopall)
@@ -28,7 +30,7 @@ class PyCurlTest(unittest.TestCase):
     r.status_code = requests.codes.ok
     r.headers = {'Content-Length': '2'}
     r.raw = io.BytesIO(b'ok')
-    r.iter_content.return_value  = r.raw
+    r.iter_content.return_value = r.raw
 
     code, total = pycurl._download('https://test/', os.devnull, None, 0, '')
     self.assertTrue(code == requests.codes.ok)
@@ -39,7 +41,7 @@ class PyCurlTest(unittest.TestCase):
     r.status_code = requests.codes.ok
     r.headers = {'Content-Length': '6'}
     r.raw = io.BytesIO(b'short')
-    r.iter_content.return_value  = r.raw
+    r.iter_content.return_value = r.raw
 
     with self.assertRaises(ValueError) as context:
       pycurl._download('https://test/', os.devnull, None, 0, '')
@@ -50,7 +52,7 @@ class PyCurlTest(unittest.TestCase):
     r.status_code = requests.codes.ok
     r.headers = {'Content-Length': 'abc'}
     r.raw = io.BytesIO(b'anything')
-    r.iter_content.return_value  = r.raw
+    r.iter_content.return_value = r.raw
 
     with self.assertRaises(ValueError) as context:
       pycurl._download('https://test/', os.devnull, None, 0, '')
@@ -61,7 +63,7 @@ class PyCurlTest(unittest.TestCase):
     r.status_code = requests.codes.ok
     r.headers = {}
     r.raw = io.BytesIO(b'anything')
-    r.iter_content.return_value  = r.raw
+    r.iter_content.return_value = r.raw
 
     code, total = pycurl._download('https://test/', os.devnull, None, 0, '')
     self.assertTrue(code == requests.codes.ok)
@@ -79,23 +81,6 @@ class PyCurlTest(unittest.TestCase):
                                    ")]}'\n")
     self.assertTrue(outfile.read(), b'ok')
 
-  def testCert(self):
-    r = requests.Session().get()
-    r.status_code = requests.codes.ok
-    r.headers = {'Content-Length': '2'}
-    r.raw = io.BytesIO(b'ok')
-    r.iter_content.return_value = r.raw
-
-    # Nothing passed when not specified
-    code, total = pycurl._download('https://test/', os.devnull, None, 0)
-    requests.Session().get.assert_called_with(
-        'https://test/', stream=True, cert=None)
-
-    # `verify` is passed through
-    code, total = pycurl._download(
-        'https://test/', os.devnull, None, 0, cert="path/to/some/cert.pem")
-    requests.Session().get.assert_called_with(
-        'https://test/', stream=True, cert="path/to/some/cert.pem")
 
 if __name__ == '__main__':
   if '-v' in sys.argv:

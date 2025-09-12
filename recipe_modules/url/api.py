@@ -13,6 +13,7 @@ import collections
 
 from recipe_engine import recipe_api
 
+
 class UrlApi(recipe_api.RecipeApi):
   quote = staticmethod(quote)
   unquote = staticmethod(unquote)
@@ -22,18 +23,20 @@ class UrlApi(recipe_api.RecipeApi):
   GERRIT_JSON_PREFIX = ")]}'\n"
 
   class HTTPError(recipe_api.StepFailure):
+
     def __init__(self, msg, response):
       super().__init__(msg)
       self.response = response
 
   class InfraHTTPError(recipe_api.InfraFailure):
+
     def __init__(self, msg, response):
       super().__init__(msg)
       self.response = response
 
   # Status JSON output from "pycurl.py" resource.
-  _PyCurlStatus = collections.namedtuple('_PyCurlStatus', (
-      'status_code', 'success', 'size', 'error_body'))
+  _PyCurlStatus = collections.namedtuple(
+      '_PyCurlStatus', ('status_code', 'success', 'size', 'error_body'))
 
   class Response:
     """Response is an HTTP response object."""
@@ -90,7 +93,6 @@ class UrlApi(recipe_api.RecipeApi):
         cls = UrlApi.InfraHTTPError if self._infra_step else UrlApi.HTTPError
         raise cls('HTTP status (%d)' % (self.status_code,), self)
 
-
   def join(self, *parts):
     """Constructs a URL path from composite parts.
 
@@ -125,8 +127,7 @@ class UrlApi(recipe_api.RecipeApi):
       raise ValueError(
           'URL scheme must be either http:// or https:// ({!r})'.format(v))
     if not u.netloc:
-      raise ValueError(
-          'URL must specify a network location ({!r})'.format(v))
+      raise ValueError('URL must specify a network location ({!r})'.format(v))
     return u.scheme.lower() == 'https'
 
   def get_file(self,
@@ -135,8 +136,7 @@ class UrlApi(recipe_api.RecipeApi):
                step_name=None,
                headers=None,
                transient_retry=True,
-               strip_prefix=None,
-               cert: str | None = None):
+               strip_prefix=None):
     """GET data at given URL and writes it to file.
 
     Args:
@@ -152,9 +152,6 @@ class UrlApi(recipe_api.RecipeApi):
       * strip_prefix (str or None): If not None, this prefix must be present at
           the beginning of the response, and will be stripped from the resulting
           content (e.g., GERRIT_JSON_PREFIX).
-      * cert (str): Optional path to a CA_BUNDLE file or directory with
-          certificates of trusted CAs. If provided, pinned to the given cert or
-          certs.
 
     Returns (UrlApi.Response):
       Response with "path" as its "output" value.
@@ -170,16 +167,14 @@ class UrlApi(recipe_api.RecipeApi):
         headers=headers,
         transient_retry=transient_retry,
         strip_prefix=strip_prefix,
-        default_test_data='',
-        cert=cert)
+        default_test_data='')
 
   def get_text(self,
                url,
                step_name=None,
                headers=None,
                transient_retry=True,
-               default_test_data=None,
-               cert: str | None = None):
+               default_test_data=None):
     """GET data at given URL and writes it to file.
 
     Args:
@@ -193,9 +188,6 @@ class UrlApi(recipe_api.RecipeApi):
           retries have exponential backoff applied.
       * default_test_data (str): If provided, use this as the text output when
           testing if no overriding data is available.
-      * cert (str): Optional path to a CA_BUNDLE file or directory with
-          certificates of trusted CAs. If provided, pinned to the given cert or
-          certs.
 
     Returns (UrlApi.Response): Response with the content as its output value.
 
@@ -209,16 +201,14 @@ class UrlApi(recipe_api.RecipeApi):
         step_name=step_name,
         headers=headers,
         transient_retry=transient_retry,
-        default_test_data=default_test_data,
-        cert=cert)
+        default_test_data=default_test_data)
 
   def get_raw(self,
               url,
               step_name=None,
               headers=None,
               transient_retry=True,
-              default_test_data=None,
-              cert: str | None = None):
+              default_test_data=None):
     """GET data at given URL and writes it to file.
 
     Args:
@@ -232,9 +222,6 @@ class UrlApi(recipe_api.RecipeApi):
           retries have exponential backoff applied.
       * default_test_data (str): If provided, use this as the text output when
           testing if no overriding data is available.
-      * cert (str): Optional path to a CA_BUNDLE file or directory with
-          certificates of trusted CAs. If provided, pinned to the given cert or
-          certs.
 
     Returns (UrlApi.Response): Response with the content as its output value.
 
@@ -249,7 +236,6 @@ class UrlApi(recipe_api.RecipeApi):
         headers=headers,
         transient_retry=transient_retry,
         default_test_data=default_test_data,
-        cert=cert,
         as_bytes=True)
 
   def get_json(self,
@@ -259,8 +245,7 @@ class UrlApi(recipe_api.RecipeApi):
                transient_retry=True,
                strip_prefix=None,
                log=False,
-               default_test_data=None,
-               cert: str | None = None):
+               default_test_data=None):
     """GET data at given URL and writes it to file.
 
     Args:
@@ -278,9 +263,6 @@ class UrlApi(recipe_api.RecipeApi):
       * log (bool): If True, emit the JSON content as a log.
       * default_test_data (jsonish): If provided, use this as the unmarshalled
           JSON result when testing if no overriding data is available.
-      * cert (str): Optional path to a CA_BUNDLE file or directory with
-          certificates of trusted CAs. If provided, pinned to the given cert or
-          certs.
 
     Returns (UrlApi.Response): Response with the JSON as its "output" value.
 
@@ -306,22 +288,21 @@ class UrlApi(recipe_api.RecipeApi):
                 strip_prefix=None,
                 as_json=False,
                 as_bytes=False,
-                default_test_data=None,
-                cert: str | None = None):
+                default_test_data=None):
 
     step_name = step_name or 'GET %s' % url
     is_secure = self.validate_url(url)
 
     args = [
-        '--url', url,
-        '--status-json', self.m.json.output(add_json_log=False,
-                                            name='status_json'),
+        '--url',
+        url,
+        '--status-json',
+        self.m.json.output(add_json_log=False, name='status_json'),
     ]
 
     if as_json:
       log = as_json == 'log'
-      args += ['--outfile', self.m.json.output(add_json_log=log,
-                                               name='output')]
+      args += ['--outfile', self.m.json.output(add_json_log=log, name='output')]
     elif path:
       # path is only passed in by the get_file variant
       # in this case, we should not use a placeholder
@@ -329,16 +310,18 @@ class UrlApi(recipe_api.RecipeApi):
     elif as_bytes:
       args += ['--outfile', self.m.raw_io.output(leak_to=path, name='output')]
     else:
-      args += ['--outfile', self.m.raw_io.output_text(leak_to=path,
-                                                      name='output')]
+      args += [
+          '--outfile',
+          self.m.raw_io.output_text(leak_to=path, name='output')
+      ]
 
     if headers:
-      has_authorization_header = any(k.lower() == 'authorization'
-                                     for k in headers)
+      has_authorization_header = any(
+          k.lower() == 'authorization' for k in headers)
       if has_authorization_header and not is_secure:
         raise ValueError(
-            'Refusing to send authorization header to insecure URL: %s' % (
-            url,))
+            'Refusing to send authorization header to insecure URL: %s' %
+            (url,))
 
       args += ['--headers-json', self.m.json.input(headers)]
     if strip_prefix:
@@ -349,10 +332,6 @@ class UrlApi(recipe_api.RecipeApi):
       args += ['--transient-retry', '0']
     elif transient_retry is not True:
       args += ['--transient-retry', str(transient_retry)]
-
-    if cert:
-      assert isinstance(cert, str)
-      args += ['--cert', cert]
 
     result = self.m.step(
         step_name,
@@ -365,9 +344,9 @@ class UrlApi(recipe_api.RecipeApi):
 
     output = path
     if not output:
-      output_placeholder = (result.json.outputs if as_json
-                            else result.raw_io.outputs if as_bytes
-                            else result.raw_io.output_texts)
+      output_placeholder = (
+          result.json.outputs if as_json else
+          result.raw_io.outputs if as_bytes else result.raw_io.output_texts)
       output = output_placeholder['output']
 
     status = self._PyCurlStatus(**result.json.outputs['status_json'])
