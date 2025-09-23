@@ -6,6 +6,9 @@ from __future__ import annotations
 
 from PB.go.chromium.org.luci.cv.api.recipe.v1 import cq as cq_pb2
 
+from . import api as _api
+from . import test_api as _test_api
+
 DEPS = [
     'buildbucket',
     'properties',
@@ -13,3 +16,6 @@ DEPS = [
 ]
 
 PROPERTIES = cq_pb2.Input
+
+API = _api.CVApi
+TEST_API = _test_api.CVTestApi

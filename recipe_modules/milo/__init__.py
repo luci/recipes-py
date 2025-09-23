@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from . import api as _api
+
 DEPS = [
     'buildbucket',
     'json',
@@ -15,3 +17,5 @@ DEPS = [
     'step',
     'uuid',
 ]
+
+API = _api.MiloApi

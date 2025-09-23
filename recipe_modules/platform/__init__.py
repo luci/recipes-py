@@ -4,5 +4,11 @@
 
 from __future__ import annotations
 
+from . import api as _api
+from . import test_api as _test_api
+
 DEPS = [
 ]
+
+API = _api.PlatformApi
+TEST_API = _test_api.PlatformTestApi

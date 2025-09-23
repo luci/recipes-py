@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from . import api as _api
+from . import test_api as _test_api
+
 DEPS = [
     'recipe_engine/cipd',
     'recipe_engine/path',
@@ -11,3 +14,6 @@ DEPS = [
     'recipe_engine/step',
     'time',
 ]
+
+API = _api.BcidReporterApi
+TEST_API = _test_api.BcidReporterTestApi

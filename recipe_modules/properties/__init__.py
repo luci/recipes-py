@@ -4,6 +4,12 @@
 
 from __future__ import annotations
 
+from . import api as _api
+from . import test_api as _test_api
+
 DEPS = [
     'recipe_engine/warning',
 ]
+
+API = _api.PropertiesApi
+TEST_API = _test_api.PropertiesTestApi

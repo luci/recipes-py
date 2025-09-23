@@ -7,6 +7,9 @@ from __future__ import annotations
 from recipe_engine.recipe_api import Property
 from recipe_engine.config import ConfigGroup, List
 
+from . import api as _api
+from . import test_api as _test_api
+
 DEPS = [
     "context",
     "path",
@@ -26,3 +29,6 @@ PROPERTIES = {
       'prefix_path': [],
     }),
 }
+
+API = _api.StepApi
+TEST_API = _test_api.StepTestApi

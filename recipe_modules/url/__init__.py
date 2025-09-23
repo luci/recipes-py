@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from . import api as _api
+from . import test_api as _test_api
+
 DEPS = [
   'context',
   'json',
@@ -11,3 +14,6 @@ DEPS = [
   'raw_io',
   'step',
 ]
+
+API = _api.UrlApi
+TEST_API = _test_api.UrlTestApi

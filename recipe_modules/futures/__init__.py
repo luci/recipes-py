@@ -1,3 +1,9 @@
-# Copyright 2021 The Chromium Authors. All rights reserved.
-# Use of this source code is governed by a BSD-style license that can be
-# found in the LICENSE file.
+# Copyright 2017 The LUCI Authors. All rights reserved.
+# Use of this source code is governed under the Apache License, Version 2.0
+# that can be found in the LICENSE file.
+
+from __future__ import annotations
+
+from . import api as _api
+
+API = _api.FuturesApi

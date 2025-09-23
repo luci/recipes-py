@@ -4,10 +4,13 @@
 
 from __future__ import annotations
 
-DEPS = [ ]
-
 from recipe_engine.recipe_api import Property
 from recipe_engine.config import ConfigGroup, Single
+
+from . import api as _api
+from . import test_api as _test_api
+
+DEPS = [ ]
 
 PROPERTIES = {
   '$recipe_engine/random': Property(
@@ -19,3 +22,6 @@ PROPERTIES = {
     ), default={},
   )
 }
+
+API = _api.RandomApi
+TEST_API = _test_api.RandomTestApi

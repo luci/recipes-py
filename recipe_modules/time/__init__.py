@@ -4,8 +4,14 @@
 
 from __future__ import annotations
 
+from . import api as _api
+from . import test_api as _test_api
+
 DEPS = [
     'context',
     'step',
     'random',
 ]
+
+API = _api.TimeApi
+TEST_API = _test_api.TimeTestApi

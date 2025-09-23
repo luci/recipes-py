@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from . import api as _api
+
 DEPS = [
   'recipe_engine/buildbucket',
   'recipe_engine/cipd',
@@ -13,3 +15,5 @@ DEPS = [
   'recipe_engine/raw_io',
   'recipe_engine/step',
 ]
+
+API = _api.ChangeVerifierApi

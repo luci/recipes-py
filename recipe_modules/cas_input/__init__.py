@@ -6,9 +6,13 @@ from __future__ import annotations
 
 from PB.recipe_modules.recipe_engine.cas_input import properties
 
+from . import api as _api
+
 DEPS = [
     'path',
     'cas',
 ]
 
 PROPERTIES = properties.InputProperties
+
+API = _api.CasInputApi

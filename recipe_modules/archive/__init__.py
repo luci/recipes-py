@@ -4,9 +4,13 @@
 
 from __future__ import annotations
 
+from . import api as _api
+
 DEPS = [
   'recipe_engine/json',
   'recipe_engine/path',
   'recipe_engine/platform',
   'recipe_engine/step',
 ]
+
+API = _api.ArchiveApi

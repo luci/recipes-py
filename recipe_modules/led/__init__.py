@@ -4,6 +4,11 @@
 
 from __future__ import annotations
 
+from PB.recipe_modules.recipe_engine.led import properties
+
+from . import api as _api
+from . import test_api as _test_api
+
 DEPS = [
   'cipd',
   'context',
@@ -14,6 +19,7 @@ DEPS = [
   'swarming',
 ]
 
-from PB.recipe_modules.recipe_engine.led import properties
-
 PROPERTIES = properties.InputProperties
+
+API = _api.LedApi
+TEST_API = _test_api.LedTestApi

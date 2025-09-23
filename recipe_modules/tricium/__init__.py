@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from . import api as _api
+
 DEPS = [
     'buildbucket',
     'cipd',
@@ -17,3 +19,5 @@ DEPS = [
     'resultdb',
     'step',
 ]
+
+API = _api.TriciumApi

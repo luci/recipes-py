@@ -9,6 +9,9 @@ from past.builtins import basestring
 from recipe_engine.recipe_api import Property
 from recipe_engine.config import ConfigGroup, List, Single
 
+from . import api as _api
+from . import test_api as _test_api
+
 DEPS = [
   'buildbucket',
   'json',
@@ -34,3 +37,6 @@ PROPERTIES = {
       default={},
   ),
 }
+
+API = _api.SchedulerApi
+TEST_API = _test_api.SchedulerTestApi

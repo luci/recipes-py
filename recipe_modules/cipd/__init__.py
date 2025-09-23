@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from . import api as _api
+from . import test_api as _test_api
+
 DEPS = [
   'buildbucket',
   'context',
@@ -17,3 +20,6 @@ DEPS = [
   'step',
   'url',
 ]
+
+API = _api.CIPDApi
+TEST_API = _test_api.CIPDTestApi

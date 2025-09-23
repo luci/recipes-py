@@ -8,7 +8,7 @@ from builtins import int
 
 from recipe_engine import recipe_test_api
 
-class PathTestApi(recipe_test_api.RecipeTestApi):
+class RandomTestApi(recipe_test_api.RecipeTestApi):
   def seed(self, seed):
     assert isinstance(seed, int), (
       'bad seed %s, expected (int, long)' % (type(seed),))

@@ -9,7 +9,7 @@ from __future__ import annotations
 from recipe_engine import recipe_api, recipe_test_api
 
 
-class WarningApi(recipe_test_api.RecipeTestApi):
+class WarningTestApi(recipe_test_api.RecipeTestApi):
   def issue(self, name):  # pragma: no cover
     """Issues an execution warning.
 
