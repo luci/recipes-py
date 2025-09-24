@@ -4,12 +4,9 @@
 
 from __future__ import annotations
 
-from . import api as _api
-from . import test_api as _test_api
-
 DEPS = [
   'raw_io',
 ]
 
-API = _api.ProtoApi
-TEST_API = _test_api.ProtoTestApi
+from .api import ProtoApi as API
+from .test_api import ProtoTestApi as TEST_API

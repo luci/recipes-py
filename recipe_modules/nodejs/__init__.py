@@ -4,8 +4,6 @@
 
 from __future__ import annotations
 
-from . import api as _api
-
 DEPS = [
     'cipd',
     'context',
@@ -13,4 +11,4 @@ DEPS = [
     'platform',
 ]
 
-API = _api.NodeJSApi
+from .api import NodeJSApi as API

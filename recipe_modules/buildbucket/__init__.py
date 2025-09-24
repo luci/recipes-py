@@ -4,9 +4,6 @@
 
 from __future__ import annotations
 
-from . import api as _api
-from . import test_api as _test_api
-
 DEPS = [
   'json',
   'path',
@@ -25,5 +22,5 @@ PROPERTIES = properties.InputProperties
 # Deprecated.
 GLOBAL_PROPERTIES = properties.LegacyInputProperties
 
-API = _api.BuildbucketApi
-TEST_API = _test_api.BuildbucketTestApi
+from .api import BuildbucketApi as API
+from .test_api import BuildbucketTestApi as TEST_API

@@ -4,8 +4,6 @@
 
 from __future__ import annotations
 
-from . import api as _api
-
 DEPS = [
     'buildbucket',
     'proto',
@@ -14,4 +12,4 @@ DEPS = [
     'uuid',
 ]
 
-API = _api.FindingsAPI
+from .api import FindingsAPI as API

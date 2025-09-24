@@ -6,8 +6,6 @@ from __future__ import annotations
 
 from PB.recipe_modules.recipe_engine.cas import properties
 
-from . import api as _api
-
 DEPS = [
     'cipd',
     'context',
@@ -21,4 +19,4 @@ DEPS = [
 
 ENV_PROPERTIES = properties.EnvProperties
 
-API = _api.CasApi
+from .api import CasApi as API

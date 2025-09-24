@@ -7,9 +7,6 @@ from __future__ import annotations
 from recipe_engine.recipe_api import Property
 from recipe_engine.config import ConfigGroup, Single
 
-from . import api as _api
-from . import test_api as _test_api
-
 PROPERTIES = {
   '$recipe_engine/path': Property(
     help='Properties specifically for the recipe_engine path module.',
@@ -29,5 +26,5 @@ DEPS = [
     'recipe_engine/warning',
 ]
 
-API = _api.PathApi
-TEST_API = _test_api.PathTestApi
+from .api import PathApi as API
+from .test_api import PathTestApi as TEST_API

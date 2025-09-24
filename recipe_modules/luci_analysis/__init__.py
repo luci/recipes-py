@@ -4,13 +4,10 @@
 
 from __future__ import annotations
 
-from . import api as _api
-from . import test_api as _test_api
-
 DEPS = [
     'recipe_engine/json',
     'recipe_engine/step',
 ]
 
-API = _api.LuciAnalysisApi
-TEST_API = _test_api.LuciAnalysisTestApi
+from .api import LuciAnalysisApi as API
+from .test_api import LuciAnalysisTestApi as TEST_API

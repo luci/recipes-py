@@ -4,9 +4,6 @@
 
 from __future__ import annotations
 
-from . import api as _api
-from . import test_api as _test_api
-
 DEPS = [
   'context',
   'json',
@@ -14,5 +11,5 @@ DEPS = [
   'step',
 ]
 
-API = _api.GeneratorScriptApi
-TEST_API = _test_api.GeneratorScriptTestApi
+from .api import GeneratorScriptApi as API
+from .test_api import GeneratorScriptTestApi as TEST_API

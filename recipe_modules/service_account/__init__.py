@@ -4,8 +4,6 @@
 
 from __future__ import annotations
 
-from . import api as _api
-
 DEPS = [
   'path',
   'platform',
@@ -13,4 +11,4 @@ DEPS = [
   'step',
 ]
 
-API = _api.ServiceAccountApi
+from .api import ServiceAccountApi as API

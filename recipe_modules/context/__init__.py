@@ -4,12 +4,9 @@
 
 from __future__ import annotations
 
-from . import api as _api
-from . import test_api as _test_api
-
 DEPS = [
   'path',
 ]
 
-API = _api.ContextApi
-TEST_API = _test_api.ContextTestApi
+from .api import ContextApi as API
+from .test_api import ContextTestApi as TEST_API

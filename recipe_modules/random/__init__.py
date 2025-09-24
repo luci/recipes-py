@@ -7,11 +7,6 @@ from __future__ import annotations
 from recipe_engine.recipe_api import Property
 from recipe_engine.config import ConfigGroup, Single
 
-from . import api as _api
-from . import test_api as _test_api
-
-DEPS = [ ]
-
 PROPERTIES = {
   '$recipe_engine/random': Property(
     help='Properties to control the `random` module.',
@@ -23,5 +18,5 @@ PROPERTIES = {
   )
 }
 
-API = _api.RandomApi
-TEST_API = _test_api.RandomTestApi
+from .api import RandomApi as API
+from .test_api import RandomTestApi as TEST_API

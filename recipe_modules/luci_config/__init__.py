@@ -4,9 +4,6 @@
 
 from __future__ import annotations
 
-from . import api as _api
-from . import test_api as _test_api
-
 DEPS = [
     "recipe_engine/buildbucket",
     "recipe_engine/file",
@@ -14,5 +11,5 @@ DEPS = [
     "recipe_engine/step",
 ]
 
-API = _api.LuciConfigApi
-TEST_API = _test_api.LuciConfigTestApi
+from .api import LuciConfigApi as API
+from .test_api import LuciConfigTestApi as TEST_API

@@ -4,8 +4,5 @@
 
 from __future__ import annotations
 
-from . import api as _api
-from . import test_api as _test_api
-
-API = _api.WarningApi
-TEST_API = _test_api.WarningTestApi
+from .api import WarningApi as API
+from .test_api import WarningTestApi as TEST_API

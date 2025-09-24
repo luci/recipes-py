@@ -4,14 +4,11 @@
 
 from __future__ import annotations
 
-from . import api as _api
-from . import test_api as _test_api
-
 DEPS = [
   'cipd',
   'context',
   'step',
 ]
 
-API = _api.LegacyAnnotationApi
-TEST_API = _test_api.LegacyAnnotationTestApi
+from .api import LegacyAnnotationApi as API
+from .test_api import LegacyAnnotationTestApi as TEST_API

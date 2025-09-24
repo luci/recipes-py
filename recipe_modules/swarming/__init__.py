@@ -6,9 +6,6 @@ from __future__ import annotations
 
 from PB.recipe_modules.recipe_engine.swarming import properties
 
-from . import api as _api
-from . import test_api as _test_api
-
 DEPS = [
     'buildbucket',  # TODO(crbug.com/1122808): Remove this dependency.
     'cas',
@@ -23,5 +20,5 @@ DEPS = [
 
 ENV_PROPERTIES = properties.EnvProperties
 
-API = _api.SwarmingApi
-TEST_API = _test_api.SwarmingTestApi
+from .api import SwarmingApi as API
+from .test_api import SwarmingTestApi as TEST_API

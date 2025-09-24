@@ -4,6 +4,4 @@
 
 from __future__ import annotations
 
-from . import api as _api
-
-API = _api.FuturesApi
+from .api import FuturesApi as API

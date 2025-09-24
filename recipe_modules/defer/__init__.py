@@ -4,10 +4,8 @@
 
 from __future__ import annotations
 
-from . import api as _api
-
 DEPS = [
   'step',
 ]
 
-API = _api.DeferApi
+from .api import DeferApi as API

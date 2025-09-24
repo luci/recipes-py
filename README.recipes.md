@@ -253,7 +253,7 @@
 
 ### *recipe_modules* / [archive](/recipe_modules/archive)
 
-[DEPS](/recipe_modules/archive/__init__.py#9): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/archive/__init__.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [step](#recipe_modules-step)
 
 
 #### **class [ArchiveApi](/recipe_modules/archive/api.py#11)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
@@ -371,7 +371,7 @@ def GenTests(api):
 ```
 ### *recipe_modules* / [bcid\_reporter](/recipe_modules/bcid_reporter)
 
-[DEPS](/recipe_modules/bcid_reporter/__init__.py#10): [cipd](#recipe_modules-cipd), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/bcid_reporter/__init__.py#7): [cipd](#recipe_modules-cipd), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
 
 #### **class [BcidReporterApi](/recipe_modules/bcid_reporter/api.py#22)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
@@ -445,7 +445,7 @@ Args:
     broker tool will use default if not specified.
 ### *recipe_modules* / [bcid\_verifier](/recipe_modules/bcid_verifier)
 
-[DEPS](/recipe_modules/bcid_verifier/__init__.py#9): [cipd](#recipe_modules-cipd), [file](#recipe_modules-file), [path](#recipe_modules-path), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/bcid_verifier/__init__.py#7): [cipd](#recipe_modules-cipd), [file](#recipe_modules-file), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
 
 API for interacting with Software Verifier.
@@ -493,7 +493,7 @@ Args:
     failure.
 ### *recipe_modules* / [buildbucket](/recipe_modules/buildbucket)
 
-[DEPS](/recipe_modules/buildbucket/__init__.py#10): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [resultdb](#recipe_modules-resultdb), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid), [warning](#recipe_modules-warning)
+[DEPS](/recipe_modules/buildbucket/__init__.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [resultdb](#recipe_modules-resultdb), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid), [warning](#recipe_modules-warning)
 
 
 API for interacting with the buildbucket service.
@@ -962,7 +962,7 @@ Args:
 Set the buildbucket host while in context, then reverts it.
 ### *recipe_modules* / [cas](/recipe_modules/cas)
 
-[DEPS](/recipe_modules/cas/__init__.py#11): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cas/__init__.py#9): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
 
 API for interacting with cas client.
@@ -1010,7 +1010,7 @@ Return URL of cas viewer.
 Sets the CAS instance while in context, then reverts it.
 ### *recipe_modules* / [cas\_input](/recipe_modules/cas_input)
 
-[DEPS](/recipe_modules/cas_input/__init__.py#11): [cas](#recipe_modules-cas), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/cas_input/__init__.py#9): [cas](#recipe_modules-cas), [path](#recipe_modules-path)
 
 
 Simple API for handling CAS inputs to a recipe.
@@ -1046,7 +1046,7 @@ Returns:
 &emsp; **@property**<br>&mdash; **def [input\_caches](/recipe_modules/cas_input/api.py#30)(self):**
 ### *recipe_modules* / [change\_verifier](/recipe_modules/change_verifier)
 
-[DEPS](/recipe_modules/change_verifier/__init__.py#9): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [cv](#recipe_modules-cv), [luci\_config](#recipe_modules-luci_config), [proto](#recipe_modules-proto), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/change_verifier/__init__.py#7): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [cv](#recipe_modules-cv), [luci\_config](#recipe_modules-luci_config), [proto](#recipe_modules-proto), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
 Recipe API for LUCI Change Verifier.
@@ -1089,7 +1089,7 @@ Returns:
   A list of CV Runs ordered newest to oldest that match the given criteria.
 ### *recipe_modules* / [cipd](/recipe_modules/cipd)
 
-[DEPS](/recipe_modules/cipd/__init__.py#10): [buildbucket](#recipe_modules-buildbucket), [context](#recipe_modules-context), [file](#recipe_modules-file), [futures](#recipe_modules-futures), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [url](#recipe_modules-url)
+[DEPS](/recipe_modules/cipd/__init__.py#7): [buildbucket](#recipe_modules-buildbucket), [context](#recipe_modules-context), [file](#recipe_modules-file), [futures](#recipe_modules-futures), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [url](#recipe_modules-url)
 
 
 API for interacting with CIPD.
@@ -1408,7 +1408,7 @@ ref must start with 'refs/'.
 Returns (ref, revision_number) tuple.
 ### *recipe_modules* / [context](/recipe_modules/context)
 
-[DEPS](/recipe_modules/context/__init__.py#10): [path](#recipe_modules-path)
+[DEPS](/recipe_modules/context/__init__.py#7): [path](#recipe_modules-path)
 
 
 The context module provides APIs for manipulating a few pieces of 'ambient'
@@ -1565,7 +1565,7 @@ Returns the ResultDB invocation name of the current context.
 Returns None if resultdb is not defined.
 ### *recipe_modules* / [cq](/recipe_modules/cq)
 
-[DEPS](/recipe_modules/cq/__init__.py#12): [cv](#recipe_modules-cv), [properties](#recipe_modules-properties), [warning](#recipe_modules-warning)
+[DEPS](/recipe_modules/cq/__init__.py#9): [cv](#recipe_modules-cv), [properties](#recipe_modules-properties), [warning](#recipe_modules-warning)
 
 
 Wrapper for CV API.
@@ -1579,7 +1579,7 @@ This module is a thin wrapper of the cv module.
 Apply non-default value cq module properties to the cv module.
 ### *recipe_modules* / [cv](/recipe_modules/cv)
 
-[DEPS](/recipe_modules/cv/__init__.py#12): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cv/__init__.py#9): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
 Recipe API for LUCI CV, the pre-commit testing system.
@@ -1748,7 +1748,7 @@ Raises:
 Returns recorded Buildbucket build IDs as a list of integers.
 ### *recipe_modules* / [defer](/recipe_modules/defer)
 
-[DEPS](/recipe_modules/defer/__init__.py#9): [step](#recipe_modules-step)
+[DEPS](/recipe_modules/defer/__init__.py#7): [step](#recipe_modules-step)
 
 
 Runs a function but defers the result until a later time.
@@ -1810,7 +1810,7 @@ with api.defer.context() as defer:
 # api.defer.collect() is called on exiting the context.
 ### *recipe_modules* / [file](/recipe_modules/file)
 
-[DEPS](/recipe_modules/file/__init__.py#10): [json](#recipe_modules-json), [path](#recipe_modules-path), [proto](#recipe_modules-proto), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/file/__init__.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [proto](#recipe_modules-proto), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
 File manipulation (read/write/delete/glob) methods.
@@ -2250,7 +2250,7 @@ Args:
 Raises: file.Error.
 ### *recipe_modules* / [findings](/recipe_modules/findings)
 
-[DEPS](/recipe_modules/findings/__init__.py#9): [buildbucket](#recipe_modules-buildbucket), [proto](#recipe_modules-proto), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
+[DEPS](/recipe_modules/findings/__init__.py#7): [buildbucket](#recipe_modules-buildbucket), [proto](#recipe_modules-proto), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
 
 
 #### **class [FindingsAPI](/recipe_modules/findings/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
@@ -2453,7 +2453,7 @@ Args:
 Returns the list of done Futures, in the order in which they were done.
 ### *recipe_modules* / [generator\_script](/recipe_modules/generator_script)
 
-[DEPS](/recipe_modules/generator_script/__init__.py#10): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/generator_script/__init__.py#7): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
 
 A simple method for running steps generated by an external script.
@@ -2500,7 +2500,7 @@ corresponds to one step, and contains the following keys:
         read them back from inside of the recipes.
 ### *recipe_modules* / [golang](/recipe_modules/golang)
 
-[DEPS](/recipe_modules/golang/__init__.py#9): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform)
+[DEPS](/recipe_modules/golang/__init__.py#7): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform)
 
 
 #### **class [GolangApi](/recipe_modules/golang/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
@@ -2536,7 +2536,7 @@ Args:
   * cache (Path) - a path to put Go caches under.
 ### *recipe_modules* / [json](/recipe_modules/json)
 
-[DEPS](/recipe_modules/json/__init__.py#10): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [warning](#recipe_modules-warning)
+[DEPS](/recipe_modules/json/__init__.py#7): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [warning](#recipe_modules-warning)
 
 
 Methods for producing and consuming JSON.
@@ -2594,7 +2594,7 @@ Returns a step that reads a JSON file.
 ***
 ### *recipe_modules* / [led](/recipe_modules/led)
 
-[DEPS](/recipe_modules/led/__init__.py#12): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [proto](#recipe_modules-proto), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
+[DEPS](/recipe_modules/led/__init__.py#9): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [proto](#recipe_modules-proto), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
 
 
 An interface to call the led tool.
@@ -2686,7 +2686,7 @@ Args:
   * use_payload - Use edit-payload or edit -rbh to update cas input.
 ### *recipe_modules* / [legacy\_annotation](/recipe_modules/legacy_annotation)
 
-[DEPS](/recipe_modules/legacy_annotation/__init__.py#10): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/legacy_annotation/__init__.py#7): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [step](#recipe_modules-step)
 
 
 Legacy Annotation module provides support for running a command emitting
@@ -2711,7 +2711,7 @@ If `legacy_global_namespace` is True, this enables an even more-legacy
 global namespace merging mode. Do not enable this. See crbug.com/1310155.
 ### *recipe_modules* / [luci\_analysis](/recipe_modules/luci_analysis)
 
-[DEPS](/recipe_modules/luci_analysis/__init__.py#10): [json](#recipe_modules-json), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/luci_analysis/__init__.py#7): [json](#recipe_modules-json), [step](#recipe_modules-step)
 
 
 API for interacting with the LUCI Analysis RPCs
@@ -2846,7 +2846,7 @@ Returns:
     projects/{project}/clusters/{cluster_algorithm}/{cluster_id}.
 ### *recipe_modules* / [luci\_config](/recipe_modules/luci_config)
 
-[DEPS](/recipe_modules/luci_config/__init__.py#10): [buildbucket](#recipe_modules-buildbucket), [file](#recipe_modules-file), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/luci_config/__init__.py#7): [buildbucket](#recipe_modules-buildbucket), [file](#recipe_modules-file), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
 
 
 #### **class [LuciConfigApi](/recipe_modules/luci_config/api.py#20)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
@@ -2912,7 +2912,7 @@ Args:
 &mdash; **def [scheduler](/recipe_modules/luci_config/api.py#178)(self, \*\*kwargs):**
 ### *recipe_modules* / [milo](/recipe_modules/milo)
 
-[DEPS](/recipe_modules/milo/__init__.py#9): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [resultdb](#recipe_modules-resultdb), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
+[DEPS](/recipe_modules/milo/__init__.py#7): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [resultdb](#recipe_modules-resultdb), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
 
 
 API for specifying Milo behavior.
@@ -2947,7 +2947,7 @@ Args:
     ID must match r'^[0-9a-f]{40}$' (git revision).
 ### *recipe_modules* / [nodejs](/recipe_modules/nodejs)
 
-[DEPS](/recipe_modules/nodejs/__init__.py#9): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform)
+[DEPS](/recipe_modules/nodejs/__init__.py#7): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform)
 
 
 #### **class [NodeJSApi](/recipe_modules/nodejs/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
@@ -2981,7 +2981,7 @@ Args:
   * cache (Path) - a path to put Node.js caches under.
 ### *recipe_modules* / [path](/recipe_modules/path)
 
-[DEPS](/recipe_modules/path/__init__.py#28): [warning](#recipe_modules-warning)
+[DEPS](/recipe_modules/path/__init__.py#25): [warning](#recipe_modules-warning)
 
 
 All functions related to manipulating paths in recipes.
@@ -3372,7 +3372,7 @@ Return type is int.
 This is equivalent to `psutil.virtual_memory().total / (1024 ** 2)`.
 ### *recipe_modules* / [properties](/recipe_modules/properties)
 
-[DEPS](/recipe_modules/properties/__init__.py#10): [warning](#recipe_modules-warning)
+[DEPS](/recipe_modules/properties/__init__.py#7): [warning](#recipe_modules-warning)
 
 
 Provides access to the recipes input properties.
@@ -3400,7 +3400,7 @@ can use it like a read-only dict.
 Returns a read-write copy of all of the properties.
 ### *recipe_modules* / [proto](/recipe_modules/proto)
 
-[DEPS](/recipe_modules/proto/__init__.py#10): [raw\_io](#recipe_modules-raw_io)
+[DEPS](/recipe_modules/proto/__init__.py#7): [raw\_io](#recipe_modules-raw_io)
 
 
 Methods for producing and consuming protobuf data to/from steps and the
@@ -3504,7 +3504,7 @@ Example:
 Access a member of `random.Random`.
 ### *recipe_modules* / [raw\_io](/recipe_modules/raw_io)
 
-[DEPS](/recipe_modules/raw_io/__init__.py#10): [path](#recipe_modules-path)
+[DEPS](/recipe_modules/raw_io/__init__.py#7): [path](#recipe_modules-path)
 
 
 Provides objects for reading and writing raw data to and from steps.
@@ -3608,7 +3608,7 @@ Args:
      log when the step has a non-SUCCESS status.
 ### *recipe_modules* / [resultdb](/recipe_modules/resultdb)
 
-[DEPS](/recipe_modules/resultdb/__init__.py#10): [context](#recipe_modules-context), [futures](#recipe_modules-futures), [json](#recipe_modules-json), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time), [uuid](#recipe_modules-uuid)
+[DEPS](/recipe_modules/resultdb/__init__.py#7): [context](#recipe_modules-context), [futures](#recipe_modules-futures), [json](#recipe_modules-json), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time), [uuid](#recipe_modules-uuid)
 
 
 API for interacting with the ResultDB service.
@@ -4021,7 +4021,7 @@ Examples:
   * Appending a 'non-production' tag to external RPCs
 ### *recipe_modules* / [scheduler](/recipe_modules/scheduler)
 
-[DEPS](/recipe_modules/scheduler/__init__.py#15): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/scheduler/__init__.py#12): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
 
 API for interacting with the LUCI Scheduler service.
@@ -4092,7 +4092,7 @@ Returns a list of triggers that triggered the current build.
 A trigger is an instance of triggers_pb2.Trigger.
 ### *recipe_modules* / [service\_account](/recipe_modules/service_account)
 
-[DEPS](/recipe_modules/service_account/__init__.py#9): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/service_account/__init__.py#7): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
 API for getting OAuth2 access tokens for LUCI tasks or private keys.
@@ -4123,7 +4123,7 @@ Args:
   key_path: (str|Path) object pointing to a service account JSON key.
 ### *recipe_modules* / [step](/recipe_modules/step)
 
-[DEPS](/recipe_modules/step/__init__.py#13): [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [proto](#recipe_modules-proto), [warning](#recipe_modules-warning)
+[DEPS](/recipe_modules/step/__init__.py#10): [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [proto](#recipe_modules-proto), [warning](#recipe_modules-warning)
 
 
 Step is the primary API for running steps (external programs, etc.)
@@ -4517,7 +4517,7 @@ Raises `InfraFailure` if the sub-build reports INFRA_FAILURE or CANCELED
 status.
 ### *recipe_modules* / [swarming](/recipe_modules/swarming)
 
-[DEPS](/recipe_modules/swarming/__init__.py#12): [buildbucket](#recipe_modules-buildbucket), [cas](#recipe_modules-cas), [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/swarming/__init__.py#9): [buildbucket](#recipe_modules-buildbucket), [cas](#recipe_modules-cas), [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
 #### **class [SwarmingApi](/recipe_modules/swarming/api.py#1236)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
@@ -4658,7 +4658,7 @@ Returns:
   A list of TaskRequestMetadata objects.
 ### *recipe_modules* / [time](/recipe_modules/time)
 
-[DEPS](/recipe_modules/time/__init__.py#10): [context](#recipe_modules-context), [random](#recipe_modules-random), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/time/__init__.py#7): [context](#recipe_modules-context), [random](#recipe_modules-random), [step](#recipe_modules-step)
 
 
 Allows mockable access to the current time.
@@ -4783,7 +4783,7 @@ deadline will not be updated, making this a no-op. For example, if
 Returns current UTC time as a datetime.datetime.
 ### *recipe_modules* / [tricium](/recipe_modules/tricium)
 
-[DEPS](/recipe_modules/tricium/__init__.py#9): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [findings](#recipe_modules-findings), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/tricium/__init__.py#7): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [findings](#recipe_modules-findings), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
 
 API for Tricium analyzers to use.
@@ -4848,7 +4848,7 @@ Raise ValueError on the first detected problem.
 Emit the results accumulated by `add_comment` and `run_legacy`.
 ### *recipe_modules* / [url](/recipe_modules/url)
 
-[DEPS](/recipe_modules/url/__init__.py#10): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/url/__init__.py#7): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
 Methods for interacting with HTTP(s) URLs.

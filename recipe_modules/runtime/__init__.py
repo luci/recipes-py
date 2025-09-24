@@ -6,10 +6,7 @@ from __future__ import annotations
 
 from PB.recipe_modules.recipe_engine.runtime import properties
 
-from . import api as _api
-from . import test_api as _test_api
-
 PROPERTIES = properties.InputProperties
 
-API = _api.RuntimeApi
-TEST_API = _test_api.RuntimeTestApi
+from .api import RuntimeApi as API
+from .test_api import RuntimeTestApi as TEST_API

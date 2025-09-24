@@ -4,8 +4,6 @@
 
 from __future__ import annotations
 
-from . import api as _api
-
 DEPS = [
     'recipe_engine/cipd',
     'recipe_engine/file',
@@ -13,4 +11,4 @@ DEPS = [
     'recipe_engine/step',
 ]
 
-API = _api.BcidVerifierApi
+from .api import BcidVerifierApi as API

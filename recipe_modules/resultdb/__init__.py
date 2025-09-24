@@ -4,9 +4,6 @@
 
 from __future__ import annotations
 
-from . import api as _api
-from . import test_api as _test_api
-
 DEPS = [
     'context',
     'futures',
@@ -17,5 +14,5 @@ DEPS = [
     'uuid',
 ]
 
-API = _api.ResultDBAPI
-TEST_API = _test_api.ResultDBTestApi
+from .api import ResultDBAPI as API
+from .test_api import ResultDBTestApi as TEST_API
