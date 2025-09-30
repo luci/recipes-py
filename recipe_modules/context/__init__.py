@@ -4,9 +4,7 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'path',
-]
+DEPS = []
 
 from .api import ContextApi as API
 from .test_api import ContextTestApi as TEST_API

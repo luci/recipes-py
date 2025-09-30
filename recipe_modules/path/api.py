@@ -16,8 +16,8 @@ collection of anchor points. The built-in anchor points are:
   * `api.path.cache_dir` - This directory is provided by whatever's running the
     recipe. Files and directories created under here /may/ be evicted in between
     runs of the recipe (i.e. to relieve disk pressure).
-  * `api.path.cleanup_dir` - This directory is provided by whatever's running the
-    recipe. Files and directories created under here /are guaranteed/ to be
+  * `api.path.cleanup_dir` - This directory is provided by whatever's running
+    the recipe. Files and directories created under here /are guaranteed/ to be
     evicted in between runs of the recipe. Additionally, this directory is
     guaranteed to be empty when the recipe starts.
   * `api.path.tmp_base_dir` - This directory is the system-configured temp dir.
@@ -100,8 +100,8 @@ class path_set:
   """Implements a set which contains all the parents folders of added
   folders.
 
-  This all boils down to a flat, sorted, list of (strpath, kind) pairs, where kind
-  is reductively just FILE or DIRECTORY. This is a far cry from a real
+  This all boils down to a flat, sorted, list of (strpath, kind) pairs, where
+  kind is reductively just FILE or DIRECTORY. This is a far cry from a real
   filesystem. See crbug.com/40890779.
 
   The initial set of paths is populated via the PathTestApi's files_exist and
@@ -117,8 +117,8 @@ class path_set:
   it will all need to be untangled carefully.
   """
 
-  # BUG(crbug.com/40890779): Expand this to be a full fakey filesystem, including file
-  # contents and file types. Coordinate with the `file` module.
+  # BUG(crbug.com/40890779): Expand this to be a full fakey filesystem,
+  # including file contents and file types. Coordinate with the `file` module.
   def __init__(self, path_mod: fake_path,
                test_data: recipe_test_api.ModuleTestData):
 
@@ -126,8 +126,9 @@ class path_set:
     # always a fake_path.
     self._path_mod: fake_path = path_mod
 
-    # _checkout_paths are buffered until `mark_checkout_dir_set` has been called,
-    # at which point we know it's acceptable to render these Paths to strings.
+    # _checkout_paths are buffered until `mark_checkout_dir_set` has been
+    # called, at which point we know it's acceptable to render these Paths to
+    # strings.
     self._checkout_paths: list[tuple[config_types.Path, FileType]] = []
 
     initial_paths: list[tuple[config_types.Path, FileType]] = []
@@ -136,7 +137,8 @@ class path_set:
         filepath = _cast_to_path_impl(path_mod,
                                       filepath.base).joinpath(*filepath.pieces)
       assert isinstance(filepath, config_types.Path), (
-          f'path.files_exist module test data contains non-Path {type(filepath)}'
+          'path.files_exist module test data contains non-Path '
+          f'{type(filepath)}'
       )
       initial_paths.append((filepath, FileType.FILE))
 
@@ -831,14 +833,30 @@ class PathApi(recipe_api.RecipeApi):
     """Equivalent to os.path.normpath."""
     return self._path_mod.normpath(str(path))
 
-  def expanduser(self, path):  # pragma: no cover
-    """Do not use this, use `api.path.home_dir` instead.
+  def expanduser(self, path: str) -> Path:
+    """Mostly equivalent to os.path.expanduser.
 
-    This ONLY handles `path` == "~", and returns `str(api.path.home_dir)`.
+    This only handles "~", not "~user".
     """
+    if not path.startswith("~"):
+      return self.abs_to_path(path)
     if path == "~":
-      return str(self.home_dir)
-    raise ValueError("expanduser only supports `~`.")
+      return self.home_dir
+    if path.startswith(("~/", "~\\")):
+      return self.home_dir / path[2:]
+    raise ValueError(f"unrecognized expanduser argument: {path}")
+
+  def expandvars(self, path: str) -> Path:
+    """Mostly equivalent to os.path.expandvars, with some limitations.
+
+    This is limited to variables set in the context module. Also, variables
+    must be of the form '${VARNAME}', not just '$VARNAME'.
+    """
+
+    for var, value in self.m.context.env.items():
+      path = path.replace(f'${{{var}}}', value)
+
+    return self.abs_to_path(path)
 
   def exists(
       self,
