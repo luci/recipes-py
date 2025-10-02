@@ -122,6 +122,11 @@ class RecipeDeps:
     return os.path.join(self.main_repo.recipes_root_path, '.recipe_deps')
 
   @cached_property
+  def protos_path(self):
+    """Returns the location of the .recipe_deps/_pb3 directory."""
+    return os.path.join(self.recipe_deps_path, '_pb3')
+
+  @cached_property
   def previous_test_failures_path(self):
     """Returns the location of the .previous_failures file."""
     return os.path.join(self.recipe_deps_path, '.previous_test_failures')
@@ -243,6 +248,9 @@ class RecipeDeps:
 
     # Add the _venv link, if we can.
     dev_support.ensure_venv(ret)
+
+    # Add the _path directory for IDE support.
+    dev_support.ensure_pathdir(ret)
 
     return ret
 

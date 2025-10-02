@@ -82,6 +82,11 @@ A recipe repo has a few essential requirements:
     are located at the base of the repository).
   * It contains a copy of [recipes.py] in its `recipes_path` folder.
 
+Optionally, it's recommended to copy `pyproject.toml` next to your `recipes.py`
+script. This will allow pyright and most IDEs to 'do the right thing'. Once you
+run `recipes.py fetch` it will populate directories inside of `.recipe_deps`
+which will provide type information for the whole recipe ecosystem.
+
 [recipes.py]: /recipes.py
 
 ### The config file recipes.cfg
