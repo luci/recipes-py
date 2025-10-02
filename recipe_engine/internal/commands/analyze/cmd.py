@@ -142,6 +142,6 @@ def main(args):
   args.input.close()
 
   data = analyze(args.recipe_deps, in_data)
-  args.output.write(jsonpb.MessageToJson(
-      data, including_default_value_fields=True))
+  args.output.write(
+      jsonpb.MessageToJson(data, always_print_fields_with_no_presence=True))
   return bool(data.error)

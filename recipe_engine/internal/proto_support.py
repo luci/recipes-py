@@ -525,7 +525,7 @@ def _install_protos(proto_package_path, dgst, proto_files):
     'cipd'+_BAT, 'ensure', '-root', os.path.join(proto_package_path, 'protoc'),
     '-ensure-file', '-'], stdin=subprocess.PIPE)
   protoc_version = PROTOC_VERSION.split(b'.', 1)[1]
-  cipd_proc.communicate(b'infra/3pp/tools/protoc/${platform} version:2@' +
+  cipd_proc.communicate(b'infra/3pp/tools/protoc/${platform} version:3@' +
                         protoc_version)
   if cipd_proc.returncode != 0:
     raise ValueError(

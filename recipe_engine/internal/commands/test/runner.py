@@ -368,10 +368,11 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
 
   # Convert the result to a json object by dumping to json, and then parsing.
   # TODO(iannucci): Use real objects so this only needs to be serialized once.
-  raw_expectations['$result'] = json.loads(jsonpb.MessageToJson(
-      legacy.to_legacy_result(test_case_result.raw_result),
-      including_default_value_fields=True,
-  ))
+  raw_expectations['$result'] = json.loads(
+      jsonpb.MessageToJson(
+          legacy.to_legacy_result(test_case_result.raw_result),
+          always_print_fields_with_no_presence=True,
+      ))
 
   if not raw_expectations['$result'].get('failure'): # on success
     if test_case_result.raw_result.summary_markdown: # has markdown populated

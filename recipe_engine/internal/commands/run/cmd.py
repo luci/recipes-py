@@ -76,7 +76,9 @@ def _main_impl(args):
 
   if args.output_result_json:
     with open(args.output_result_json, 'w') as fil:
-      fil.write(str(jsonpb.MessageToJson(
-          result, including_default_value_fields=True)))
+      fil.write(
+          str(
+              jsonpb.MessageToJson(
+                  result, always_print_fields_with_no_presence=True)))
 
   return 1 if result.HasField("failure") else 0

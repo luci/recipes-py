@@ -51,7 +51,7 @@ wheel: <
   name: "infra/python/wheels/protobuf-py3"
   # NOTE: This MUST have a matching version of:
   #  infra/3pp/tools/protoc/${{platform}}
-  version: "version:4.21.1"
+  version: "version:6.32.1"
 >
 
 wheel: <

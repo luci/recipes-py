@@ -730,9 +730,11 @@ def main(args):
   _set_known_objects(node)
 
   if args.kind == 'jsonpb':
-    sys.stdout.write(jsonpb.MessageToJson(
-      node, including_default_value_fields=True,
-      preserving_proto_field_name=True))
+    sys.stdout.write(
+        jsonpb.MessageToJson(
+            node,
+            always_print_fields_with_no_presence=True,
+            preserving_proto_field_name=True))
   elif args.kind == 'binarypb':
     sys.stdout.write(node.SerializeToString())
   elif args.kind == 'textpb':
