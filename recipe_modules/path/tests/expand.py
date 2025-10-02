@@ -23,13 +23,13 @@ def RunSteps(api):
     else:
       assert False, f'{exc_type.__name__} not raised'  # pragma: no cover
 
-  assert_raises(ValueError, api.path.expanduser, 'no-tilde')
-  assert_raises(ValueError, api.path.expanduser, 'tilde-at-end-~')
   assert_raises(ValueError, api.path.expanduser, '~~')
 
-  assert api.path.expanduser('~') == api.path.home_dir
-  assert api.path.expanduser('~/foo') == api.path.home_dir / 'foo'
-  assert api.path.expanduser('~/foo/bar') == api.path.home_dir / 'foo/bar'
+  assert api.path.expanduser('no-tilde') == 'no-tilde'
+  assert api.path.expanduser('tilde-at-end-~') == 'tilde-at-end-~'
+  assert api.path.expanduser('~') == str(api.path.home_dir)
+  assert api.path.expanduser('~/foo') == str(api.path.home_dir / 'foo')
+  assert api.path.expanduser('~/foo/bar') == str(api.path.home_dir / 'foo/bar')
 
   def testexpandvars(
       variable: str,
@@ -50,7 +50,7 @@ def RunSteps(api):
         expanded_pres = api.step.empty('expanded').presentation
         expanded_pres.step_summary_text = str(expanded)
 
-        assert expanded == expected_path
+        assert expanded == str(expected_path)
 
   foo = api.path.start_dir / 'foo'
 

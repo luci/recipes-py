@@ -833,20 +833,20 @@ class PathApi(recipe_api.RecipeApi):
     """Equivalent to os.path.normpath."""
     return self._path_mod.normpath(str(path))
 
-  def expanduser(self, path: str) -> Path:
+  def expanduser(self, path: str) -> str:
     """Mostly equivalent to os.path.expanduser.
 
     This only handles "~", not "~user".
     """
     if not path.startswith("~"):
-      return self.abs_to_path(path)
+      return path
     if path == "~":
-      return self.home_dir
+      return str(self.home_dir)
     if path.startswith(("~/", "~\\")):
-      return self.home_dir / path[2:]
+      return str(self.home_dir / path[2:])
     raise ValueError(f"unrecognized expanduser argument: {path}")
 
-  def expandvars(self, path: str) -> Path:
+  def expandvars(self, path: str) -> str:
     """Mostly equivalent to os.path.expandvars, with some limitations.
 
     This is limited to variables set in the context module. Also, variables
@@ -856,7 +856,7 @@ class PathApi(recipe_api.RecipeApi):
     for var, value in self.m.context.env.items():
       path = path.replace(f'${{{var}}}', value)
 
-    return self.abs_to_path(path)
+    return path
 
   def exists(
       self,
