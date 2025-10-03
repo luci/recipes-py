@@ -125,7 +125,9 @@ the module namespace is flat in each repo. A recipe module directory contains
 these files:
 
   * `__init__.py`: Contains the `DEPS`, `PROPERTIES`, etc. declarations for the
-    recipe_module.
+    `recipe_module`, plus an exported `API` (subclassing
+    `recipe_engine.recipe_api.RecipeApi`) and an optional `TEST_API`
+    (subclassing `recipe_engine.recipe_test_apiRecipeTestApi`)
   * `api.py`: Contains the implementation of the recipe module.
   * `test_api.py`: Contains the implementation of the recipe module's fakes.
 
@@ -533,6 +535,8 @@ Example:
     GLOBAL_PROPERTIES = my_proto.GlobalProperties
     ENV_PROPERTIES = my_proto.EnvProperties
 
+    from .api import MyApi as API
+
     # api.py
     from recipe_engine.recipe_api import RecipeApi
 
@@ -879,6 +883,23 @@ to make IDE development of recipes easier.
 
 See Also: Debugger Configuration
 
+### Pyright
+
+Add a `pyproject.toml` to your repo next to `recipes.py` which contains:
+
+    [tool.pyright]
+    venvPath = '.recipe_deps/_venv'
+    venv = 'normal'
+    extraPaths = ['.recipe_deps/_path']
+
+After running `.recipes.py fetch` you should expect any IDE with pyright
+integration to show type hints for all imports, including:
+
+  * `RECIPE_MODULES`
+  * `PB`
+  * `recipe_engine`
+  * All wheels used by the recipe engine.
+
 ### Python/VirtualEnv
 
 NOTE: Windows platforms may require additional permissions (e.g. Developer Mode
@@ -901,13 +922,6 @@ Debugger Configuration section).
 You can use these virtualenvs to enter the recipe engine's pinned python
 environment, but you can also configure your IDE/editor environment to use these
 environments by default.
-
-You can configure pyright (e.g. in pyproject.toml) to set `.recipe_deps` as
-`venvPath` and `_venv` as the `venv` configuration:
-
-    [tool.pyright]
-    venvPath = ".recipe_deps/_venv"
-    venv = "normal"
 
 NOTE: Any time the recipe_engine's .vpython3 files change, the values of these
 symlinks will be regenerated. Depending on the IDE this may mean that the IDE
