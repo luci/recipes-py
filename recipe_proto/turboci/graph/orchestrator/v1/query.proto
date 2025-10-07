@@ -1,0 +1,178 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "turboci/graph/ids/v1/identifier.proto";
+import "turboci/graph/orchestrator/v1/check_kind.proto";
+import "turboci/graph/orchestrator/v1/field_options.proto";
+import "turboci/graph/orchestrator/v1/revision_range.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// Query describes a simple graph query.
+//
+// This is composed of three phases: selection, expansion and collection.
+//
+// The selection phase queries for a set of nodes within a WorkPlan
+// - effectively a regular SELECT type query on a traditional database.
+//
+// After the selection phase, the expansion phase allows traversal along the
+// edges of the selected nodes. Currently only 'dependency' edge traversal is
+// supported, but other types of relationships could be possible in the future
+// (e.g. 'created_by', 'written_by', etc.).
+//
+// Finally, after the set of nodes has been fully expanded, we collect all the
+// requested data from those Nodes.
+//
+// See QueryNodesRequest.version for how this Query interacts with transactions.
+message Query {
+  // Type URLs (for Check Option Datum, Check Result Datum, Stage args,
+  // CheckEdit Option Datum and CheckEdit Result) that the caller wants to see
+  // in the response.  Any child Node whose type URL is not specified here
+  // will be omitted in the response.
+  //
+  // TBD: The special value "*" means that the caller wants to see all type
+  // URLs, but this requires an extra permission. Extra permission is needed
+  // to encourage clients to be explicit about what they want to reduce
+  // bandwidth, coupling and increase auditability.
+  repeated string type_urls = 1;
+
+  // Select picks some set of nodes out of the graph.
+  message Select {
+    // How this selection of nodes should be constrained to one or more
+    // WorkPlans.
+    message WorkPlanConstraint {
+      // Constrain this Select to the given WorkPlan(s).
+      repeated ids.v1.WorkPlan in_workplans = 1;
+
+      // TBD: criteria to query across workplans - presumably recent ones, but
+      // also probably this should allow constraining to specific templated
+      // workflows.
+      //
+      // IIUC node_class is kind of equivalent to such a filter, except it's
+      // duplicated to each WorkNode, not a property of WorkPlan.
+    }
+    // Which WorkPlans to search across.
+    optional WorkPlanConstraint workplan = 1;
+
+    // The identifiers of specific nodes to select.
+    //
+    // This should be used if you already know the identifiers of the nodes you
+    // care about.
+    repeated ids.v1.Identifier nodes = 2 [
+      (turboci).id.allowed = IDENTIFIER_KIND_CHECK,
+      (turboci).id.allowed = IDENTIFIER_KIND_STAGE
+      // TBD: Allow additional identifier kinds here.
+    ];
+
+    // Select one or more Checks which match this pattern.
+    message CheckPattern {
+      // Find Checks of this kind (unset means all kinds).
+      optional CheckKind kind = 1;
+
+      // Find Checks whose `Identifier.Check.id` matches this re2 regex.
+      optional string id_regex = 2;
+
+      // Find Checks with *any* of these options. Note that you still must set
+      // follow.check_options.type_urls to actually get the CheckOptions in the
+      // result set.
+      repeated string with_option_types = 3;
+    }
+    // Select Checks matching these patterns.
+    repeated CheckPattern check_patterns = 3;
+
+    // Select one or more Stages which match this pattern.
+    message StagePattern {
+      // TBD
+    }
+
+    // Select Stages matching these patterns.
+    repeated StagePattern stage_patterns = 4;
+  }
+  // Select an arbitrary set of nodes.
+  optional Select select = 2;
+
+  // Expand takes the selected node set and 'expands' it by following edges in
+  // the graph from those nodes.
+  message Expand {
+    // How to follow Check.dependencies and Stage.dependencies.
+    message Dependencies {
+      // Follow this many dependents (so for some node X, follow to other
+      // nodes which depend-on X up to this distance away).
+      //
+      // 0 means "do not follow dependents".
+      //
+      // Must be >= 0.
+      optional int32 dependents_depth = 1;
+
+      // Follow this many dependencies (so for some node, follow it's
+      // `dependencies` fields up to this distance away).
+      //
+      // 0 means "do not follow dependencies".
+      //
+      // Must be >= 0.
+      optional int32 dependencies_depth = 2;
+
+      // Includes only resolved edges during traversal.
+      optional bool only_resolved = 3;
+
+      // TBD: Other selection criteria (e.g. only checks of kind X or with
+      // option type Y)
+    }
+    // Instructs the query to follow dependencies of the selected node(s).
+    optional Dependencies dependencies = 1;
+
+    // TBD: Other edge types, such as created_by or written_by.
+  }
+  // Expand that set of nodes by following their edges.
+  optional Expand expand = 3;
+
+  // Collect retrieves data from the expanded node set.
+  message Collect {
+    // Data describes what options/results/progress data we want to retrieve
+    // from the selected checks/stages.
+    message Data {
+      // Describes what data the caller wants to see for Checks.
+      message Check {
+        // Include CheckOptions filtered by `type_urls` for any selected Checks.
+        optional bool options = 1;
+
+        // Include Result data filtered by `type_urls` for any selected Checks.
+        optional bool result_data = 2;
+      }
+      // Describes what data the caller wants to see for Checks.
+      optional Check check = 2;
+
+      // Describes what data the caller wants to see for Stages.
+      message Stage {
+        // TBD: what attempt progress data to include (and maybe for which
+        // attempt(s) to include it).
+      }
+      // Describes what data the caller wants to see for Stages.
+      optional Stage stage = 3;
+    }
+    // Collect options/results/progress data.
+    optional Data data = 1;
+
+    // Edits describes which edit records we want want to collect.
+    message Edits {
+      // Include edits only within this range of Revisions.
+      optional RevisionRange range = 1;
+
+      // Include Check Edits for any selected Checks in this range.
+      optional bool check = 2;
+
+      // Include Stage Edits for any selected Stages in this range.
+      optional bool stage = 3;
+    }
+    // Collect edit records.
+    optional Edits edits = 2;
+  }
+  // The data to collect from the expanded node set.
+  optional Collect collect = 4;
+}

@@ -1,0 +1,28 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "turboci/graph/orchestrator/v1/revision.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// Response message for TurboCIGraphService.WriteNodes.
+message WriteNodesResponse {
+  // The committed revision of this write.
+  //
+  // This can be used to read back e.g. Edits from the graph or otherwise
+  // communicate to other readers what version they must observe to see the
+  // writes done in this RPC.
+  //
+  // You can, technically, chain Writes together with this - however if a Write
+  // finds a transaction conflict, you will have to restart the chain from that
+  // write (not from the beginning of the chain).
+  //
+  // See WriteNodesRequest.TransactionDetails.
+  optional Revision written_version = 1;
+}

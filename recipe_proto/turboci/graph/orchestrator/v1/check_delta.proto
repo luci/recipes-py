@@ -1,0 +1,71 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "turboci/graph/ids/v1/identifier.proto";
+import "turboci/graph/orchestrator/v1/check_state.proto";
+import "turboci/graph/orchestrator/v1/edge_group.proto";
+import "turboci/graph/orchestrator/v1/field_options.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// Encapsulates data changes to a Check object.
+//
+// Fields are unset when the edit did not change that aspect of the Check.
+message CheckDelta {
+  // If set, the new state that was set as part of this edit.
+  optional CheckState state = 1;
+
+  // NOTE: Edit.what is also the identifier for the created Check, so is not
+  // included here.
+
+  // NOTE: Edit.realm is also the realm for the created Check, so is not
+  // included here.
+
+  // NOTE: Check.kind is not here (it's immutable, so just read it @HEAD on the
+  // Check.)
+
+  // Dependencies written as part of this edit.
+  //
+  // Contains the FULL dependencies data (e.g. if the edit 'added' a new
+  // dependency to one of these EdgeGroups, or added a new EdgeGroup, etc., you
+  // would see the entire set of EdgeGroups here, not just the added/changed
+  // one(s)).
+  repeated EdgeGroup dependencies = 2 [(turboci).id.allowed = IDENTIFIER_KIND_CHECK];
+
+  // Options written as part of this edit.
+  repeated ids.v1.CheckOption options = 3;
+
+  // Information about a single Check.Result written as part of this edit.
+  message Result {
+    // The identifier of this Check.Result.
+    optional ids.v1.CheckResult identifier = 1;
+
+    // If true, this Check.Result was created by this edit.
+    optional bool created = 2;
+
+    // Reference to the data written as part of this edit.
+    repeated ids.v1.CheckResultDatum data = 3;
+
+    // If true, this edit finalized the Check.Result.
+    //
+    // This may be true in conjunction with `created` to indicate that a
+    // new Check.Result was created and immediately finalized.
+    //
+    // `Check.Result.finalized_at` will match the timestamp of this Edit.
+    optional bool finalized = 4;
+  }
+  // Result data written as part of this edit.
+  //
+  // This is repeated to allow for the Orchestrator to make a single edit
+  // which e.g. finalizes all Results in a single edit, but *typically* this
+  // will only contain a single Result.
+  //
+  // Unique and sorted on `Result.identifier`.
+  repeated Result result = 4;
+}

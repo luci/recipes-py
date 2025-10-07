@@ -1,0 +1,87 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "google/api/field_behavior.proto";
+import "turboci/graph/ids/v1/identifier.proto";
+import "turboci/graph/orchestrator/v1/revision.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// Edge is a singular pointer to some node with an Identifier.
+//
+// Typically Edges must always point to nodes in the same graph, though this may
+// be lifted in the future.
+message Edge {
+  // Target indicates the node that this Edge points to.
+  //
+  // Currently only Checks and Stages are supported.
+  optional ids.v1.Identifier target = 1;
+
+  // The Orchestrator logically attempts to resolve an Edge any time the target
+  // it points to changes - in practice, the Orchestrator will make various
+  // optimizations to avoid this becoming resource intensive.
+  //
+  // Once a resolution is recorded, the Edge is never evaluated again. TurboCI
+  // graph is structured such that data evolves in an append-only fashion, so
+  // that once an Edge is resolved as satisfied, the data which caused it to be
+  // satisfied cannot be 'reversed' (and vice-versa; an edge resolved as
+  // satisfied == false cannot later become satisfiable).
+  message Resolution {
+    // If this is `true`, then this Edge's condition is satisfied.
+    // If this is `false`, then this Edge's condition is unsatisfiable.
+    optional bool satisfied = 1 [(google.api.field_behavior) = IMMUTABLE];
+
+    // The version of the target node which caused this Edge (or EdgeGroup) to
+    // be satisfied/unsatisfiable.
+    //
+    // This will always be less than or equal to the version in `at`.
+    optional Revision target_version = 2 [(google.api.field_behavior) = IMMUTABLE];
+
+    // The database revsision (commit timestamp) at which this resolution was
+    // made.
+    //
+    // Edges in the Orchestrator MAY be resolved in an eventually-consistent
+    // fashion, which means that it's possible to observe the target of this
+    // edge in a satisfying state for this edge, but the edge is still not
+    // marked as resolved.
+    //
+    // This will always be greater than or equal to the version in `target_version`.
+    optional Revision at = 3 [(google.api.field_behavior) = IMMUTABLE];
+  }
+  // Indicates if this Edge was resolved yet.
+  //
+  // If this is absent, then this Edge has not yet been resolved.
+  optional Resolution resolution = 2;
+
+  // TODO: Add a way to set a condition on this edge.
+  //
+  // For now let's start with resolving edges when `target.state` is it's FINAL
+  // variant. I suspect that we'll quickly need to at least change which state
+  // we depend on (e.g. for Stages I think we will want to depend on
+  // `STAGE_STATE_WAITING_FOR_GROUP` in order to add Stages which don't start
+  // until after the current Stage finishes execution).
+  //
+  // We were originally considering:
+  // A CEL expression used to determine whether an edge is satisfied.
+  //
+  // The available nouns/verbs depend on the type of `target`. This vocabulary
+  // is intentionally extremely limited in v1 with the intent of expanding it as
+  // needed in later versions.
+  //
+  // Checks:
+  //   * `check.state`
+  //   * (default `check.state == CHECK_STATE_FINAL`)
+  //
+  // Stages:
+  //   * `stage.state`
+  //   * (default `stage.state == STAGE_STATE_FINAL`)
+  //
+  // CEL: https://github.com/google/cel-spec
+  // string condition = 3;
+}

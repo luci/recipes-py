@@ -1,0 +1,44 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// CheckKind informs the 'general' type of this Check, independent of whatever
+// options it may have.
+//
+// This serves two primary purposes:
+//   * This establishes a colloquial way to refer to Checks (e.g. 'a test check'
+//     vs 'a build check').
+//   * DataMap type registration can indicate what kinds of Checks that type
+//     can be used on, to allow some high-level partitioning; e.g. a TestFilter
+//     might only show up on TEST Checks, not SOURCE checks.
+enum CheckKind {
+  // UNKNOWN is the default, invalid, kind.
+  CHECK_KIND_UNKNOWN = 0;
+
+  // SOURCE is a Check which describes in various detail one or more external
+  // inputs to the workflow. Resolving a SOURCE check may include actions like
+  // "find all commits with this label set", or "traverse dependency references
+  // in these source points to generate a full set of commits/artifacts".
+  CHECK_KIND_SOURCE = 1;
+
+  // BUILD is a Check which transforms some inputs (typically SOURCE checks)
+  // into one or more output artifacts.
+  CHECK_KIND_BUILD = 2;
+
+  // TEST is a Check which consumes one or more artifacts (usually from BUILDs)
+  // and/or SOURCEs, and determines if these artifacts are correct in some
+  // fashion.
+  CHECK_KIND_TEST = 3;
+
+  // ANALYSIS is a Check which consumes ~anything, and makes some
+  // meta-determiniation. For example, an Analysis could consume sources, builds
+  // and tests and make a determiation like "this CL can land".
+  CHECK_KIND_ANALYSIS = 4;
+}

@@ -1,0 +1,39 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "turboci/graph/orchestrator/v1/check.proto";
+import "turboci/graph/orchestrator/v1/check_edit_view.proto";
+import "turboci/graph/orchestrator/v1/check_result_view.proto";
+import "turboci/graph/orchestrator/v1/datum.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// CheckView is a collated, partial, view of a single Check and the nodes
+// which belong to it.
+message CheckView {
+  // The Check itself - always present.
+  optional Check check = 1;
+
+  // Data for the Check's options which are visible and of a type which was
+  // requested.
+  repeated Datum option_data = 2;
+
+  // CheckEdits for this Check which are being read.
+  //
+  // Some CheckEdits may be omitted if the user did not request them.
+  repeated CheckEditView edits = 3;
+
+  // Result data for this Check which is being read.
+  //
+  // Matches 1:1 with Check.results.
+  //
+  // Some CheckResultViews may be empty if the user did not request those data
+  // types or didn't have permission to see them.
+  repeated CheckResultView results = 4;
+}

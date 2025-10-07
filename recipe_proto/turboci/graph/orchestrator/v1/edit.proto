@@ -1,0 +1,127 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "google/api/field_behavior.proto";
+import "google/protobuf/timestamp.proto";
+import "turboci/graph/ids/v1/identifier.proto";
+import "turboci/graph/orchestrator/v1/actor.proto";
+import "turboci/graph/orchestrator/v1/check_delta.proto";
+import "turboci/graph/orchestrator/v1/field_options.proto";
+import "turboci/graph/orchestrator/v1/revision.proto";
+import "turboci/graph/orchestrator/v1/stage_delta.proto";
+import "turboci/graph/orchestrator/v1/value.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// Edit is a record which indicates who/what/why edited a Check or
+// Stage.
+//
+// This has a `delta` of either CheckDelta or StageDelta, depending on the
+// type of the edit.
+//
+// Edit Deltas are designed to be quite slim. Heavy bits of the delta (like
+// Option Data) will be stored separately from this Edit record and will have a
+// shorter TTL.
+message Edit {
+  // The node which this Edit is associated with.
+  optional ids.v1.Identifier for_node = 1 [
+    (turboci).id.allowed = IDENTIFIER_KIND_CHECK,
+    (turboci).id.allowed = IDENTIFIER_KIND_STAGE
+  ];
+
+  // Version of the check/stage that this edit resulted in.
+  //
+  // When an edit applies, this `version` will match the node's version.
+  optional Revision version = 2;
+
+  // The time at which this Edit will be automatically garbage collected.
+  //
+  // Defaults to 180 days from the time of the Edit.
+  //
+  // TBD: Add RPC to extend the TTL of an Edit and its data.
+  optional google.protobuf.Timestamp expire_at = 3;
+
+  // The time at which heavyweight data associated with this Edit (e.g.
+  // CheckEditOptions) will be automatically garbage collected.
+  //
+  // Defaults to 30 days from the time of the Edit.
+  //
+  // TBD: Add RPC to extend the TTL of an Edit and its data.
+  optional google.protobuf.Timestamp data_expire_at = 4;
+
+  // The security realm for this Edit (duplicated from the affected Check/Stage
+  // to allow easy ACL resolution).
+  optional string realm = 5 [(google.api.field_behavior) = IMMUTABLE];
+
+  // The entity which generated this Edit.
+  optional Actor editor = 6;
+
+  // If set, the WriteNodes call which produced this Edit was transactional over
+  // this set of Identifiers.
+  //
+  // If this is unset, then this Edit was the result of an 'oblivious write'
+  // without a transaction snapshot.
+  repeated ids.v1.Identifier transactional_set = 7 [
+    (turboci).id.allowed = IDENTIFIER_KIND_CHECK,
+    (turboci).id.allowed = IDENTIFIER_KIND_CHECK_OPTION,
+    (turboci).id.allowed = IDENTIFIER_KIND_CHECK_RESULT_DATUM,
+    (turboci).id.allowed = IDENTIFIER_KIND_STAGE
+  ];
+
+  // Human and machine-readable reasons for this Edit (provided as part of
+  // WriteNodes).
+  message Reason {
+    // The security realm for this reason.
+    //
+    // If omitted, this will be the same as the parent node's realm.
+    optional string realm = 1;
+
+    // A 'low effort' reason for this edit.
+    //
+    // This is 'low effort' because it's preferable for the writer to provide
+    // detailed machine-readable data in the `details` field below.
+    optional string reason = 2;
+
+    // Machine-readable reason(s) for this edit.
+    //
+    // This is repeated to allow for standardized reason message types in
+    // conjunction with workflow-specific details as part of the same write
+    // record.
+    repeated Value details = 3;
+  }
+  // The writer-provided reason(s) for this Edit.
+  //
+  // The only reason to have multiple Reason messages is to allow for different
+  // realms.
+  //
+  // NOTE: When viewing Edits, the reader will only see the reasons for which
+  // they have read permissions (that is - two different users may see different
+  // versions of this otherwise entirely-immutable Edit).
+  //
+  // By convention, these should be ordered from most to least specific, so if a
+  // client only wants to display one Reason, it should be the first in this
+  // list.
+  repeated Reason reasons = 8;
+
+  // TBD: Allow indication that this Edit is "important" to be able to garbage
+  // collect it at a slower cadence?
+
+  // The actual delta of this Edit.
+  oneof delta {
+    // This is a delta for a Check.
+    //
+    // `what` must be an Identifier.Check.
+    CheckDelta check = 9;
+
+    // This is a delta for a Stage.
+    //
+    // `what` must be an Identifier.Stage.
+    StageDelta stage = 10;
+  }
+}

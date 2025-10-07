@@ -1,0 +1,38 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "turboci/graph/orchestrator/v1/graph_view.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// Response message for TurboCIGraphService.QueryNodes.
+message QueryNodesResponse {
+  // The graph view of the nodes matching the query.
+  optional GraphView graph = 1;
+
+  // TBD: A field to indicate which permissions were checked that the caller
+  // didn't have access to.
+  //
+  // Populating this field would require an extra permission, but would be
+  // useful for e.g. service owners or generally-privileged users to be able to
+  // see what permissions are missing.
+  //
+  // // (realm, permission, nodes)
+  // message MissingPermissions {
+  //   // the realm in which the permission is missing
+  //   string realm = 1;
+  //
+  //   // the permission which is missing
+  //   string permission = 2;
+  //
+  //   // the nodes where we were missing this permission
+  //   repeated Identifier nodes = 3;
+  // }
+  // repeated MissingPermission missing_permissions = 2;
+}

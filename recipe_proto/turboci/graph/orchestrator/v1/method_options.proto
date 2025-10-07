@@ -1,0 +1,64 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "google/protobuf/descriptor.proto";
+import "turboci/graph/ids/v1/identifier_kind.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// MethodOptions are method options which apply to RPC method definitions.
+message MethodOptions {
+  // Which permissions this RPC may check.
+  //
+  // This is purely for documentation purposes.
+  //
+  // Example:
+  //   rpc Foo(FooRequest) returns (FooResponse) {
+  //     option (turboci_rpc) = {
+  //       permission: {
+  //         name: "turboci.checks.update"
+  //         in: IDENTIFIER_KIND_CHECK
+  //         for: "Check edits"
+  //         for: "Check option edits"
+  //       }
+  //       permission: {
+  //         name: "turboci.checks.globalUpdate"
+  //         in: IDENTIFIER_KIND_WORK_PLAN
+  //         for: "Calls without StageAttemptToken"
+  //       }
+  //     };
+  //   }
+  //
+  // This indicates that the RPC requires the permission
+  // "turboci.checks.update" for all check and check option edits, and ALSO
+  // requires "turboci.checks.globalUpdate" for all calls to this RPC without
+  // a StageAttemptToken.
+  //
+  // You should also refer to the documentation of `Foo` for any additional
+  // details of when these permissions are checked.
+  message Permission {
+    // The name of the permission.
+    optional string name = 1;
+
+    // The node whose realm will be checked.
+    optional ids.v1.IdentifierKind in = 2;
+
+    // Short description of when this permission is checked.
+    repeated string for = 3;
+  }
+
+  // Permissions that this RPC will check, including the realms and/or the
+  // conditions under which they are checked.
+  repeated Permission permission = 1 [retention = RETENTION_SOURCE];
+}
+
+extend google.protobuf.MethodOptions {
+  // TurboCI options for service methods.
+  optional MethodOptions turboci_rpc = 525000026;
+}

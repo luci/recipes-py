@@ -1,0 +1,27 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "google/api/field_behavior.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// Revision represents a resource version identifier.
+//
+// We use this instead of raw Timestamp messages to allow for future
+// evolution of the revision type as well as to distinguish against regular
+// Timestamps used elsewhere in the schema.
+message Revision {
+  // The spanner commit timestamp which represents this revision.
+  //
+  // This may be rendered as a string in some contexts (e.g. as part of the
+  // serialization of an Identity.CheckEdit), in which case it will be
+  // "T<seconds>/<nanos>".
+  optional google.protobuf.Timestamp ts = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+}

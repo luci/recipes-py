@@ -1,0 +1,43 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "turboci/graph/orchestrator/v1/datum.proto";
+import "turboci/graph/orchestrator/v1/edit.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// CheckEditView is a collated, partial, view of a single Edit for a Check and
+// the nodes which belong to it.
+message CheckEditView {
+  // The Edit itself - always present.
+  //
+  // NOTE: The Edit.reasons field will omit any Reasons with realms in
+  // which you do not have read permission.
+  optional Edit edit = 1;
+
+  // Data for the Edit's check.options which are visible and of a type
+  // which was requested.
+  repeated Datum option_data = 2;
+
+  // We've currently decided that Check Result *data* history is not needed
+  // for CheckEdits. The rationale for this is that Check Results are
+  // already bound to a specific, singular, StageAttempt, which is the only
+  // actor on them. If we need to see the history of what that StageAttempt
+  // did, we can look at the logs for it.
+  //
+  // This is in opposition to the evolution of Check options, where we
+  // expect multiple actors to be writing to the same Check during its
+  // PLANNING state.
+  //
+  // Note that Check Result writes (e.g. adding a new Result, adding a
+  // Result datum, finalizing a Result) will still generate a CheckEdit,
+  // including a Reason (because these actions mutate the Check itself). We
+  // anticipate that this should be a sufficient audit trail for debugging
+  // the data here.
+}

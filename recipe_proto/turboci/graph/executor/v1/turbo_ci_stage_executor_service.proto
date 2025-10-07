@@ -1,0 +1,66 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.executor.v1;
+
+import "turboci/graph/executor/v1/cancel_stage.proto";
+import "turboci/graph/executor/v1/run_stage.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/executor/v1/grpcpb;executorgrpcpb";
+option java_multiple_files = true;
+
+// TurboCIStageExecutor defines the interface that all stage executors must
+// implement.
+
+// The TurboCI Orchestrator can be configured to use many different services
+// which implement TurboCIStageExecutor to execute stages of different types.
+service TurboCIStageExecutor {
+  // RunStage instructs the executor to run the given stage attempt.
+  //
+  // This RPC supports both "validate_only" mode and "run" mode.
+  //
+  // * In the "validate_only" mode, the RPC performs pre-flight checks,
+  // including ACL checks and validation on the stage. It either returns
+  // the validated execution policy if the validation passes, or an error.
+  //
+  // TBD: Formalize how the error will be propagated back to the client
+  // attempting to insert this stage. How would we allow details in the
+  // response?
+  //
+  // Sidenote - do we need to record this failed node insertion somewhere
+  // in the graph/ledger for observability?
+  //
+  // * In the "run" mode, the RPC redoes the ACL checks and stage validation,
+  // then runs the stage if validation passes.
+  //   * If the stage is synchronous, at the end of this RPC the executor must
+  //     call TurboCIOrchestrator.WriteNodes with StageAttemptToken to do all
+  //     the writes in one transaction, including a CurrentStageWrite to mark
+  //     the StageAttempt as COMPLETE or INCOMPLETE.
+  //   * If the stage is asynchronous, this RPC must call
+  //     TurboCIOrchestrator.WriteNodes with CurrentStageWrite to mark the
+  //     StageAttempt as SCHEDULED or RUNNING.
+  //     * the executor must also write the validated execution policy for the
+  //       StageAttempt for the updated state (See
+  //       turboci.orchestrator.v1.ExecutionPolicy for details).
+  rpc RunStage(RunStageRequest) returns (RunStageResponse) {}
+
+  // CancelStage instructs the executor to cancel the given stage attempt.
+  //
+  // This RPC is used to cancel an asynchronous stage attempt that is in
+  // CANCELLING state.
+  //
+  // To handle this RPC, the executor may
+  // * call TurboCIOrchestrator.WriteNodes with CurrentStageWrite to mark the
+  //   stage as COMPLETE/INCOMPLETE if it can do so (for example, if the stage
+  //   attempt has not started running yet).
+  // * call TurboCIOrchestrator.WriteNodes with CurrentStageWrite to mark the
+  //   stage as TEARING_DOWN if the execution policy allows this, and there is
+  //   some additional work that needs to happen in this state.
+  // * communicate with its stage attempt worker (e.g. bbagent) to make a
+  //   similar TurboCIOrchestrator.WriteNodes call to transition the stage
+  //   attempt to COMPLETE/INCOMPLETE/TEARING_DOWN.
+  rpc CancelStage(CancelStageRequest) returns (CancelStageResponse) {}
+}

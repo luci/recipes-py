@@ -1,0 +1,20 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// TransactionConflictFailure is a gRPC error detail message returned by QueryNodes
+// and WriteNodes.
+//
+// If your client receives an rpc status with this message in it, it means that
+// the client needs to retry its transaction from the beginning.
+message TransactionConflictFailure {
+  // TBD: Anything useful to put here?
+  // Maybe a list of the conflicted identifiers and maybe their version?
+}

@@ -1,0 +1,43 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "turboci/graph/orchestrator/v1/execution_policy.proto";
+import "turboci/graph/orchestrator/v1/stage_state.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// Encapsulates data changes to a Stage object.
+message StageDelta {
+  // If set, the new Stage state that was set as part of this edit.
+  optional StageState state = 1;
+
+  // NOTE: Edit.what is also the identifier for the created Stage, so is not
+  // included here.
+
+  // NOTE: Edit.realm is also the realm for the created Stage, so is not
+  // included here.
+
+  // Execution policy writes for this Stage.
+  //
+  // Usually this should be empty or have only one policy change - but it's
+  // possible for a single write to affect multiple policies.
+  //
+  // Like Stage.execution_policies, this will be sorted and unique on
+  // ExecutionPolicy.source.
+  repeated ExecutionPolicy execution_policies = 2;
+
+  // TBD: current-Attempt modifications:
+  // AttemptState current_attempt_state
+  // Attempt metadata (links, "worker_id", etc.?)
+  // Attempt progress
+  //
+  // May need to be repeated (or at least duplicated) e.g. in the case where the
+  // user wrote AttemptState == INCOMPLETE, and the Orchestrator immediately
+  // creates a new Attempt in the AWAITING_RETRY state.
+}

@@ -1,0 +1,179 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "turboci/graph/orchestrator/v1/method_options.proto";
+import "turboci/graph/orchestrator/v1/query_nodes_request.proto";
+import "turboci/graph/orchestrator/v1/query_nodes_response.proto";
+import "turboci/graph/orchestrator/v1/write_nodes_request.proto";
+import "turboci/graph/orchestrator/v1/write_nodes_response.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1/grpcpb;orchestratorgrpcpb";
+option java_multiple_files = true;
+
+// TurboCIOrchestrator is the API for interacting with the TurboCI
+// Orchestrator.
+service TurboCIOrchestrator {
+  // WriteNodes transactionally writes or updates multiple nodes within a
+  // WorkPlan.
+  //
+  // NOTE: Simple workflows can have all Checks, Check options and Stages in the
+  // same realm, minimizing the number of required bindings.
+  rpc WriteNodes(WriteNodesRequest) returns (WriteNodesResponse) {
+    option (turboci_rpc) = {
+      // Permissions to write stages OR checks (or related data) to a WorkPlan.
+      //
+      // Required WriteNodesRequest.token will be checked to ensure that a
+      // StageAttempt is only writing to its own WorkPlan.
+      permission: {
+        name: "turboci.workplans.write"
+        in: IDENTIFIER_KIND_WORK_PLAN
+        for: "all calls"
+      }
+
+      permission: {
+        name: "turboci.workplans.writeExternal"
+        in: IDENTIFIER_KIND_WORK_PLAN
+        for: "calls without StageAttemptToken from this WorkPlan"
+      }
+
+      permission: {
+        name: "turboci.stages.update"
+        in: IDENTIFIER_KIND_STAGE
+        for: "creation and updates of Stages"
+      }
+
+      permission: {
+        name: "turboci.worknodes.update"
+        in: IDENTIFIER_KIND_STAGE
+        for: "creation and updates of WorkNode-type Stages"
+      }
+
+      permission: {
+        name: "turboci.checks.update"
+        in: IDENTIFIER_KIND_CHECK
+        for: "creation and updates to Checks"
+      }
+
+      permission: {
+        name: "turboci.checkOptions.update"
+        in: IDENTIFIER_KIND_CHECK_OPTION
+        for: "creation and updates to Check Options"
+      }
+
+      permission: {
+        name: "turboci.checkResults.update"
+        in: IDENTIFIER_KIND_CHECK_RESULT_DATUM
+        for: "creation and updates to Check Result Data"
+      }
+    };
+  }
+
+  // QueryNodes allows querying nodes in a fairly simple way.
+  //
+  // In the future we may add a more advanced API to open up more of GQL's
+  // underlying expressiveness.
+  rpc QueryNodes(QueryNodesRequest) returns (QueryNodesResponse) {
+    option (turboci_rpc) = {
+      permission: {
+        name: "turboci.workplans.readExternal"
+        in: IDENTIFIER_KIND_WORK_PLAN
+        for: "calls without StageAttemptToken from this WorkPlan"
+      }
+
+      permission: {
+        name: "turboci.checks.read"
+        in: IDENTIFIER_KIND_CHECK
+        for: "reading Checks (and their edits and reason details)"
+      }
+
+      permission: {
+        name: "turboci.typeUrls.wildcard"
+        in: IDENTIFIER_KIND_WORK_PLAN
+        for: "including * in type_urls"
+      }
+
+      permission: {
+        name: "turboci.checkOptions.read"
+        in: IDENTIFIER_KIND_CHECK_OPTION
+        for: "reading option data. Needs .checks.read on the containing Check, too"
+      }
+
+      permission: {
+        name: "turboci.checkResults.read"
+        in: IDENTIFIER_KIND_CHECK_RESULT_DATUM
+        for: "reading check result data. Needs .checks.read on the containing Check, too"
+      }
+
+      permission: {
+        name: "turboci.stages.read"
+        in: IDENTIFIER_KIND_STAGE
+        for: "reading Stages (and their edits and reason details)"
+      }
+
+      permission: {
+        name: "turboci.worknodes.read"
+        in: IDENTIFIER_KIND_STAGE
+        for: "read of WorkNode-type Stages"
+      }
+    };
+  }
+
+  // TBD: Idempotent way to allocate N WorkNode IDs - this will allow safe node
+  // ID allocation outside of a transaction so that WorkNodes can be
+  // transactionally inserted.
+
+  // TBD: An (idempotent) way to kick off a configured, named workplan.
+  //
+  // I don't think we will need to disambiguate kickoffs between different
+  // callers at the same time for the same workplan configuration?
+  //
+  // Maybe use some 'template' verbiage here?
+  //
+  // Input should have the Any args that the initial stage should start with,
+  // and the RPC should be able to do a basic type-check that this workplan
+  // needs the given type. Maybe the initial args should be placed in a Check
+  // with a well known name, and assigned to the initial Stage? This would allow
+  // an easy entrypoint for e.g. a tightly-configured buildbucket build to be
+  // the initial stage, but allow it to take differently-typed args depending on
+  // the workplan it's used for. The registration of the workplan should still
+  // list the expected types, though.
+  //
+  // Maybe this (and the RPCs to list workplan templates) should be a separate
+  // service?
+  //
+  // rpc WorkPlanTemplateStart(WorkPlanTemplateStartRequest)
+  //     returns (WorkPlanTemplateStartResponse)
+  // {
+  //   option deadline = 20;
+  //   option (turboci_rpc) = {
+  //     permission: "turboci.workplan.templates.start"
+  //   };
+  // }
+
+  // TBD: RPC to list available workplan templates.
+  //
+  // rpc WorkPlanTemplatesList(WorkPlanTemplatesListRequest)
+  //     returns (WorkPlanTemplatesListResponse) {
+  //   option deadline = 20;
+  //   option (turboci_rpc) = {
+  //     permission: "turboci.workplan.templates.list"
+  //   };
+  // }
+
+  // TBD: An (idempotent) way to kick off an ad-hoc workplan in a specific
+  // realm, seeded with stages.
+  //
+  // How to permit service accounts for initial stage(s)?
+  //
+  // rpc CreateWorkPlan(CreateWorkPlan) returns (CreateWorkPlanResponse) {
+  //   option deadline = 20;
+  //   option (turboci_rpc) = {
+  //     permission: "turboci.workplan.create"
+  //   };
+  // }
+}

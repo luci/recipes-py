@@ -1,0 +1,30 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.data.piper.v1;
+// This proto is intended to be classified as MVP (converged) maturity.
+// TBD - Pending actual implementation to annotate maturity.
+
+option go_package = "go.chromium.org/turboci/proto/go/data/piper/v1;piperpb";
+option java_multiple_files = true;
+
+// PiperSourceCheckOptions provide the information necessary for the Build stage to retrieve the Piper source code
+// by providing a list of files in Piper and/or list of build targets.
+message PiperSourceCheckOptions {
+  // List of paths to files in Piper.
+  // Eg. "google3/configs/foo.bar"
+  repeated string files = 1;
+  // List of blaze build targets.
+  // Eg. "//configs/foo:bar"
+  repeated string targets = 2;
+  // If provided, use a Piper workspace checked out at the provided CL #. Use HEAD if not provided.
+  // This can also be a pending CL.
+  optional int64 cl_number = 3;
+
+  // PiperSourceCheckOptions doesn't currently support including CLs to patch atop the base CL because
+  // we don't currently have use cases that need that, but there's no reason we can't add that
+  // to the message if we find there's a use case that needs it.
+}

@@ -1,0 +1,29 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// RevisionRange represents a range of revisions.
+//
+// This range is half-open: `[start, end)`.
+message RevisionRange {
+  // The first revision in the range.
+  //
+  // If omitted, the range is unbounded on the lower end.
+  optional google.protobuf.Timestamp start = 1;
+
+  // The first revision *after* the range.
+  //
+  // Objects with a revision equal to this are NOT included in the range.
+  //
+  // If omitted, the range is unbounded on the upper end.
+  optional google.protobuf.Timestamp end = 2;
+}

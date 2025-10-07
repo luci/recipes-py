@@ -1,0 +1,211 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "google/api/field_behavior.proto";
+import "turboci/graph/ids/v1/identifier.proto";
+import "turboci/graph/orchestrator/v1/actor.proto";
+import "turboci/graph/orchestrator/v1/check_kind.proto";
+import "turboci/graph/orchestrator/v1/check_state.proto";
+import "turboci/graph/orchestrator/v1/edge_group.proto";
+import "turboci/graph/orchestrator/v1/field_options.proto";
+import "turboci/graph/orchestrator/v1/revision.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// A Check is a node in a TurboCI graph which ties together:
+//  * A named objective of the Workflow (sometimes thought of as a question).
+//  For example:
+//    * Does source X build for platform Y?
+//    * Do these tests built for Y pass when run on Z?
+//    * Are the aggregate test results good enough to allow this CL to land?
+//  * Options which describe *how* to answer that question. For example:
+//    * Which compile targets should be built?
+//    * Which test cases should be skipped? Or how many times should retry if
+//      they fail?
+//    * What test targets should we consider when evaluating the CL?
+//  * The answers to that question (i.e. the results of the Check)
+//    * Pointers to build artifacts, test results, small bits of workflow
+//      specific output which don't fit nicely elsewhere, etc.
+//
+// Checks are not, themselves, executable, but Stages are the executable nodes
+// which operate to plan and resolve Checks.
+//
+// Options and Result Data are held as protobuf Any messages in Datum objects
+// which are children of this Check. Each Datum can be assigned to a different
+// security realm (allowing for public/private inputs/outputs for the same
+// Check).
+//
+// See also:
+//   * Identifier.Check* (Identifiers for Checks, CheckOptions, etc.)
+//   * CheckView (graph view object for a Check and contained messages)
+//   * CheckEditView (graph view object for Edits of a Check)
+message Check {
+  // The Check's identifier.
+  //
+  // `identifier.id` is provided by the Stage which creates this Check.
+  optional ids.v1.Check identifier = 1 [(google.api.field_behavior) = IMMUTABLE];
+
+  // The coarse-grained kind of this Check.
+  //
+  // Used in UI and Data registration to restrict what data types are usable in
+  // `options` and `results.data`.
+  //
+  // Used as part of a Checks query for a coarse-grained filter.
+  optional CheckKind kind = 2 [(google.api.field_behavior) = IMMUTABLE];
+
+  // The security realm for this Check.
+  //
+  // If unset on creation, then this will be populated with the realm of the
+  // Stage which creates this Check.
+  optional string realm = 3 [(google.api.field_behavior) = IMMUTABLE];
+
+  // The version of this Check.
+  //
+  // Updated any time fields in this Check change.
+  //
+  // Note that changing the data in an existing Check Option or a Check Result
+  // Datum does not change any field data in this message, and thus will not
+  // change this version number (adding a new entry in `options` or in
+  // a `Result.data` would, however).
+  optional Revision version = 4;
+
+  // The current state of the Check.
+  optional CheckState state = 5;
+
+  // Dependencies on other objects in the graph.
+  //
+  // All of these dependencies must be satisfied for this Check to be unblocked
+  // and advance from the PLANNED to WAITING state.
+  //
+  // If the dependencies are unsatisfiable, then the Check will be immediately
+  // moved to FINAL state and a single Result will be added with type `TBD`.
+  //
+  // Currently Checks may only depend on other Checks in the same workflow.
+  repeated EdgeGroup dependencies = 6 [
+    (turboci).check.editable = CHECK_STATE_PLANNING,
+    (turboci).id.allowed = IDENTIFIER_KIND_CHECK
+  ];
+
+  // OptionRef is a reference to a CheckOption.
+  message OptionRef {
+    // The Identifier for the CheckOption, which is a Datum.
+    optional ids.v1.CheckOption identifier = 1;
+
+    // The type_url of the data contained for this CheckOption.
+    optional string type_url = 2;
+
+    // TBD: If we add an additional distinguisher key in Datum, we'd add it
+    // here too (e.g. to allow multiple entries of the same type URL with
+    // different keys).
+  }
+
+  // Options form the bulk of 'how to answer this Check'.
+  //
+  // It is expected that small details (like assignments to specific
+  // hardware/devices) will not be present here and will be decided by the
+  // Stages which actually produce results for this Check. The balance of what
+  // is in the Check options vs. what is in the Stage args is up to the workflow
+  // authors. It should be expected that Check options will be consumed by
+  // entities external to the Workflow (such as individual developers), and so
+  // it's recommended that the option data here be formulated in a way to be
+  // useful both in-workflow (to Stages) and to users outside the workflow. If
+  // small execution details ARE stored here, it's recommended that they be
+  // stored in a secondary data type to make it clear to external users that
+  // these details are not intended to be intrinsic for reproduction/replication
+  // of the Check results.
+  //
+  // Orchestrator will ensure that the option types here are registered to be
+  // valid for this Check's kind.
+  //
+  // This field is kept unique by `type_url` and ordered by
+  // identifier.options_idx.
+  //
+  // You can use QueryNodes to get a CheckView which includes this Check and
+  // also CheckOptions.
+  repeated OptionRef options = 7 [(turboci).check.editable = CHECK_STATE_PLANNING];
+
+  // A Result is a container of result data for a Check.
+  //
+  // Results belong to exactly one Actor (usually a StageAttempt), and any given
+  // Actor may only have one Result per Check.
+  //
+  // A Check may have multiple Results, and each Result may have multiple pieces
+  // of result data. This could occur when multiple Stages all contribute
+  // results to the same Check (e.g. sharding, multiple executions, etc.).
+  message Result {
+    // Identifier for this Result.
+    optional ids.v1.CheckResult identifier = 1;
+
+    // The entity which created this Result.
+    optional Actor owner = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+    // The database revsision (commit timestamp) at which this Result was
+    // created.
+    optional Revision created_at = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+    // ResultDatumRef is a reference to a CheckResultDatum.
+    message ResultDatumRef {
+      // The Identifier for the CheckResultDatum.
+      optional ids.v1.CheckResultDatum identifier = 1;
+
+      // The type_url of the data contained for this CheckResultDatum.
+      optional string type_url = 2;
+
+      // TBD: If we add an additional distinguisher key in Datum, we'd add it
+      // here too (e.g. to allow multiple entries of the same type URL with
+      // different keys).
+    }
+
+    // Data form the bulk of the result.
+    //
+    // NOTE: Most data should be stored in ResultDB via turboci.ResultStorage.
+    //
+    // This field is kept unique by `type_url` and ordered by
+    // identifier.options_idx.
+    //
+    // Orchestrator will ensure that the option types here are registered to be
+    // valid for this Result's kind.
+    //
+    // You can use QueryNodes to get a CheckView which includes this Check and
+    // also Result Data.
+    repeated ResultDatumRef data = 4;
+
+    // The database revsision (commit timestamp) at which this Result is
+    // finalized.
+    //
+    // This is set when:
+    //   * A StageAttempt `owner` ends (becomes COMPLETE or INCOMPLETE).
+    //   * The `owner` explicitly indicates that their results are final.
+    //   * The Check advances to the FINAL state.
+    optional Revision finalized_at = 5;
+  }
+  // The list of Results this Check has.
+  //
+  // Any time a StageAttempt adds new result *data* for this Check for the first
+  // time, a new Result will be added to this list.
+  //
+  // So, if you had 3 Stages, each with one Stage Attempt, which add result
+  // data for this Check, you would see 3 Result messages. Similarly, if you
+  // had one Stage with 3 Attempts, all 3 of which add result data for this
+  // check, you would see 3 Result messages.
+  //
+  // Check.version is advanced when a new Result is added, or new data types are
+  // added to an existing Result. However, CheckEdits will still be produced for
+  // each write to each Result datum.
+  repeated Result results = 8 [
+    (turboci).check.editable = CHECK_STATE_WAITING,
+    // This is OUTPUT_ONLY because the Orchestrator will add and maintain
+    // Results automatically as StageAttempts write data for this Check.
+    (google.api.field_behavior) = OUTPUT_ONLY
+  ];
+
+  // TBD: Add another field for 'Resolved-To' edges to Checks for the case where
+  // this Check is 'underspecified' and the Workflow resolves/evolves it to
+  // one or more concrete Checks.
+}

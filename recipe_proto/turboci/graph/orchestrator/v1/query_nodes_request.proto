@@ -1,0 +1,65 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "turboci/graph/orchestrator/v1/query.proto";
+import "turboci/graph/orchestrator/v1/revision.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// Request message for TurboCIGraphService.QueryNodes.
+message QueryNodesRequest {
+  // The token of the Stage Attempt which is performing this query.
+  //
+  // This is in addition to regular RPC authorization.
+  //
+  // If missing, this RPC will check that the caller additionally has the
+  // 'turboci.workplans.readExternal' on the implied workplans.
+  optional string stage_attempt_token = 1;
+
+  // VersionRestriction describes how this query can be constrained by database
+  // version.
+  message VersionRestriction {
+    // What type of restriction to apply.
+    oneof restriction {
+      // Require will cause the query to return the current version of all
+      // nodes (from the read-only transaction), but it will check that all
+      // queried nodes have a Revision less than or equal to this version.
+      //
+      // If QueryNodes would return a node newer than `require`, it will return
+      // FAILED_PRECONDITION with a detail message of
+      // TransactionConflictFailure.
+      //
+      // Use this when issuing follow-up queries within a transaction, where you
+      // want to abort and retry that transaction as soon as you know there will
+      // be a conflict.
+      Revision require = 1;
+
+      // Query from the database at this snapshot version.
+      //
+      // This can return data older than the current version in the database.
+      //
+      // Use this when trying to assemble a consistent (but possibly stale) view
+      // of the data in the database.
+      //
+      // This CAN be used from a transaction (WriteNodes will eventually detect
+      // the discrepancy and you will need to retry the transaction at that
+      // point).
+      Revision snapshot = 2;
+    }
+  }
+  // If omitted, QueryNodes will return the current version of any nodes in the
+  // query from within a read-only transaction.
+  //
+  // Otherwise, this restricts how the query interacts with the underlying
+  // database.
+  optional VersionRestriction version = 2;
+
+  // One or more Queries to select nodes to return.
+  repeated Query query = 3;
+}

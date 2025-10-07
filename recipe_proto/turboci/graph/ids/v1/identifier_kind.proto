@@ -1,0 +1,50 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.ids.v1;
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/ids/v1;idspb";
+option java_multiple_files = true;
+
+// IdentifierKind enumerates the different kinds of Identifiers, and is used to
+// annotate fields containing Edges to indicate which kinds of nodes are
+// allowed.
+//
+// This should be kept in sync with the `type` oneof in Identifier.
+enum IdentifierKind {
+  // Default value.
+  IDENTIFIER_KIND_UNKNOWN = 0;
+
+  // An Identifier.WorkPlan.
+  IDENTIFIER_KIND_WORK_PLAN = 1;
+
+  // An Identifier.Check.
+  IDENTIFIER_KIND_CHECK = 2;
+
+  // An Identifier.CheckOption.
+  IDENTIFIER_KIND_CHECK_OPTION = 3;
+
+  // An Identifier.CheckResult.
+  IDENTIFIER_KIND_CHECK_RESULT = 4;
+
+  // An Identifier.CheckResultDatum.
+  IDENTIFIER_KIND_CHECK_RESULT_DATUM = 5;
+
+  // An Identifier.CheckEdit.
+  IDENTIFIER_KIND_CHECK_EDIT = 6;
+
+  // An Identifier.CheckEditOption.
+  IDENTIFIER_KIND_CHECK_EDIT_OPTION = 7;
+
+  // An Identifier.Stage.
+  IDENTIFIER_KIND_STAGE = 8;
+
+  // An Identifier.StageAttempt.
+  IDENTIFIER_KIND_STAGE_ATTEMPT = 9;
+
+  // An Identifier.StageEdit.
+  IDENTIFIER_KIND_STAGE_EDIT = 10;
+}
