@@ -854,7 +854,8 @@ class PathApi(recipe_api.RecipeApi):
     """
 
     for var, value in self.m.context.env.items():
-      path = path.replace(f'${{{var}}}', value)
+      if value is not None:
+        path = path.replace(f'${{{var}}}', value)
 
     return path
 

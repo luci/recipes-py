@@ -3132,7 +3132,7 @@ Args:
 
 Returns dirname of path
 
-&mdash; **def [exists](/recipe_modules/path/api.py#861)(self, path: ((config_types.Path | str) | util.InputPlaceholder)):**
+&mdash; **def [exists](/recipe_modules/path/api.py#862)(self, path: ((config_types.Path | str) | util.InputPlaceholder)):**
 
 Equivalent to os.path.exists.
 
@@ -3164,14 +3164,14 @@ that the recipe is non-hermetic.
 This is called by the recipe engine immediately after __init__(), but
 with `self._paths_client` initialized.
 
-&mdash; **def [isdir](/recipe_modules/path/api.py#874)(self, path: ((config_types.Path | str) | util.InputPlaceholder)):**
+&mdash; **def [isdir](/recipe_modules/path/api.py#875)(self, path: ((config_types.Path | str) | util.InputPlaceholder)):**
 
 Equivalent to os.path.isdir.
 
 The presence or absence of paths can be mocked during the execution of the
 recipe by using the mock_* methods.
 
-&mdash; **def [isfile](/recipe_modules/path/api.py#887)(self, path: ((config_types.Path | str) | util.InputPlaceholder)):**
+&mdash; **def [isfile](/recipe_modules/path/api.py#888)(self, path: ((config_types.Path | str) | util.InputPlaceholder)):**
 
 Equivalent to os.path.isfile.
 
@@ -3216,23 +3216,23 @@ need the full security properties of mkstemp, please outsource this to e.g.
 either a resource script of your recipe module or recipe.
 ***
 
-&mdash; **def [mock\_add\_directory](/recipe_modules/path/api.py#911)(self, path: config_types.Path):**
+&mdash; **def [mock\_add\_directory](/recipe_modules/path/api.py#912)(self, path: config_types.Path):**
 
 For testing purposes, mark that file |path| exists.
 
-&mdash; **def [mock\_add\_file](/recipe_modules/path/api.py#907)(self, path: config_types.Path):**
+&mdash; **def [mock\_add\_file](/recipe_modules/path/api.py#908)(self, path: config_types.Path):**
 
 For testing purposes, mark that file |path| exists.
 
-&mdash; **def [mock\_add\_paths](/recipe_modules/path/api.py#900)(self, path: config_types.Path, kind: FileType=FileType.FILE):**
+&mdash; **def [mock\_add\_paths](/recipe_modules/path/api.py#901)(self, path: config_types.Path, kind: FileType=FileType.FILE):**
 
 For testing purposes, mark that |path| exists.
 
-&mdash; **def [mock\_copy\_paths](/recipe_modules/path/api.py#915)(self, source: config_types.Path, dest: config_types.Path):**
+&mdash; **def [mock\_copy\_paths](/recipe_modules/path/api.py#916)(self, source: config_types.Path, dest: config_types.Path):**
 
 For testing purposes, copy |source| to |dest|.
 
-&mdash; **def [mock\_remove\_paths](/recipe_modules/path/api.py#922)(self, path: config_types.Path, should_remove: Callable[([str], bool)]=(lambda p: True)):**
+&mdash; **def [mock\_remove\_paths](/recipe_modules/path/api.py#923)(self, path: config_types.Path, should_remove: Callable[([str], bool)]=(lambda p: True)):**
 
 For testing purposes, mark that |path| doesn't exist.
 
