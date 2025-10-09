@@ -615,8 +615,7 @@ class RecipeModule:
           f'Module "{self.repo.name}/{self.name}" exports '
           'TEST_API which is not a subclass of RecipeTestApi.')
 
-    # Fall back to finding the (optional) RecipeTestApi subclass so we can
-    # raise an error.
+    # Fall back to finding the (optional) RecipeTestApi subclass.
     test_module = None
     if os.path.isfile(os.path.join(self.path, 'test_api.py')):
       test_module = importlib.import_module(
@@ -625,16 +624,13 @@ class RecipeModule:
     if not test_module:
       return RecipeTestApi
 
-    # TODO(b/448955620): Remove this.
     for v in test_module.__dict__.values():
       # If the recipe has literally imported the RecipeTestApi, we don't want
       # to consider that to be the real RecipeTestApi :)
       if v is RecipeTestApi:
         continue
       if inspect.isclass(v) and issubclass(v, RecipeTestApi):
-        raise MalformedModuleError(
-            f'Module "{self.repo.name}/{self.name}" has RecipeTestApi subclass '
-            f'in `test_api`, but does not export API')
+        return v
 
     return RecipeTestApi
 
@@ -658,9 +654,20 @@ class RecipeModule:
           f'Module "{self.repo.name}/{self.name}" exports '
           'API which is not a subclass of RecipeApi.')
 
-    raise MalformedModuleError(
-        f'Module "{self.repo.name}/{self.name}" does not export API')
+    # Fall back to trying to find it implicitly.
+    api_module = importlib.import_module(
+      f'RECIPE_MODULES.{self.repo.name}.{self.name}.api')
 
+    for v in api_module.__dict__.values():
+      # skip RecipeApi class
+      if v is RecipeApi:
+        continue
+
+      if inspect.isclass(v) and issubclass(v, RecipeApi):
+        return v
+
+    raise MalformedModuleError(
+        f'Recipe module "{self.repo.name}/{self.name}" is missing API.')
 
   @cached_property
   def CONFIG_CTX(self):

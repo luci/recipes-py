@@ -24,7 +24,7 @@ import shutil
 import subprocess
 import sys
 import textwrap
-from typing import Generator
+from typing import ContextManager, Generator
 
 import attr
 
@@ -393,8 +393,6 @@ class FakeRecipeRepo:
     if self.exists(base):
       shutil.rmtree(os.path.join(self.path, base))
 
-    mod_name_ident = mod_name.title().replace(' ', '')
-
     with self.write_file(os.path.join(base, '__init__.py')) as buf:
       buf.write('''
       {imports}
@@ -408,9 +406,6 @@ class FakeRecipeRepo:
       PROPERTIES = {PROPERTIES}
       GLOBAL_PROPERTIES = {GLOBAL_PROPERTIES}
       ENV_PROPERTIES = {ENV_PROPERTIES}
-
-      from .api import {mod_name}Api as API
-      from .test_api import {mod_name}Api as TEST_API
       '''.format(
           imports='\n'.join(mod.imports),
           DEPS=mod.DEPS,
@@ -419,7 +414,6 @@ class FakeRecipeRepo:
           PROPERTIES=mod.PROPERTIES,
           GLOBAL_PROPERTIES=mod.GLOBAL_PROPERTIES,
           ENV_PROPERTIES=mod.ENV_PROPERTIES,
-          mod_name=mod_name_ident,
       ))
 
     dump = self.fake_recipe_deps._ambient_toplevel_code_dump()
@@ -437,7 +431,7 @@ class FakeRecipeRepo:
       ''').format(
           imports='\n'.join(mod.imports),
           ambient_toplevel_code=dump,
-          mod_name=mod_name_ident,
+          mod_name=mod_name.title().replace(' ', ''),
           api=_get_suite(mod.api, 'pass')))
 
     with self.write_file(os.path.join(base, 'test_api.py')) as buf:
@@ -453,7 +447,7 @@ class FakeRecipeRepo:
       ''').format(
           imports='\n'.join(mod.imports),
           ambient_toplevel_code=dump,
-          mod_name=mod_name_ident,
+          mod_name=mod_name.title().replace(' ', ''),
           test_api=_get_suite(mod.test_api, 'pass')))
 
     config_body = _get_suite(mod.config, '', indent='')

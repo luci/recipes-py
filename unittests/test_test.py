@@ -105,7 +105,7 @@ class Common(test_env.RecipeEngineUnitTest):
     needs_infra_fail = 12
 
 
-  def _outcome_json(self, per_test=None, coverage=100.0, uncovered_mods=(),
+  def _outcome_json(self, per_test=None, coverage=100, uncovered_mods=(),
                     unused_expects=()):
     """Generates a JSON dict representing a runner.Outcome message.
 
@@ -412,7 +412,7 @@ class TestRun(Common):
         result.data,
         self._outcome_json(
             per_test={},
-            coverage=93.3,
+            coverage=92.3,
             uncovered_mods=['foo'],
         ))
 
@@ -463,7 +463,7 @@ class TestRun(Common):
         self._outcome_json(per_test={
           'foo_module:examples/full.basic': [self.OutcomeType.crash,
                                              self.OutcomeType.needs_infra_fail]
-        }, coverage=95.5))
+        }, coverage=95.0))
 
   def test_recipe_module_example_not_covered(self):
     with self.main.write_module('foo_module') as mod:
@@ -487,7 +487,7 @@ class TestRun(Common):
         self._outcome_json(per_test={
           'foo_module:examples/full.basic':
               [self.OutcomeType.diff],
-        }, coverage=91.7))
+        }, coverage=90.9))
 
   def test_recipe_module_uncovered_not_strict(self):
     with self.main.write_module('foo_module') as mod:
@@ -499,7 +499,7 @@ class TestRun(Common):
 
     self.assertDictEqual(
         self._run_test('run', should_fail=True).data,
-        self._outcome_json(coverage=93.3, per_test={}))
+        self._outcome_json(coverage=92.3, per_test={}))
 
   def test_recipe_module_covered_by_recipe_not_strict(self):
     with self.main.write_module('foo_module') as mod:
@@ -538,7 +538,7 @@ class TestRun(Common):
               'my_recipe.basic': [],
             },
             uncovered_mods=['foo_module'],
-            coverage=95.5,
+            coverage=95.0,
         ))
 
   def test_recipe_module_partially_covered_by_recipe_not_strict(self):
@@ -591,7 +591,7 @@ class TestRun(Common):
         self._outcome_json(per_test={
           'foo_module:examples/full.basic': [],
           'foo_recipe.basic': [],
-        }, coverage=96.8))
+        }, coverage=96.6))
 
   def test_recipe_module_test_expectation_failure_empty(self):
     with self.main.write_module('foo_module'):
@@ -645,7 +645,7 @@ class TestRun(Common):
     self.assertDictEqual(
         self._run_test('run', should_fail=True).data,
         self._outcome_json(
-            coverage=93.3,
+            coverage=92.3,
             per_test={},
         ))
 
@@ -659,7 +659,7 @@ class TestRun(Common):
         self._run_test('run', should_fail=True).data,
         self._outcome_json(
             uncovered_mods=['foo_module'],
-            coverage=93.3,
+            coverage=92.3,
             per_test={},
         ))
 
@@ -700,7 +700,7 @@ class TestRun(Common):
         self._run_test('run', should_fail=True).data,
         self._outcome_json(
             uncovered_mods=['foo_module'],
-            coverage=95.7,
+            coverage=95.2,
         ))
 
   def test_api_covered_by_example(self):
@@ -843,7 +843,7 @@ class TestRun(Common):
     self.assertDictEqual(
         self._run_test('run', should_fail=True).data,
         self._outcome_json(
-            coverage=93.1,
+            coverage=92.6,
             uncovered_mods=['foo_module'],
         ))
 
@@ -1081,7 +1081,7 @@ class TestTrain(Common):
       ''')
     self.assertDictEqual(
         self._run_test('run', should_fail=True).data,
-        self._outcome_json(coverage=94.7, per_test={}))
+        self._outcome_json(coverage=94.1, per_test={}))
 
   def test_config_uncovered_strict(self):
     with self.main.write_module('foo_module') as mod:
@@ -1093,7 +1093,7 @@ class TestTrain(Common):
     self.assertDictEqual(
         self._run_test('run', should_fail=True).data,
         self._outcome_json(
-            coverage=94.7,
+            coverage=94.1,
             per_test={},
             uncovered_mods=['foo_module'],
         ))
