@@ -82,6 +82,8 @@ message Stage {
 
   // Stages are allowed to depend on other Checks and Stages, and will not be
   // sent to an Executor until these dependencies are resolved.
+  //
+  // Once the Stage is ATTEMPTING, this field is immutable.
   repeated EdgeGroup dependencies = 7 [
     (turboci).id.allowed = IDENTIFIER_KIND_CHECK,
     (turboci).id.allowed = IDENTIFIER_KIND_STAGE

@@ -58,21 +58,16 @@ message EdgeGroup {
   // `resolution` will be set once the `threshold` is met - this means that some
   // `edges` and `groups` may still be unresolved.
   //
-  // Until the node is FINAL, the orchestrator will keep propagating all edges
-  // in order to allow you to quickly read the state of the dependencies.
+  // Once `resolution` is set, this EdgeGroup is immutable.
   //
-  // To figure out what edges caused an EdgeGroup to be unblocked, compare the
-  // timestamp of this resolution to the resolutions in `groups` and/or `edges`.
-  // Groups and edges which are resolved after `resolution.at` were not included
-  // in the original event which resolved this EdgeGroup.
+  // You can follow dependencies in a query by using Query.Expand.Dependencies.
+  // This will allow you to follow dependencies, or follow them backwards
+  // ("dependents"), filtered by their satisfied value.
   //
-  // For example, say this EdgeGroup has edges A, B, and C, with a threshold of
-  // 2. A and B both become resolved, and so this EdgeGroup will have its
-  // resolution set as well. At this point, C is still unresolved.
-  //
-  // At a later point, C becomes resolved, which will leave this EdgeGroup with
-  // all three of its edges resolved - however C's resolution time will be after
-  // the resolution time of this EdgeGroup.
+  // Query.Expand.Dependencies also has a `current` option, which allows you to
+  // effectively ignore the immutability of this EdgeGroup while making a query.
+  // All Edges contained (transitively) by this EdgeGroup will be considered
+  // while expanding the query.
   //
   // Note that an EdgeGroup can be resolved with `satisfied = false` if the
   // Orchestrator can prove that no additional evolution of `edges` and `groups`

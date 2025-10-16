@@ -127,16 +127,33 @@ message Query {
       // Must be >= 0.
       optional int32 dependencies_depth = 2;
 
-      // If unset, includes all edges.
+      // If unset, includes ALL edges, regardless of resolution. Implies
+      // `current = true`.
+      //
       // If True, only includes resolved, satisfied, edges.
       // If False, only includes resolved, unsatisfied, edges.
       //
-      // NOTE: Edges which are frozen because they are part of a resolved
-      // EdgeGroup on a node will not show up as either true or false here, but
-      // will continue to show up with an unset `satisfied` filter.
-      //
       // See the documentation on `EdgeGroup.resolution`.
       optional bool satisfied = 3;
+
+      // If true, ignores the `resolution` field of the node's EdgeGroups.
+      //
+      // If false (or unset), only follows edges to nodes which have the
+      // `resolution` field set.
+      //
+      // For example:
+      //
+      //   A -> {B, C, threshold=1}
+      //
+      //   A->B becomes resolved, and A moves to WAITING. A will forever show
+      //   a resolution on B, but not on C.
+      //
+      //   If A->C later resolves (e.g. C becomes FINAL), and a stage wants to
+      //   find "ALL resolved dependencies of A", it would do this query with
+      //   `current=true`. If the stage only wants "Dependencies of A which were
+      //   the set that actually unblocked A", then it would do this query with
+      //   `current=false`.
+      optional bool current = 4;
 
       // TBD: Other selection criteria (e.g. only checks of kind X or with
       // option type Y)
