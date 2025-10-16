@@ -12,7 +12,6 @@ import "turboci/graph/orchestrator/v1/check_kind.proto";
 import "turboci/graph/orchestrator/v1/check_state.proto";
 import "turboci/graph/orchestrator/v1/edge.proto";
 import "turboci/graph/orchestrator/v1/edge_group.proto";
-import "turboci/graph/orchestrator/v1/edit.proto";
 import "turboci/graph/orchestrator/v1/execution_policy.proto";
 import "turboci/graph/orchestrator/v1/field_options.proto";
 import "turboci/graph/orchestrator/v1/revision.proto";
@@ -52,6 +51,26 @@ message WriteNodesRequest {
   // CheckWrites/StageWrites.
   optional string stage_attempt_token = 1;
 
+  // Reason is the write-request analogue of Edit.Reason.
+  message Reason {
+    // The security realm for this reason.
+    //
+    // If omitted, this will be the same as the parent node's realm.
+    optional string realm = 1;
+
+    // A 'low effort' reason for this edit.
+    //
+    // This is 'low effort' because it's preferable for the writer to provide
+    // detailed machine-readable data in the `details` field below.
+    optional string reason = 2;
+
+    // Machine-readable reason(s) for this edit.
+    //
+    // This is repeated to allow for standardized reason message types in
+    // conjunction with workflow-specific details as part of the same write
+    // record.
+    repeated google.protobuf.Any details = 3;
+  }
   // The reason for this write operation, as supplied by the entity performing
   // the write.
   //
@@ -65,7 +84,7 @@ message WriteNodesRequest {
   // convention, these should be ordered from most to least specific, so if
   // a client only wants to display one Reason, it should be the first in this
   // list which they have access to.
-  repeated Edit.Reason reasons = 2;
+  repeated Reason reasons = 2;
 
   // TransactionDetails encapsulates the information necessary to make this
   // write safe by describing the snapshot of the graph which the writer
@@ -162,7 +181,7 @@ message WriteNodesRequest {
     // or the caller must have the additional "turboci.workplans.writeExternal"
     // permission in the check's realm (or in the realm of the option/result
     // data).
-    optional ids.v1.Check check = 1;
+    optional ids.v1.Check identifier = 1;
 
     // Realm to assign to this check.
     //
@@ -246,7 +265,7 @@ message WriteNodesRequest {
     // Otherwise, the Stage must belong to the stage_attempt_token's WorkPlan,
     // or the caller must have the additional "turboci.workplans.writeExternal"
     // permission in the stage's realm.
-    optional ids.v1.Stage stage = 1;
+    optional ids.v1.Stage identifier = 1;
 
     // The arguments of the Stage.
     //

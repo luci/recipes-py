@@ -8,6 +8,7 @@ package turboci.graph.orchestrator.v1;
 
 import "turboci/graph/ids/v1/identifier.proto";
 import "turboci/graph/orchestrator/v1/check_kind.proto";
+import "turboci/graph/orchestrator/v1/check_state.proto";
 import "turboci/graph/orchestrator/v1/field_options.proto";
 import "turboci/graph/orchestrator/v1/revision_range.proto";
 
@@ -79,9 +80,17 @@ message Query {
       optional string id_regex = 2;
 
       // Find Checks with *any* of these options. Note that you still must set
-      // follow.check_options.type_urls to actually get the CheckOptions in the
-      // result set.
+      // type_urls and collect.data.check.options to actually get the
+      // Check Option data in the result set.
       repeated string with_option_types = 3;
+
+      // Find Checks in this state.
+      optional CheckState state = 4;
+
+      // Find Checks with *any* of these result data types. Note that you still
+      // must set type_urls and collect.data.check.result_data to actually get the
+      // Check Result data in the result set.
+      repeated string with_result_data_types = 5;
     }
     // Select Checks matching these patterns.
     repeated CheckPattern check_patterns = 3;
@@ -118,8 +127,16 @@ message Query {
       // Must be >= 0.
       optional int32 dependencies_depth = 2;
 
-      // Includes only resolved edges during traversal.
-      optional bool only_resolved = 3;
+      // If unset, includes all edges.
+      // If True, only includes resolved, satisfied, edges.
+      // If False, only includes resolved, unsatisfied, edges.
+      //
+      // NOTE: Edges which are frozen because they are part of a resolved
+      // EdgeGroup on a node will not show up as either true or false here, but
+      // will continue to show up with an unset `satisfied` filter.
+      //
+      // See the documentation on `EdgeGroup.resolution`.
+      optional bool satisfied = 3;
 
       // TBD: Other selection criteria (e.g. only checks of kind X or with
       // option type Y)
@@ -134,44 +151,34 @@ message Query {
 
   // Collect retrieves data from the expanded node set.
   message Collect {
-    // Data describes what options/results/progress data we want to retrieve
-    // from the selected checks/stages.
-    message Data {
-      // Describes what data the caller wants to see for Checks.
-      message Check {
-        // Include CheckOptions filtered by `type_urls` for any selected Checks.
-        optional bool options = 1;
+    // Describes what data the caller wants to see for Checks.
+    message Check {
+      // Include CheckOptions filtered by `type_urls` for any selected Checks.
+      optional bool options = 1;
 
-        // Include Result data filtered by `type_urls` for any selected Checks.
-        optional bool result_data = 2;
-      }
-      // Describes what data the caller wants to see for Checks.
-      optional Check check = 2;
+      // Include Result data filtered by `type_urls` for any selected Checks.
+      optional bool result_data = 2;
 
-      // Describes what data the caller wants to see for Stages.
-      message Stage {
-        // TBD: what attempt progress data to include (and maybe for which
-        // attempt(s) to include it).
-      }
-      // Describes what data the caller wants to see for Stages.
-      optional Stage stage = 3;
-    }
-    // Collect options/results/progress data.
-    optional Data data = 1;
-
-    // Edits describes which edit records we want want to collect.
-    message Edits {
       // Include edits only within this range of Revisions.
-      optional RevisionRange range = 1;
-
-      // Include Check Edits for any selected Checks in this range.
-      optional bool check = 2;
-
-      // Include Stage Edits for any selected Stages in this range.
-      optional bool stage = 3;
+      //
+      // An empty RevisionRange (e.g. {0, 0}) means `all edits`.
+      optional RevisionRange edits = 3;
     }
-    // Collect edit records.
-    optional Edits edits = 2;
+    // Describes what data the caller wants to see for Checks.
+    optional Check check = 1;
+
+    // Describes what data the caller wants to see for Stages.
+    message Stage {
+      // TBD: what attempt progress data to include (and maybe for which
+      // attempt(s) to include it).
+
+      // Include edits only within this range of Revisions.
+      //
+      // An empty RevisionRange (e.g. {0, 0}) means `all edits`.
+      optional RevisionRange edits = 1;
+    }
+    // Describes what data the caller wants to see for Stages.
+    optional Stage stage = 2;
   }
   // The data to collect from the expanded node set.
   optional Collect collect = 4;

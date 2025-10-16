@@ -140,7 +140,7 @@ message CheckResultDatum {
 // Serialized as "<check>:E<version>".
 //
 // E.g.
-// "L<check.work_plan.id>:C<check.id>:ET<version.ts.seconds>/<version.ts.nanos>"
+// "L<check.work_plan.id>:C<check.id>:V<version.seconds>/<version.nanos>"
 message CheckEdit {
   // The check that this edit belongs to.
   optional Check check = 1;
@@ -151,10 +151,10 @@ message CheckEdit {
 
 // Identifies a CheckEditOption within a WorkPlan.
 //
-// Serialized as "<check_edit>:D<idx>".
+// Serialized as "<check_edit>:O<idx>".
 //
 // E.g.
-// "L<check_edit.check.work_plan.id>:C<check_edit.check.id>:ET<check_edit.version.ts.seconds>/<check_edit.version.ts.nanos>:D<idx>"
+// "L<check_edit.check.work_plan.id>:C<check_edit.check.id>:V<check_edit.version.seconds>/<check_edit.version.nanos>:D<idx>"
 //
 // This is separate from `CheckEdit` because it may reside in a different
 // realm than the CheckEdit itself.
@@ -162,11 +162,10 @@ message CheckEditOption {
   // The check that this edit belongs to.
   optional CheckEdit check_edit = 1;
 
-  // The 1-based index of this datum within the Edit.check.delta.options
-  // list.
+  // The 1-based index of this datum within the check.options list.
   //
   // This is 1-based to distinguish it from 0/unset (which is invalid).
-  optional int32 check_delta_options_idx = 2;
+  optional int32 idx = 2;
 }
 
 // Identifies a Stage within a WorkPlan.
@@ -233,7 +232,7 @@ message StageAttempt {
   // The 1-based index of this attempt within the Stage.attempts list.
   //
   // This is 1-based to distinguish it from 0/unset (which is invalid).
-  optional int32 attempts_idx = 2;
+  optional int32 idx = 2;
 }
 
 // Identifies a Stage Edit within a WorkPlan.
@@ -241,7 +240,7 @@ message StageAttempt {
 // Serialized as "<stage>:E<version>".
 //
 // E.g.
-// "<stage.work_plan.id>:<stage.id>:ET<version.ts.seconds>/<version.ts.nanos>"
+// "<stage.work_plan.id>:<stage.id>:V<version.seconds>/<version.nanos>"
 message StageEdit {
   // The stage that this edit belongs to.
   optional Stage stage = 1;

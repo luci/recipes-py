@@ -1,0 +1,22 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.data.gerrit.v1;
+// This proto is intended to be classified as MVP (converged) maturity.
+// TBD - Pending actual implementation to annotate maturity.
+
+import "turboci/data/gerrit/v1/gerrit_change_info.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/data/gerrit/v1;gerritpb";
+option java_multiple_files = true;
+
+// GobSourceCheckResults provide expanded details about the CLs relevant to this CI run.
+// In the future, this may also contain expanded checkout details such as the commit IDs of
+// each mount but we are not aware of any need for this today.
+message GobSourceCheckResults {
+  // The detailed gerrit change infos for the gerrit_changes in the options.
+  repeated GerritChangeInfo changes = 1;
+}

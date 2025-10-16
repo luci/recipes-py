@@ -1,0 +1,125 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.data.build.v1;
+// This proto is intended to be classified as multiproduct (not converged) maturity.
+// TBD - Pending actual implementation to annotate maturity.
+
+option go_package = "go.chromium.org/turboci/proto/go/data/build/v1;buildpb";
+option java_multiple_files = true;
+
+// BuildCheckResults represent the output of a build. This is mainly centered around the artifacts
+// generated from the build and their locations.
+message BuildCheckResult {
+  // Whether the build succeeded or failed. "success = true" means that all required build actions
+  // succeeded. Any failed actions result in "success = false". If the build failed, display_message
+  // will contain human-readable information about the failure reason. Additional product-specific
+  // failure information should reside in a product-specific proto.
+  optional bool success = 1;
+
+  // A message string and a format-type enum to instruct clients how to render the text.
+  message DisplayMessage {
+    // The message string.
+    optional string message = 1;
+
+    // Different types of message formatting.
+    enum MessageFormat {
+      // Default message format.
+      MESSAGE_FORMAT_UNKNOWN = 0;
+      // Plain text - no special formatting.
+      MESSAGE_FORMAT_PLAIN_TEXT = 1;
+      // HTML markup.
+      MESSAGE_FORMAT_HTML = 2;
+      // Markdown formatting.
+      MESSAGE_FORMAT_MARKDOWN = 3;
+      // Includes ANSI escape codes for controlling things like text color.
+      MESSAGE_FORMAT_ANSI = 4;
+    }
+
+    // How the message string should be formatted.
+    optional MessageFormat message_format = 2;
+  }
+  // A message string detailing the status of the build with information on how to format the text.
+  optional DisplayMessage display_message = 2;
+
+  // Build ID, target and attempt which are necessary to query artifacts in ab/ or Android Build API
+  message AndroidBuildArtifacts {
+    // Android build ID.
+    optional string build_id = 1;
+    // Android build target.
+    optional string target = 2;
+    // Android build attempt.
+    optional string build_attempt = 3;
+  }
+
+  // Information needed to find artifacts in ab/.
+  // We acknowledge that this is Android-specific but are keeping it here in the "multiproduct"
+  // namespace.
+  optional AndroidBuildArtifacts android_build_artifacts = 3;
+
+  // A manifest in proto form containing key (file name) to value (CAS digest) mappings of build
+  // artifacts.
+  // Eg. http://shortn/_zd9o9GVYT1
+  message CasManifest {
+    // Key (filename), value (CAS digest)
+    // Eg.
+    // "art-host-tests.zip": "7717786334a0e5b7e06d36c0327ac6baa8494e9a5b3a2e7b745b298eea09f0db/78",
+    // "google-tradefed.zip": "750d367eaa6012032b01b9743e83f21f3f1e4695b563cdd4828dc81846878e6d/2559",
+    // "host-unit-tests.zip": "eca68a3d11ad7e7e75871ee0a343d75d42dd789ea48a6b2ca173eb9008c10da2/78",
+    map<string, string> manifest = 1;
+
+    // The instance name of the CAS service.
+    // Eg. projects/android-build-farm/instances/default_instance
+    optional string cas_instance = 2;
+
+    // The address of the CAS service.
+    // Eg. remotebuildexecution.googleapis.com:443
+    optional string cas_service = 3;
+
+    // The CAS uploader client version.
+    optional string client_version = 4;
+  }
+
+  // CAS manifest information fully represented in proto form.
+  optional CasManifest cas_manifest = 4;
+
+  // GCS path to bucket/directory containing artifacts
+  // This serves as an "implicit" manifest. Clients would be expected to have
+  // "well-known" artifact names under this directory
+  message GcsArtifacts {
+    // The path prefix in GS under which artifacts for this build will be stored.
+    // Format: "gs://bucket/path/to/root/dir/". Trailing slash is *required*.
+    optional string root_directory_uri = 1;
+
+    // Message wrapper to allow repeated files because repeated fields cannot directly
+    // be used as a map value.
+    message Files {
+      // Paths to files in the GCS bucket, relative to the root_directory_uri.
+      repeated string files = 1;
+    }
+
+    // Mapping of files in the GCS bucket into different artifact categories
+    // Eg. http://shortn/_8eibPJsb7v
+    map<string, Files> files_by_category = 2;
+  }
+
+  // Mapping between a label string and a collection of artifacts in a GCS bucket.
+  // Used to support cases where different sets of artifacts are uploaded to different buckets.
+  // The string key identifies the purpose of the artifacts and allows easy access for consumers.
+  // For cases where only a single set of artifacts is uploaded, you can use "default" as the key.
+  // It is expected that use cases with multiple GCS buckets will likely want to represent
+  // the set of known keys for their use case, probably in a custom proto.
+  map<string, GcsArtifacts> gcs_artifacts = 5;
+
+  // A redirect URL to the build dashboard showing additional details about the build (eg. logs).
+  // Useful to show in tools like Chronicle.
+  optional string view_url = 6;
+
+  // Future convergence:
+  // * Store an artifacts manifest in ResultDB and reference here
+  // * CasManifest that maps files to their CAS digest. We don't have a known use case for this
+  //   today besides an Android-specific one that uploads a cas_digest file to ab/ (example).
+}

@@ -48,23 +48,36 @@ message EdgeGroup {
   // A value greater than one could be useful if you want to depend on the first
   // N of multiple possible edges.
   //
-  // A zero or negative threshold will be normalized to `unset`.
+  // A zero threshold will be normalized to `unset`.
+  // A negative threshold is an error.
   optional int32 threshold = 3;
 
   // A bubbling up of the resolution from the child edges of this group. Used to
   // easily identify which branch of the edge tree was resolved.
   //
-  // Once `resolution` is set, `edges` and `groups` are frozen (so to see which
-  // Edge objects caused this group to be resolved, recurse into edges and
-  // groups). This is true even if after `resolution.at` some additional edges
-  // became resolved. If you want to see if any of these extra edges were
-  // resolved, you can just directly query for them at the time you want to
-  // check for them.
+  // `resolution` will be set once the `threshold` is met - this means that some
+  // `edges` and `groups` may still be unresolved.
   //
-  // This can be set with `satisfied = false` if the Orchestrator can prove that
-  // no additional evolution of `edges` and `groups` could satisfy this
-  // EdgeGroup. For example, if `threshold` is set to 5 and this EdgeGroup has 5
-  // entries, one of which is marked as `satisfied = false`, then we know this
-  // EdgeGroup must also be unsatisfiable.
+  // Until the node is FINAL, the orchestrator will keep propagating all edges
+  // in order to allow you to quickly read the state of the dependencies.
+  //
+  // To figure out what edges caused an EdgeGroup to be unblocked, compare the
+  // timestamp of this resolution to the resolutions in `groups` and/or `edges`.
+  // Groups and edges which are resolved after `resolution.at` were not included
+  // in the original event which resolved this EdgeGroup.
+  //
+  // For example, say this EdgeGroup has edges A, B, and C, with a threshold of
+  // 2. A and B both become resolved, and so this EdgeGroup will have its
+  // resolution set as well. At this point, C is still unresolved.
+  //
+  // At a later point, C becomes resolved, which will leave this EdgeGroup with
+  // all three of its edges resolved - however C's resolution time will be after
+  // the resolution time of this EdgeGroup.
+  //
+  // Note that an EdgeGroup can be resolved with `satisfied = false` if the
+  // Orchestrator can prove that no additional evolution of `edges` and `groups`
+  // could ever satisfy this EdgeGroup. For example, if `threshold` is set to 5 and
+  // this EdgeGroup has 5 entries, one of which is marked as `satisfied
+  // = false`, then we know this EdgeGroup must also be unsatisfiable.
   optional Edge.Resolution resolution = 4;
 }

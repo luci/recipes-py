@@ -8,23 +8,36 @@ package turboci.graph.executor.v1;
 
 import "turboci/graph/executor/v1/cancel_stage.proto";
 import "turboci/graph/executor/v1/run_stage.proto";
+import "turboci/graph/executor/v1/validate_stage.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/executor/v1/grpcpb;executorgrpcpb";
 option java_multiple_files = true;
 
 // TurboCIStageExecutor defines the interface that all stage executors must
 // implement.
-
+//
 // The TurboCI Orchestrator can be configured to use many different services
 // which implement TurboCIStageExecutor to execute stages of different types.
+//
+// TBD: Explain end-user-credential propagation.
 service TurboCIStageExecutor {
-  // RunStage instructs the executor to run the given stage attempt.
+  // ValidateStage instructs the executor to validate the stage.
   //
-  // This RPC supports both "validate_only" mode and "run" mode.
+  // It is called once (i.e. not per attempt) when the stage is being inserted
+  // into the graph. It should check the executor can run the stage at all (this
+  // includes checking ACLs if appropriate).
   //
-  // * In the "validate_only" mode, the RPC performs pre-flight checks,
-  // including ACL checks and validation on the stage. It either returns
-  // the validated execution policy if the validation passes, or an error.
+  // If the stage looks good (i.e. this RPC returns OK), the executor has
+  // opportunity to adjust some of stages parameters before the stage is
+  // inserted into the graph by returning them in ValidateStageResponse
+  // (currently contains only turboci.orchestrator.v1.ExecutionPolicy).
+  //
+  // If the stage doesn't look good (i.e. this RPC returns an error), the entire
+  // WriteNodes transaction that was attempting to insert the stage will be
+  // aborted. The graph will be left unchanged.
+  //
+  // RunStage RPC is generally expected to redo the validation, since the stage
+  // parameters may change after the stage is inserted.
   //
   // TBD: Formalize how the error will be propagated back to the client
   // attempting to insert this stage. How would we allow details in the
@@ -33,8 +46,23 @@ service TurboCIStageExecutor {
   // Sidenote - do we need to record this failed node insertion somewhere
   // in the graph/ledger for observability?
   //
-  // * In the "run" mode, the RPC redoes the ACL checks and stage validation,
-  // then runs the stage if validation passes.
+  // Must have no side effects, since it observes stages that potentially will
+  // never exist in the graph for real.
+  rpc ValidateStage(ValidateStageRequest) returns (ValidateStageResponse) {}
+
+  // RunStage instructs the executor to run the given stage attempt.
+  //
+  // This is called per attempt to either run the stage to completion (for
+  // "synchronous" stages) or to dispatch it to execute elsewhere (for
+  // "asynchronous" stages).
+  //
+  // RunStage RPC is generally expected to redo the validation done by
+  // ValidateStage, since the stage parameters may change after the stage is
+  // inserted. If the stage is no longer passing the validation, RunStage should
+  // essentially finish it as failed by calling TurboCIOrchestrator.WriteNodes
+  // (see below).
+  //
+  // Expected behavior:
   //   * If the stage is synchronous, at the end of this RPC the executor must
   //     call TurboCIOrchestrator.WriteNodes with StageAttemptToken to do all
   //     the writes in one transaction, including a CurrentStageWrite to mark
@@ -45,6 +73,14 @@ service TurboCIStageExecutor {
   //     * the executor must also write the validated execution policy for the
   //       StageAttempt for the updated state (See
   //       turboci.orchestrator.v1.ExecutionPolicy for details).
+  //
+  // RunStage return value and even status code are essentially ignored.
+  // The orchestrator always looks at the state of the stage attempt after
+  // RunStage finishes (successfully or not) to decide if the request succeeded
+  // or should be retried. This is needed to unify handling of synchronous and
+  // asynchronous stages and to simplify handling of a class of race conditions
+  // related to RPC peers (or network between them) dying midway through
+  // execution.
   rpc RunStage(RunStageRequest) returns (RunStageResponse) {}
 
   // CancelStage instructs the executor to cancel the given stage attempt.

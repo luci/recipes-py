@@ -1,0 +1,98 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.data.build.v1;
+// This proto is intended to be classified as MVP (converged) maturity.
+// TBD - Pending actual implementation to annotate maturity.
+
+option go_package = "go.chromium.org/turboci/proto/go/data/build/v1;buildpb";
+option java_multiple_files = true;
+
+// The products currently supported by Turbo CI.
+enum Product {
+  // Default product.
+  PRODUCT_UNKNOWN = 0;
+  // Android.
+  PRODUCT_ANDROID = 1;
+  // Browser.
+  PRODUCT_BROWSER = 2;
+  // ChromeOS.
+  PRODUCT_CHROMEOS = 3;
+}
+
+// BuildCheckOptions provide the necessary information to execute the build, including but not
+// limited to:
+//   * Information specifying the purpose of each of the input dependency Checks.
+//   * External dependencies such as binaries stored in GCS, RBE-CAS etc.
+//   * Information/instructions on how to construct the filesystem for executing the build.
+//
+// The source code to be built will typically be specified via dependencies on Source Checks and
+// don't need to be explicitly referenced in the BuildCheckOptions if there is only one Source
+// Check specified. For situations where multiple Source Checks are needed, stage maintainers
+// are encouraged to create a custom message that maps Source Check identifiers to the purpose
+// they'll be used for.
+message BuildCheckOptions {
+  // A "build target" represents a particular configuration for a build action that will create
+  // a set of binaries. Typically the build target, and therefore the binaries produced, will
+  // target a specific runtime environment (hardware/architecture, VM environment, etc.) plus
+  // optionally a set of software configurations to build into the binaries (features to enable,
+  // enabling debug ports, etc.). The build target may also include/imply a particular branch
+  // or other specification for which source code should be used when building, though this
+  // is not required.
+  //
+  // A build target will often correspond 1:1 to a builder that will perform a build for that
+  // build target, though this is not required. (You could have a single builder that knows how
+  // to build many targets, and that accepts the build target name as an input, for example).
+  // When builders build only a single build target, often the builder name and the build target
+  // name will be the same.
+  message BuildTarget {
+    // The name for this build target. The exact meaning and format of this value will vary between
+    // products, but examples include:
+    // * Android: cf_x86_64_phone-trunk_staging-userdebug
+    // * Browser: chromium/try/linux-rel
+    // * ChromeOS: chromeos/staging/staging-brya-release-main
+    optional string name = 1;
+
+    // The namespace for this build target, which together with the target name uniquely identifies
+    // the build target. The exact meaning and format of this value will vary between products,
+    // and currently only Android is expected to use it (to hold the target's branch config).
+    // Browser and ChromeOS do not currently expect to use it since the values they plan to use for
+    // `name` are already believed to be globally unique.
+    optional string namespace = 2;
+
+    // The product (Android, etc.) whose artifacts are built by this build target.
+    optional Product product = 3;
+
+    // The platform that the artifacts built by this build target are meant to run on.
+    // For example, "husky" or "brya".
+    //
+    // This information will be used to help provide the right image to test execution Stages
+    // based on the DUTs they choose to test on when there are multiple choices possible.
+    optional string platform = 4;
+
+    // The device that the artifacts built by this build target is meant to run on.
+    // For example, "redrix" or "taniks" within the "brya" platform.
+    //
+    // This information will be used to help provide the right image to test execution Stages
+    // based on the DUTs they choose to test on when there are multiple choices possible.
+    // May be omitted for workflows that do not need to build per-device images.
+    optional string device = 5;
+  }
+
+  // The build target. This will have slightly different meanings for different products but it
+  // roughly represents the hardware this build is meant for plus the set of software options
+  // (e.g. whether to enable certain build-time software options) to enable for the output
+  // artifacts.
+  optional BuildTarget target = 1;
+
+  // Other things to consider converging later:
+  // * Useful build flags to override (e.g. enabling/disabling ASAN, logging levels, DCHECKS, etc.)
+  //   * Not currently needed by Browser
+  //   * Somewhat similar to build_features in Android. Leave as Android-specific
+  //     until it becomes clear whether it should be converged
+  // * Sub-targets to build (e.g. in BWYN we only build some parts of test_suites)
+  //   * Eg. test_context in Android (but this can currently be computed based on the TestChecks)
+}

@@ -1,0 +1,25 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.executor.v1;
+
+import "turboci/graph/orchestrator/v1/execution_policy.proto";
+import "turboci/graph/orchestrator/v1/stage.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/executor/v1;executorpb";
+option java_multiple_files = true;
+
+// Request to validate a stage before it is inserted into the graph.
+message ValidateStageRequest {
+  // Stage to validate.
+  optional orchestrator.v1.Stage stage = 1;
+}
+
+// Response to a stage validation request.
+message ValidateStageResponse {
+  // Validated execution policy for the stage.
+  optional orchestrator.v1.ExecutionPolicy execution_policy = 1;
+}

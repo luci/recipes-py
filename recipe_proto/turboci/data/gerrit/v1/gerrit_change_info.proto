@@ -1,0 +1,341 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.data.gerrit.v1;
+// This proto is intended to be classified as MVP (converged) maturity.
+// TBD - Pending actual implementation to annotate maturity.
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/data/gerrit/v1;gerritpb";
+option java_multiple_files = true;
+
+// These fields should roughly match Gerrit ChangeInfo.
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#change-info
+// Please see the Gerrit documentation for details on which fields are required/optional and when
+// certain fields are populated/left empty.
+//
+// Note that the main purpose here is to replicate the ChangeInfo fields from the Gerrit Change Detail API
+// response, and to ensure the same fields available in legacy CI systems are also available here, even if
+// some fields may not have an immediate use for CI purposes. Therefore the fields in this message and its
+// sub-messages are expected to be populated from the Gerrit API response rather than directly by workflows.
+message GerritChangeInfo {
+  // Which Gerrit instance this change is hosted on. This should not include the
+  // ".googlesource.com" hostname suffix as the suffix may be different depending on how it's
+  // accessed (eg. ".git.corp.google.com")
+  //
+  // Example:
+  //   https://android.googlesource.com/ -> "android"
+  optional string host = 1;
+
+  // Which project.
+  //
+  // Example:
+  //   https://android.googlesource.com/device/google/cuttlefish/ ->
+  //     "device/google/cuttlefish"
+  optional string project = 2;
+
+  // Which branch. The refs/heads/ prefix is omitted.
+  optional string branch = 3;
+
+  // The gerrit assigned change number for this change.
+  //
+  // Example:
+  //   https://chromium-review.googlesource.com/c/infra/turboci/proto/+/6990802/2
+  //     -> 6990802
+  optional int64 change_number = 4;
+
+  // The latest patchset number for this change at the time of the request for this change information.
+  // This should be equivalent to the RevisionInfo.patchset field for the latest revision.
+  // Example:
+  //   https://chromium-review.googlesource.com/c/infra/turboci/proto/+/6990802/2
+  //     -> 2
+  optional int32 patchset = 5;
+
+  // Possible statuses for changes.
+  enum Status {
+    // Unknown status.
+    STATUS_UNKNOWN = 0;
+    // Change is in progress.
+    STATUS_NEW = 1;
+    // Change has been merged into branch.
+    STATUS_MERGED = 2;
+    // Change has been abandoned.
+    STATUS_ABANDONED = 3;
+    // The change has a merge conflict.
+    STATUS_MERGE_CONFLICT = 4;
+  }
+
+  // The status of the change.
+  optional Status status = 6;
+
+  // The timestamp of when the change was created.
+  optional google.protobuf.Timestamp creation_time = 7;
+
+  // Last time this change was modified.
+  // This includes new comments, label changes, etc.
+  optional google.protobuf.Timestamp last_modification_time = 8;
+
+  // The time when this change was submitted in gerrit.
+  optional google.protobuf.Timestamp submitted_time = 9;
+
+  // The commit ID of the current patch set of this change.
+  optional string current_revision = 10;
+
+  // All patch sets of this change as of the time its metadata was retrieved from Gerrit,
+  // if ALL_REVISIONS was specified when retrieving. Otherwise this contains only the
+  // Revision corresponding to the current_revision.
+  // This is stored as a map where the key is the commit ID and the value is the RevisionInfo.
+  map<string, RevisionInfo> revisions = 11;
+
+  // The ChangeInfo.owner from Gerrit, representing the person who created the change.
+  optional AccountInfo owner = 12;
+
+  // The reviewers of this change as a map where the key is the reviewer state and the value
+  // is a list of AccountInfos.
+  // Possible reviewer states are "REVIEWER" and "CC".
+  // "REVIEWER": Users with at least one non-zero vote on the change.
+  // "CC": Users that were added to the change, but have not voted
+  map<string, AccountInfos> reviewers = 13;
+
+  // The label info associated with the change as a map where the key is the full name of the label
+  // (e.g., "Code-Review", not "CR") and the value is the LabelInfo.
+  map<string, LabelInfo> labels = 14;
+
+  // The comments posted at the change-level. This does not include comments left at specific
+  // lines within the changed files.
+  repeated ChangeMessageInfo messages = 15;
+
+  // The Change-Id of the change.
+  // Eg. "I8473b95934b5732ac55d26311a706c9c2bde9940"
+  optional string change_id = 16;
+
+  // The topic to which this change belongs.
+  optional string topic = 17;
+
+  // Whether this change info was created for a local change.
+  // Some clients may create a fake ChangeInfo for changes in their local workspace.
+  // If true, this ChangeInfo is likely manually-created for local testing purposes so expect
+  // many fields to be omitted.
+  optional bool local = 18;
+
+  // Whether the owner of the CL is a bot or not.
+  optional bool is_owner_bot = 19;
+
+  // Future convergence: last non-trivial patchset
+  // We know that both Chrome and Android use some variation of "last non-trivial patchset"
+  // but the exact algorithm for determining "non-trivial" is not clear and therefore we
+  // are not confident in converging it at the moment. We expect Chrome and Android to create
+  // their own protos for this today. We may converge this in the future once it becomes
+  // clear how each product defines "non-trivial".
+  // For reference, how Android does it today: http://shortn/_nRwyXPcucE
+}
+
+// Sourced from https://gerrit-review.googlesource.com/Documentation/rest-api-accounts.html#account-info
+message AccountInfo {
+  // The numeric ID of the account.
+  optional int64 account_id = 1;
+
+  // The full name of the user.
+  optional string name = 2;
+
+  // The display name of the user.
+  optional string display_name = 3;
+
+  // The email address the user prefers to be contacted through.
+  optional string email = 4;
+
+  // The secondary emails of the user.
+  repeated string secondary_emails = 5;
+
+  // The username of the user.
+  optional string username = 6;
+
+  // Status message of the account.
+  optional string status = 7;
+
+  // Whether the account is inactive.
+  optional bool inactive = 8;
+
+  // Whether the account is deleted.
+  optional bool deleted = 9;
+
+  // List of additional tags that this account has (e.g., SERVICE_USER).
+  repeated string tags = 10;
+}
+
+// Wrapper for repeated AccountInfo
+message AccountInfos {
+  // Multiple AccountInfos.
+  repeated AccountInfo accounts = 1;
+}
+
+// Sourced from https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#approval-info
+message ApprovalInfo {
+  // The account info of the user who made the approval.
+  optional AccountInfo user = 1;
+
+  // The vote that the user has given for the label.
+  optional int32 value = 2;
+
+  // The timestamp when the approval was made.
+  optional google.protobuf.Timestamp date = 3;
+
+  // The value of the tag field from the ReviewInput that was set while posting the review,
+  // if a tag was set. See more details in
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#approval-info
+  optional string tag = 4;
+
+  // If true, this vote was made after the change was submitted.
+  optional bool post_submit = 5;
+}
+
+// Sourced from https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#change-message-info
+message ChangeMessageInfo {
+  // The ID of the message.
+  optional string id = 1;
+
+  // Author of the message. Unset if written by the Gerrit system.
+  optional AccountInfo author = 2;
+
+  // Real author of the message. Only set if the message was posted on behalf of another user.
+  optional AccountInfo real_author = 3;
+
+  // The timestamp this message was posted.
+  optional google.protobuf.Timestamp date = 4;
+
+  // The text left by the user or Gerrit system. Accounts are served as account IDs inlined in
+  // the text as <GERRIT_ACCOUNT_18419>. All accounts, used in message, can be found in
+  // accounts_in_message field.
+  optional string message = 5;
+
+  // Accounts used in message.
+  repeated AccountInfo accounts_in_message = 6;
+
+  // Value of the tag field from ReviewInput set while posting the review.
+  // See "tag" field under https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#change-message-info
+  optional string tag = 7;
+
+  // Which patchset (if any) generated this message.
+  optional int32 patchset = 8;
+}
+
+// Sourced from https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#commit-info
+message CommitInfo {
+  // The commit ID.
+  optional string commit_id = 1;
+
+  // The parent commits of this commit. In each parent only the commit and subject fields are populated.
+  repeated CommitInfo parents = 2;
+
+  // The author of this commit.
+  optional AccountInfo author = 3;
+
+  // The committer of this commit.
+  optional AccountInfo committer = 4;
+
+  // The subject of the commit (header line of the commit message).
+  optional string subject = 5;
+
+  // The commit message.
+  optional string message = 6;
+}
+
+// Sourced from https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#file-info
+message FileInfo {
+  // The old file path. Only set if the file was renamed or copied.
+  optional string old_path = 1;
+
+  // Possible statuses for file changes.
+  enum Status {
+    // Unknown status.
+    STATUS_UNKNOWN = 0;
+    // The file was added.
+    STATUS_ADDED = 1;
+    // The file was deleted.
+    STATUS_DELETED = 2;
+    // The file was modified.
+    STATUS_MODIFIED = 3;
+    // The file was renamed.
+    STATUS_RENAMED = 4;
+    // The file was copied.
+    STATUS_COPIED = 5;
+    // The file was rewritten.
+    STATUS_REWRITTEN = 6;
+  }
+  // The status of the file.
+  optional Status status = 2;
+
+  // Number of inserted lines.
+  optional int32 lines_inserted = 3;
+
+  // Number of deleted lines.
+  optional int32 lines_deleted = 4;
+}
+
+// Sourced from https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#label-info
+message LabelInfo {
+  // The description of the label.
+  optional string description = 1;
+
+  // The voting value of the user who recommended/disliked this label.
+  optional int32 value = 2;
+
+  // The default voting value for the label.
+  optional int32 default_value = 3;
+
+  // List of all approvals for this label.
+  repeated ApprovalInfo all = 4;
+
+  // A map of all values that are allowed for this label.
+  // The map keys are the vote values (e.g., "-2", "-1", " 0", "+1", "+2")
+  // and the map values are the descriptions.
+  map<string, string> values = 5;
+}
+
+// Sourced from https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#revision-info
+message RevisionInfo {
+  // Possible kinds of changes.
+  // See https://gerrit-review.googlesource.com/Documentation/config-labels.html for more detailed
+  // descriptions of each enum type.
+  enum Kind {
+    // Default value.
+    KIND_UNKNOWN = 0;
+    // Rework change.
+    KIND_REWORK = 1;
+    // Trivial rebase change.
+    KIND_TRIVIAL_REBASE = 2;
+    // Trivial rebase change with message update.
+    KIND_TRIVIAL_REBASE_WITH_MESSAGE_UPDATE = 3;
+    // Parents changed.
+    KIND_MERGE_FIRST_PARENT_UPDATE = 4;
+    // No code change (eg. commit message update).
+    KIND_NO_CODE_CHANGE = 5;
+    // No change.
+    KIND_NO_CHANGE = 6;
+  }
+
+  // The kind of change for this revision.
+  optional Kind kind = 1;
+  // The patch set number, or edit if the patch set is an edit.
+  optional int32 patchset = 2;
+
+  // When the patchset was created.
+  optional google.protobuf.Timestamp created = 3;
+
+  // The uploader of the patchset.
+  optional AccountInfo uploader = 4;
+
+  // The Git reference for the patchset.
+  optional string ref = 5;
+
+  // The commit of the patchset.
+  optional CommitInfo commit = 6;
+
+  // The files of the patchset as a map where the key is the path to the file and
+  // the value is the FileInfo.
+  map<string, FileInfo> files = 7;
+}

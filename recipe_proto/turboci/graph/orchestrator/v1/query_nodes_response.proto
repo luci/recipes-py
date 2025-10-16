@@ -6,6 +6,7 @@ syntax = "proto3";
 
 package turboci.graph.orchestrator.v1;
 
+import "turboci/graph/ids/v1/identifier.proto";
 import "turboci/graph/orchestrator/v1/graph_view.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
@@ -15,6 +16,9 @@ option java_multiple_files = true;
 message QueryNodesResponse {
   // The graph view of the nodes matching the query.
   optional GraphView graph = 1;
+
+  // A list of explicitly-selected nodes which were not found in the graph.
+  repeated ids.v1.Identifier absent = 2;
 
   // TBD: A field to indicate which permissions were checked that the caller
   // didn't have access to.

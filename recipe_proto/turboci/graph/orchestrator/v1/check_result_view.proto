@@ -6,6 +6,7 @@ syntax = "proto3";
 
 package turboci.graph.orchestrator.v1;
 
+import "turboci/graph/ids/v1/identifier.proto";
 import "turboci/graph/orchestrator/v1/datum.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
@@ -13,6 +14,9 @@ option java_multiple_files = true;
 
 // A view of the data for a single Check.Result.
 message CheckResultView {
+  // Which CheckResult this belongs to.
+  optional ids.v1.CheckResult identifier = 1;
+
   // The current data for each data type in this Result.
-  repeated Datum data = 1;
+  repeated Datum data = 2;
 }
