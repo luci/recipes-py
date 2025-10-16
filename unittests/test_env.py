@@ -149,6 +149,9 @@ class RecipeEngineUnitTest(unittest.TestCase):
 
 def main():
   if '-v' in sys.argv or '--verbose' in sys.argv:
+    # _MAX_LENGTH is hard coded to 80 for some reason and so ends up truncating
+    # comparison messages.
+    __import__('sys').modules['unittest.util']._MAX_LENGTH = 999999999
     logging.root.handlers=[CapturableHandler()]
     logging.basicConfig(level=logging.DEBUG)
   sys.exit(unittest.main())
