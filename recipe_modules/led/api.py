@@ -30,7 +30,7 @@ class LedApi(recipe_api.RecipeApi):
   The main interface this module provides is a direct call to the led binary:
 
     led_result = api.led(
-      'get-builder', ['luci.chromium.try:chromium_presubmit'])
+      'get-builder', ['luci.chromium.try:linux-presubmit'])
     final_data = led_result.then('edit-recipe-bundle').result
 
   See the led binary for full documentation of commands.
