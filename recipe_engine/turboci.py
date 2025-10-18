@@ -42,6 +42,7 @@ from .internal.turboci.common import (
 )
 
 from .internal.turboci.errors import (
+    CheckWriteInvariantException,
     TransactionConflictException,
     TransactionUseAfterWriteException,
     TurboCIException,
@@ -50,6 +51,7 @@ from .internal.turboci.errors import (
 __all__ = [
     'check',
     'check_id',
+    'CheckWriteInvariantException',
     'collect_check_ids',
     'edge_group',
     'from_id',
