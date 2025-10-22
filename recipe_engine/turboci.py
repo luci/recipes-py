@@ -49,6 +49,11 @@ from .internal.turboci.errors import (
     TurboCIException,
 )
 
+from .internal.turboci.transaction import (
+    Transaction,
+    run_transaction,
+)
+
 __all__ = [
     'check',
     'check_id',
@@ -61,7 +66,9 @@ __all__ = [
     'query_nodes',
     'read_checks',
     'reason',
+    'run_transaction',
     'to_id',
+    'Transaction',
     'TransactionConflictException',
     'TransactionUseAfterWriteException',
     'TurboCIException',

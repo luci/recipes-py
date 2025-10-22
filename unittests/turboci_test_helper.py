@@ -16,6 +16,7 @@ from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesReque
 
 from recipe_engine import turboci
 from recipe_engine.internal.turboci.fake import FakeTurboCIOrchestrator
+from recipe_engine.internal.turboci.transaction import QueryMode
 
 class TestBaseClass(test_env.RecipeEngineUnitTest):
   def setUp(self):
@@ -55,3 +56,14 @@ class TestBaseClass(test_env.RecipeEngineUnitTest):
   ):
     return turboci.read_checks(
         *ids, types=types, collect=collect, client=self.CLIENT)
+
+  def run_transaction(
+      self,
+      txnFunc: Callable[[turboci.Transaction], None],
+      *,
+      retries=3,
+      query_mode: QueryMode = 'require',
+  ):
+    return turboci.run_transaction(
+        txnFunc, retries=retries, query_mode=query_mode,
+        client=self.CLIENT)
