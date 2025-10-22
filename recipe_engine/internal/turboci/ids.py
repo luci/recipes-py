@@ -25,7 +25,8 @@ def type_urls(*msgs: str|type[Message]|Message) -> Generator[str]:
   """Cast multiple proto message types or instances to their type url."""
   for msg in msgs:
     if isinstance(msg, str):
-      if not msg.startswith(_TYPE_PREFIX):
+      # * is a special value which means "all types"
+      if msg != '*' and not msg.startswith(_TYPE_PREFIX):
         raise ValueError(f"type url {msg!r} must start with {_TYPE_PREFIX!r}.")
       yield msg
     else:

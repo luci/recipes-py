@@ -247,7 +247,8 @@ class TestData(BaseTestData):
     self.step_data = defaultdict(StepTestData)
     self.expected_exceptions = []
     self.expected_status = None
-    self.post_process_hooks = [] # list(PostprocessHook)
+    self.post_process_hooks: list[PostprocessHook] = []
+    self.assert_turboci_graph_hooks: list[PostprocessHook] = []
 
     # Filled in by recipe_deps.Recipe.gen_tests()
     self.expect_file = None
@@ -271,6 +272,9 @@ class TestData(BaseTestData):
 
     ret.post_process_hooks.extend(self.post_process_hooks)
     ret.post_process_hooks.extend(other.post_process_hooks)
+
+    ret.assert_turboci_graph_hooks.extend(self.assert_turboci_graph_hooks)
+    ret.assert_turboci_graph_hooks.extend(other.assert_turboci_graph_hooks)
 
     ret.expected_status = self.expected_status
     if other.expected_status is not None:
@@ -309,6 +313,12 @@ class TestData(BaseTestData):
     for warning in getattr(func, 'recipe_warnings', ()):
       record_execution_warning(warning)
     self.post_process_hooks.append(PostprocessHook(func, args, kwargs, context))
+
+  @escape.escape_warnings('.*')
+  def assert_turboci_graph(self, func, args, kwargs, context):
+    for warning in getattr(func, 'recipe_warnings', ()):
+      record_execution_warning(warning)
+    self.assert_turboci_graph_hooks.append(PostprocessHook(func, args, kwargs, context))
 
   def __repr__(self):
     return "TestData(%r)" % ({
@@ -930,6 +940,34 @@ class RecipeTestApi:
     _, filename, lineno, _, _, _ = inspect.stack()[1]
     context = PostprocessHookContext(func, args, kwargs, filename, lineno)
     ret.post_process(post_check, (func,) + args, kwargs, context)
+    return ret
+
+  def assert_turboci_graph(self, func, *args, **kwargs):
+    """Add a check-only post-processing hook which asserts on the TurboCI
+    graph state.
+
+    This is like post_process, except that func should look like:
+
+       from PB.turboci.graph.orchestrator.v1.graph_view import GraphView
+
+       func(assert_, graph: GraphView, *args, **kwargs) -> None
+
+    def GenTests(api):
+      def _assert_graph(assert_, graph: GraphView):
+        check_view = graph.checks[0]
+        assert_(check_view.check.identifier.id == 'bob')
+
+      yield api.test(
+        'whatever',
+        api.assert_turboci_graph(_check_graph),
+      )
+    """
+    def post_check(check, steps, f, *args, **kwargs):
+      f(check, steps, *args, **kwargs)
+    ret = TestData()
+    _, filename, lineno, _, _, _ = inspect.stack()[1]
+    context = PostprocessHookContext(func, args, kwargs, filename, lineno)
+    ret.assert_turboci_graph(post_check, (func,) + args, kwargs, context)
     return ret
 
 

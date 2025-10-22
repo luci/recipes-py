@@ -26,7 +26,7 @@ from PB.turboci.graph.orchestrator.v1.revision import Revision
 from recipe_engine import turboci
 from recipe_engine.internal.turboci.common import check_id
 from recipe_engine.internal.turboci.fake import _IndexEntrySnapshot
-from recipe_engine.internal.turboci.ids import AnyIdentifier
+from recipe_engine.internal.turboci.ids import AnyIdentifier, type_urls
 
 
 demoStruct = Struct(fields={'hello': Value(string_value='world')})
@@ -463,6 +463,28 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
     ))
     self.assertEqual(len(ret.checks), 2)
     self.assertEqual(set(c.check.identifier.id for c in ret.checks), {'a', 'c'})
+
+  def test_query_filter_all_options(self):
+    self.write_nodes(
+        turboci.check('a', kind='ANALYSIS', options=[demoStruct]),
+        turboci.check('b', kind=CheckKind.CHECK_KIND_ANALYSIS, options=[demoTS]),
+        turboci.check('c', kind=CheckKind.CHECK_KIND_ANALYSIS, options=[demoStruct]),
+    )
+
+    ret = self.query_nodes(turboci.make_query(
+        Query.Select.CheckPattern(),
+        Query.Collect.Check(options=True),
+        types=('*',),
+    ))
+    self.assertEqual(len(ret.checks), 3)
+    self.assertEqual(set(c.check.identifier.id for c in ret.checks), {
+      'a', 'b', 'c',
+    })
+    types = set()
+    for check in ret.checks:
+      types.update(d.value.value.type_url for d in check.option_data)
+    self.assertEqual(types, set(type_urls(demoStruct, demoTS)))
+
 
   def test_query_filter_result(self):
     self.write_nodes(

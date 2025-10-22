@@ -486,6 +486,7 @@ class FakeTurboCIOrchestrator(TurboCIClient):
                             require: Revision|None):
     """Collect adds all required nodes to the GraphView."""
     types = set(query.type_urls)
+    all_types = '*' in types
     collect = query.collect
     if collect.check.HasField('edits'):
       raise NotImplementedError(
@@ -516,14 +517,14 @@ class FakeTurboCIOrchestrator(TurboCIClient):
         if collect_opts:
           assert isinstance(nodeVal, Check)
           for opt in nodeVal.options:
-            if opt.type_url in types:
+            if all_types or opt.type_url in types:
               toProcess.append((from_id(opt.identifier), wrap_id(opt.identifier)))
 
         if collect_result_data:
           assert isinstance(nodeVal, Check)
           for rslt in nodeVal.results:
             for dat in rslt.data:
-              if dat.type_url in types:
+              if all_types or dat.type_url in types:
                 toProcess.append((from_id(dat.identifier), wrap_id(dat.identifier)))
 
 

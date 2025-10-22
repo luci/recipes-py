@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from PB.turboci.graph.orchestrator.v1.graph_view import GraphView
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 
 DEPS = [
@@ -417,7 +418,14 @@ def GenTests(api):
   ))
   assert len(write_checks_input.steps) == 4
 
+  def _assert_graph(assert_, graph: GraphView):
+    check_view = graph.checks[0]
+    assert_(check_view.check.identifier.id == 'bob')
+    assert_(check_view.option_data[0].value.value.type_url ==
+            'type.googleapis.com/turboci.data.gerrit.v1.GobSourceCheckOptions')
+
   yield api.test(
       'write_checks',
       api.properties(write_checks_input),
+      api.assert_turboci_graph(_assert_graph),
   )
