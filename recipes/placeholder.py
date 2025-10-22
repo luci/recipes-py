@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
 from PB.turboci.graph.orchestrator.v1.graph_view import GraphView
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 
@@ -401,13 +402,24 @@ def GenTests(api):
 
   write_checks_input = InputProps(status=Status.SUCCESS)
   step = write_checks_input.steps.add(name='write bob')
-  step.turboci_write.check_writes.append(turboci.check(
-      'bob', kind='BUILD',
-  ))
+  step.turboci_write.check_writes.append(
+      turboci.check(
+          # Note - bob depends on charlie, which is written via turboci_write_nodes
+          # prior to RunSteps.
+          'bob',
+          kind='TEST',
+          deps=[turboci.edge_group('charlie')],
+      ))
   step = write_checks_input.steps.add(name='add option to bob')
   step.turboci_write.check_writes.append(turboci.check(
       'bob', options=[GobSourceCheckOptions()], state='PLANNED',
   ))
+  step = write_checks_input.steps.add(name='finalize charlie')
+  step.turboci_write.check_writes.append(
+      turboci.check(
+          'charlie',
+          state='FINAL',
+      ))
   step = write_checks_input.steps.add(name='add result to bob')
   step.turboci_write.check_writes.append(turboci.check(
       'bob', results=[GobSourceCheckResults()], state='FINAL',
@@ -416,16 +428,22 @@ def GenTests(api):
   step.turboci_write.check_writes.append(turboci.check(
       'bob', results=[GerritChangeInfo()], state='FINAL',
   ))
-  assert len(write_checks_input.steps) == 4
 
   def _assert_graph(assert_, graph: GraphView):
-    check_view = graph.checks[0]
-    assert_(check_view.check.identifier.id == 'bob')
-    assert_(check_view.option_data[0].value.value.type_url ==
+    by_id = {cv.check.identifier.id: cv for cv in graph.checks}
+
+    charlie_view = by_id['charlie']
+    assert_(charlie_view.check.identifier.id == 'charlie')
+    assert_(charlie_view.check.kind == CheckKind.CHECK_KIND_BUILD)
+
+    bob_view = by_id['bob']
+    assert_(bob_view.check.identifier.id == 'bob')
+    assert_(bob_view.option_data[0].value.value.type_url ==
             'type.googleapis.com/turboci.data.gerrit.v1.GobSourceCheckOptions')
 
   yield api.test(
       'write_checks',
       api.properties(write_checks_input),
+      api.turboci_write_nodes(turboci.check('charlie', kind='BUILD'),),
       api.assert_turboci_graph(_assert_graph),
   )

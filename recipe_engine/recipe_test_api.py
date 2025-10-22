@@ -2,12 +2,15 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from __future__ import annotations
+
+from dataclasses import dataclass
 import inspect
 from collections import defaultdict
 from collections import namedtuple
 from functools import reduce
 from os import stat
-from typing import Literal
+from typing import TYPE_CHECKING, Literal, Sequence
 
 from past.builtins import basestring
 
@@ -18,6 +21,9 @@ from .util import ModuleInjectionSite
 from .util import ModuleInjectionError
 from .util import static_call
 from .util import static_wraps
+
+if TYPE_CHECKING:
+  from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 
 
 def combineify(name, dest, a, b, overwrite=False):
@@ -236,6 +242,13 @@ and kwargs.
 """
 
 
+@dataclass
+class WriteNodesBlock:
+  nodes: Sequence[WriteNodesRequest.CheckWrite]
+  filename: str
+  lineno: int
+
+
 class TestData(BaseTestData):
   def __init__(self, name=None):
     super().__init__()
@@ -249,6 +262,7 @@ class TestData(BaseTestData):
     self.expected_status = None
     self.post_process_hooks: list[PostprocessHook] = []
     self.assert_turboci_graph_hooks: list[PostprocessHook] = []
+    self.turboci_write_nodes: list[WriteNodesBlock] = []
 
     # Filled in by recipe_deps.Recipe.gen_tests()
     self.expect_file = None
@@ -275,6 +289,8 @@ class TestData(BaseTestData):
 
     ret.assert_turboci_graph_hooks.extend(self.assert_turboci_graph_hooks)
     ret.assert_turboci_graph_hooks.extend(other.assert_turboci_graph_hooks)
+
+    ret.turboci_write_nodes = self.turboci_write_nodes + other.turboci_write_nodes
 
     ret.expected_status = self.expected_status
     if other.expected_status is not None:
@@ -968,6 +984,34 @@ class RecipeTestApi:
     _, filename, lineno, _, _, _ = inspect.stack()[1]
     context = PostprocessHookContext(func, args, kwargs, filename, lineno)
     ret.assert_turboci_graph(post_check, (func,) + args, kwargs, context)
+    return ret
+
+  def turboci_write_nodes(self, *nodes: WriteNodesRequest.CheckWrite):
+    """Set the initial state of the TurboCI graph.
+
+    This block of nodes will be written to the turboci graph with a single
+    write_nodes call. If you concatenate multiple TestData together (with +), or
+    use `api.turboci_write_nodes` multiple times, each block of nodes will be
+    written as a single write_nodes call.
+
+    Example:
+
+    def GenTests(api):
+      yield api.test(
+        'whatever',
+        api.turboci_write_nodes(
+          turboci.check('some-id', kind='BUILD', options=(...)),
+          ...
+        ),
+        # this will happen in a second write, and so doesn't need `kind`.
+        api.turboci_write_nodes(
+          turboci.check('some-id', options=(...other types...)),
+        )
+      )
+    """
+    ret = TestData()
+    _, filename, lineno, _, _, _ = inspect.stack()[1]
+    ret.turboci_write_nodes = [WriteNodesBlock(nodes, filename, lineno)]
     return ret
 
 

@@ -44,6 +44,13 @@ def execute_test_case(recipe_deps, recipe_name, test_data) -> TestCaseResult:
   from ..stream.simulator import SimulationStreamEngine
   from ...util import fix_json_object
 
+  from recipe_engine import turboci
+  for block in test_data.turboci_write_nodes:
+    turboci.write_nodes(
+        *block.nodes,
+        turboci.reason(
+            f'api.turboci_write_nodes() from {block.filename}:{block.lineno}'))
+
   step_runner = SimulationStepRunner(test_data)
   simulator = SimulationStreamEngine()
   stream_engine = StreamEngineInvariants.wrap(simulator)
