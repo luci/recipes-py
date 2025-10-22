@@ -14,7 +14,6 @@ import textwrap
 import time
 import traceback
 
-import attr
 import difflib
 import coverage
 import gevent
@@ -24,8 +23,6 @@ from builtins import str
 from gevent import subprocess
 from google.protobuf import duration_pb2
 from google.protobuf import json_format as jsonpb
-
-from recipe_engine import __path__ as RECIPE_ENGINE_PATH
 
 # pylint: disable=import-error
 import PB
@@ -43,8 +40,8 @@ from ...simple_cfg import RECIPES_CFG_LOCATION_REL
 from ...test import magic_check_fn
 from ...warn import record
 from ...test.execute_test_case import execute_test_case
-
-from ... import debugger
+from ...turboci import common as turboci_common
+from ...turboci import fake as turboci_fake
 
 from .expectation_conversion import transform_expectations
 from .pipe import write_message, read_message
@@ -440,6 +437,7 @@ def main(recipe_deps, cov_file, is_train, cover_module_imports):
     config_types.ResetGlobalVariableAssignments()
     engine_types.PerGreentletStateRegistry.clear()
     GLOBAL_SHUTDOWN.clear()
+    turboci_common.CLIENT = turboci_fake.FakeTurboCIOrchestrator(test_mode=True)
 
     test_desc = _read_test_desc()
     if not test_desc:

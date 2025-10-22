@@ -26,6 +26,8 @@ from ...global_shutdown import install_signal_handlers
 from ...step_runner.subproc import SubprocessStepRunner
 from ...stream.annotator import AnnotatorStreamEngine
 from ...stream.invariants import StreamEngineInvariants
+from ...turboci import common as turboci_common
+from ...turboci import fake as turboci_fake
 
 from ....third_party import luci_context
 
@@ -39,6 +41,8 @@ def _main_impl(args):
   if args.props:
     for p in args.props:
       args.properties.update(p)
+
+  turboci_common.CLIENT = turboci_fake.FakeTurboCIOrchestrator(test_mode=False)
 
   properties = args.properties
 

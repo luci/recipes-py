@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
+
 DEPS = [
   'buildbucket',
   'properties',
@@ -18,11 +20,17 @@ from google.protobuf.struct_pb2 import Struct
 from PB.recipe_engine import result as result_pb2
 from PB.recipes.recipe_engine.placeholder import (
   InputProps, Step, FakeStep, CollectChildren,
-  ChildBuild, Buildbucket, LifeTime)
+  ChildBuild, Buildbucket, LifeTime, TurboCIWrite)
 from PB.go.chromium.org.luci.buildbucket.proto.builder_common import BuilderID
-from PB.go.chromium.org.luci.buildbucket.proto.common import Status, ENDED_MASK
+from PB.go.chromium.org.luci.buildbucket.proto.common import Status
 
-from recipe_engine import post_process, step_data
+from PB.turboci.data.gerrit.v1.gob_source_check_options import GobSourceCheckOptions
+from PB.turboci.data.gerrit.v1.gob_source_check_results import GobSourceCheckResults
+from PB.turboci.data.gerrit.v1.gerrit_change_info import GerritChangeInfo
+
+from recipe_engine import post_process
+
+from recipe_engine import turboci
 
 PROPERTIES = InputProps
 
@@ -45,18 +53,23 @@ def RunSteps(api, properties):
 
     pres.properties = json_format.MessageToDict(step_pb.set_properties)
 
-  def processStep(step):
-    if step.WhichOneof('type') == 'fake_step':
-      processFakeStep(step.name, step.fake_step)
-    elif step.WhichOneof('type') == 'child_build':
-      child_build = step.child_build
-      build = scheduleChildBuild(step.name, step.child_build)
-      if child_build.id:
-        child_map[child_build.id] = build.id
-    elif step.WhichOneof('type') == 'collect_children':
-      collectChild(step.name, step.collect_children)
+  def processStep(step: Step):
+    match step.WhichOneof('type'):
+      case 'fake_step':
+        processFakeStep(step.name, step.fake_step)
+      case 'child_build':
+        child_build = step.child_build
+        build = scheduleChildBuild(step.name, step.child_build)
+        if child_build.id:
+          child_map[child_build.id] = build.id
+      case 'collect_children':
+        collectChild(step.name, step.collect_children)
+      case 'turboci_write':
+        TurboCIWrite(step.name, step.turboci_write)
+      case _:  # pragma: no cover
+        assert False, 'unreachable'
 
-  def processFakeStep(step_name, fake_step):
+  def processFakeStep(step_name: str, fake_step: FakeStep):
     if fake_step.children:
       with api.step.nest(step_name) as pres:
         handlePres(pres, fake_step)
@@ -74,7 +87,7 @@ def RunSteps(api, properties):
         api.time.sleep(
             fake_step.duration_secs, with_step=False, step_result=result)
 
-  def scheduleChildBuild(step_name, child_build):
+  def scheduleChildBuild(step_name: str, child_build: ChildBuild):
     assert child_build.buildbucket
     builder = child_build.buildbucket.builder
 
@@ -113,6 +126,22 @@ def RunSteps(api, properties):
       else:
         raise api.step.InfraFailure('no build to collect for %s' % child_id)
     api.buildbucket.collect_builds(build_ids_to_collect, step_name=step_name)
+
+  def TurboCIWrite(step_name: str, req: TurboCIWrite):
+    reasons = req.reasons
+    if not reasons:
+      reasons = [turboci.reason(f'written by step {step_name!r}')]
+    with api.step.nest(step_name) as pres:
+      try:
+        rawReq = WriteNodesRequest(reasons=reasons, checks=req.check_writes)
+        pres.logs['request'] = str(rawReq)
+
+        rawRsp = turboci.get_client().WriteNodes(rawReq)
+        pres.logs['response'] = str(rawRsp)
+      except turboci.TurboCIException as ex:
+        pres.status = api.step.EXCEPTION
+        pres.step_text = f'turboci.write_nodes failed'
+        pres.logs['exception'] = f'{type(ex).__name__}: {ex}'
 
   if not (properties.status and properties.status & Status.ENDED_MASK):
     return result_pb2.RawResult(
@@ -367,4 +396,28 @@ def GenTests(api):
           experiments=['luci.buildbucket.parent_tracking']
       ),
       status='INFRA_FAILURE',
+  )
+
+  write_checks_input = InputProps(status=Status.SUCCESS)
+  step = write_checks_input.steps.add(name='write bob')
+  step.turboci_write.check_writes.append(turboci.check(
+      'bob', kind='BUILD',
+  ))
+  step = write_checks_input.steps.add(name='add option to bob')
+  step.turboci_write.check_writes.append(turboci.check(
+      'bob', options=[GobSourceCheckOptions()], state='PLANNED',
+  ))
+  step = write_checks_input.steps.add(name='add result to bob')
+  step.turboci_write.check_writes.append(turboci.check(
+      'bob', results=[GobSourceCheckResults()], state='FINAL',
+  ))
+  step = write_checks_input.steps.add(name='fail to add late result to bob')
+  step.turboci_write.check_writes.append(turboci.check(
+      'bob', results=[GerritChangeInfo()], state='FINAL',
+  ))
+  assert len(write_checks_input.steps) == 4
+
+  yield api.test(
+      'write_checks',
+      api.properties(write_checks_input),
   )

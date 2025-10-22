@@ -13,7 +13,6 @@ import psutil
 from google.protobuf import json_format as jsonpb
 from google.protobuf import text_format as textpb
 
-from PB.go.chromium.org.luci.buildbucket.proto import common
 from PB.go.chromium.org.luci.buildbucket.proto.build import Build
 
 from ....third_party import luci_context
@@ -24,6 +23,8 @@ from ...global_shutdown import install_signal_handlers
 from ...step_runner.subproc import SubprocessStepRunner
 from ...stream.invariants import StreamEngineInvariants
 from ...stream.luci import LUCIStreamEngine
+from ...turboci import common as turboci_common
+from ...turboci import fake as turboci_fake
 
 from . import RunBuildContractViolation
 
@@ -91,6 +92,10 @@ def _main_impl(args):
   build.ParseFromString(open(sys.stdin.fileno(), 'rb').read())
   LOG.info('finished parsing Build message')
   LOG.debug('build proto: %s', jsonpb.MessageToJson(build))
+
+  # TODO: Wire this up to a real client when luci_context indicates that we're
+  # running as a Stage.
+  turboci_common.CLIENT = turboci_fake.FakeTurboCIOrchestrator(test_mode=False)
 
   properties = jsonpb.MessageToDict(build.input.properties)
   properties.update(_synth_properties(build, properties))

@@ -30,6 +30,7 @@ from .internal.turboci.ids import (
 )
 
 from .internal.turboci.common import (
+    TurboCIClient,
     check,
     check_id,
     collect_check_ids,
@@ -54,6 +55,12 @@ from .internal.turboci.transaction import (
     run_transaction,
 )
 
+from recipe_engine.internal.turboci import common as _common
+
+def get_client() -> TurboCIClient:
+  """Gets the current raw client interface."""
+  return _common.CLIENT
+
 __all__ = [
     'check',
     'check_id',
@@ -61,6 +68,7 @@ __all__ = [
     'collect_check_ids',
     'edge_group',
     'from_id',
+    'get_client',
     'InvalidArgumentException',
     'make_query',
     'query_nodes',

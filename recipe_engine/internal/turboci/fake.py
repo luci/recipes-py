@@ -124,12 +124,18 @@ class _IndexEntrySnapshot:
 
 @dataclass
 class FakeTurboCIOrchestrator(TurboCIClient):
+  # If set, FakeTurboCIOrchestrator will use a monotonic internal clock for
+  # revisions instead of time.monotonic_ns.
+  test_mode: bool = field(kw_only=True)
+
   # This is overkill as long as recipes use a single thread for execution
   # - however this should allow this fake to be obviously correct even without
   # the GIL.
   _lock: Lock = field(default_factory=Lock)
 
   # Updated with `time.monotonic_ns()` on every write.
+  # In test mode this is updated by incrementing the seconds field by 1 on every
+  # write.
   _revision: Revision = field(default_factory=Revision)
 
   # Map of node id -> Check|Datum
@@ -704,10 +710,14 @@ class FakeTurboCIOrchestrator(TurboCIClient):
 
       # no exceptions past this point
 
-      now = time.monotonic_ns()
-      self._revision = Revision(
-          ts=Timestamp(seconds=int(now // 1e9), nanos=int(now % 1e9)))
+      if self.test_mode:
+        new_version = Revision(ts=Timestamp(seconds=self._revision.ts.seconds+1))
+      else:
+        now = time.monotonic_ns()
+        new_version = Revision(
+            ts=Timestamp(seconds=int(now // 1e9), nanos=int(now % 1e9)))
+      self._revision = new_version
       for check in req.checks:
         self._indexed_apply_locked(check)
 
-    return WriteNodesResponse()
+    return WriteNodesResponse(written_version=new_version)

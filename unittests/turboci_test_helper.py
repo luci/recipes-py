@@ -20,7 +20,7 @@ from recipe_engine.internal.turboci.transaction import QueryMode
 
 class TestBaseClass(test_env.RecipeEngineUnitTest):
   def setUp(self):
-    self.CLIENT = FakeTurboCIOrchestrator()
+    self.CLIENT = FakeTurboCIOrchestrator(test_mode=True)
     return super().setUp()
 
   def tearDown(self):

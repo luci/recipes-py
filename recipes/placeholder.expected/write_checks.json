@@ -1,0 +1,109 @@
+[
+  {
+    "cmd": [],
+    "name": "write bob",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@request@reasons {@@@",
+      "@@@STEP_LOG_LINE@request@  reason: \"written by step \\'write bob\\'\"@@@",
+      "@@@STEP_LOG_LINE@request@}@@@",
+      "@@@STEP_LOG_LINE@request@checks {@@@",
+      "@@@STEP_LOG_LINE@request@  identifier {@@@",
+      "@@@STEP_LOG_LINE@request@    id: \"bob\"@@@",
+      "@@@STEP_LOG_LINE@request@  }@@@",
+      "@@@STEP_LOG_LINE@request@  kind: CHECK_KIND_BUILD@@@",
+      "@@@STEP_LOG_LINE@request@}@@@",
+      "@@@STEP_LOG_END@request@@@",
+      "@@@STEP_LOG_LINE@response@written_version {@@@",
+      "@@@STEP_LOG_LINE@response@  ts {@@@",
+      "@@@STEP_LOG_LINE@response@    seconds: 1@@@",
+      "@@@STEP_LOG_LINE@response@  }@@@",
+      "@@@STEP_LOG_LINE@response@}@@@",
+      "@@@STEP_LOG_END@response@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "add option to bob",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@request@reasons {@@@",
+      "@@@STEP_LOG_LINE@request@  reason: \"written by step \\'add option to bob\\'\"@@@",
+      "@@@STEP_LOG_LINE@request@}@@@",
+      "@@@STEP_LOG_LINE@request@checks {@@@",
+      "@@@STEP_LOG_LINE@request@  identifier {@@@",
+      "@@@STEP_LOG_LINE@request@    id: \"bob\"@@@",
+      "@@@STEP_LOG_LINE@request@  }@@@",
+      "@@@STEP_LOG_LINE@request@  options {@@@",
+      "@@@STEP_LOG_LINE@request@    value {@@@",
+      "@@@STEP_LOG_LINE@request@      [type.googleapis.com/turboci.data.gerrit.v1.GobSourceCheckOptions] {@@@",
+      "@@@STEP_LOG_LINE@request@      }@@@",
+      "@@@STEP_LOG_LINE@request@    }@@@",
+      "@@@STEP_LOG_LINE@request@  }@@@",
+      "@@@STEP_LOG_LINE@request@  state: CHECK_STATE_PLANNED@@@",
+      "@@@STEP_LOG_LINE@request@}@@@",
+      "@@@STEP_LOG_END@request@@@",
+      "@@@STEP_LOG_LINE@response@written_version {@@@",
+      "@@@STEP_LOG_LINE@response@  ts {@@@",
+      "@@@STEP_LOG_LINE@response@    seconds: 2@@@",
+      "@@@STEP_LOG_LINE@response@  }@@@",
+      "@@@STEP_LOG_LINE@response@}@@@",
+      "@@@STEP_LOG_END@response@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "add result to bob",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@request@reasons {@@@",
+      "@@@STEP_LOG_LINE@request@  reason: \"written by step \\'add result to bob\\'\"@@@",
+      "@@@STEP_LOG_LINE@request@}@@@",
+      "@@@STEP_LOG_LINE@request@checks {@@@",
+      "@@@STEP_LOG_LINE@request@  identifier {@@@",
+      "@@@STEP_LOG_LINE@request@    id: \"bob\"@@@",
+      "@@@STEP_LOG_LINE@request@  }@@@",
+      "@@@STEP_LOG_LINE@request@  results {@@@",
+      "@@@STEP_LOG_LINE@request@    value {@@@",
+      "@@@STEP_LOG_LINE@request@      [type.googleapis.com/turboci.data.gerrit.v1.GobSourceCheckResults] {@@@",
+      "@@@STEP_LOG_LINE@request@      }@@@",
+      "@@@STEP_LOG_LINE@request@    }@@@",
+      "@@@STEP_LOG_LINE@request@  }@@@",
+      "@@@STEP_LOG_LINE@request@  state: CHECK_STATE_FINAL@@@",
+      "@@@STEP_LOG_LINE@request@}@@@",
+      "@@@STEP_LOG_END@request@@@",
+      "@@@STEP_LOG_LINE@response@written_version {@@@",
+      "@@@STEP_LOG_LINE@response@  ts {@@@",
+      "@@@STEP_LOG_LINE@response@    seconds: 3@@@",
+      "@@@STEP_LOG_LINE@response@  }@@@",
+      "@@@STEP_LOG_LINE@response@}@@@",
+      "@@@STEP_LOG_END@response@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "fail to add late result to bob",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@turboci.write_nodes failed@@@",
+      "@@@STEP_LOG_LINE@request@reasons {@@@",
+      "@@@STEP_LOG_LINE@request@  reason: \"written by step \\'fail to add late result to bob\\'\"@@@",
+      "@@@STEP_LOG_LINE@request@}@@@",
+      "@@@STEP_LOG_LINE@request@checks {@@@",
+      "@@@STEP_LOG_LINE@request@  identifier {@@@",
+      "@@@STEP_LOG_LINE@request@    id: \"bob\"@@@",
+      "@@@STEP_LOG_LINE@request@  }@@@",
+      "@@@STEP_LOG_LINE@request@  results {@@@",
+      "@@@STEP_LOG_LINE@request@    value {@@@",
+      "@@@STEP_LOG_LINE@request@      [type.googleapis.com/turboci.data.gerrit.v1.GerritChangeInfo] {@@@",
+      "@@@STEP_LOG_LINE@request@      }@@@",
+      "@@@STEP_LOG_LINE@request@    }@@@",
+      "@@@STEP_LOG_LINE@request@  }@@@",
+      "@@@STEP_LOG_LINE@request@  state: CHECK_STATE_FINAL@@@",
+      "@@@STEP_LOG_LINE@request@}@@@",
+      "@@@STEP_LOG_END@request@@@",
+      "@@@STEP_LOG_LINE@exception@CheckWriteInvariantException: WriteNodes.CheckWrite('L:Cbob'): cannot edit finalized results@@@",
+      "@@@STEP_LOG_END@exception@@@",
+      "@@@STEP_EXCEPTION@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]

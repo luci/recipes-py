@@ -26,8 +26,8 @@ from ... import config_types
 from ... import engine_types
 
 from .. import debugger
-from .. import recipe_deps
 from .. import global_shutdown
+from .. import recipe_deps
 
 from ..test.execute_test_case import execute_test_case
 from .test.fail_tracker import FailTracker
@@ -183,6 +183,11 @@ def _debug_recipe(rdeps: recipe_deps.RecipeDeps, recipe: recipe_deps.Recipe,
   config_types.ResetGlobalVariableAssignments()
   engine_types.PerGreentletStateRegistry.clear()
   global_shutdown.GLOBAL_SHUTDOWN.clear()
+
+  # Late imports for PB :/
+  from ..turboci import common as turboci_common
+  from ..turboci import fake as turboci_fake
+  turboci_common.CLIENT = turboci_fake.FakeTurboCIOrchestrator(test_mode=True)
 
   try:
     print(f'RunSteps() # Loaded test case: {recipe.name}.{test_data.name}')

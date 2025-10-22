@@ -9,6 +9,8 @@ import "google/protobuf/struct.proto";
 import "go.chromium.org/luci/buildbucket/proto/builder_common.proto";
 import "go.chromium.org/luci/buildbucket/proto/common.proto";
 
+import "turboci/graph/orchestrator/v1/write_nodes_request.proto";
+
 package recipes.recipe_engine.placeholder;
 
 enum LifeTime {
@@ -31,6 +33,22 @@ message ChildBuild {
   oneof trigger {
     Buildbucket buildbucket = 10;
   }
+}
+
+message TurboCIWrite {
+  // The reasons to record along with these writes.
+  //
+  // If no reasons are provided, Placeholder will write a simple reason with the
+  // text:  "written by step 'name-of-step'".
+  repeated turboci.graph.orchestrator.v1.WriteNodesRequest.Reason reasons = 1;
+
+  // Arbitrary CheckWrites to make into the current TurboCI WorkPlan (or just to
+  // the in-memory fake if this recipe doesn't run as part of a WorkPlan).
+  //
+  // If the write fails, the error will be revealed on the step.
+  //
+  // The work_plan portion of each check_write here will be ignored.
+  repeated turboci.graph.orchestrator.v1.WriteNodesRequest.CheckWrite check_writes = 2;
 }
 
 // CollectChildren represents a step which waits for child build(s).
@@ -113,6 +131,7 @@ message Step {
     FakeStep fake_step = 2;
     ChildBuild child_build = 3;
     CollectChildren collect_children = 4;
+    TurboCIWrite turboci_write = 5;
   }
 }
 
