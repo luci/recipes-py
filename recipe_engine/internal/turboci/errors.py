@@ -28,6 +28,13 @@ class CheckWriteInvariantException(TurboCIException):
   a PLANNED Check)."""
 
 
+class InvalidArgumentException(TurboCIException):
+  """Raised when the input arguments were invalid.
+
+  Corresponds to gRPC code INVALID_ARGUMENT.
+  """
+
+
 class TransactionUseAfterWriteException(TurboCIException):
   """Raised from Transaction.WriteNodes/QueryNodes if they are called after
   a call to WriteNodes."""

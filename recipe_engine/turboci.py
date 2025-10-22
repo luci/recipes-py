@@ -43,6 +43,7 @@ from .internal.turboci.common import (
 
 from .internal.turboci.errors import (
     CheckWriteInvariantException,
+    InvalidArgumentException,
     TransactionConflictException,
     TransactionUseAfterWriteException,
     TurboCIException,
@@ -55,6 +56,7 @@ __all__ = [
     'collect_check_ids',
     'edge_group',
     'from_id',
+    'InvalidArgumentException',
     'make_query',
     'query_nodes',
     'read_checks',
