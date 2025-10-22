@@ -111,20 +111,22 @@ class TestCheck(test_env.RecipeEngineUnitTest):
   def test_ok(self):
     chk = check(
         'the check id',
-        kind='TEST',
-        state='PLANNED',
+        kind='CHECK_KIND_TEST',
+        state='CHECK_STATE_PLANNED',
         options=[_mkStruct({'a': 'b'})],
-        deps=[edge_group("stuff", "things",)],
+        deps=[edge_group(
+            "stuff",
+            "things",
+        )],
         results=[_mkStruct({'cool': ['result']})],
         finalize_results=True,
-
         in_workplan='321',
         realm='project/check/realm',
         realm_options=[
-          ('project/check/option/realm', Value(string_value='realm_option')),
+            ('project/check/option/realm', Value(string_value='realm_option')),
         ],
         realm_results=[
-          ('project/check/result/realm', Value(string_value='realm_result')),
+            ('project/check/result/realm', Value(string_value='realm_result')),
         ],
     )
 
@@ -180,9 +182,12 @@ class TestWriteNodes(test_env.RecipeEngineUnitTest):
   def test_write_nodes(self):
     # User writes:
     write_nodes(
-        check("someid", kind='BUILD', options=[
-          _mkStruct({"cool_opt": [1, 2, 3]}),
-        ]),
+        check(
+            "someid",
+            kind='CHECK_KIND_BUILD',
+            options=[
+                _mkStruct({"cool_opt": [1, 2, 3]}),
+            ]),
         reason("I feel like it", _mkStruct({"hello": "world"})),
     )
 

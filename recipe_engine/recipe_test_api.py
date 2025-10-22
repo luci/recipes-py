@@ -334,7 +334,8 @@ class TestData(BaseTestData):
   def assert_turboci_graph(self, func, args, kwargs, context):
     for warning in getattr(func, 'recipe_warnings', ()):
       record_execution_warning(warning)
-    self.assert_turboci_graph_hooks.append(PostprocessHook(func, args, kwargs, context))
+    self.assert_turboci_graph_hooks.append(
+        PostprocessHook(func, args, kwargs, context))
 
   def __repr__(self):
     return "TestData(%r)" % ({
@@ -978,8 +979,10 @@ class RecipeTestApi:
         api.assert_turboci_graph(_check_graph),
       )
     """
+
     def post_check(check, steps, f, *args, **kwargs):
       f(check, steps, *args, **kwargs)
+
     ret = TestData()
     _, filename, lineno, _, _, _ = inspect.stack()[1]
     context = PostprocessHookContext(func, args, kwargs, filename, lineno)

@@ -18,7 +18,9 @@ from recipe_engine import turboci
 from recipe_engine.internal.turboci.fake import FakeTurboCIOrchestrator
 from recipe_engine.internal.turboci.transaction import QueryMode
 
+
 class TestBaseClass(test_env.RecipeEngineUnitTest):
+
   def setUp(self):
     self.CLIENT = FakeTurboCIOrchestrator(test_mode=True)
     return super().setUp()
@@ -29,12 +31,10 @@ class TestBaseClass(test_env.RecipeEngineUnitTest):
 
   def write_nodes(
       self,
-      *nodes: (WriteNodesRequest.CheckWrite|
-               WriteNodesRequest.StageWrite|
-               WriteNodesRequest.Reason),
-
-      current_stage: WriteNodesRequest.CurrentStageWrite|None = None,
-      txn: WriteNodesRequest.TransactionDetails|None = None,
+      *nodes: (WriteNodesRequest.CheckWrite | WriteNodesRequest.StageWrite
+               | WriteNodesRequest.Reason),
+      current_stage: WriteNodesRequest.CurrentStageWrite | None = None,
+      txn: WriteNodesRequest.TransactionDetails | None = None,
   ):
     if not any(isinstance(node, WriteNodesRequest.Reason) for node in nodes):
       nodes += (turboci.reason('test write'),)
@@ -44,15 +44,15 @@ class TestBaseClass(test_env.RecipeEngineUnitTest):
   def query_nodes(
       self,
       *queries: Query,
-      version: QueryNodesRequest.VersionRestriction|None = None,
+      version: QueryNodesRequest.VersionRestriction | None = None,
   ):
     return turboci.query_nodes(*queries, version=version, client=self.CLIENT)
 
   def read_checks(
       self,
-      *ids: identifier.Check|str,
-      collect: Query.Collect.Check|None = None,
-      types: Sequence[str|Message|type[Message]]=(),
+      *ids: identifier.Check | str,
+      collect: Query.Collect.Check | None = None,
+      types: Sequence[str | Message | type[Message]] = (),
   ):
     return turboci.read_checks(
         *ids, types=types, collect=collect, client=self.CLIENT)
@@ -65,5 +65,4 @@ class TestBaseClass(test_env.RecipeEngineUnitTest):
       query_mode: QueryMode = 'require',
   ):
     return turboci.run_transaction(
-        txnFunc, retries=retries, query_mode=query_mode,
-        client=self.CLIENT)
+        txnFunc, retries=retries, query_mode=query_mode, client=self.CLIENT)

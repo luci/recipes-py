@@ -46,7 +46,7 @@ class CheckDeltaTest(test_env.RecipeEngineUnitTest):
   def test_PLANNING_maximum(self):
     delta = turboci.check(
         id='hey',
-        kind='ANALYSIS',
+        kind='CHECK_KIND_ANALYSIS',
         options=[demoStruct],
         deps=[turboci.edge_group('other')],
     )
@@ -84,7 +84,7 @@ class CheckDeltaTest(test_env.RecipeEngineUnitTest):
       check_invariant.assert_can_apply(
           turboci.check(
               id='hey',
-              kind='ANALYSIS',
+              kind='CHECK_KIND_ANALYSIS',
               results=[demoStruct],
               # State is not >= PLANNED
           ),
@@ -93,7 +93,7 @@ class CheckDeltaTest(test_env.RecipeEngineUnitTest):
     check_invariant.assert_can_apply(
         turboci.check(
             id='hey',
-            kind='ANALYSIS',
+            kind='CHECK_KIND_ANALYSIS',
             results=[demoStruct],
             state=CheckState.CHECK_STATE_PLANNED,
         ), None)
@@ -122,7 +122,7 @@ class CheckDeltaTest(test_env.RecipeEngineUnitTest):
         turboci.check(
             id='hey',
             deps=[turboci.edge_group()],
-            state='FINAL',
+            state='CHECK_STATE_FINAL',
             results=[demoStruct],
         ), check)
 
@@ -213,7 +213,7 @@ class CheckDeltaTest(test_env.RecipeEngineUnitTest):
           turboci.check(
               id='hey',
               # changing state to WAITING with unresolved dependencies
-              state='WAITING',
+              state='CHECK_STATE_WAITING',
           ),
           check)
 

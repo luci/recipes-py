@@ -10,6 +10,7 @@ from typing import Literal, Protocol, Sequence
 from google.protobuf.message import Message
 
 from PB.turboci.graph.ids.v1 import identifier
+from PB.turboci.graph.orchestrator.v1 import check_state
 from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
 from PB.turboci.graph.orchestrator.v1.check_state import CheckState
 from PB.turboci.graph.orchestrator.v1.check_view import CheckView
@@ -100,13 +101,11 @@ def reason(reason: str, *details: Message, realm: str|None = None) -> WriteNodes
 
 CheckKindType = (
   CheckKind|
-  Literal['SOURCE', 'BUILD', 'TEST', 'ANALYSIS']|
   Literal['CHECK_KIND_SOURCE', 'CHECK_KIND_BUILD', 'CHECK_KIND_TEST', 'CHECK_KIND_ANALYSIS']
 )
 
 CheckStateType = (
   CheckState|
-  Literal['PLANNING', 'PLANNED', 'WAITING', 'FINAL']|
   Literal['CHECK_STATE_PLANNING', 'CHECK_STATE_PLANNED', 'CHECK_STATE_WAITING', 'CHECK_STATE_FINAL']
 )
 
@@ -145,23 +144,15 @@ def check(
 
   if kind:
     if isinstance(kind, str):
-      kind = {
-        'SOURCE': CheckKind.CHECK_KIND_SOURCE,
-        'BUILD': CheckKind.CHECK_KIND_BUILD,
-        'TEST': CheckKind.CHECK_KIND_TEST,
-        'ANALYSIS': CheckKind.CHECK_KIND_ANALYSIS,
-      }[kind]
-    ret.kind = kind
+      ret.kind = CheckKind.Value(kind)
+    else:
+      ret.kind = kind
 
   if state:
     if isinstance(state, str):
-      state = {
-        'PLANNING': CheckState.CHECK_STATE_PLANNING,
-        'PLANNED': CheckState.CHECK_STATE_PLANNED,
-        'WAITING': CheckState.CHECK_STATE_WAITING,
-        'FINAL': CheckState.CHECK_STATE_FINAL,
-      }[state]
-    ret.state = state
+      ret.state = CheckState.Value(state)
+    else:
+      ret.state = state
 
   if finalize_results:
     ret.finalize_results = finalize_results
@@ -262,7 +253,7 @@ def make_query(
     if atom is None:
       continue
     match atom:
-      # QuerySelectAtom
+    # QuerySelectAtom
       case Query.Select():
         ret.select.MergeFrom(atom)
       case Query.Select.WorkPlanConstraint():

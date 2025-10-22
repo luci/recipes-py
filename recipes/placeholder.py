@@ -20,9 +20,10 @@ from google.protobuf import json_format
 from google.protobuf.struct_pb2 import Struct
 
 from PB.recipe_engine import result as result_pb2
-from PB.recipes.recipe_engine.placeholder import (
-  InputProps, Step, FakeStep, CollectChildren,
-  ChildBuild, Buildbucket, LifeTime, TurboCIWrite)
+from PB.recipes.recipe_engine.placeholder import (InputProps, Step, FakeStep,
+                                                  CollectChildren, ChildBuild,
+                                                  Buildbucket, LifeTime,
+                                                  TurboCIWrite)
 from PB.go.chromium.org.luci.buildbucket.proto.builder_common import BuilderID
 from PB.go.chromium.org.luci.buildbucket.proto.common import Status
 
@@ -407,27 +408,36 @@ def GenTests(api):
           # Note - bob depends on charlie, which is written via turboci_write_nodes
           # prior to RunSteps.
           'bob',
-          kind='TEST',
+          kind='CHECK_KIND_TEST',
           deps=[turboci.edge_group('charlie')],
       ))
   step = write_checks_input.steps.add(name='add option to bob')
-  step.turboci_write.check_writes.append(turboci.check(
-      'bob', options=[GobSourceCheckOptions()], state='PLANNED',
-  ))
+  step.turboci_write.check_writes.append(
+      turboci.check(
+          'bob',
+          options=[GobSourceCheckOptions()],
+          state='CHECK_STATE_PLANNED',
+      ))
   step = write_checks_input.steps.add(name='finalize charlie')
   step.turboci_write.check_writes.append(
       turboci.check(
           'charlie',
-          state='FINAL',
+          state='CHECK_STATE_FINAL',
       ))
   step = write_checks_input.steps.add(name='add result to bob')
-  step.turboci_write.check_writes.append(turboci.check(
-      'bob', results=[GobSourceCheckResults()], state='FINAL',
-  ))
+  step.turboci_write.check_writes.append(
+      turboci.check(
+          'bob',
+          results=[GobSourceCheckResults()],
+          state='CHECK_STATE_FINAL',
+      ))
   step = write_checks_input.steps.add(name='fail to add late result to bob')
-  step.turboci_write.check_writes.append(turboci.check(
-      'bob', results=[GerritChangeInfo()], state='FINAL',
-  ))
+  step.turboci_write.check_writes.append(
+      turboci.check(
+          'bob',
+          results=[GerritChangeInfo()],
+          state='CHECK_STATE_FINAL',
+      ))
 
   def _assert_graph(assert_, graph: GraphView):
     by_id = {cv.check.identifier.id: cv for cv in graph.checks}
@@ -444,6 +454,7 @@ def GenTests(api):
   yield api.test(
       'write_checks',
       api.properties(write_checks_input),
-      api.turboci_write_nodes(turboci.check('charlie', kind='BUILD'),),
+      api.turboci_write_nodes(
+          turboci.check('charlie', kind='CHECK_KIND_BUILD'),),
       api.assert_turboci_graph(_assert_graph),
   )

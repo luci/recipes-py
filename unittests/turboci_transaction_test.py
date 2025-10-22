@@ -24,12 +24,14 @@ demoTS2 = Timestamp(seconds=200, nanos=200)
 
 
 class TransactionTest(turboci_test_helper.TestBaseClass):
+
   def test_simple_transaction(self):
-    self.write_nodes(turboci.check(
-        'hey',
-        kind='BUILD',
-        state='PLANNING',
-    ))
+    self.write_nodes(
+        turboci.check(
+            'hey',
+            kind='CHECK_KIND_BUILD',
+            state='CHECK_STATE_PLANNING',
+        ))
 
     def _mutate(txn: turboci.Transaction):
       rslt = txn.read_checks("hey")[0]
@@ -45,13 +47,15 @@ class TransactionTest(turboci_test_helper.TestBaseClass):
     self.assertEqual(len(rslt.check.options), 2)
 
   def test_transaction_retry(self):
-    self.write_nodes(turboci.check(
-        'hey',
-        kind='BUILD',
-        state='PLANNING',
-    ))
+    self.write_nodes(
+        turboci.check(
+            'hey',
+            kind='CHECK_KIND_BUILD',
+            state='CHECK_STATE_PLANNING',
+        ))
 
     first_attempt = [True]
+
     def _mutate(txn: turboci.Transaction):
       # This includes the check 'hey' in the transaction and starts the
       # snapshot.
@@ -72,6 +76,7 @@ class TransactionTest(turboci_test_helper.TestBaseClass):
           turboci.reason('transactional write'),
           turboci.check("hey", options=[demoTS]),
       )
+
     self.run_transaction(_mutate)
 
     self.assertFalse(first_attempt[0])
@@ -79,8 +84,10 @@ class TransactionTest(turboci_test_helper.TestBaseClass):
     rslt = self.read_checks('hey')[0]
     # We should have both data types in Struct, TS order.
     self.assertEqual(len(rslt.check.options), 2)
-    self.assertEqual(rslt.check.options[0].type_url, turboci.type_url_for(demoStruct2))
-    self.assertEqual(rslt.check.options[1].type_url, turboci.type_url_for(demoTS))
+    self.assertEqual(rslt.check.options[0].type_url,
+                     turboci.type_url_for(demoStruct2))
+    self.assertEqual(rslt.check.options[1].type_url,
+                     turboci.type_url_for(demoTS))
 
   def test_transactional_creation(self):
     first_attempt = [True]
@@ -90,7 +97,7 @@ class TransactionTest(turboci_test_helper.TestBaseClass):
         # does not already exist - write a new node kind which obviously
         # conflicts with the sneaky write. Having a dynamic kind like this for
         # real is certainly an error.
-        delta = turboci.check('hey', kind='BUILD')
+        delta = turboci.check('hey', kind='CHECK_KIND_BUILD')
       else:
         # The check already exists, add an option to it, regardless of kind.
         delta = turboci.check('hey', options=[demoStruct])
@@ -100,7 +107,7 @@ class TransactionTest(turboci_test_helper.TestBaseClass):
         first_attempt[0] = False
         self.write_nodes(
             turboci.reason('sneaky write'),
-            turboci.check('hey', kind='ANALYSIS'),
+            turboci.check('hey', kind='CHECK_KIND_ANALYSIS'),
         )
         # After this, our `write` should raise a transaction failure error, but
         # the next transaction attempt should succeed.
@@ -116,7 +123,8 @@ class TransactionTest(turboci_test_helper.TestBaseClass):
     # Since we only conditionally wrote, we see the kind written outside
     # the transaction but the option written by the transaction.
     self.assertEqual(rslt.check.kind, CheckKind.CHECK_KIND_ANALYSIS)
-    self.assertEqual(rslt.check.options[0].type_url, turboci.type_url_for(demoStruct))
+    self.assertEqual(rslt.check.options[0].type_url,
+                     turboci.type_url_for(demoStruct))
 
 
 if __name__ == '__main__':

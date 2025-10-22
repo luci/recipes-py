@@ -81,12 +81,10 @@ class Transaction:
 
   def write_nodes(
       self,
-      *nodes_reasons: (
-        WriteNodesRequest.CheckWrite|
-        WriteNodesRequest.StageWrite|
-        WriteNodesRequest.Reason),
-
-      current_stage: WriteNodesRequest.CurrentStageWrite|None = None,
+      *nodes_reasons:
+      (WriteNodesRequest.CheckWrite | WriteNodesRequest.StageWrite
+       | WriteNodesRequest.Reason),
+      current_stage: WriteNodesRequest.CurrentStageWrite | None = None,
   ) -> None:
     """Writes one or more nodes.
 
@@ -97,7 +95,7 @@ class Transaction:
       raise TransactionUseAfterWriteException("WriteNodes called twice.")
     self._did_write = True
 
-    txn: WriteNodesRequest.TransactionDetails|None = None
+    txn: WriteNodesRequest.TransactionDetails | None = None
     if self._revision:
       txn = WriteNodesRequest.TransactionDetails(
           nodes_observed=(to_id(node) for node in self.observed_nodes),
@@ -119,14 +117,15 @@ class Transaction:
 
     self._client.WriteNodes(req)
 
-  def query_nodes(self, *query: Query, observe_graph = True) -> GraphView:
+  def query_nodes(self, *query: Query, observe_graph=True) -> GraphView:
     """Runs run or more queries and returns their combined result.
 
     Will add all observed nodes to Transaction.observed_nodes unless
     `observe_graph` is False.
     """
     if self._did_write:
-      raise TransactionUseAfterWriteException("QueryNodes called after WriteNodes.")
+      raise TransactionUseAfterWriteException(
+          "QueryNodes called after WriteNodes.")
 
     req = QueryNodesRequest()
     if self._revision:
@@ -145,20 +144,21 @@ class Transaction:
 
   def read_checks(
       self,
-      *ids: identifier.Check|str,
-      collect: Query.Collect.Check|None = None,
-      types: Sequence[str|Message|type[Message]] = ()
+      *ids: identifier.Check | str,
+      collect: Query.Collect.Check | None = None,
+      types: Sequence[str | Message | type[Message]] = ()
   ) -> Sequence[CheckView]:
     """Convenience function for reading one or more checks by ID.
 
     This just does a query_nodes for the ids specified by `ids`, and then unwraps
     the result.
     """
-    return self.query_nodes(common.make_query(
-        Query.Select(nodes=common.collect_check_ids(*ids)),
-        collect,
-        types=types,
-    )).checks
+    return self.query_nodes(
+        common.make_query(
+            Query.Select(nodes=common.collect_check_ids(*ids)),
+            collect,
+            types=types,
+        )).checks
 
 
 # The mode for QueryNodes's version restriction.
@@ -194,5 +194,5 @@ def run_transaction(
       txnFunc(txn)
       return
     except TransactionConflictException:
-      if attempt == retries-1:
+      if attempt == retries - 1:
         raise

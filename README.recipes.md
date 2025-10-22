@@ -5999,7 +5999,7 @@ Test to cover legacy aspects of PathTestApi.
 [DEPS](/recipes/placeholder.py#11): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming), [time](#recipe_modules-time)
 
 
-&mdash; **def [RunSteps](/recipes/placeholder.py#40)(api, properties):**
+&mdash; **def [RunSteps](/recipes/placeholder.py#41)(api, properties):**
 ### *recipes* / [platform:examples/full](/recipe_modules/platform/examples/full.py)
 
 [DEPS](/recipe_modules/platform/examples/full.py#7): [platform](#recipe_modules-platform), [step](#recipe_modules-step)

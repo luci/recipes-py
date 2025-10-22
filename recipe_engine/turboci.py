@@ -57,9 +57,11 @@ from .internal.turboci.transaction import (
 
 from recipe_engine.internal.turboci import common as _common
 
+
 def get_client() -> TurboCIClient:
   """Gets the current raw client interface."""
   return _common.CLIENT
+
 
 __all__ = [
     'check',
