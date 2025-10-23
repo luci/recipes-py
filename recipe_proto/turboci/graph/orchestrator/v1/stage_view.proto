@@ -22,8 +22,8 @@ message StageView {
   // ... = 2;
   reserved 2; // reserved for progress data.
 
-  // StageEdits for this Stage which are being read.
+  // StageEdits for this Stage.
   //
-  // Some StageEdits may be omitted if the user did not request them.
+  // Sorted by `edit.version`.
   repeated StageEditView edits = 3;
 }

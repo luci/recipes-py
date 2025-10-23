@@ -15,7 +15,9 @@ option java_multiple_files = true;
 // Response message for TurboCIGraphService.QueryNodes.
 message QueryNodesResponse {
   // The graph view of the nodes matching the query.
-  optional GraphView graph = 1;
+  //
+  // Indexed by WorkPlan id.
+  map<string, GraphView> graph = 1;
 
   // A list of explicitly-selected nodes which were not found in the graph.
   repeated ids.v1.Identifier absent = 2;

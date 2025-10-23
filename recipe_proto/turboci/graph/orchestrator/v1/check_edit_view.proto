@@ -23,7 +23,12 @@ message CheckEditView {
 
   // Data for the Edit's check.options which are visible and of a type
   // which was requested.
-  repeated Datum option_data = 2;
+  //
+  // Indexed by type_url.
+  //
+  // NOTE: If we add an additional distinguisher other than type_url, it will
+  // need to also be rendered in this string key. Probably <tag>:<type_url>.
+  map<string, Datum> option_data = 2;
 
   // We've currently decided that Check Result *data* history is not needed
   // for CheckEdits. The rationale for this is that Check Results are

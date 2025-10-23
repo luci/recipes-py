@@ -17,6 +17,11 @@ message CheckResultView {
   // Which CheckResult this belongs to.
   optional ids.v1.CheckResult identifier = 1;
 
-  // The current data for each data type in this Result.
-  repeated Datum data = 2;
+  // Data for this result.
+  //
+  // Indexed by type_url.
+  //
+  // NOTE: If we add an additional distinguisher other than type_url, it will
+  // need to also be rendered in this string key. Probably <tag>:<type_url>.
+  map<string, Datum> data = 2;
 }

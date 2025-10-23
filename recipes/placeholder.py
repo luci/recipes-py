@@ -412,10 +412,15 @@ def GenTests(api):
           deps=[turboci.edge_group('charlie')],
       ))
   step = write_checks_input.steps.add(name='add option to bob')
+
+  options = GobSourceCheckOptions()
+  gerrit = options.gerrit_changes.add()
+  gerrit.hostname = "cool-host.example.com"
+
   step.turboci_write.check_writes.append(
       turboci.check(
           'bob',
-          options=[GobSourceCheckOptions()],
+          options=[options],
           state='CHECK_STATE_PLANNED',
       ))
   step = write_checks_input.steps.add(name='finalize charlie')
@@ -440,16 +445,19 @@ def GenTests(api):
       ))
 
   def _assert_graph(assert_, graph: GraphView):
-    by_id = {cv.check.identifier.id: cv for cv in graph.checks}
-
-    charlie_view = by_id['charlie']
+    charlie_view = graph.checks['charlie']
     assert_(charlie_view.check.identifier.id == 'charlie')
     assert_(charlie_view.check.kind == CheckKind.CHECK_KIND_BUILD)
 
-    bob_view = by_id['bob']
+    bob_view = graph.checks['bob']
     assert_(bob_view.check.identifier.id == 'bob')
-    assert_(bob_view.option_data[0].value.value.type_url ==
-            'type.googleapis.com/turboci.data.gerrit.v1.GobSourceCheckOptions')
+
+    url = turboci.type_url_for(GobSourceCheckOptions)
+    assert_(url in bob_view.option_data)
+
+    got = GobSourceCheckOptions()
+    assert_(bob_view.option_data[url].value.value.Unpack(got))
+    assert_(got.gerrit_changes[0].hostname == 'cool-host.example.com')
 
   yield api.test(
       'write_checks',

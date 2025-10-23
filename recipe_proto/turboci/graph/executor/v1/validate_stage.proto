@@ -6,8 +6,8 @@ syntax = "proto3";
 
 package turboci.graph.executor.v1;
 
-import "turboci/graph/orchestrator/v1/execution_policy.proto";
 import "turboci/graph/orchestrator/v1/stage.proto";
+import "turboci/graph/orchestrator/v1/stage_execution_policy.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/executor/v1;executorpb";
 option java_multiple_files = true;
@@ -21,5 +21,5 @@ message ValidateStageRequest {
 // Response to a stage validation request.
 message ValidateStageResponse {
   // Validated execution policy for the stage.
-  optional orchestrator.v1.ExecutionPolicy execution_policy = 1;
+  optional orchestrator.v1.StageExecutionPolicy stage_execution_policy = 1;
 }

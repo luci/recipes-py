@@ -12,11 +12,12 @@ import "turboci/graph/orchestrator/v1/check_kind.proto";
 import "turboci/graph/orchestrator/v1/check_state.proto";
 import "turboci/graph/orchestrator/v1/edge.proto";
 import "turboci/graph/orchestrator/v1/edge_group.proto";
-import "turboci/graph/orchestrator/v1/execution_policy.proto";
 import "turboci/graph/orchestrator/v1/field_options.proto";
 import "turboci/graph/orchestrator/v1/revision.proto";
 import "turboci/graph/orchestrator/v1/stage.proto";
+import "turboci/graph/orchestrator/v1/stage_attempt_execution_policy.proto";
 import "turboci/graph/orchestrator/v1/stage_attempt_state.proto";
+import "turboci/graph/orchestrator/v1/stage_execution_policy.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
 option java_multiple_files = true;
@@ -137,10 +138,13 @@ message WriteNodesRequest {
     // didn't find it, so I'm doing a write based on that information. If X DOES
     // exist at the time of the write, I want to abort and try again.").
     //
-    // NOTE: If you are writing what you THINK is a new node, the safe thing to
-    // do is to query for that node before doing the write (to confirm it
-    // doesn't exist) and then also include that node ID in this list (to
-    // confirm it didn't start existing before your write).
+    // NOTE: If you are writing what you THINK are all new nodes, but haven't
+    // done a query to verify this, just providing `txn` with `nodes_observed`
+    // and `snapshot_version` left unset is sufficient to guard against the
+    // nodes already being written. However, if you get
+    // a TransactionConflictFailure because the nodes already exist, when you
+    // recover make sure to do the query before you try the write again! You may
+    // be conflicting with a previous incarnation of your own process!
     repeated ids.v1.Identifier nodes_observed = 1 [
       (turboci).id.allowed = IDENTIFIER_KIND_CHECK,
       (turboci).id.allowed = IDENTIFIER_KIND_CHECK_OPTION,
@@ -153,6 +157,10 @@ message WriteNodesRequest {
     // If multiple queries were made in this transaction, this revision MUST be
     // the first revision observed. Providing version.require to QueryNodes will
     // help enforce this.
+    //
+    // If `snapshot_version` is unset, it is treated as a 0 value (which means
+    // that all `nodes_observed` plus all nodes being written in this request
+    // must not already exist).
     optional Revision snapshot_version = 2;
   }
   // Set if the caller wants to make this write transactional with a subset of
@@ -309,10 +317,10 @@ message WriteNodesRequest {
     // If the Stage already exists, this will only result in an error if this
     // requested policy doesn't match doesn't match the existing requested policy.
     //
-    // If this write creates the stage and the requested_execution_policy is
-    // omitted, the stage will get the default ExecutionPolicy from the
+    // If this write creates the stage and the requested_stage_execution_policy is
+    // omitted, the stage will get the default StageExecutionPolicy from the
     // Executor.
-    optional ExecutionPolicy requested_execution_policy = 5 [(turboci).creation_only = true];
+    optional StageExecutionPolicy requested_stage_execution_policy = 5 [(turboci).creation_only = true];
 
     // The Check assignments of the Stage.
     //
@@ -348,6 +356,10 @@ message WriteNodesRequest {
     // transitions (since all other transitions are handled by the Orchestrator
     // itself):
     //
+    //   * PENDING -> SCHEDULED
+    //   * PENDING -> RUNNING
+    //   * PENDING -> COMPLETE
+    //   * PENDING -> INCOMPLETE
     //   * SCHEDULED -> RUNNING
     //   * SCHEDULED -> COMPLETE
     //   * SCHEDULED -> INCOMPLETE
@@ -365,6 +377,12 @@ message WriteNodesRequest {
     // with `and` instead? Or just reject multiple conditional Edges with the
     // same target? Or replace the condition in the existing Edge?
     repeated Edge ensure_in_continuation_group = 3;
+
+    // The modified execution policy for this StageAttempt.
+    //
+    // This field can only be set by the stage executor when advancing the
+    // stage attempt state PENDING -> (SCHEDULED|RUNNING).
+    optional StageAttemptExecutionPolicy attempt_execution_policy = 4;
 
     // TBD: WorkerID/nonce/dedup key to ensure `SCHEDULED -> RUNNING` only
     // happens for one logical process/thread.

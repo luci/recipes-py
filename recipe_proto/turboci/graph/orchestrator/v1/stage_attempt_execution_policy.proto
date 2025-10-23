@@ -11,9 +11,9 @@ import "google/protobuf/duration.proto";
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
 option java_multiple_files = true;
 
-// ExecutionPolicy describes constraints on how a Stage may be executed by the
-// Orchestrator.
-message ExecutionPolicy {
+// StageAttemptExecutionPolicy describes constraints on how a StageAttempt
+// may be executed by the Orchestrator.
+message StageAttemptExecutionPolicy {
   // Heartbeat indicates the minimum heartbeat interval for Stage Attempts in
   // a given state.
   //
@@ -83,15 +83,15 @@ message ExecutionPolicy {
     optional google.protobuf.Duration tearing_down = 3;
   }
   // The heartbeat policies for Attempts of this Stage.
-  optional Heartbeat attempt_heartbeat = 2;
+  optional Heartbeat attempt_heartbeat = 1;
 
-  // AttemptTimeout describes the maximum amount of time a Stage Attempt can be in a
+  // Timeout describes the maximum amount of time a Stage Attempt can be in a
   // given state (in addition to restrictions imposed by Heartbeat).
   //
   // The Orchestrator will automatically transition a Stage Attempt to
   // INCOMPLETE after the timeout has passed if the Stage Attempt has not yet
   // transitioned to the next state.
-  message AttemptTimeout {
+  message Timeout {
     // The maximum amount of time a Stage Attempt can be in the
     // PENDING/THROTTLED state.
     //
@@ -126,95 +126,6 @@ message ExecutionPolicy {
     // the TEARING_DOWN state.
     optional google.protobuf.Duration tearing_down = 4;
   }
-  // The timeout policies for Attempts of this Stage.
-  optional AttemptTimeout attempt_timeout = 3;
-
-  // Retry describes the policy for retrying a Stage across multiple Attempts.
-  message Retry {
-    // The maximum number of retries (apart from the first attempt) that will be
-    // made for this Stage.
-    optional int32 max_retries = 1;
-
-    // TBD: A way to control how TurboCI does backoff to the Executor - likely
-    // it would be good enough to set this statically via Executor config. We
-    // shouldn't have to worry too much about changing this config at runtime
-    // because retry backoff calculation is effectively instantaneous (all
-    // happens within a single transaction).
-
-    // TBD: May be worth adding a way to control implicit retry criteria
-    // ('only retry if $condition').
-  }
-  // Policy for retrying this Stage across multiple Attempts.
-  //
-  // If omitted, the Stage will be attempted at most once.
-  optional Retry retry = 4;
-
-  // The maximum amount of time the Stage itself can stay in a non-FINAL state.
-  //
-  // This timeout starts from the time the Stage is *created*.
-  //
-  // This supersedes all per-Attempt restrictions and is intended to be able
-  // to set a cap on the maximum overall amount of time that a stage can take.
-  //
-  // This MUST be greater than the cumulative timeouts in `attempt_timeout` - it
-  // should also account for some amount of time for this Stage to enter the
-  // ATTEMPTING state in the first place.
-  //
-  // Interaction with retries: See `stage_timeout_mode`.
-  optional google.protobuf.Duration stage_timeout = 5;
-
-  // The description of what happens when `stage_timeout` is reached.
-  enum StageTimeoutMode {
-    // UNKNOWN is the invalid mode.
-    STAGE_TIMEOUT_MODE_UNKNOWN = 0;
-
-    // FINISH_CURRENT_ATTEMPT means that when `stage_timeout` occurs, the
-    // Orchestrator will allow the current Attempt to finish within it's
-    // configured expiration.
-    STAGE_TIMEOUT_MODE_FINISH_CURRENT_ATTEMPT = 1;
-
-    // BLOCK_MAX_EXECUTION_RETRY means that BEFORE `stage_timeout` occurs, the
-    // Orchestrator will calculate if the next Attempt, assuming it runs to the
-    // maximum duration of all timeouts in `attempt_timeout`, plus the computed
-    // backoff delay, would complete before `stage_timeout`.
-    //
-    // If it would, then the retry Attempt will be created. Otherwise the
-    // Orchestrator will not create a retry.
-    //
-    // Note that this mode also means that if it took a VERY long time to
-    // unblock this Stage, and the Stage Attempt's maximum execution time is
-    // also long, it's possible for the Stage to move to FINAL without executing
-    // any Attempt at all. See HYBRID for a compromise.
-    STAGE_TIMEOUT_MODE_BLOCK_MAX_EXECUTION_RETRY = 2;
-
-    // This is the same as BLOCK_MAX_EXECUTION_RETRY, except that the Stage will
-    // always have at least one Attempt (so, it behaves like
-    // FINISH_CURRENT_ATTEMPT if the Stage has zero or one Attempts, otherwise
-    // like BLOCK_MAX_EXECUTION_RETRY).
-    STAGE_TIMEOUT_MODE_HYBRID = 3;
-  }
-  // Describes how stage_timeout interacts with the Stage state machine.
-  //
-  // In particular, we want to avoid the situation where the Orchestrator
-  // creates 'doomed' Stage Attempts.
-  //
-  // Consider the case where a Build Stage is allotted a total of 6 hours to be
-  // scheduled, execute and complete. If there are only 4 hours left on
-  // `stage_timeout`, it likely doesn't make sense to trigger the Build with the
-  // intent on killing it off 2 hours before it will likely complete (which
-  // would just be a waste of resources).
-  //
-  // In this scenario, the two modes available today would let you:
-  //   * potentially overshoot stage_timeout by 2 hours
-  //   * fail the stage with 4 hours of stage_timeout left
-  //   * fail the stage with 4 hours of stage_timeout left (unless the stage has
-  //     zero attempts, in which case it will overshoot by 2 hours)
-  //
-  // TBD: it's possible to imagine another mode which runs a final Attempt with
-  // a modified `attempt_timeout` - this is likely more complicated (which
-  // timeout do you prune? probably pending_throttled?). Leaving this out for
-  // now to see how far these other modes get us.
-  //
-  // If unset, defaults to STAGE_TIMEOUT_MODE_FINISH_CURRENT_ATTEMPT.
-  optional StageTimeoutMode stage_timeout_mode = 6;
+  // The timeout policies for the StageAttempt.
+  optional Timeout timeout = 2;
 }

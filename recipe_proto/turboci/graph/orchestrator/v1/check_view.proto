@@ -22,18 +22,20 @@ message CheckView {
 
   // Data for the Check's options which are visible and of a type which was
   // requested.
-  repeated Datum option_data = 2;
-
-  // CheckEdits for this Check which are being read.
   //
-  // Some CheckEdits may be omitted if the user did not request them.
+  // Indexed by type_url.
+  //
+  // NOTE: If we add an additional distinguisher other than type_url, it will
+  // need to also be rendered in this string key. Probably <tag>:<type_url>.
+  map<string, Datum> option_data = 2;
+
+  // CheckEdits for this Check.
+  //
+  // Sorted by `edit.version`.
   repeated CheckEditView edits = 3;
 
-  // Result data for this Check which is being read.
+  // Result data for this Check.
   //
-  // Matches 1:1 with Check.results.
-  //
-  // Some CheckResultViews may be empty if the user did not request those data
-  // types or didn't have permission to see them.
-  repeated CheckResultView results = 4;
+  // Indexed by `identifier.idx`.
+  map<int32, CheckResultView> results = 4;
 }

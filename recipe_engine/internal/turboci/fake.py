@@ -59,13 +59,11 @@ from PB.turboci.graph.ids.v1 import identifier
 
 from PB.turboci.graph.orchestrator.v1.check import Check
 from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
-from PB.turboci.graph.orchestrator.v1.check_view import CheckView
 from PB.turboci.graph.orchestrator.v1.check_state import (CheckState,
                                                           CHECK_STATE_PLANNING,
                                                           CHECK_STATE_PLANNED,
                                                           CHECK_STATE_WAITING,
                                                           CHECK_STATE_FINAL)
-from PB.turboci.graph.orchestrator.v1.check_view import CheckView
 from PB.turboci.graph.orchestrator.v1.datum import Datum
 from PB.turboci.graph.orchestrator.v1.edge import Edge
 from PB.turboci.graph.orchestrator.v1.graph_view import GraphView
@@ -553,47 +551,26 @@ class FakeTurboCIOrchestrator(TurboCIClient):
             req.version.require if req.version.HasField('require') else None)
       version = self._revision
 
-    ret = GraphView(version=version)
-    checkViews: dict[str, CheckView] = {}
+    ret = GraphView(version=version, identifier=identifier.WorkPlan(id=""))
 
-    def _get(cid: str) -> CheckView:
-      if not (cur := checkViews.get(cid, None)):
-        cur = ret.checks.add()
-        checkViews[cid] = cur
-      return cur
-
-    for ident_str, node in graph.items():
+    for node in graph.values():
       if isinstance(node, Check):
-        _get(ident_str).check.CopyFrom(node)
+        ret.checks[node.identifier.id].check.CopyFrom(node)
       else:
         assert isinstance(node, Datum)
-        match node.identifier.WhichOneof('type'):
+        ident = node.identifier
+        type_url = node.value.value.type_url
+        match ident.WhichOneof('type'):
           case 'check_option':
-            cv = _get(from_id(node.identifier.check_option.check))
-            cv.option_data.append(node)
+            cv = ret.checks[ident.check_option.check.id]
+            cv.option_data[type_url].CopyFrom(node)
           case 'check_result_datum':
-            rslt_id = node.identifier.check_result_datum.result
-            cv = _get(from_id(rslt_id.check))
-            for cur in cv.results:
-              if cur.identifier.idx == rslt_id.idx:
-                cur.data.append(node)
-                break
-            else:
-              cv.results.add(data=[node])
-
-    # make everything sorted
-    ret.checks.sort(
-        key=lambda c: (c.check.identifier.work_plan.id, c.check.identifier.id))
-    ret.stages.sort(
-        key=lambda s: (s.stage.identifier.work_plan.id, s.stage.identifier.id))
-    for check in ret.checks:
-      check.option_data.sort(key=lambda o: o.identifier.check_option.idx)
-      check.results.sort(key=lambda r: r.identifier.idx)
-      for result in check.results:
-        result.data.sort(key=lambda d: d.identifier.check_result_datum.idx)
+            rslt_id = ident.check_result_datum.result
+            cv = ret.checks[rslt_id.check.id]
+            cv.results[rslt_id.idx].data[type_url].CopyFrom(node)
 
     return QueryNodesResponse(
-        graph=ret,
+        graph={"": ret},
         absent=all_absent.values(),
     )
 

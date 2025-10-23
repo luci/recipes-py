@@ -6,7 +6,7 @@ syntax = "proto3";
 
 package turboci.graph.orchestrator.v1;
 
-import "turboci/graph/orchestrator/v1/execution_policy.proto";
+import "turboci/graph/orchestrator/v1/stage_execution_policy.proto";
 import "turboci/graph/orchestrator/v1/stage_state.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
@@ -29,8 +29,8 @@ message StageDelta {
   // possible for a single write to affect multiple policies.
   //
   // Like Stage.execution_policies, this will be sorted and unique on
-  // ExecutionPolicy.source.
-  repeated ExecutionPolicy execution_policies = 2;
+  // StageExecutionPolicy.source.
+  repeated StageExecutionPolicy execution_policies = 2;
 
   // TBD: current-Attempt modifications:
   // AttemptState current_attempt_state

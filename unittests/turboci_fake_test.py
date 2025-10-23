@@ -26,13 +26,16 @@ from PB.turboci.graph.orchestrator.v1.revision import Revision
 from recipe_engine import turboci
 from recipe_engine.internal.turboci.common import check_id
 from recipe_engine.internal.turboci.fake import _IndexEntrySnapshot
-from recipe_engine.internal.turboci.ids import AnyIdentifier, type_urls
+from recipe_engine.internal.turboci.ids import AnyIdentifier, type_url_for, type_urls
 
 demoStruct = Struct(fields={'hello': Value(string_value='world')})
 demoStruct2 = Struct(fields={'hola': Value(string_value='mundo')})
 
 demoTS = Timestamp(seconds=100, nanos=100)
 demoTS2 = Timestamp(seconds=200, nanos=200)
+
+structURL = type_url_for(demoStruct)
+tsURL = type_url_for(demoTS)
 
 
 def _mkAny(value: Message) -> Any:
@@ -131,10 +134,10 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
             Query.Select(nodes=turboci.collect_check_ids('hey')),
             Query.Collect.Check(options=True),
             types=[demoStruct],
-        ))
+        ))[""]
     self.assertEqual(len(rslt.checks), 1)
     self.assertEqual(
-        rslt.checks[0].check,
+        rslt.checks['hey'].check,
         Check(
             identifier=turboci.check_id('hey'),
             state='CHECK_STATE_PLANNING',
@@ -143,9 +146,9 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
             options=_mkOptions('hey', demoStruct),
         ))
     self.assertEqual(
-        rslt.checks[0].option_data[0],
+        rslt.checks['hey'].option_data[structURL],
         _mkDatum(
-            turboci.wrap_id(rslt.checks[0].check.options[0].identifier),
+            turboci.wrap_id(rslt.checks['hey'].check.options[0].identifier),
             demoStruct,
             rslt.version,
         ))
@@ -164,7 +167,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         collect=Query.Collect.Check(options=True),
         types=[Struct],
     )[0]
-    self.assertEqual(rslt.option_data[0].value.value, _mkAny(demoStruct))
+    self.assertEqual(rslt.option_data[structURL].value.value, _mkAny(demoStruct))
 
   def test_check_state_PLANNING_overwrite_option(self):
     self.write_nodes(
@@ -182,7 +185,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         collect=Query.Collect.Check(options=True),
         types=[Struct],
     )[0]
-    self.assertEqual(rslt.option_data[0].value.value, _mkAny(demoStruct2))
+    self.assertEqual(rslt.option_data[structURL].value.value, _mkAny(demoStruct2))
 
   def test_check_state_PLANNING_add_second_option(self):
     self.write_nodes(
@@ -200,8 +203,8 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         collect=Query.Collect.Check(options=True),
         types=[Struct, Timestamp],
     )[0]
-    self.assertEqual(rslt.option_data[0].value.value, _mkAny(demoStruct))
-    self.assertEqual(rslt.option_data[1].value.value, _mkAny(demoTS))
+    self.assertEqual(rslt.option_data[structURL].value.value, _mkAny(demoStruct))
+    self.assertEqual(rslt.option_data[tsURL].value.value, _mkAny(demoTS))
 
   def test_check_state_PLANNING_add_dependency(self):
     self.write_nodes(
@@ -427,7 +430,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
                      turboci.type_url_for(demoStruct))
     self.assertTrue(rslt.check.results[0].HasField('created_at'))
     self.assertTrue(rslt.check.results[0].HasField('finalized_at'))
-    self.assertEqual(rslt.results[0].data[0].value.value, _mkAny(demoStruct))
+    self.assertEqual(rslt.results[1].data[structURL].value.value, _mkAny(demoStruct))
 
   def test_check_WAITING_results(self):
     self.write_nodes(
@@ -474,10 +477,9 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         turboci.make_query(
             Query.Select.CheckPattern(kind='CHECK_KIND_ANALYSIS'),
             Query.Select.CheckPattern(kind=CheckKind.CHECK_KIND_BUILD),
-        ))
+        ))[""]
     self.assertEqual(len(ret.checks), 3)
-    self.assertEqual(
-        set(c.check.identifier.id for c in ret.checks), {'a', 'c', 'cc'})
+    self.assertEqual(set(ret.checks), {'a', 'c', 'cc'})
 
   def test_query_filter_option(self):
     self.write_nodes(
@@ -491,9 +493,9 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
     ret = self.query_nodes(
         turboci.make_query(
             Query.Select.CheckPattern(
-                with_option_types=turboci.type_urls(demoStruct)),))
+                with_option_types=turboci.type_urls(demoStruct)),))[""]
     self.assertEqual(len(ret.checks), 2)
-    self.assertEqual(set(c.check.identifier.id for c in ret.checks), {'a', 'c'})
+    self.assertEqual(set(ret.checks), {'a', 'c'})
 
   def test_query_filter_all_options(self):
     self.write_nodes(
@@ -506,14 +508,12 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         Query.Select.CheckPattern(),
         Query.Collect.Check(options=True),
         types=('*',),
-    ))
+    ))[""]
     self.assertEqual(len(ret.checks), 3)
-    self.assertEqual(set(c.check.identifier.id for c in ret.checks), {
-      'a', 'b', 'c',
-    })
+    self.assertEqual(set(ret.checks), {'a', 'b', 'c'})
     types = set()
-    for check in ret.checks:
-      types.update(d.value.value.type_url for d in check.option_data)
+    for check in ret.checks.values():
+      types.update(check.option_data)
     self.assertEqual(types, set(type_urls(demoStruct, demoTS)))
 
 
@@ -539,10 +539,10 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
     ret = self.query_nodes(
         turboci.make_query(
             Query.Select.CheckPattern(
-                with_result_data_types=turboci.type_urls(demoStruct)),))
+                with_result_data_types=turboci.type_urls(demoStruct)),))[""]
 
     self.assertEqual(len(ret.checks), 2)
-    self.assertEqual(set(c.check.identifier.id for c in ret.checks), {'a', 'c'})
+    self.assertEqual(set(ret.checks), {'a', 'c'})
 
   def test_query_filter_id_regex(self):
     self.write_nodes(
@@ -553,11 +553,9 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
     )
 
     ret = self.query_nodes(
-        turboci.make_query(Query.Select.CheckPattern(id_regex='.*[er].*'),))
+        turboci.make_query(Query.Select.CheckPattern(id_regex='.*[er].*'),))[""]
     self.assertEqual(len(ret.checks), 3)
-    self.assertEqual(
-        set(c.check.identifier.id for c in ret.checks),
-        {'clorp', 'butter', 'neat'})
+    self.assertEqual(set(ret.checks), {'clorp', 'butter', 'neat'})
 
   def test_query_filter_follow_down(self):
     # make a simple diamond
@@ -592,10 +590,9 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         turboci.make_query(
             Query.Select.CheckPattern(kind='CHECK_KIND_ANALYSIS'),
             Query.Expand.Dependencies(dependencies_depth=2),
-        ))
+        ))[""]
     self.assertEqual(len(ret.checks), 4)
-    self.assertEqual(
-        set(c.check.identifier.id for c in ret.checks), {'a', 'b', 'c', 'd'})
+    self.assertEqual(set(ret.checks), {'a', 'b', 'c', 'd'})
 
   def test_query_filter_follow_up(self):
     # make a simple diamond
@@ -630,10 +627,9 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         turboci.make_query(
             Query.Select.CheckPattern(kind=CheckKind.CHECK_KIND_SOURCE),
             Query.Expand.Dependencies(dependents_depth=2),
-        ))
+        ))[""]
     self.assertEqual(len(ret.checks), 4)
-    self.assertEqual(
-        set(c.check.identifier.id for c in ret.checks), {'s', 'b', 'c', 'd'})
+    self.assertEqual(set(ret.checks), {'s', 'b', 'c', 'd'})
 
 
 if __name__ == '__main__':

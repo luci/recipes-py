@@ -5,12 +5,11 @@
 
 from __future__ import annotations
 
-from typing import Literal, Protocol, Sequence
+from typing import Literal, Mapping, Protocol, Sequence, cast
 
 from google.protobuf.message import Message
 
 from PB.turboci.graph.ids.v1 import identifier
-from PB.turboci.graph.orchestrator.v1 import check_state
 from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
 from PB.turboci.graph.orchestrator.v1.check_state import CheckState
 from PB.turboci.graph.orchestrator.v1.check_view import CheckView
@@ -144,13 +143,13 @@ def check(
 
   if kind:
     if isinstance(kind, str):
-      ret.kind = CheckKind.Value(kind)
+      ret.kind = cast(CheckKind, CheckKind.Value(kind))
     else:
       ret.kind = kind
 
   if state:
     if isinstance(state, str):
-      ret.state = CheckState.Value(state)
+      ret.state = cast(CheckState, CheckState.Value(state))
     else:
       ret.state = state
 
@@ -287,7 +286,7 @@ def query_nodes(
     *queries: Query,
     version: QueryNodesRequest.VersionRestriction|None = None,
     client: TurboCIClient|None = None,
-) -> GraphView:
+) -> Mapping[str, GraphView]:
   """Convenience function for CLIENT.QueryNodes."""
   return (client or CLIENT).QueryNodes(QueryNodesRequest(
       version=version,
@@ -304,8 +303,15 @@ def read_checks(*ids: identifier.Check|str,
   This just does a query_nodes for the ids specified by `ids`, and then unwraps
   the result.
   """
-  return query_nodes(make_query(
-      Query.Select(nodes=collect_check_ids(*ids)),
+  idents = list(collect_check_ids(*ids))
+  work_plan = {ident.check.work_plan.id for ident in idents}
+  if len(work_plan) > 1:
+    raise ValueError(
+        f'read_checks: got checks from more than one workplan: {work_plan}')
+
+  checks = query_nodes(make_query(
+      Query.Select(nodes=idents),
       collect,
       types=types,
-  ), client=client).checks
+  ), client=client)[work_plan.pop()].checks
+  return [checks[ident.check.id] for ident in idents]

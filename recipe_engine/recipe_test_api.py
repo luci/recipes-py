@@ -963,6 +963,12 @@ class RecipeTestApi:
     """Add a check-only post-processing hook which asserts on the TurboCI
     graph state.
 
+    Since the simulated/fake turboci interface only emultates a single WorkPlan,
+    this just passes your assertion function the faked GraphView (not a mapping
+    of workplan id -> GraphView as you might get back from query_nodes).
+
+    This GraphView contains all nodes and data, for all data types, in the graph.
+
     This is like post_process, except that func should look like:
 
        from PB.turboci.graph.orchestrator.v1.graph_view import GraphView
@@ -980,13 +986,13 @@ class RecipeTestApi:
       )
     """
 
-    def post_check(check, steps, f, *args, **kwargs):
+    def assert_turboci_graph(check, steps, f, *args, **kwargs):
       f(check, steps, *args, **kwargs)
 
     ret = TestData()
     _, filename, lineno, _, _, _ = inspect.stack()[1]
     context = PostprocessHookContext(func, args, kwargs, filename, lineno)
-    ret.assert_turboci_graph(post_check, (func,) + args, kwargs, context)
+    ret.assert_turboci_graph(assert_turboci_graph, (func,) + args, kwargs, context)
     return ret
 
   def turboci_write_nodes(self, *nodes: WriteNodesRequest.CheckWrite):

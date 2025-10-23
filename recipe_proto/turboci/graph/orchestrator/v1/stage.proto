@@ -11,10 +11,11 @@ import "turboci/graph/ids/v1/identifier.proto";
 import "turboci/graph/orchestrator/v1/check_state.proto";
 import "turboci/graph/orchestrator/v1/edge.proto";
 import "turboci/graph/orchestrator/v1/edge_group.proto";
-import "turboci/graph/orchestrator/v1/execution_policy.proto";
 import "turboci/graph/orchestrator/v1/field_options.proto";
 import "turboci/graph/orchestrator/v1/revision.proto";
+import "turboci/graph/orchestrator/v1/stage_attempt_execution_policy.proto";
 import "turboci/graph/orchestrator/v1/stage_attempt_state.proto";
+import "turboci/graph/orchestrator/v1/stage_execution_policy.proto";
 import "turboci/graph/orchestrator/v1/stage_state.proto";
 import "turboci/graph/orchestrator/v1/value.proto";
 
@@ -75,7 +76,7 @@ message Stage {
   //
   // Updated any time fields in this Stage change, which includes all changes to
   // the active Stage Attempt (if state is ATTEMPTING).
-  optional Revision version = 5;
+  optional Revision version = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // The current state of the Stage.
   optional StageState state = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
@@ -95,10 +96,6 @@ message Stage {
   // `requested` is set by the stage creator. This is validated and augmented by
   // the Executor to become the `validated` policy.
   //
-  // It is expected that a requested ExecutionPolicy which is over-broad will be
-  // rejected by the Executor (rather than silently capped), but this is not
-  // enforced by TurboCI.
-  //
   // In the future, this may also include a `dynamic` policy which could allow
   // additional restrictions to be added after the Stage is created.
   message ExecutionPolicyState {
@@ -108,16 +105,16 @@ message Stage {
     // This will be validated by the Executor prior to the Stage being committed
     // to the graph.
     //
-    // If omitted, the Executor will provide a full ExecutionPolicy according to
+    // If omitted, the Executor will provide a full StageExecutionPolicy according to
     // its own logic/configuration.
-    optional ExecutionPolicy requested = 1 [(google.api.field_behavior) = IMMUTABLE];
+    optional StageExecutionPolicy requested = 1 [(google.api.field_behavior) = IMMUTABLE];
 
     // Actual execution policy is the policy validated and returned by the
     // Executor when it accepts the Stage for insertion to the graph.
     //
     // This is the policy that TurboCI will use to drive Attempts for this
     // Stage.
-    optional ExecutionPolicy validated = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+    optional StageExecutionPolicy validated = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
     // TBD: Potentially allow a `dynamic` ExecutionPolicy which callers can use
     // to decrease the effective limits on this Stage.
@@ -126,14 +123,9 @@ message Stage {
     //   * Stage type configuration should indicate that dynamic execution
     //   policy is supported.
     //   * TurboCI must ensure this dynamic policy only ever shrinks.
-    //   * TurboCI must ensure that changes to this dynamic policy can be safely
-    //   observed by the current StageAttempt. Presumably the Stage Attempt would
-    //   learn of this policy change at the time it heartbeats (similarly to how
-    //   it would learn of its cancellation at the time that it heartbeats). So
-    //   it should not be possible to modify the timeout for the state of the
-    //   current StageAttempt such that the timeout will hit before the next
-    //   two heartbeats (because we are currently assuming a Stage Attempt is
-    //   allowed to miss one heartbeat before being marked INCOMPLETE).
+    //   * If the changes are on `attempt_execution_policy_template`, TurboCI
+    //   will set the requested policy for the future attempts to this updated
+    //   policy. But the current attempt will not be affected.
   }
 
   // Execution policy for this Stage.
@@ -215,6 +207,16 @@ message Stage {
     }
     // Append-only Executor-specefic progress messages.
     repeated Progress progress = 5;
+
+    // Actual execution policy for this StageAttempt.
+    //
+    // When the orchestrator sends this attempt to the executor to run, the
+    // executor will reevaluate the previous validated attempt execution
+    // template in stage execution policy and make adjustments when necessary.
+    // The validated execution policy is sent to the Orchestrator as part of
+    // CurrentStageWrite when the executor advances the StageAttempt state
+    // PENDING -> (SCHEDULED|RUNNING).
+    optional StageAttemptExecutionPolicy execution_policy = 6;
   }
   // Current retry/attempts state of this Stage, stored in ascending order by
   // created time.
@@ -249,7 +251,7 @@ message Stage {
     // goal state, then the Orchestrator will stop monitoring Assignments for
     // this Check at this goal state.
     //
-    // Manual advancement can dangerous if done when other Stages are still
+    // Manual advancement can be dangerous if done when other Stages are still
     // operating on the Check at the earlier state (for example, if one Stage
     // moves a Check to PLANNED while another Stage is still trying to write to
     // the Check options, the writing Stage will fail to write out the options).

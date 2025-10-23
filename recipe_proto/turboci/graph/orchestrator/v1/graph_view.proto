@@ -6,6 +6,7 @@ syntax = "proto3";
 
 package turboci.graph.orchestrator.v1;
 
+import "turboci/graph/ids/v1/identifier.proto";
 import "turboci/graph/orchestrator/v1/check_view.proto";
 import "turboci/graph/orchestrator/v1/revision.proto";
 import "turboci/graph/orchestrator/v1/stage_view.proto";
@@ -38,15 +39,21 @@ message GraphView {
   // GraphView.
   optional Revision version = 1;
 
-  // Checks in the graph.
+  // The WorkPlan to which all nodes in this GraphView belong.
+  optional ids.v1.WorkPlan identifier = 2;
+
+  // Checks in the graph, addressed by `check.identifier.id`.
   //
   // Checks may be omitted if the user does not have permission to view them,
   // or if the user did not request them.
-  repeated CheckView checks = 2;
+  map<string, CheckView> checks = 3;
 
-  // Stages in the graph.
+  // Stages in the graph, addressed by `stage.identifier.id`.
+  //
+  // Note that for the same reason ids.v1.Stage.id contains the 'S' or 'N'
+  // prefix, that prefix appears in the key here as well.
   //
   // Stages may be omitted if the user does not have permission to view them,
   // or if the user did not request them.
-  repeated StageView stages = 3;
+  map<string, StageView> stages = 4;
 }

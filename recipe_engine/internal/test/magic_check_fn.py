@@ -655,7 +655,7 @@ def post_process(test_failures: Outcome.Results, raw_expectations,
             result_data=True,
         ),
         types=('*',),
-    ))
+    ))[""]
     for hook, args, kwargs, context in test_data.assert_turboci_graph_hooks:
       graph_state_copy = copy.deepcopy(graph_state)
       assert_ = Checker(context, graph_state_copy)

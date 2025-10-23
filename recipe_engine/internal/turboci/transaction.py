@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Callable, Literal, Sequence
+from typing import Callable, Literal, Mapping, Sequence
 
 from google.protobuf.message import Message
 
@@ -16,6 +16,7 @@ from PB.turboci.graph.orchestrator.v1.query import Query
 from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesRequest
 from PB.turboci.graph.orchestrator.v1.revision import Revision
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
+from PB.turboci.graph.orchestrator.v1.write_nodes_response import WriteNodesResponse
 
 from . import common
 from .ids import from_id, to_id
@@ -62,30 +63,32 @@ class Transaction:
   # necessary for correctness for the live service.
   _did_write: bool = False
 
-  def _observe_graph(self, graph: GraphView):
-    if not self._revision:
-      self._revision = graph.version
-
+  def _observe_graph(self, graphs: Mapping[str, GraphView]):
     # checks
-    for view in graph.checks:
-      self.observed_nodes.add(from_id(view.check.identifier))
-      for datum in view.option_data:
-        self.observed_nodes.add(from_id(datum.identifier))
-      for result in view.results:
-        for datum in result.data:
+    for graph in graphs.values():
+      if not self._revision:
+        self._revision = graph.version
+      for view in graph.checks.values():
+        self.observed_nodes.add(from_id(view.check.identifier))
+        for datum in view.option_data.values():
           self.observed_nodes.add(from_id(datum.identifier))
+        for result in view.results.values():
+          for datum in result.data.values():
+            self.observed_nodes.add(from_id(datum.identifier))
 
-    # stages
-    for view in graph.stages:
-      self.observed_nodes.add(from_id(view.stage.identifier))
+      # stages
+      for view in graph.stages.values():
+        self.observed_nodes.add(from_id(view.stage.identifier))
 
   def write_nodes(
       self,
-      *nodes_reasons:
-      (WriteNodesRequest.CheckWrite | WriteNodesRequest.StageWrite
-       | WriteNodesRequest.Reason),
+      *atoms: (
+          WriteNodesRequest.CheckWrite
+        | WriteNodesRequest.StageWrite
+        | WriteNodesRequest.Reason
+      ),
       current_stage: WriteNodesRequest.CurrentStageWrite | None = None,
-  ) -> None:
+  ) -> WriteNodesResponse:
     """Writes one or more nodes.
 
     Once called, this Transaction object must be discarded. If you want to do
@@ -102,22 +105,17 @@ class Transaction:
           snapshot_version=self._revision,
       )
 
-    req = WriteNodesRequest(
+    return common.write_nodes(
+        *atoms,
         current_stage=current_stage,
         txn=txn,
-    )
-    for node in nodes_reasons:
-      match node:
-        case WriteNodesRequest.CheckWrite():
-          req.checks.append(node)
-        case WriteNodesRequest.StageWrite():
-          req.stages.append(node)
-        case _:
-          req.reasons.append(node)
+        client=self._client)
 
-    self._client.WriteNodes(req)
-
-  def query_nodes(self, *query: Query, observe_graph=True) -> GraphView:
+  def query_nodes(
+      self,
+      *query: Query,
+      observe_graph=True
+  ) -> Mapping[str, GraphView]:
     """Runs run or more queries and returns their combined result.
 
     Will add all observed nodes to Transaction.observed_nodes unless
@@ -153,12 +151,19 @@ class Transaction:
     This just does a query_nodes for the ids specified by `ids`, and then unwraps
     the result.
     """
-    return self.query_nodes(
-        common.make_query(
-            Query.Select(nodes=common.collect_check_ids(*ids)),
-            collect,
-            types=types,
-        )).checks
+    # TODO: share implementation between common.read_checks and here.
+    idents = list(common.collect_check_ids(*ids))
+    work_plan = {ident.check.work_plan.id for ident in idents}
+    if len(work_plan) > 1:
+      raise ValueError(
+          f'read_checks: got checks from more than one workplan: {work_plan}')
+
+    checks = self.query_nodes(common.make_query(
+        Query.Select(nodes=idents),
+        collect,
+        types=types,
+    ))[work_plan.pop()].checks
+    return [checks[ident.check.id] for ident in idents]
 
 
 # The mode for QueryNodes's version restriction.
