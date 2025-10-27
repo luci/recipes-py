@@ -362,7 +362,8 @@ def parse_deps(repo_name, mod_ast, relpath):
       relpath=relpath,
       lineno=lineno,
     )
-    spec = parse_deps_spec(repo_name, ast.literal_eval(_unparse(DEPS)))
+    spec = parse_deps_spec(repo_name, ast.literal_eval(_unparse(DEPS)),
+                           source=relpath)
     for dep_repo_name, mod_name in sorted(spec.values()):
       ret.module_links.add(repo_name=dep_repo_name, name=mod_name)
 

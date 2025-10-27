@@ -41,6 +41,7 @@ import os
 import re
 import sys
 
+from collections.abc import Mapping, Sequence
 from functools import cached_property
 from typing import Type
 
@@ -537,7 +538,7 @@ class RecipeModule:
     This imports the module code.
     """
     DEPS = getattr(self.do_import(), 'DEPS', ())
-    return parse_deps_spec(self.repo.name, DEPS)
+    return parse_deps_spec(self.repo.name, DEPS, source=self.path)
 
   @cached_property
   def transitive_DEPS(self):
@@ -936,7 +937,8 @@ class Recipe:
 
     This reads the recipe code.
     """
-    return parse_deps_spec(self.repo.name, self.global_symbols.get('DEPS', ()))
+    return parse_deps_spec(self.repo.name, self.global_symbols.get('DEPS', ()),
+                           source=self.path)
 
   @cached_property
   def transitive_DEPS(self):
@@ -1043,7 +1045,12 @@ def _scan_recipe_directory(path):
       yield raw_recipe_name.replace(os.path.sep, '/')
 
 
-def parse_deps_spec(repo_name, deps_spec):
+def parse_deps_spec(
+    repo_name: str,
+    deps_spec: Sequence[str] | Mapping[str, str],
+    *,
+    source: str,
+):
   """Parses a DEPS mapping from inside a recipe or recipe module's __init__.py,
   and returns a deps map in the form of:
 
@@ -1058,9 +1065,9 @@ def parse_deps_spec(repo_name, deps_spec):
      DEPS = {'local_name': 'module', 'other_name': 'repo/module'}
 
   Args:
-    * repo_name (str) - The repo that unscoped dependencies should be
-      resolved against.
-    * deps_spec (list|tuple|dict) - The deps specification.
+    * repo_name - Repo that unscoped dependencies should be resolved against.
+    * deps_spec - The deps specification.
+    * source - Source file where DEPS lives, for errors.
 
   Returns fully qualified deps dict of {localname: (repo_name, module_name)}
   """
@@ -1070,14 +1077,15 @@ def parse_deps_spec(repo_name, deps_spec):
     #  * repo_name/name  # explicit repo_name
     return tuple(name.split('/', 1)) if '/' in name else (repo_name, name)
 
-  # Sequence delcaration
+  # Sequence declaration
   if isinstance(deps_spec, (list, tuple)):
     deps = {}
     for dep_name in deps_spec:
       d_repo_name, d_module = _parse_dep_name(dep_name)
       if d_module in deps:
         raise ValueError(
-          'You specified two dependencies with the name %r' % (d_module,))
+          f'You specified two dependencies with the name {d_module} in '
+          f'{source}')
       deps[d_module] = (d_repo_name, d_module)
 
   # Dict declaration
@@ -1091,7 +1099,8 @@ def parse_deps_spec(repo_name, deps_spec):
     return {}
 
   else:
-    raise ValueError('Unknown DEPS type %r' % (type(deps_spec).__name__,))
+    raise ValueError(
+      f'Unknown DEPS type {type(deps_spec).__name__} in {source}')
 
   return deps
 
