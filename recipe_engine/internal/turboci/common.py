@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from typing import Literal, Mapping, Protocol, Sequence, cast
+from typing import Literal, Mapping, Protocol, Sequence, Type, TypeVar, cast
 
 from google.protobuf.message import Message
 
@@ -21,7 +21,7 @@ from PB.turboci.graph.orchestrator.v1.query_nodes_response import QueryNodesResp
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 from PB.turboci.graph.orchestrator.v1.write_nodes_response import WriteNodesResponse
 
-from .ids import collect_check_ids, type_urls, wrap_id, check_id, stage_id
+from .ids import collect_check_ids, type_url_for, type_urls, wrap_id, check_id, stage_id
 
 
 class TurboCIClient(Protocol):
@@ -321,9 +321,59 @@ def read_checks(*ids: identifier.Check|str,
     raise ValueError(
         f'read_checks: got checks from more than one workplan: {work_plan}')
 
-  checks = query_nodes(make_query(
-      Query.Select(nodes=idents),
-      collect,
-      types=types,
-  ), client=client)[work_plan.pop()].checks
+  checks = next(
+      iter(
+          query_nodes(
+              make_query(
+                  Query.Select(nodes=idents),
+                  collect,
+                  types=types,
+              ),
+              client=client).values())).checks
   return [checks[ident.check.id] for ident in idents]
+
+
+MsgT = TypeVar('MsgT', bound=Message)
+
+
+def get_option(msg: Type[MsgT], check_view: CheckView) -> MsgT | None:
+  """Extracts, unpacks and returns the data for the proto message `msg`
+  from the check_view's option_data.
+
+  If check_view does not have a matching option, returns None.
+
+  Example:
+
+    dat = get_option(MyMessage, graph.checks['foo'])
+    # dat is None or an instance of MyMessage
+  """
+  dat = check_view.option_data.get(type_url_for(msg))
+  if dat is None:
+    return None
+  ret = msg()
+  dat.value.value.Unpack(ret)
+  return ret
+
+
+def get_results(msg: Type[MsgT], check_view: CheckView) -> list[MsgT]:
+  """Extracts, unpacks and returns the data for the proto message `msg`
+  from all results in the check_view.
+
+  If the check_view has no results, or doesn't have any result data which
+  matches `msg`, returns an empty list.
+
+  Example:
+
+    dat = get_results(MyMessage, graph.checks['foo'])
+    # dat is a possibly-empty list of instances of MyMessage
+  """
+  url = type_url_for(msg)
+  ret: list[MsgT] = []
+  for result in check_view.results.values():
+    dat = result.data.get(url)
+    if dat is None:
+      continue
+    val = msg()
+    dat.value.value.Unpack(val)
+    ret.append(val)
+  return ret

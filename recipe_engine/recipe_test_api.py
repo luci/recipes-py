@@ -1003,6 +1003,11 @@ class RecipeTestApi:
     use `api.turboci_write_nodes` multiple times, each block of nodes will be
     written as a single write_nodes call.
 
+    It is not necessary to supply a reason - a low-effort reason will be
+    synthesized for the purpose of this test like:
+
+       reason("api.turboci_write_nodes() from /path/to/recipe.py:1234")
+
     Example:
 
     def GenTests(api):

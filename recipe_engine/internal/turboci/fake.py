@@ -270,6 +270,8 @@ class FakeTurboCIOrchestrator(TurboCIClient):
       typId: dict[str, identifier.Identifier] = {
           ref.type_url: wrap_id(ref.identifier) for ref in refs
       }
+      # TODO: Assert that realm does not mutate, and for newly created data
+      # without a specified realm, mirror the check's realm.
       for realmValue in to_write:
         type_url = realmValue.value.value.type_url
         if (cur_id := typId.get(type_url)) is None:

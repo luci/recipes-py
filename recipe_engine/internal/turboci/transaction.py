@@ -158,11 +158,14 @@ class Transaction:
       raise ValueError(
           f'read_checks: got checks from more than one workplan: {work_plan}')
 
-    checks = self.query_nodes(common.make_query(
-        Query.Select(nodes=idents),
-        collect,
-        types=types,
-    ))[work_plan.pop()].checks
+    checks = next(
+        iter(
+            self.query_nodes(
+                common.make_query(
+                    Query.Select(nodes=idents),
+                    collect,
+                    types=types,
+                )).values())).checks
     return [checks[ident.check.id] for ident in idents]
 
 

@@ -410,7 +410,7 @@ class DependencyIndex:
   def index_node_write(self, real_node: Check | Stage):
     """Updates the indexed conditions for `real_node`.
 
-    Looks at current unresolved conditions for `node` and attempts to resolve
+    Looks at current unresolved conditions for `real_node` and attempts to resolve
     them. If one or more conditions are resolved, adds events to the
     _resolution_events queue.
     """
@@ -441,13 +441,17 @@ class DependencyIndex:
     write operations, which must be applied by the caller.
 
     This diverges from the real implementation by 'instantaneously' resolving
-    all events in both queues.
+    all events in the queue (vs. potentially doing these in parallel and/or
+    asynchronous transactions in the background).
 
-    The intent is to call this in a loop as long as this keeps returning
-    non-empty writes. In the real system this will happen asynchronously and/or
-    opportunistically in the write handler.
+    The intent is to call this in a loop as long as has_events() returns True.
+    In the real system this will happen asynchronously and/or opportunistically
+    in the write handler.
 
-    Returns a dict mapping from node identifier to Dependencies to write.
+    Returns a dict mapping from node identifier to Dependencies to write to that
+    node. The write should include calling `index_resolved` (if appropriate),
+    advancing the state of the node (if the dependencies are resolved), and
+    finally `index_node_write`.
     """
     ret: dict[str, Dependencies] = {}
 
@@ -491,7 +495,7 @@ class DependencyIndex:
     return ret
 
   def index_resolved(self, node_ident_str: str, deps: Dependencies):
-    """Records that `node_ident_str` is resolved.
+    """Records that `node_ident_str` dependencies are resolved.
 
     `deps` must be resolved, or this raises an error.
 

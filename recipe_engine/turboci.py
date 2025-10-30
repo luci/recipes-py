@@ -14,10 +14,10 @@ Usage:
       turboci.query_nodes(...)
       turboci.write_nodes(...)
 
-    def GenTests(...):
+    def GenTests(api):
       api.test(
         'name',
-        # TBD: Testing API to assert graph state after recipe ends.
+        api.assert_turboci_graph(...),
       )
 """
 
@@ -34,6 +34,8 @@ from .internal.turboci.common import (
     check_id,
     collect_check_ids,
     dep_group,
+    get_option,
+    get_results,
     make_query,
     query_nodes,
     read_checks,
@@ -71,6 +73,8 @@ __all__ = [
     'dep_group',
     'from_id',
     'get_client',
+    'get_option',
+    'get_results',
     'InvalidArgumentException',
     'make_query',
     'query_nodes',
