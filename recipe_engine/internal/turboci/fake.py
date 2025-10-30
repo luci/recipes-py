@@ -148,8 +148,10 @@ class FakeTurboCIOrchestrator(TurboCIClient):
     if isinstance(node, Check):
       return node
     if node is None:
-      assert False, f'_must_get_check did not find check {ident_str!r}.'
-    assert False, f'_must_get_check found non-check {node!r}.'
+      raise AssertionError(
+          f'_must_get_check did not find check {ident_str!r}.')
+    raise AssertionError(
+        f'_must_get_check found non-check {node!r}.')
 
   # secondary indices - keep synchronized with _IndexEntrySnapshot and
   # _update_indices_locked.
@@ -175,8 +177,14 @@ class FakeTurboCIOrchestrator(TurboCIClient):
     """Advances the database revision to the next logical version.
 
     Under test mode this advances self._revision.seconds by 1.
+
     Otherwise, populates self._revision with the current actual timestamp
-    according to time.monotonic_ns().
+    according to time.monotonic_ns(). This can happen when running recipes in
+    contexts where TurboCI is not enabled, or there is no access token for it in
+    LUCI_CONTEXT. Using monotonic_ns will allow data dumped from these to at
+    least have timestamps which are mostly consistent with wall clock times in
+    most cases to help with debugging. Ideally we just get to the point where
+    the real APIs are available all the time in non-testing scenarios.
     """
     if self.test_mode:
       new_version = Revision(
