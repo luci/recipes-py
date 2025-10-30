@@ -9,6 +9,7 @@ import functools
 import logging
 import re
 import gevent
+import typing
 
 from builtins import map, range
 from past.builtins import basestring
@@ -48,7 +49,11 @@ class ModuleInjectionSite:
   def __init__(self, owner_module=None):
     self.owner_module = owner_module
 
-  def __getattr__(self, key):
+  # pyright will infer NoReturn with no return type annotation and then any
+  # context managers accessed via a module's dependencies (e.g.
+  # self.m.context(...) or self.m.step.nest(...)) get flagged as errors because
+  # NoReturn doesn't implement the context manager protocol
+  def __getattr__(self, key: str) -> typing.Any:
     raise ModuleInjectionError(
       "Recipe Module %r has no dependency %r. (Add it to __init__.py:DEPS?)"
       % (module_name(self.owner_module), key))
