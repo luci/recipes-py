@@ -6,18 +6,17 @@ syntax = "proto3";
 
 package turboci.graph.orchestrator.v1;
 
-import "google/protobuf/any.proto";
 import "turboci/graph/ids/v1/identifier.proto";
 import "turboci/graph/orchestrator/v1/check_kind.proto";
 import "turboci/graph/orchestrator/v1/check_state.proto";
 import "turboci/graph/orchestrator/v1/edge.proto";
-import "turboci/graph/orchestrator/v1/edge_group.proto";
 import "turboci/graph/orchestrator/v1/field_options.proto";
 import "turboci/graph/orchestrator/v1/revision.proto";
 import "turboci/graph/orchestrator/v1/stage.proto";
 import "turboci/graph/orchestrator/v1/stage_attempt_execution_policy.proto";
 import "turboci/graph/orchestrator/v1/stage_attempt_state.proto";
 import "turboci/graph/orchestrator/v1/stage_execution_policy.proto";
+import "turboci/graph/orchestrator/v1/value.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
 option java_multiple_files = true;
@@ -27,8 +26,9 @@ option java_multiple_files = true;
 // Allows atomically writing to multiple nodes (Checks, Stages) in a single
 // transaction.
 message WriteNodesRequest {
-  // RealmValue describes a standard Any which resides in a given security
-  // realm.
+  // RealmValue describes a Value which resides in a given security realm.
+  //
+  // This is used to write objects which appear in the graph as Datum messages.
   message RealmValue {
     // The realm to assign to this value (if the value is being created).
     // If it's unset/empty, it will inherit from the realm of the Stage
@@ -40,7 +40,40 @@ message WriteNodesRequest {
     optional string realm = 1 [(turboci).creation_only = true];
 
     // The value to set.
-    optional google.protobuf.Any value = 2;
+    optional Value value = 2;
+  }
+
+  // An in-line representation of Dependencies.Group.
+  //
+  // The Orchestrator will deduplicate edges into Dependencies.edges in the
+  // Check or Stage.
+  //
+  // Otherwise this has the same meaning as Dependencies.Group.
+  message DependencyGroup {
+    // Singular edges in this group.
+    repeated Edge edges = 1;
+
+    // Sub-groups in this group.
+    //
+    // May not contain empty groups.
+    repeated DependencyGroup groups = 2;
+
+    // Number of edges and/or groups which need to be satisfied for this
+    // DependencyGroup to be satisfied.
+    //
+    // See `Dependencies.Group.threshold`.
+    optional int32 threshold = 3;
+  }
+
+  // A single Stage.Attempt.Progress write message.
+  message StageAttemptProgress {
+    // Low-effort/human-readable progress information.
+    //
+    // Better than nothing, but not good for machines to parse.
+    optional string msg = 1;
+
+    // Machine-readable details for this progress item.
+    repeated Value details = 2;
   }
 
   // The token of the Stage Attempt which is performing this write.
@@ -70,7 +103,7 @@ message WriteNodesRequest {
     // This is repeated to allow for standardized reason message types in
     // conjunction with workflow-specific details as part of the same write
     // record.
-    repeated google.protobuf.Any details = 3;
+    repeated Value details = 3;
   }
   // The reason for this write operation, as supplied by the entity performing
   // the write.
@@ -213,17 +246,13 @@ message WriteNodesRequest {
     // Must be unique on `RealmValue.value.type_url`.
     repeated RealmValue options = 4 [(turboci).check.editable = CHECK_STATE_PLANNING];
 
-    // Dependencies for this Check.
+    // Dependency predicate for this Check.
     //
-    // If set, fully overwrites the dependencies field in the target Check.
+    // If set, used to populate the dependencies.edges and
+    // dependencies.predicate fields in the target Check.
     //
-    // Empty groups will be pruned from this. You can remove all dependencies by
-    // providing a single, empty, EdgeGroup.
-    //
-    // If this Write transitions the Check to PLANNED and also provides
-    // dependencies, these must match identically to the already-written
-    // dependencies.
-    repeated EdgeGroup dependencies = 5 [
+    // To clear dependencies, set this to an empty DependencyGroup.
+    optional DependencyGroup dependencies = 5 [
       (turboci).id.allowed = IDENTIFIER_KIND_CHECK,
       (turboci).check.editable = CHECK_STATE_PLANNING
     ];
@@ -289,7 +318,7 @@ message WriteNodesRequest {
     //
     // We could just accept 'same type' == OK and ignore the value, but this
     // feels a bit wishy-washy.
-    optional google.protobuf.Any args = 2 [(turboci).creation_only = true];
+    optional Value args = 2 [(turboci).creation_only = true];
 
     // Realm to assign to this Stage.
     //
@@ -302,11 +331,14 @@ message WriteNodesRequest {
     // be rejected.
     optional string realm = 3 [(turboci).creation_only = true];
 
-    // Dependencies for this Stage.
+    // Dependency predicate for this Stage.
+    //
+    // If set, used to populate the dependencies.edges and
+    // dependencies.predicate fields in the target Check.
     //
     // If the Stage already exists, this will only result in an error if it
     // doesn't match the existing dependencies identically.
-    repeated EdgeGroup dependencies = 4 [
+    optional DependencyGroup dependencies = 4 [
       (turboci).id.allowed = IDENTIFIER_KIND_STAGE,
       (turboci).id.allowed = IDENTIFIER_KIND_CHECK,
       (turboci).creation_only = true
@@ -368,6 +400,17 @@ message WriteNodesRequest {
     //   * RUNNING -> INCOMPLETE
     optional StageAttemptState state = 1;
 
+    // Sets the StageAttempt.process_uid field.
+    //
+    // MUST be supplied when transitioning a StageAttempt to RUNNING.
+    //
+    // If the field is already populated in the StageAttempt, this value must
+    // match - otherwise the write is rejected with an error detail of
+    // StageAttemptClaimedFailure.
+    //
+    // Refer to Stage.Attempt.process_uid.
+    optional string process_uid = 2;
+
     // Ensure all provided edges are included in `Stage.continuation_group`.
     //
     // Edges are deduplicated with `Stage.continuation_group` if they have the
@@ -378,21 +421,23 @@ message WriteNodesRequest {
     // same target? Or replace the condition in the existing Edge?
     repeated Edge ensure_in_continuation_group = 3;
 
-    // The modified execution policy for this StageAttempt.
+    // The modified execution policy for this Stage Attempt.
     //
     // This field can only be set by the stage executor when advancing the
     // stage attempt state PENDING -> (SCHEDULED|RUNNING).
     optional StageAttemptExecutionPolicy attempt_execution_policy = 4;
 
-    // TBD: WorkerID/nonce/dedup key to ensure `SCHEDULED -> RUNNING` only
-    // happens for one logical process/thread.
-
-    // TBD: Other StageAttempt trivia (links to underlying system, Any(s) for
-    // structured data about the StageAttempt, build id/task id).
+    // Adds details to the Stage Attempt.details field.
     //
-    // Can we make this immutable once written?
+    // If a data type here is already present in the database, the data here
+    // must exactly equal the existing data; Otherwise the write is rejected.
+    repeated Value details = 5;
 
-    // TBD: Attempt Progress
+    // Progress messages to add to the current StageAttempt.
+    //
+    // It is a good idea to do these progress updates transactionally, otherwise
+    // it's possible to double-append them.
+    repeated StageAttemptProgress progress = 6;
   }
   // State for the current Stage as indicated by `stage_attempt_token`.
   //

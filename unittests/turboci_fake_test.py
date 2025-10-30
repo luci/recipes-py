@@ -18,15 +18,15 @@ from PB.turboci.graph.orchestrator.v1.check import Check
 from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
 from PB.turboci.graph.orchestrator.v1.check_state import CheckState
 from PB.turboci.graph.orchestrator.v1.datum import Datum
-from PB.turboci.graph.orchestrator.v1.edge import Edge
-from PB.turboci.graph.orchestrator.v1.edge_group import EdgeGroup
+from PB.turboci.graph.orchestrator.v1.dependencies import Dependencies
+from PB.turboci.graph.orchestrator.v1.edge import RESOLUTION_SATISFIED, Edge
 from PB.turboci.graph.orchestrator.v1.query import Query
 from PB.turboci.graph.orchestrator.v1.revision import Revision
 
 from recipe_engine import turboci
-from recipe_engine.internal.turboci.common import check_id
+from recipe_engine.turboci import dep_group, check_id
 from recipe_engine.internal.turboci.fake import _IndexEntrySnapshot
-from recipe_engine.internal.turboci.ids import AnyIdentifier, type_url_for, type_urls
+from recipe_engine.internal.turboci.ids import AnyIdentifier, type_url_for, type_urls, wrap_id
 
 demoStruct = Struct(fields={'hello': Value(string_value='world')})
 demoStruct2 = Struct(fields={'hola': Value(string_value='mundo')})
@@ -81,10 +81,6 @@ class IndexEntrySnapshotTest(test_env.RecipeEngineUnitTest):
 
   def test_snapshot(self):
     ident = check_id('thing')
-    deps = [
-        turboci.edge_group('a', 'b'),
-    ]
-    deps[0].edges[1].resolution.satisfied = True
     check = Check(
         identifier=ident,
         kind='CHECK_KIND_TEST',
@@ -93,7 +89,6 @@ class IndexEntrySnapshotTest(test_env.RecipeEngineUnitTest):
         results=[
             Check.Result(data=_mkResults('thing', Struct, Value),),
         ],
-        dependencies=deps,
     )
     entry = _IndexEntrySnapshot.for_check(check)
     self.assertEqual(entry.kind, CheckKind.CHECK_KIND_TEST)
@@ -109,7 +104,6 @@ class IndexEntrySnapshotTest(test_env.RecipeEngineUnitTest):
             'type.googleapis.com/google.protobuf.Struct',
             'type.googleapis.com/google.protobuf.Value',
         })
-    self.assertEqual(entry.deps, {('L:Ca', None), ('L:Cb', True)})
 
   def test_empty_snapshot(self):
     entry = _IndexEntrySnapshot.for_check(None)
@@ -117,7 +111,6 @@ class IndexEntrySnapshotTest(test_env.RecipeEngineUnitTest):
     self.assertEqual(entry.state, 0)
     self.assertEqual(entry.option_types, set())
     self.assertEqual(entry.result_types, set())
-    self.assertEqual(entry.deps, set())
 
 
 class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
@@ -144,6 +137,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
             kind='CHECK_KIND_BUILD',
             version=rslt.version,
             options=_mkOptions('hey', demoStruct),
+            dependencies=Dependencies(),
         ))
     self.assertEqual(
         rslt.checks['hey'].option_data[structURL],
@@ -214,7 +208,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
             options=[demoStruct],
             # Note: we can add a dependency to a check which we are writing
             # concurrently with 'hey'.
-            deps=[turboci.edge_group('there')],
+            deps=dep_group('there'),
         ),
         turboci.check(
             'there',
@@ -222,10 +216,9 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
             options=[demoStruct],
         ))
     rslt = self.read_checks('hey')[0]
-    self.assertEqual(len(rslt.check.dependencies), 1)
-    self.assertEqual(
-        rslt.check.dependencies[0],
-        EdgeGroup(edges=[Edge(target=turboci.wrap_id(check_id('there')))]))
+    self.assertEqual(len(rslt.check.dependencies.edges), 1)
+    self.assertEqual(rslt.check.dependencies.edges[0],
+                     Edge(check=Edge.Check(identifier=check_id('there'))))
 
   def test_error_check_state_missing_dep(self):
     with self.assertRaisesRegex(turboci.InvalidArgumentException,
@@ -234,7 +227,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
           turboci.check(
               'hey',
               kind='CHECK_KIND_BUILD',
-              deps=[turboci.edge_group('missing')],
+              deps=dep_group('missing'),
           ))
 
   def test_check_state_PLANNING_replace_dependency(self):
@@ -245,7 +238,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
             options=[demoStruct],
             # Note: we can add a dependency to a check which we are writing
             # concurrently with 'hey'.
-            deps=[turboci.edge_group('there')],
+            deps=dep_group('there'),
         ),
         turboci.check(
             'there',
@@ -255,15 +248,20 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
     self.write_nodes(
         turboci.check(
             'hey',
-            deps=[turboci.edge_group('there', 'moo')],
+            deps=dep_group('there', 'moo'),
         ), turboci.check(
             'moo',
             kind='CHECK_KIND_BUILD',
         ))
     rslt = self.read_checks('hey')[0]
-    self.assertEqual(len(rslt.check.dependencies), 1)
-    self.assertEqual(rslt.check.dependencies[0],
-                     turboci.edge_group('there', 'moo'))
+    self.assertEqual(len(rslt.check.dependencies.edges), 2)
+    self.assertListEqual(
+        list(rslt.check.dependencies.edges), [
+            Edge(check=Edge.Check(identifier=check_id('there'))),
+            Edge(check=Edge.Check(identifier=check_id('moo'))),
+        ])
+    self.assertEqual(rslt.check.dependencies.predicate,
+                     Dependencies.Group(edges=[0, 1]))
 
   def test_check_state_PLANNING_evolve(self):
     self.write_nodes(
@@ -316,7 +314,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
             options=[demoStruct],
             # Note: we can add a dependency to a check which we are writing
             # concurrently with 'hey'.
-            deps=[turboci.edge_group('there')],
+            deps=dep_group('there'),
         ),
         turboci.check(
             'there',
@@ -343,12 +341,11 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         turboci.check(
             'a',
             kind='CHECK_KIND_BUILD',
-            deps=[turboci.edge_group('b')],
-        ),
-        turboci.check(
+            deps=dep_group('b'),
+        ), turboci.check(
             'b',
             kind='CHECK_KIND_BUILD',
-            deps=[turboci.edge_group('c')],
+            deps=dep_group('c'),
         ), turboci.check(
             'c',
             kind='CHECK_KIND_BUILD',
@@ -402,7 +399,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         turboci.check(
             'a',
             state='CHECK_STATE_PLANNED',
-            deps=[turboci.edge_group('b')],
+            deps=dep_group('b'),
         ))
     ret = self.read_checks('a')[0]
     self.assertEqual(ret.check.state, CheckState.CHECK_STATE_WAITING)
@@ -563,22 +560,19 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         turboci.check(
             'a',
             kind='CHECK_KIND_ANALYSIS',
-            deps=[turboci.edge_group('b', 'c')],
-        ),
-        turboci.check(
+            deps=dep_group('b', 'c'),
+        ), turboci.check(
             'b',
             kind='CHECK_KIND_TEST',
-            deps=[turboci.edge_group('d')],
-        ),
-        turboci.check(
+            deps=dep_group('d'),
+        ), turboci.check(
             'c',
             kind='CHECK_KIND_TEST',
-            deps=[turboci.edge_group('d')],
-        ),
-        turboci.check(
+            deps=dep_group('d'),
+        ), turboci.check(
             'd',
             kind='CHECK_KIND_BUILD',
-            deps=[turboci.edge_group('s')],
+            deps=dep_group('s'),
         ),
         turboci.check(
             's',
@@ -589,10 +583,9 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
     ret = self.query_nodes(
         turboci.make_query(
             Query.Select.CheckPattern(kind='CHECK_KIND_ANALYSIS'),
-            Query.Expand.Dependencies(dependencies_depth=2),
+            Query.Expand.Dependencies(),
         ))[""]
-    self.assertEqual(len(ret.checks), 4)
-    self.assertEqual(set(ret.checks), {'a', 'b', 'c', 'd'})
+    self.assertEqual(set(ret.checks), {'a', 'b', 'c'})
 
   def test_query_filter_follow_up(self):
     # make a simple diamond
@@ -600,22 +593,19 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         turboci.check(
             'a',
             kind='CHECK_KIND_ANALYSIS',
-            deps=[turboci.edge_group('b', 'c')],
-        ),
-        turboci.check(
+            deps=dep_group('b', 'c'),
+        ), turboci.check(
             'b',
             kind='CHECK_KIND_TEST',
-            deps=[turboci.edge_group('d')],
-        ),
-        turboci.check(
+            deps=dep_group('d'),
+        ), turboci.check(
             'c',
             kind='CHECK_KIND_TEST',
-            deps=[turboci.edge_group('d')],
-        ),
-        turboci.check(
+            deps=dep_group('d'),
+        ), turboci.check(
             'd',
             kind='CHECK_KIND_BUILD',
-            deps=[turboci.edge_group('s')],
+            deps=dep_group('s'),
         ),
         turboci.check(
             's',
@@ -626,10 +616,184 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
     ret = self.query_nodes(
         turboci.make_query(
             Query.Select.CheckPattern(kind=CheckKind.CHECK_KIND_SOURCE),
-            Query.Expand.Dependencies(dependents_depth=2),
+            Query.Expand.Dependents(),
         ))[""]
-    self.assertEqual(len(ret.checks), 4)
-    self.assertEqual(set(ret.checks), {'s', 'b', 'c', 'd'})
+    self.assertEqual(set(ret.checks), {'s', 'd'})
+
+  def test_dependencies_edges(self):
+    self.write_nodes(
+        turboci.check('A', kind='CHECK_KIND_BUILD', state='CHECK_STATE_FINAL'),
+        turboci.check(
+            'B',
+            kind='CHECK_KIND_BUILD',
+            state='CHECK_STATE_PLANNED',
+            deps=dep_group('A')),
+        turboci.check(
+            'C',
+            kind='CHECK_KIND_BUILD',
+            state='CHECK_STATE_PLANNED',
+            deps=dep_group('A')),
+        turboci.check(
+            'D',
+            kind='CHECK_KIND_BUILD',
+            state='CHECK_STATE_PLANNED',
+            deps=dep_group('B', 'C')),
+    )
+
+    ret = self.query_nodes(
+        turboci.make_query(
+            Query.Select(nodes=turboci.collect_check_ids('D')),
+            Query.Expand.Dependencies(),
+        ))[""]
+    self.assertEqual(set(ret.checks.keys()), {'D', 'B', 'C'})
+
+  def test_dependencies_satisfied(self):
+    self.write_nodes(
+        turboci.check('A', kind='CHECK_KIND_BUILD', state='CHECK_STATE_FINAL'),
+        turboci.check(
+            'B',
+            kind='CHECK_KIND_BUILD',
+            state='CHECK_STATE_PLANNED',
+            deps=dep_group('A')),
+        turboci.check(
+            'C',
+            kind='CHECK_KIND_BUILD',
+            state='CHECK_STATE_PLANNED',
+            deps=dep_group('A')),
+        turboci.check(
+            'D',
+            kind='CHECK_KIND_BUILD',
+            state='CHECK_STATE_PLANNED',
+            deps=dep_group('B', 'C')),
+    )
+
+    # d has no satisfied dependencies
+    ret = self.query_nodes(
+        turboci.make_query(
+            Query.Select(nodes=turboci.collect_check_ids('D')),
+            Query.Expand.Dependencies(mode='QUERY_EXPAND_DEPS_MODE_SATISFIED'),
+        ))[""]
+    self.assertEqual(set(ret.checks.keys()), {'D'})
+
+    # Once B and C are final, D should be unblocked
+    self.write_nodes(
+        turboci.check('B', state='CHECK_STATE_FINAL'),
+        turboci.check('C', state='CHECK_STATE_FINAL'),
+    )
+
+    # deps of d are satisfied now
+    ret = self.query_nodes(
+        turboci.make_query(
+            Query.Select(nodes=turboci.collect_check_ids('D')),
+            Query.Expand.Dependencies(mode='QUERY_EXPAND_DEPS_MODE_SATISFIED'),
+        ))[""]
+    self.assertEqual(set(ret.checks.keys()), {'D', 'B', 'C'})
+    self.assertEqual(ret.checks['D'].check.state,
+                     CheckState.CHECK_STATE_WAITING)
+
+  def test_dependents_edges(self):
+    self.write_nodes(
+        turboci.check('A', kind='CHECK_KIND_BUILD'),
+        turboci.check(
+            'B',
+            kind='CHECK_KIND_BUILD',
+            state='CHECK_STATE_PLANNED',
+            deps=dep_group('A')),
+        turboci.check(
+            'C',
+            kind='CHECK_KIND_BUILD',
+            state='CHECK_STATE_PLANNED',
+            deps=dep_group('A')),
+        turboci.check(
+            'D',
+            kind='CHECK_KIND_BUILD',
+            state='CHECK_STATE_PLANNED',
+            deps=dep_group('B', 'C')),
+    )
+
+    ret = self.query_nodes(
+        turboci.make_query(
+            Query.Select(nodes=turboci.collect_check_ids('A')),
+            Query.Expand.Dependents(),
+        ))[""]
+    self.assertEqual(set(ret.checks.keys()), {'A', 'B', 'C'})
+
+  def test_dependents_satisfied(self):
+    self.write_nodes(
+        turboci.check('A', kind='CHECK_KIND_BUILD'),
+        turboci.check(
+            'B',
+            kind='CHECK_KIND_BUILD',
+            state='CHECK_STATE_PLANNED',
+            deps=dep_group('A')),
+        turboci.check(
+            'C',
+            kind='CHECK_KIND_BUILD',
+            state='CHECK_STATE_PLANNED',
+            deps=dep_group('A')),
+        turboci.check(
+            'D',
+            kind='CHECK_KIND_BUILD',
+            state='CHECK_STATE_PLANNED',
+            deps=dep_group('B', 'C')),
+    )
+
+    ret = self.query_nodes(
+        turboci.make_query(
+            Query.Select(nodes=turboci.collect_check_ids('A')),
+            Query.Expand.Dependents(mode='QUERY_EXPAND_DEPS_MODE_SATISFIED'),
+        ))[""]
+    self.assertEqual(set(ret.checks.keys()), {'A'})
+
+    self.write_nodes(turboci.check('A', state='CHECK_STATE_FINAL'))
+
+    ret = self.query_nodes(
+        turboci.make_query(
+            Query.Select(nodes=turboci.collect_check_ids('A')),
+            Query.Expand.Dependents(mode='QUERY_EXPAND_DEPS_MODE_SATISFIED'),
+        ))[""]
+    self.assertEqual(set(ret.checks.keys()), {'A', 'B', 'C'})
+
+  def test_ab_bc_resolution(self):
+    self.write_nodes(
+        turboci.check(
+            'p',
+            kind='CHECK_KIND_BUILD',
+            state='CHECK_STATE_PLANNED',
+            deps=dep_group(
+                dep_group('a', 'b'),
+                dep_group('b', 'c'),
+                dep_group('c', 'd'),
+                threshold=1,
+            )),
+        turboci.check('a', kind='CHECK_KIND_BUILD'),
+        turboci.check('b', kind='CHECK_KIND_BUILD'),
+        turboci.check('c', kind='CHECK_KIND_BUILD'),
+        turboci.check('d', kind='CHECK_KIND_BUILD'),
+    )
+
+    p = self.read_checks('p')[0]
+    self.assertFalse(p.check.dependencies.HasField('resolution'))
+
+    # satisfy p->a and p->c
+    self.write_nodes(
+        turboci.check('a', state='CHECK_STATE_FINAL'),
+        turboci.check('c', state='CHECK_STATE_FINAL'),
+    )
+
+    # still no resolution yet
+    p = self.read_checks('p')[0]
+    self.assertFalse(p.check.dependencies.HasField('resolution'))
+
+    # satisfy p->d
+    self.write_nodes(turboci.check('d', state='CHECK_STATE_FINAL'),)
+
+    # resolved
+    p = self.read_checks('p')[0]
+    self.assertTrue(p.check.dependencies.HasField('resolution'))
+    # and satisfied has the minimal set of just ['c', 'd']
+    self.assertEqual(p.check.dependencies.resolution,
+                     RESOLUTION_SATISFIED)
 
 
 if __name__ == '__main__':

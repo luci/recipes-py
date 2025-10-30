@@ -42,13 +42,13 @@ by this fake, will raise NotImplementedError.
 
 from __future__ import annotations
 
-from collections import defaultdict
 import copy
 import re
 import time
 
-from copy import deepcopy
+from collections import defaultdict
 from dataclasses import dataclass, field
+from itertools import chain
 from threading import Lock
 from typing import Callable, TypeVar, cast
 
@@ -61,11 +61,10 @@ from PB.turboci.graph.orchestrator.v1.check import Check
 from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
 from PB.turboci.graph.orchestrator.v1.check_state import (CheckState,
                                                           CHECK_STATE_PLANNING,
-                                                          CHECK_STATE_PLANNED,
-                                                          CHECK_STATE_WAITING,
                                                           CHECK_STATE_FINAL)
 from PB.turboci.graph.orchestrator.v1.datum import Datum
-from PB.turboci.graph.orchestrator.v1.edge import Edge
+from PB.turboci.graph.orchestrator.v1.dependencies import Dependencies
+from PB.turboci.graph.orchestrator.v1.edge import RESOLUTION_SATISFIED
 from PB.turboci.graph.orchestrator.v1.graph_view import GraphView
 from PB.turboci.graph.orchestrator.v1.query import Query
 from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesRequest
@@ -92,7 +91,6 @@ class _IndexEntrySnapshot:
   state: CheckState = CheckState.CHECK_STATE_UNKNOWN
   option_types: set[str] = field(default_factory=set)
   result_types: set[str] = field(default_factory=set)
-  deps: set[tuple[str, bool | None]] = field(default_factory=set)
 
   @staticmethod
   def for_check(check: Check | None) -> _IndexEntrySnapshot:
@@ -103,24 +101,11 @@ class _IndexEntrySnapshot:
     for result in check.results:
       result_types.update(entry.type_url for entry in result.data)
 
-    deps: set[tuple[str, bool | None]] = set()
-
-    class visitor(edge.GroupVisitor):
-
-      def visit_edge(self, edge: Edge):
-        satisfied: bool | None = None
-        if edge.HasField("resolution"):
-          satisfied = edge.resolution.satisfied
-        deps.add((from_id(edge.target), satisfied))
-
-    visitor().visit(*check.dependencies)
-
     return _IndexEntrySnapshot(
         kind=check.kind,
         state=check.state,
         option_types=set(entry.type_url for entry in check.options),
         result_types=result_types,
-        deps=deps,
     )
 
 
@@ -141,12 +126,39 @@ class FakeTurboCIOrchestrator(TurboCIClient):
   _revision: Revision = field(default_factory=Revision)
 
   # Map of node id -> Check|Datum
+  #
+  # TODO: Split this into type-specific tables rather than one big dict of
+  # everything.
+  #
+  # TODO: use sortedcontainers instead of a dict?
   _db: dict[str, Check | Datum] = field(default_factory=dict)
+
+  def _get_check(self, ident_str: str) -> Check | None:
+    # TODO: This function can be removed once _db is split into per-type tables
+    # (it would just be `self._checks.get`.
+    node = self._db.get(ident_str)
+    if isinstance(node, Check):
+      return node
+    return None
+
+  def _must_get_check(self, ident_str: str) -> Check:
+    # TODO: This function can be removed once _db is split into per-type tables
+    # (it would just be `self._checks.get`.
+    node = self._db.get(ident_str)
+    if isinstance(node, Check):
+      return node
+    if node is None:
+      assert False, f'_must_get_check did not find check {ident_str!r}.'
+    assert False, f'_must_get_check found non-check {node!r}.'
 
   # secondary indices - keep synchronized with _IndexEntrySnapshot and
   # _update_indices_locked.
 
   # x -> ids
+  #
+  # TODO: Should be split by kind - these are all computed from Check right now.
+  # e.g. should be _check_by_kind, _check_by_state, _check_by_option_type,
+  # _check_by_result_type.
   _db_by_kind: defaultdict[CheckKind, set[str]] = field(
       default_factory=lambda: defaultdict(set))
   _db_by_state: defaultdict[CheckState, set[str]] = field(
@@ -156,16 +168,25 @@ class FakeTurboCIOrchestrator(TurboCIClient):
   _db_by_result_type: defaultdict[str, set[str]] = field(
       default_factory=lambda: defaultdict(set))
 
-  # from (X, satisfied) -> checks which point at X
-  #
-  # If satisfied is None, it means that X isn't FINAL yet, so the incoming
-  # edges are unresolved.
-  # If it's True, it means that it's final and these are resolved edges which
-  # are satisfied by X.
-  # If it's False, it means that it's final and these are resolved edges which
-  # are unsatisfied by X.
-  _db_by_dependents: defaultdict[tuple[str, bool | None], set[str]] = field(
-      default_factory=lambda: defaultdict(set))
+  _dependencies: edge.DependencyIndex = field(
+      default_factory=edge.DependencyIndex)
+
+  def _advance_revision_locked(self) -> Revision:
+    """Advances the database revision to the next logical version.
+
+    Under test mode this advances self._revision.seconds by 1.
+    Otherwise, populates self._revision with the current actual timestamp
+    according to time.monotonic_ns().
+    """
+    if self.test_mode:
+      new_version = Revision(
+          ts=Timestamp(seconds=self._revision.ts.seconds + 1))
+    else:
+      now = time.monotonic_ns()
+      new_version = Revision(
+          ts=Timestamp(seconds=int(now // 1e9), nanos=int(now % 1e9)))
+    self._revision = new_version
+    return new_version
 
   def _update_indices_locked(self, check_id: str, prev: _IndexEntrySnapshot, check: Check):
     """Updates indices based on fully validated check and _IndexEntrySnapshot.
@@ -191,53 +212,20 @@ class FakeTurboCIOrchestrator(TurboCIClient):
         self._db_by_state[prev.state].discard(check_id)
       self._db_by_state[cur.state].add(check_id)
 
-    # options and result types are only addative
+    # options and result types are only additive
     for typ in cur.option_types - prev.option_types:
       self._db_by_option_type[typ].add(check_id)
     for typ in cur.result_types - prev.result_types:
       self._db_by_result_type[typ].add(check_id)
 
-    # dependencies are fully mutable while in PLANNING, so we need to compute
-    # removals and additions.
-    for dep in cur.deps - prev.deps:
-      self._db_by_dependents[dep].add(check_id)
-    for dep in prev.deps - cur.deps:
-      self._db_by_dependents[dep].discard(check_id)
+  def _apply_checkwrite_locked(self, write: WriteNodesRequest.CheckWrite,
+                               deps: Dependencies | None) -> Check:
+    """Applies a raw CheckWrite, plus the corresponding pre-normalized
+    Dependencies (if any).
 
-    # If this write transitions this check to FINAL, we need to resolve any
-    # edges in dependents which point to this check. This MAY also transition
-    # the dependent check from PENDING to WAITING.
-    #
-    # NOTE: This duplicates logic with ResolveEdges because we only support
-    # the condition `check.state == FINAL` as resolution criteria for now.
-    if prev.state != CHECK_STATE_FINAL and cur.state == CHECK_STATE_FINAL:
-      # We know all existing dependents entries which point at check_id have no
-      # satisfied value (None). Find them all and update them.
-
-      # to avoid modifying the indexes while we are iterating in the loop,
-      # buffer all writes.
-      writes: list[WriteNodesRequest.CheckWrite] = []
-      for dependent_id in self._db_by_dependents[check_id, None]:
-        dependent = self._db[dependent_id]
-        assert isinstance(dependent, Check)
-
-        # calculate new dependency tree for the dependent, using `check` as the
-        # target node for the edges. Buffer the resulting write.
-        dependencies = deepcopy(dependent.dependencies)
-        fully_unblocked = edge.resolve_edges(
-            *dependencies, at=self._revision, targets=[check])
-
-        writes.append(
-            WriteNodesRequest.CheckWrite(
-                identifier=dependent.identifier,
-                state=CHECK_STATE_WAITING if fully_unblocked else None,
-                dependencies=dependencies,
-            ))
-
-      for write in writes:
-        self._indexed_apply_locked(write)
-
-  def _apply_locked(self, write: WriteNodesRequest.CheckWrite) -> Check:
+    NOTE: This function should never consider write.dependencies in any
+    capacity.
+    """
     ident_str = from_id(write.identifier)
     check: Check
 
@@ -256,6 +244,12 @@ class FakeTurboCIOrchestrator(TurboCIClient):
           kind=write.kind,
           state=CHECK_STATE_PLANNING,
       )
+      # New check without deps creates empty dependencies.
+      #
+      # This is important to trigger the check for resolving empty deps in the
+      # PLANNED state.
+      if deps is None:
+        deps = Dependencies()
       self._db[ident_str] = check
       _touch()
 
@@ -269,7 +263,7 @@ class FakeTurboCIOrchestrator(TurboCIClient):
           ref.type_url: wrap_id(ref.identifier) for ref in refs
       }
       for realmValue in to_write:
-        type_url = realmValue.value.type_url
+        type_url = realmValue.value.value.type_url
         if (cur_id := typId.get(type_url)) is None:
           # we're adding a new datum
           _touch()
@@ -283,41 +277,8 @@ class FakeTurboCIOrchestrator(TurboCIClient):
             version=self._revision,
             realm=realmValue.realm or None,
         )
-        dat.value.value.CopyFrom(realmValue.value)
+        dat.value.value.CopyFrom(realmValue.value.value)
         self._db[from_id(cur_id)] = dat
-
-    new_state: CheckState = write.state
-
-    if write.dependencies:
-      dependencies = deepcopy(write.dependencies)
-      edge.prune_empty_groups(dependencies)
-
-      targ_ids = edge.extract_target_ids(*dependencies, want='*')
-      # NOTE: This duplicates logic with edge.ResolveEdges.
-      fully_unblocked = edge.resolve_edges(
-          *dependencies,
-          at=self._revision,
-          targets=[
-              node for ident_str in targ_ids
-              if (isinstance((node := self._db.get(ident_str)), Check) and
-                  node.state == CHECK_STATE_FINAL)
-          ])
-      if fully_unblocked and (check.state == CHECK_STATE_PLANNED or
-                              new_state == CHECK_STATE_PLANNED):
-        new_state = CHECK_STATE_WAITING
-
-      _touch()
-      del check.dependencies[:]
-      check.dependencies.extend(dependencies)
-
-    if new_state:
-      _touch()
-      check.state = new_state
-      # If the user moves us to PLANNED, but we're actually already fully
-      # resolved, we can move directly to WAITING.
-      if check.state == CHECK_STATE_PLANNED:
-        if all(group.resolution.satisfied for group in check.dependencies):
-          check.state = CHECK_STATE_WAITING
 
     if write.options:
       _write_data(
@@ -327,7 +288,7 @@ class FakeTurboCIOrchestrator(TurboCIClient):
               type_url=type_url,
           ))
 
-    finalize_results = write.finalize_results or new_state == CHECK_STATE_FINAL
+    finalize_results = write.finalize_results or write.state == CHECK_STATE_FINAL
 
     if (write.results or finalize_results) and not check.results:
       _touch()
@@ -350,13 +311,85 @@ class FakeTurboCIOrchestrator(TurboCIClient):
     if finalize_results:
       check.results[0].finalized_at.CopyFrom(self._revision)
 
+    was_planning = check.state == CheckState.CHECK_STATE_PLANNING
+    now_planning = was_planning
+    if write.HasField('state'):
+      _touch()
+      check.state = write.state
+      now_planning = write.state == CheckState.CHECK_STATE_PLANNING
+
+    ##### All dependencies related code is below ###############################
+
+    # deps_newly_resolved indicates if this write action caused the dependencies
+    # to be resolved.
+    deps_newly_resolved = False
+
+    wrote_deps = deps is not None
+    if wrote_deps:
+      _touch()
+      check.dependencies.CopyFrom(deps)
+      # We just changed deps - check if the caller passed in already resolved
+      # deps (i.e. as the result of self._dependencies.process_queue).
+      deps_newly_resolved = deps.HasField('resolution')
+
+    # We need to index_predicate as long as we updated deps during PLANNING
+    # (i.e. user changed the predicate/edges), OR when we first transition from
+    # PLANNING to not-PLANNING (i.e. we need to mark the predicate as immutable
+    # and start receiving resolution_events).
+    if ((wrote_deps and now_planning) or (was_planning and not now_planning)):
+      # If we're no longer PLANNING, we need to mark the predicate as immutable.
+      last_index_predicate = not now_planning
+
+      self._dependencies.index_predicate(
+          ident_str,
+          check.dependencies,
+          self._revision,
+          mark_immutable=last_index_predicate)
+
+      if last_index_predicate:
+        # NOTE: When we mark the predicate as immutable, it will populate
+        # resolution_events with any already-resolved conditions. This may be
+        # enough to immediately resolve the dependencies.
+        deps_newly_resolved = check.dependencies.HasField('resolution')
+
+    if deps_newly_resolved:
+      self._dependencies.index_resolved(ident_str, check.dependencies)
+
+      # Note: check.state COULD already be FINAL if the user knew in advance
+      # that there were no dependencies, and did a direct write to the FINAL
+      # state. Only advance the state if we're still in PLANNED.
+      if check.state == CheckState.CHECK_STATE_PLANNED:
+        if check.dependencies.resolution == RESOLUTION_SATISFIED:
+          check.state = CheckState.CHECK_STATE_WAITING
+
+        else:  # unsatisfiable
+          # _touch()
+          # check.state = CheckState.CHECK_STATE_FINAL
+          #
+          # At this point we would add some TBD type as a result as well
+          # - however this is not yet defined, so just raise an error for
+          # now.
+          raise NotImplementedError(
+              f'FakeTurboCIOrchestrator: unsatisfiable dependencies')
+
+    # Finally, see if we can unblock any other nodes.
+    #
+    # This must be the very last operation in this function, because it's
+    # allowed to observe any immutable data about `check`. If we put this higher
+    # up in the function, it's possible that we would miss changes to
+    # check.dependencies and/or check.state.
+    self._dependencies.index_node_write(check)
+
     return check
 
-  def _indexed_apply_locked(self, write: WriteNodesRequest.CheckWrite):
+  def _index_apply_checkwrite_locked(self, write: WriteNodesRequest.CheckWrite,
+                                     deps: Dependencies | None):
+    """Apply a check write and its normalized dependencies, ensuring that the indexes
+    reflect this write."""
     ident_str = from_id(write.identifier)
     idx_snap = _IndexEntrySnapshot.for_check(
         cast(Check | None, self._db.get(ident_str)))
-    check = self._apply_locked(write)
+    check = self._apply_checkwrite_locked(write, deps)
     self._update_indices_locked(ident_str, idx_snap, check)
 
   def _select_nodes_locked(
@@ -420,67 +453,27 @@ class FakeTurboCIOrchestrator(TurboCIClient):
 
   def _expand_nodes_locked(self, expand: Query.Expand,
                            state: dict[str, identifier.Identifier]):
-    if not expand.dependencies:
-      return
-    deps = expand.dependencies
+    """Expands the nodes in `state` according to `expand`.
 
-    satisfied: bool | None = None
-    if deps.HasField('satisfied'):
-      satisfied = deps.satisfied
+    This entails walking 'forwards' and 'backwards' through the graph along
+    dependency edges.
+    """
+    to_add: dict[str, identifier.Identifier] = {}
 
-    # base_checks is the set of checks to expand. All expansions will be based
-    # off this.
-    base_checks: dict[str, tuple[identifier.Identifier, Check]] = {
-        ident_str: (ident, cast(Check, self._db[ident_str]))
-        for ident_str, ident in state.items()
-        if ident.WhichOneof('type') == 'check'
-    }
+    if expand.HasField('dependencies'):
+      for node_ident_str in state:
+        to_add.update(
+            self._dependencies.dependencies_of(node_ident_str,
+                                               expand.dependencies.mode))
 
-    # Walk Checks along their dependencies.
-    if depth := deps.dependencies_depth:
-      # This is the layer of nodes that we are about to walk down.
-      tier_down: dict[str, tuple[identifier.Identifier, Check]] = base_checks
-      # These are nodes that we already did walk down. We will use these
-      # to prevent traversing the same node multiple times.
-      walked_down: set[str] = set()
-      for _ in range(depth):
-        next_tier_down: dict[str, tuple[identifier.Identifier, Check]] = {}
-        for key, (_, check) in tier_down.items():
-          walked_down.add(key[0])
-          next_tier_down.update({
-              ident_str: (ident, cast(Check, self._db[ident_str]))
-              for ident_str, ident in edge.extract_target_ids(
-                  *check.dependencies,
-                  satisfied=satisfied,
-              ).items()
-              if ident_str not in state
-          })
-        state.update({
-            ident_str: ident
-            for ident_str, (ident, _) in next_tier_down.items()
-        })
-        tier_down = {
-            k: v for k, v in next_tier_down.items() if k not in walked_down
-        }
+    if expand.HasField('dependents'):
+      for node_ident_str in state:
+        to_add.update(
+            self._dependencies.dependents_of(node_ident_str,
+                                             expand.dependents.mode))
 
-    # Walk dependents of Checks (i.e. walk 'backwards' from Checks to other
-    # nodes which depend on it).
-    if depth := deps.dependents_depth:
-      # To go along dependents, we need to use a index - keeping the Check won't
-      # help us.
-      tier_up: set[str] = set(k for k in base_checks.keys())
-      walked_up: set[str] = set()
-      for _ in range(depth):
-        next_tier_up: set[str] = set()
-        for ident_str in tier_up:
-          walked_up.add(ident_str)
-          next_tier_up.update(self._db_by_dependents[ident_str, satisfied])
-          if satisfied is None:
-            next_tier_up.update(self._db_by_dependents[ident_str, True])
-            next_tier_up.update(self._db_by_dependents[ident_str, False])
-        state.update(
-            (ident_str, to_id(ident_str)) for ident_str in next_tier_up)
-        tier_up = next_tier_up - walked_up
+    state.update(to_add)
+
 
   def _collect_nodes_locked(self, graph: dict[str, Check | Datum], query: Query,
                             state: dict[str, identifier.Identifier],
@@ -603,23 +596,29 @@ class FakeTurboCIOrchestrator(TurboCIClient):
 
     seen_ids: set[str] = set()
     dups: set[str] = set()
-    for check in req.checks:
-      if check.identifier.work_plan.id:
+    check_deps: list[None | Dependencies] = []
+    for cwrite in req.checks:
+      if cwrite.identifier.work_plan.id:
         raise NotImplementedError("FakeTurboCIOrchestrator.WriteNodes: "
                                   "`checks.idententifier.work_plan.id`")
-      if check.realm:
+      if cwrite.realm:
         raise NotImplementedError("FakeTurboCIOrchestrator.WriteNodes: "
                                   "`checks.realm`")
-      for opt in check.options:
+      for opt in cwrite.options:
         if opt.realm:
           raise NotImplementedError("FakeTurboCIOrchestrator.WriteNodes: "
                                     "`checks.options.realm`")
-      for rslt in check.results:
+      for rslt in cwrite.results:
         if rslt.realm:
           raise NotImplementedError("FakeTurboCIOrchestrator.WriteNodes: "
                                     "`checks.results.realm`")
 
-      ident_str = from_id(check.identifier)
+      if cwrite.HasField('dependencies'):
+        check_deps.append(edge.extract_dependencies(cwrite.dependencies))
+      else:
+        check_deps.append(None)
+
+      ident_str = from_id(cwrite.identifier)
       if ident_str not in seen_ids:
         seen_ids.add(ident_str)
       else:
@@ -630,6 +629,12 @@ class FakeTurboCIOrchestrator(TurboCIClient):
           "WriteNodes: duplicate check writes: {dups}")
 
     with self._lock:
+      # Note: in the real implementation this can be done in separate, parallel,
+      # transactions before the main transaction.
+      self._dependencies.ensure_conditions(
+          chain(*(deps.edges for deps in check_deps if deps is not None)),
+          self._get_check)
+
       if req.txn.nodes_observed:
         too_new: set[str] = set()
 
@@ -644,14 +649,14 @@ class FakeTurboCIOrchestrator(TurboCIClient):
         for ident in req.txn.nodes_observed:
           _observe(from_id(ident))
         # now observe all implied nodes
-        for check in req.checks:
-          cur = cast(Check | None, _observe(from_id(check.identifier)))
+        for cwrite in req.checks:
+          cur = cast(Check | None, _observe(from_id(cwrite.identifier)))
           if cur:
             opt_typ_to_ident = {
                 ref.type_url: from_id(ref.identifier) for ref in cur.options
             }
-            for opt in check.options:
-              _observe(opt_typ_to_ident.get(opt.value.type_url))
+            for opt in cwrite.options:
+              _observe(opt_typ_to_ident.get(opt.value.value.type_url))
             # Our fake only supports one 'stage', so all results are recorded on
             # results[0].
             if cur.results:
@@ -659,8 +664,8 @@ class FakeTurboCIOrchestrator(TurboCIClient):
                   ref.type_url: from_id(ref.identifier)
                   for ref in cur.results[0].data
               }
-              for rslt in check.results:
-                _observe(rslt_typ_to_ident.get(rslt.value.type_url))
+              for rslt in cwrite.results:
+                _observe(rslt_typ_to_ident.get(rslt.value.value.type_url))
 
         if too_new:
           raise TransactionConflictException(
@@ -670,14 +675,16 @@ class FakeTurboCIOrchestrator(TurboCIClient):
       # check that we can apply all deltas
       needed_checks: set[str] = set()
       added_checks: set[str] = set()
-      for check in req.checks:
-        ident_str = from_id(check.identifier)
+      for cwrite, deps in zip(req.checks, check_deps):
+        ident_str = from_id(cwrite.identifier)
         added_checks.add(ident_str)
         cur = self._db.get(ident_str)
-        check_invariant.assert_can_apply(check, cast(Check | None, cur))
-        if check.dependencies:
+        check_invariant.assert_can_apply(cwrite, cast(Check | None, cur))
+        if deps:
           needed_checks.update(
-              edge.extract_target_ids(*check.dependencies, want='check'))
+              from_id(e.check.identifier)
+              for e in deps.edges
+              if e.WhichOneof('target') == 'check')
 
       missing_checks = needed_checks - added_checks
       if missing_checks:
@@ -691,16 +698,26 @@ class FakeTurboCIOrchestrator(TurboCIClient):
               f"unsatisfiable dependencies: {actually_missing}")
 
       # no exceptions past this point
+      new_version = self._advance_revision_locked()
+      for cwrite, deps in zip(req.checks, check_deps):
+        self._index_apply_checkwrite_locked(cwrite, deps)
 
-      if self.test_mode:
-        new_version = Revision(
-            ts=Timestamp(seconds=self._revision.ts.seconds + 1))
-      else:
-        now = time.monotonic_ns()
-        new_version = Revision(
-            ts=Timestamp(seconds=int(now // 1e9), nanos=int(now % 1e9)))
-      self._revision = new_version
-      for check in req.checks:
-        self._indexed_apply_locked(check)
+      # Do this until there are no more edge propagations.
+      #
+      # In the real implementation, these would all be asynchronous background
+      # transactions on the graph state.
+      while self._dependencies.has_events():
+        self._advance_revision_locked()
+        to_write = self._dependencies.process_queue(
+            self._must_get_check, self._revision)
+        for node_ident_str, deps in to_write.items():
+          node = self._db[node_ident_str]
+          if isinstance(node, Check):
+            cwrite = WriteNodesRequest.CheckWrite(identifier=node.identifier)
+            self._index_apply_checkwrite_locked(cwrite, deps)
+          else:
+            raise NotImplementedError(
+                'FakeTurboCIOrchestrator: cannot resolve edges for node of'
+                f' type {type(node).__name__}')
 
     return WriteNodesResponse(written_version=new_version)

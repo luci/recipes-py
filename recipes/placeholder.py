@@ -409,7 +409,7 @@ def GenTests(api):
           # prior to RunSteps.
           'bob',
           kind='CHECK_KIND_TEST',
-          deps=[turboci.edge_group('charlie')],
+          deps=turboci.dep_group('charlie'),
       ))
   step = write_checks_input.steps.add(name='add option to bob')
 

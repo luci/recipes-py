@@ -11,19 +11,17 @@ from PB.turboci.graph.orchestrator.v1.check_state import (CHECK_STATE_PLANNING,
                                                           CHECK_STATE_WAITING,
                                                           CHECK_STATE_FINAL,
                                                           CheckState)
-from PB.turboci.graph.orchestrator.v1.edge import Edge
-from PB.turboci.graph.orchestrator.v1.edge_group import EdgeGroup
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 
-from . import edge
 from .ids import from_id
+from .edge import extract_ident_condition
 from .errors import CheckWriteInvariantException
 
 
 def _dup_types(vals: Sequence[WriteNodesRequest.RealmValue]) -> set[str]:
   count: dict[str, int] = defaultdict(int)
   for val in vals:
-    count[val.value.type_url] += 1
+    count[val.value.value.type_url] += 1
   return {typ_url for typ_url, amt in count.items() if amt > 1}
 
 
@@ -55,20 +53,19 @@ def assert_can_apply(write: WriteNodesRequest.CheckWrite, check: None | Check):
     #   * there are no dependencies
     #   * the target state is PLANNED or later.
     if write.results:
-      if write.dependencies or state < CHECK_STATE_PLANNED:
-        raise exc(f"new check: results for state {state!r}")
+      if write.HasField('dependencies') or state < CHECK_STATE_PLANNED:
+        raise exc(
+            f"new check: cannot add results in state {CheckState.Name(state)!r}"
+        )
     return
 
   if (new := write.kind) and new != check.kind:
     raise exc(f"mismatched kind: {new} != {check.kind}")
 
-  # None means 'don't update the field'
-  dependencies: Sequence[EdgeGroup] | None = (None if not write.dependencies
-                                              else write.dependencies)
-  # If the user wants to clear dependencies, they will write a single, empty,
-  # EdgeGroup. Prune all empty edge groups from `dependencies`.
-  if dependencies:
-    edge.prune_empty_groups(dependencies)
+  cur_has_deps = bool(check.dependencies.edges)
+  writing_empty_deps = (
+      write.HasField('dependencies') and
+      (len(write.dependencies.edges) + len(write.dependencies.groups)) == 0)
 
   if new := write.state:
     old = check.state
@@ -76,27 +73,19 @@ def assert_can_apply(write: WriteNodesRequest.CheckWrite, check: None | Check):
       pass
     elif old == CHECK_STATE_PLANNING and new == CHECK_STATE_PLANNED:
       pass
-    elif old == CHECK_STATE_PLANNING and (not check.dependencies or
-                                          (dependencies is not None and
-                                           not dependencies)):
+    elif old == CHECK_STATE_PLANNING and (not cur_has_deps or
+                                          writing_empty_deps):
       # OK to go to WAITING/FINAL explicitly if there are no dependencies, or
       # we are writing an empty dependency set.
       pass
     elif old == CHECK_STATE_PLANNED:
       # This should always happen automatically - there's no reason to write to
       # a Check in the PLANNED state.
-      unresolved_deps: set[str] = set()
-
-      class find_unresolved(edge.GroupVisitor):
-
-        def visit_group(self, group: EdgeGroup) -> bool:
-          return not group.resolution.satisfied
-
-        def visit_edge(self, edge: Edge):
-          if not edge.HasField('resolution'):
-            unresolved_deps.add(from_id(edge.target))
-
-      find_unresolved().visit(*check.dependencies)
+      unresolved_deps: set[str] = {
+          extract_ident_condition(e)[0]
+          for i, e in enumerate(check.dependencies.edges)
+          if i not in check.dependencies.resolution_events
+      }
       raise exc(
           f"PLANNED->WAITING happens automatically when all deps are resolved (missing {unresolved_deps})."
       )
@@ -113,30 +102,13 @@ def assert_can_apply(write: WriteNodesRequest.CheckWrite, check: None | Check):
     if check.state != CHECK_STATE_PLANNING:
       raise exc(f"cannot edit options in state {CheckState.Name(check.state)}")
 
-  if dependencies is not None:
+  if write.HasField('dependencies'):
     if check.state != CHECK_STATE_PLANNING:
       raise exc(
           f"cannot edit dependencies in state {CheckState.Name(check.state)}")
 
-    class check_edge_group_well_formed(edge.GroupVisitor):
-
-      def visit_group(self, group: EdgeGroup) -> bool:
-        if group.HasField("resolution"):
-          raise exc(f"written groups must not populate `resolution`")
-        if (got := group.threshold) < 0:
-          raise exc(f"written groups must have threshold >= 0: {got=}")
-        if (got := group.threshold) > (want :=
-                                       len(group.groups) + len(group.edges)):
-          raise exc(
-              "written groups must have threshold < #(groups)+#(edges): " +
-              f"{got=} {want=}")
-        return True
-
-      def visit_edge(self, edge: Edge):
-        if edge.HasField("resolution"):
-          raise exc(f"written edges must not populate `resolution`")
-
-    check_edge_group_well_formed().visit(*dependencies)
+    # write.dependencies is normalized by the calling function, so we don't need
+    # to check for well-formedness here.
 
   if write.results or write.finalize_results:
     if check.state != CHECK_STATE_WAITING and (

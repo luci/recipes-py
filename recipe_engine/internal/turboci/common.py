@@ -13,7 +13,7 @@ from PB.turboci.graph.ids.v1 import identifier
 from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
 from PB.turboci.graph.orchestrator.v1.check_state import CheckState
 from PB.turboci.graph.orchestrator.v1.check_view import CheckView
-from PB.turboci.graph.orchestrator.v1.edge_group import EdgeGroup
+from PB.turboci.graph.orchestrator.v1.edge import Edge
 from PB.turboci.graph.orchestrator.v1.graph_view import GraphView
 from PB.turboci.graph.orchestrator.v1.query import Query
 from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesRequest
@@ -42,9 +42,12 @@ class TurboCIClient(Protocol):
 CLIENT: TurboCIClient
 
 
-def edge_group(*contained: str|identifier.Identifier|identifier.Check|identifier.Stage|EdgeGroup,
-              stages: Sequence[str] = (), threshold: int = 0, in_workplan: str = "") -> EdgeGroup:
-  """Helper to generate an EdgeGroup for WriteNodes.
+def dep_group(*contained: str | identifier.Identifier | identifier.Check
+              | identifier.Stage | WriteNodesRequest.DependencyGroup,
+              stages: Sequence[str] = (),
+              threshold: int = 0,
+              in_workplan: str = "") -> WriteNodesRequest.DependencyGroup:
+  """Helper to generate a WriteNodesRequest.DependencyGroup.
 
   You may pass:
     * strings which will be interpreted as a BARE check ids, and will be
@@ -55,36 +58,46 @@ def edge_group(*contained: str|identifier.Identifier|identifier.Check|identifier
       these IDs.
     * identifier.Identifier (which must be a Check) or identifier.Check. These
       will be added as edges to the returned group.
-    * EdgeGroups (possibly returned via another edge_group call) which will be
+    * EdgeGroups (possibly returned via another dep_group call) which will be
       added as sub-groups.
 
   Threshold defaults to 0 (i.e. all contained edges and groups must be satisfied
   for this group to be satisfied), but you can set it to another value with the
   threshold keyword arg.
   """
-  ret = EdgeGroup()
-  if threshold > 0:
-    ret.threshold = threshold
-  if threshold < 0:
-    raise ValueError(f"edge_group: negative threshold {threshold}")
+  ret = WriteNodesRequest.DependencyGroup()
 
   for obj in contained:
     match obj:
-      case EdgeGroup():
+      case WriteNodesRequest.DependencyGroup():
         ret.groups.append(obj)
       case identifier.Identifier():
-        if (typ := obj.WhichOneof('type')) not in ('check', 'stage'):
-          raise ValueError(f'Cannot create a dependency on target of kind {typ!r}')
-        ret.edges.add(target=obj)
+        match (typ := obj.WhichOneof('type')):
+          case 'check':
+            ret.edges.add(check=Edge.Check(identifier=obj.check))
+          case 'stage':
+            ret.edges.add(stage=Edge.Stage(identifier=obj.stage))
+          case _:
+            raise ValueError(f'Cannot create a dependency on target of kind {typ!r}')
       case identifier.Check():
-        ret.edges.add(target=wrap_id(obj))
+        ret.edges.add(check=Edge.Check(identifier=obj))
       case identifier.Stage():
-        ret.edges.add(target=wrap_id(obj))
+        ret.edges.add(stage=Edge.Stage(identifier=obj))
       case str():
-        ret.edges.add(target=wrap_id(check_id(obj, in_workplan=in_workplan)))
+        ret.edges.add(check=Edge.Check(
+            identifier=check_id(obj, in_workplan=in_workplan)))
 
   for stage_bare in stages:
-    ret.edges.add(target=wrap_id(stage_id(stage_bare, in_workplan=in_workplan)))
+    ret.edges.add(stage=Edge.Stage(identifier=stage_id(stage_bare, in_workplan=in_workplan)))
+
+  if threshold > (N := len(contained) + len(stages)):
+    raise ValueError(
+        'dep_group: threshold greater than contained edges+groups: '
+        f'{threshold} > {N}')
+  if threshold > 0:
+    ret.threshold = threshold
+  if threshold < 0:
+    raise ValueError(f"dep_group: negative threshold {threshold}")
 
   return ret
 
@@ -94,7 +107,7 @@ def reason(reason: str, *details: Message, realm: str|None = None) -> WriteNodes
   ret = WriteNodesRequest.Reason(reason=reason, realm=realm)
   for detail in details:
     a = ret.details.add()
-    a.Pack(detail, deterministic=True)
+    a.value.Pack(detail, deterministic=True)
   return ret
 
 
@@ -111,18 +124,17 @@ CheckStateType = (
 
 def check(
     id: str,
-
     *,
     kind: CheckKindType = CheckKind.CHECK_KIND_UNKNOWN,
     state: CheckStateType = CheckState.CHECK_STATE_UNKNOWN,
     options: Sequence[Message] = (),
-    deps: Sequence[EdgeGroup]|None = None,
+    deps: WriteNodesRequest.DependencyGroup | None = None,
     results: Sequence[Message] = (),
     finalize_results: bool = False,
 
     # Not needed for fake.
     in_workplan: str = "",
-    realm: str|None = None,
+    realm: str | None = None,
     realm_options: Sequence[tuple[str, Message]] = (),
     realm_results: Sequence[tuple[str, Message]] = (),
 ) -> WriteNodesRequest.CheckWrite:
@@ -157,23 +169,23 @@ def check(
     ret.finalize_results = finalize_results
 
   if deps:
-    ret.dependencies.extend(deps)
+    ret.dependencies.CopyFrom(deps)
 
   for opt in options:
     el = ret.options.add()
-    el.value.Pack(opt, deterministic=True)
+    el.value.value.Pack(opt, deterministic=True)
 
   for realm, opt in realm_options:
     el = ret.options.add(realm=realm)
-    el.value.Pack(opt, deterministic=True)
+    el.value.value.Pack(opt, deterministic=True)
 
   for rslt in results:
     el = ret.results.add()
-    el.value.Pack(rslt, deterministic=True)
+    el.value.value.Pack(rslt, deterministic=True)
 
   for realm, rslt in realm_results:
     el = ret.results.add(realm=realm)
-    el.value.Pack(rslt, deterministic=True)
+    el.value.value.Pack(rslt, deterministic=True)
 
   return ret
 
@@ -218,9 +230,7 @@ QuerySelectAtom = (
 )
 
 QueryExpandAtom = (
-  Query.Expand|
-  Query.Expand.Dependencies
-)
+    Query.Expand | Query.Expand.Dependencies | Query.Expand.Dependents)
 
 QueryCollectAtom = (
   Query.Collect|
@@ -267,6 +277,8 @@ def make_query(
         ret.expand.MergeFrom(atom)
       case Query.Expand.Dependencies():
         ret.expand.dependencies.MergeFrom(atom)
+      case Query.Expand.Dependents():
+        ret.expand.dependents.MergeFrom(atom)
 
       # QueryCollectAtom
       case Query.Collect():

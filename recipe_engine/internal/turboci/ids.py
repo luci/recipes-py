@@ -157,54 +157,64 @@ def to_id(ident_str: str) -> identifier.Identifier:
 
   match [t[0] for t in toks]:
     case ['L']:
-      ret.work_plan.id = trim[0]
+      if trim[0]:
+        ret.work_plan.id = trim[0]
 
     case ['L', 'C']:
-      ret.check.work_plan.id = trim[0]
+      if trim[0]:
+        ret.check.work_plan.id = trim[0]
       ret.check.id = trim[1]
 
     case ['L', 'C', 'O']:
-      ret.check_option.check.work_plan.id = trim[0]
+      if trim[0]:
+        ret.check_option.check.work_plan.id = trim[0]
       ret.check_option.check.id = trim[1]
       ret.check_option.idx = int(trim[2])
 
     case ['L', 'C', 'R']:
-      ret.check_result.check.work_plan.id = trim[0]
+      if trim[0]:
+        ret.check_result.check.work_plan.id = trim[0]
       ret.check_result.check.id = trim[1]
       ret.check_result.idx = int(trim[2])
 
     case ['L', 'C', 'R', 'D']:
-      ret.check_result_datum.result.check.work_plan.id = trim[0]
+      if trim[0]:
+        ret.check_result_datum.result.check.work_plan.id = trim[0]
       ret.check_result_datum.result.check.id = trim[1]
       ret.check_result_datum.result.idx = int(trim[2])
       ret.check_result_datum.idx = int(trim[3])
 
     case ['L', 'C', 'V']:
-      ret.check_edit.check.work_plan.id = trim[0]
+      if trim[0]:
+        ret.check_edit.check.work_plan.id = trim[0]
       ret.check_edit.check.id = trim[1]
       parse_vers(trim[2], ret.check_edit.version )
 
     case ['L', 'C', 'V', 'O']:
-      ret.check_edit_option.check_edit.check.work_plan.id = trim[0]
+      if trim[0]:
+        ret.check_edit_option.check_edit.check.work_plan.id = trim[0]
       ret.check_edit_option.check_edit.check.id = trim[1]
       parse_vers(trim[2], ret.check_edit_option.check_edit.version)
       ret.check_edit_option.idx = int(trim[3])
 
     case ['L', 'N'] | ['L', 'S']:
-      ret.stage.work_plan.id = trim[0]
+      if trim[0]:
+        ret.stage.work_plan.id = trim[0]
       # NOTE: We keep the N/S prefix as part of ident.id to distinguish between
       # WorkNode and non-WorkNode stage types.
       ret.stage.id = toks[1]
 
     case ['L', 'N', 'A'] | ['L', 'S', 'A']:
-      ret.stage_attempt.stage.work_plan.id = trim[0]
+      if trim[0]:
+        ret.stage_attempt.stage.work_plan.id = trim[0]
       # NOTE: We keep the N/S prefix as part of ident.id to distinguish between
       # WorkNode and non-WorkNode stage types.
       ret.stage_attempt.stage.id = toks[1]
       ret.stage_attempt.idx = int(trim[2])
 
     case ['L', 'N', 'V'] | ['L', 'S', 'V']:
-      ret.stage_edit.stage.work_plan.id = trim[0]
+      if trim[0]:
+        ret.stage_edit.stage.work_plan.id = trim[0]
       # NOTE: We keep the N/S prefix as part of ident.id to distinguish between
       # WorkNode and non-WorkNode stage types.
       ret.stage_edit.stage.id = toks[1]

@@ -17,32 +17,31 @@ from google.protobuf.message import Message
 
 from recipe_engine.internal.turboci.ids import wrap_id
 
-from google.protobuf.any_pb2 import Any
-from google.protobuf.struct_pb2 import Struct, Value
+from google.protobuf.struct_pb2 import Struct, Value as StructValue
 from google.protobuf.proto_json import parse
 
 from PB.turboci.graph.ids.v1 import identifier
 from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
 from PB.turboci.graph.orchestrator.v1.check_state import CheckState
 from PB.turboci.graph.orchestrator.v1.edge import Edge
-from PB.turboci.graph.orchestrator.v1.edge_group import EdgeGroup
 from PB.turboci.graph.orchestrator.v1.query import Query
 from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesRequest
 from PB.turboci.graph.orchestrator.v1.revision import Revision
+from PB.turboci.graph.orchestrator.v1.value import Value
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 
 from recipe_engine.internal.turboci import common
-from recipe_engine.turboci import (
-  write_nodes, reason, check, edge_group, check_id, query_nodes, make_query)
+from recipe_engine.turboci import (write_nodes, reason, check, dep_group,
+                                   check_id, query_nodes, make_query)
 
 
 def _mkStruct(d: dict) -> Struct:
   return cast(Struct, parse(Struct, d))
 
 
-def _mkAny(msg: Message) -> Any:
-  ret = Any()
-  ret.Pack(msg, deterministic=True)
+def _mkValue(msg: Message) -> Value:
+  ret = Value()
+  ret.value.Pack(msg, deterministic=True)
   return ret
 
 
@@ -71,40 +70,42 @@ class TestReason(test_env.RecipeEngineUnitTest):
   def test_ok(self):
     r = reason("some string", _mkStruct({'a': 'b'}), realm='project/realm')
 
-    self.assertEqual(r, WriteNodesRequest.Reason(
-        reason="some string",
-        realm="project/realm",
-        details=[_mkAny(_mkStruct({'a': 'b'}))],
-    ))
+    self.assertEqual(
+        r,
+        WriteNodesRequest.Reason(
+            reason="some string",
+            realm="project/realm",
+            details=[_mkValue(_mkStruct({'a': 'b'}))],
+        ))
 
 
 class TestDepGroup(test_env.RecipeEngineUnitTest):
   def test_ok(self):
-    eg = edge_group(
+    dg = dep_group(
         'stuff',
         identifier.Identifier(check=identifier.Check(id="things")),
         identifier.Check(id="more"),
-        edge_group('nested-1', 'nested-2', in_workplan='L123456'),
+        dep_group('nested-1', 'nested-2', in_workplan='L123456'),
         threshold=3,
     )
-    self.assertEqual(eg, EdgeGroup(
-        edges=[
-          Edge(target=identifier.Identifier(check=identifier.Check(id='stuff'))),
-          Edge(target=identifier.Identifier(check=identifier.Check(id='things'))),
-          Edge(target=identifier.Identifier(check=identifier.Check(id='more'))),
-        ],
-        groups=[
-          EdgeGroup(edges=[
-            Edge(target=identifier.Identifier(check=identifier.Check(
-                work_plan=identifier.WorkPlan(id="123456"),
-                id='nested-1'))),
-            Edge(target=identifier.Identifier(check=identifier.Check(
-                work_plan=identifier.WorkPlan(id="123456"),
-                id='nested-2'))),
-          ]),
-        ],
-        threshold=3,
-    ))
+    self.assertEqual(
+        dg,
+        WriteNodesRequest.DependencyGroup(
+            edges=[
+                Edge(check=Edge.Check(identifier=check_id('stuff'))),
+                Edge(check=Edge.Check(identifier=check_id('things'))),
+                Edge(check=Edge.Check(identifier=check_id('more'))),
+            ],
+            groups=[
+                WriteNodesRequest.DependencyGroup(edges=[
+                    Edge(check=Edge.Check(identifier=check_id(
+                        'nested-1', in_workplan='123456'))),
+                    Edge(check=Edge.Check(identifier=check_id(
+                        'nested-2', in_workplan='123456'))),
+                ]),
+            ],
+            threshold=3,
+        ))
 
 
 class TestCheck(test_env.RecipeEngineUnitTest):
@@ -114,58 +115,57 @@ class TestCheck(test_env.RecipeEngineUnitTest):
         kind='CHECK_KIND_TEST',
         state='CHECK_STATE_PLANNED',
         options=[_mkStruct({'a': 'b'})],
-        deps=[edge_group(
+        deps=dep_group(
             "stuff",
             "things",
-        )],
+        ),
         results=[_mkStruct({'cool': ['result']})],
         finalize_results=True,
         in_workplan='321',
         realm='project/check/realm',
         realm_options=[
-            ('project/check/option/realm', Value(string_value='realm_option')),
+            ('project/check/option/realm',
+             StructValue(string_value='realm_option')),
         ],
         realm_results=[
-            ('project/check/result/realm', Value(string_value='realm_result')),
+            ('project/check/result/realm',
+             StructValue(string_value='realm_result')),
         ],
     )
 
-    self.assertEqual(chk, WriteNodesRequest.CheckWrite(
-        identifier=identifier.Check(
-            work_plan=identifier.WorkPlan(id='321'),
-            id='the check id',
-        ),
-        realm='project/check/realm',
-        kind=CheckKind.CHECK_KIND_TEST,
-        options=[
-          WriteNodesRequest.RealmValue(
-              value=_mkAny(_mkStruct({'a': 'b'})),
-          ),
-          WriteNodesRequest.RealmValue(
-              realm='project/check/option/realm',
-              value=_mkAny(Value(string_value='realm_option')),
-          ),
-        ],
-        dependencies=[
-          EdgeGroup(
-              edges=[
-                Edge(target=wrap_id(identifier.Check(id='stuff'))),
-                Edge(target=wrap_id(identifier.Check(id='things'))),
-              ],
-          ),
-        ],
-        results=[
-          WriteNodesRequest.RealmValue(
-              value=_mkAny(_mkStruct({'cool': ['result']})),
-          ),
-          WriteNodesRequest.RealmValue(
-              realm='project/check/result/realm',
-              value=_mkAny(Value(string_value='realm_result')),
-          ),
-        ],
-        finalize_results=True,
-        state=CheckState.CHECK_STATE_PLANNED,
-    ))
+    self.assertEqual(
+        chk,
+        WriteNodesRequest.CheckWrite(
+            identifier=identifier.Check(
+                work_plan=identifier.WorkPlan(id='321'),
+                id='the check id',
+            ),
+            realm='project/check/realm',
+            kind=CheckKind.CHECK_KIND_TEST,
+            options=[
+                WriteNodesRequest.RealmValue(
+                    value=_mkValue(_mkStruct({'a': 'b'})),),
+                WriteNodesRequest.RealmValue(
+                    realm='project/check/option/realm',
+                    value=_mkValue(StructValue(string_value='realm_option')),
+                ),
+            ],
+            dependencies=WriteNodesRequest.DependencyGroup(
+                edges=[
+                    Edge(check=Edge.Check(identifier=check_id('stuff'))),
+                    Edge(check=Edge.Check(identifier=check_id('things'))),
+                ],),
+            results=[
+                WriteNodesRequest.RealmValue(
+                    value=_mkValue(_mkStruct({'cool': ['result']})),),
+                WriteNodesRequest.RealmValue(
+                    realm='project/check/result/realm',
+                    value=_mkValue(StructValue(string_value='realm_result')),
+                ),
+            ],
+            finalize_results=True,
+            state=CheckState.CHECK_STATE_PLANNED,
+        ))
 
 
 class TestWriteNodes(test_env.RecipeEngineUnitTest):
@@ -192,23 +192,25 @@ class TestWriteNodes(test_env.RecipeEngineUnitTest):
     )
 
     # Raw API call to common.CLIENT.
-    self.m.WriteNodes.assert_called_once_with(WriteNodesRequest(
-        reasons=[WriteNodesRequest.Reason(
-            reason="I feel like it",
-            details=[_mkAny(_mkStruct({'hello': 'world'}))],
-        )],
-        checks=[
-          WriteNodesRequest.CheckWrite(
-              identifier=identifier.Check(id="someid"),
-              kind=CheckKind.CHECK_KIND_BUILD,
-              options=[
-                WriteNodesRequest.RealmValue(
-                    value=_mkAny(_mkStruct({'cool_opt': [1, 2, 3]})),
+    self.m.WriteNodes.assert_called_once_with(
+        WriteNodesRequest(
+            reasons=[
+                WriteNodesRequest.Reason(
+                    reason="I feel like it",
+                    details=[_mkValue(_mkStruct({'hello': 'world'}))],
                 )
-              ],
-          ),
-        ],
-    ))
+            ],
+            checks=[
+                WriteNodesRequest.CheckWrite(
+                    identifier=identifier.Check(id="someid"),
+                    kind=CheckKind.CHECK_KIND_BUILD,
+                    options=[
+                        WriteNodesRequest.RealmValue(
+                            value=_mkValue(_mkStruct({'cool_opt': [1, 2, 3]})),)
+                    ],
+                ),
+            ],
+        ))
 
   def test_query_nodes(self):
     query_nodes(

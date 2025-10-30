@@ -13,7 +13,7 @@ from google.protobuf.struct_pb2 import Struct, Value
 from google.protobuf.timestamp_pb2 import Timestamp
 
 from recipe_engine import turboci
-from recipe_engine.internal.turboci import check_invariant
+from recipe_engine.internal.turboci import check_invariant, edge
 from recipe_engine.internal.turboci.common import check_id
 
 from PB.turboci.graph.ids.v1 import identifier
@@ -48,7 +48,7 @@ class CheckDeltaTest(test_env.RecipeEngineUnitTest):
         id='hey',
         kind='CHECK_KIND_ANALYSIS',
         options=[demoStruct],
-        deps=[turboci.edge_group('other')],
+        deps=turboci.dep_group('other'),
     )
     check_invariant.assert_can_apply(delta, None)
 
@@ -60,7 +60,7 @@ class CheckDeltaTest(test_env.RecipeEngineUnitTest):
             kind='CHECK_KIND_ANALYSIS',
             state='CHECK_STATE_PLANNING',
             options=_mkOptions('hey', demoStruct),
-            dependencies=[turboci.edge_group('neat')],
+            dependencies=edge.extract_dependencies(turboci.dep_group('neat')),
         ))
 
   def test_creation_errors(self):
@@ -104,7 +104,7 @@ class CheckDeltaTest(test_env.RecipeEngineUnitTest):
         kind=CheckKind.CHECK_KIND_ANALYSIS,
         state=CheckState.CHECK_STATE_PLANNING,
         options=_mkOptions('hey', demoStruct),
-        dependencies=[turboci.edge_group('neat')],
+        dependencies=edge.extract_dependencies(turboci.dep_group('neat')),
     )
 
     with self.assertRaises(turboci.CheckWriteInvariantException):
@@ -121,7 +121,7 @@ class CheckDeltaTest(test_env.RecipeEngineUnitTest):
     check_invariant.assert_can_apply(
         turboci.check(
             id='hey',
-            deps=[turboci.edge_group()],
+            deps=turboci.dep_group(),
             state='CHECK_STATE_FINAL',
             results=[demoStruct],
         ), check)
@@ -135,59 +135,13 @@ class CheckDeltaTest(test_env.RecipeEngineUnitTest):
           ),
           check)
 
-    with self.assertRaises(turboci.CheckWriteInvariantException):
-      dg = turboci.edge_group("stuff")
-      dg.edges[0].resolution.satisfied = True
-      check_invariant.assert_can_apply(
-          turboci.check(
-              id='hey',
-              # setting dependency groups which are resolved
-              deps=[dg],
-          ),
-          check)
-
-    with self.assertRaises(turboci.CheckWriteInvariantException):
-      dg = turboci.edge_group("stuff")
-      dg.SetInParent
-      dg.edges[0].resolution.satisfied = True
-      check_invariant.assert_can_apply(
-          turboci.check(
-              id='hey',
-              # setting dependency edges which are resolved
-              deps=[dg],
-          ),
-          check)
-
-    with self.assertRaises(turboci.CheckWriteInvariantException):
-      dg = turboci.edge_group("stuff")
-      dg.threshold = -1
-      dg.edges[0].resolution.satisfied = True
-      check_invariant.assert_can_apply(
-          turboci.check(
-              id='hey',
-              # threshold negative
-              deps=[dg],
-          ),
-          check)
-
-    with self.assertRaises(turboci.CheckWriteInvariantException):
-      dg = turboci.edge_group("stuff", threshold=10)
-      dg.edges[0].resolution.satisfied = True
-      check_invariant.assert_can_apply(
-          turboci.check(
-              id='hey',
-              # threshold larger than the group
-              deps=[dg],
-          ),
-          check)
-
   def test_PLANNED_errors(self):
     check = Check(
         identifier=check_id('hey'),
         kind='CHECK_KIND_ANALYSIS',
         state='CHECK_STATE_PLANNED',
         options=_mkOptions('hey', demoStruct),
-        dependencies=[turboci.edge_group('neat')],
+        dependencies=edge.extract_dependencies(turboci.dep_group('neat')),
     )
 
     with self.assertRaises(turboci.CheckWriteInvariantException):

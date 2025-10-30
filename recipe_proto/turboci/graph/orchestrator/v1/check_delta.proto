@@ -8,7 +8,7 @@ package turboci.graph.orchestrator.v1;
 
 import "turboci/graph/ids/v1/identifier.proto";
 import "turboci/graph/orchestrator/v1/check_state.proto";
-import "turboci/graph/orchestrator/v1/edge_group.proto";
+import "turboci/graph/orchestrator/v1/dependencies.proto";
 import "turboci/graph/orchestrator/v1/field_options.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
@@ -32,11 +32,11 @@ message CheckDelta {
 
   // Dependencies written as part of this edit.
   //
-  // Contains the FULL dependencies data (e.g. if the edit 'added' a new
-  // dependency to one of these EdgeGroups, or added a new EdgeGroup, etc., you
-  // would see the entire set of EdgeGroups here, not just the added/changed
-  // one(s)).
-  repeated EdgeGroup dependencies = 2 [(turboci).id.allowed = IDENTIFIER_KIND_CHECK];
+  // The fields within reflect what was changed in this edit:
+  //   * `edges`, `to_unblock` and `resolved` are included in-whole, and mean
+  //     that this edit modified those fields.
+  //   * `resolution_events` reflects just new events resolved in this edit.
+  optional Dependencies dependencies = 2 [(turboci).id.allowed = IDENTIFIER_KIND_CHECK];
 
   // Options written as part of this edit.
   repeated ids.v1.CheckOption options = 3;

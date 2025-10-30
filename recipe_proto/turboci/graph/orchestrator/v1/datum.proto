@@ -60,8 +60,4 @@ message Datum {
   //
   // The `type_url` of this value is immutable.
   optional Value value = 4;
-
-  // TBD: An additional disambiguator/key in addition to value.type_url?
-
-  // TBD: Orchestrator-visible index values.
 }

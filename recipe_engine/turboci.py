@@ -30,15 +30,15 @@ from .internal.turboci.ids import (
 )
 
 from .internal.turboci.common import (
-    TurboCIClient,
     check,
     check_id,
     collect_check_ids,
-    edge_group,
+    dep_group,
     make_query,
     query_nodes,
     read_checks,
     reason,
+    TurboCIClient,
     write_nodes,
 )
 
@@ -68,7 +68,7 @@ __all__ = [
     'check_id',
     'CheckWriteInvariantException',
     'collect_check_ids',
-    'edge_group',
+    'dep_group',
     'from_id',
     'get_client',
     'InvalidArgumentException',

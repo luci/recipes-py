@@ -11,7 +11,7 @@ import "turboci/graph/ids/v1/identifier.proto";
 import "turboci/graph/orchestrator/v1/actor.proto";
 import "turboci/graph/orchestrator/v1/check_kind.proto";
 import "turboci/graph/orchestrator/v1/check_state.proto";
-import "turboci/graph/orchestrator/v1/edge_group.proto";
+import "turboci/graph/orchestrator/v1/dependencies.proto";
 import "turboci/graph/orchestrator/v1/field_options.proto";
 import "turboci/graph/orchestrator/v1/revision.proto";
 
@@ -80,19 +80,10 @@ message Check {
 
   // Dependencies on other objects in the graph.
   //
-  // All of these dependencies must be resolved and satisfied for this Check to
-  // be unblocked and advance from the PLANNED to WAITING state.
-  //
-  // If the dependencies are unsatisfiable, then the Check will be immediately
-  // moved to FINAL state and a single Result will be added with type `TBD`.
+  // Checks may only depend on other Checks.
   //
   // Once the Check is WAITING, this field is immutable.
-  //
-  // Currently Checks may only depend on other Checks in the same workflow.
-  repeated EdgeGroup dependencies = 6 [
-    (turboci).check.editable = CHECK_STATE_PLANNING,
-    (turboci).id.allowed = IDENTIFIER_KIND_CHECK
-  ];
+  optional Dependencies dependencies = 6 [(turboci).id.allowed = IDENTIFIER_KIND_CHECK];
 
   // OptionRef is a reference to a CheckOption.
   message OptionRef {
@@ -102,7 +93,7 @@ message Check {
     // The type_url of the data contained for this CheckOption.
     optional string type_url = 2;
 
-    // TBD: If we add an additional distinguisher key in Datum, we'd add it
+    // TBD: If we add an additional distinguisher key in Value, we'd add it
     // here too (e.g. to allow multiple entries of the same type URL with
     // different keys).
   }
@@ -159,7 +150,7 @@ message Check {
       // The type_url of the data contained for this CheckResultDatum.
       optional string type_url = 2;
 
-      // TBD: If we add an additional distinguisher key in Datum, we'd add it
+      // TBD: If we add an additional distinguisher key in Value, we'd add it
       // here too (e.g. to allow multiple entries of the same type URL with
       // different keys).
     }

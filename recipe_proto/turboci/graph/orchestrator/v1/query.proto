@@ -15,6 +15,24 @@ import "turboci/graph/orchestrator/v1/revision_range.proto";
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
 option java_multiple_files = true;
 
+// When expanding a query selection set with Query.Expand.Dependencies or
+// Query.Expand.Dependants, how should we actually expand that set?
+enum QueryExpandDepsMode {
+  // Unknown query expansion mode.
+  //
+  // Defaults to 'REQUESTED'.
+  QUERY_EXPAND_DEPS_MODE_UNKNOWN = 0;
+
+  // Expand to deps which are listed in dependencies.edges.
+  QUERY_EXPAND_DEPS_MODE_EDGES = 1;
+
+  // Expand to deps which are listed (transitively) in dependencies.satisfied.
+  //
+  // Note that this will be the empty set for nodes which are not already past
+  // the PLANNED state, and for nodes which have unsatisfiable dependencies.
+  QUERY_EXPAND_DEPS_MODE_SATISFIED = 2;
+}
+
 // Query describes a simple graph query.
 //
 // This is composed of three phases: selection, expansion and collection.
@@ -41,6 +59,9 @@ message Query {
   // URLs, but this requires an extra permission. Extra permission is needed
   // to encourage clients to be explicit about what they want to reduce
   // bandwidth, coupling and increase auditability.
+  //
+  // TBD: Allow limited wildcards to include everything under some package
+  // namespace.
   repeated string type_urls = 1;
 
   // Select picks some set of nodes out of the graph.
@@ -109,59 +130,45 @@ message Query {
   // Expand takes the selected node set and 'expands' it by following edges in
   // the graph from those nodes.
   message Expand {
-    // How to follow Check.dependencies and Stage.dependencies.
+    // How to expand the dependencies for a Check or Stage.
     message Dependencies {
-      // Follow this many dependents (so for some node X, follow to other
-      // nodes which depend-on X up to this distance away).
+      // How to expand dependencies.
       //
-      // 0 means "do not follow dependents".
-      //
-      // Must be >= 0.
-      optional int32 dependents_depth = 1;
+      // Defaults to QUERY_EXPAND_DEPS_MODE_EDGES.
+      optional QueryExpandDepsMode mode = 1;
 
-      // Follow this many dependencies (so for some node, follow it's
-      // `dependencies` fields up to this distance away).
-      //
-      // 0 means "do not follow dependencies".
-      //
-      // Must be >= 0.
-      optional int32 dependencies_depth = 2;
-
-      // If unset, includes ALL edges, regardless of resolution. Implies
-      // `current = true`.
-      //
-      // If True, only includes resolved, satisfied, edges.
-      // If False, only includes resolved, unsatisfied, edges.
-      //
-      // See the documentation on `EdgeGroup.resolution`.
-      optional bool satisfied = 3;
-
-      // If true, ignores the `resolution` field of the node's EdgeGroups.
-      //
-      // If false (or unset), only follows edges to nodes which have the
-      // `resolution` field set.
-      //
-      // For example:
-      //
-      //   A -> {B, C, threshold=1}
-      //
-      //   A->B becomes resolved, and A moves to WAITING. A will forever show
-      //   a resolution on B, but not on C.
-      //
-      //   If A->C later resolves (e.g. C becomes FINAL), and a stage wants to
-      //   find "ALL resolved dependencies of A", it would do this query with
-      //   `current=true`. If the stage only wants "Dependencies of A which were
-      //   the set that actually unblocked A", then it would do this query with
-      //   `current=false`.
-      optional bool current = 4;
-
-      // TBD: Other selection criteria (e.g. only checks of kind X or with
-      // option type Y)
+      // TBD: Allow walking more than one dependency down?
     }
-    // Instructs the query to follow dependencies of the selected node(s).
+    // For each selected Check or Stage, include its immediate dependencies.
+    //
+    // So given:
+    //   A -> {B, C}
+    //
+    // (B, C) are dependencies of A.
     optional Dependencies dependencies = 1;
 
-    // TBD: Other edge types, such as created_by or written_by.
+    // How to expand the dependents for a Check or Stage.
+    message Dependents {
+      // How to expand dependents.
+      //
+      // Defaults to QUERY_EXPAND_DEPS_MODE_EDGES.
+      optional QueryExpandDepsMode mode = 1;
+
+      // TBD: Allow walking more than one dependent up?
+    }
+    // For each selected Check or Stage, include any Checks/Stages which depend
+    // on it.
+    //
+    // So given:
+    //   A -> {B, C}
+    //
+    // A is a dependent of B.
+    optional Dependents dependents = 2;
+
+    // TBD: Other edge types, such as created_by or written_by?
+    // If we include them, how would we indicate these relationships in GraphView?
+    // We may need created_by/written_by as explicit fields in the various
+    // nodes.
   }
   // Expand that set of nodes by following their edges.
   optional Expand expand = 3;

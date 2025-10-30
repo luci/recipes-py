@@ -3,3 +3,4 @@ __pycache__
 /workdir
 /.recipe_deps
 .idea/
+.coverage

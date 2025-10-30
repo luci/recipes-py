@@ -17,6 +17,8 @@ message QueryNodesResponse {
   // The graph view of the nodes matching the query.
   //
   // Indexed by WorkPlan id.
+  //
+  // The `version` field of each GraphView will always be identical.
   map<string, GraphView> graph = 1;
 
   // A list of explicitly-selected nodes which were not found in the graph.

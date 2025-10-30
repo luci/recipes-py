@@ -27,6 +27,14 @@ option java_multiple_files = true;
 //
 // When writing this type to the server, only `value` is allowed to be
 // populated.
+//
+// In the future, this may also be given:
+//   * additional disambiguators in addition to value.type_url. This would allow
+//   multiple Values holding the same type_url in the same field (e.g. TypeX
+//   "public" and TypeX "private").
+//   * Workflow-provided, Orchestrator-visible index values to allow these
+//   Values to be selectable in queries, without the Orchestrator having to have
+//   up-to-date descriptors for the contained type in `value`.
 message Value {
   // The actual value.
   optional google.protobuf.Any value = 1;
@@ -40,4 +48,8 @@ message Value {
 
   // A ProtoJSON-serialized version of `value`.
   optional string value_json = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // TBD: An additional disambiguator/key in addition to value.type_url?
+
+  // TBD: Orchestrator-visible index values.
 }
