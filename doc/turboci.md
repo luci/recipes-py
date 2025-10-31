@@ -487,10 +487,13 @@ Currently the only expansion opportunities are for 'dependencies' and
 Both of these accept a `mode` argument which can either be:
   * `QUERY_EXPAND_DEPS_MODE_EDGES` - This follows `node.dependencies.edges`,
     meaning that all *potential* dependencies will be selected.
-  * `QUERY_EXPAND_DEPS_MODE_SATISFIED` - This follows
-    `node.dependencies.satisfied` meaning that all *actual, resolved*
+  * `QUERY_EXPAND_DEPS_MODE_SATISFIED` - This follows only those members of
+    `node.dependencies.edges` that contributed to a Resolution of
+    `RESOLUTION_SATISFIED` meaning that all *actual, satisfied*
     dependencies will be selected. Note that nodes in a state prior to
-    `CHECK_STATE_WAITING` or `STAGE_STATE_ATTEMPTING` have *no* satisfied edges.
+    `CHECK_STATE_WAITING` or `STAGE_STATE_ATTEMPTING` and nodes with resolutions
+    other than `RESOLUTION_SATISFIED` have *no* satisfied edges, since the
+    dependency as a whole was not satisfied in those cases.
 
 Example data:
 
