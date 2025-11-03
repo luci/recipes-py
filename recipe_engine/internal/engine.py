@@ -16,8 +16,6 @@ import traceback
 
 from contextlib import contextmanager
 
-from future.utils import raise_
-
 import attr
 import gevent
 import gevent.local
@@ -458,7 +456,7 @@ class RecipeEngine:
 
       # If there's a buffered exception, we raise it now.
       if caught:
-        raise_(caught[0], caught[1], caught[2])
+        raise caught
 
       return ret
 
@@ -953,8 +951,8 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
     * base_environ (dict|FakeEnviron) - The 'base' environment to merge the
       step_config's environmental parameters into.
 
-  Returns (exc_info|None). Any exception which was raised while running the step
-  (or None, if everything was OK).
+  Returns (Exception|None). Any exception which was raised while running the
+  step (or None, if everything was OK).
 
   Side effects: populates the step_data.presentation object.
   """
@@ -1015,8 +1013,8 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
       debug_log.write_line('Resolving output placeholders')
       _resolve_output_placeholders(
           debug_log, step_data.name_tokens, step_config, step_data, step_runner)
-  except:   # pylint: disable=bare-except
-    caught = sys.exc_info()
+  except Exception as exc:   # pylint: disable=broad-except
+    caught = exc
     debug_log.write_line('Unhandled exception:')
     for line in traceback.format_exc().splitlines():
       debug_log.write_line(line)
