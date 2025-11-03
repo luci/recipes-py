@@ -541,16 +541,6 @@ class RecipeModule:
     return parse_deps_spec(self.repo.name, DEPS, source=self.path)
 
   @cached_property
-  def transitive_DEPS(self):
-    """Returns the set of fully-qualified DEPS reachable from this module."""
-    ret = set()
-    d = self.repo.recipe_deps
-    for repo_name, module_name in self.normalized_DEPS.values():
-      ret.add('%s/%s' % (repo_name, module_name))
-      ret.update(d.repos[repo_name].modules[module_name].transitive_DEPS)
-    return frozenset(ret)
-
-  @cached_property
   def warnings(self):
     """Returns a tuple of warnings issued against this recipe module."""
     WARNINGS = getattr(self.do_import(), 'WARNINGS', ())
@@ -939,16 +929,6 @@ class Recipe:
     """
     return parse_deps_spec(self.repo.name, self.global_symbols.get('DEPS', ()),
                            source=self.path)
-
-  @cached_property
-  def transitive_DEPS(self):
-    """Returns the set of fully-qualified DEPS reachable from this module."""
-    ret = set()
-    d = self.repo.recipe_deps
-    for repo_name, module_name in self.normalized_DEPS.values():
-      ret.add('%s/%s' % (repo_name, module_name))
-      ret.update(d.repos[repo_name].modules[module_name].transitive_DEPS)
-    return frozenset(ret)
 
   def mk_api(self, engine, test_data=None):
     """Makes a RecipeScriptApi, suitable for use with run_steps.
