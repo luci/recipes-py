@@ -4,19 +4,9 @@
 
 from __future__ import annotations
 
-from recipe_engine.recipe_api import Property
-from recipe_engine.config import ConfigGroup, Single
+from PB.recipe_modules.recipe_engine.random import properties
 
-PROPERTIES = {
-  '$recipe_engine/random': Property(
-    help='Properties to control the `random` module.',
-    param_name='module_properties',
-    kind=ConfigGroup(
-      # help='A seed to be passed to random.'
-      seed=Single(int, required=False),
-    ), default={},
-  )
-}
+PROPERTIES = properties.InputProperties
 
 from .api import RandomApi as API
 from .test_api import RandomTestApi as TEST_API

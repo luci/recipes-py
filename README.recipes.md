@@ -3505,7 +3505,7 @@ Example:
 
 #### **class [RandomApi](/recipe_modules/random/api.py#32)([RecipeApi](/recipe_engine/recipe_api.py#433)):**
 
-&mdash; **def [\_\_getattr\_\_](/recipe_modules/random/api.py#39)(self, name):**
+&mdash; **def [\_\_getattr\_\_](/recipe_modules/random/api.py#44)(self, name):**
 
 Access a member of `random.Random`.
 ### *recipe_modules* / [raw\_io](/recipe_modules/raw_io)

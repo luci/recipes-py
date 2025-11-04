@@ -30,11 +30,16 @@ import random
 from recipe_engine import recipe_api
 
 class RandomApi(recipe_api.RecipeApi):
-  def __init__(self, module_properties, **kwargs):
+  def __init__(self, props, **kwargs):
     super().__init__(**kwargs)
-    self._random = random.Random(
-        module_properties.get('seed',
-                              1234 if self._test_data.enabled else None))
+
+    seed: int | None = None
+    if props.HasField('seed'):
+      seed = props.seed
+    if not seed and self._test_data.enabled:
+      seed = 1234
+
+    self._random = random.Random(seed)
 
   def __getattr__(self, name):
     """Access a member of `random.Random`."""
