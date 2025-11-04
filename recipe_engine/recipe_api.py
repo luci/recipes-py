@@ -826,6 +826,7 @@ class Property:
       kind: The type of this Property. You can either pass in a raw python
             type, or a Config Type, using the recipe engine config system.
     """
+    record_execution_warning('OLD_STYLE_PROPERTIES_DEPRECATED')
     if default is not PROPERTY_SENTINEL:
       try:
         json.dumps(default)

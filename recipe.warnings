@@ -63,3 +63,14 @@ warning {
   description: "The indicated step is invoking vpython or python2."
   description: "Please switch this to `vpython3` or `python3`."
 }
+
+warning {
+  name: "OLD_STYLE_PROPERTIES_DEPRECATED"
+  description: "Old-style properties are deprecated."
+  description: ""
+  description: "Please switch from properties configured as"
+  description: "`PROPERTIES = {...}` to properties configured with protobufs"
+  description: " (`PROPERTIES = InputProperties`)"
+  deadline: "2026-02-01"
+  google_issue { id: 457721604 }
+}
