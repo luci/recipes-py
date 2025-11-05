@@ -22,9 +22,11 @@ def RunSteps(api):
 
   api.step.empty('compile')
 
-  assert api.runtime.in_global_shutdown, "Not in global_shutdown after compile"
+  assert api.runtime.in_global_shutdown, (  # pragma: no cover
+      "Not in global_shutdown after compile"
+  )
 
-  api.step.empty('should_skip') # Should be skipped
+  api.step.empty('should_skip')  # pragma: no cover
 
 
 def GenTests(api):
