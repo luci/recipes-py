@@ -13,9 +13,7 @@ DEPS = [
   'step',
 ]
 
-from recipe_engine import recipe_api
 from recipe_engine.post_process import DropExpectation
-from recipe_engine.internal import exceptions
 
 from PB.recipes.recipe_engine.engine_tests import long_sleep
 
@@ -33,8 +31,8 @@ def RunSteps(api, props):
 
     try:
       api.step('sleep forever', ['sleep', '360'])
-    except (api.step.StepFailure, exceptions.CancelledBuild) as ex:
-      assert recipe_api.was_cancelled(ex)
+    except api.step.StepFailure as ex:
+      assert ex.was_cancelled
       if props.HasField('check_retcode'):
         check_retcode = props.check_retcode
         expected = (

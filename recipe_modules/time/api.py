@@ -124,6 +124,8 @@ class TimeApi(recipe_api.RecipeApi):
 
     if not self._test_data.enabled:  # pragma: no cover
       gevent.wait([GLOBAL_SHUTDOWN], timeout=secs)
+    if GLOBAL_SHUTDOWN.ready() and step_result:
+      step_result.presentation.status = "CANCELED"
 
   def exponential_retry(
       self,

@@ -189,7 +189,7 @@
   },
   {
     "failure": {
-      "humanReason": "The build was cancelled\n"
+      "humanReason": "Infra Failure: Step('buildbucket.get') (canceled) (retcode: None)"
     },
     "name": "$result"
   }

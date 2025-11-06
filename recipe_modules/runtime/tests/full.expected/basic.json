@@ -12,8 +12,15 @@
     "name": "compile"
   },
   {
+    "cmd": [],
+    "name": "should_skip",
+    "~followup_annotations": [
+      "@@@STEP_EXCEPTION@@@"
+    ]
+  },
+  {
     "failure": {
-      "humanReason": "The build was cancelled\n"
+      "humanReason": "Infra Failure: Step('should_skip') (canceled) (retcode: None)"
     },
     "name": "$result"
   }

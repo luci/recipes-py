@@ -30,7 +30,6 @@ from recipe_engine.internal import recipe_deps
 from .config_types import Path
 from .internal import engine_step
 from .internal.attr_util import attr_dict_type
-from .internal.exceptions import CancelledBuild
 from .internal.warn import escape
 from .recipe_test_api import DisabledTestData, ModuleTestData
 from .third_party import luci_context
@@ -44,8 +43,6 @@ from .util import Placeholder
 from recipe_engine import config_types
 
 from recipe_engine import recipe_test_api  # pylint: disable=unused-import
-
-CancelledBuild = CancelledBuild
 
 
 class UnknownRequirementError:
@@ -386,13 +383,10 @@ class StepFailure(Exception):
 
 
 def was_cancelled(exception: Exception) -> bool:
-  if isinstance(exception, CancelledBuild):
-    return True
-
   if isinstance(exception, StepFailure):
     return exception.was_cancelled
 
-  if isinstance(exception, (ExceptionGroup, BaseExceptionGroup)):
+  if isinstance(exception, ExceptionGroup):
     for exc in exception.exceptions:
       if was_cancelled(exc):
         return True

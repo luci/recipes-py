@@ -1,11 +1,21 @@
 [
   {
     "cmd": [],
-    "name": "sleep 5"
+    "name": "sleep 5",
+    "~followup_annotations": [
+      "@@@STEP_EXCEPTION@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "echo",
+    "~followup_annotations": [
+      "@@@STEP_EXCEPTION@@@"
+    ]
   },
   {
     "failure": {
-      "humanReason": "The build was cancelled\n"
+      "humanReason": "Infra Failure: Step('echo') (canceled) (retcode: None)"
     },
     "name": "$result"
   }

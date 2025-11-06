@@ -7,7 +7,7 @@
       "The recipe has crashed at point 'Uncaught exception'!",
       "",
       "  + Exception Group Traceback (most recent call last):",
-      "  |   File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/engine.py\", line 592, in run_steps",
+      "  |   File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/engine.py\", line 589, in run_steps",
       "  |     raw_result = recipe_obj.run_steps(api, engine)",
       "  |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
       "  |   File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/recipe_deps.py\", line 1008, in run_steps",
