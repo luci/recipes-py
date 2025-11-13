@@ -400,9 +400,7 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
     self.assertDictEqual(
         final_build, {
             'status': 'CANCELED',
-            'summary_markdown': (
-                "Infra Failure: Step('sleep forever') (canceled) (retcode: -15)"
-            ),
+            'summary_markdown': "The build was cancelled: Step('sleep forever')\n",
             'steps': [
                 {
                     'name': 'setup_build',
@@ -418,8 +416,7 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
                 },
             ],
             'output': {
-                'status':
-                    'CANCELED',
+                'status': 'CANCELED',
             },
         })
 

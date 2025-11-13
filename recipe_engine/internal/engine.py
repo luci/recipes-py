@@ -38,7 +38,7 @@ from ..third_party import luci_context
 from . import debugger
 
 from .engine_env import merge_envs
-from .exceptions import RecipeUsageError, CrashEngine
+from .exceptions import CancelledBuild, RecipeUsageError, CrashEngine
 from .global_shutdown import GLOBAL_SHUTDOWN
 from .resource_semaphore import ResourceWaiter
 from .step_runner import Step
@@ -114,7 +114,7 @@ class _MemoryProfiler:
 
 
 def _get_reasons(exception: Exception) -> list[str]:
-  if isinstance(exception, ExceptionGroup):
+  if isinstance(exception, (ExceptionGroup, BaseExceptionGroup)):
     reasons = []
     for exc in exception.exceptions:
       reasons.extend(_get_reasons(exc))
@@ -601,7 +601,7 @@ class RecipeEngine:
           engine.close_non_parent_step()
           engine._step_stack[-1].close()   # pylint: disable=protected-access
 
-      except* recipe_api.StepFailure as ex:
+      except * (recipe_api.StepFailure, CancelledBuild) as ex:
         if debugger.should_set_implicit_breakpoints():
 
           # =========================================================

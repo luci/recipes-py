@@ -69,3 +69,23 @@ class CrashEngine(BaseException):
   def __init__(self, reason):
     super().__init__(reason)
     self.reason = reason
+
+
+# CancelledBuild inherits from BaseException instead of Exception so it won't be
+# caught by 'except Exception as exc' blocks. There are few built-in exception
+# types that inherit from BaseException: Exception, GeneratorExit,
+# KeyboardInterrupt, and SystemExit. CancelledBuild seems to fit in the same
+# category as KeyboardInterrupt and SystemExit, so have it inherit from
+# BaseException too.
+class CancelledBuild(BaseException):
+  """Raised from the engine when buildbucket cancels the build.
+
+  This exception should only be handled by the recipe engine.
+  """
+
+  def __init__(self, reason: str | None = None):
+    prefix = 'The build was cancelled'
+    final_reason = f'{prefix}: {reason}\n' if reason else f'{prefix}\n'
+    super().__init__(final_reason)
+    self.reason = final_reason
+    self.was_cancelled = True

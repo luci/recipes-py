@@ -16,7 +16,7 @@
   },
   {
     "failure": {
-      "humanReason": "Infra Failure: Step('compile') (canceled) (retcode: None)"
+      "humanReason": "The build was cancelled: Step('compile')\n"
     },
     "name": "$result"
   }

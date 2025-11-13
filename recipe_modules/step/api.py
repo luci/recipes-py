@@ -19,6 +19,7 @@ from recipe_engine import recipe_api
 from recipe_engine.config_types import Path
 from recipe_engine.engine_types import StepPresentation
 from recipe_engine.engine_types import ResourceCost as _ResourceCost
+from recipe_engine.internal.global_shutdown import GLOBAL_SHUTDOWN
 from recipe_engine.recipe_test_api import StepTestData
 from recipe_engine.util import Placeholder, returns_placeholder
 from recipe_engine.recipe_utils import check_type, check_list_type
@@ -439,6 +440,15 @@ class StepApi(recipe_api.RecipeApi):
         'EXCEPTION': self.InfraFailure,
         'CANCELED': self.InfraFailure,
     }[status]
+
+    # This inline function is tested in the runtime module tests.
+    def cancelled_build_wrapper(name, result):  # pragma: no cover
+      raise recipe_api.CancelledBuild(f"Step('{name}')")
+
+    if GLOBAL_SHUTDOWN.ready():
+      # The next line is tested in the runtime module tests.
+      exc = cancelled_build_wrapper  # pragma: no cover
+
     # TODO(iannucci): Use '|' instead of '.'
     raise exc('.'.join(result.name_tokens), result)
 
