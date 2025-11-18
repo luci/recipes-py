@@ -8,6 +8,8 @@ package turboci.data.build.v1;
 // This proto is intended to be classified as multiproduct (not converged) maturity.
 // TBD - Pending actual implementation to annotate maturity.
 
+import "turboci/data/common/v1/display_message.proto";
+
 option go_package = "go.chromium.org/turboci/proto/go/data/build/v1;buildpb";
 option java_multiple_files = true;
 
@@ -20,30 +22,8 @@ message BuildCheckResult {
   // failure information should reside in a product-specific proto.
   optional bool success = 1;
 
-  // A message string and a format-type enum to instruct clients how to render the text.
-  message DisplayMessage {
-    // The message string.
-    optional string message = 1;
-
-    // Different types of message formatting.
-    enum MessageFormat {
-      // Default message format.
-      MESSAGE_FORMAT_UNKNOWN = 0;
-      // Plain text - no special formatting.
-      MESSAGE_FORMAT_PLAIN_TEXT = 1;
-      // HTML markup.
-      MESSAGE_FORMAT_HTML = 2;
-      // Markdown formatting.
-      MESSAGE_FORMAT_MARKDOWN = 3;
-      // Includes ANSI escape codes for controlling things like text color.
-      MESSAGE_FORMAT_ANSI = 4;
-    }
-
-    // How the message string should be formatted.
-    optional MessageFormat message_format = 2;
-  }
   // A message string detailing the status of the build with information on how to format the text.
-  optional DisplayMessage display_message = 2;
+  optional turboci.data.common.v1.DisplayMessage display_message = 2;
 
   // Build ID, target and attempt which are necessary to query artifacts in ab/ or Android Build API
   message AndroidBuildArtifacts {

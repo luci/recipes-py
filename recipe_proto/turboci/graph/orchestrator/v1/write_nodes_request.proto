@@ -302,6 +302,9 @@ message WriteNodesRequest {
     // Otherwise, the Stage must belong to the stage_attempt_token's WorkPlan,
     // or the caller must have the additional "turboci.workplans.writeExternal"
     // permission in the stage's realm.
+    //
+    // The `is_worknode` field should also be omitted - it will be filled in by
+    // the server according to the type of `args`.
     optional ids.v1.Stage identifier = 1;
 
     // The arguments of the Stage.
@@ -338,6 +341,19 @@ message WriteNodesRequest {
     //
     // If the Stage already exists, this will only result in an error if it
     // doesn't match the existing dependencies identically.
+    //
+    // NOTE: Currently Stages in this group must only point to Stages created by
+    // the Stage performing this write. In theory, this should help prevent
+    // excessive coupling between different, unrelated, stage implementations.
+    //
+    // If arbitrary stage dependencies are allowed, it could cause errors when
+    // an upstream stage changes it's implementation and no longer produces the
+    // stages the downstream one expects. Instead, the upstream stage should
+    // create a Check which can remain stable across the implementation
+    // versions, and the downstream stages should depend on that.
+    //
+    // However, if the current writer is the one creating the stages, then there
+    // is no implementation risk.
     optional DependencyGroup dependencies = 4 [
       (turboci).id.allowed = IDENTIFIER_KIND_STAGE,
       (turboci).id.allowed = IDENTIFIER_KIND_CHECK,
@@ -411,15 +427,13 @@ message WriteNodesRequest {
     // Refer to Stage.Attempt.process_uid.
     optional string process_uid = 2;
 
-    // Ensure all provided edges are included in `Stage.continuation_group`.
+    // Continuation Group predicate for this Stage.
     //
-    // Edges are deduplicated with `Stage.continuation_group` if they have the
-    // same `target`.
+    // If set, used to populate the continuation_group.edges and
+    // continuation_group.predicate fields in this Stage.
     //
-    // TBD: When edges have conditions, will want to coalesce the conditions
-    // with `and` instead? Or just reject multiple conditional Edges with the
-    // same target? Or replace the condition in the existing Edge?
-    repeated Edge ensure_in_continuation_group = 3;
+    // Edges here must only point to Stages which were created_by this Stage.
+    optional DependencyGroup continuation_group = 3 [(turboci).id.allowed = IDENTIFIER_KIND_STAGE];
 
     // The modified execution policy for this Stage Attempt.
     //

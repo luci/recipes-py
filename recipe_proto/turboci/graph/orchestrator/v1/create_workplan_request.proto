@@ -1,0 +1,32 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// Request message for TurboCIOrchestrator.CreateWorkPlan.
+//
+// Currently can only create empty work plans that can later be populated via
+// WriteNodes call.
+message CreateWorkPlanRequest {
+  // The security realm for this WorkPlan.
+  //
+  // Controls who can add nodes to it.
+  //
+  // Required.
+  optional string realm = 1;
+
+  // Used to deduplicate retries of CreateWorkPlan call.
+  //
+  // Multiple calls to CreateWorkPlan from the same user with the same
+  // idempotency key will all return the same workplan.
+  //
+  // Required. Must be at least 8 bytes long. Can be a randomly generated
+  // string.
+  optional string idempotency_key = 2;
+}

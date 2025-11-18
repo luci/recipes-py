@@ -1,0 +1,26 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.data.test.v1;
+// This proto is intended to be classified as multiproduct (not converged) maturity.
+// TBD - Pending actual implementation to annotate maturity.
+
+import "turboci/data/common/v1/display_message.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/data/test/v1;testpb";
+option java_multiple_files = true;
+
+// TestCheckDescriptionOption stores descriptive information about its containing test check. This
+// information will be used for display in places like the Chronicle UI.
+message TestCheckDescriptionOption {
+  // A short title for the test check, to be used when displaying in places like the Chronicle UI
+  // graph. Keep under 30 characters; if longer than 30 characters, may be truncated in UIs.
+  optional string title = 1;
+
+  // A message string with a more detailed description of the tests, with information on how to
+  // format the text. Purely optional.
+  optional turboci.data.common.v1.DisplayMessage display_message = 2;
+}

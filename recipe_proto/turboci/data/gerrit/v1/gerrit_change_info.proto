@@ -38,8 +38,11 @@ message GerritChangeInfo {
   //     "device/google/cuttlefish"
   optional string project = 2;
 
-  // Which branch. The refs/heads/ prefix is omitted.
+  // Which branch (shortname). Matches full_branch, except the refs/*/ prefix is omitted.
   optional string branch = 3;
+
+  // The full name of the branch. Always starts with refs/.
+  optional string full_branch = 20;
 
   // The gerrit assigned change number for this change.
   //
@@ -132,6 +135,8 @@ message GerritChangeInfo {
   // their own protos for this today. We may converge this in the future once it becomes
   // clear how each product defines "non-trivial".
   // For reference, how Android does it today: http://shortn/_nRwyXPcucE
+
+  // Next field number to use: 21
 }
 
 // Sourced from https://gerrit-review.googlesource.com/Documentation/rest-api-accounts.html#account-info

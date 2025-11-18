@@ -1,0 +1,35 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.data.common.v1;
+// This proto is intended to be classified as converged maturity.
+// TBD - Pending actual implementation to annotate maturity.
+
+option go_package = "go.chromium.org/turboci/proto/go/data/common/v1;commonpb";
+option java_multiple_files = true;
+
+// A message string and a format-type enum to instruct clients how to render the text.
+message DisplayMessage {
+  // The message string.
+  optional string message = 1;
+
+  // Different types of message formatting.
+  enum MessageFormat {
+    // Default message format.
+    MESSAGE_FORMAT_UNKNOWN = 0;
+    // Plain text - no special formatting.
+    MESSAGE_FORMAT_PLAIN_TEXT = 1;
+    // HTML markup.
+    MESSAGE_FORMAT_HTML = 2;
+    // Markdown formatting.
+    MESSAGE_FORMAT_MARKDOWN = 3;
+    // Includes ANSI escape codes for controlling things like text color.
+    MESSAGE_FORMAT_ANSI = 4;
+  }
+
+  // How the message string should be formatted.
+  optional MessageFormat message_format = 2;
+}

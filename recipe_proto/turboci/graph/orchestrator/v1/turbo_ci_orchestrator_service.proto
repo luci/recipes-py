@@ -6,6 +6,8 @@ syntax = "proto3";
 
 package turboci.graph.orchestrator.v1;
 
+import "turboci/graph/orchestrator/v1/create_workplan_request.proto";
+import "turboci/graph/orchestrator/v1/create_workplan_response.proto";
 import "turboci/graph/orchestrator/v1/method_options.proto";
 import "turboci/graph/orchestrator/v1/query_nodes_request.proto";
 import "turboci/graph/orchestrator/v1/query_nodes_response.proto";
@@ -18,6 +20,19 @@ option java_multiple_files = true;
 // TurboCIOrchestrator is the API for interacting with the TurboCI
 // Orchestrator.
 service TurboCIOrchestrator {
+  // CreateWorkPlan creates a new WorkPlan.
+  //
+  // Currently can only create empty work plans that can later be populated via
+  // WriteNodes call.
+  rpc CreateWorkPlan(CreateWorkPlanRequest) returns (CreateWorkPlanResponse) {
+    option (turboci_rpc) = {
+      permission: {
+        name: "turboci.workplans.create"
+        in: IDENTIFIER_KIND_WORK_PLAN
+      }
+    };
+  }
+
   // WriteNodes transactionally writes or updates multiple nodes within a
   // WorkPlan.
   //
@@ -162,18 +177,6 @@ service TurboCIOrchestrator {
   //   option deadline = 20;
   //   option (turboci_rpc) = {
   //     permission: "turboci.workplan.templates.list"
-  //   };
-  // }
-
-  // TBD: An (idempotent) way to kick off an ad-hoc workplan in a specific
-  // realm, seeded with stages.
-  //
-  // How to permit service accounts for initial stage(s)?
-  //
-  // rpc CreateWorkPlan(CreateWorkPlan) returns (CreateWorkPlanResponse) {
-  //   option deadline = 20;
-  //   option (turboci_rpc) = {
-  //     permission: "turboci.workplan.create"
   //   };
   // }
 }

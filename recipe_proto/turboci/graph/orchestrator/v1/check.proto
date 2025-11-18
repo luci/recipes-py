@@ -51,19 +51,22 @@ message Check {
   // `identifier.id` is provided by the Stage which creates this Check.
   optional ids.v1.Check identifier = 1 [(google.api.field_behavior) = IMMUTABLE];
 
+  // Actor which created the Check.
+  optional Actor created_by = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
   // The coarse-grained kind of this Check.
   //
   // Used in UI and Data registration to restrict what data types are usable in
   // `options` and `results.data`.
   //
   // Used as part of a Checks query for a coarse-grained filter.
-  optional CheckKind kind = 2 [(google.api.field_behavior) = IMMUTABLE];
+  optional CheckKind kind = 3 [(google.api.field_behavior) = IMMUTABLE];
 
   // The security realm for this Check.
   //
   // If unset on creation, then this will be populated with the realm of the
   // Stage which creates this Check.
-  optional string realm = 3 [(google.api.field_behavior) = IMMUTABLE];
+  optional string realm = 4 [(google.api.field_behavior) = IMMUTABLE];
 
   // The version of this Check.
   //
@@ -73,17 +76,30 @@ message Check {
   // Datum does not change any field data in this message, and thus will not
   // change this version number (adding a new entry in `options` or in
   // a `Result.data` would, however).
-  optional Revision version = 4;
+  optional Revision version = 5;
 
   // The current state of the Check.
-  optional CheckState state = 5;
+  optional CheckState state = 6;
+
+  // StateHistoryEntry records the database revision (commit timestamp) when
+  // each time this Check's state changes.
+  message StateHistoryEntry {
+    // The changed state.
+    optional CheckState state = 1;
+    // The revision when the state change happens.
+    optional Revision version = 2;
+  }
+
+  // Append-only list of StateHistoryEntry to record the database revision
+  // (commit timestamp) when each time this Check's state changes.
+  repeated StateHistoryEntry state_history = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Dependencies on other objects in the graph.
   //
   // Checks may only depend on other Checks.
   //
   // Once the Check is WAITING, this field is immutable.
-  optional Dependencies dependencies = 6 [(turboci).id.allowed = IDENTIFIER_KIND_CHECK];
+  optional Dependencies dependencies = 8 [(turboci).id.allowed = IDENTIFIER_KIND_CHECK];
 
   // OptionRef is a reference to a CheckOption.
   message OptionRef {
@@ -121,7 +137,7 @@ message Check {
   //
   // You can use QueryNodes to get a CheckView which includes this Check and
   // also CheckOptions.
-  repeated OptionRef options = 7 [(turboci).check.editable = CHECK_STATE_PLANNING];
+  repeated OptionRef options = 9 [(turboci).check.editable = CHECK_STATE_PLANNING];
 
   // A Result is a container of result data for a Check.
   //
@@ -191,7 +207,7 @@ message Check {
   // Check.version is advanced when a new Result is added, or new data types are
   // added to an existing Result. However, CheckEdits will still be produced for
   // each write to each Result datum.
-  repeated Result results = 8 [
+  repeated Result results = 10 [
     (turboci).check.editable = CHECK_STATE_WAITING,
     // This is OUTPUT_ONLY because the Orchestrator will add and maintain
     // Results automatically as StageAttempts write data for this Check.
