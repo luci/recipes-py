@@ -33,6 +33,8 @@ respectively).
 All DEPS evaluation is also handled in this file.
 """
 
+from __future__ import annotations
+
 import bdb
 import importlib
 import inspect
@@ -41,9 +43,9 @@ import os
 import re
 import sys
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, Sequence, Iterator
 from functools import cached_property
-from typing import Type
+from typing import Type, TYPE_CHECKING
 
 from future.utils import raise_
 
@@ -52,6 +54,7 @@ import attr
 from attr.validators import optional
 
 from google.protobuf import json_format as jsonpb
+from google.protobuf.message import Message
 
 from ..config_types import Path, ResolvedBasePath
 from ..engine_types import freeze, FrozenDict
@@ -69,8 +72,13 @@ from .exceptions import RecipeLoadError, RecipeSyntaxError, MalformedRecipeError
 from .exceptions import MalformedModuleError, UnknownRecipeModule
 from .simple_cfg import SimpleRecipesCfg, RECIPES_CFG_LOCATION_REL
 from .test.test_util import filesystem_safe
+from .warn import definition as warn_def
 from .warn.definition import (parse_warning_definitions,
                               RECIPE_WARNING_DEFINITIONS_REL)
+
+if TYPE_CHECKING:
+  from .engine import RecipeEngine
+  from .test.test_util import RecipeTestData
 
 
 LOG = logging.getLogger(__name__)
@@ -89,7 +97,7 @@ class RecipeDeps:
   """
 
   # The mapping of repo_name -> RecipeRepo for all known repos.
-  repos = attr.ib(converter=freeze)  # type: dict[str, RecipeRepo]
+  repos: dict[str, RecipeRepo] = attr.ib(converter=freeze)
   @repos.validator
   def check(self, attrib, value):
     # This is a separate function (as opposed to the `validator=` kwarg),
@@ -103,7 +111,7 @@ class RecipeDeps:
   # RecipeDeps.
   #
   # This repo is guaranteed to be a member of `repos`.
-  main_repo_id = attr.ib(validator=attr_type(str))  # type: str
+  main_repo_id: str = attr.ib(validator=attr_type(str))
 
   def __attrs_post_init__(self):
     def _raise_unknown_rname(repo_name):
@@ -113,27 +121,27 @@ class RecipeDeps:
     self.repos.on_missing = _raise_unknown_rname
 
   @property
-  def main_repo(self):
+  def main_repo(self) -> RecipeRepo:
     """Returns the RecipeRepo corresponding to the main repo name."""
     return self.repos[self.main_repo_id]
 
   @cached_property
-  def recipe_deps_path(self):
+  def recipe_deps_path(self) -> str:
     """Returns the location of the .recipe_deps directory."""
     return os.path.join(self.main_repo.recipes_root_path, '.recipe_deps')
 
   @cached_property
-  def protos_path(self):
+  def protos_path(self) -> str:
     """Returns the location of the .recipe_deps/_pb3 directory."""
     return os.path.join(self.recipe_deps_path, '_pb3')
 
   @cached_property
-  def previous_test_failures_path(self):
+  def previous_test_failures_path(self) -> str:
     """Returns the location of the .previous_failures file."""
     return os.path.join(self.recipe_deps_path, '.previous_test_failures')
 
   @cached_property
-  def warning_definitions(self):
+  def warning_definitions(self) -> dict[str, warn_def.Definition]:
     """Returns warning definitions for all repos in this RecipeDeps.
 
     Key is fully-qualified warning name (i.e. `$repo_name/WARNING_NAME`).
@@ -145,8 +153,9 @@ class RecipeDeps:
     }
 
   @classmethod
-  def create(cls, main_repo_path, overrides, proto_override,
-             minimal_protoc=False):
+  def create(cls, main_repo_path: str, overrides: dict[str, str],
+             proto_override: str | None,
+             minimal_protoc: bool = False) -> RecipeDeps:
     """Creates a RecipeDeps.
 
     This will possibly do network operations to fetch recipe repos from git if
@@ -271,21 +280,21 @@ class RecipeRepo:
   already been done).
   """
 
-  recipe_deps = attr.ib(validator=attr_type(RecipeDeps))  # type: RecipeDeps
+  recipe_deps: RecipeDeps = attr.ib(validator=attr_type(RecipeDeps))
 
   # Absolute path to the root of this repository.
-  path = attr.ib(validator=[
+  path: str = attr.ib(validator=[
     attr_type(str),
     attr_value_is('an absolute path', os.path.isabs),
-  ])  # type: str
+  ])
 
   # The SimpleRecipesCfg for this repo.
-  simple_cfg = attr.ib(
+  simple_cfg: SimpleRecipesCfg = attr.ib(
       validator=attr_type(SimpleRecipesCfg)
-  )  # type: SimpleRecipesCfg
+  )
 
   # Mapping of module name -> RecipeModule for all recipe modules in this repo.
-  modules = attr.ib(converter=freeze)  # type: dict[str, RecipeModule]
+  modules: dict[str, RecipeModule] = attr.ib(converter=freeze)
   @modules.validator
   def check(self, attrib, value):
     # This is a separate function (as opposed to the `validator=` kwarg),
@@ -294,7 +303,7 @@ class RecipeRepo:
     attr_dict_type(str, RecipeModule)(self, attrib, value)
 
   # Mapping of recipe name -> Recipe for all recipes in this repo.
-  recipes = attr.ib(converter=freeze)  # type: dict[str, Recipe]
+  recipes: dict[str, Recipe] = attr.ib(converter=freeze)
   @recipes.validator
   def check(self, attrib, value):
     # This is a separate function (as opposed to the `validator=` kwarg),
@@ -304,8 +313,8 @@ class RecipeRepo:
 
   # The fetch.Backend, or None (if this repo was overridden on the command
   # line), for this repo.
-  backend = attr.ib(
-    validator=attr_type((type(None), fetch.Backend)))  # type: fetch.Backend
+  backend: fetch.Backend | None = attr.ib(
+    validator=attr_type((type(None), fetch.Backend)))
 
   def __attrs_post_init__(self):
     suffix = ' in repo {name!r}.'.format(name=self.name)
@@ -320,7 +329,7 @@ class RecipeRepo:
     self.recipes.on_missing = _raise_missing_recipe
 
   @cached_property
-  def recipes_cfg_pb2(self):
+  def recipes_cfg_pb2(self) -> Message:
     """Read recipes.cfg as a recipes_cfg_pb2.RepoSpec proto message.
 
     If successful, the return value is cached.
@@ -332,7 +341,7 @@ class RecipeRepo:
           cfg_file.read(), RepoSpec(), ignore_unknown_fields=True)
 
   @cached_property
-  def recipes_root_path(self):
+  def recipes_root_path(self) -> str:
     """The absolute path to the directory containing the `recipes`,
     `recipe_modules`, etc. directories."""
     # Normalize because self.simple_cfg.recipes_path is always POSIX-style.
@@ -340,12 +349,12 @@ class RecipeRepo:
       os.path.join(self.path, self.simple_cfg.recipes_path))
 
   @cached_property
-  def readme_path(self):
+  def readme_path(self) -> str:
     """The absolute path for the 'README.recipes.md' file."""
     return os.path.join(self.recipes_root_path, 'README.recipes.md')
 
   @cached_property
-  def warning_definitions(self):
+  def warning_definitions(self) -> dict[str, warn_def.Definition]:
     """The warnings defined (a dict of warning name to warning.Definition proto
     message) in this repo. Empty dict if not defined.
     """
@@ -353,12 +362,12 @@ class RecipeRepo:
       self.recipes_root_path, RECIPE_WARNING_DEFINITIONS_REL))
 
   @property
-  def name(self):
+  def name(self) -> str:
     """Shorthand for `RecipeRepo.simple_cfg.repo_name`."""
     return self.simple_cfg.repo_name
 
   @cached_property
-  def sloppy_coverage_patterns(self):
+  def sloppy_coverage_patterns(self) -> frozenset[str]:
     """Returns a frozenset of patterns (fnmatch absolute paths) for files which
     are covered in this repo by `DISABLE_STRICT_COVERAGE=True`."""
     patterns = []
@@ -368,17 +377,17 @@ class RecipeRepo:
     return frozenset(patterns)
 
   @cached_property
-  def recipes_dir(self):
+  def recipes_dir(self) -> str:
     """Returns the absolute path to this repo's recipes directory."""
     return os.path.join(self.recipes_root_path, 'recipes')
 
   @cached_property
-  def modules_dir(self):
+  def modules_dir(self) -> str:
     """Returns the absolute path to this repo's recipe modules directory."""
     return os.path.join(self.recipes_root_path, 'recipe_modules')
 
   @property
-  def expectation_paths(self):
+  def expectation_paths(self) -> list[str]:
     """Returns absolute paths to all expectation files.
 
     Includes even unused expectation files that don't have an associated
@@ -418,7 +427,9 @@ class RecipeRepo:
     return paths
 
   @classmethod
-  def create(cls, recipe_deps, path, backend=None, simple_cfg=None):
+  def create(cls, recipe_deps: RecipeDeps, path: str,
+             backend: fetch.Backend | None = None,
+             simple_cfg: SimpleRecipesCfg | None = None) -> RecipeRepo:
     """Creates a RecipeRepo.
 
     Args:
@@ -489,14 +500,14 @@ class RecipeRepo:
 
 @attr.s(frozen=True)
 class RecipeModule:
-  repo = attr.ib(validator=attr_type(RecipeRepo))  # type: RecipeRepo
-  name = attr.ib(validator=attr_type(str))
+  repo: RecipeRepo = attr.ib(validator=attr_type(RecipeRepo))
+  name: str = attr.ib(validator=attr_type(str))
 
   # Maps from all recipe names under this module to the Recipe object.
   #
   # Note: the names of these will be e.g. `examples\full`. Use the Recipe's
   # .name field to get the repo-importable name `module:examples\full`.
-  recipes = attr.ib(converter=freeze)
+  recipes: dict[str, Recipe] = attr.ib(converter=freeze)
   @recipes.validator
   def check(self, attrib, value):
     # This is a separate function (as opposed to the `validator=` kwarg),
@@ -512,23 +523,23 @@ class RecipeModule:
     self.recipes.on_missing = _raise_missing_recipe
 
   @cached_property
-  def full_name(self):
+  def full_name(self) -> str:
     """The fully qualified name of the recipe module (e.g. `repo/module`)."""
     return '%s/%s' % (self.repo.name, self.name)
 
   @cached_property
-  def path(self):
+  def path(self) -> str:
     """The absolute path to the directory for this recipe module."""
     return os.path.join(self.repo.modules_dir, self.name)
 
   @cached_property
-  def relpath(self):
+  def relpath(self) -> str:
     """The path to the directory for this recipe module relative to the repo
     root."""
     return os.path.relpath(self.path, self.repo.path)
 
   @cached_property
-  def normalized_DEPS(self):
+  def normalized_DEPS(self) -> dict[str, tuple[str, str]]:
     """Returns a normalized form of the DEPS specification for this object.
 
     The normalized form looks like:
@@ -541,13 +552,13 @@ class RecipeModule:
     return parse_deps_spec(self.repo.name, DEPS, source=self.path)
 
   @cached_property
-  def warnings(self):
+  def warnings(self) -> tuple[str, ...]:
     """Returns a tuple of warnings issued against this recipe module."""
     WARNINGS = getattr(self.do_import(), 'WARNINGS', ())
     return tuple(WARNINGS)
 
   @cached_property
-  def _cumulative_import_warnings(self):
+  def _cumulative_import_warnings(self) -> tuple[tuple[str, RecipeModule], ...]:
     """Returns all import warnings as a tuple that this module and its
     dependent modules hit. Each element of the tuple is a tuple of
     (fully-qualified warning name, importer RecipeModule).
@@ -568,7 +579,7 @@ class RecipeModule:
       'RECIPE_MODULES.%s.%s' % (self.repo.name, self.name))
 
   @cached_property
-  def PROPERTIES(self):
+  def PROPERTIES(self) -> Type[Message] | dict:
     """Will return either a protobuf message, or an dictionary for config-style
     properties.
 
@@ -691,7 +702,7 @@ class RecipeModule:
           return v
 
   @cached_property
-  def uses_sloppy_coverage(self):
+  def uses_sloppy_coverage(self) -> bool:
     """Returns True if this module has DISABLE_STRICT_COVERAGE set.
 
     This implies that ANY recipe code in the whole repo should count towards the
@@ -709,7 +720,7 @@ class RecipeModule:
   effective_python_compatibility = 'PY3'
 
   @classmethod
-  def create(cls, repo, name):
+  def create(cls, repo: RecipeRepo, name: str) -> RecipeModule:
     """Creates a RecipeModule.
 
     Args:
@@ -746,13 +757,14 @@ class RecipeModule:
 @attr.s(frozen=True)
 class Recipe:
   # The repo in which this recipe is located.
-  repo = attr.ib(validator=attr_type(RecipeRepo)) # type: RecipeRepo
+  repo: RecipeRepo = attr.ib(validator=attr_type(RecipeRepo))
 
   # The name of the recipe (e.g. `path/to/recipe` or 'module:run/recipe').
-  name = attr.ib(validator=attr_type(str))
+  name: str = attr.ib(validator=attr_type(str))
 
   # The RecipeModule, if any, to which this Recipe belongs.
-  module = attr.ib(validator=optional(attr_type(RecipeModule)))
+  module: RecipeModule | None = attr.ib(
+      validator=optional(attr_type(RecipeModule)))
 
   def __attrs_post_init__(self):
     if self.module:
@@ -767,7 +779,7 @@ class Recipe:
           '{recipe_name!r}'.format(recipe_name=self.name))
 
   @cached_property
-  def path(self):
+  def path(self) -> str:
     """The absolute path of the recipe script."""
     native_name = self.name.replace('/', os.path.sep)
     if self.module:
@@ -777,23 +789,23 @@ class Recipe:
     return ret + '.py'
 
   @cached_property
-  def expectation_dir(self):
+  def expectation_dir(self) -> str:
     """Returns the directory where this recipe's expectation JSON files live."""
     # TODO(iannucci): move expectation tree outside of the recipe tree.
     return os.path.splitext(self.path)[0] + '.expected'
 
   @cached_property
-  def resources_dir(self):
+  def resources_dir(self) -> str:
     """Returns the directory where this recipe's resource files live."""
     return os.path.splitext(self.path)[0] + '.resources'
 
   @cached_property
-  def relpath(self):
+  def relpath(self) -> str:
     """The path to the recipe relative to the repo root."""
     return os.path.relpath(self.path, self.repo.path)
 
   @cached_property
-  def expectation_paths(self):
+  def expectation_paths(self) -> set[str]:
     """Get all existing expectation file paths for this recipe.
 
     Returns a set of absolute paths to all discovered expectation files.
@@ -810,7 +822,7 @@ class Recipe:
     return ret
 
   @cached_property
-  def coverage_patterns(self):
+  def coverage_patterns(self) -> frozenset[str]:
     """Returns a frozenset of patterns (fnmatch absolute paths) for files which
     are covered by this recipe.
 
@@ -822,7 +834,7 @@ class Recipe:
     return self.repo.sloppy_coverage_patterns | frozenset(patterns)
 
   @cached_property
-  def global_symbols(self):
+  def global_symbols(self) -> dict[str, object]:
     """Returns the global symbols for this recipe.
 
     This will exec the recipe's code (at most once) and return the dict
@@ -892,12 +904,12 @@ class Recipe:
   effective_python_compatibility = 'PY3'
 
   @cached_property
-  def full_name(self):
+  def full_name(self) -> str:
     """The fully qualified name of the recipe (e.g. `repo::path/to/recipe`, or
     `repo::module:run/recipe`)."""
     return '%s::%s' % (self.repo.name, self.name)
 
-  def gen_tests(self):
+  def gen_tests(self) -> Iterator[BaseTestData]:
     """Runs this recipe's GenTests function.
 
     Yields all TestData fixtures for this recipe. Fills in the .expect_file
@@ -918,7 +930,7 @@ class Recipe:
       yield test_data
 
   @cached_property
-  def normalized_DEPS(self):
+  def normalized_DEPS(self) -> dict[str, tuple[str, str]]:
     """Returns a normalized form of the DEPS specification for this object.
 
     The normalized form looks like:
@@ -930,7 +942,8 @@ class Recipe:
     return parse_deps_spec(self.repo.name, self.global_symbols.get('DEPS', ()),
                            source=self.path)
 
-  def mk_api(self, engine, test_data=None):
+  def mk_api(self, engine: RecipeEngine,
+             test_data: RecipeTestData | None = None) -> RecipeScriptApi:
     """Makes a RecipeScriptApi, suitable for use with run_steps.
 
       * engine (RecipeEngine) - The engine to use for running.
@@ -959,7 +972,7 @@ class Recipe:
     })
     return api
 
-  def run_steps(self, api, engine):
+  def run_steps(self, api: RecipeScriptApi, engine: RecipeEngine) -> object:
     """Runs this recipe's RunSteps function.
 
     Args:
@@ -1011,7 +1024,7 @@ class Recipe:
     return recipe_result
 
 
-def _scan_recipe_directory(path):
+def _scan_recipe_directory(path: str) -> Iterator[str]:
   """Internal helper to yield recipe names for all recipe files under a path."""
   for root, dirs, files in os.walk(path):
     dirs[:] = [x for x in dirs
@@ -1030,7 +1043,7 @@ def parse_deps_spec(
     deps_spec: Sequence[str] | Mapping[str, str],
     *,
     source: str,
-):
+) -> dict[str, tuple[str, str]]:
   """Parses a DEPS mapping from inside a recipe or recipe module's __init__.py,
   and returns a deps map in the form of:
 
@@ -1051,7 +1064,7 @@ def parse_deps_spec(
 
   Returns fully qualified deps dict of {localname: (repo_name, module_name)}
   """
-  def _parse_dep_name(name):
+  def _parse_dep_name(name: str) -> tuple[str, str]:
     # dependencies can look like:
     #  * name            # uses current repo_name
     #  * repo_name/name  # explicit repo_name
@@ -1085,7 +1098,9 @@ def parse_deps_spec(
   return deps
 
 
-def _collect_import_warnings(root):
+def _collect_import_warnings(
+    root: RecipeModule | Recipe,
+) -> set[tuple[str, RecipeModule | Recipe]]:
   """Traverses the dependency tree from root and collects all import warnings.
 
   Returns a set of (fully-qualified warning name, importing recipe or
@@ -1103,7 +1118,8 @@ def _collect_import_warnings(root):
   return ret
 
 
-def _instantiate_test_api(module: RecipeModule, resolved_deps):
+def _instantiate_test_api(module: RecipeModule,
+                          resolved_deps: dict[str, RecipeTestApi | None]) -> RecipeTestApi:
   """Instantiates the RecipeTestApi class from the given imported recipe module.
 
   Args:
@@ -1125,8 +1141,10 @@ def _instantiate_test_api(module: RecipeModule, resolved_deps):
   return inst
 
 
-def _instantiate_api(engine, test_data, fqname, module: RecipeModule, test_api,
-                     resolved_deps):
+def _instantiate_api(engine: RecipeEngine, test_data: RecipeTestData,
+                     fqname: str, module: RecipeModule,
+                     test_api: RecipeTestApi,
+                     resolved_deps: dict[str, RecipeApi | None]) -> RecipeApi:
   """Instantiates the RecipeApi subclass from the given imported recipe
   module.
 
@@ -1222,7 +1240,9 @@ def _instantiate_api(engine, test_data, fqname, module: RecipeModule, test_api,
   return inst
 
 
-def _resolve(recipe_deps, deps_spec, variant, engine, test_data):
+def _resolve(recipe_deps: RecipeDeps, deps_spec: dict[str, tuple[str, str]],
+             variant: str, engine: RecipeEngine | None,
+             test_data: RecipeTestData | None) -> dict[str, RecipeApi | RecipeTestApi | None]:
   """Resolves a deps_spec to a map of {local_name: api instance}
 
   Args:
