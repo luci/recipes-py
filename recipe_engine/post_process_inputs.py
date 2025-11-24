@@ -4,9 +4,12 @@
 
 """The types that appear as inputs to post-processing hooks."""
 
+from __future__ import annotations
+
 import re
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
+from typing import Any, Callable
 
 import attr
 from past.builtins import basestring
@@ -37,11 +40,13 @@ class Command(list):
     ['foo', ..., 'bar'] in Command(['foo', 'monkey', 'stuff, 'bar'])
     ['foo', ..., 'bar'] in Command(['foo', 'bar'])
   """
-  def __contains__(self, item):
+
+  def __contains__(self, item: object) -> bool:
     # Get a function that can be used for matching against an element
     # Command's elements will always be strings, so we'll only try to match
     # against strings or regexes
-    def get_matcher(obj):
+    def get_matcher(obj: str | re.Pattern
+                    | type(Ellipsis)) -> Callable | type(Ellipsis) | None:
       if isinstance(obj, basestring):
         return lambda other: obj == other
       if isinstance(obj, re.Pattern):
@@ -94,7 +99,7 @@ class Command(list):
     # If matchers looked like ['a', 'b', ..., 'c'], min_slots now looks like:
     # [3, 2, 1, 1]
 
-    def _matches_seq(matchers_offset, self_offset):
+    def _matches_seq(matchers_offset: int, self_offset: int) -> bool:
       max_slot = len(self) - min_slots[matchers_offset]
       if max_slot < self_offset:
         return False
@@ -126,7 +131,8 @@ class Command(list):
     # this would be quadratic on self.
     no_entry = object()
     cache = {}
-    def _cached_matches_seq(matchers_offset, self_offset):
+
+    def _cached_matches_seq(matchers_offset: int, self_offset: int) -> bool:
       key = (matchers_offset, self_offset)
       ret = cache.get(key, no_entry)
       if ret is not no_entry:
@@ -157,7 +163,7 @@ class Step:
   # TODO(iannucci) Use buildbucket step names here, e.g. 'parent|child|leaf'
   # instead of buildbot style 'parent.child.leaf' or make tuple
   # The name of the step as a string
-  name = attr.ib()
+  name: str = attr.ib()
 
   # The step's command as a sequence of strings
   #
@@ -169,15 +175,15 @@ class Step:
   # so distiniguish between an empty cmd list and a cmd that has been filtered
   # while still allowing duck-typing a default of () is used which is not equal
   # to an empty list but still supports sequence operations
-  cmd = attr.ib(default=())
+  cmd: Command | Sequence[str] = attr.ib(default=())
 
   # The working directory that the step is executed under as a string, in terms
   # of a placeholder e.g. RECIPE_REPO[recipe_engine]
   # An empty string is equivalent to start_dir
-  cwd = attr.ib(default='')
+  cwd: str = attr.ib(default='')
 
   # The resource cost of this Step. Will be None for no-command steps.
-  cost = attr.ib(default=ResourceCost())
+  cost: ResourceCost = attr.ib(default=ResourceCost())
 
   # See //recipe_modules/context/api.py for information on the precise meaning
   # of env, env_prefixes and env_suffixes.
@@ -185,32 +191,32 @@ class Step:
   # env will be the env value for the step, a dictionary mapping strings
   # containing the environment variable names to strings containing the
   # environment variable value.
-  env = attr.ib(factory=dict)
+  env: dict[str, str] = attr.ib(factory=dict)
   # env_prefixes and env_suffixes will be the env prefixes and suffixes for the
   # step, dictionaries mapping strings containing the environment variable names
   # to lists containing strings to be prepended/addended to the environment
   # variable.
-  env_prefixes = attr.ib(factory=dict)
-  env_suffixes = attr.ib(factory=dict)
+  env_prefixes: dict[str, list[str]] = attr.ib(factory=dict)
+  env_suffixes: dict[str, list[str]] = attr.ib(factory=dict)
 
   # A bool indicating whether a step can emit its own annotations.
-  allow_subannotations = attr.ib(default=False)
+  allow_subannotations: bool = attr.ib(default=False)
 
   # Either None for no timeout or a numeric type containing the number of
   # seconds the step must complete in.
-  timeout = attr.ib(default=None)
+  timeout: int | float | None = attr.ib(default=None)
 
   # Mapping of LUCI_CONTEXT section name to the current section value.
-  luci_context = attr.ib(factory=dict)
+  luci_context: dict[str, Any] = attr.ib(factory=dict)
 
   # A bool indicating the step is an infrastructure step that should raise
   # InfraFailure instead of StepFailure if the step finishes with an exit code
   # that is not allowed.
-  infra_step = attr.ib(default=False)
+  infra_step: bool = attr.ib(default=False)
 
   # String containing the content of the step's stdin if the step's stdin was
   # redirected with a PlaceHolder.
-  stdin = attr.ib(default='')
+  stdin: str = attr.ib(default='')
 
   # ***************************** Annotation fields ****************************
   # These fields appear in annotations in the ~followup_annotations field in the
@@ -218,33 +224,34 @@ class Step:
 
   # The nest level of the step: 0 is a top-level step.
   # TODO(iannucci) Remove this
-  nest_level = attr.ib(default=0)
+  nest_level: int = attr.ib(default=0)
 
   # A string containing the step's step text.
-  step_text = attr.ib(default='')
+  step_text: str = attr.ib(default='')
 
   # A string containing the step's step summary text.
-  step_summary_text = attr.ib(default='')
+  step_summary_text: str = attr.ib(default='')
 
   # A dictionary containing the step's logs, mapping strings containing the log
   # name to strings containing the full content of the log (the lines of the
   # logs in the StepPresentation joined with '\n').
-  logs = attr.ib(factory=dict)
+  logs: dict[str, str] = attr.ib(factory=dict)
 
   # A dictionary containing the step's links, mapping strings containing the
   # link name to strings containing the link URL.
-  links = attr.ib(factory=dict)
+  links: dict[str, str] = attr.ib(factory=dict)
 
   # A dictionary containing the build properties set by the step, mapping
   # strings containing the property name to json-ish objects containing the
   # value of the property.
-  output_properties = attr.ib(factory=dict)
+  output_properties: dict[str, Any] = attr.ib(factory=dict)
 
   # A string containing the resulting status of the step, one of: 'SUCCESS',
   # 'EXCEPTION', 'FAILURE', 'WARNING', 'CANCELED'.
-  status = attr.ib(default='SUCCESS',
-                   validator=attr.validators.in_((
-                     'SUCCESS', 'EXCEPTION', 'FAILURE', 'WARNING', 'CANCELED')))
+  status: str = attr.ib(
+      default='SUCCESS',
+      validator=attr.validators.in_(
+          ('SUCCESS', 'EXCEPTION', 'FAILURE', 'WARNING', 'CANCELED')))
 
   # A dictionary containing step tags.
   # Tag keys SHOULD indicate the domain/system that interprets them, e.g.:
@@ -257,17 +264,17 @@ class Step:
   # The Key may not exceed 256 bytes.
   # The Value may not exceed 1024 bytes.
   # Key and Value may not be empty.
-  tags = attr.ib(factory=dict)
+  tags: dict[str, str] = attr.ib(factory=dict)
 
   # Arbitrary lines that appear in the annotations.
   #
   # The presence of these annotations is an implementation detail and likely to
   # change in the future, so tests should avoid operating on this field except
   # to set it to default to filter them out.
-  _raw_annotations = attr.ib(default=[])
+  _raw_annotations: list[str] = attr.ib(default=[])
 
   @classmethod
-  def from_step_dict(cls, step_dict):
+  def from_step_dict(cls, step_dict: dict[str, Any]) -> Step:
     """Create a `Step` from a step dictionary.
 
     Args:
@@ -280,8 +287,8 @@ class Step:
       matches the item's key is set to the item's value.
     """
     if 'name' not in step_dict:
-      raise ValueError("step dict must have 'name' key, step dict keys: %r"
-                       % sorted(step_dict))
+      raise ValueError("step dict must have 'name' key, step dict keys: %r" %
+                       sorted(step_dict))
     if 'cmd' in step_dict or 'cost' in step_dict:
       step_dict = step_dict.copy()
       if 'cmd' in step_dict:
@@ -290,10 +297,10 @@ class Step:
         step_dict['cost'] = ResourceCost(**step_dict['cost'])
     return cls(**step_dict)
 
-  def _as_dict(self):
+  def _as_dict(self) -> dict[str, Any]:
     return attr.asdict(self, recurse=False)
 
-  def to_step_dict(self):
+  def to_step_dict(self) -> dict[str, Any]:
     step_dict = {k: v for k, v in self._as_dict().items()
                  if k == 'name' or v != PROTOTYPE_STEP[k]}
     if step_dict.get('cmd', None) is not None:
@@ -305,5 +312,6 @@ class Step:
       if k.startswith('_'):
         step_dict[k[1:]] = step_dict.pop(k)
     return step_dict
+
 
 PROTOTYPE_STEP = Step('')._as_dict()
