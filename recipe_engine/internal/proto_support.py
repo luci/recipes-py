@@ -4,6 +4,8 @@
 
 """Contains all logic w.r.t. the recipe engine's support for protobufs."""
 
+from __future__ import annotations
+
 import ast
 import errno
 import hashlib
@@ -15,6 +17,8 @@ import shutil
 import sys
 import tempfile
 
+from typing import Callable
+
 from gevent import subprocess
 
 import attr
@@ -24,21 +28,19 @@ import google.protobuf.message
 from google.protobuf import descriptor_pb2
 
 from . import recipe_deps
-
 from .attr_util import attr_type
 from .exceptions import BadProtoDefinitions
-
 
 PROTOC_VERSION = google.protobuf.__version__.encode('utf-8')
 
 
 if sys.platform.startswith('win'):
   _BAT = '.bat'
-  def _to_posix(path):
+  def _to_posix(path: str) -> str:
     return path.replace('\\', '/')
 else:
   _BAT = ''
-  def _to_posix(path):
+  def _to_posix(path: str) -> str:
     return path
 
 
@@ -47,27 +49,28 @@ class _ProtoInfo:
   """_ProtoInfo holds information about the proto files found in a recipe repo.
   """
   # Native-slash-delimited path to the source file
-  src_abspath = attr.ib(validator=attr_type(str))
+  src_abspath: str = attr.ib(validator=attr_type(str))
 
   # The fwd-slash-delimited path relative to `repo.path` of the proto file.
-  relpath = attr.ib(validator=attr_type(str))
+  relpath: str = attr.ib(validator=attr_type(str))
 
   # The fwd-slash-delimited path relative to the output PB directory of where
   # this file should go when we compile protos.
-  dest_relpath = attr.ib(validator=attr_type(str))
+  dest_relpath: str = attr.ib(validator=attr_type(str))
 
   # Set to True iff this is a reserved path
-  reserved = attr.ib(validator=attr_type(bool))
+  reserved: bool = attr.ib(validator=attr_type(bool))
 
   # The git blob hash of this file.
   #
   # We use the git algorithm here in case we ever want to use e.g. the committed
   # git index as a source for these hashes (and it's not really any more
   # expensive to compute).
-  blobhash = attr.ib(validator=attr_type(str))
+  blobhash: str = attr.ib(validator=attr_type(str))
 
   @classmethod
-  def create(cls, repo, scan_relpath, dest_namespace, relpath):
+  def create(cls, repo: recipe_deps.RecipeRepo, scan_relpath: str,
+             dest_namespace: str, relpath: str) -> _ProtoInfo:
     """Creates a _ProtoInfo.
 
     This will convert `relpath` into a global relpath for the output PB folder,
@@ -77,13 +80,13 @@ class _ProtoInfo:
     attribute on the returned `_ProtoInfo` will be True.
 
     Args:
-      * repo (RecipeRepo) - The recipe repo we found the proto file in
-      * scan_relpath (str) - The fwd-slash-delimited base path we were scanning
+      * repo - The recipe repo we found the proto file in
+      * scan_relpath - The fwd-slash-delimited base path we were scanning
         in the repo to find the proto file. This is offset from the `repo.path`
         by `repo.simple_cfg.recipes_path`. e.g. 'scripts/slave/recipes/'.
-      * dest_namespace (str) - The fwd-slash-delimited path prefix for the
+      * dest_namespace - The fwd-slash-delimited path prefix for the
         destination proto. e.g. 'recipes/build/'.
-      * relpath (str) - The fwd-slash-delimited relative path from `repo.path`
+      * relpath - The fwd-slash-delimited relative path from `repo.path`
         to where we found the proto. e.g.
         'scripts/slave/recipes/subdir/something.proto'.
 
@@ -121,11 +124,13 @@ class _ProtoInfo:
     return cls(src_abspath, relpath, dest_relpath, reserved, blobhash)
 
 
-def _gather_proto_info_from_repo(repo):
+def _gather_proto_info_from_repo(
+    repo: recipe_deps.RecipeRepo,
+) -> list[_ProtoInfo]:
   """Gathers all protos from the given repo.
 
   Args:
-    * repo (RecipeRepo) - The repo to gather all protos from.
+    * repo - The repo to gather all protos from.
 
   Returns List[_ProtoInfo]
   """
@@ -173,12 +178,14 @@ def _gather_proto_info_from_repo(repo):
 RECIPE_PB_VERSION = b'6'
 
 
-def _gather_protos(deps):
+def _gather_protos(
+    deps: recipe_deps.RecipeDeps,
+) -> tuple[str, list[tuple[str, str]]]:
   """Gathers all .proto files from all repos, and calculates their collective
   hash.
 
   Args:
-    * deps (RecipeDeps) - The loaded recipe dependencies.
+    * deps - The loaded recipe dependencies.
 
   Returns Tuple[dgst: str, proto_files: List[Tuple[str, str]]]
     * dgst: The 'overall' checksum for all protos which we ought to to have
@@ -199,11 +206,11 @@ def _gather_protos(deps):
   csum.update(b'\0')
   csum.update(PROTOC_VERSION)
   csum.update(b'\0')
-  rel_to_projs = {}  # type: Dict[dest_relpath: str, List[repo_name: str]]
+  rel_to_projs: dict[str, list[str]] = {}
   # dups has keys where len(rel_to_projs[dest_relpath]) > 1
-  dups = set()       # type: Set[key: str]
-  reserved = set()   # type: Set[key: str]
-  retval = []        # type: List[Tuple[src_abspath: str, dest_relpath: str]]
+  dups: set[str] = set()
+  reserved: set[str] = set()
+  retval: list[tuple[str, str]] = []
   for repo_name, proto_infos in sorted(all_protos.items()):
     csum.update(repo_name.encode('utf-8'))
     csum.update(b'\0\0')
@@ -251,13 +258,13 @@ def _gather_protos(deps):
 class _DirMaker:
   """Helper class to make directories on disk, handling errors for directories
   which exist and only making a given directory once."""
-  made_dirs = attr.ib(factory=set)
+  made_dirs: set[str] = attr.ib(factory=set)
 
-  def __call__(self, dirname):
+  def __call__(self, dirname: str) -> None:
     """Makes a directory.
 
     Args:
-      * dirname (str) - Directory to make (abs or relative).
+      * dirname - Directory to make (abs or relative).
     """
     if dirname in self.made_dirs:
       return
@@ -273,14 +280,14 @@ class _DirMaker:
       self.made_dirs.add(curpath)
 
 
-def _check_package(modulebody, relpath_base):
+def _check_package(modulebody: str, relpath_base: str) -> str | None:
   """Returns an error as a string if the proto file at `relpath_base` has
   a package line which is inconsistent.
 
   Args:
-    * modulebody (str) - The contents of the _pb2.py file.
-    * pkg (str) - The package read from the proto, e.g. "some.package.namespace"
-    * relpath_base (str) - The native-slash-delimited relative path to the
+    * modulebody - The contents of the _pb2.py file.
+    * pkg - The package read from the proto, e.g. "some.package.namespace"
+    * relpath_base - The native-slash-delimited relative path to the
       destination `PB` folder of the generated proto file, minus the '.py'
       extension. e.g.  "recipes/recipe_engine/subpath".
 
@@ -342,7 +349,8 @@ def _check_package(modulebody, relpath_base):
 # We find all import lines which aren't importing from the special
 # `google.protobuf` namespace, and rewrite them.
 _REWRITE_IMPORT_RE = re.compile(
-    r'^from (?!google\.protobuf|typing)(\S*) import (\S*)_pb2 as (.*)$', re.MULTILINE)
+    r'^from (?!google\.protobuf|typing)(\S*) import (\S*)_pb2 as (.*)$',
+    re.MULTILINE)
 
 
 def _rewrite_and_rename(root: str, base_proto_path: str) -> str | None:
@@ -390,7 +398,7 @@ def _rewrite_and_rename(root: str, base_proto_path: str) -> str | None:
   return err
 
 
-def _try_rename(src, dest):
+def _try_rename(src: str, dest: str) -> None:
   """Attempts to os.rename src to dest, swallowing ENOENT errors."""
   try:
     os.rename(src, dest)
@@ -399,7 +407,9 @@ def _try_rename(src, dest):
       raise
 
 
-def _rel_to_abs_replacer(proto_files):
+def _rel_to_abs_replacer(
+    proto_files: list[tuple[str, str]],
+) -> Callable[[str], str]:
   """Returns a function which will replace directories relative to the
   destination `PB` directory (at the beginning of a line) with their original
   source absolute paths.
@@ -431,15 +441,19 @@ def _rel_to_abs_replacer(proto_files):
       lambda match: rel_to_abs[match.group(0)], to_replace)
 
 
-def _collect_protos(argfile_fd, proto_files, dest):
+def _collect_protos(
+    argfile_fd: int,
+    proto_files: list[tuple[str, str]],
+    dest: str,
+) -> None:
   """Copies all proto_files into dest.
 
   Writes this list of files to `argfile_fd` which will be passed to protoc.
 
   Args:
-    * argfile_fd (int): An open writable file descriptor for the argfile.
+    * argfile_fd: An open writable file descriptor for the argfile.
     * proto_files (List[Tuple[src_abspath: str, dest_relpath: str]])
-    * dest (str): Path to the directory where we should collect the .proto
+    * dest: Path to the directory where we should collect the .proto
     files.
 
   Side-effects:
@@ -458,18 +472,19 @@ def _collect_protos(argfile_fd, proto_files, dest):
     os.close(argfile_fd)  # for windows
 
 
-def _compile_protos(proto_files, proto_tree, protoc, argfile, dest):
+def _compile_protos(proto_files: list[tuple[str, str]], proto_tree: str,
+                    protoc: str, argfile: str, dest: str) -> None:
   """Runs protoc over the collected protos, renames them and rewrites their
   imports to make them import from `PB`.
 
   Args:
-    * proto_files (List[Tuple[src_abspath: str, dest_relpath: str]])
-    * proto_tree (str): Path to the directory with all the collected .proto
+    * proto_files: Protobuf files.
+    * proto_tree: Path to the directory with all the collected .proto
       files.
-    * protoc (str): Path to the protoc binary to use.
-    * argfile (str): Path to a protoc argfile containing a relative path to
+    * protoc: Path to the protoc binary to use.
+    * argfile: Path to a protoc argfile containing a relative path to
       every .proto file in proto_tree on its own line.
-    * dest (str): Path to the destination where the compiled protos should go.
+    * dest: Path to the destination where the compiled protos should go.
   """
   protoc_proc = subprocess.Popen(
       [protoc, '--python_out', dest, '--pyi_out', dest, '@'+argfile],
@@ -503,17 +518,18 @@ def _compile_protos(proto_files, proto_tree, protoc, argfile, dest):
     sys.exit(1)
 
 
-def _install_protos(proto_package_path, dgst, proto_files):
+def _install_protos(proto_package_path: str, dgst: str,
+                    proto_files: list[tuple[str, str]]) -> None:
   """Installs protos to `{proto_package_path}/PB`.
 
   Args:
-    * proto_package_path (str) - The absolute path to the folder where:
+    * proto_package_path - The absolute path to the folder where:
       * We should install protoc as '.../protoc/...'
       * We should install the compiled proto files as '.../PB/...'
       * We should use '.../tmp/...' as a tempdir.
-    * dgst (str) - The hexadecimal (lowercase) checksum for the protos we're
+    * dgst - The hexadecimal (lowercase) checksum for the protos we're
       about to install.
-    * proto_files (List[Tuple[src_abspath: str, dest_relpath: str]])
+    * proto_files: Protobuf files.
 
   Side-effects:
     * Ensures that `{proto_package_path}/PB` exists and is the correct
@@ -560,13 +576,13 @@ def _install_protos(proto_package_path, dgst, proto_files):
     _try_rename(pb_temp, dest)
 
 
-def _check_digest(proto_package, dgst):
+def _check_digest(proto_package: str, dgst: str) -> bool:
   """Checks protos installed in `{proto_package_path}/PB`.
 
   Args:
-    * proto_package_base (str) - The absolute path to the folder where we will
+    * proto_package_base - The absolute path to the folder where we will
       look for '.../PB/csum
-    * dgst (str) - The digest of the proto files which we believe need to be
+    * dgst - The digest of the proto files which we believe need to be
       built.
 
   Returns True iff csum matches dgst.
@@ -580,7 +596,8 @@ def _check_digest(proto_package, dgst):
       raise
 
 
-def ensure_compiled(deps: 'recipe_deps.RecipeDeps', proto_override):
+def ensure_compiled(deps: recipe_deps.RecipeDeps,
+                    proto_override: str | None) -> str:
   """Ensures protos are compiled.
 
   Gathers protos from all repos and compiles them into
@@ -591,8 +608,8 @@ def ensure_compiled(deps: 'recipe_deps.RecipeDeps', proto_override):
   See /doc/implementation_details.md for more info.
 
   Args:
-    * deps (RecipeDeps) - The fully-loaded recipes deps.
-    * proto_override (str|None) - Instead of finding/compiling all protos, use
+    * deps - The fully-loaded recipes deps.
+    * proto_override - Instead of finding/compiling all protos, use
       this absolute path for `{deps.recipe_deps_path}/_pb3`.
 
   Returns path to the compiled proto package.
@@ -630,7 +647,7 @@ def ensure_compiled(deps: 'recipe_deps.RecipeDeps', proto_override):
   return proto_package
 
 
-def append_to_syspath(proto_package):
+def append_to_syspath(proto_package: str) -> None:
   """Append proto package to sys.path.
 
   Raises an AssertionError if another package with the same basename is already
@@ -641,7 +658,7 @@ def append_to_syspath(proto_package):
   sys.path.append(proto_package)
 
 
-def is_message_class(obj):
+def is_message_class(obj: object) -> bool:
   """Returns True if |obj| is a subclass of google.protobuf.message.Message."""
   return (inspect.isclass(obj) and
           issubclass(obj, google.protobuf.message.Message))
