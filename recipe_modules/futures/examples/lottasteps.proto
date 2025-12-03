@@ -4,7 +4,7 @@
 
 syntax = "proto3";
 
-package recipe_modules.recipe_engine.futures.examples;
+package recipe_modules.recipe_engine.futures.examples.lottasteps;
 
 message Input {
   // The number of steps the recipe should attempt to launch in parallel.

@@ -4,7 +4,7 @@
 
 syntax = "proto3";
 
-package recipe_modules.recipe_engine.buildbucket.tests;
+package recipe_modules.recipe_engine.buildbucket.tests.properties;
 
 import "go.chromium.org/luci/buildbucket/proto/build.proto";
 

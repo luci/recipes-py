@@ -6,7 +6,7 @@ syntax = "proto3";
 
 import "tricium/data.proto";
 
-package recipe_modules.recipe_engine.tricium.tests;
+package recipe_modules.recipe_engine.tricium.tests.enforce_comments_num_limit;
 
 message InputProps {
   .tricium.Data.Results expected_results = 1;

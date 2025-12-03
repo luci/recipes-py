@@ -4,7 +4,7 @@
 
 syntax = "proto3";
 
-package recipe_modules.recipe_engine.defer.tests;
+package recipe_modules.recipe_engine.defer.tests.properties;
 
 message CollectInputProps {
   bool exception = 1;

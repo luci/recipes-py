@@ -4,7 +4,7 @@
 
 syntax = "proto3";
 
-package recipe_modules.recipe_engine.file.examples;
+package recipe_modules.recipe_engine.file.examples.copytree;
 
 message Properties {
   bool symlinks = 1;

@@ -4,7 +4,7 @@
 
 syntax = "proto3";
 
-package recipe_modules.recipe_engine.step.tests;
+package recipe_modules.recipe_engine.step.tests.properties;
 
 import "go.chromium.org/luci/buildbucket/proto/build.proto";
 
@@ -21,4 +21,3 @@ message SubBuildInputProps {
 
   bool legacy = 5;
 }
-

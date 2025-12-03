@@ -6,7 +6,7 @@ syntax = "proto3";
 
 import "google/protobuf/struct.proto";
 
-package recipe_modules.recipe_engine.properties.examples;
+package recipe_modules.recipe_engine.properties.examples.full;
 
 message InputProps {
   message SubMessage {

@@ -4,7 +4,7 @@
 
 syntax = "proto3";
 
-package recipe_modules.recipe_engine.proto.tests;
+package recipe_modules.recipe_engine.proto.tests.placeholders;
 
 message SomeMessage {
   string field = 1;

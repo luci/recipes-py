@@ -286,7 +286,6 @@ def _check_package(modulebody: str, relpath_base: str) -> str | None:
 
   Args:
     * modulebody - The contents of the _pb2.py file.
-    * pkg - The package read from the proto, e.g. "some.package.namespace"
     * relpath_base - The native-slash-delimited relative path to the
       destination `PB` folder of the generated proto file, minus the '.py'
       extension. e.g.  "recipes/recipe_engine/subpath".
@@ -322,6 +321,12 @@ def _check_package(modulebody: str, relpath_base: str) -> str | None:
   )
   is_global = not is_reserved_namespace(toplevel_namespace)
 
+  is_module_test = lambda toks: (
+      toks[0] == 'recipe_modules'
+      and len(toks) > 3
+      and toks[3] in ('examples', 'tests')
+  )
+
   err = None
   pkg_toks = pkg.split('.')
   if is_global:
@@ -333,15 +338,24 @@ def _check_package(modulebody: str, relpath_base: str) -> str | None:
       # Recipes should match the full relpath_base
       expected = '.'.join(relpath_toks)
       if pkg != expected:
-        err = 'expected %r, got %r' % (expected, pkg)
+        err = f'expected {expected!r}, got {pkg!r}'
+
+    elif is_module_test(relpath_toks):
+      # Recipe module tests should match the full relpath_base, but in the short
+      # term they may match the relpath minus a token.
+      # TODO: b/465777995 - Remove the "minus a token" matching.
+      expected = '.'.join(relpath_toks)
+      if pkg != expected and pkg != '.'.join(relpath_toks[:-1]):
+        err = f'expected {expected!r}, got {pkg!r}'
+
     else:
       # Everything else should match the full relpath minus a token
       expected = '.'.join(relpath_toks[:-1])
       if pkg != expected:
-        err = 'expected %r, got %r' % (expected, pkg)
+        err = f'expected {expected!r}, got {pkg!r}'
 
   if err:
-    err = '%s: bad package: %s' % (relpath_base + '.proto', err)
+    err = f'{relpath_base}.proto: bad package: {err}'
 
   return err
 
