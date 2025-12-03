@@ -5177,7 +5177,7 @@ This recipe tests the buildbucket.set_output_gitiles_commit function.
 [DEPS](/recipe_modules/buildbucket/tests/search.py#18): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/search.py#38)(api, props):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/search.py#29)(api, props):**
 ### *recipes* / [cas:examples/full](/recipe_modules/cas/examples/full.py)
 
 [DEPS](/recipe_modules/cas/examples/full.py#7): [cas](#recipe_modules-cas), [file](#recipe_modules-file), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
@@ -6301,7 +6301,7 @@ This file is a recipe demonstrating reading triggers of the current build.
 [DEPS](/recipe_modules/time/examples/jitter.py#12): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
 
-&mdash; **def [RunSteps](/recipe_modules/time/examples/jitter.py#29)(api, properties):**
+&mdash; **def [RunSteps](/recipe_modules/time/examples/jitter.py#22)(api, properties):**
 ### *recipes* / [tricium:examples/add\_comment](/recipe_modules/tricium/examples/add_comment.py)
 
 [DEPS](/recipe_modules/tricium/examples/add_comment.py#15): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [tricium](#recipe_modules-tricium)

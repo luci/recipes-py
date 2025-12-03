@@ -123,70 +123,6 @@ class _ProtoInfo:
 
     return cls(src_abspath, relpath, dest_relpath, reserved, blobhash)
 
-  @classmethod
-  def _find_inline_properties_proto(cls, path: str) -> str | None:
-    with open(path, 'r') as ins:
-      for entry in ast.parse(ins.read()).body:
-        match entry:
-          case (ast.Assign(
-              targets=[ast.Name(id='INLINE_PROPERTIES_PROTO')],
-              value=ast.Constant(value=str(x))) | ast.AnnAssign(
-                  target=ast.Name(id='INLINE_PROPERTIES_PROTO'),
-                  value=ast.Constant(value=str(x)))):
-            return x
-
-          case (ast.Assign(targets=[ast.Name(id='INLINE_PROPERTIES_PROTO')])
-                | ast.AnnAssign(target=ast.Name(id='INLINE_PROPERTIES_PROTO'))
-                | ast.AugAssign(target=ast.Name(id='INLINE_PROPERTIES_PROTO'))):
-            raise ValueError(f'bad use of INLINE_PROPERTIES_PROTO in {path}')
-
-    return None
-
-  @classmethod
-  def inline_create(cls, repo: recipe_deps.RecipeRepo, scan_relpath: str,
-                    dest_namespace: str, relpath: str) -> _ProtoInfo:
-    """Creates a _ProtoInfo from a Python file containing an inline proto."""
-
-    inline_properties_proto: str | None = None
-
-    assert relpath.endswith('.py')
-    path = os.path.join(repo.path, relpath)
-
-    inline_properties_proto = cls._find_inline_properties_proto(path)
-
-    assert inline_properties_proto, (
-        f'Expected but could not find proto in {path}')
-
-    subpath = relpath[len(scan_relpath):]
-
-    proto_path = os.path.join(
-        repo.recipe_deps.recipe_deps_path,
-        'inline_proto',
-        repo.name,
-        f'{os.path.splitext(subpath)[0]}.proto',
-    )
-    proto_relpath = os.path.relpath(proto_path, repo.path)
-
-    # Writing to disk so proto errors point to a specific file that users can
-    # find. This is needed because line numbers don't exactly match the
-    # multi-line str in the Python file.
-    os.makedirs(os.path.dirname(proto_path), exist_ok=True)
-    with open(proto_path, 'w') as outs:
-      print(f'// This file is generated from {path}', file=outs)
-      print('syntax = "proto3";', file=outs)
-
-      namespace = dest_namespace.strip('/').split('/')
-      for i, part in enumerate(os.path.dirname(relpath).split('/')):
-        if i != 0:
-          namespace.append(part)
-      print(f'package {".".join(namespace)};', file=outs)
-      print(inline_properties_proto, file=outs)
-
-    scan_relpath = os.path.join(
-        os.path.relpath(repo.recipe_deps.recipe_deps_path, repo.path),
-        'inline_proto', repo.name)
-    return cls.create(repo, scan_relpath, dest_namespace, proto_relpath)
-
 
 def _gather_proto_info_from_repo(
     repo: recipe_deps.RecipeRepo,
@@ -226,23 +162,11 @@ def _gather_proto_info_from_repo(
 
       for fname in fnames:
         fname = str(fname)  # fname can be unicode
-        path = posixpath.join(base, fname)
-        relpath = posixpath.join(relbase, fname)
-        relname, suffix = os.path.splitext(relpath)
-
-        if suffix == '.proto':
-          ret.append(
-              _ProtoInfo.create(repo, scan_relpath, dest_namespace, relpath))
+        if not fname.endswith('.proto'):
           continue
-
-        if suffix == '.py' and not os.path.isfile(f'{relname}.proto'):
-          with open(path, 'r') as ins:
-            contents = ins.read()
-          if re.search(r'^INLINE_PROPERTIES_PROTO\s*=', contents, re.MULTILINE):
-            ret.append(
-                _ProtoInfo.inline_create(repo, scan_relpath, dest_namespace,
-                                         relpath))
-          continue
+        ret.append(_ProtoInfo.create(
+            repo, scan_relpath, dest_namespace, posixpath.join(relbase, fname)
+        ))
 
   return sorted(ret)
 

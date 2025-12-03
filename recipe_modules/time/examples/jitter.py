@@ -16,13 +16,6 @@ DEPS = [
   'time',
 ]
 
-INLINE_PROPERTIES_PROTO = """
-message JitterProps {
-  float random_output = 1;
-  int32 expected_outcome = 2;
-}
-"""
-
 PROPERTIES = properties_pb2.JitterProps
 
 
