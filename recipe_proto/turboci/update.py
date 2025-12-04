@@ -66,16 +66,23 @@ def main():
   resp = requests.get(TAR_URL % (target, REPO_PATH), stream=True).raw
   with tarfile.open(mode='r|*', fileobj=resp) as tar:
     for item in tar:
+      if not item.name.endswith('.proto'):
+        continue
+      if item.name.startswith('data/chrome/depot_tools'):
+        print(f'Skipping {item.name!r}, turboci.data.chrome.depot_tools is imported in depot_tools recipe repo')
+        continue
+      if item.name.startswith('data/chrome'):
+        print(f'Skipping {item.name!r}, unknown chrome-specific package')
+        continue
       if item.name.endswith('_test.proto'):
         print(f'Skipping {item.name!r}')
         continue
       if 'internal' in item.name or 'googleapis' in item.name:
         print(f'Skipping {item.name!r}')
         continue
-      if item.name.endswith('.proto'):
-        print(f'Extracting {item.name!r}')
-        tar.extract(item, path=base_dir)
-        to_remove.discard(base_dir / item.name)
+      print(f'Extracting {item.name!r}')
+      tar.extract(item, path=base_dir)
+      to_remove.discard(base_dir / item.name)
 
   if to_remove:
     print('Removing stale proto')
