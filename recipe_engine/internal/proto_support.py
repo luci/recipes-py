@@ -44,6 +44,18 @@ else:
     return path
 
 
+def _file_checksum(path):
+  csum = hashlib.sha1()
+  with open(path, 'rb') as ins:
+    csum.update(f'blob {os.fstat(ins.fileno()).st_size}'.encode())
+    for line in ins:
+      data = ins.read(4 * 1024)
+      if not data:
+        break
+      csum.update(data)
+  return csum.hexdigest()
+
+
 @attr.s(frozen=True)
 class _ProtoInfo:
   """_ProtoInfo holds information about the proto files found in a recipe repo.
@@ -111,14 +123,7 @@ class _ProtoInfo:
 
     # Compute the file's blobhash
     csum = hashlib.sha1()
-    with open(src_abspath, 'rb') as src:
-      csum.update(
-          b'blob %d\0' % (os.fstat(src.fileno()).st_size,))
-      while True:
-        data = src.read(4 * 1024)
-        if not data:
-          break
-        csum.update(data)
+    csum.update(_file_checksum(src_abspath).encode())
     blobhash = csum.hexdigest()
 
     return cls(src_abspath, relpath, dest_relpath, reserved, blobhash)
@@ -171,13 +176,6 @@ def _gather_proto_info_from_repo(
   return sorted(ret)
 
 
-# This is the version # of the proto generation algorithm, and is mixed into the
-# checksum. If you need to change the compilation algorithm/process in any way,
-# you should increment this version number to cause all protos to be regenerated
-# downstream.
-RECIPE_PB_VERSION = b'6'
-
-
 def _gather_protos(
     deps: recipe_deps.RecipeDeps,
 ) -> tuple[str, list[tuple[str, str]]]:
@@ -202,10 +200,16 @@ def _gather_protos(
     if proto_info:
       all_protos[repo.name] = proto_info
 
-  csum = hashlib.sha256(RECIPE_PB_VERSION)
+  csum = hashlib.sha256()
+
+  # If this file changes we need to double-check we can still load all proto
+  # files, so add a hash of this file to the checksum.
+  csum.update(_file_checksum(__file__).encode())
   csum.update(b'\0')
+
   csum.update(PROTOC_VERSION)
   csum.update(b'\0')
+
   rel_to_projs: dict[str, list[str]] = {}
   # dups has keys where len(rel_to_projs[dest_relpath]) > 1
   dups: set[str] = set()
