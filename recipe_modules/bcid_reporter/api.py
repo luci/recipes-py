@@ -13,7 +13,7 @@ from RECIPE_MODULES.recipe_engine.time.api import exponential_retry
 # Usage of bcid_reporter recipe_module will have significant downstream impact
 # and to avoid any production outage, we are pinning the latest known good build
 # of the tool here. Upstream changes are intentionally left out.
-_LATEST_STABLE_VERSION = 'git_revision:9022d7a188fb08ac5fce88b3bcaff5c9b1dbeee2'
+_LATEST_STABLE_VERSION = 'git_revision:94ca00f962f62fd49166b3d7fbeb0056dfc3499e'
 
 # Spike is failing intermittently due to issues calling the swarming API, this
 # retry can decorate each report method.
