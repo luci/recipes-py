@@ -345,11 +345,9 @@ def _check_package(modulebody: str, relpath_base: str) -> str | None:
         err = f'expected {expected!r}, got {pkg!r}'
 
     elif is_module_test(relpath_toks):
-      # Recipe module tests should match the full relpath_base, but in the short
-      # term they may match the relpath minus a token.
-      # TODO: b/465777995 - Remove the "minus a token" matching.
+      # Recipe module tests should match the full relpath_base.
       expected = '.'.join(relpath_toks)
-      if pkg != expected and pkg != '.'.join(relpath_toks[:-1]):
+      if pkg != expected:
         err = f'expected {expected!r}, got {pkg!r}'
 
     else:
