@@ -424,7 +424,22 @@ def main(recipe_deps, cov_file, is_train, cover_module_imports):
 
   cov_data = coverage.CoverageData(basename=cov_file)
   if cover_module_imports:
-    cov_data.update(_cover_all_imports(main_repo))
+    module_imports_data = _cover_all_imports(main_repo)
+    try:
+      cov_data.update(module_imports_data)
+    except coverage.exceptions.DataError as ex:
+      # A DataError can happen when the runner subprocess gets SIGKILLed during
+      # cleanup after an error (often due to user code) in the main process. In
+      # this case we shouldn't let the exception propagate since it would
+      # eventually reach the main process's stderr and clutter the output. So
+      # instead, catch the error and send it back to the main process just in
+      # case it's a genuine error not caused by being killed, in which case the
+      # main process will still be alive to propagate the error.
+      result = Outcome()
+      result.internal_error.append('Uncaught exception: %r' % (ex,))
+      result.internal_error.extend(traceback.format_exc().splitlines())
+      write_message(sys.stdout.buffer, result)
+      return
 
   test_data_cache = {}
 
