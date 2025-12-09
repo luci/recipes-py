@@ -1,0 +1,14 @@
+// Copyright 2023 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+package recipe_modules.recipe_engine.buildbucket.tests.properties;
+
+import "go.chromium.org/luci/buildbucket/proto/build.proto";
+
+message SearchInputProps {
+  repeated .buildbucket.v2.Build builds = 1;
+  bool dup_predicate = 2;
+}

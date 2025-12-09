@@ -12,8 +12,8 @@ from PB.go.chromium.org.luci.buildbucket.proto import (
     builds_service as builds_service_pb2,
     common as common_pb2,
 )
-from PB.recipe_modules.recipe_engine.buildbucket.tests import (search as
-                                                               search_pb2)
+from PB.recipe_modules.recipe_engine.buildbucket.tests import (properties as
+                                                               properties_pb2)
 
 DEPS = [
   'buildbucket',
@@ -23,16 +23,7 @@ DEPS = [
   'step'
 ]
 
-INLINE_PROPERTIES_PROTO = """
-import "go.chromium.org/luci/buildbucket/proto/build.proto";
-
-message SearchInputProps {
-  repeated .buildbucket.v2.Build builds = 1;
-  bool dup_predicate = 2;
-}
-"""
-
-PROPERTIES = search_pb2.SearchInputProps
+PROPERTIES = properties_pb2.SearchInputProps
 
 
 def RunSteps(api, props):
@@ -104,7 +95,7 @@ def GenTests(api):
       'props',
       build(),
       api.properties(
-          search_pb2.SearchInputProps(
+          properties_pb2.SearchInputProps(
               builds=[
                   build_status(id=3, builder='chromium/try/foo'),
                   build_status(id=4, builder='chromium/try/bar'),
@@ -134,7 +125,7 @@ def GenTests(api):
       'two builds two predicates, simulated',
       build(),
       api.properties(dup_predicate=True),
-      api.properties(search_pb2.SearchInputProps(dup_predicate=True,),),
+      api.properties(properties_pb2.SearchInputProps(dup_predicate=True,),),
       api.buildbucket.simulated_multi_predicates_search_results([
           build_status(id=1),
           build_status(id=2, status=common_pb2.FAILURE),
@@ -145,7 +136,7 @@ def GenTests(api):
       'two builds two predicates with test data prop',
       build(),
       api.properties(
-          search_pb2.SearchInputProps(
+          properties_pb2.SearchInputProps(
               builds=[
                   build_status(id=3, builder='chromium/try/foo'),
                   build_status(id=4, builder='chromium/try/bar'),

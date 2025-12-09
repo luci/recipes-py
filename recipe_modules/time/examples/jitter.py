@@ -5,7 +5,9 @@ from __future__ import annotations
 
 from recipe_engine import post_process
 
-from PB.recipe_modules.recipe_engine.time.examples import jitter as jitter_pb2
+from PB.recipe_modules.recipe_engine.time.examples import (
+  jitter as properties_pb2
+)
 
 DEPS = [
   'assertions',
@@ -14,14 +16,7 @@ DEPS = [
   'time',
 ]
 
-INLINE_PROPERTIES_PROTO = """
-message JitterProps {
-  float random_output = 1;
-  int32 expected_outcome = 2;
-}
-"""
-
-PROPERTIES = jitter_pb2.JitterProps
+PROPERTIES = properties_pb2.JitterProps
 
 
 def RunSteps(api, properties):
@@ -35,20 +30,26 @@ def RunSteps(api, properties):
 
 def GenTests(api):
   yield api.test(
-      'low-end',
-      api.properties(
-          jitter_pb2.JitterProps(random_output=0, expected_outcome=90)),
-      api.post_process(post_process.DropExpectation),
+    'low-end',
+    api.properties(properties_pb2.JitterProps(
+      random_output=0,
+      expected_outcome=90
+    )),
+    api.post_process(post_process.DropExpectation),
   )
   yield api.test(
-      'middle',
-      api.properties(
-          jitter_pb2.JitterProps(random_output=.5, expected_outcome=100)),
-      api.post_process(post_process.DropExpectation),
+    'middle',
+    api.properties(properties_pb2.JitterProps(
+      random_output=.5,
+      expected_outcome=100
+    )),
+    api.post_process(post_process.DropExpectation),
   )
   yield api.test(
-      'high-end',
-      api.properties(
-          jitter_pb2.JitterProps(random_output=1, expected_outcome=110)),
-      api.post_process(post_process.DropExpectation),
+    'high-end',
+    api.properties(properties_pb2.JitterProps(
+      random_output=1,
+      expected_outcome=110
+    )),
+    api.post_process(post_process.DropExpectation),
   )
