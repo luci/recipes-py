@@ -502,8 +502,8 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
       https://bugs\.chromium\.org/p/chromium/issues/detail\?id=123456
       https://crbug.com/123456
     Call Sites:
-    .+/recipe_modules/cool_mod/api\.py:\d+
-    .+/recipe_modules/my_mod/tests/bad\.py:3
+      recipe_modules/cool_mod/api\.py:\d+
+      recipe_modules/my_mod/tests/bad\.py:3
     '''.strip('\n'))
     self.assertRegex(output, expected_regexp)
 
@@ -546,8 +546,8 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
       https://bugs\.chromium\.org/p/chrome\-operations/issues/detail\?id=654321
       https://crbug.com/654321
     Import Sites:
-    .+/recipe_modules/my_mod/tests/full\.py
-    .+/recipe_modules/cool_mod/__init__\.py
+      recipe_modules/my_mod/tests/full\.py
+      recipe_modules/cool_mod/__init__\.py
     '''.strip('\n'))
     self.assertRegex(output, expected_regexp)
 
@@ -584,9 +584,9 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
       https://bugs\.chromium\.org/p/chrome\-operations/issues/detail\?id=654321
       https://crbug.com/654321
     Call Sites:
-    .+/recipe_modules/my_mod/tests/full\.py:3
+      recipe_modules/my_mod/tests/full\.py:3
     Import Sites:
-    .+/recipe_modules/my_mod/tests/full\.py
+      recipe_modules/my_mod/tests/full\.py
     '''.strip('\n'))
     self.assertRegex(output, expected_regexp)
 
@@ -644,7 +644,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
           yield api.test('basic')
       '''.lstrip('\n'))
     output, _  = self.deps.main_repo.recipes_py('test', 'train')
-    self.assertIn('/recipe_modules/my_mod/tests/bad.py:3 (and 4, 5)', output)
+    self.assertIn('recipe_modules/my_mod/tests/bad.py:3 (and 4, 5)', output)
 
   def test_dedupe_causes_for_multiple_tests(self):
     with self.deps.main_repo.write_module('my_mod') as mod:
@@ -782,7 +782,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
 
     Bug Link: https://bugs\.chromium\.org/p/chrome\-operations/issues/detail\?id=654321
     Import Sites:
-    .+/main/recipes/bad\.py
+      recipes/bad\.py
     [\*]{70}
     \s*WARNING: upstream/MYMODULE_SWIZZLE_BADARG_USAGE\s*
     \s*Found 1 call sites and 0 import sites\s*
@@ -793,7 +793,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
 
     Bug Link: https://crbug.com/123456
     Call Sites:
-    .+/main/recipes/bad\.py:3
+      recipes/bad\.py:3
     '''.strip('\n'))
     self.assertRegex(output, expected_regexp)
 

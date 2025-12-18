@@ -414,7 +414,9 @@ def _print_warnings(
 
   def print_call_sites(call_sites):
     def stringify_frame(frame):
-      return ':'.join((os.path.normpath(frame.file), str(frame.line)))
+      path = os.path.relpath(
+          os.path.normpath(frame.file), recipe_deps.main_repo.path)
+      return ':'.join((path, str(frame.line)))
 
     if not call_sites:
       return
@@ -449,10 +451,10 @@ def _print_warnings(
                                 s.repo or "", s.module or "", s.recipe or "")):
       repo = recipe_deps.repos[import_site.repo]
       if import_site.module:
-        mod_path = repo.modules[import_site.module].path
-        print('  %s' % os.path.normpath(os.path.join(mod_path, '__init__.py')))
+        mod_path = repo.modules[import_site.module].relpath
+        print('  %s' % os.path.join(mod_path, '__init__.py'))
       else:
-        print('  %s' % os.path.normpath(repo.recipes[import_site.recipe].path))
+        print('  %s' % repo.recipes[import_site.recipe].relpath)
 
   fail = False
   for warning_name in sorted(warning_result):
