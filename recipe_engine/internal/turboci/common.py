@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from typing import Literal, Mapping, Protocol, Sequence, Type, TypeVar, cast
+from typing import Literal, Protocol, Sequence, Type, TypeVar, cast
 
 from google.protobuf.message import Message
 
@@ -15,14 +15,13 @@ from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
 from PB.turboci.graph.orchestrator.v1.check_state import CheckState
 from PB.turboci.graph.orchestrator.v1.check_view import CheckView
 from PB.turboci.graph.orchestrator.v1.edge import Edge
-from PB.turboci.graph.orchestrator.v1.graph_view import GraphView
 from PB.turboci.graph.orchestrator.v1.query import Query
 from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesRequest
 from PB.turboci.graph.orchestrator.v1.query_nodes_response import QueryNodesResponse
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 from PB.turboci.graph.orchestrator.v1.write_nodes_response import WriteNodesResponse
 
-from .ids import collect_check_ids, type_url_for, type_urls, wrap_id, check_id, stage_id
+from .ids import collect_check_ids, type_url_for, type_urls, check_id, stage_id
 
 
 class TurboCIClient(Protocol):
@@ -299,14 +298,14 @@ def query_nodes(
     version: QueryNodesRequest.VersionRestriction | None = None,
     types: Sequence[str | Message | type[Message]] = (),
     client: TurboCIClient | None = None,
-) -> Mapping[str, GraphView]:
+) -> QueryNodesResponse:
   """Convenience function for CLIENT.QueryNodes."""
   return (client or CLIENT).QueryNodes(
       QueryNodesRequest(
           version=version,
           query=queries,
           type_info=QueryNodesRequest.TypeInfo(wanted=type_urls(*types)),
-      )).graph
+      ))
 
 
 def read_checks(*ids: identifier.Check|str,
@@ -332,7 +331,7 @@ def read_checks(*ids: identifier.Check|str,
                   collect,
               ),
               types=types,
-              client=client).values())).checks
+              client=client).graph.values())).checks
   return [checks[ident.check.id] for ident in idents]
 
 

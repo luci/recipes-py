@@ -547,7 +547,7 @@ class DependencyIndex:
       self,
       node_ident_str: str,
       mode: QueryExpandDepsMode,
-  ) -> dict[str, identifier.Identifier]:
+  ) -> set[str]:
     """Returns nodes which `node_ident_str` depends on."""
     node = self._data[node_ident_str]
     edges: set[str]
@@ -556,15 +556,13 @@ class DependencyIndex:
     else:
       edges = node.edges_flat
 
-    return {
-        target_ident_str: to_id(target_ident_str) for target_ident_str in edges
-    }
+    return set(edges)
 
   def dependents_of(
       self,
       target_ident_str: str,
       mode: QueryExpandDepsMode,
-  ) -> dict[str, identifier.Identifier]:
+  ) -> set[str]:
     """Return nodes which depend on `target_ident_str`."""
     node = self._data[target_ident_str]
     edges: set[str]
@@ -573,6 +571,4 @@ class DependencyIndex:
     else:
       edges = node.dependents
 
-    return {
-        node_ident_str: to_id(node_ident_str) for node_ident_str in edges
-    }
+    return set(edges)
