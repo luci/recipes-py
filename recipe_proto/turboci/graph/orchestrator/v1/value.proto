@@ -49,6 +49,33 @@ message Value {
   // A ProtoJSON-serialized version of `value`.
   optional string value_json = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
+  // OmitReason details why this Value's content is omitted.
+  enum OmitReason {
+    // Default invalid value.
+    OMIT_REASON_UNKNOWN = 0;
+
+    // This Value has a type_url which was not requested by the caller.
+    //
+    // In this case `value.type_url` will be present, but other metadata (like
+    // orchestrator-visible index values) may be present as well.
+    OMIT_REASON_UNWANTED = 1;
+
+    // This Value has a type_url which WAS requested by the user, but the caller
+    // doesn't have access to it. See the surrounding Datum to see the realm to
+    // which this Value belongs.
+    //
+    // In this case ONLY `value.type_url` (and in the future any other
+    // 'disambiguator/key') will be present.
+    OMIT_REASON_NO_ACCESS = 2;
+  }
+
+  // If true, `value.value` was pruned from this message either due to
+  // permissions (no read access in the realm containing this Value) or due to
+  // a Query filter (not in type_info.wanted).
+  //
+  // `value.type_url`, however will always be present as metadata.
+  optional OmitReason omitted = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
   // TBD: An additional disambiguator/key in addition to value.type_url?
 
   // TBD: Orchestrator-visible index values.

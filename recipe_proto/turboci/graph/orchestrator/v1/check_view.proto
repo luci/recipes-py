@@ -7,9 +7,7 @@ syntax = "proto3";
 package turboci.graph.orchestrator.v1;
 
 import "turboci/graph/orchestrator/v1/check.proto";
-import "turboci/graph/orchestrator/v1/check_edit_view.proto";
-import "turboci/graph/orchestrator/v1/check_result_view.proto";
-import "turboci/graph/orchestrator/v1/datum.proto";
+import "turboci/graph/orchestrator/v1/edit.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
 option java_multiple_files = true;
@@ -20,22 +18,8 @@ message CheckView {
   // The Check itself - always present.
   optional Check check = 1;
 
-  // Data for the Check's options which are visible and of a type which was
-  // requested.
-  //
-  // Indexed by type_url.
-  //
-  // NOTE: If we add an additional distinguisher other than type_url, it will
-  // need to also be rendered in this string key. Probably <tag>:<type_url>.
-  map<string, Datum> option_data = 2;
-
   // CheckEdits for this Check.
   //
-  // Sorted by `edit.version`.
-  repeated CheckEditView edits = 3;
-
-  // Result data for this Check.
-  //
-  // Indexed by `identifier.idx`.
-  map<int32, CheckResultView> results = 4;
+  // Sorted by `version`.
+  repeated Edit edits = 2;
 }

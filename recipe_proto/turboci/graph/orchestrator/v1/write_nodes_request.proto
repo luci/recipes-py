@@ -6,6 +6,7 @@ syntax = "proto3";
 
 package turboci.graph.orchestrator.v1;
 
+import "google/protobuf/timestamp.proto";
 import "turboci/graph/ids/v1/identifier.proto";
 import "turboci/graph/orchestrator/v1/check_kind.proto";
 import "turboci/graph/orchestrator/v1/check_state.proto";
@@ -14,7 +15,6 @@ import "turboci/graph/orchestrator/v1/field_options.proto";
 import "turboci/graph/orchestrator/v1/revision.proto";
 import "turboci/graph/orchestrator/v1/stage.proto";
 import "turboci/graph/orchestrator/v1/stage_attempt_execution_policy.proto";
-import "turboci/graph/orchestrator/v1/stage_attempt_state.proto";
 import "turboci/graph/orchestrator/v1/stage_execution_policy.proto";
 import "turboci/graph/orchestrator/v1/value.proto";
 
@@ -30,10 +30,12 @@ message WriteNodesRequest {
   //
   // This is used to write objects which appear in the graph as Datum messages.
   message RealmValue {
-    // The realm to assign to this value (if the value is being created).
-    // If it's unset/empty, it will inherit from the realm of the Stage
-    // indicated by stage_attempt_token. If it's unset/empty and there is no
-    // stage_attempt_token, the update will be rejected.
+    // The realm to assign to this value (if the value is being created). If
+    // it's unset/empty, it will inherit from the realm of the object containing
+    // it (so, for Check options or result data, this would be the Check's
+    // realm).
+    //
+    // If provided, must be the absolute form "<project>:<name>".
     //
     // If the value is being overwritten and `realm` is provided, it must match
     // the already-written value's realm.
@@ -70,33 +72,47 @@ message WriteNodesRequest {
     // Low-effort/human-readable progress information.
     //
     // Better than nothing, but not good for machines to parse.
-    optional string msg = 1;
+    optional string message = 1;
 
     // Machine-readable details for this progress item.
     repeated Value details = 2;
   }
 
-  // The token of the Stage Attempt which is performing this write.
+  // The token which constrains this write to a specific Workplan (and possibly
+  // to a Stage Attempt in that Workplan).
+  //
+  // A suitable token is provided to the Executor of a Stage or to the creator
+  // of an empty Workplan.
   //
   // This is in addition to regular RPC authorization.
   //
   // If missing, this RPC will check that the caller additionally has the
   // 'turboci.workplans.writeExternal' permission on Workplan(s) in the
   // CheckWrites/StageWrites.
-  optional string stage_attempt_token = 1;
+  optional string token = 1;
 
   // Reason is the write-request analogue of Edit.Reason.
+  //
+  // NOTE: If this WriteNodes is a no-op because it's a retry of a previous
+  // successful WriteNodes, these Reasons will not be recorded in the graph
+  // because there will not be any applied writes. This means that if you
+  // vary the Reasons from retry to retry, it's possible to see a successful
+  // WriteNodes where the provided reasons are not retained.
   message Reason {
     // The security realm for this reason.
     //
-    // If omitted, this will be the same as the parent node's realm.
-    optional string realm = 1;
+    // If provided, must be the absolute form "<project>:<name>".
+    //
+    // If absent the written Stage will copy its realm from the implied realm
+    // of the `token`. For Stage Attempt tokens, this will be the Stage's
+    // realm, and for Creator tokens, this will be the WorkPlan's realm.
+    optional string realm = 1 [(turboci).realm_inherits_writer = true];
 
     // A 'low effort' reason for this edit.
     //
     // This is 'low effort' because it's preferable for the writer to provide
     // detailed machine-readable data in the `details` field below.
-    optional string reason = 2;
+    optional string message = 2;
 
     // Machine-readable reason(s) for this edit.
     //
@@ -122,8 +138,8 @@ message WriteNodesRequest {
 
   // TransactionDetails encapsulates the information necessary to make this
   // write safe by describing the snapshot of the graph which the writer
-  // observed. TurboCI Orchestrator will transactionally ensure that these nodes
-  // haven't changed since the writer observed them.
+  // observed. TurboCI Orchestrator will transactionally ensure that these
+  // nodes haven't changed since the writer observed them.
   //
   // TurboCI Orchestrator will implicitly include all nodes which are being
   // written to - this message can provide additional nodes to that set.
@@ -139,20 +155,19 @@ message WriteNodesRequest {
   //     more_nodes, _ = QueryNodes(..., ensure_version=snapshot_version)
   //     # This will cause QueryNodes to fail if any returned nodes have
   //     # a version greater than `snapshot_version`. This will allow the
-  //     # transaction loop to retry.
+  //     # transaction loop to retry immediately, rather than waiting for the
+  //     # WriteNodes call.
   //
   //     # computations
   //
   //     if WriteNodes(..., txn={nodes+more_nodes, snapshot_version}) {
   //       # Success!
   //
-  //       # It would be technically possible to use the written_version field from the
-  //       # response to do another WriteNodes call, assuming you supply a subset of
-  //       # the `nodes_observed` to the new write. However, if this second write fails,
-  //       # you must restart the second write process from after the first Write.
-  //       #
-  //       # It is simplest to just start a second transaction loop, including potentially
-  //       # re-reading the nodes_observed.
+  //       # If you need to make another transaction, you CAN use the
+  //       # written_version in the response as an input snapshot_version to
+  //       # the subsequent transaction. However, it's important that if this
+  //       # second transaction gets a conflict, it restart with
+  //       # snapshot_version unset.
   //       break
   //     } else {
   //       # failure - retry from the top
@@ -176,8 +191,8 @@ message WriteNodesRequest {
     // and `snapshot_version` left unset is sufficient to guard against the
     // nodes already being written. However, if you get
     // a TransactionConflictFailure because the nodes already exist, when you
-    // recover make sure to do the query before you try the write again! You may
-    // be conflicting with a previous incarnation of your own process!
+    // recover make sure to do the query before you try the write again! You
+    // may be conflicting with a previous incarnation of your own process!
     repeated ids.v1.Identifier nodes_observed = 1 [
       (turboci).id.allowed = IDENTIFIER_KIND_CHECK,
       (turboci).id.allowed = IDENTIFIER_KIND_CHECK_OPTION,
@@ -188,8 +203,8 @@ message WriteNodesRequest {
     // The 'version' of the GraphView returned from QueryNodes.
     //
     // If multiple queries were made in this transaction, this revision MUST be
-    // the first revision observed. Providing version.require to QueryNodes will
-    // help enforce this.
+    // the first revision observed. Providing version.require to QueryNodes
+    // will help enforce this.
     //
     // If `snapshot_version` is unset, it is treated as a 0 value (which means
     // that all `nodes_observed` plus all nodes being written in this request
@@ -216,24 +231,30 @@ message WriteNodesRequest {
     // The check to write to.
     //
     // If the WorkPlan is left blank, will be populated with the WorkPlan in
-    // `stage_attempt_token`, if it's provided.
+    // `token`, if it's provided.
     //
-    // Otherwise, the Check must belong to the stage_attempt_token's WorkPlan,
-    // or the caller must have the additional "turboci.workplans.writeExternal"
-    // permission in the check's realm (or in the realm of the option/result
-    // data).
+    // Otherwise, the Check must belong to the token's WorkPlan, or the caller
+    // must have the additional "turboci.workplans.writeExternal" permission in
+    // the check's realm (or in the realm of the option/result data).
     optional ids.v1.Check identifier = 1;
 
     // Realm to assign to this check.
+    //
+    // If provided, must be the absolute form "<project>:<name>".
     //
     // If this is set, and the Check DOES already exist, this MUST match the
     // existing realm.
     //
     // If absent and this CheckWrite creates the Check, the written Check will
-    // copy its realm from the Stage doing the write (assuming
-    // `stage_attempt_token` is set). If `stage_attempt_token` is unset and this
-    // field is absent, the write will be rejected.
-    optional string realm = 2 [(turboci).creation_only = true];
+    // copy its realm from the implied realm of the `token`. For Stage Attempt
+    // tokens, this will be the Stage's realm, and for Creator tokens, this
+    // will be the WorkPlan's realm.
+    //
+    // If `token` is unset and this field is absent, the write will be rejected.
+    optional string realm = 2 [
+      (turboci).creation_only = true,
+      (turboci).realm_inherits_writer = true
+    ];
 
     // Kind to assign to this check.
     //
@@ -260,17 +281,17 @@ message WriteNodesRequest {
     // Write data to a Result for this Check.
     //
     // The Result to write in is keyed on:
-    //   * The Stage Attempt (if stage_attempt_token is provided)
-    //   * The caller's identity (if stage_attempt_token is absent)
+    //   * The Stage Attempt (if `token` is provided)
+    //   * The caller's identity (if `token` is absent)
     //
     // If the given keyed Result does not exist, it will be automatically
-    // created. Multiple calls to WriteNodes from this same StageAttempt or
+    // created. Multiple calls to WriteNodes from this same Stage Attempt or
     // service account will update the same Result, and the Result will be
-    // automatically finalized when this StageAttempt ends (if a WriteNodes with
-    // `finalize_results` is not called before then).
+    // automatically finalized when this Stage Attempt ends (if a WriteNodes
+    // with `finalize_results` is not called before then).
     //
     // The data here will overwrite existing data of the same type in the
-    // selected Result for this StageAttempt.
+    // selected Result for this Stage Attempt.
     repeated RealmValue results = 6 [(turboci).check.editable = CHECK_STATE_WAITING];
 
     // If set, finalize the Check.Result.
@@ -292,16 +313,16 @@ message WriteNodesRequest {
   //
   // Note that the `state` of a Stage is managed entirely by the Orchestrator
   // itself. If you are a Stage implementation and need to manage the state of
-  // your own StageAttempt, see CurrentStageWrite.
+  // your own Stage Attempt, see CurrentStageWrite.
   message StageWrite {
     // The stage to write to.
     //
     // If the WorkPlan is left blank, will be populated with the WorkPlan in
-    // `stage_attempt_token`, if it's provided.
+    // `token`, if it's provided.
     //
-    // Otherwise, the Stage must belong to the stage_attempt_token's WorkPlan,
-    // or the caller must have the additional "turboci.workplans.writeExternal"
-    // permission in the stage's realm.
+    // Otherwise, the Stage must belong to the token's WorkPlan, or the caller
+    // must have the additional "turboci.workplans.writeExternal" permission in
+    // the stage's realm.
     //
     // The `is_worknode` field should also be omitted - it will be filled in by
     // the server according to the type of `args`.
@@ -325,14 +346,20 @@ message WriteNodesRequest {
 
     // Realm to assign to this Stage.
     //
+    // If provided, must be the absolute form "<project>:<name>".
+    //
     // If the Stage already exists, this will only result in an error if it
     // doesn't match the existing realm.
     //
-    // If absent, the written Stage will copy its realm from the Stage doing
-    // the write (assuming `stage_attempt_token` is set). If
-    // `stage_attempt_token` is unset and this field is absent, the write will
-    // be rejected.
-    optional string realm = 3 [(turboci).creation_only = true];
+    // If absent the written Stage will copy its realm from the implied realm of
+    // the `token`. For Stage Attempt tokens, this will be the Stage's realm,
+    // and for Creator tokens, this will be the WorkPlan's realm.
+    //
+    // If `token` is unset and this field is absent, the write will be rejected.
+    optional string realm = 3 [
+      (turboci).creation_only = true,
+      (turboci).realm_inherits_writer = true
+    ];
 
     // Dependency predicate for this Stage.
     //
@@ -360,13 +387,14 @@ message WriteNodesRequest {
       (turboci).creation_only = true
     ];
 
-    // The requested retry policy of the Stage.
+    // The requested execution policy of the Stage.
     //
     // If the Stage already exists, this will only result in an error if this
-    // requested policy doesn't match doesn't match the existing requested policy.
+    // requested policy doesn't match doesn't match the existing requested
+    // policy.
     //
-    // If this write creates the stage and the requested_stage_execution_policy is
-    // omitted, the stage will get the default StageExecutionPolicy from the
+    // If this write creates the stage and the requested_stage_execution_policy
+    // is omitted, the stage will get the default StageExecutionPolicy from the
     // Executor.
     optional StageExecutionPolicy requested_stage_execution_policy = 5 [(turboci).creation_only = true];
 
@@ -388,82 +416,190 @@ message WriteNodesRequest {
     //
     // Use the top-level `reason` field to provide the cancellation reason.
     optional bool cancelled = 7;
-
-    // TBD: Other Adjustments ?
-    // TBD: Dynamic Execution Policy
   }
   // Write to zero or more Stages.
   repeated StageWrite stages = 5;
 
-  // Internal writes for the Stage indicated by the token.
+  // Internal writes for the Stage Attempt indicated by the token.
   //
   // These aspects come from either the Executor which owns this Stage Attempt,
   // or the running Stage Attempt process.
+  message CurrentAttemptWrite {
+    // Adds details to the Stage Attempt.details field.
+    //
+    // If a data type here is already present in the database, the data here
+    // must exactly equal the existing data; Otherwise the write is rejected.
+    repeated Value details = 1;
+
+    // Progress messages to add to the current Stage Attempt.
+    //
+    // It is a good idea to do these progress updates transactionally,
+    // otherwise it's possible to double-append them.
+    repeated StageAttemptProgress progress = 2;
+
+    // Indicate how the Orchestrator should transition to a given state.
+    message StateTransition {
+      // Throttled indicates that the Executor can run this Attempt, just not
+      // right now.
+      message Throttled {
+        // Specifies that the Stage Attempt should not be made PENDING again
+        // (and thus sent to the Executor via RunStage) until this time.
+        //
+        // Specifying a time in the past will cause the write to be a no-op
+        // (which will leave the Attempt in the PENDING state).
+        //
+        // Required.
+        optional google.protobuf.Timestamp until = 1;
+      }
+
+      // Scheduled indicates that the Executor has accepted the Attempt, and
+      // will run it at a later time.
+      message Scheduled {
+        // The execution policy for this Stage Attempt.
+        //
+        // Optional.
+        optional StageAttemptExecutionPolicy attempt_execution_policy = 1;
+      }
+
+      // Running indicates that the Executor is actively running this Attempt.
+      message Running {
+        // The execution policy for this Stage Attempt.
+        //
+        // This should only be used if it wasn't already set in SCHEDULED.
+        // If it's set for both SCHEDULED and RUNNING, it must be the same
+        // value.
+        //
+        // Optional.
+        optional StageAttemptExecutionPolicy attempt_execution_policy = 1;
+
+        // Sets the Stage.Attempt.process_uid field.
+        //
+        // If the field is already populated in the Stage Attempt, this value
+        // must match - otherwise the write is rejected with an error detail
+        // of StageAttemptClaimedFailure.
+        //
+        // Refer to Stage.Attempt.process_uid.
+        //
+        // Required.
+        optional string process_uid = 2;
+      }
+
+      // TearingDown indicates that the Executor has either finished RUNNING
+      // the Attempt, or the Stage was cancelled and the Executor is doing
+      // its final cleanup for a previously-RUNNING Attempt.
+      message TearingDown {
+        // Nothing here for now.
+      }
+
+      // Complete indicates that the Executor has finished all work on this
+      // Attempt, and the Stage can now move into its next state.
+      //
+      // NOTE: See STAGE_ATTEMPT_COMPLETE. Completing a Stage does not imply
+      // workflow-level success like "the code compiled successfully" or "the
+      // tests all passed". It simply means that e.g. the requested build ran
+      // to completion, or the test harness executed all the tests.
+      // Workflow-level records like compilation success/failure or test
+      // execution success/failure should be recorded in the Checks for those
+      // things as specific Result data.
+      message Complete {
+        // Nothing here for now.
+      }
+
+      // Incomplete indicates an Executor-level failure which prevented the
+      // stage from running to completion.
+      //
+      // By convention, the reason for this should be reflected in the final
+      // Progress message (which, unlike the write reasons, will not be
+      // garbage collected after some amount of time).
+      //
+      // NOTE: See STAGE_ATTEMPT_INCOMPLETE. Similar to COMPLETE, INCOMPLETE
+      // is used to indicate failure of the stage to complete it's desired
+      // task (e.g. compiler segfaulted, test harness lost contact with a DUT
+      // during test execution (and such a failure may not be due to the test
+      // itself), etc.)
+      message Incomplete {
+        // Controls if this Stage should make another Attempt.
+        //
+        // If true, then no new Attempt is made, even if policy would permit one.
+        //
+        // Optional.
+        optional bool block_new_attempts = 1;
+      }
+
+      // Required - the state that this StateTransition wants to move
+      // to.
+      oneof desired_state {
+        // Move to the THROTTLED state.
+        //
+        // Current state must be PENDING.
+        Throttled throttled = 1;
+
+        // Move to the SCHEDULED state.
+        //
+        // Current state must be PENDING.
+        Scheduled scheduled = 2;
+
+        // Move to the RUNNING state.
+        //
+        // Current state must be PENDING or SCHEDULED.
+        Running running = 3;
+
+        // Move to the TEARING_DOWN state.
+        //
+        // Current state must be RUNNING or CANCELLING.
+        TearingDown tearing_down = 4;
+
+        // Move to the COMPLETE state.
+        //
+        // Current state must be PENDING, SCHEDULED, RUNNING or TEARING_DOWN.
+        Complete complete = 5;
+
+        // Move to the INCOMPLETE state.
+        //
+        // Current state must be PENDING, SCHEDULED, RUNNING or TEARING_DOWN.
+        Incomplete incomplete = 6;
+      }
+    }
+    // A state transition to make in this write.
+    optional StateTransition state_transition = 3;
+  }
+  // State for the current Stage Attempt as indicated by `token`.
+  //
+  // It is invalid to set this without also setting `token`.
+  //
+  // A WriteNodes call with `current_attempt` set (even when it is empty) acts
+  // as a heartbeat for the current Stage Attempt indicated by the token. If
+  // you need to implement the 'simplest heartbeat', you can make a WriteNodes
+  // call with just the token and an empty `current_attempt {}`.
+  //
+  // WriteNodes calls that don't have `current_attempt` set do not affect the
+  // heartbeat timer. This makes such calls less likely to hit transaction
+  // collisions (since they don't try to concurrently modify the heartbeat
+  // timer). This may be useful if you want to make concurrent WriteNodes calls
+  // from the same Stage Attempt, or even closely-sequential WriteNodes calls
+  // (to non-overlapping portions of the graph) from the same Stage Attempt.
+  //
+  // All else being equal, it's better to do fewer, larger, WriteNodes calls
+  // than many small WriteNodes calls.
+  optional CurrentAttemptWrite current_attempt = 6;
+
+  // Internal writes for the Stage indicated by the token.
   message CurrentStageWrite {
-    // Report the attempt's current state. This can only make the following
-    // transitions (since all other transitions are handled by the Orchestrator
-    // itself):
-    //
-    //   * PENDING -> SCHEDULED
-    //   * PENDING -> RUNNING
-    //   * PENDING -> COMPLETE
-    //   * PENDING -> INCOMPLETE
-    //   * SCHEDULED -> RUNNING
-    //   * SCHEDULED -> COMPLETE
-    //   * SCHEDULED -> INCOMPLETE
-    //   * RUNNING -> TEARING_DOWN
-    //   * RUNNING -> COMPLETE
-    //   * RUNNING -> INCOMPLETE
-    optional StageAttemptState state = 1;
-
-    // Sets the StageAttempt.process_uid field.
-    //
-    // MUST be supplied when transitioning a StageAttempt to RUNNING.
-    //
-    // If the field is already populated in the StageAttempt, this value must
-    // match - otherwise the write is rejected with an error detail of
-    // StageAttemptClaimedFailure.
-    //
-    // Refer to Stage.Attempt.process_uid.
-    optional string process_uid = 2;
-
     // Continuation Group predicate for this Stage.
     //
     // If set, used to populate the continuation_group.edges and
     // continuation_group.predicate fields in this Stage.
     //
     // Edges here must only point to Stages which were created_by this Stage.
-    optional DependencyGroup continuation_group = 3 [(turboci).id.allowed = IDENTIFIER_KIND_STAGE];
-
-    // The modified execution policy for this Stage Attempt.
     //
-    // This field can only be set by the stage executor when advancing the
-    // stage attempt state PENDING -> (SCHEDULED|RUNNING).
-    optional StageAttemptExecutionPolicy attempt_execution_policy = 4;
-
-    // Adds details to the Stage Attempt.details field.
-    //
-    // If a data type here is already present in the database, the data here
-    // must exactly equal the existing data; Otherwise the write is rejected.
-    repeated Value details = 5;
-
-    // Progress messages to add to the current StageAttempt.
-    //
-    // It is a good idea to do these progress updates transactionally, otherwise
-    // it's possible to double-append them.
-    repeated StageAttemptProgress progress = 6;
+    // If continuation_group is already set, this will overwrite the existing
+    // continuation_group.
+    optional DependencyGroup continuation_group = 1 [(turboci).id.allowed = IDENTIFIER_KIND_STAGE];
   }
-  // State for the current Stage as indicated by `stage_attempt_token`.
+  // State for the current Stage as indicated by `token`.
   //
-  // It is invalid to set this without also setting `stage_attempt_token`.
+  // It is invalid to set this without also setting `token`.
   //
-  // All WriteNodes calls with a token act as a heartbeat for the current Stage
-  // Attempt indicated by the token. If you need to implement the 'simplest
-  // heartbeat', you can make a WriteNodes call with the token set and nothing
-  // else.
-  //
-  // TBD: Document the SCHEDULED -> RUNNING state transition requirements (i.e.
-  // setting a unique worker_id and handling multiple logicall processes all
-  // trying to transition to RUNNING at the same time).
-  optional CurrentStageWrite current_stage = 6;
+  // This does not impact the heartbeat timer for the current attempt.
+  optional CurrentStageWrite current_stage = 7;
 }

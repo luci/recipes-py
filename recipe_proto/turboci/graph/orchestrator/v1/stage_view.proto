@@ -6,8 +6,8 @@ syntax = "proto3";
 
 package turboci.graph.orchestrator.v1;
 
+import "turboci/graph/orchestrator/v1/edit.proto";
 import "turboci/graph/orchestrator/v1/stage.proto";
-import "turboci/graph/orchestrator/v1/stage_edit_view.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
 option java_multiple_files = true;
@@ -18,12 +18,8 @@ message StageView {
   // The Stage itself - always present.
   optional Stage stage = 1;
 
-  // TBD: Stage Attempt Progress data.
-  // ... = 2;
-  reserved 2; // reserved for progress data.
-
   // StageEdits for this Stage.
   //
-  // Sorted by `edit.version`.
-  repeated StageEditView edits = 3;
+  // Sorted by `version`.
+  repeated Edit edits = 2;
 }

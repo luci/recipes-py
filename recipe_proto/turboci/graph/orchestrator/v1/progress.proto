@@ -1,0 +1,45 @@
+// Copyright 2025 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/rpc/status.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// ProgressEvolvePending is a progress detail attached to Stage Attempts
+// by the Orchestrator itself while the StageAttempt is PENDING and something
+// goes wrong while talking to the Executor.
+//
+// This will be set in the transaction that validates that the Executor did
+// advance the Attempt to the next state after PENDING.
+message ProgressEvolvePending {
+  // The target time when the Orchestrator will next try calling the
+  // Executor's RunStage endpoint.
+  optional google.protobuf.Timestamp next_try = 1;
+
+  // The phase of the Orchestrator's handler where the failure occurred, and
+  // details about what went wrong.
+  oneof phase {
+    // Set if the Orchestrator encountered an error before reaching out to the
+    // Executor.
+    google.rpc.Status pre_rpc = 2;
+
+    // Set if the Executor returned a status other than OK.
+    //
+    // This will be the most recent rpc.Status across all `retry_count` RPCs.
+    // If this is unset, then it means the Executor returned an OK status, but
+    // failed to advance the Attempt out of the PENDING state.
+    google.rpc.Status rpc = 3;
+
+    // post_rpc doesn't matter - if the executor advanced to the next state,
+    // then the Orchestrator is just doing a read to confirm this. Otherwise
+    // the Orchestrator has just written this PendingFailedToAdvance progress
+    // message.
+  }
+}

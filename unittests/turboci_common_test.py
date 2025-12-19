@@ -75,7 +75,7 @@ class TestReason(test_env.RecipeEngineUnitTest):
     self.assertEqual(
         r,
         WriteNodesRequest.Reason(
-            reason="some string",
+            message="some string",
             realm="project/realm",
             details=[_mkValue(_mkStruct({'a': 'b'}))],
         ))
@@ -198,7 +198,7 @@ class TestWriteNodes(test_env.RecipeEngineUnitTest):
         WriteNodesRequest(
             reasons=[
                 WriteNodesRequest.Reason(
-                    reason="I feel like it",
+                    message="I feel like it",
                     details=[_mkValue(_mkStruct({'hello': 'world'}))],
                 )
             ],
@@ -226,24 +226,26 @@ class TestWriteNodes(test_env.RecipeEngineUnitTest):
             require=Revision(ts=Timestamp(seconds=1234, nanos=5678)),
         ))
 
-    self.m.QueryNodes.assert_called_once_with(QueryNodesRequest(
-        query=[
-          Query(select=Query.Select(
-              nodes=[identifier.Identifier(check=identifier.Check(id="bob"))],
-          )),
-          Query(
-              select=Query.Select(check_patterns=[
-                Query.Select.CheckPattern(id_regex="nerp")
-              ]),
-              collect=Query.Collect(check=Query.Collect.Check(
-                  options=True,
-              ))
-          ),
-        ],
-        version=QueryNodesRequest.VersionRestriction(
-            require=Revision(ts=Timestamp(seconds=1234, nanos=5678)),
-        ),
-    ))
+    self.m.QueryNodes.assert_called_once_with(
+        QueryNodesRequest(
+            type_info=QueryNodesRequest.TypeInfo(wanted=[]),
+            query=[
+                Query(
+                    select=Query.Select(
+                        nodes=[
+                            identifier.Identifier(
+                                check=identifier.Check(id="bob"))
+                        ],)),
+                Query(
+                    select=Query.Select(check_patterns=[
+                        Query.Select.CheckPattern(id_regex="nerp")
+                    ]),
+                    collect=Query.Collect(
+                        check=Query.Collect.Check(options=True,))),
+            ],
+            version=QueryNodesRequest.VersionRestriction(
+                require=Revision(ts=Timestamp(seconds=1234, nanos=5678)),),
+        ))
 
 
 class TestGetOptionsResults(turboci_test_helper.TestBaseClass):
@@ -262,7 +264,7 @@ class TestGetOptionsResults(turboci_test_helper.TestBaseClass):
         collect=Query.Collect.Check(options=True),
         types=list(type_urls(Struct)))[0]
 
-    self.assertEqual(get_option(Struct, cv), {
+    self.assertEqual(get_option(Struct, cv.check), {
         'hello': [1, 2, 3, 4],
     })
 
@@ -281,7 +283,7 @@ class TestGetOptionsResults(turboci_test_helper.TestBaseClass):
         collect=Query.Collect.Check(result_data=True),
         types=list(type_urls(Struct)))[0]
 
-    self.assertEqual(get_results(Struct, cv), [{
+    self.assertEqual(get_results(Struct, cv.check), [{
         'hello': [1, 2, 3, 4],
     }])
 

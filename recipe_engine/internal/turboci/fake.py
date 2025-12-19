@@ -99,12 +99,12 @@ class _IndexEntrySnapshot:
 
     result_types: set[str] = set()
     for result in check.results:
-      result_types.update(entry.type_url for entry in result.data)
+      result_types.update(entry.value.value.type_url for entry in result.data)
 
     return _IndexEntrySnapshot(
         kind=check.kind,
         state=check.state,
-        option_types=set(entry.type_url for entry in check.options),
+        option_types=set(entry.value.value.type_url for entry in check.options),
         result_types=result_types,
     )
 
@@ -261,14 +261,13 @@ class FakeTurboCIOrchestrator(TurboCIClient):
       self._db[ident_str] = check
       _touch()
 
-    RT = TypeVar('RT', Check.OptionRef, Check.Result.ResultDatumRef)
     def _write_data(
         to_write: RepeatedCompositeFieldContainer[WriteNodesRequest.RealmValue],
-        refs: RepeatedCompositeFieldContainer[RT],
-        mk_ref: Callable[[str, int], RT],
+        container: RepeatedCompositeFieldContainer[Datum],
+        mk_ident: Callable[[int], identifier.Identifier],
     ):
       typId: dict[str, identifier.Identifier] = {
-          ref.type_url: wrap_id(ref.identifier) for ref in refs
+          d.value.value.type_url: wrap_id(d.identifier) for d in container
       }
       # TODO: Assert that realm does not mutate, and for newly created data
       # without a specified realm, mirror the check's realm.
@@ -277,26 +276,38 @@ class FakeTurboCIOrchestrator(TurboCIClient):
         if (cur_id := typId.get(type_url)) is None:
           # we're adding a new datum
           _touch()
-          ref = mk_ref(type_url, len(refs) + 1)
-          refs.append(ref)
-          cur_id = wrap_id(ref.identifier)
-          typId[type_url] = cur_id
+          # add to check container
+          dat = container.add()
+          cur_id = mk_ident(len(container))
+          dat.identifier.CopyFrom(cur_id)
+          typId[type_url] = wrap_id(cur_id)
+        else:
+          # updating existing datum
+          # find it in container
+          for d in container:
+            if d.value.value.type_url == type_url:
+              dat = d
+              break
+          else:
+            # Should be unreachable if typId logic is correct
+            raise AssertionError("datum not found in container")
 
-        dat = Datum(
-            identifier=cur_id,
-            version=self._revision,
-            realm=realmValue.realm or None,
-        )
-        dat.value.value.CopyFrom(realmValue.value.value)
-        self._db[from_id(cur_id)] = dat
+        # Update datum fields
+        dat.version.CopyFrom(self._revision)
+        if realmValue.realm:
+          dat.realm = realmValue.realm
+        dat.value.CopyFrom(realmValue.value)
+
+        # Update separate datum in DB (copy)
+        db_dat = Datum()
+        db_dat.CopyFrom(dat)
+        self._db[from_id(cur_id)] = db_dat
 
     if write.options:
       _write_data(
-          write.options, check.options, lambda type_url, idx: Check.OptionRef(
-              identifier=identifier.CheckOption(
-                  check=write.identifier, idx=idx),
-              type_url=type_url,
-          ))
+          write.options, check.options, lambda idx: identifier.Identifier(
+              check_option=identifier.CheckOption(
+                  check=write.identifier, idx=idx)))
 
     finalize_results = write.finalize_results or write.state == CHECK_STATE_FINAL
 
@@ -311,12 +322,11 @@ class FakeTurboCIOrchestrator(TurboCIClient):
       # write into.
       _write_data(
           write.results, check.results[0].data,
-          lambda type_url, idx: Check.Result.ResultDatumRef(
-              identifier=identifier.CheckResultDatum(
+          lambda idx: identifier.Identifier(
+              check_result_datum=identifier.CheckResultDatum(
                   result=identifier.CheckResult(check=write.identifier, idx=1),
                   idx=idx,
-              ),
-              type_url=type_url))
+              )))
 
     if finalize_results:
       check.results[0].finalized_at.CopyFrom(self._revision)
@@ -486,10 +496,11 @@ class FakeTurboCIOrchestrator(TurboCIClient):
 
 
   def _collect_nodes_locked(self, graph: dict[str, Check | Datum], query: Query,
+                            type_info: QueryNodesRequest.TypeInfo | None,
                             state: dict[str, identifier.Identifier],
                             require: Revision | None):
     """Collect adds all required nodes to the GraphView."""
-    types = set(query.type_urls)
+    types = set(type_info.wanted) if type_info else set()
     all_types = '*' in types
     collect = query.collect
     if collect.check.HasField('edits'):
@@ -514,32 +525,46 @@ class FakeTurboCIOrchestrator(TurboCIClient):
             f"node {node_str} newer than {require}",
             failure_message=TransactionConflictFailure())
       if node_str not in graph:
-        graph[node_str] = copy.deepcopy(nodeVal)
+        val_copy = copy.deepcopy(nodeVal)
+        graph[node_str] = val_copy
 
-      if ((collect_opts or collect_result_data) and
-          ident.WhichOneof('type') == 'check'):
-        if collect_opts:
-          assert isinstance(nodeVal, Check)
-          for opt in nodeVal.options:
-            if all_types or opt.type_url in types:
-              toProcess.append(
-                  (from_id(opt.identifier), wrap_id(opt.identifier)))
+        if isinstance(val_copy, Check):
+          # Filter options
+          if collect_opts:
+            to_keep = [
+                d for d in val_copy.options
+                if all_types or d.value.value.type_url in types
+            ]
+            del val_copy.options[:]
+            val_copy.options.extend(to_keep)
+          else:
+            del val_copy.options[:]
 
-        if collect_result_data:
-          assert isinstance(nodeVal, Check)
-          for rslt in nodeVal.results:
-            for dat in rslt.data:
-              if all_types or dat.type_url in types:
-                toProcess.append(
-                    (from_id(dat.identifier), wrap_id(dat.identifier)))
+          if collect_result_data:
+            for result in val_copy.results:
+              to_keep = [
+                  d for d in result.data
+                  if all_types or d.value.value.type_url in types
+              ]
+              del result.data[:]
+              result.data.extend(to_keep)
+          else:
+            for result in val_copy.results:
+              del result.data[:]
+
 
   def QueryNodes(self, req: QueryNodesRequest) -> QueryNodesResponse:
-    if req.stage_attempt_token:
-      raise NotImplementedError(
-          "FakeTurboCIOrchestrator.QueryNodes: `stage_attempt_token`")
+    if req.token:
+      raise NotImplementedError("FakeTurboCIOrchestrator.QueryNodes: `token`")
     if req.version.HasField('snapshot'):
       raise NotImplementedError(
           "FakeTurboCIOrchestrator.QueryNodes: `version.snapshot`")
+    if req.type_info.HasField('unknown_jsonpb'):
+      raise NotImplementedError(
+          "FakeTurboCIOrchestrator.QueryNodes: `type_info.unknown_jsonpb`")
+    if req.type_info.known:
+      raise NotImplementedError(
+          "FakeTurboCIOrchestrator.QueryNodes: `type_info.known`")
 
     with self._lock:
       graph: dict[str, Check | Datum] = {}
@@ -550,7 +575,7 @@ class FakeTurboCIOrchestrator(TurboCIClient):
         if query.expand:
           self._expand_nodes_locked(query.expand, state)
         self._collect_nodes_locked(
-            graph, query, state,
+            graph, query, req.type_info, state,
             req.version.require if req.version.HasField('require') else None)
       version = self._revision
 
@@ -559,18 +584,7 @@ class FakeTurboCIOrchestrator(TurboCIClient):
     for node in graph.values():
       if isinstance(node, Check):
         ret.checks[node.identifier.id].check.CopyFrom(node)
-      else:
-        assert isinstance(node, Datum)
-        ident = node.identifier
-        type_url = node.value.value.type_url
-        match ident.WhichOneof('type'):
-          case 'check_option':
-            cv = ret.checks[ident.check_option.check.id]
-            cv.option_data[type_url].CopyFrom(node)
-          case 'check_result_datum':
-            rslt_id = ident.check_result_datum.result
-            cv = ret.checks[rslt_id.check.id]
-            cv.results[rslt_id.idx].data[type_url].CopyFrom(node)
+      # TODO: store skeletonized Check when missing datum
 
     return QueryNodesResponse(
         graph={"": ret},
@@ -578,13 +592,13 @@ class FakeTurboCIOrchestrator(TurboCIClient):
     )
 
   def WriteNodes(self, req: WriteNodesRequest) -> WriteNodesResponse:
-    if req.stage_attempt_token:
-      raise NotImplementedError(
-          "FakeTurboCIOrchestrator.WriteNodes: `stage_attempt_token`")
+    if req.token:
+      raise NotImplementedError("FakeTurboCIOrchestrator.WriteNodes: `token`")
 
     if req.stages:
       raise NotImplementedError("FakeTurboCIOrchestrator.WriteNodes: `stages`")
 
+    # Handle current_attempt (allow it, but ignore content for now as we don't strictly simulate attempts)
     if req.HasField('current_stage'):
       raise NotImplementedError(
           "FakeTurboCIOrchestrator.WriteNodes: `current_stage`")
@@ -663,7 +677,8 @@ class FakeTurboCIOrchestrator(TurboCIClient):
           cur = cast(Check | None, _observe(from_id(cwrite.identifier)))
           if cur:
             opt_typ_to_ident = {
-                ref.type_url: from_id(ref.identifier) for ref in cur.options
+                d.value.value.type_url: from_id(d.identifier)
+                for d in cur.options
             }
             for opt in cwrite.options:
               _observe(opt_typ_to_ident.get(opt.value.value.type_url))
@@ -671,8 +686,8 @@ class FakeTurboCIOrchestrator(TurboCIClient):
             # results[0].
             if cur.results:
               rslt_typ_to_ident = {
-                  ref.type_url: from_id(ref.identifier)
-                  for ref in cur.results[0].data
+                  d.value.value.type_url: from_id(d.identifier)
+                  for d in cur.results[0].data
               }
               for rslt in cwrite.results:
                 _observe(rslt_typ_to_ident.get(rslt.value.value.type_url))

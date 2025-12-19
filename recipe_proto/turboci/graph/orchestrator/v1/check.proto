@@ -11,9 +11,11 @@ import "turboci/graph/ids/v1/identifier.proto";
 import "turboci/graph/orchestrator/v1/actor.proto";
 import "turboci/graph/orchestrator/v1/check_kind.proto";
 import "turboci/graph/orchestrator/v1/check_state.proto";
+import "turboci/graph/orchestrator/v1/datum.proto";
 import "turboci/graph/orchestrator/v1/dependencies.proto";
 import "turboci/graph/orchestrator/v1/field_options.proto";
 import "turboci/graph/orchestrator/v1/revision.proto";
+import "turboci/graph/orchestrator/v1/stage_attempt_state.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
 option java_multiple_files = true;
@@ -101,19 +103,6 @@ message Check {
   // Once the Check is WAITING, this field is immutable.
   optional Dependencies dependencies = 8 [(turboci).id.allowed = IDENTIFIER_KIND_CHECK];
 
-  // OptionRef is a reference to a CheckOption.
-  message OptionRef {
-    // The Identifier for the CheckOption, which is a Datum.
-    optional ids.v1.CheckOption identifier = 1;
-
-    // The type_url of the data contained for this CheckOption.
-    optional string type_url = 2;
-
-    // TBD: If we add an additional distinguisher key in Value, we'd add it
-    // here too (e.g. to allow multiple entries of the same type URL with
-    // different keys).
-  }
-
   // Options form the bulk of 'how to answer this Check'.
   //
   // It is expected that small details (like assignments to specific
@@ -132,12 +121,11 @@ message Check {
   // Orchestrator will ensure that the option types here are registered to be
   // valid for this Check's kind.
   //
-  // This field is kept unique by `type_url` and ordered by
-  // identifier.options_idx.
-  //
-  // You can use QueryNodes to get a CheckView which includes this Check and
-  // also CheckOptions.
-  repeated OptionRef options = 9 [(turboci).check.editable = CHECK_STATE_PLANNING];
+  // This field is kept unique by `type_url`, and will reflect the insertion
+  // order of when each type_url was first added. Note that Datum have
+  // a revision value which is independent of the Check's revision value - Stage
+  // Attempts writing option data can do so without altering the Check itself.
+  repeated Datum options = 9 [(turboci).check.editable = CHECK_STATE_PLANNING];
 
   // A Result is a container of result data for a Check.
   //
@@ -152,38 +140,30 @@ message Check {
     optional ids.v1.CheckResult identifier = 1;
 
     // The entity which created this Result.
+    //
+    // This is the only entity which can modify this Result.
     optional Actor owner = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
     // The database revsision (commit timestamp) at which this Result was
     // created.
     optional Revision created_at = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
-    // ResultDatumRef is a reference to a CheckResultDatum.
-    message ResultDatumRef {
-      // The Identifier for the CheckResultDatum.
-      optional ids.v1.CheckResultDatum identifier = 1;
-
-      // The type_url of the data contained for this CheckResultDatum.
-      optional string type_url = 2;
-
-      // TBD: If we add an additional distinguisher key in Value, we'd add it
-      // here too (e.g. to allow multiple entries of the same type URL with
-      // different keys).
-    }
-
     // Data form the bulk of the result.
     //
     // NOTE: Most data should be stored in ResultDB via turboci.ResultStorage.
     //
-    // This field is kept unique by `type_url` and ordered by
-    // identifier.options_idx.
+    // This field is kept unique by `type_url`, and will reflect the insertion
+    // order of when each type_url was first added. Note that Datum have
+    // a revision value which is independent of the Check's revision value
+    // - Stage Attempts writing result data can do so without altering the
+    // Check itself.
     //
     // Orchestrator will ensure that the option types here are registered to be
-    // valid for this Result's kind.
+    // valid for this Check's kind.
     //
-    // You can use QueryNodes to get a CheckView which includes this Check and
-    // also Result Data.
-    repeated ResultDatumRef data = 4;
+    // All data will have an Identifier of kind
+    // IDENTIFIER_KIND_CHECK_RESULT_DATUM.
+    repeated Datum data = 4;
 
     // The database revsision (commit timestamp) at which this Result is
     // finalized.
@@ -193,6 +173,14 @@ message Check {
     //   * The `owner` explicitly indicates that their results are final.
     //   * The Check advances to the FINAL state.
     optional Revision finalized_at = 5;
+
+    // If the Result was finalized automatically by the conclusion of the owner
+    // Stage Attempt, this indicates the final state of that Stage Attempt (i.e.
+    // COMPLETE or INCOMPLETE).
+    //
+    // If this is unset, it means that the Result was either finalized
+    // explicitly by the owner, or by the Check advancing to the final state.
+    optional StageAttemptState attempt_state = 6;
   }
   // The list of Results this Check has.
   //

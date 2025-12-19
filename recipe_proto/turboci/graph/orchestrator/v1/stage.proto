@@ -7,6 +7,7 @@ syntax = "proto3";
 package turboci.graph.orchestrator.v1;
 
 import "google/api/field_behavior.proto";
+import "google/protobuf/timestamp.proto";
 import "turboci/graph/ids/v1/identifier.proto";
 import "turboci/graph/orchestrator/v1/actor.proto";
 import "turboci/graph/orchestrator/v1/check_state.proto";
@@ -154,7 +155,7 @@ message Stage {
   // TBD: Pull this into its own top-level StageAttempt entity because it will
   // need to have its own state and lifecycle/transactions.
   //
-  // Next ID: 9
+  // Next ID: 11
   message Attempt {
     // The Stage Attempt's identifier.
     optional ids.v1.StageAttempt identifier = 1;
@@ -163,6 +164,18 @@ message Stage {
     //
     // Updated any time fields in this Attempt change.
     optional Revision version = 2;
+
+    // Last time we got a WriteNodes from this Attempt with the `current_stage`
+    // field populated.
+    //
+    // This is distinct from `version` because the state of the Attempt can be
+    // altered by the Orchestrator without counting as a heartbeat.
+    //
+    // Until the first successful WriteNodes call from the executor happens,
+    // this will remain unset. This will be set, but not updated, during
+    // THROTTLED (because we accepted a WriteNodes in order to enter the
+    // THROTTLED state).
+    optional Revision last_heartbeat = 10;
 
     // The current state of this Attempt.
     optional StageAttemptState state = 3;
@@ -239,15 +252,22 @@ message Stage {
     // information in a time-oriented way.
     message Progress {
       // Low-effort/human-readable progress information.
-      optional string msg = 1;
+      optional string message = 1;
 
-      // The version of this Stage which added this Progress message.
+      // The version of the Stage Attempt when this Progress message was added.
       optional Revision version = 2;
 
       // Machine-readable details for this progress item.
       //
       // Kept sorted by, and unique on, type_url.
       repeated Value details = 3;
+
+      // The entity which created this progress message.
+      //
+      // If created_by is Orchestrator, then `details` may contain the
+      // following:
+      //   * turboci.graph.orchestrator.v1.ProgressEvolvePending
+      optional Actor created_by = 4;
     }
     // Append-only Executor-specefic progress messages.
     repeated Progress progress = 7;
@@ -266,6 +286,12 @@ message Stage {
   // created time.
   //
   // Only the most recent attempt (the last in the list) is potentially 'live'.
+  //
+  // Note that the revision of the attempts are unrelated to the revision of the
+  // Stage. While the Stage is ATTEMPTING, the Stage's revision only changes
+  // when:
+  //   * A new Attempt is created
+  //   * The Stage is canceled
   repeated Attempt attempts = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Assignment describes the workflow's intent that this Stage will handle one
@@ -335,4 +361,47 @@ message StageAttemptClaimedFailure {
   // logging/reporting purposes (typically to help wayward developers see which
   // other process is *actually* working on this Stage Attempt).
   optional string claimed_by_process_uid = 1;
+}
+
+// StageAttemptCurrentState is returned in QueryNodesResponse,
+// WriteNodesResponse, and also embedded in errors returned by these RPCs.
+//
+// This will always be present when a properly encoded Stage Attempt token is
+// used with those RPCs (even when that token refers to a now-final Stage
+// Attempt).
+message StageAttemptCurrentState {
+  // The state of the stage attempt which corresponds to the token provided
+  // in the WriteNodesRequest.
+  //
+  // NOTE: This is authoritative, and could be in a state which is later than
+  // the one that the client which made the RPC expects.
+  //
+  //   * CANCELLING - The Stage has been cancelled, but there has not yet been
+  //     a heartbeat from the the Stage Attempt. As soon as there is a
+  //     current_stage write from the Stage Attempt, this state will turn into
+  //     TEARING_DOWN.
+  //   * TEARING_DOWN - The Stage was cancelled while a Stage Attempt was
+  //     RUNNING. When a WriteNodes with current_stage set happens, the
+  //     orchestrator will transition to TEARING_DOWN in that same
+  //     transaction and report this state here. The still-running attempt
+  //     should do any graceful shutdown it can before
+  //     `current_state_deadline` and then do a WriteNodes to mark the
+  //     current attempt as either COMPLETE or INCOMPLETE.
+  //   * COMPLETE/INCOMPLETE - Something already marked this attempt as
+  //     finished. The still-running attempt should immediately shutdown
+  //     without attempting to do any further QueryNodes/WriteNodes calls.
+  //     Note that this could happen if a Stage is cancelled while PENDING or
+  //     SCHEDULED.
+  optional StageAttemptState state = 1;
+
+  // The version of the Stage Attempt that the orchestrator observed.
+  optional Revision version = 2;
+
+  // If set, the timestamp for when the orchestrator will timeout the current
+  // state.
+  optional google.protobuf.Timestamp update_state_by = 3;
+
+  // If set, the timestamp for when the orchestrator expects the next
+  // heartbeat.
+  optional google.protobuf.Timestamp heartbeat_by = 4;
 }

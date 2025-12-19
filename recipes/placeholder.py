@@ -7,6 +7,7 @@ from __future__ import annotations
 from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
 from PB.turboci.graph.orchestrator.v1.graph_view import GraphView
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
+from recipe_engine.internal.turboci.common import get_option
 
 DEPS = [
   'buildbucket',
@@ -449,15 +450,16 @@ def GenTests(api):
     assert_(charlie_view.check.identifier.id == 'charlie')
     assert_(charlie_view.check.kind == CheckKind.CHECK_KIND_BUILD)
 
-    bob_view = graph.checks['bob']
-    assert_(bob_view.check.identifier.id == 'bob')
+    bob = graph.checks['bob'].check
+    assert_(bob.identifier.id == 'bob')
 
     url = turboci.type_url_for(GobSourceCheckOptions)
-    assert_(url in bob_view.option_data)
+    bob_opts = [opt.value.value.type_url for opt in bob.options]
+    assert_(url in bob_opts)
 
-    got = GobSourceCheckOptions()
-    assert_(bob_view.option_data[url].value.value.Unpack(got))
-    assert_(got.gerrit_changes[0].hostname == 'cool-host.example.com')
+    opt = get_option(GobSourceCheckOptions, bob)
+    assert opt is not None  # for pyright
+    assert_(opt.gerrit_changes[0].hostname == 'cool-host.example.com')
 
   yield api.test(
       'write_checks',

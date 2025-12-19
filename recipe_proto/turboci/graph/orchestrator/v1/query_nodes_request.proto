@@ -14,13 +14,55 @@ option java_multiple_files = true;
 
 // Request message for TurboCIGraphService.QueryNodes.
 message QueryNodesRequest {
-  // The token of the Stage Attempt which is performing this query.
+  // The token which indicates that the query is coming from within a specific
+  // WorkPlan.
+  //
+  // A suitable token is provided to the Executor of a Stage or to the creator
+  // of an empty Workplan.
   //
   // This is in addition to regular RPC authorization.
   //
   // If missing, this RPC will check that the caller additionally has the
   // 'turboci.workplans.readExternal' on the implied workplans.
-  optional string stage_attempt_token = 1;
+  optional string token = 1;
+
+  // TypeInfo lets the orchestrator know which auxiliary type(s) the caller
+  // wants to see in Check Options, Check Results, Stage args, Edits, etc.
+  message TypeInfo {
+    // Type URLs that the caller wants to see in the response. Any child Node
+    // whose type URL is not specified here will be omitted in the response.
+    //
+    // TBD: The special value "*" means that the caller wants to see ALL types,
+    // but this requires an extra permission. Extra permission is needed to
+    // encourage clients to be explicit about what they want to reduce
+    // bandwidth, coupling and increase auditability.
+    //
+    // TBD: Allow limited wildcards to include everything under some package
+    // namespace like `turboci.data.*`.
+    repeated string wanted = 1;
+
+    // If specified the orchestrator will encode all Values with this
+    // alternate encoding, excluding types listed in `known`.
+    //
+    // Note that the orchestrator may have an out-of-date version of the
+    // descriptors - if this happens then Value.has_unknown_fields may be set
+    // to `true`.
+    optional bool unknown_jsonpb = 2;
+
+    // Type URLs that the caller has descriptors for. Used with
+    // `unknown_alternate_encoding` to avoid encoding types the caller does
+    // actually have descriptors for.
+    //
+    // TBD: Allow limited wildcards to include everything under some package
+    // namespace like `turboci.data.*`.
+    repeated string known = 3;
+  }
+  // A description of the desired Value types this query should return.
+  //
+  // Only Value types listed by `wanted` will have their values in the response.
+  //
+  // Datum objects with unwanted type_urls will be omitted from the response.
+  optional TypeInfo type_info = 2;
 
   // VersionRestriction describes how this query can be constrained by database
   // version.
@@ -58,8 +100,8 @@ message QueryNodesRequest {
   //
   // Otherwise, this restricts how the query interacts with the underlying
   // database.
-  optional VersionRestriction version = 2;
+  optional VersionRestriction version = 3;
 
   // One or more Queries to select nodes to return.
-  repeated Query query = 3;
+  repeated Query query = 4;
 }

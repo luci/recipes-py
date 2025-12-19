@@ -6,8 +6,10 @@ syntax = "proto3";
 
 package turboci.graph.orchestrator.v1;
 
-import "turboci/graph/orchestrator/v1/stage_execution_policy.proto";
+import "turboci/graph/ids/v1/identifier.proto";
+import "turboci/graph/orchestrator/v1/stage_attempt_state.proto";
 import "turboci/graph/orchestrator/v1/stage_state.proto";
+import "turboci/graph/orchestrator/v1/value.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
 option java_multiple_files = true;
@@ -23,21 +25,30 @@ message StageDelta {
   // NOTE: Edit.realm is also the realm for the created Stage, so is not
   // included here.
 
-  // Execution policy writes for this Stage.
-  //
-  // Usually this should be empty or have only one policy change - but it's
-  // possible for a single write to affect multiple policies.
-  //
-  // Like Stage.execution_policies, this will be sorted and unique on
-  // StageExecutionPolicy.source.
-  repeated StageExecutionPolicy execution_policies = 2;
+  // Attempt represents a delta to a given StageAttempt.
+  message Attempt {
+    // The identifier of the StageAttempt which was edited.
+    optional ids.v1.StageAttempt identifier = 1;
 
-  // TBD: current-Attempt modifications:
-  // AttemptState current_attempt_state
-  // Attempt metadata (links, "worker_id", etc.?)
-  // Attempt progress
+    // The state that the Attempt entered as part of this Edit.
+    optional StageAttemptState state = 2;
+
+    // Details written as part of this edit.
+    //
+    // NOTE: For now, the Value here will be devoid of content other than
+    // `type_url`.
+    repeated Value details = 3;
+
+    // The index of the progress message(s) written as part of this edit.
+    repeated int64 progress = 4;
+
+    // Failure is true iff the `failure` fieild was written as part of this
+    // edit.
+    optional bool failure = 5;
+  }
+  // Attempt(s) which were modified as part of this edit.
   //
-  // May need to be repeated (or at least duplicated) e.g. in the case where the
-  // user wrote AttemptState == INCOMPLETE, and the Orchestrator immediately
-  // creates a new Attempt in the AWAITING_RETRY state.
+  // NOTE: This should have a maximum length of 2 when an old Attempt is made
+  // INCOMPLETE at the same time a new Attempt is written as PENDING.
+  repeated Attempt attempts = 2;
 }

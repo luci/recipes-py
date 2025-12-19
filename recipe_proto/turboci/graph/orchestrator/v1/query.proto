@@ -52,20 +52,6 @@ enum QueryExpandDepsMode {
 //
 // See QueryNodesRequest.version for how this Query interacts with transactions.
 message Query {
-  // Type URLs (for Check Option Datum, Check Result Datum, Stage args,
-  // CheckEdit Option Datum and CheckEdit Result) that the caller wants to see
-  // in the response.  Any child Node whose type URL is not specified here
-  // will be omitted in the response.
-  //
-  // TBD: The special value "*" means that the caller wants to see all type
-  // URLs, but this requires an extra permission. Extra permission is needed
-  // to encourage clients to be explicit about what they want to reduce
-  // bandwidth, coupling and increase auditability.
-  //
-  // TBD: Allow limited wildcards to include everything under some package
-  // namespace.
-  repeated string type_urls = 1;
-
   // Select picks some set of nodes out of the graph.
   message Select {
     // How this selection of nodes should be constrained to one or more

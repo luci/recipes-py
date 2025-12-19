@@ -38,8 +38,16 @@ service TurboCIOrchestrator {
   //
   // NOTE: Simple workflows can have all Checks, Check options and Stages in the
   // same realm, minimizing the number of required bindings.
+  //
+  // If a correctly encoded Stage Attempt token is used for
+  // WriteNodesRequest.token, then a
+  // turboci.graph.orchestrator.v1.StageAttemptCurrentState will be embedded as
+  // an error detail, and the client is expected to respect the indicated
+  // state.
   rpc WriteNodes(WriteNodesRequest) returns (WriteNodesResponse) {
     option (turboci_rpc) = {
+      // TODO: harmonize these with the actual permissions.
+
       // Permissions to write stages OR checks (or related data) to a WorkPlan.
       //
       // Required WriteNodesRequest.token will be checked to ensure that a
@@ -92,8 +100,16 @@ service TurboCIOrchestrator {
   //
   // In the future we may add a more advanced API to open up more of GQL's
   // underlying expressiveness.
+  //
+  // If a correctly encoded Stage Attempt token is used for
+  // QueryNodesRequest.token, then a
+  // turboci.graph.orchestrator.v1.StageAttemptCurrentState will be embedded as
+  // an error detail, and the client is expected to respect the indicated
+  // state.
   rpc QueryNodes(QueryNodesRequest) returns (QueryNodesResponse) {
     option (turboci_rpc) = {
+      // TODO: harmonize these with the actual permissions.
+
       permission: {
         name: "turboci.workplans.readExternal"
         in: IDENTIFIER_KIND_WORK_PLAN

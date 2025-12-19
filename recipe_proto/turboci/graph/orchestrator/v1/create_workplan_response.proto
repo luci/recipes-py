@@ -15,4 +15,10 @@ option java_multiple_files = true;
 message CreateWorkPlanResponse {
   // The created WorkPlan's identifier.
   optional ids.v1.WorkPlan identifier = 1;
+
+  // A token suitable for use with WriteNodes and QueryNodes.
+  //
+  // Any writes done with this token are attributed to "WorkplanCreator", rather
+  // than any particular stage.
+  optional string creator_token = 2;
 }

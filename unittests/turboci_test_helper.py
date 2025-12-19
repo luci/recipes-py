@@ -45,8 +45,10 @@ class TestBaseClass(test_env.RecipeEngineUnitTest):
       self,
       *queries: Query,
       version: QueryNodesRequest.VersionRestriction | None = None,
+      types: Sequence[str | Message | type[Message]] = (),
   ):
-    return turboci.query_nodes(*queries, version=version, client=self.CLIENT)
+    return turboci.query_nodes(
+        *queries, version=version, types=types, client=self.CLIENT)
 
   def read_checks(
       self,

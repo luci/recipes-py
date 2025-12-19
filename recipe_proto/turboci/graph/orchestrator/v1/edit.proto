@@ -52,41 +52,76 @@ message Edit {
   //
   // Defaults to 30 days from the time of the Edit.
   //
+  // This currently has no effect for Stage edits, because Stage edits don't
+  // retain any heavy data.
+  //
   // TBD: Add RPC to extend the TTL of an Edit and its data.
   optional google.protobuf.Timestamp data_expire_at = 4;
 
   // The security realm for this Edit (duplicated from the affected Check/Stage
   // to allow easy ACL resolution).
+  //
+  // The premise is that if you can read a Check or Stage, you can read the
+  // edits for that Check or Stage.
   optional string realm = 5 [(google.api.field_behavior) = IMMUTABLE];
 
   // The entity which generated this Edit.
-  optional Actor editor = 6;
+  optional Actor created_by = 6;
 
-  // If set, the WriteNodes call which produced this Edit was transactional over
-  // this set of Identifiers.
+  // This is the set of nodes which were included in the same WriteNodes
+  // RPC as this Edit (one per `checks`, `stages`, and/or
+  // `current_stage_write`). For simplicity, this will also always include
+  // `for_node`.
   //
-  // If this is unset, then this Edit was the result of an 'oblivious write'
-  // without a transaction snapshot.
+  // This may contain more nodes than were actually written in the case of
+  // a partially applied write, e.g.
+  //
+  //   * One writer writes Check["foo", BUILD]
+  //   * Another writer writes Check["foo", BUILD], Check["bar", BUILD].
+  //
+  // In this case, the edit on "bar" from the second write will include "foo"
+  // in this set because the requested write is compatible with the state of
+  // "foo".
+  //
+  // This can only happen with WriteNodes requests with `txn` unset (i.e.
+  // 'oblivious writes').
+  //
+  // If you need to detect this, load e.g. `Check["foo"] / Edit[version]`. If
+  // the edit does not exist, then it means foo was already written before this
+  // Edit.
   repeated ids.v1.Identifier transactional_set = 7 [
     (turboci).id.allowed = IDENTIFIER_KIND_CHECK,
-    (turboci).id.allowed = IDENTIFIER_KIND_CHECK_OPTION,
-    (turboci).id.allowed = IDENTIFIER_KIND_CHECK_RESULT_DATUM,
-    (turboci).id.allowed = IDENTIFIER_KIND_STAGE
+    (turboci).id.allowed = IDENTIFIER_KIND_STAGE,
+    // IDENTIFIER_KIND_STAGE_ATTEMPT corresponds to `current_stage_write`.
+    (turboci).id.allowed = IDENTIFIER_KIND_STAGE_ATTEMPT
   ];
+
+  // If set, then the WriteNodes which created this edit was done as an
+  // 'oblivious' write - that is, `txn` was not supplied in WriteNodseRequest.
+  //
+  // This is intended to be a hint when debugging that a non-transactional
+  // write could be an issue.
+  optional bool oblivious_write = 11;
 
   // Human and machine-readable reasons for this Edit (provided as part of
   // WriteNodes).
   message Reason {
     // The security realm for this reason.
     //
-    // If omitted, this will be the same as the parent node's realm.
+    // This is set by the writer which created this Edit. In WriteNodseRequest,
+    // this defaults to the writer's realm unless explicitly set, and so may
+    // differ from the Edit's realm.
+    //
+    // The premise is that the Edit is a property of the Check/Stage but
+    // details of why an Edit was made are controlled by the writer that made
+    // them.
     optional string realm = 1;
 
     // A 'low effort' reason for this edit.
     //
     // This is 'low effort' because it's preferable for the writer to provide
     // detailed machine-readable data in the `details` field below.
-    optional string reason = 2;
+    optional string message = 2;
 
     // Machine-readable reason(s) for this edit.
     //
@@ -116,12 +151,12 @@ message Edit {
   oneof delta {
     // This is a delta for a Check.
     //
-    // `what` must be an Identifier.Check.
+    // `for_node` must be an Identifier.Check.
     CheckDelta check = 9;
 
     // This is a delta for a Stage.
     //
-    // `what` must be an Identifier.Stage.
+    // `for_node` must be an Identifier.Stage.
     StageDelta stage = 10;
   }
 }

@@ -22,10 +22,11 @@ message StageAttemptExecutionPolicy {
   // a certain amount of time to mean that the stage is gone and should be
   // treated accordingly.
   //
-  // If, say, `pending` is 30s, it means that the executor must send a Heartbeat
-  // RPC to the Orchestrator at least once every 30s while the Stage Attempt is
-  // in the PENDING state. It's allowed to heartbeat faster than this interval,
-  // but shouldn't be necessary.
+  // If, say, `scheduled` is 30s, it means that the executor must send
+  // a heartbeat RPC (a WriteNodes RPC with `current_stage` populated, even
+  // if it is empty) at least once every 30s while the Stage Attempt is
+  // in the SCHEDULED state. It's allowed to heartbeat faster than this
+  // interval, but shouldn't be necessary.
   //
   // In addition, we want to ensure that a single lost heartbeat doesn't time
   // out an expensive stage that might be close to completion, so the
@@ -82,8 +83,8 @@ message StageAttemptExecutionPolicy {
     // is still subject to timeouts for the phase.
     optional google.protobuf.Duration tearing_down = 3;
   }
-  // The heartbeat policies for Attempts of this Stage.
-  optional Heartbeat attempt_heartbeat = 1;
+  // The heart policies for the StageAttempt.
+  optional Heartbeat heartbeat = 1;
 
   // Timeout describes the maximum amount of time a Stage Attempt can be in a
   // given state (in addition to restrictions imposed by Heartbeat).

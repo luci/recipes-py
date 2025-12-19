@@ -4,7 +4,7 @@
     "name": "write bob",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@request@reasons {@@@",
-      "@@@STEP_LOG_LINE@request@  reason: \"written by step \\'write bob\\'\"@@@",
+      "@@@STEP_LOG_LINE@request@  message: \"written by step \\'write bob\\'\"@@@",
       "@@@STEP_LOG_LINE@request@}@@@",
       "@@@STEP_LOG_LINE@request@checks {@@@",
       "@@@STEP_LOG_LINE@request@  identifier {@@@",
@@ -35,7 +35,7 @@
     "name": "add option to bob",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@request@reasons {@@@",
-      "@@@STEP_LOG_LINE@request@  reason: \"written by step \\'add option to bob\\'\"@@@",
+      "@@@STEP_LOG_LINE@request@  message: \"written by step \\'add option to bob\\'\"@@@",
       "@@@STEP_LOG_LINE@request@}@@@",
       "@@@STEP_LOG_LINE@request@checks {@@@",
       "@@@STEP_LOG_LINE@request@  identifier {@@@",
@@ -68,7 +68,7 @@
     "name": "finalize charlie",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@request@reasons {@@@",
-      "@@@STEP_LOG_LINE@request@  reason: \"written by step \\'finalize charlie\\'\"@@@",
+      "@@@STEP_LOG_LINE@request@  message: \"written by step \\'finalize charlie\\'\"@@@",
       "@@@STEP_LOG_LINE@request@}@@@",
       "@@@STEP_LOG_LINE@request@checks {@@@",
       "@@@STEP_LOG_LINE@request@  identifier {@@@",
@@ -90,7 +90,7 @@
     "name": "add result to bob",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@request@reasons {@@@",
-      "@@@STEP_LOG_LINE@request@  reason: \"written by step \\'add result to bob\\'\"@@@",
+      "@@@STEP_LOG_LINE@request@  message: \"written by step \\'add result to bob\\'\"@@@",
       "@@@STEP_LOG_LINE@request@}@@@",
       "@@@STEP_LOG_LINE@request@checks {@@@",
       "@@@STEP_LOG_LINE@request@  identifier {@@@",
@@ -121,7 +121,7 @@
     "~followup_annotations": [
       "@@@STEP_TEXT@turboci.write_nodes failed@@@",
       "@@@STEP_LOG_LINE@request@reasons {@@@",
-      "@@@STEP_LOG_LINE@request@  reason: \"written by step \\'fail to add late result to bob\\'\"@@@",
+      "@@@STEP_LOG_LINE@request@  message: \"written by step \\'fail to add late result to bob\\'\"@@@",
       "@@@STEP_LOG_LINE@request@}@@@",
       "@@@STEP_LOG_LINE@request@checks {@@@",
       "@@@STEP_LOG_LINE@request@  identifier {@@@",

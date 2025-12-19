@@ -70,10 +70,10 @@ class Transaction:
         self._revision = graph.version
       for view in graph.checks.values():
         self.observed_nodes.add(from_id(view.check.identifier))
-        for datum in view.option_data.values():
+        for datum in view.check.options:
           self.observed_nodes.add(from_id(datum.identifier))
-        for result in view.results.values():
-          for datum in result.data.values():
+        for result in view.check.results:
+          for datum in result.data:
             self.observed_nodes.add(from_id(datum.identifier))
 
       # stages
@@ -82,12 +82,11 @@ class Transaction:
 
   def write_nodes(
       self,
-      *atoms: (
-          WriteNodesRequest.CheckWrite
-        | WriteNodesRequest.StageWrite
-        | WriteNodesRequest.Reason
-      ),
+      *atoms: (WriteNodesRequest.CheckWrite
+               | WriteNodesRequest.StageWrite
+               | WriteNodesRequest.Reason),
       current_stage: WriteNodesRequest.CurrentStageWrite | None = None,
+      current_attempt: WriteNodesRequest.CurrentAttemptWrite | None = None,
   ) -> WriteNodesResponse:
     """Writes one or more nodes.
 
@@ -108,14 +107,14 @@ class Transaction:
     return common.write_nodes(
         *atoms,
         current_stage=current_stage,
+        current_attempt=current_attempt,
         txn=txn,
         client=self._client)
 
-  def query_nodes(
-      self,
-      *query: Query,
-      observe_graph=True
-  ) -> Mapping[str, GraphView]:
+  def query_nodes(self,
+                  *query: Query,
+                  types: Sequence[str | Message | type[Message]] = (),
+                  observe_graph=True) -> Mapping[str, GraphView]:
     """Runs run or more queries and returns their combined result.
 
     Will add all observed nodes to Transaction.observed_nodes unless
@@ -126,6 +125,9 @@ class Transaction:
           "QueryNodes called after WriteNodes.")
 
     req = QueryNodesRequest()
+    if types:
+      req.type_info.wanted.extend(common.type_urls(*types))
+
     if self._revision:
       match self._query_mode:
         case 'require':
@@ -164,8 +166,9 @@ class Transaction:
                 common.make_query(
                     Query.Select(nodes=idents),
                     collect,
-                    types=types,
-                )).values())).checks
+                ),
+                types=types,
+            ).values())).checks
     return [checks[ident.check.id] for ident in idents]
 
 

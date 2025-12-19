@@ -7,6 +7,7 @@ syntax = "proto3";
 package turboci.graph.orchestrator.v1;
 
 import "turboci/graph/orchestrator/v1/revision.proto";
+import "turboci/graph/orchestrator/v1/stage.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
 option java_multiple_files = true;
@@ -25,4 +26,9 @@ message WriteNodesResponse {
   //
   // See WriteNodesRequest.TransactionDetails.
   optional Revision written_version = 1;
+
+  // State of the current stage attempt.
+  //
+  // Only set if the `token` was for a stage attempt.
+  optional StageAttemptCurrentState current_attempt_state = 2;
 }

@@ -16,6 +16,9 @@ message Actor {
   // Placeholder type for when the Orchestrator itself makes this edit.
   message Orchestrator {}
 
+  // Placeholder type for when the creator of the Workplan makes this edit.
+  message WorkplanCreator {}
+
   // The kind of editor which edited this node.
   oneof kind {
     // The StageAttempt which generated this Edit.
@@ -25,6 +28,9 @@ message Actor {
 
     // The Orchestrator generated this Edit.
     Orchestrator orchestrator = 2;
+
+    // The Creator of the Workplan generated this Edit.
+    WorkplanCreator workplan_creator = 3;
 
     // TBD: general service account editor if/when WriteNodes allows
     // external-to-the-workflow writes.

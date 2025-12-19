@@ -10,6 +10,7 @@ from typing import Literal, Mapping, Protocol, Sequence, Type, TypeVar, cast
 from google.protobuf.message import Message
 
 from PB.turboci.graph.ids.v1 import identifier
+from PB.turboci.graph.orchestrator.v1.check import Check
 from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
 from PB.turboci.graph.orchestrator.v1.check_state import CheckState
 from PB.turboci.graph.orchestrator.v1.check_view import CheckView
@@ -102,9 +103,9 @@ def dep_group(*contained: str | identifier.Identifier | identifier.Check
   return ret
 
 
-def reason(reason: str, *details: Message, realm: str|None = None) -> WriteNodesRequest.Reason:
+def reason(message: str, *details: Message, realm: str|None = None) -> WriteNodesRequest.Reason:
   """Helper to generate a WriteNodesRequest.Reason for WriteNodes."""
-  ret = WriteNodesRequest.Reason(reason=reason, realm=realm)
+  ret = WriteNodesRequest.Reason(message=message, realm=realm)
   for detail in details:
     a = ret.details.add()
     a.value.Pack(detail, deterministic=True)
@@ -191,11 +192,12 @@ def check(
 
 
 def write_nodes(
-    *atoms: WriteNodesRequest.CheckWrite|WriteNodesRequest.StageWrite|WriteNodesRequest.Reason,
-
-    current_stage: WriteNodesRequest.CurrentStageWrite|None = None,
-    txn: WriteNodesRequest.TransactionDetails|None = None,
-    client: TurboCIClient|None = None,
+    *atoms: WriteNodesRequest.CheckWrite | WriteNodesRequest.StageWrite
+    | WriteNodesRequest.Reason,
+    current_stage: WriteNodesRequest.CurrentStageWrite | None = None,
+    current_attempt: WriteNodesRequest.CurrentAttemptWrite | None = None,
+    txn: WriteNodesRequest.TransactionDetails | None = None,
+    client: TurboCIClient | None = None,
 ) -> WriteNodesResponse:
   """Convenience function for client.WriteNodes.
 
@@ -205,6 +207,7 @@ def write_nodes(
   """
   req = WriteNodesRequest(
       current_stage=current_stage,
+      current_attempt=current_attempt,
       txn=txn,
   )
   for atom in atoms:
@@ -245,10 +248,7 @@ QueryAtoms = (
 )
 
 
-def make_query(
-    *atoms: QueryAtoms|None,
-    types: Sequence[str|Message|type[Message]] = (),
-) -> Query:
+def make_query(*atoms: QueryAtoms | None) -> Query:
   """Convenience function to make a Query message from atomic bits.
 
   None atoms are skipped.
@@ -257,7 +257,7 @@ def make_query(
 
   Repeated fields are appended (e.g. CheckPattern and StagePattern).
   """
-  ret = Query(type_urls=type_urls(*types))
+  ret = Query()
   for atom in atoms:
     if atom is None:
       continue
@@ -296,14 +296,17 @@ def make_query(
 
 def query_nodes(
     *queries: Query,
-    version: QueryNodesRequest.VersionRestriction|None = None,
-    client: TurboCIClient|None = None,
+    version: QueryNodesRequest.VersionRestriction | None = None,
+    types: Sequence[str | Message | type[Message]] = (),
+    client: TurboCIClient | None = None,
 ) -> Mapping[str, GraphView]:
   """Convenience function for CLIENT.QueryNodes."""
-  return (client or CLIENT).QueryNodes(QueryNodesRequest(
-      version=version,
-      query=queries,
-  )).graph
+  return (client or CLIENT).QueryNodes(
+      QueryNodesRequest(
+          version=version,
+          query=queries,
+          type_info=QueryNodesRequest.TypeInfo(wanted=type_urls(*types)),
+      )).graph
 
 
 def read_checks(*ids: identifier.Check|str,
@@ -327,8 +330,8 @@ def read_checks(*ids: identifier.Check|str,
               make_query(
                   Query.Select(nodes=idents),
                   collect,
-                  types=types,
               ),
+              types=types,
               client=client).values())).checks
   return [checks[ident.check.id] for ident in idents]
 
@@ -336,31 +339,32 @@ def read_checks(*ids: identifier.Check|str,
 MsgT = TypeVar('MsgT', bound=Message)
 
 
-def get_option(msg: Type[MsgT], check_view: CheckView) -> MsgT | None:
+def get_option(msg: Type[MsgT], check: Check) -> MsgT | None:
   """Extracts, unpacks and returns the data for the proto message `msg`
-  from the check_view's option_data.
+  from the check's option_data.
 
-  If check_view does not have a matching option, returns None.
+  If the check does not have a matching option, returns None.
 
   Example:
 
     dat = get_option(MyMessage, graph.checks['foo'])
     # dat is None or an instance of MyMessage
   """
-  dat = check_view.option_data.get(type_url_for(msg))
-  if dat is None:
-    return None
-  ret = msg()
-  dat.value.value.Unpack(ret)
-  return ret
+  url = type_url_for(msg)
+  for option in check.options:
+    if option.value.value.type_url == url:
+      ret = msg()
+      option.value.value.Unpack(ret)
+      return ret
+  return None
 
 
-def get_results(msg: Type[MsgT], check_view: CheckView) -> list[MsgT]:
+def get_results(msg: Type[MsgT], check: Check) -> list[MsgT]:
   """Extracts, unpacks and returns the data for the proto message `msg`
-  from all results in the check_view.
+  from all results in the check.
 
-  If the check_view has no results, or doesn't have any result data which
-  matches `msg`, returns an empty list.
+  If the check doesn't have any result data which matches `msg`, returns an
+  empty list.
 
   Example:
 
@@ -369,11 +373,10 @@ def get_results(msg: Type[MsgT], check_view: CheckView) -> list[MsgT]:
   """
   url = type_url_for(msg)
   ret: list[MsgT] = []
-  for result in check_view.results.values():
-    dat = result.data.get(url)
-    if dat is None:
-      continue
-    val = msg()
-    dat.value.value.Unpack(val)
-    ret.append(val)
+  for result in check.results:
+    for dat in result.data:
+      if dat.value.value.type_url == url:
+        val = msg()
+        dat.value.value.Unpack(val)
+        ret.append(val)
   return ret

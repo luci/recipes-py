@@ -20,6 +20,7 @@ from PB.turboci.graph.ids.v1 import identifier
 from PB.turboci.graph.orchestrator.v1.check import Check
 from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
 from PB.turboci.graph.orchestrator.v1.check_state import CheckState
+from PB.turboci.graph.orchestrator.v1.datum import Datum
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 
 demoStruct = Struct(fields={'hello': Value(string_value='world')})
@@ -31,14 +32,18 @@ demoTS2 = Timestamp(seconds=200, nanos=200)
 
 def _mkOptions(id: str,
                *msg: type[Message] | Message,
-               in_workplan: str = "") -> list[Check.OptionRef]:
+               in_workplan: str = "") -> list[Datum]:
   ident = check_id(id, in_workplan=in_workplan)
-  return [
-      Check.OptionRef(
-          type_url=turboci.type_url_for(m),
-          identifier=identifier.CheckOption(check=ident, idx=i + 1))
-      for i, m in enumerate(msg)
-  ]
+  ret = []
+  for i, m in enumerate(msg):
+    d = Datum(
+        identifier=identifier.Identifier(
+            check_option=identifier.CheckOption(check=ident, idx=i + 1)))
+    if isinstance(m, type):
+      m = m()
+    d.value.value.Pack(m, deterministic=True)
+    ret.append(d)
+  return ret
 
 
 class CheckDeltaTest(test_env.RecipeEngineUnitTest):
