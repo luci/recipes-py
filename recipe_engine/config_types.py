@@ -298,7 +298,10 @@ class Path:
   @property
   def suffix(self) -> str:
     """For 'dir/foo.tar.gz', return '.gz'."""
-    return '.' + self.name.rsplit('.', 1)[1]
+    parts = self.name.rsplit('.', 1)
+    if len(parts) == 1:
+      return ''
+    return '.' + parts[1]
 
   @property
   def suffixes(self) -> str:

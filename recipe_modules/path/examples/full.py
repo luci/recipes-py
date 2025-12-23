@@ -90,6 +90,11 @@ def RunSteps(api):
   assert abc_def_xyz.suffix == '.xyz'
   assert abc_def_xyz.suffixes == ['.def', '.xyz']
 
+  abc = api.path.tmp_base_dir / 'abc'
+  assert abc.stem == 'abc'
+  assert abc.suffix == ''
+  assert abc.suffixes == []
+
   api.step('touch me', ['touch', api.path.abspath(file_path)])
   # Assert for testing that a file exists.
   api.path.mock_add_paths(file_path)
