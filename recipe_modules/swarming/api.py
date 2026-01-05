@@ -939,6 +939,7 @@ class TaskResult:
     self._created_ts = None
     self._started_ts = None
     self._completed_ts = None
+    self._tags = None
     self._output = None
     self._name = None
     self._state = None
@@ -968,6 +969,8 @@ class TaskResult:
       self._created_ts = parse_datetime(results.get('created_ts'))
       self._started_ts = parse_datetime(results.get('started_ts'))
       self._completed_ts = parse_datetime(results.get('completed_ts'))
+
+      self._tags = results.get('tags', [])
 
       cas_output_root = results.get('cas_output_root')
       if cas_output_root:
@@ -1056,6 +1059,14 @@ class TaskResult:
     Returns None if an error occurred.
     """
     return self._completed_ts
+
+  @property
+  def tags(self):
+    """Returns a list of colon-separated tags.
+
+    Returns None if an error occurred.
+    """
+    return self._tags
 
   @property
   def output(self):
