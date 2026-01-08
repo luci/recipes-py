@@ -71,6 +71,11 @@ def main():
       if item.name.startswith('data/chrome/depot_tools'):
         print(f'Skipping {item.name!r}, turboci.data.chrome.depot_tools is imported in depot_tools recipe repo')
         continue
+      if item.name.startswith('data/chrome/build'):
+        print(
+            f'Skipping {item.name!r}, turboci.data.chrome.build is imported in build recipe repo'
+        )
+        continue
       if item.name.startswith('data/chrome'):
         print(f'Skipping {item.name!r}, unknown chrome-specific package')
         continue
