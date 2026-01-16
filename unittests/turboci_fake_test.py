@@ -156,6 +156,12 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         Check(
             identifier=turboci.check_id('hey'),
             state='CHECK_STATE_PLANNING',
+            state_history=[
+              Check.StateHistoryEntry(
+                state='CHECK_STATE_PLANNING',
+                version=rslt.version,
+              ),
+            ],
             kind='CHECK_KIND_BUILD',
             version=rslt.version,
             options=check.options,  # we verified contents above
@@ -994,6 +1000,74 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
     # Check that option is absent
     self.assertEqual(len(ret.absent), 1)
     self.assertEqual(ret.absent[0], opt_id)
+
+  def test_check_state_history(self):
+    # 1. Create in PLANNING
+    self.write_nodes(
+        turboci.check(
+            'check',
+            kind='CHECK_KIND_BUILD',
+            deps=dep_group('dep'),
+        ),
+        turboci.check(
+            'dep',
+            kind='CHECK_KIND_BUILD',
+        )
+    )
+
+    view = self.read_checks('check')[0]
+    self.assertEqual(view.check.state, CheckState.CHECK_STATE_PLANNING)
+    self.assertEqual(len(view.check.state_history), 1)
+    self.assertEqual(view.check.state_history[0].state,
+                     CheckState.CHECK_STATE_PLANNING)
+    v1 = view.check.state_history[0].version
+
+    # 2. Move to PLANNED
+    self.write_nodes(turboci.check(
+        'check',
+        state='CHECK_STATE_PLANNED',
+    ))
+
+    view = self.read_checks('check')[0]
+    self.assertEqual(view.check.state, CheckState.CHECK_STATE_PLANNED)
+    self.assertEqual(len(view.check.state_history), 2)
+    self.assertEqual(view.check.state_history[0].state,
+                     CheckState.CHECK_STATE_PLANNING)
+    self.assertEqual(view.check.state_history[1].state,
+                     CheckState.CHECK_STATE_PLANNED)
+    v2 = view.check.state_history[1].version
+    self.assertGreater((v2.ts.seconds, v2.ts.nanos),
+                       (v1.ts.seconds, v1.ts.nanos))
+
+    # 3. Move 'dep' to FINAL -> 'check' becomes WAITING
+    self.write_nodes(turboci.check(
+        'dep',
+        state='CHECK_STATE_FINAL',
+    ))
+
+    view = self.read_checks('check')[0]
+    self.assertEqual(view.check.state, CheckState.CHECK_STATE_WAITING)
+    self.assertEqual(len(view.check.state_history), 3)
+    self.assertEqual(view.check.state_history[2].state,
+                     CheckState.CHECK_STATE_WAITING)
+    v3 = view.check.state_history[2].version
+    self.assertGreater((v3.ts.seconds, v3.ts.nanos),
+                       (v2.ts.seconds, v2.ts.nanos))
+
+    # 4. Move to FINAL
+    self.write_nodes(turboci.check(
+        'check',
+        state='CHECK_STATE_FINAL',
+    ))
+
+    view = self.read_checks('check')[0]
+    self.assertEqual(view.check.state, CheckState.CHECK_STATE_FINAL)
+    self.assertEqual(len(view.check.state_history), 4)
+    self.assertEqual(view.check.state_history[3].state,
+                     CheckState.CHECK_STATE_FINAL)
+    v4 = view.check.state_history[3].version
+    self.assertGreater((v4.ts.seconds, v4.ts.nanos),
+                       (v3.ts.seconds, v3.ts.nanos))
 
 
 if __name__ == '__main__':

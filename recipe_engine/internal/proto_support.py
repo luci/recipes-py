@@ -48,7 +48,7 @@ def _file_checksum(path):
   csum = hashlib.sha1()
   with open(path, 'rb') as ins:
     csum.update(f'blob {os.fstat(ins.fileno()).st_size}'.encode())
-    for line in ins:
+    while True:
       data = ins.read(4 * 1024)
       if not data:
         break
@@ -588,7 +588,10 @@ def _compile_protos(proto_files: list[tuple[str, str]], proto_tree: str,
       [protoc, '--python_out', dest, '--pyi_out', dest, '@'+argfile],
       cwd=proto_tree, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
   output, _ = protoc_proc.communicate()
-  os.remove(argfile)
+  try:
+    os.remove(argfile)
+  except:
+    pass
 
   if protoc_proc.returncode != 0:
     replacer = _rel_to_abs_replacer(proto_files)

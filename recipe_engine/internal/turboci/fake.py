@@ -60,6 +60,7 @@ from PB.turboci.graph.orchestrator.v1.check import Check
 from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
 from PB.turboci.graph.orchestrator.v1.check_state import (CheckState,
                                                           CHECK_STATE_PLANNING,
+                                                          CHECK_STATE_WAITING,
                                                           CHECK_STATE_FINAL)
 from PB.turboci.graph.orchestrator.v1.check_view import CheckView
 from PB.turboci.graph.orchestrator.v1.datum import Datum
@@ -241,6 +242,14 @@ class FakeTurboCIOrchestrator(TurboCIClient):
     for typ in cur.result_types - prev.result_types:
       self._checks_by_result_type[typ].add(check_id)
 
+
+  def _set_check_state(self, check: Check, state: CheckState):
+    if check.state == state:
+      return
+    check.state = state
+    check.state_history.add(state=state, version=self._revision)
+
+
   def _apply_checkwrite_locked(self, write: WriteNodesRequest.CheckWrite,
                                deps: Dependencies | None) -> Check:
     """Applies a raw CheckWrite, plus the corresponding pre-normalized
@@ -265,8 +274,8 @@ class FakeTurboCIOrchestrator(TurboCIClient):
       check = Check(
           identifier=write.identifier,
           kind=write.kind,
-          state=CHECK_STATE_PLANNING,
       )
+      self._set_check_state(check, CHECK_STATE_PLANNING)
       # New check without deps creates empty dependencies.
       #
       # This is important to trigger the check for resolving empty deps in the
@@ -345,7 +354,7 @@ class FakeTurboCIOrchestrator(TurboCIClient):
     now_planning = was_planning
     if write.HasField('state'):
       _touch()
-      check.state = write.state
+      self._set_check_state(check, write.state)
       now_planning = write.state == CheckState.CHECK_STATE_PLANNING
 
     ##### All dependencies related code is below ###############################
@@ -390,11 +399,11 @@ class FakeTurboCIOrchestrator(TurboCIClient):
       # state. Only advance the state if we're still in PLANNED.
       if check.state == CheckState.CHECK_STATE_PLANNED:
         if check.dependencies.resolution == RESOLUTION_SATISFIED:
-          check.state = CheckState.CHECK_STATE_WAITING
+          self._set_check_state(check, CHECK_STATE_WAITING)
 
         else:  # unsatisfiable
           # _touch()
-          # check.state = CheckState.CHECK_STATE_FINAL
+          # self._set_check_state(check, CheckState.CHECK_STATE_FINAL)
           #
           # At this point we would add some TBD type as a result as well
           # - however this is not yet defined, so just raise an error for
