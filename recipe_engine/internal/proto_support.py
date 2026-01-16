@@ -18,6 +18,8 @@ import sys
 import tempfile
 
 from typing import Callable
+from io import StringIO
+from pathlib import Path
 
 from gevent import subprocess
 
@@ -44,10 +46,19 @@ else:
     return path
 
 
-def _file_checksum(path):
+def _blob_checksum(blob: str) -> str:
+  csum = hashlib.sha1()
+  csum.update(f'blob {len(blob)}'.encode())
+  csum.update(b'\0')
+  csum.update(blob.encode())
+  return csum.hexdigest()
+
+
+def _file_checksum(path) -> str:
   csum = hashlib.sha1()
   with open(path, 'rb') as ins:
     csum.update(f'blob {os.fstat(ins.fileno()).st_size}'.encode())
+    csum.update(b'\0')
     while True:
       data = ins.read(4 * 1024)
       if not data:
@@ -73,6 +84,11 @@ class _ProtoInfo:
   # Set to True iff this is a reserved path
   reserved: bool = attr.ib(validator=attr_type(bool))
 
+  # If not-None, this _ProtoInfo refers to synthesized file content which
+  # needs to be written to disk at generation-time.
+  synthetic_content: str|None = attr.ib(
+      validator=attr_type((str, type(None))))
+
   # The git blob hash of this file.
   #
   # We use the git algorithm here in case we ever want to use e.g. the committed
@@ -81,8 +97,10 @@ class _ProtoInfo:
   blobhash: str = attr.ib(validator=attr_type(str))
 
   @classmethod
-  def create(cls, repo: recipe_deps.RecipeRepo, scan_relpath: str,
-             dest_namespace: str, relpath: str) -> _ProtoInfo:
+  def create(
+      cls, repo: recipe_deps.RecipeRepo, scan_relpath: str,
+      dest_namespace: str, relpath: str, synthetic_content: str|None = None,
+    ) -> _ProtoInfo:
     """Creates a _ProtoInfo.
 
     This will convert `relpath` into a global relpath for the output PB folder,
@@ -101,6 +119,9 @@ class _ProtoInfo:
       * relpath - The fwd-slash-delimited relative path from `repo.path`
         to where we found the proto. e.g.
         'scripts/slave/recipes/subdir/something.proto'.
+      * synthetic_content - Synthesized content which needs to be written to
+        src_abspath when generating. This is deferred until generation to make
+        sure that checksum calculation stays a read-only operation.
 
     Returns a fully populated _ProtoInfo.
     """
@@ -121,12 +142,13 @@ class _ProtoInfo:
 
     src_abspath = os.path.normpath(os.path.join(repo.path, relpath))
 
-    # Compute the file's blobhash
-    csum = hashlib.sha1()
-    csum.update(_file_checksum(src_abspath).encode())
-    blobhash = csum.hexdigest()
+    if synthetic_content is not None:
+      blobhash = _blob_checksum(synthetic_content)
+    else:
+      blobhash = _file_checksum(src_abspath)
 
-    return cls(src_abspath, relpath, dest_relpath, reserved, blobhash)
+    return cls(src_abspath, relpath, dest_relpath, reserved,
+               synthetic_content, blobhash)
 
   @classmethod
   def _find_inline_properties_proto(cls, path: str) -> str | None:
@@ -172,31 +194,29 @@ class _ProtoInfo:
     )
     proto_relpath = _to_posix(os.path.relpath(proto_path, repo.path))
 
-    # Writing to disk so proto errors point to a specific file that users can
-    # find. This is needed because line numbers don't exactly match the
-    # multi-line str in the Python file.
-    os.makedirs(posixpath.dirname(proto_path), exist_ok=True)
-    with open(proto_path, 'w') as outs:
-      print(f'// This file is generated from {path}', file=outs)
-      print('syntax = "proto3";', file=outs)
+    buf = StringIO()
+    print(f'// This file is generated from {path}', file=buf)
+    print('syntax = "proto3";', file=buf)
 
-      namespace = dest_namespace.strip('/').split('/')
-      for i, part in enumerate(posixpath.dirname(relpath).split('/')):
-        if i != 0:
-          namespace.append(part)
+    namespace = dest_namespace.strip('/').split('/')
+    for i, part in enumerate(posixpath.dirname(relpath).split('/')):
+      if i != 0:
+        namespace.append(part)
 
-      split_relpath = relpath.split('/')
-      if (split_relpath[0] == 'recipe_modules' and
-          split_relpath[2] in ('tests', 'examples')):
-        namespace.append(posixpath.splitext(split_relpath[-1])[0])
-      print(f'package {".".join(namespace)};', file=outs)
-      print(inline_properties_proto, file=outs)
+    split_relpath = relpath.split('/')
+    if (split_relpath[0] == 'recipe_modules' and
+        split_relpath[2] in ('tests', 'examples')):
+      namespace.append(posixpath.splitext(split_relpath[-1])[0])
+    print(f'package {".".join(namespace)};', file=buf)
+    print(inline_properties_proto, file=buf)
 
     scan_relpath = posixpath.join(
         _to_posix(
             os.path.relpath(repo.recipe_deps.recipe_deps_path, repo.path)),
         'inline_proto', repo.name)
-    return cls.create(repo, scan_relpath, dest_namespace, proto_relpath)
+
+    return cls.create(repo, scan_relpath, dest_namespace, proto_relpath,
+                      buf.getvalue())
 
 
 def _gather_proto_info_from_repo(
@@ -260,7 +280,7 @@ def _gather_proto_info_from_repo(
 
 def _gather_protos(
     deps: recipe_deps.RecipeDeps,
-) -> tuple[str, list[tuple[str, str]]]:
+) -> tuple[str, list[tuple[str, str]], list[tuple[Path, str]]]:
   """Gathers all .proto files from all repos, and calculates their collective
   hash.
 
@@ -273,10 +293,13 @@ def _gather_protos(
     * proto_files: a list of source abspath to dest_relpath for these proto
       files (i.e. copy from source to $tmpdir/dest_relpath when constructing the
       to-be-compiled proto tree).
+    * synthetic_files: a list of abspath + content of synthesized proto files
+      which are represented in proto_files, but need to be written to disk
+      before compilation.
 
   Raises BadProtoDefinitions if this finds conflicting or reserved protos.
   """
-  all_protos = {}  # Dict[repo_name : str, List[_ProtoInfo]]
+  all_protos: dict[str, list[_ProtoInfo]] = {}
   for repo in deps.repos.values():
     proto_info = _gather_proto_info_from_repo(repo)
     if proto_info:
@@ -296,12 +319,13 @@ def _gather_protos(
   # dups has keys where len(rel_to_projs[dest_relpath]) > 1
   dups: set[str] = set()
   reserved: set[str] = set()
-  retval: list[tuple[str, str]] = []
+  proto_files: list[tuple[str, str]] = []
+  synthetic_files: list[tuple[Path, str]] = []
   for repo_name, proto_infos in sorted(all_protos.items()):
     csum.update(repo_name.encode('utf-8'))
     csum.update(b'\0\0')
 
-    for info in proto_infos:
+    for info in sorted(proto_infos):
       duplist = rel_to_projs.setdefault(info.dest_relpath, [])
       duplist.append(repo_name)
       if len(duplist) > 1:
@@ -309,7 +333,9 @@ def _gather_protos(
       if info.reserved:
         reserved.add(info.dest_relpath)
 
-      retval.append((info.src_abspath, info.dest_relpath))
+      proto_files.append((info.src_abspath, info.dest_relpath))
+      if info.synthetic_content is not None:
+        synthetic_files.append((Path(info.src_abspath), info.synthetic_content))
 
       csum.update(info.relpath.encode('utf-8'))
       csum.update(b'\0')
@@ -337,7 +363,7 @@ def _gather_protos(
 
     raise BadProtoDefinitions(msg)
 
-  return csum.hexdigest(), retval
+  return csum.hexdigest(), proto_files, synthetic_files
 
 
 @attr.s
@@ -720,10 +746,15 @@ def ensure_compiled(deps: recipe_deps.RecipeDeps,
     proto_package = os.path.join(deps.recipe_deps_path, '_pb3')
     _DirMaker()(proto_package)
 
-    dgst, proto_files = _gather_protos(deps)
+    dgst, proto_files, synthetic_files = _gather_protos(deps)
 
     # If the digest already matches, we're done
     if not _check_digest(proto_package, dgst):
+      # Now we can write out any synthesized proto files and try to compile.
+      for path, content in synthetic_files:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content)
+
       # Otherwise, try to compile
       try:
         _install_protos(proto_package, dgst, proto_files)
