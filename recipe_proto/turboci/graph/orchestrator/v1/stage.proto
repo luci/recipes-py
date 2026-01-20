@@ -16,6 +16,7 @@ import "turboci/graph/orchestrator/v1/field_options.proto";
 import "turboci/graph/orchestrator/v1/revision.proto";
 import "turboci/graph/orchestrator/v1/stage_attempt_execution_policy.proto";
 import "turboci/graph/orchestrator/v1/stage_attempt_state.proto";
+import "turboci/graph/orchestrator/v1/stage_concluded_reason.proto";
 import "turboci/graph/orchestrator/v1/stage_execution_policy.proto";
 import "turboci/graph/orchestrator/v1/stage_state.proto";
 import "turboci/graph/orchestrator/v1/value.proto";
@@ -31,12 +32,14 @@ option java_multiple_files = true;
 // See also:
 //   * StageView (graph view object for a Stage and contained messages)
 //   * StageEditView (graph view object for Edits of a Stage)
+//
+// Next ID: 15
 message Stage {
   // The Stage's identifier.
   optional ids.v1.Stage identifier = 1 [(google.api.field_behavior) = IMMUTABLE];
 
   // Actor which created the Stage.
-  optional Actor created_by = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  optional Actor created_by = 2 [(google.api.field_behavior) = IMMUTABLE];
 
   // The security realm for this Stage.
   //
@@ -77,33 +80,36 @@ message Stage {
   //
   // Updated any time fields in this Stage change, which includes all changes to
   // the active Stage Attempt (if state is ATTEMPTING).
-  optional Revision version = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+  optional Revision version = 5;
 
   // The current state of the Stage.
-  optional StageState state = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+  optional StageState state = 6;
+
+  // If this stage was cancelled, this indicates the Actor which cancelled
+  // it.
+  optional Actor cancelled_by = 14;
 
   // StateHistoryEntry records the database revision (commit timestamp) when
   // each time this Stage's state changes.
   message StateHistoryEntry {
     // The changed state.
-    optional StageState state = 1;
+    optional StageState state = 1 [(google.api.field_behavior) = IMMUTABLE];
     // The revision when the state change happens.
-    optional Revision version = 2;
+    optional Revision version = 2 [(google.api.field_behavior) = IMMUTABLE];
   }
 
   // Append-only list of StateHistoryEntry to record the database revision
   // (commit timestamp) when each time this Stage's state changes.
-  repeated StateHistoryEntry state_history = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+  repeated StateHistoryEntry state_history = 7;
 
   // Dependencies on other objects in the graph.
   //
   // Stages are allowed to depend on other Checks and Stages, and will not be
   // sent to an Executor until dependencies is resolved.
-  //
-  // Once the Stage is ATTEMPTING, this field is immutable.
   optional Dependencies dependencies = 8 [
     (turboci).id.allowed = IDENTIFIER_KIND_CHECK,
-    (turboci).id.allowed = IDENTIFIER_KIND_STAGE
+    (turboci).id.allowed = IDENTIFIER_KIND_STAGE,
+    (google.api.field_behavior) = IMMUTABLE
   ];
 
   // ExecutionPolicyState is the set of execution policies which define the
@@ -130,7 +136,7 @@ message Stage {
     //
     // This is the policy that TurboCI will use to drive Attempts for this
     // Stage.
-    optional StageExecutionPolicy validated = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+    optional StageExecutionPolicy validated = 2;
 
     // TBD: Potentially allow a `dynamic` ExecutionPolicy which callers can use
     // to decrease the effective limits on this Stage.
@@ -155,10 +161,10 @@ message Stage {
   // TBD: Pull this into its own top-level StageAttempt entity because it will
   // need to have its own state and lifecycle/transactions.
   //
-  // Next ID: 11
+  // Next ID: 12
   message Attempt {
     // The Stage Attempt's identifier.
-    optional ids.v1.StageAttempt identifier = 1;
+    optional ids.v1.StageAttempt identifier = 1 [(google.api.field_behavior) = IMMUTABLE];
 
     // The version of this Attempt.
     //
@@ -184,14 +190,32 @@ message Stage {
     // each time this Attempt's state changes.
     message StateHistoryEntry {
       // The changed state.
-      optional StageAttemptState state = 1;
+      optional StageAttemptState state = 1 [(google.api.field_behavior) = IMMUTABLE];
       // The revision when the state change happens.
-      optional Revision version = 2;
+      optional Revision version = 2 [(google.api.field_behavior) = IMMUTABLE];
     }
 
     // Append-only list of StateHistoryEntry to record the database revision
     // (commit timestamp) when each time this Attempt's state changes.
-    repeated StateHistoryEntry state_history = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+    repeated StateHistoryEntry state_history = 4;
+
+    // If set, this Attempt is in a state where the Orchestrator is waiting for
+    // some future time to interact with it.
+    //
+    // The states where this is set are:
+    //
+    //   * PENDING - The Orchestrator attempted to send this Stage Attempt to
+    //     the executor, but failed for some reason. The Orchestrator will try
+    //     again after this time.
+    //   * THROTTLED - The Executor explicitly asked the Orchestrator to hold
+    //     a PENDING attempt until later. The Orchestrator not to attempt to
+    //     call RunStage again until this time.
+    //   * AWAITING_RETRY - This Attempt was created as a retry of a previous
+    //     INCOMPLETE attempt, and the Orchestrator will not advance it to
+    //     PENDING until this time.
+    //
+    // In all other states, this field is unset.
+    optional google.protobuf.Timestamp waiting_until = 11;
 
     // An opaque value provided by a Stage Attempt process (i.e. a single thread
     // of execution which is servicing this Stage Attempt) which is used to
@@ -268,6 +292,13 @@ message Stage {
       // following:
       //   * turboci.graph.orchestrator.v1.ProgressEvolvePending
       optional Actor created_by = 4;
+
+      // Unique-to-this-Attempt key for this Progress message.
+      //
+      // Used to prevent duplicate Progress messages via WriteNodesRequest.
+      //
+      // See WriteNodesRequest.StageAttemptProgress.
+      optional string idempotency_key = 5;
     }
     // Append-only Executor-specefic progress messages.
     repeated Progress progress = 7;
@@ -292,7 +323,7 @@ message Stage {
   // when:
   //   * A new Attempt is created
   //   * The Stage is canceled
-  repeated Attempt attempts = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
+  repeated Attempt attempts = 10;
 
   // Assignment describes the workflow's intent that this Stage will handle one
   // or more Checks in some fashion.
@@ -347,6 +378,11 @@ message Stage {
   //
   // If needed, this could be expanded to allow Checks later.
   optional Dependencies continuation_group = 12 [(turboci).id.allowed = IDENTIFIER_KIND_STAGE];
+
+  // Describes why this stage is not PLANNED or ATTEMPTING anymore.
+  //
+  // Set for stages that are in AWAITING_GROUP or FINAL states.
+  optional StageConcludedReason concluded_reason = 13;
 }
 
 // StageAttemptClaimedFailure is a gRPC error detail message returned by

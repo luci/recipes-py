@@ -7,7 +7,7 @@ from __future__ import annotations
 from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
 from PB.turboci.graph.orchestrator.v1.graph_view import GraphView
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
-from recipe_engine.internal.turboci.common import get_option
+from recipe_engine.internal.turboci.common import get_check_view, get_option
 
 DEPS = [
   'buildbucket',
@@ -446,11 +446,11 @@ def GenTests(api):
       ))
 
   def _assert_graph(assert_, graph: GraphView):
-    charlie_view = graph.checks['charlie']
+    charlie_view = get_check_view(graph, 'charlie')
     assert_(charlie_view.check.identifier.id == 'charlie')
     assert_(charlie_view.check.kind == CheckKind.CHECK_KIND_BUILD)
 
-    bob = graph.checks['bob'].check
+    bob = get_check_view(graph, 'bob').check
     assert_(bob.identifier.id == 'bob')
 
     url = turboci.type_url_for(GobSourceCheckOptions)

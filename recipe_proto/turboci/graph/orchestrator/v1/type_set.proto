@@ -1,0 +1,23 @@
+// Copyright 2026 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// TypeSet represents a set of possible type_urls of Values.
+message TypeSet {
+  // A list of type URLs or type URL wildcards (if ends with `*`).
+  //
+  // Examples are:
+  //   - type.googleapis.com/turboci.data.stage.v1.CommonStageAttemptDetails
+  //   - type.googleapis.com/turboci.data.stage.v1.*
+  //
+  // Note that using wildcard type sets may be restricted by the particular
+  // API that handles the TypeSet.
+  repeated string type_urls = 1;
+}

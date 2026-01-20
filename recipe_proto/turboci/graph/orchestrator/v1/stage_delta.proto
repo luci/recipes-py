@@ -7,6 +7,8 @@ syntax = "proto3";
 package turboci.graph.orchestrator.v1;
 
 import "turboci/graph/ids/v1/identifier.proto";
+import "turboci/graph/orchestrator/v1/dependencies.proto";
+import "turboci/graph/orchestrator/v1/field_options.proto";
 import "turboci/graph/orchestrator/v1/stage_attempt_state.proto";
 import "turboci/graph/orchestrator/v1/stage_state.proto";
 import "turboci/graph/orchestrator/v1/value.proto";
@@ -41,14 +43,21 @@ message StageDelta {
 
     // The index of the progress message(s) written as part of this edit.
     repeated int64 progress = 4;
-
-    // Failure is true iff the `failure` fieild was written as part of this
-    // edit.
-    optional bool failure = 5;
   }
   // Attempt(s) which were modified as part of this edit.
   //
   // NOTE: This should have a maximum length of 2 when an old Attempt is made
   // INCOMPLETE at the same time a new Attempt is written as PENDING.
   repeated Attempt attempts = 2;
+
+  // Cancelled is true if the edit cancelled this Stage.
+  optional bool cancelled = 3;
+
+  // The Stage continuation_group written as part of this edit.
+  //
+  // The fields within reflect what was changed in this edit:
+  //   * `edges`, `predicate` and `resolution` are included in-whole, and mean
+  //     that this edit modified those fields.
+  //   * `resolution_events` reflects just new events resolved in this edit.
+  optional Dependencies continuation_group = 4 [(turboci).id.allowed = IDENTIFIER_KIND_STAGE];
 }

@@ -19,15 +19,37 @@ option java_multiple_files = true;
 
 // TurboCIOrchestrator is the API for interacting with the TurboCI
 // Orchestrator.
+//
+// These RPCs will require certain permissions, acquired via project-scoped
+// LUCI ACLs (configured via
+// https://chromium.googlesource.com/infra/luci/luci-go/+/refs/heads/main/lucicfg/doc/README.md#luci.binding),
+// for the data being acted upon. A more complete description of the LUCI
+// authorization model is at http://go/luci-authorization (Googlers only),
+// with a more sparse description available to non-Googlers at
+// https://chromium.googlesource.com/infra/luci/luci-go/+/refs/heads/main/lucicfg/doc/README.md#ACLs.
+//
+// Additional notes for understanding Turbo CI's use of this permissions model:
+// * Every message has a LUCI realm (as a `string realm` field in these protos)
+// either in the message or a containing message, and permissions to act on that
+// message are configured for the realm.
+// * Nested messages (e.g. a Check option inside of a Check) may be assigned to
+// a different realm than their parent. Permission to read or write a nested
+// message also requires the corresponding permission for all parent nodes, and
+// for the containing Workplan.
 service TurboCIOrchestrator {
-  // CreateWorkPlan creates a new WorkPlan.
+  // CreateWorkPlan creates a new WorkPlan and returns a Workplan Creator
+  // token, which can be used to create checks and stages in this Workplan.
   //
   // Currently can only create empty work plans that can later be populated via
   // WriteNodes call.
   rpc CreateWorkPlan(CreateWorkPlanRequest) returns (CreateWorkPlanResponse) {
     option (turboci_rpc) = {
       permission: {
-        name: "turboci.workplans.create"
+        // There is no "internal" variant of this permission.
+        //
+        // By definition, there cannot be any tokens from inside the workplan
+        // prior to the workplan's creation.
+        external: "turboci.workplans.create"
         in: IDENTIFIER_KIND_WORK_PLAN
       }
     };
@@ -46,52 +68,58 @@ service TurboCIOrchestrator {
   // state.
   rpc WriteNodes(WriteNodesRequest) returns (WriteNodesResponse) {
     option (turboci_rpc) = {
-      // TODO: harmonize these with the actual permissions.
-
-      // Permissions to write stages OR checks (or related data) to a WorkPlan.
-      //
-      // Required WriteNodesRequest.token will be checked to ensure that a
-      // StageAttempt is only writing to its own WorkPlan.
       permission: {
-        name: "turboci.workplans.write"
+        internal: "turboci.workplans.update"
+        external: "turboci.workplans.updateExternal"
         in: IDENTIFIER_KIND_WORK_PLAN
-        for: "all calls"
+        for: "all writes"
       }
 
       permission: {
-        name: "turboci.workplans.writeExternal"
-        in: IDENTIFIER_KIND_WORK_PLAN
-        for: "calls without StageAttemptToken from this WorkPlan"
-      }
-
-      permission: {
-        name: "turboci.stages.update"
+        internal: "turboci.stages.create"
+        external: "turboci.stages.createExternal"
         in: IDENTIFIER_KIND_STAGE
-        for: "creation and updates of Stages"
+        for: "adding new stages"
       }
 
       permission: {
-        name: "turboci.worknodes.update"
+        internal: "turboci.stages.cancel"
+        external: "turboci.stages.cancelExternal"
         in: IDENTIFIER_KIND_STAGE
-        for: "creation and updates of WorkNode-type Stages"
+        for: "cancelling stages"
       }
 
       permission: {
-        name: "turboci.checks.update"
+        internal: "turboci.stages.updateCurrent"
+        in: IDENTIFIER_KIND_STAGE
+        for: "updating current stage indicated by token"
+        for: "updating current attempt indicated by token"
+      }
+
+      permission: {
+        internal: "turboci.checks.write"
+        external: "turboci.checks.writeExternal"
         in: IDENTIFIER_KIND_CHECK
-        for: "creation and updates to Checks"
+        for: "creating checks"
+        for: "updating checks"
+        for: "writing check options"
+        for: "writing check result data"
       }
 
       permission: {
-        name: "turboci.checkOptions.update"
+        internal: "turboci.checkOptions.write"
+        external: "turboci.checkOptions.writeExternal"
         in: IDENTIFIER_KIND_CHECK_OPTION
-        for: "creation and updates to Check Options"
+        for: "creating check options"
+        for: "updating check options"
       }
 
       permission: {
-        name: "turboci.checkResults.update"
+        internal: "turboci.checkResultData.write"
+        external: "turboci.checkResultData.writeExternal"
         in: IDENTIFIER_KIND_CHECK_RESULT_DATUM
-        for: "creation and updates to Check Result Data"
+        for: "creating check result data"
+        for: "updating check result data"
       }
     };
   }
@@ -108,48 +136,50 @@ service TurboCIOrchestrator {
   // state.
   rpc QueryNodes(QueryNodesRequest) returns (QueryNodesResponse) {
     option (turboci_rpc) = {
-      // TODO: harmonize these with the actual permissions.
-
       permission: {
-        name: "turboci.workplans.readExternal"
-        in: IDENTIFIER_KIND_WORK_PLAN
-        for: "calls without StageAttemptToken from this WorkPlan"
-      }
-
-      permission: {
-        name: "turboci.checks.read"
+        internal: "turboci.checks.read"
+        external: "turboci.checks.readExternal"
         in: IDENTIFIER_KIND_CHECK
-        for: "reading Checks (and their edits and reason details)"
+        for: "reading checks and their associated values (options, result data, edits)"
       }
 
       permission: {
-        name: "turboci.typeUrls.wildcard"
-        in: IDENTIFIER_KIND_WORK_PLAN
-        for: "including * in type_urls"
-      }
+        internal: "turboci.checkOptions.read"
+        external: "turboci.checkOptions.readExternal"
 
-      permission: {
-        name: "turboci.checkOptions.read"
         in: IDENTIFIER_KIND_CHECK_OPTION
-        for: "reading option data. Needs .checks.read on the containing Check, too"
+        for: "reading options in checks"
+
+        in: IDENTIFIER_KIND_CHECK_EDIT_OPTION
+        for: "reading options in check edits"
       }
 
       permission: {
-        name: "turboci.checkResults.read"
+        internal: "turboci.checkResultData.read"
+        external: "turboci.checkResultData.readExternal"
         in: IDENTIFIER_KIND_CHECK_RESULT_DATUM
-        for: "reading check result data. Needs .checks.read on the containing Check, too"
+        for: "reading checks and their associated values (options, result data, edits)"
       }
 
       permission: {
-        name: "turboci.stages.read"
-        in: IDENTIFIER_KIND_STAGE
-        for: "reading Stages (and their edits and reason details)"
+        internal: "turboci.stages.read"
+        external: "turboci.stages.readExternal"
+        in: IDENTIFIER_KIND_CHECK
+        for: "reading stages and their associated values (attempts, edits)"
       }
 
       permission: {
-        name: "turboci.worknodes.read"
-        in: IDENTIFIER_KIND_STAGE
-        for: "read of WorkNode-type Stages"
+        internal: "turboci.stages.readCurrent"
+        in: IDENTIFIER_KIND_CHECK
+        for: "reading the stage and/or attempts associated with the provided token"
+      }
+
+      permission: {
+        internal: "turboci.editReasons.read"
+        external: "turboci.editReasons.readExternal"
+        in: IDENTIFIER_KIND_CHECK_EDIT_REASON
+        in: IDENTIFIER_KIND_STAGE_EDIT_REASON
+        for: "reading edit reasons"
       }
     };
   }

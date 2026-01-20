@@ -11,16 +11,18 @@ import "turboci/graph/orchestrator/v1/check_kind.proto";
 import "turboci/graph/orchestrator/v1/check_state.proto";
 import "turboci/graph/orchestrator/v1/field_options.proto";
 import "turboci/graph/orchestrator/v1/revision_range.proto";
+import "turboci/graph/orchestrator/v1/stage_state.proto";
+import "turboci/graph/orchestrator/v1/type_set.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
 option java_multiple_files = true;
 
-// When expanding a query selection set with Query.Expand.Dependencies or
-// Query.Expand.Dependants, how should we actually expand that set?
+// When expanding a query selection set with Query.ExpandDependencies or
+// Query.ExpandDependents, how should we actually expand that set?
 enum QueryExpandDepsMode {
   // Unknown query expansion mode.
   //
-  // Defaults to 'REQUESTED'.
+  // Equivalent to QUERY_EXPAND_DEPS_MODE_EDGES.
   QUERY_EXPAND_DEPS_MODE_UNKNOWN = 0;
 
   // Expand to deps which are listed in dependencies.edges.
@@ -35,163 +37,301 @@ enum QueryExpandDepsMode {
   QUERY_EXPAND_DEPS_MODE_SATISFIED = 2;
 }
 
-// Query describes a simple graph query.
+// Defines what subset of Stage Attempts to include when returning a Stage.
+enum CollectStageAttempts {
+  // UNKNOWN is the default value.
+  //
+  // Equivalent to COLLECT_STAGE_ATTEMPTS_NONE.
+  COLLECT_STAGE_ATTEMPTS_UNKNOWN = 0;
+
+  // No stage attempts will be returned, this is default.
+  COLLECT_STAGE_ATTEMPTS_NONE = 1;
+
+  // All stage attempts will be returned.
+  COLLECT_STAGE_ATTEMPTS_ALL = 2;
+
+  // Only the latest stage attempt will be returned.
+  //
+  // All non-latest attempts will be represented by shallow entries just
+  // containing their ID (to preserve the invariant that Stage.attempt[x] has
+  // ID with Idx `x+1`).
+  COLLECT_STAGE_ATTEMPTS_LATEST = 3;
+}
+
+// Query describes a single graph query.
 //
-// This is composed of three phases: selection, expansion and collection.
+// This is composed of 3 phases: selection with filtering, expansion and
+// collection.
 //
-// The selection phase queries for a set of nodes within a WorkPlan
-// - effectively a regular SELECT type query on a traditional database.
+// The selection phase (represented by fields `node_set`, `select_stages` and
+// `select_checks`) either just picks the given set of nodes or selects
+// all nodes within a matching set of work plans (most commonly just some
+// single plan). Selected nodes then are optionally filtered based on their
+// type and properties.
 //
-// After the selection phase, the expansion phase allows traversal along the
+// After the filtering phase, the expansion phase (represented by fields
+// `expand_dependencies` and `expand_dependents`) allows traversal along the
 // edges of the selected nodes. Currently only 'dependency' edge traversal is
 // supported, but other types of relationships could be possible in the future
 // (e.g. 'created_by', 'written_by', etc.).
 //
 // Finally, after the set of nodes has been fully expanded, we collect all the
-// requested data from those Nodes.
+// requested data from those Nodes. This phase is represented by fields
+// `collect_checks` and `collect_stages`.
+//
+//
+//                  ┌──────────┐
+//           ┌──────┤ node_set ├─────┐
+//           │      └──────────┘     │
+//           ▼                       ▼
+//    ┌─────────────┐         ┌─────────────┐
+//    │select_checks│         │select_stages│      Select + Filter
+//    └──────┬──────┘         └──────┬──────┘
+//           │                       │
+//           │       ┌───────┐       │
+//           └──────►│       │◄──────┘
+//                   │<union>│
+//           ┌───────┤       ├───────┐
+//           │       └───────┘       │
+//           ▼            │          ▼
+//  ┌───────────────────┐ │ ┌─────────────────┐
+//  │expand_dependencies│ │ │expand_dependents│    Expand
+//  └────────┬──────────┘ │ └────────┬────────┘
+//           │            ▼          │
+//           │       ┌───────┐       │
+//           └──────►│       │◄──────┘
+//                   │<union>│
+//           ┌───────┤       ├───────┐
+//           │       └───────┘       │
+//           │                       │
+//           ▼                       ▼
+//    ┌──────────────┐       ┌──────────────┐
+//    │collect_checks│       │collect_stages│      Collect
+//    └──────┬───────┘       └───────┬──────┘
+//           │                       │
+//           │      ┌─────────┐      │
+//           └─────►│GraphView│◄─────┘
+//                  └─────────┘
 //
 // See QueryNodesRequest.version for how this Query interacts with transactions.
+//
+// Queries that are guaranteed to produce no results (like a query with
+// only `select_stages`, no expansion, and no `collect_stages`) are rejected
+// as invalid, resulting in INVALID_ARGUMENT error from QueryNodes.
 message Query {
-  // Select picks some set of nodes out of the graph.
-  message Select {
-    // How this selection of nodes should be constrained to one or more
-    // WorkPlans.
-    message WorkPlanConstraint {
-      // Constrain this Select to the given WorkPlan(s).
-      repeated ids.v1.WorkPlan in_workplans = 1;
+  // Indicates to work with all nodes in the matching set of work plans.
+  message NodesAcrossWorkPlans {
+    // TBD: criteria to query across workplans - presumably recent ones, but
+    // also probably this should allow constraining to specific templated
+    // workflows.
+    //
+    // IIUC node_class is kind of equivalent to such a filter, except it's
+    // duplicated to each WorkNode, not a property of WorkPlan.
+  }
 
-      // TBD: criteria to query across workplans - presumably recent ones, but
-      // also probably this should allow constraining to specific templated
-      // workflows.
-      //
-      // IIUC node_class is kind of equivalent to such a filter, except it's
-      // duplicated to each WorkNode, not a property of WorkPlan.
-    }
-    // Which WorkPlans to search across.
-    optional WorkPlanConstraint workplan = 1;
-
+  // Indicates to work only with the given list of nodes.
+  message NodesByID {
     // The identifiers of specific nodes to select.
     //
     // This should be used if you already know the identifiers of the nodes you
     // care about.
+    //
+    // These nodes will be subjected to `select_checks` and `select_stages`
+    // predicates. This allowed to e.g. examine if any of the already known
+    // nodes are in a particular expected state already.
+    //
+    // Nodes that don't exist at all will be skipped and their IDs will be
+    // returned in QueryNodesResponse.absent.
     repeated ids.v1.Identifier nodes = 2 [
       (turboci).id.allowed = IDENTIFIER_KIND_CHECK,
       (turboci).id.allowed = IDENTIFIER_KIND_STAGE
       // TBD: Allow additional identifier kinds here.
     ];
+  }
 
-    // Select one or more Checks which match this pattern.
-    message CheckPattern {
-      // Find Checks of this kind (unset means all kinds).
+  // What set of nodes to start the query with. Required.
+  oneof node_set {
+    // Select all nodes in the given work plan.
+    ids.v1.WorkPlan nodes_in_workplan = 1;
+    // Select all nodes in all work plans matching some criteria.
+    NodesAcrossWorkPlans nodes_across_workplans = 2;
+    // Select the explicitly given set of nodes.
+    NodesByID nodes_by_id = 3;
+  }
+
+  // If present, indicates the query wants to examine Checks, optionally
+  // passing them through the given filtering predicate before proceeding.
+  //
+  // The outcome of this phase is joined with the outcome of a similar
+  // SelectStages phase before being passed to Expand and Collect phases.
+  //
+  // If not set, the query will not be selecting any Check nodes at the
+  // selection phase (note you still may see Checks in the overall result
+  // if `collect_checks` is present and some Checks were discovered during
+  // the Expand phase).
+  message SelectChecks {
+    // Only pick Checks which match this predicate.
+    //
+    // Individual clauses are ANDed together. An unset field means the
+    // corresponding clause is not checked. At least one field must be set.
+    message Predicate {
+      // Pick Checks of this kind.
       optional CheckKind kind = 1;
 
-      // Find Checks whose `Identifier.Check.id` matches this re2 regex.
-      optional string id_regex = 2;
+      // Pick Checks in this state.
+      optional CheckState state = 2;
 
-      // Find Checks with *any* of these options. Note that you still must set
-      // type_urls and collect.data.check.options to actually get the
-      // Check Option data in the result set.
-      repeated string with_option_types = 3;
+      // Pick Checks that have a Check Option that matches the type filter.
+      //
+      // Note that you still must set QueryNodesRequest.type_info.wanted and
+      // collect_checks.options to actually get the Check Option data in
+      // the result set.
+      optional TypeSet with_option_type = 3;
 
-      // Find Checks in this state.
-      optional CheckState state = 4;
-
-      // Find Checks with *any* of these result data types. Note that you still
-      // must set type_urls and collect.data.check.result_data to actually get the
-      // Check Result data in the result set.
-      repeated string with_result_data_types = 5;
+      // Pick Checks that have a Check Result that matches the type filter.
+      //
+      // Note that you still must set QueryNodesRequest.type_info.wanted and
+      // collect_checks.result_data to actually get the Check Result data in
+      // the result set.
+      optional TypeSet with_result_data_type = 4;
     }
-    // Select Checks matching these patterns.
-    repeated CheckPattern check_patterns = 3;
-
-    // Select one or more Stages which match this pattern.
-    message StagePattern {
-      // TBD
-    }
-
-    // Select Stages matching these patterns.
-    repeated StagePattern stage_patterns = 4;
+    // Pick Checks matching any of these predicates (they are ORed together).
+    //
+    // If empty, all Checks will be selected.
+    repeated Predicate predicates = 1;
   }
-  // Select an arbitrary set of nodes.
-  optional Select select = 2;
+  // If present, indicates the query wants to examine Checks.
+  //
+  // At least one of `select_checks` or `select_stages` must be set.
+  optional SelectChecks select_checks = 4;
 
-  // Expand takes the selected node set and 'expands' it by following edges in
-  // the graph from those nodes.
-  message Expand {
-    // How to expand the dependencies for a Check or Stage.
-    message Dependencies {
-      // How to expand dependencies.
-      //
-      // Defaults to QUERY_EXPAND_DEPS_MODE_EDGES.
-      optional QueryExpandDepsMode mode = 1;
+  // If present, indicates the query wants to examine Stages, optionally
+  // passing them through the given filtering predicate before proceeding.
+  //
+  // The outcome of this phase is joined with the outcome of a similar
+  // SelectChecks phase before being passed to Expand and Collect phases.
+  //
+  // If not set, the query will not be selecting any Stage nodes at the
+  // selection phase (note you still may see Stages in the overall result
+  // if `collect_stages` is present and some Stages were discovered during
+  // the Expand phase).
+  message SelectStages {
+    // Only pick Stages which match this predicate.
+    //
+    // Individual clauses are ANDed together. An unset field means the
+    // corresponding clause is not checked. At least one field must be set.
+    message Predicate {
+      // Pick Stages in this state.
+      optional StageState state = 1;
 
-      // TBD: Allow walking more than one dependency down?
+      // Pick Stages with Args matching the type filter.
+      optional TypeSet with_args_type = 2;
     }
-    // For each selected Check or Stage, include its immediate dependencies.
+    // Pick Stages matching any of these predicates (they are ORed together).
     //
-    // So given:
-    //   A -> {B, C}
-    //
-    // (B, C) are dependencies of A.
-    optional Dependencies dependencies = 1;
-
-    // How to expand the dependents for a Check or Stage.
-    message Dependents {
-      // How to expand dependents.
-      //
-      // Defaults to QUERY_EXPAND_DEPS_MODE_EDGES.
-      optional QueryExpandDepsMode mode = 1;
-
-      // TBD: Allow walking more than one dependent up?
-    }
-    // For each selected Check or Stage, include any Checks/Stages which depend
-    // on it.
-    //
-    // So given:
-    //   A -> {B, C}
-    //
-    // A is a dependent of B.
-    optional Dependents dependents = 2;
-
-    // TBD: Other edge types, such as created_by or written_by?
-    // If we include them, how would we indicate these relationships in GraphView?
-    // We may need created_by/written_by as explicit fields in the various
-    // nodes.
+    // If empty, all Stages will be selected.
+    repeated Predicate predicates = 1;
   }
-  // Expand that set of nodes by following their edges.
-  optional Expand expand = 3;
+  // If present, indicates the query wants to examine Stages.
+  //
+  // At least one of `select_checks` or `select_stages` must be set.
+  optional SelectStages select_stages = 5;
 
-  // Collect retrieves data from the expanded node set.
-  message Collect {
-    // Describes what data the caller wants to see for Checks.
-    message Check {
-      // Include CheckOptions filtered by `type_urls` for any selected Checks.
-      optional bool options = 1;
+  // How to expand the dependencies for a Check or Stage.
+  message ExpandDependencies {
+    // How to expand dependencies.
+    //
+    // Defaults to QUERY_EXPAND_DEPS_MODE_EDGES.
+    optional QueryExpandDepsMode mode = 1;
 
-      // Include Result data filtered by `type_urls` for any selected Checks.
-      optional bool result_data = 2;
-
-      // Include edits only within this range of Revisions.
-      //
-      // An empty RevisionRange (e.g. {0, 0}) means `all edits`.
-      optional RevisionRange edits = 3;
-    }
-    // Describes what data the caller wants to see for Checks.
-    optional Check check = 1;
-
-    // Describes what data the caller wants to see for Stages.
-    message Stage {
-      // TBD: what attempt progress data to include (and maybe for which
-      // attempt(s) to include it).
-
-      // Include edits only within this range of Revisions.
-      //
-      // An empty RevisionRange (e.g. {0, 0}) means `all edits`.
-      optional RevisionRange edits = 1;
-    }
-    // Describes what data the caller wants to see for Stages.
-    optional Stage stage = 2;
+    // TBD: Allow walking more than one dependency down?
   }
-  // The data to collect from the expanded node set.
-  optional Collect collect = 4;
+  // For each selected Check or Stage, include its immediate dependencies.
+  //
+  // So given:
+  //   A -> {B, C}
+  //
+  // (B, C) are dependencies of A.
+  optional ExpandDependencies expand_dependencies = 6;
+
+  // How to expand the dependents for a Check or Stage.
+  message ExpandDependents {
+    // How to expand dependents.
+    //
+    // Defaults to QUERY_EXPAND_DEPS_MODE_EDGES.
+    optional QueryExpandDepsMode mode = 1;
+
+    // TBD: Allow walking more than one dependent up?
+  }
+  // For each selected Check or Stage, include any Checks/Stages which depend
+  // on it.
+  //
+  // So given:
+  //   A -> {B, C}
+  //
+  // A is a dependent of B.
+  optional ExpandDependents expand_dependents = 7;
+
+  // TBD: Expand other edge types, such as created_by or written_by?
+  // If we include them, how would we indicate these relationships in GraphView?
+  // We may need created_by/written_by as explicit fields in the various
+  // nodes.
+
+  // Describes what data the caller wants to see for discovered Checks (in
+  // addition to core Check properties).
+  message CollectChecks {
+    // Include CheckOptions for any discovered Checks.
+    //
+    // Only options matching QueryNodesRequest.type_info.wanted TypeSet will
+    // be returned (for initially selected Checks, this type filter is applied
+    // on top of filtering done by SelectChecks.predicates).
+    optional bool options = 1;
+
+    // Include Result data for any selected Checks.
+    //
+    // Only options matching QueryNodesRequest.type_info.wanted TypeSet will
+    // be returned (for initially selected Checks, this type filter is applied
+    // on top of filtering done by SelectChecks.predicates).
+    optional bool result_data = 2;
+
+    // Include edits only within this range of Revisions.
+    //
+    // An empty RevisionRange (e.g. {0, 0}) means `all edits`. If this field
+    // is absent, no edits will be included.
+    optional RevisionRange edits = 3;
+  }
+  // If present, indicates the caller is interested in Checks processed by
+  // the query (including the originally selected checks, if any, and all checks
+  // discovered during the Expand phase).
+  //
+  // If absent, the result will have no checks at all.
+  //
+  // At least one of `collect_checks` or `collect_stages` must be set.
+  optional CollectChecks collect_checks = 8;
+
+  // Describes what data the caller wants to see for discovered Stages (in
+  // addition to core Stage properties).
+  //
+  // Value-typed fields inside Stage Attempts (e.g. progress details) and Stage
+  // Edits are subject to filtering by QueryNodesRequest.type_info.wanted.
+  message CollectStages {
+    // What subset of Stage Attempts to include.
+    //
+    // By default attempts are not included.
+    optional CollectStageAttempts attempts = 1;
+
+    // Include edits only within this range of Revisions.
+    //
+    // An empty RevisionRange (e.g. {0, 0}) means `all edits`. If this field
+    // is absent, no edits will be included.
+    optional RevisionRange edits = 2;
+  }
+  // If present, indicates the caller is interested in Stages processed by
+  // the query (including the originally selected stages, if any, and all stages
+  // discovered during the Expand phase).
+  //
+  // If absent, the result will have no stages at all.
+  //
+  // At least one of `collect_checks` or `collect_stages` must be set.
+  optional CollectStages collect_stages = 9;
 }

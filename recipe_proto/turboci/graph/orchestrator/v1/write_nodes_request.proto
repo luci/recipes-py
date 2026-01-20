@@ -76,6 +76,53 @@ message WriteNodesRequest {
 
     // Machine-readable details for this progress item.
     repeated Value details = 2;
+
+    // An optional field for preventing duplicate progress messages.
+    //
+    // If you don't care about duplicate progress messages on retried RPCs, you
+    // can ignore this field.
+    //
+    // Otherwise, if set, this field must be unique per progress message, per
+    // Stage Attempt.
+    //
+    // Writing multiple progress messages with the same idempotency_key, but
+    // different `message` or `details` fields is an error.
+    //
+    // It is recommended to set this field like "<thread_id>/<unique>" where
+    // <thread_id> identifies a single actor within the Executor, in the
+    // context of the current stage attempt token, and <unique> is some unique
+    // value for that actor, for the Stage Attempt.
+    //
+    // Examples:
+    //   * server/<purpose> - messages emitted by the server on behalf of a
+    //     working bot with some specific purpose (e.g. "server/final").
+    //   * bot/<sequence> etc. - messages emitted by the bot from a single
+    //     process on a machine somewhere. The process keeps <sequence> as a
+    //     simple counter in-memory.
+    //   * <uuid> - 36 bytes of stringy goodness. Hopefully your progress
+    //     messages are much longer than this :)
+    //
+    // This solves the problem where:
+    //   * you do a write with a progress message (e.g. "hello"), but fail to
+    //     get the OK response (network, cosmic rays, etc.).
+    //   * you then retry the RPC.
+    //
+    // If the WriteNodesRequest has a TransactionDetails, the retry will fail,
+    // and after getting the current Stage Attempt state, you would need to
+    // scan through the existing Progress messages to see if the message
+    // "hello" is present (assuming that "hello" is actually a unique progress
+    // message in the first place).
+    //
+    // If the WriteNodesRequest does NOT have a TransactionDetails, the new
+    // message will just be appended silently, and you will end up with two
+    // "hello" messages.
+    //
+    // Setting the idempotency_key to a per-Attempt-unique value will prevent
+    // this; this Progress message will be recorded at most once on the
+    // Attempt, and on the retry, the orchestrator will know that this message
+    // was already recorded and will be able to return OK without duplicating
+    // it.
+    optional string idempotency_key = 3;
   }
 
   // The token which constrains this write to a specific Workplan (and possibly
@@ -433,8 +480,8 @@ message WriteNodesRequest {
 
     // Progress messages to add to the current Stage Attempt.
     //
-    // It is a good idea to do these progress updates transactionally,
-    // otherwise it's possible to double-append them.
+    // See StageAttemptProgress.idempotency_key to prevent duplicate appends on
+    // network flake.
     repeated StageAttemptProgress progress = 2;
 
     // Indicate how the Orchestrator should transition to a given state.

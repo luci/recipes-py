@@ -39,6 +39,9 @@ enum IdentifierKind {
   // An Identifier.CheckEditOption.
   IDENTIFIER_KIND_CHECK_EDIT_OPTION = 7;
 
+  // An Identifier.CheckEditReason
+  IDENTIFIER_KIND_CHECK_EDIT_REASON = 11;
+
   // An Identifier.Stage.
   IDENTIFIER_KIND_STAGE = 8;
 
@@ -47,4 +50,7 @@ enum IdentifierKind {
 
   // An Identifier.StageEdit.
   IDENTIFIER_KIND_STAGE_EDIT = 10;
+
+  // An Identifier.StageEditReason
+  IDENTIFIER_KIND_STAGE_EDIT_REASON = 12;
 }

@@ -126,7 +126,7 @@ class Transaction:
 
     req = QueryNodesRequest()
     if types:
-      req.type_info.wanted.extend(common.type_urls(*types))
+      req.type_info.wanted.MergeFrom(common.type_set(*types))
 
     if self._revision:
       match self._query_mode:
@@ -145,7 +145,7 @@ class Transaction:
   def read_checks(
       self,
       *ids: identifier.Check | str,
-      collect: Query.Collect.Check | None = None,
+      collect: Query.CollectChecks | None = None,
       types: Sequence[str | Message | type[Message]] = ()
   ) -> Sequence[CheckView]:
     """Convenience function for reading one or more checks by ID.
@@ -164,8 +164,9 @@ class Transaction:
         iter(
             self.query_nodes(
                 common.make_query(
-                    Query.Select(nodes=idents),
+                    Query.SelectChecks(),
                     collect,
+                    node_set=idents,
                 ),
                 types=types,
             ).values())).checks

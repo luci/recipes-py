@@ -46,7 +46,7 @@ class TransactionTest(turboci_test_helper.TestBaseClass):
 
     rslt = self.read_checks(
         'hey',
-        collect=Query.Collect.Check(options=True),
+        collect=Query.CollectChecks(options=True),
         types=[demoStruct, demoTS])[0]
     self.assertEqual(len(rslt.check.options), 2)
 
@@ -87,7 +87,7 @@ class TransactionTest(turboci_test_helper.TestBaseClass):
 
     rslt = self.read_checks(
         'hey',
-        collect=Query.Collect.Check(options=True),
+        collect=Query.CollectChecks(options=True),
         types=[demoStruct2, demoTS])[0]
     # We should have both data types in Struct, TS order.
     self.assertEqual(len(rslt.check.options), 2)
@@ -127,7 +127,7 @@ class TransactionTest(turboci_test_helper.TestBaseClass):
     self.assertFalse(first_attempt[0])
 
     rslt = self.read_checks(
-        'hey', collect=Query.Collect.Check(options=True), types=[demoStruct])[0]
+        'hey', collect=Query.CollectChecks(options=True), types=[demoStruct])[0]
     # Since we only conditionally wrote, we see the kind written outside
     # the transaction but the option written by the transaction.
     self.assertEqual(rslt.check.kind, CheckKind.CHECK_KIND_ANALYSIS)

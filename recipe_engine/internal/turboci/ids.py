@@ -11,6 +11,8 @@ from google.protobuf.message import Message
 from google.protobuf.timestamp_pb2 import Timestamp
 
 from PB.turboci.graph.ids.v1 import identifier
+from PB.turboci.graph.orchestrator.v1.type_set import TypeSet
+from recipe_engine.internal.turboci.errors import InvalidArgumentException
 
 
 _TYPE_PREFIX = "type.googleapis.com/"
@@ -33,6 +35,13 @@ def type_urls(*msgs: str|type[Message]|Message) -> Generator[str]:
       yield type_url_for(msg)
 
 
+def type_set(*msgs: str|type[Message]|Message) -> TypeSet:
+  """Convenience function to turn a list of type strings/messages into a
+  TurboCI TypeSet.
+  """
+  return TypeSet(type_urls=list(type_urls(*msgs)))
+
+
 AnyIdentifier = (
     identifier.Identifier
     | identifier.WorkPlan
@@ -43,10 +52,12 @@ AnyIdentifier = (
 
   # Unsupported in the fake for now:
     | identifier.CheckEdit
+    | identifier.CheckEditReason
     | identifier.CheckEditOption
     | identifier.Stage
     | identifier.StageAttempt
     | identifier.StageEdit
+    | identifier.StageEditReason
 )
 
 
@@ -125,19 +136,26 @@ def from_id(ident: AnyIdentifier) -> str:
     case identifier.CheckEdit():
       return f'{from_id(ident.check)}:V{fmt_rev(ident.version)}'
 
+    case identifier.CheckEditReason():
+      return f'{from_id(ident.check_edit)}:R{ident.idx}'
+
     case identifier.CheckEditOption():
       return f'{from_id(ident.check_edit)}:O{ident.idx}'
 
     case identifier.Stage():
-      # NOTE: We keep the N/S prefix as part of ident.id to distinguish between
-      # WorkNode and non-WorkNode stage types.
-      return f'{from_id(ident.work_plan)}:{ident.id}'
+      pfx = '?'
+      if ident.HasField('is_worknode'):
+        pfx = 'N' if ident.is_worknode else 'S'
+      return f'{from_id(ident.work_plan)}:{pfx}{ident.id}'
 
     case identifier.StageAttempt():
       return f'{from_id(ident.stage)}:A{ident.idx}'
 
     case identifier.StageEdit():
       return f'{from_id(ident.stage)}:V{fmt_rev(ident.version)}'
+
+    case identifier.StageEditReason():
+      return f'{from_id(ident.stage_edit)}:R{ident.idx}'
 
     case _:
       raise NotImplementedError(f'from_id({type(ident)})')
@@ -149,6 +167,19 @@ def to_id(ident_str: str) -> identifier.Identifier:
   # trim are the tokens with the leading char removed
   trim = [t[1:] for t in toks]
   ret = identifier.Identifier()
+
+  def parse_is_worknode(stg: identifier.Stage):
+    '''Parses toks[1][0] for S, N, ?'''
+    match toks[1][0]:
+      case 'N':
+        stg.is_worknode = True
+      case 'S':
+        stg.is_worknode = False
+      case '?':
+        stg.ClearField('is_worknode')
+      case _:
+        raise InvalidArgumentException(
+            f"Expected token to start with S, N or ?, got {toks[1][0]!r}")
 
   def parse_vers(v: str, to: Timestamp):
     secs, nanos = v.split('/')
@@ -190,6 +221,13 @@ def to_id(ident_str: str) -> identifier.Identifier:
       ret.check_edit.check.id = trim[1]
       parse_vers(trim[2], ret.check_edit.version )
 
+    case ['L', 'C', 'V', 'R']:
+      if trim[0]:
+        ret.check_edit_reason.check_edit.check.work_plan.id = trim[0]
+      ret.check_edit_reason.check_edit.check.id = trim[1]
+      parse_vers(trim[2], ret.check_edit_reason.check_edit.version )
+      ret.check_edit_reason.idx = int(trim[3])
+
     case ['L', 'C', 'V', 'O']:
       if trim[0]:
         ret.check_edit_option.check_edit.check.work_plan.id = trim[0]
@@ -197,28 +235,33 @@ def to_id(ident_str: str) -> identifier.Identifier:
       parse_vers(trim[2], ret.check_edit_option.check_edit.version)
       ret.check_edit_option.idx = int(trim[3])
 
-    case ['L', 'N'] | ['L', 'S']:
+    case ['L', _]:
       if trim[0]:
         ret.stage.work_plan.id = trim[0]
-      # NOTE: We keep the N/S prefix as part of ident.id to distinguish between
-      # WorkNode and non-WorkNode stage types.
-      ret.stage.id = toks[1]
+      parse_is_worknode(ret.stage)
+      ret.stage.id = trim[1]
 
-    case ['L', 'N', 'A'] | ['L', 'S', 'A']:
+    case ['L', _, 'A']:
       if trim[0]:
         ret.stage_attempt.stage.work_plan.id = trim[0]
-      # NOTE: We keep the N/S prefix as part of ident.id to distinguish between
-      # WorkNode and non-WorkNode stage types.
-      ret.stage_attempt.stage.id = toks[1]
+      parse_is_worknode(ret.stage_attempt.stage)
+      ret.stage_attempt.stage.id = trim[1]
       ret.stage_attempt.idx = int(trim[2])
 
-    case ['L', 'N', 'V'] | ['L', 'S', 'V']:
+    case ['L', _, 'V']:
       if trim[0]:
         ret.stage_edit.stage.work_plan.id = trim[0]
-      # NOTE: We keep the N/S prefix as part of ident.id to distinguish between
-      # WorkNode and non-WorkNode stage types.
-      ret.stage_edit.stage.id = toks[1]
+      parse_is_worknode(ret.stage_edit.stage)
+      ret.stage_edit.stage.id = trim[1]
       parse_vers(trim[2], ret.stage_edit.version)
+
+    case ['L', _, 'V', 'R']:
+      if trim[0]:
+        ret.stage_edit_reason.stage_edit.stage.work_plan.id = trim[0]
+      ret.stage_edit_reason.stage_edit.stage.id = trim[1]
+      parse_is_worknode(ret.stage_edit_reason.stage_edit.stage)
+      parse_vers(trim[2], ret.stage_edit_reason.stage_edit.version )
+      ret.stage_edit_reason.idx = int(trim[3])
 
   if not ret.WhichOneof('type'):
     raise NotImplementedError(f'to_id: unrecognized ID {ident_str!r}')
@@ -243,6 +286,8 @@ def wrap_id(ident: AnyIdentifier) -> identifier.Identifier:
       return identifier.Identifier(check_result_datum=ident)
     case identifier.CheckEdit():
       return identifier.Identifier(check_edit=ident)
+    case identifier.CheckEditReason():
+      return identifier.Identifier(check_edit_reason=ident)
     case identifier.CheckEditOption():
       return identifier.Identifier(check_edit_option=ident)
     case identifier.Stage():
@@ -251,6 +296,8 @@ def wrap_id(ident: AnyIdentifier) -> identifier.Identifier:
       return identifier.Identifier(stage_attempt=ident)
     case identifier.StageEdit():
       return identifier.Identifier(stage_edit=ident)
+    case identifier.StageEditReason():
+      return identifier.Identifier(stage_edit_reason=ident)
     case _:
       raise NotImplementedError(f'wrap_id({type(ident)})')
 

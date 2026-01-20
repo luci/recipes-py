@@ -53,7 +53,7 @@ class TestBaseClass(test_env.RecipeEngineUnitTest):
   def read_checks(
       self,
       *ids: identifier.Check | str,
-      collect: Query.Collect.Check | None = None,
+      collect: Query.CollectChecks | None = None,
       types: Sequence[str | Message | type[Message]] = (),
   ):
     return turboci.read_checks(

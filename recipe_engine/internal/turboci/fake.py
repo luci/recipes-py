@@ -47,6 +47,7 @@ import time
 
 from collections import defaultdict
 from dataclasses import dataclass, field
+from functools import reduce
 from itertools import chain
 from threading import Lock
 from typing import Callable, cast
@@ -72,6 +73,7 @@ from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesReque
 from PB.turboci.graph.orchestrator.v1.query_nodes_response import QueryNodesResponse
 from PB.turboci.graph.orchestrator.v1.revision import Revision
 from PB.turboci.graph.orchestrator.v1.transaction_invariant import TransactionConflictFailure
+from PB.turboci.graph.orchestrator.v1.type_set import TypeSet
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 from PB.turboci.graph.orchestrator.v1.write_nodes_response import WriteNodesResponse
 from recipe_engine.internal.turboci import check_invariant
@@ -86,26 +88,35 @@ def _is_rev_newer(a: Revision, b: Revision) -> bool:
   return (a.ts.seconds, a.ts.nanos) > (b.ts.seconds, b.ts.nanos)
 
 
-def _get_option(check: Check, idx: int) -> Datum | None:
-  if idx > len(check.options):
-    return None
-  return check.options[idx-1]
+class _all_nodes_set:
+  """_all_nodes_set is a fake universal set for nodes to simplify some
+  of the query logic.
+  """
+  def __and__(self, other):
+    return other
 
+  def __rand__(self, other):
+    return other
 
-def _get_result(check: Check, result_idx: int, data_idx: int) -> Datum | None:
-  if result_idx > len(check.results):
-    return None
-  result = check.results[result_idx-1]
-  if data_idx > len(result.data):
-    return None
-  return result.data[data_idx-1]
-
-
-
-def _want_datum(type_info: QueryNodesRequest.TypeInfo, datum: Datum) -> bool:
-  if '*' in type_info.wanted:
+  def __contains__(self, other):
     return True
-  return datum.value.value.type_url in type_info.wanted
+
+
+def _type_set_to_re(ts: TypeSet) -> re.Pattern:
+  fragments: list[str] = []
+  for frag in ts.type_urls:
+    q = re.escape(frag)
+    if q.endswith(r'\*'):
+      fragments.append(q.removesuffix(r'\*')+'.*')
+    else:
+      fragments.append(q)
+
+  return re.compile(f'({")|(".join(fragments)})')
+
+
+def _want_datum(type_set: TypeSet, datum: Datum) -> bool:
+  pat = _type_set_to_re(type_set)
+  return bool(pat.match(datum.value.value.type_url))
 
 
 @dataclass
@@ -431,14 +442,12 @@ class FakeTurboCIOrchestrator(TurboCIClient):
     check = self._apply_checkwrite_locked(write, deps)
     self._update_indices_locked(ident_str, idx_snap, check)
 
-  def _ensure_check_in_view(self, graph: GraphView, check_id: identifier.Check) -> tuple[CheckView, Check] | tuple[None, None]:
-    check_str = from_id(check_id)
+  def _ensure_check_in_view(self, graph: GraphView, check_str: str) -> tuple[CheckView, Check] | tuple[None, None]:
     check = self._checks.get(check_str)
     if check is None:
       return None, None
 
-    local_id = check_id.id
-    ret = graph.checks[local_id]
+    ret = graph.checks[check_str]
     if not ret.HasField('check'):
       ret.check.CopyFrom(check)
 
@@ -453,111 +462,104 @@ class FakeTurboCIOrchestrator(TurboCIClient):
 
     return ret, check
 
+
+  def _select_checks_locked(self, basis: set[str]|_all_nodes_set, sel: Query.SelectChecks|None) -> set[str]:
+    if not sel:
+      return set()
+
+    if not sel.predicates:
+      if isinstance(basis, _all_nodes_set):
+        return set(self._checks)
+      return basis
+
+    ret: set[str] = set()
+
+    for p in sel.predicates:
+      toIntersect: list[set[str]] = []
+
+      if k := p.kind:
+        toIntersect.append(self._checks_by_kind[k] & basis)
+
+      if st := p.state:
+        toIntersect.append(self._checks_by_state[st] & basis)
+
+      if ot := p.with_option_type:
+        pat = _type_set_to_re(ot)
+        for type_url, node_ids in self._checks_by_opt_type.items():
+          if pat.match(type_url):
+            toIntersect.append(node_ids & basis)
+
+      if rdt := p.with_result_data_type:
+        pat = _type_set_to_re(rdt)
+        for type_url, node_ids in self._checks_by_result_type.items():
+          if pat.match(type_url):
+            toIntersect.append(node_ids & basis)
+
+      ret.update(reduce(lambda a, b: a&b, toIntersect))
+
+    return ret
+
+
   def _select_nodes_locked(
-      self, ret: GraphView, sel: Query.Select
+      self, graph: GraphView, q: Query
   ) -> tuple[
       set[str],
       dict[str, identifier.Identifier],
   ]:
     """Processes a Query.Select into a set of nodes_ids."""
-    toProcess: set[str] = set()
     absent: dict[str, identifier.Identifier] = {}
+    basis: _all_nodes_set | set[str]
 
-    # fake ignores .workplan - it only simulates a single workplan
+    match ns := q.WhichOneof('node_set'):
+      case 'nodes_by_id':
+        basis = set()
 
-    explicit = {from_id(ident): ident for ident in sel.nodes}
-    for k, v in explicit.items():
-      check_id_pair: tuple[str, identifier.Check] | None = None
-      update_view: Callable[[CheckView, Check], bool] = lambda view, check: True
+        implied_select_checks = False
+        # implied_select_stages = False
 
-      match v.WhichOneof('type'):
-        case 'check_option':
-          co = v.check_option
-          check_id_pair = (from_id(co.check), co.check)
+        for ident in q.nodes_by_id.nodes:
+          match typ := ident.WhichOneof('type'):
+            case 'check':
+              implied_select_checks = True
+              ident_str = from_id(ident)
+              if ident_str in self._checks:
+                basis.add(ident_str)
+              else:
+                absent[ident_str] = ident
 
-          def _add_option(view: CheckView, check: Check) -> bool:
-            option = _get_option(check, co.idx)
-            if option is None:
-              return False
-            view.check.options[co.idx-1].CopyFrom(option)
-            return True
+            case _:
+              raise NotImplementedError(
+                  "FakeTurboCIOrchestrator.QueryNodes: "
+                  f"`query.nodes_by_id` has unsupported type {typ!r}")
 
-          update_view = _add_option
-        case 'check_result_datum':
-          crd = v.check_result_datum
-          chk = crd.result.check
-          check_id_pair = (from_id(chk), chk)
+        if implied_select_checks and not q.HasField('select_checks'):
+          q.select_checks.SetInParent()
 
-          def _add_result(view: CheckView, check: Check) -> bool:
-            result = _get_result(check, crd.result.idx, crd.idx)
-            if result is None:
-              return False
-            view.check.results[crd.result.idx-1].data[crd.idx-1].CopyFrom(result)
-            return True
+      case 'nodes_in_workplan':
+        if id := q.nodes_in_workplan.id:
+          raise NotImplementedError(
+            f"FakeTurboCIOrchestrator.QueryNodes: nodes_in_workplan with non-empty id {id!r}")
 
-          update_view = _add_result
-        case 'check':
-          check_id_pair = (k, v.check)
-        case _:
-          absent[k] = v
-          continue
+        basis = _all_nodes_set()
 
-      check_str, check_id = check_id_pair
-      check_view, check = self._ensure_check_in_view(ret, check_id)
-      if check_view is not None:
-        assert check is not None
-        toProcess.add(check_str)
+      case _:
+        raise NotImplementedError(
+            f"FakeTurboCIOrchestrator.QueryNodes: `query.{ns}`")
 
-        if not update_view(check_view, check):
-          absent[k] = v
-      else:
-        absent[k] = v
-
-    for pattern in sel.check_patterns:
-      sets: list[set[str]] = []
-
-      if pattern.kind:
-        sets.append(self._checks_by_kind[pattern.kind])
-
-      if pattern.with_option_types:
-        ops_set = set()
-        for typ in pattern.with_option_types:
-          ops_set.update(self._checks_by_opt_type[typ])
-        sets.append(ops_set)
-
-      if pattern.with_result_data_types:
-        result_set = set()
-        for typ in pattern.with_result_data_types:
-          result_set.update(self._checks_by_result_type[typ])
-        sets.append(result_set)
-
-      if pattern.state:
-        sets.append(self._checks_by_state[pattern.state])
-
-      if sets:
-        base = set.intersection(*sets)
-      else:
-        base = {key for key, node in self._checks.items() if isinstance(node, Check)}
-
-      new_matches = base - toProcess
-      if pattern.id_regex:
-        pat = re.compile(r'L\d*:C' + pattern.id_regex)
-        new_matches = {
-            ident_str for ident_str in new_matches if pat.match(ident_str)
-        }
-      toProcess.update(new_matches)
-      for match in new_matches:
-        self._ensure_check_in_view(ret, to_id(match).check)
-
-    if sel.stage_patterns:
+    if q.HasField('select_stages'):
       raise NotImplementedError(
-          "FakeTurboCIOrchestrator.QueryNodes: `query.stage_patterns`")
+          "FakeTurboCIOrchestrator.QueryNodes: `query.select_stages`")
 
-    return toProcess, absent
+    selected = self._select_checks_locked(basis, q.select_checks)
+    for node_id in selected:
+      self._ensure_check_in_view(graph, node_id)
 
-  def _expand_nodes_locked(self, graph: GraphView, expand: Query.Expand,
+    return selected, absent
+
+
+  def _expand_nodes_locked(self, graph: GraphView, q: Query,
                            toCollect: set[str]):
-    """Expands the nodes in `state` according to `expand`.
+    """Expands the nodes in `toCollect` according to `q`.
 
     This entails walking 'forwards' and 'backwards' through the graph along
     dependency edges.
@@ -565,20 +567,20 @@ class FakeTurboCIOrchestrator(TurboCIClient):
     # Need separate set to avoid changing toCollect while iterating on it.
     to_add: set[str] = set()
 
-    if expand.HasField('dependencies'):
+    if q.HasField('expand_dependencies'):
       for node_ident_str in toCollect:
         matches = self._dependencies.dependencies_of(
-            node_ident_str, expand.dependencies.mode)
+            node_ident_str, q.expand_dependencies.mode)
         for match in matches:
-          self._ensure_check_in_view(graph, to_id(match).check)
+          self._ensure_check_in_view(graph, match)
         to_add.update(matches)
 
-    if expand.HasField('dependents'):
+    if q.HasField('expand_dependents'):
       for node_ident_str in toCollect:
         matches = self._dependencies.dependents_of(
-            node_ident_str, expand.dependents.mode)
+            node_ident_str, q.expand_dependents.mode)
         for match in matches:
-          self._ensure_check_in_view(graph, to_id(match).check)
+          self._ensure_check_in_view(graph, match)
         to_add.update(matches)
 
     toCollect.update(to_add)
@@ -588,16 +590,15 @@ class FakeTurboCIOrchestrator(TurboCIClient):
                             toCollect: set[str],
                             require: Revision | None):
     """Collect adds all required nodes to the GraphView."""
-    collect = query.collect
-    if collect.check.HasField('edits'):
+    if query.collect_checks.HasField('edits'):
       raise NotImplementedError(
-          "FakeTurboCIOrchestrator.QueryNodes: `query.collect.check.edits`")
-    if collect.HasField('stage'):
+          "FakeTurboCIOrchestrator.QueryNodes: `query.collect_checks.edits`")
+    if query.HasField('collect_stages'):
       raise NotImplementedError(
-          "FakeTurboCIOrchestrator.QueryNodes: `query.collect.stage`")
+          "FakeTurboCIOrchestrator.QueryNodes: `query.collect_stages`")
 
-    collect_opts = collect.check.options
-    collect_result_data = collect.check.result_data
+    collect_opts = query.collect_checks.options
+    collect_result_data = query.collect_checks.result_data
 
     for check_str in toCollect:
       check = self._checks[check_str]
@@ -608,17 +609,17 @@ class FakeTurboCIOrchestrator(TurboCIClient):
             failure_message=TransactionConflictFailure())
 
       # This must already be in graph
-      view = graph.checks[check.identifier.id]
+      view = graph.checks[check_str]
 
       if collect_opts:
         for i, opt in enumerate(check.options):
-          if _want_datum(type_info, opt):
+          if _want_datum(type_info.wanted, opt):
             view.check.options[i].CopyFrom(opt)
 
       if collect_result_data:
         for result_idx, result in enumerate(check.results):
           for data_idx, dat in enumerate(result.data):
-            if _want_datum(type_info, dat):
+            if _want_datum(type_info.wanted, dat):
               view.check.results[result_idx].data[data_idx].CopyFrom(dat)
 
 
@@ -631,7 +632,7 @@ class FakeTurboCIOrchestrator(TurboCIClient):
     if req.type_info.HasField('unknown_jsonpb'):
       raise NotImplementedError(
           "FakeTurboCIOrchestrator.QueryNodes: `type_info.unknown_jsonpb`")
-    if req.type_info.known:
+    if req.type_info.HasField('known'):
       raise NotImplementedError(
           "FakeTurboCIOrchestrator.QueryNodes: `type_info.known`")
 
@@ -639,16 +640,15 @@ class FakeTurboCIOrchestrator(TurboCIClient):
       ret = GraphView(version=self._revision, identifier=identifier.WorkPlan(id=""))
       all_absent: dict[str, identifier.Identifier] = {}
       for query in req.query:
-        toCollect, absent = self._select_nodes_locked(ret, query.select)
+        toCollect, absent = self._select_nodes_locked(ret, query)
         all_absent.update(absent)
-        if query.expand:
-          self._expand_nodes_locked(ret, query.expand, toCollect)
+        self._expand_nodes_locked(ret, query, toCollect)
         self._collect_nodes_locked(
             ret, query, req.type_info, toCollect,
             req.version.require if req.version.HasField('require') else None)
 
     return QueryNodesResponse(
-        graph={"": ret},
+        graph={"L": ret},
         absent=all_absent.values(),
     )
 

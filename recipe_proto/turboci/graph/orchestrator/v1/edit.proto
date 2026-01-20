@@ -106,6 +106,12 @@ message Edit {
   // Human and machine-readable reasons for this Edit (provided as part of
   // WriteNodes).
   message Reason {
+    // The identifier of this specific Reason.
+    optional ids.v1.Identifier identifier = 4 [
+      (turboci).id.allowed = IDENTIFIER_KIND_CHECK_EDIT_REASON,
+      (turboci).id.allowed = IDENTIFIER_KIND_STAGE_EDIT_REASON
+    ];
+
     // The security realm for this reason.
     //
     // This is set by the writer which created this Edit. In WriteNodseRequest,
@@ -136,11 +142,11 @@ message Edit {
   // realms.
   //
   // NOTE: When viewing Edits, the reader will only see the reasons for which
-  // they have read permissions (that is - two different users may see different
-  // versions of this otherwise entirely-immutable Edit).
+  // they have read permissions (that is - two different users may see
+  // different versions of this otherwise entirely-immutable Edit).
   //
-  // By convention, these should be ordered from most to least specific, so if a
-  // client only wants to display one Reason, it should be the first in this
+  // By convention, these should be ordered from most to least specific, so if
+  // a client only wants to display one Reason, it should be the first in this
   // list.
   repeated Reason reasons = 8;
 

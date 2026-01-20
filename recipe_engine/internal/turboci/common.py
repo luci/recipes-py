@@ -5,7 +5,9 @@
 
 from __future__ import annotations
 
-from typing import Literal, Protocol, Sequence, Type, TypeVar, cast
+import collections.abc
+
+from typing import Iterable, Literal, Protocol, Sequence, Type, TypeVar, cast
 
 from google.protobuf.message import Message
 
@@ -15,13 +17,15 @@ from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
 from PB.turboci.graph.orchestrator.v1.check_state import CheckState
 from PB.turboci.graph.orchestrator.v1.check_view import CheckView
 from PB.turboci.graph.orchestrator.v1.edge import Edge
+from PB.turboci.graph.orchestrator.v1.graph_view import GraphView
 from PB.turboci.graph.orchestrator.v1.query import Query
 from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesRequest
 from PB.turboci.graph.orchestrator.v1.query_nodes_response import QueryNodesResponse
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 from PB.turboci.graph.orchestrator.v1.write_nodes_response import WriteNodesResponse
 
-from .ids import collect_check_ids, type_url_for, type_urls, check_id, stage_id
+from .ids import collect_check_ids, type_url_for, type_set, check_id, stage_id
+from recipe_engine.internal.turboci import ids
 
 
 class TurboCIClient(Protocol):
@@ -224,20 +228,33 @@ def write_nodes(
   return (client or CLIENT).WriteNodes(req)
 
 
+# NodesInWorkplan is a QueryNodeSet which selects from all nodes in the
+# current workplan.
+NodesInWorkplan = identifier.WorkPlan()
+
+
+QueryNodeSet = (
+  identifier.WorkPlan|
+  Query.NodesByID|
+  Query.NodesAcrossWorkPlans|
+  Iterable[ids.AnyIdentifier]
+)
+
 QuerySelectAtom = (
-  Query.Select|
-  Query.Select.WorkPlanConstraint|
-  Query.Select.CheckPattern|
-  Query.Select.StagePattern
+  Query.SelectChecks|
+  Query.SelectChecks.Predicate|
+  Query.SelectStages|
+  Query.SelectStages.Predicate
 )
 
 QueryExpandAtom = (
-    Query.Expand | Query.Expand.Dependencies | Query.Expand.Dependents)
+  Query.ExpandDependencies|
+  Query.ExpandDependents
+)
 
 QueryCollectAtom = (
-  Query.Collect|
-  Query.Collect.Check|
-  Query.Collect.Stage
+  Query.CollectChecks|
+  Query.CollectStages
 )
 
 QueryAtoms = (
@@ -247,7 +264,7 @@ QueryAtoms = (
 )
 
 
-def make_query(*atoms: QueryAtoms | None) -> Query:
+def make_query(*atoms: QueryAtoms | None, node_set: QueryNodeSet = NodesInWorkplan) -> Query:
   """Convenience function to make a Query message from atomic bits.
 
   None atoms are skipped.
@@ -257,35 +274,45 @@ def make_query(*atoms: QueryAtoms | None) -> Query:
   Repeated fields are appended (e.g. CheckPattern and StagePattern).
   """
   ret = Query()
+  match node_set:
+    case identifier.WorkPlan():
+      ret.nodes_in_workplan.CopyFrom(node_set)
+    case Query.NodesByID():
+      ret.nodes_by_id.CopyFrom(node_set)
+    case Query.NodesAcrossWorkPlans():
+      ret.nodes_across_workplans.CopyFrom(node_set)
+    case collections.abc.Iterable():
+      ret.nodes_by_id.nodes.extend(
+          ids.wrap_id(x) for x in node_set
+      )
+    case _:
+      raise TypeError(f'make_query: unknown node_set {type(node_set)}')
+
   for atom in atoms:
     if atom is None:
       continue
     match atom:
-    # QuerySelectAtom
-      case Query.Select():
-        ret.select.MergeFrom(atom)
-      case Query.Select.WorkPlanConstraint():
-        ret.select.workplan.MergeFrom(atom)
-      case Query.Select.CheckPattern():
-        ret.select.check_patterns.append(atom)
-      case Query.Select.StagePattern():
-        ret.select.stage_patterns.append(atom)
+      # QuerySelectAtom
+      case Query.SelectChecks():
+        ret.select_checks.MergeFrom(atom)
+      case Query.SelectChecks.Predicate():
+        ret.select_checks.predicates.append(atom)
+      case Query.SelectStages():
+        ret.select_stages.MergeFrom(atom)
+      case Query.SelectStages.Predicate():
+        ret.select_stages.predicates.append(atom)
 
       # QueryExpandAtom
-      case Query.Expand():
-        ret.expand.MergeFrom(atom)
-      case Query.Expand.Dependencies():
-        ret.expand.dependencies.MergeFrom(atom)
-      case Query.Expand.Dependents():
-        ret.expand.dependents.MergeFrom(atom)
+      case Query.ExpandDependencies():
+        ret.expand_dependencies.MergeFrom(atom)
+      case Query.ExpandDependents():
+        ret.expand_dependents.MergeFrom(atom)
 
       # QueryCollectAtom
-      case Query.Collect():
-        ret.collect.MergeFrom(atom)
-      case Query.Collect.Check():
-        ret.collect.check.MergeFrom(atom)
-      case Query.Collect.Stage():
-        ret.collect.stage.MergeFrom(atom)
+      case Query.CollectChecks():
+        ret.collect_checks.MergeFrom(atom)
+      case Query.CollectStages():
+        ret.collect_stages.MergeFrom(atom)
 
       case _:
         raise TypeError(f'make_query: unknown atom {type(atom)}')
@@ -304,12 +331,12 @@ def query_nodes(
       QueryNodesRequest(
           version=version,
           query=queries,
-          type_info=QueryNodesRequest.TypeInfo(wanted=type_urls(*types)),
+          type_info=QueryNodesRequest.TypeInfo(wanted=type_set(*types)),
       ))
 
 
 def read_checks(*ids: identifier.Check|str,
-                collect: Query.Collect.Check|None = None,
+                collect: Query.CollectChecks|None = None,
                 types: Sequence[str|Message|type[Message]] = (),
                 client: TurboCIClient|None = None) -> Sequence[CheckView]:
   """Convenience function for reading one or more checks by ID.
@@ -327,15 +354,25 @@ def read_checks(*ids: identifier.Check|str,
       iter(
           query_nodes(
               make_query(
-                  Query.Select(nodes=idents),
                   collect,
+                  node_set=idents,
               ),
               types=types,
               client=client).graph.values())).checks
-  return [checks[ident.check.id] for ident in idents]
+  return list(checks.values())
 
 
 MsgT = TypeVar('MsgT', bound=Message)
+
+
+def get_check_view(graph: GraphView, check_id: str) -> CheckView:
+  """Finds and returns the CheckView for the check whose id is `check_id`.
+
+  If this check is not found, returns an empty CheckView."""
+  for cv in graph.checks.values():
+    if cv.check.identifier.id == check_id:
+      return cv
+  return CheckView()
 
 
 def get_option(msg: Type[MsgT], check: Check) -> MsgT | None:

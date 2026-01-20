@@ -649,12 +649,12 @@ def post_process(test_failures: Outcome.Results, raw_expectations,
 
   if test_data.assert_turboci_graph_hooks:
     graph_state = turboci.query_nodes(turboci.make_query(
-        Query.Select.CheckPattern(),
-        Query.Collect.Check(
+        Query.SelectChecks(),
+        Query.CollectChecks(
             options=True,
             result_data=True,
         ),
-    ), types=('*',)).graph[""]
+    ), types=('*',)).graph["L"]
     for hook, args, kwargs, context in test_data.assert_turboci_graph_hooks:
       graph_state_copy = copy.deepcopy(graph_state)
       assert_ = Checker(context, graph_state_copy)

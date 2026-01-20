@@ -39,6 +39,8 @@ message Identifier {
     CheckEdit check_edit = 6;
     // Option data for an edit to a Check.
     CheckEditOption check_edit_option = 7;
+    // A reason for an edit to a Check.
+    CheckEditReason check_edit_reason = 11;
 
     // A Stage within a WorkPlan.
     Stage stage = 8;
@@ -46,6 +48,8 @@ message Identifier {
     StageAttempt stage_attempt = 9;
     // An edit to a Stage.
     StageEdit stage_edit = 10;
+    // A reason for an edit to a Stage.
+    StageEditReason stage_edit_reason = 12;
   }
 }
 
@@ -135,7 +139,7 @@ message CheckResultDatum {
 
 // Identifies a CheckEdit within a WorkPlan.
 //
-// Serialized as "<check>:E<version>".
+// Serialized as "<check>:V<version>".
 //
 // E.g.
 // "L<check.work_plan.id>:C<check.id>:V<version.seconds>/<version.nanos>"
@@ -157,12 +161,26 @@ message CheckEdit {
 // This is separate from `CheckEdit` because it may reside in a different
 // realm than the CheckEdit itself.
 message CheckEditOption {
-  // The check that this edit belongs to.
+  // The check edit that this option belongs to.
   optional CheckEdit check_edit = 1;
 
   // The 1-based index of this datum within the check.options list.
   //
   // This is 1-based to distinguish it from 0/unset (which is invalid).
+  optional int32 idx = 2;
+}
+
+// Identifies a Reason within a CheckEdit.
+//
+// Serialized as "<edit>:R<idx>".
+//
+// E.g.
+// "L<check.work_plan.id>:C<check.id>:V<version.seconds>/<version.nanos>:R1"
+message CheckEditReason {
+  // The check edit that this reason belongs to.
+  optional CheckEdit check_edit = 1;
+
+  // The 1-based index of this Reason in the edit.
   optional int32 idx = 2;
 }
 
@@ -219,7 +237,7 @@ message StageAttempt {
 
 // Identifies a Stage Edit within a WorkPlan.
 //
-// Serialized as "<stage>:E<version>".
+// Serialized as "<stage>:V<version>".
 //
 // E.g.
 // "L<stage.work_plan.id>:<stage.id>:V<version.seconds>/<version.nanos>"
@@ -229,4 +247,18 @@ message StageEdit {
 
   // The version of the Stage at the time this edit was made.
   optional google.protobuf.Timestamp version = 2;
+}
+
+// Identifies a Reason within a StageEdit.
+//
+// Serialized as "<edit>:R<idx>".
+//
+// E.g.
+// "L<stage.work_plan.id>:<stage.id>:V<version.seconds>/<version.nanos>:R1"
+message StageEditReason {
+  // The stage edit that this reason belongs to.
+  optional StageEdit stage_edit = 1;
+
+  // The 1-based index of this Reason in the edit.
+  optional int32 idx = 2;
 }

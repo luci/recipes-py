@@ -39,6 +39,13 @@ class _id_test_case:
   kind: str
   ident: AnyIdentifier
   ident_str: str
+  note: str = ""
+
+  @property
+  def name(self):
+    if self.note:
+      return f'{self.kind} ({self.note})'
+    return self.kind
 
 _test_cases: list[_id_test_case] = [
   _id_test_case(
@@ -98,6 +105,19 @@ _test_cases: list[_id_test_case] = [
       "L1234567:Ccool/beans & stuff:V12345/7890"),
 
   _id_test_case(
+      "check_edit_reason",
+      identifier.CheckEditReason(
+          check_edit=identifier.CheckEdit(
+              check=identifier.Check(
+                  work_plan=identifier.WorkPlan(id="1234567"),
+                  id="cool/beans & stuff"),
+              version=_testTS,
+          ),
+          idx=3,
+      ),
+      "L1234567:Ccool/beans & stuff:V12345/7890:R3"),
+
+  _id_test_case(
       "check_edit_option",
       identifier.CheckEditOption(
           check_edit=identifier.CheckEdit(
@@ -111,66 +131,97 @@ _test_cases: list[_id_test_case] = [
 
   _id_test_case(
       "stage",
-      identifier.Stage(  # worknode
+      identifier.Stage(
           work_plan=identifier.WorkPlan(id="1234567"),
-          id="N938215823",
+          is_worknode=True,
+          id="938215823",
       ),
-      "L1234567:N938215823"),
+      "L1234567:N938215823",
+      note="worknode",
+  ),
 
   _id_test_case(
       "stage",
-      identifier.Stage(  # native
+      identifier.Stage(
           work_plan=identifier.WorkPlan(id="1234567"),
-          id="Ssome stuff that is awesome",
+          is_worknode=False,
+          id="some stuff that is awesome",
       ),
-      "L1234567:Ssome stuff that is awesome"),
+      "L1234567:Ssome stuff that is awesome",
+  ),
 
   _id_test_case(
       "stage_attempt",
-      identifier.StageAttempt(  # worknode
+      identifier.StageAttempt(
           stage=identifier.Stage(
             work_plan=identifier.WorkPlan(id="1234567"),
-            id="N938215823"),
+            is_worknode=True,
+            id="938215823"),
           idx=3,
       ),
-      "L1234567:N938215823:A3"),
+      "L1234567:N938215823:A3",
+      note="worknode",
+  ),
 
   _id_test_case(
       "stage_attempt",
-      identifier.StageAttempt(  # native
+      identifier.StageAttempt(
           stage=identifier.Stage(
             work_plan=identifier.WorkPlan(id="1234567"),
-            id="Ssome stuff that is awesome"),
+            is_worknode=False,
+            id="some stuff that is awesome"),
           idx=3,
       ),
-      "L1234567:Ssome stuff that is awesome:A3"),
+      "L1234567:Ssome stuff that is awesome:A3",
+  ),
 
   _id_test_case(
       "stage_edit",
-      identifier.StageEdit(  # worknode
+      identifier.StageEdit(
           stage=identifier.Stage(
             work_plan=identifier.WorkPlan(id="1234567"),
-            id="N938215823"),
+            is_worknode=True,
+            id="938215823"),
           version=_testTS,
       ),
-      "L1234567:N938215823:V12345/7890"),
+      "L1234567:N938215823:V12345/7890",
+      note="worknode",
+  ),
 
   _id_test_case(
       "stage_edit",
-      identifier.StageEdit(  # native
+      identifier.StageEdit(
           stage=identifier.Stage(
             work_plan=identifier.WorkPlan(id="1234567"),
-            id="Ssome stuff that is awesome"),
+            is_worknode=False,
+            id="some stuff that is awesome"),
           version=_testTS,
       ),
-      "L1234567:Ssome stuff that is awesome:V12345/7890"),
+      "L1234567:Ssome stuff that is awesome:V12345/7890",
+  ),
+
+
+  _id_test_case(
+      "stage_edit_reason",
+      identifier.StageEditReason(
+          stage_edit=identifier.StageEdit(
+              stage=identifier.Stage(
+                work_plan=identifier.WorkPlan(id="1234567"),
+                is_worknode=False,
+                id="some stuff that is awesome"),
+              version=_testTS,
+          ),
+          idx=3,
+      ),
+      "L1234567:Ssome stuff that is awesome:V12345/7890:R3"),
+
 ]
 
 
 class ToFromIDTest(test_env.RecipeEngineUnitTest):
   def test_ok(self):
     for tc in _test_cases:
-      with self.subTest(kind=tc.kind):
+      with self.subTest(kind=tc.name):
         self.assertEqual(from_id(tc.ident), tc.ident_str)
         self.assertEqual(from_id(wrap_id(tc.ident)), tc.ident_str)
         self.assertEqual(to_id(tc.ident_str), wrap_id(tc.ident))
@@ -179,7 +230,7 @@ class ToFromIDTest(test_env.RecipeEngineUnitTest):
 class TestWrap(test_env.RecipeEngineUnitTest):
   def test_wrap_id(self):
     for tc in _test_cases:
-      with self.subTest(kind=tc.kind):
+      with self.subTest(kind=tc.name):
         self.assertIsInstance(wrap_id(tc.ident), identifier.Identifier)
         self.assertEqual(wrap_id(tc.ident).WhichOneof('type'), tc.kind)
 
@@ -251,7 +302,6 @@ class TestTypeURLs(test_env.RecipeEngineUnitTest):
   def test_error(self):
     with self.assertRaisesRegex(ValueError, "must start with"):
       list(type_urls("fictional.package.Messsage"))
-
 
 if __name__ == '__main__':
   test_env.main()

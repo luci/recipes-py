@@ -14,43 +14,23 @@ option java_multiple_files = true;
 
 // MethodOptions are method options which apply to RPC method definitions.
 message MethodOptions {
-  // Which permissions this RPC may check.
+  // Which permissions this RPC may check, and under what conditions.
   //
   // This is purely for documentation purposes.
-  //
-  // Example:
-  //   rpc Foo(FooRequest) returns (FooResponse) {
-  //     option (turboci_rpc) = {
-  //       permission: {
-  //         name: "turboci.checks.update"
-  //         in: IDENTIFIER_KIND_CHECK
-  //         for: "Check edits"
-  //         for: "Check option edits"
-  //       }
-  //       permission: {
-  //         name: "turboci.checks.globalUpdate"
-  //         in: IDENTIFIER_KIND_WORK_PLAN
-  //         for: "Calls without StageAttemptToken"
-  //       }
-  //     };
-  //   }
-  //
-  // This indicates that the RPC requires the permission
-  // "turboci.checks.update" for all check and check option edits, and ALSO
-  // requires "turboci.checks.globalUpdate" for all calls to this RPC without
-  // a StageAttemptToken.
-  //
-  // You should also refer to the documentation of `Foo` for any additional
-  // details of when these permissions are checked.
   message Permission {
-    // The name of the permission.
-    optional string name = 1;
+    // The name of the permission checked for operations in the same
+    // workplan as the token.
+    optional string internal = 1;
 
-    // The node whose realm will be checked.
-    optional ids.v1.IdentifierKind in = 2;
+    // The name of the permission checked for operations outside the
+    // workplan of the token, or for operations with no token at all.
+    optional string external = 2;
+
+    // The node(s) whose realm will be checked.
+    repeated ids.v1.IdentifierKind in = 3;
 
     // Short description of when this permission is checked.
-    repeated string for = 3;
+    repeated string for = 4;
   }
 
   // Permissions that this RPC will check, including the realms and/or the

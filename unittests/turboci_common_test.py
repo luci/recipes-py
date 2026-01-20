@@ -16,7 +16,7 @@ import turboci_test_helper
 
 from google.protobuf.message import Message
 
-from recipe_engine.internal.turboci.ids import type_urls, wrap_id
+from recipe_engine.internal.turboci.ids import type_urls
 
 from google.protobuf.struct_pb2 import Struct, Value as StructValue
 from google.protobuf.proto_json import parse
@@ -28,6 +28,7 @@ from PB.turboci.graph.orchestrator.v1.edge import Edge
 from PB.turboci.graph.orchestrator.v1.query import Query
 from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesRequest
 from PB.turboci.graph.orchestrator.v1.revision import Revision
+from PB.turboci.graph.orchestrator.v1.type_set import TypeSet
 from PB.turboci.graph.orchestrator.v1.value import Value
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 
@@ -217,10 +218,10 @@ class TestWriteNodes(test_env.RecipeEngineUnitTest):
   def test_query_nodes(self):
     query_nodes(
         make_query(
-            Query.Select(nodes=[wrap_id(check_id("bob"))]),
+            node_set=[check_id("bob")],
         ), make_query(
-            Query.Select.CheckPattern(id_regex='nerp'),
-            Query.Collect.Check(options=True),
+            Query.SelectChecks.Predicate(kind='CHECK_KIND_TEST'),
+            Query.CollectChecks(options=True),
         ),
         version=QueryNodesRequest.VersionRestriction(
             require=Revision(ts=Timestamp(seconds=1234, nanos=5678)),
@@ -228,20 +229,23 @@ class TestWriteNodes(test_env.RecipeEngineUnitTest):
 
     self.m.QueryNodes.assert_called_once_with(
         QueryNodesRequest(
-            type_info=QueryNodesRequest.TypeInfo(wanted=[]),
+            type_info=QueryNodesRequest.TypeInfo(wanted=TypeSet()),
             query=[
                 Query(
-                    select=Query.Select(
-                        nodes=[
-                            identifier.Identifier(
-                                check=identifier.Check(id="bob"))
-                        ],)),
+                  nodes_by_id=Query.NodesByID(nodes=[
+                      identifier.Identifier(
+                          check=identifier.Check(id="bob"))
+                  ]),
+                ),
                 Query(
-                    select=Query.Select(check_patterns=[
-                        Query.Select.CheckPattern(id_regex="nerp")
+                    nodes_in_workplan=identifier.WorkPlan(),
+                    select_checks=Query.SelectChecks(predicates=[
+                        Query.SelectChecks.Predicate(kind='CHECK_KIND_TEST'),
                     ]),
-                    collect=Query.Collect(
-                        check=Query.Collect.Check(options=True,))),
+                    collect_checks=Query.CollectChecks(
+                      options=True,
+                    ),
+                ),
             ],
             version=QueryNodesRequest.VersionRestriction(
                 require=Revision(ts=Timestamp(seconds=1234, nanos=5678)),),
@@ -261,7 +265,7 @@ class TestGetOptionsResults(turboci_test_helper.TestBaseClass):
 
     cv = self.read_checks(
         'a',
-        collect=Query.Collect.Check(options=True),
+        collect=Query.CollectChecks(options=True),
         types=list(type_urls(Struct)))[0]
 
     self.assertEqual(get_option(Struct, cv.check), {
@@ -280,7 +284,7 @@ class TestGetOptionsResults(turboci_test_helper.TestBaseClass):
 
     cv = self.read_checks(
         'a',
-        collect=Query.Collect.Check(result_data=True),
+        collect=Query.CollectChecks(result_data=True),
         types=list(type_urls(Struct)))[0]
 
     self.assertEqual(get_results(Struct, cv.check), [{

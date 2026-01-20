@@ -19,6 +19,18 @@ message Actor {
   // Placeholder type for when the creator of the Workplan makes this edit.
   message WorkplanCreator {}
 
+  // External indicates that the edit came from some Actor using an External
+  // permission variant (no write token used).
+  message External {
+    // TBD: Add a field here for the external account identity. Note that
+    // doing this properly will require nuance to distinguish between e.g.
+    // 1st party service accounts, 1st party accounts and 3rd party accounts.
+    //
+    // This requires extra privacy and permission apparatus, so for now the
+    // external account information is not maintained (but, also, we don't
+    // expect to hand out external writer permissions widely).
+  }
+
   // The kind of editor which edited this node.
   oneof kind {
     // The StageAttempt which generated this Edit.
@@ -32,7 +44,7 @@ message Actor {
     // The Creator of the Workplan generated this Edit.
     WorkplanCreator workplan_creator = 3;
 
-    // TBD: general service account editor if/when WriteNodes allows
-    // external-to-the-workflow writes.
+    // An account not represented by one of the other Actor kinds.
+    External external = 4;
   }
 }
