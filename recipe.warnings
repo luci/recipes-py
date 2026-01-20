@@ -71,6 +71,6 @@ warning {
   description: "Please switch from properties configured as"
   description: "`PROPERTIES = {...}` to properties configured with protobufs"
   description: " (`PROPERTIES = InputProperties`)"
-  deadline: "2026-02-01"
+  deadline: "2026-04-01"
   google_issue { id: 457721604 }
 }
