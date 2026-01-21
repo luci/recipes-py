@@ -5208,10 +5208,10 @@ This recipe tests the buildbucket.set_output_gitiles_commit function.
 Generates response Runs for a test.
 ### *recipes* / [cipd:examples/full](/recipe_modules/cipd/examples/full.py)
 
-[DEPS](/recipe_modules/cipd/examples/full.py#11): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cipd/examples/full.py#16): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cipd/examples/full.py#39)(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files, install_mode, refs, tags, metadata, max_threads):**
+&mdash; **def [RunSteps](/recipe_modules/cipd/examples/full.py#49)(api, props: full_pb.InputProperties):**
 ### *recipes* / [cipd:tests/platform](/recipe_modules/cipd/tests/platform.py)
 
 [DEPS](/recipe_modules/cipd/tests/platform.py#11): [cipd](#recipe_modules-cipd), [platform](#recipe_modules-platform), [step](#recipe_modules-step)
