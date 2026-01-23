@@ -5,10 +5,8 @@
 """Tests for query_failure_rate."""
 from __future__ import annotations
 
+from PB.recipe_modules.recipe_engine.luci_analysis.tests import query_failure_rate_test as query_failure_rate_test_pb
 from recipe_engine import post_process
-from recipe_engine.config import Dict
-from recipe_engine.config import List
-from recipe_engine.recipe_api import Property
 
 DEPS = [
     'luci_analysis',
@@ -18,14 +16,26 @@ DEPS = [
     'recipe_engine/raw_io',
 ]
 
-PROPERTIES = {
-    'input_list': Property(kind=list),
+INLINE_PROPERTIES_PROTO = """
+message TestVariant {
+  string test_id = 1 [json_name = "testId"];
+  string variant_hash = 2 [json_name = "variantHash"];
 }
 
+message InputProperties {
+  repeated TestVariant input_list = 1;
+}
+"""
 
-def RunSteps(api, input_list):
-  suite_to_failure_rate_per_suite = api.luci_analysis.query_failure_rate(
-      input_list)
+PROPERTIES = query_failure_rate_test_pb.InputProperties
+
+
+def RunSteps(api, props: query_failure_rate_test_pb.InputProperties):
+  input_list = [
+      {'testId': i.test_id, 'variantHash': i.variant_hash}
+      for i in props.input_list
+  ]
+  api.luci_analysis.query_failure_rate(input_list)
 
 
 def GenTests(api):
@@ -56,28 +66,30 @@ def GenTests(api):
   yield api.test(
       'basic',
       api.properties(
-          input_list=[
-              {
-                  'testId': 'ninja://gpu:suite_1/test_one',
-                  'variantHash': '88d12dbe8971eab5',
-              },
-              {
-                  'testId': 'ninja://gpu:suite_2/test_one',
-                  'variantHash': '88d12dbe8971fheu',
-              },
-              {
-                  'testId': 'ninja://gpu:suite_3/test_one',
-                  'variantHash': '98d12dbe8971eab5',
-              },
-              {
-                  'testId': 'ninja://gpu:suite_3/test_two',
-                  'variantHash': '88d12dbe8971eid5',
-              },
-              {
-                  'testId': 'ninja://gpu:suite_3/test_three',
-                  'variantHash': '88d12dbe8971eid5',
-              },
-          ],),
+          query_failure_rate_test_pb.InputProperties(
+              input_list=[
+                  query_failure_rate_test_pb.TestVariant(
+                      test_id='ninja://gpu:suite_1/test_one',
+                      variant_hash='88d12dbe8971eab5',
+                  ),
+                  query_failure_rate_test_pb.TestVariant(
+                      test_id='ninja://gpu:suite_2/test_one',
+                      variant_hash='88d12dbe8971fheu',
+                  ),
+                  query_failure_rate_test_pb.TestVariant(
+                      test_id='ninja://gpu:suite_3/test_one',
+                      variant_hash='98d12dbe8971eab5',
+                  ),
+                  query_failure_rate_test_pb.TestVariant(
+                      test_id='ninja://gpu:suite_3/test_two',
+                      variant_hash='88d12dbe8971eid5',
+                  ),
+                  query_failure_rate_test_pb.TestVariant(
+                      test_id='ninja://gpu:suite_3/test_three',
+                      variant_hash='88d12dbe8971eid5',
+                  ),
+              ],
+          )),
       api.luci_analysis.query_failure_rate_results(query_failure_rate_results),
       api.post_process(
           post_process.LogContains,
@@ -98,12 +110,14 @@ def GenTests(api):
   yield api.test(
       'empty_response',
       api.properties(
-          input_list=[
-              {
-                  'testId': 'ninja://gpu:suite_1/test_one',
-                  'variantHash': '88d12dbe8971eab5',
-              },
-          ],),
+          query_failure_rate_test_pb.InputProperties(
+              input_list=[
+                  query_failure_rate_test_pb.TestVariant(
+                      test_id='ninja://gpu:suite_1/test_one',
+                      variant_hash='88d12dbe8971eab5',
+                  ),
+              ],
+          )),
       api.step_data(
           'query LUCI Analysis for failure rates.rpc call',
           stdout=api.raw_io.output_text(api.json.dumps({})),

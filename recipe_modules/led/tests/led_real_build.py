@@ -4,16 +4,9 @@
 
 from __future__ import annotations
 
-import re
-
+from PB.recipe_modules.recipe_engine.led.properties import InputProperties as LedInputProperties
+from PB.recipe_modules.recipe_engine.led.tests import led_real_build as led_real_build_pb
 from recipe_engine import post_process
-from recipe_engine.post_process import StepCommandContains
-from recipe_engine.recipe_api import Property
-
-from PB.go.chromium.org.luci.buildbucket.proto import common
-from PB.go.chromium.org.luci.led.job import job
-from PB.go.chromium.org.luci.swarming.proto.api_v2 import swarming
-from PB.recipe_modules.recipe_engine.led.properties import InputProperties
 
 DEPS = [
     'buildbucket',
@@ -23,12 +16,16 @@ DEPS = [
     'step',
 ]
 
-PROPERTIES = {
-    'get_cmd': Property(default=None, kind=list),
+INLINE_PROPERTIES_PROTO = """
+message InputProperties {
+  repeated string get_cmd = 1;
 }
+"""
 
-def RunSteps(api, get_cmd):
-  intermediate = api.led(*get_cmd)
+PROPERTIES = led_real_build_pb.InputProperties
+
+def RunSteps(api, props: led_real_build_pb.InputProperties):
+  intermediate = api.led(*props.get_cmd)
 
   if api.led.launched_by_led:
     assert api.led.shadowed_bucket
@@ -52,8 +49,8 @@ def GenTests(api):
     return api.properties(**{'$recipe_engine/led': input_properties})
 
   yield (api.test('get-builder') +
-         api.properties(get_cmd=['get-builder', 'chromium/try:linux-rel']) +
-         led_props(InputProperties(shadowed_bucket='bucket')) +
+         api.properties(led_real_build_pb.InputProperties(get_cmd=['get-builder', 'chromium/try:linux-rel'])) +
+         led_props(LedInputProperties(shadowed_bucket='bucket')) +
          api.post_process(post_process.StepCommandContains, 'led get-builder',
                           ['led', 'get-builder', 'chromium/try:linux-rel']) +
          api.post_process(post_process.StepCommandContains, 'led launch',
@@ -61,8 +58,8 @@ def GenTests(api):
          api.post_process(post_process.DropExpectation))
 
   yield (api.test('get-build') +
-         api.properties(get_cmd=['get-build', '87654321']) +
-         led_props(InputProperties(shadowed_bucket='bucket')) +
+         api.properties(led_real_build_pb.InputProperties(get_cmd=['get-build', '87654321'])) +
+         led_props(LedInputProperties(shadowed_bucket='bucket')) +
          api.post_process(post_process.StepCommandContains, 'led get-build',
                           ['led', 'get-build', '87654321']) +
          api.post_process(post_process.StepCommandContains, 'led launch',

@@ -4,20 +4,23 @@
 
 from __future__ import annotations
 
-from recipe_engine import recipe_api
+from PB.recipe_modules.recipe_engine.step.tests import timeout as timeout_pb
 
 DEPS = [
   'properties',
   'step',
 ]
 
-
-PROPERTIES = {
-  'timeout': recipe_api.Property(default=0, kind=int),
+INLINE_PROPERTIES_PROTO = """
+message InputProperties {
+  int32 timeout = 1;
 }
+"""
+
+PROPERTIES = timeout_pb.InputProperties
 
 
-def RunSteps(api, timeout):
+def RunSteps(api, props: timeout_pb.InputProperties):
   # Timeout causes the recipe engine to raise an exception if your step takes
   # longer to run than you allow. Units are seconds.
   try:
@@ -38,7 +41,7 @@ def RunSteps(api, timeout):
 def GenTests(api):
   yield (
       api.test('timeout') +
-      api.properties(timeout=1) +
+      api.properties(timeout_pb.InputProperties(timeout=1)) +
       api.step_data('timeout', times_out_after=20) +
       api.step_data('timeout (2)', times_out_after=20)
     )

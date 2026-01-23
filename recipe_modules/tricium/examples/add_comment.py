@@ -6,17 +6,19 @@ from __future__ import annotations
 
 import json
 
-from recipe_engine import post_process
-from recipe_engine.recipe_api import Property
-
-from PB.tricium.data import Data
+from PB.recipe_modules.recipe_engine.tricium.examples import add_comment as add_comment_pb
 from PB.go.chromium.org.luci.common.proto.findings import findings as findings_pb
+from recipe_engine import post_process
 
 DEPS = ['buildbucket', 'proto', 'properties', 'tricium']
 
-PROPERTIES = {
-    'trigger_type_error': Property(kind=bool, default=False),
+INLINE_PROPERTIES_PROTO = """
+message InputProperties {
+  bool trigger_type_error = 1;
 }
+"""
+
+PROPERTIES = add_comment_pb.InputProperties
 
 COMMENT_1 = {
     'category': 'test category',
@@ -114,9 +116,9 @@ def CreateExpectedFinding(api, input_comment):
   return expected
 
 
-def RunSteps(api, trigger_type_error):
+def RunSteps(api, props: add_comment_pb.InputProperties):
   filename = 'path/to/file'
-  if trigger_type_error:
+  if props.trigger_type_error:
     COMMENT_2['start_line'] = str(COMMENT_2['start_line'])
 
   api.tricium.add_comment(**COMMENT_1)
@@ -144,7 +146,7 @@ def RunSteps(api, trigger_type_error):
 def GenTests(api):
   yield api.test('basic', api.buildbucket.try_build(project='chrome'))
   yield (api.test('type_error', api.buildbucket.try_build(project='chrome')) +
-         api.properties(trigger_type_error=True) +
+         api.properties(add_comment_pb.InputProperties(trigger_type_error=True)) +
          api.expect_exception('TypeError') +
          api.post_process(post_process.DropExpectation))
   yield (api.test('no_gerrit_change') +

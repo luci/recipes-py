@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from recipe_engine.recipe_api import Property
+from PB.recipe_modules.recipe_engine.service_account.examples import full as full_pb
 
 DEPS = [
   'platform',
@@ -14,27 +14,31 @@ DEPS = [
   'path',
 ]
 
-PROPERTIES = {
-  'key_path': Property(),
-  'scopes': Property(),
+INLINE_PROPERTIES_PROTO = """
+message InputProperties {
+  string key_path = 1;
+  repeated string scopes = 2;
 }
+"""
+
+PROPERTIES = full_pb.InputProperties
 
 
-def RunSteps(api, key_path, scopes):
-  if key_path:
-    account = api.service_account.from_credentials_json(key_path)
-    assert account.key_path == key_path
+def RunSteps(api, props: full_pb.InputProperties):
+  if props.key_path:
+    account = api.service_account.from_credentials_json(props.key_path)
+    assert account.key_path == props.key_path
   else:
     account = api.service_account.default()
-  account.get_access_token(scopes)
+  account.get_access_token(props.scopes)
   account.get_id_token("http://www.example.com")
 
 
 def GenTests(api):
-  def props(key_path=None, scopes=None):
-    return api.properties.generic(
+  def props(key_path='', scopes=None):
+    return api.properties(full_pb.InputProperties(
         key_path=key_path,
-        scopes=scopes)
+        scopes=scopes))
 
   yield api.test(
       'default',
@@ -51,7 +55,7 @@ def GenTests(api):
   yield api.test(
       'json_key',
       api.platform('linux', 64),
-      props(key_path=api.path.start_dir / 'key_name.json'),
+      props(key_path='[START_DIR]/key_name.json'),
   )
 
   yield api.test(

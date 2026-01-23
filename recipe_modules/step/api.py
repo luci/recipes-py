@@ -24,6 +24,7 @@ from recipe_engine.recipe_test_api import StepTestData
 from recipe_engine.util import Placeholder, returns_placeholder
 from recipe_engine.recipe_utils import check_type, check_list_type
 
+from PB.recipe_modules.recipe_engine.step import properties as properties_pb
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 
@@ -31,9 +32,9 @@ from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 class StepApi(recipe_api.RecipeApi):
   step_client = recipe_api.RequireClient('step')
 
-  def __init__(self, step_properties, **kwargs):
+  def __init__(self, step_properties: properties_pb.InputProperties, **kwargs):
     super().__init__(**kwargs)
-    self._prefix_path = step_properties.get('prefix_path', [])
+    self._prefix_path = list(step_properties.prefix_path)
 
   # Valid step status values.
   EXCEPTION = 'EXCEPTION'

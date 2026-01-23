@@ -4,7 +4,8 @@
 
 from __future__ import annotations
 
-from recipe_engine import recipe_api, post_process
+from PB.recipe_modules.recipe_engine.step.examples import full as full_pb
+from recipe_engine import post_process
 
 DEPS = [
     'buildbucket',
@@ -15,22 +16,25 @@ DEPS = [
     'step',
 ]
 
-PROPERTIES = {
-    'access_invalid_data': recipe_api.Property(default=False),
-    'access_deep_invalid_data': recipe_api.Property(default=False),
-    'assign_extra_junk': recipe_api.Property(default=False),
-    'timeout': recipe_api.Property(default=0, kind=int),
+INLINE_PROPERTIES_PROTO = """
+message InputProperties {
+  bool access_invalid_data = 1;
+  bool access_deep_invalid_data = 2;
+  bool assign_extra_junk = 3;
+  int32 timeout = 4;
 }
+"""
+
+PROPERTIES = full_pb.InputProperties
 
 
-def RunSteps(api, access_invalid_data, access_deep_invalid_data,
-             assign_extra_junk, timeout):
-  if timeout:
+def RunSteps(api, props: full_pb.InputProperties):
+  if props.timeout:
     # Timeout causes the recipe engine to raise an exception if your step takes
     # longer to run than you allow. Units are seconds.
-    if timeout == 1:
+    if props.timeout == 1:
       api.step('timeout', ['sleep', '20'], timeout=1)
-    elif timeout == 2:
+    elif props.timeout == 2:
       try:
         api.step('caught timeout', ['sleep', '20'], timeout=1)
       except api.step.StepFailure:
@@ -123,17 +127,17 @@ def RunSteps(api, access_invalid_data, access_deep_invalid_data,
   api.step('application', ['echo', 'main', 'application'],
            wrapper=['python3', '-c', 'import sys; print(sys.argv)'])
 
-  if access_invalid_data:
+  if props.access_invalid_data:
     result = api.step('no-op', ['echo', 'I', 'do', 'nothing'])
     # Trying to access non-existent attributes on the result should raise.
     _ = result.json.output
 
-  if access_deep_invalid_data:
+  if props.access_deep_invalid_data:
     result = api.step('no-op', ['echo', api.json.output()])
     # Trying to access deep, non-existent attributes on the result should raise.
     _ = result.json.outpurt
 
-  if assign_extra_junk:
+  if props.assign_extra_junk:
     result = api.step('no-op', ['echo', 'I', 'do', 'nothing'])
     # Assigning extra junk to the result raises ValueError.
     result.json = "hi"
@@ -177,7 +181,7 @@ def GenTests(api):
 
   yield api.test(
       'invalid_access',
-      api.properties(access_invalid_data=True),
+      api.properties(full_pb.InputProperties(access_invalid_data=True)),
       api.expect_exception('AttributeError'),
       api.post_process(post_process.StatusException),
       api.post_process(
@@ -188,7 +192,7 @@ def GenTests(api):
 
   yield api.test(
       'deep_invalid_access',
-      api.properties(access_deep_invalid_data=True),
+      api.properties(full_pb.InputProperties(access_deep_invalid_data=True)),
       api.expect_exception('AttributeError'),
       api.post_process(post_process.StatusException),
       api.post_process(
@@ -199,7 +203,7 @@ def GenTests(api):
 
   yield api.test(
       'extra_junk',
-      api.properties(assign_extra_junk=True),
+      api.properties(full_pb.InputProperties(assign_extra_junk=True)),
       api.expect_exception('ValueError'),
       api.post_process(post_process.StatusException),
       api.post_process(
@@ -215,14 +219,14 @@ def GenTests(api):
 
   yield api.test(
       'timeout',
-      api.properties(timeout=1),
+      api.properties(full_pb.InputProperties(timeout=1)),
       api.step_data('timeout', times_out_after=20),
       status='FAILURE',
   )
 
   yield api.test(
       'catch_timeout',
-      api.properties(timeout=2),
+      api.properties(full_pb.InputProperties(timeout=2)),
       api.step_data('caught timeout', times_out_after=20),
   )
 

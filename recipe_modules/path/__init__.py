@@ -4,23 +4,9 @@
 
 from __future__ import annotations
 
-from recipe_engine.recipe_api import Property
-from recipe_engine.config import ConfigGroup, Single
+from PB.recipe_modules.recipe_engine.path import properties as properties_pb
 
-PROPERTIES = {
-  '$recipe_engine/path': Property(
-    help='Properties specifically for the recipe_engine path module.',
-    param_name='path_properties',
-    kind=ConfigGroup(
-      # The absolute path to the temporary directory that the recipe should use.
-      temp_dir=Single(str),
-      # The absolute path to the cache directory that the recipe should use.
-      cache_dir=Single(str),
-      # The absolute path to the cleanup directory that the recipe should use.
-      cleanup_dir=Single(str),
-    ), default={},
-  )
-}
+PROPERTIES = properties_pb.InputProperties
 
 DEPS = [
     'recipe_engine/context',

@@ -4,14 +4,18 @@
 
 from __future__ import annotations
 
+from PB.recipe_modules.recipe_engine.tricium.tests import add_comment_validation as add_comment_validation_pb
 from recipe_engine import post_process
-from recipe_engine.recipe_api import Property
 
 DEPS = ['buildbucket', 'tricium', 'properties']
 
-PROPERTIES = {
-    'case': Property(kind=str),
+INLINE_PROPERTIES_PROTO = """
+message InputProperties {
+  string case = 1;
 }
+"""
+
+PROPERTIES = add_comment_validation_pb.InputProperties
 
 _BAD_CASES = {
     'bad start_line':
@@ -40,19 +44,19 @@ _OK_CASES = {
     'several entire lines': dict(start_line=3, end_line=5),
 }
 
-def RunSteps(api, case):
+def RunSteps(api, props: add_comment_validation_pb.InputProperties):
   # Set valid default.
   kwargs = dict(
       category='test',
       message='msg',
       path='path/to/file',
   )
-  if case in _BAD_CASES:
-    kwargs.update(_BAD_CASES[case])
-  elif case in _OK_CASES:
-    kwargs.update(_OK_CASES[case])
+  if props.case in _BAD_CASES:
+    kwargs.update(_BAD_CASES[props.case])
+  elif props.case in _OK_CASES:
+    kwargs.update(_OK_CASES[props.case])
   else:  # pragma: nocover
-    assert 'unknown case', case
+    assert 'unknown case', props.case
   api.tricium.add_comment(**kwargs)
 
   # ensure that it adds objects to both
@@ -62,11 +66,15 @@ def RunSteps(api, case):
 
 def GenTests(api):
   for name in _BAD_CASES:
-    yield api.test(name, api.properties(case=name),
-                   api.expect_exception(ValueError.__name__),
-                   api.post_process(post_process.DropExpectation),
-                   api.buildbucket.try_build(project='chrome'))
+    yield api.test(
+        name,
+        api.properties(add_comment_validation_pb.InputProperties(case=name)),
+        api.expect_exception(ValueError.__name__),
+        api.post_process(post_process.DropExpectation),
+        api.buildbucket.try_build(project='chrome'))
   for name in _OK_CASES:
-    yield api.test(name, api.properties(case=name),
-                   api.post_process(post_process.DropExpectation),
-                   api.buildbucket.try_build(project='chrome'))
+    yield api.test(
+        name,
+        api.properties(add_comment_validation_pb.InputProperties(case=name)),
+        api.post_process(post_process.DropExpectation),
+        api.buildbucket.try_build(project='chrome'))

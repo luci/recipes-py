@@ -1,0 +1,15 @@
+// Copyright 2026 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+package recipe_modules.recipe_engine.path;
+
+message InputProperties {
+  // The absolute path to the temporary directory that the recipe should use.
+  string temp_dir = 1;
+  // The absolute path to the cache directory that the recipe should use.
+  string cache_dir = 2;
+  // The absolute path to the cleanup directory that the recipe should use.
+  string cleanup_dir = 3;
+}

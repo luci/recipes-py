@@ -2980,7 +2980,7 @@ Args:
   * cache (Path) - a path to put Node.js caches under.
 ### *recipe_modules* / [path](/recipe_modules/path)
 
-[DEPS](/recipe_modules/path/__init__.py#25): [context](#recipe_modules-context), [warning](#recipe_modules-warning)
+[DEPS](/recipe_modules/path/__init__.py#11): [context](#recipe_modules-context), [warning](#recipe_modules-warning)
 
 
 All functions related to manipulating paths in recipes.
@@ -3010,9 +3010,9 @@ collection of anchor points. The built-in anchor points are:
     should avoid 'checkout', and instead just explicitly pass paths around. This
     path may be removed in the future.
 
-#### **class [PathApi](/recipe_modules/path/api.py#329)([RecipeApi](/recipe_engine/recipe_api.py#439)):**
+#### **class [PathApi](/recipe_modules/path/api.py#330)([RecipeApi](/recipe_engine/recipe_api.py#439)):**
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED')**<br>&mdash; **def [\_\_contains\_\_](/recipe_modules/path/api.py#578)(self, pathname: NamedBasePathsType):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED')**<br>&mdash; **def [\_\_contains\_\_](/recipe_modules/path/api.py#579)(self, pathname: NamedBasePathsType):**
 
 This method is DEPRECATED.
 
@@ -3027,7 +3027,7 @@ In the past, the base paths that this module knew about were extensible via
 a very complicated 'config' system. All of that has been removed, but this
 method remains for now.
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED')**<br>&mdash; **def [abs\_to\_path](/recipe_modules/path/api.py#516)(self, abs_string_path: str):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED')**<br>&mdash; **def [abs\_to\_path](/recipe_modules/path/api.py#517)(self, abs_string_path: str):**
 
 Converts an absolute path string `abs_string_path` to a real Path
 object, using the most appropriate known base path.
@@ -3055,22 +3055,22 @@ api.path.abs_to_path("/basis/dir/for/recipe/some/other/dir") ->
 Raises an ValueError if the preconditions are not met, otherwise returns the
 Path object.
 
-&mdash; **def [abspath](/recipe_modules/path/api.py#733)(self, path: (config_types.Path | str)):**
+&mdash; **def [abspath](/recipe_modules/path/api.py#734)(self, path: (config_types.Path | str)):**
 
 Equivalent to os.abspath.
 
-&mdash; **def [assert\_absolute](/recipe_modules/path/api.py#454)(self, path: (config_types.Path | str)):**
+&mdash; **def [assert\_absolute](/recipe_modules/path/api.py#455)(self, path: (config_types.Path | str)):**
 
 Raises AssertionError if the given path is not an absolute path.
 
 Args:
   * path - The path to check.
 
-&mdash; **def [basename](/recipe_modules/path/api.py#737)(self, path: (config_types.Path | str)):**
+&mdash; **def [basename](/recipe_modules/path/api.py#738)(self, path: (config_types.Path | str)):**
 
 Equivalent to os.path.basename.
 
-&emsp; **@property**<br>&mdash; **def [cache\_dir](/recipe_modules/path/api.py#667)(self):**
+&emsp; **@property**<br>&mdash; **def [cache\_dir](/recipe_modules/path/api.py#668)(self):**
 
 This directory is provided by whatever's running the recipe.
 
@@ -3093,7 +3093,7 @@ As the base Path.
 Note that directories created under here /may/ be evicted in between runs of
 the recipe (i.e. to relieve disk pressure).
 
-&mdash; **def [cast\_to\_path](/recipe_modules/path/api.py#701)(self, strpath: str):**
+&mdash; **def [cast\_to\_path](/recipe_modules/path/api.py#702)(self, strpath: str):**
 
 This returns a Path for strpath which can be used anywhere a Path is
 required.
@@ -3106,20 +3106,20 @@ This means that if strpath is a subdirectory of a known path (say,
 cache_dir), the returned Path will be based on that known path. This is
 important for test compatibility.
 
-&emsp; **@checkout_dir.setter**<br>&mdash; **def [checkout\_dir](/recipe_modules/path/api.py#607)(self, path: config_types.Path):**
+&emsp; **@checkout_dir.setter**<br>&mdash; **def [checkout\_dir](/recipe_modules/path/api.py#608)(self, path: config_types.Path):**
 
 Sets the global variable `api.path.checkout_dir` to the given path.
 
     
 
-&emsp; **@property**<br>&mdash; **def [cleanup\_dir](/recipe_modules/path/api.py#692)(self):**
+&emsp; **@property**<br>&mdash; **def [cleanup\_dir](/recipe_modules/path/api.py#693)(self):**
 
 This directory is guaranteed to be cleaned up (eventually) after the
 execution of this recipe.
 
 This directory is guaranteed to be empty when the recipe starts.
 
-&mdash; **def [dirname](/recipe_modules/path/api.py#741)(self, path: (config_types.Path | str)):**
+&mdash; **def [dirname](/recipe_modules/path/api.py#742)(self, path: (config_types.Path | str)):**
 
 For "foo/bar/baz", return "foo/bar".
 
@@ -3132,53 +3132,53 @@ Args:
 
 Returns dirname of path
 
-&mdash; **def [exists](/recipe_modules/path/api.py#862)(self, path: ((config_types.Path | str) | util.InputPlaceholder)):**
+&mdash; **def [exists](/recipe_modules/path/api.py#863)(self, path: ((config_types.Path | str) | util.InputPlaceholder)):**
 
 Equivalent to os.path.exists.
 
 The presence or absence of paths can be mocked during the execution of the
 recipe by using the mock_* methods.
 
-&mdash; **def [expanduser](/recipe_modules/path/api.py#836)(self, path: str):**
+&mdash; **def [expanduser](/recipe_modules/path/api.py#837)(self, path: str):**
 
 Mostly equivalent to os.path.expanduser.
 
 This only handles "~", not "~user".
 
-&mdash; **def [expandvars](/recipe_modules/path/api.py#849)(self, path: str):**
+&mdash; **def [expandvars](/recipe_modules/path/api.py#850)(self, path: str):**
 
 Mostly equivalent to os.path.expandvars, with some limitations.
 
 This is limited to variables set in the context module. Also, variables
 must be of the form '${VARNAME}', not just '$VARNAME'.
 
-&emsp; **@property**<br>&mdash; **def [home\_dir](/recipe_modules/path/api.py#649)(self):**
+&emsp; **@property**<br>&mdash; **def [home\_dir](/recipe_modules/path/api.py#650)(self):**
 
 This is the path to the current $HOME directory.
 
 It is generally recommended to avoid using this, because it is an indicator
 that the recipe is non-hermetic.
 
-&mdash; **def [initialize](/recipe_modules/path/api.py#429)(self):**
+&mdash; **def [initialize](/recipe_modules/path/api.py#430)(self):**
 
 This is called by the recipe engine immediately after __init__(), but
 with `self._paths_client` initialized.
 
-&mdash; **def [isdir](/recipe_modules/path/api.py#875)(self, path: ((config_types.Path | str) | util.InputPlaceholder)):**
+&mdash; **def [isdir](/recipe_modules/path/api.py#876)(self, path: ((config_types.Path | str) | util.InputPlaceholder)):**
 
 Equivalent to os.path.isdir.
 
 The presence or absence of paths can be mocked during the execution of the
 recipe by using the mock_* methods.
 
-&mdash; **def [isfile](/recipe_modules/path/api.py#888)(self, path: ((config_types.Path | str) | util.InputPlaceholder)):**
+&mdash; **def [isfile](/recipe_modules/path/api.py#889)(self, path: ((config_types.Path | str) | util.InputPlaceholder)):**
 
 Equivalent to os.path.isfile.
 
 The presence or absence of paths can be mocked during the execution of the
 recipe by using the mock_* methods.
 
-&mdash; **def [join](/recipe_modules/path/api.py#760)(self, path, \*paths):**
+&mdash; **def [join](/recipe_modules/path/api.py#761)(self, path, \*paths):**
 
 Equivalent to os.path.join.
 
@@ -3192,7 +3192,7 @@ If your path is rooted in one of the path module's root paths (i.e. those
 retrieved with api.path.something), then you can convert from a string path
 back to a Path with the `abs_to_path` method.
 
-&mdash; **def [mkdtemp](/recipe_modules/path/api.py#463)(self, prefix: str=tempfile.template):**
+&mdash; **def [mkdtemp](/recipe_modules/path/api.py#464)(self, prefix: str=tempfile.template):**
 
 Makes a new temporary directory, returns Path to it.
 
@@ -3201,7 +3201,7 @@ Args:
 
 Returns a Path to the new directory.
 
-&mdash; **def [mkstemp](/recipe_modules/path/api.py#488)(self, prefix: str=tempfile.template):**
+&mdash; **def [mkstemp](/recipe_modules/path/api.py#489)(self, prefix: str=tempfile.template):**
 
 Makes a new temporary file, returns Path to it.
 
@@ -3216,23 +3216,23 @@ need the full security properties of mkstemp, please outsource this to e.g.
 either a resource script of your recipe module or recipe.
 ***
 
-&mdash; **def [mock\_add\_directory](/recipe_modules/path/api.py#912)(self, path: config_types.Path):**
+&mdash; **def [mock\_add\_directory](/recipe_modules/path/api.py#913)(self, path: config_types.Path):**
 
 For testing purposes, mark that file |path| exists.
 
-&mdash; **def [mock\_add\_file](/recipe_modules/path/api.py#908)(self, path: config_types.Path):**
+&mdash; **def [mock\_add\_file](/recipe_modules/path/api.py#909)(self, path: config_types.Path):**
 
 For testing purposes, mark that file |path| exists.
 
-&mdash; **def [mock\_add\_paths](/recipe_modules/path/api.py#901)(self, path: config_types.Path, kind: FileType=FileType.FILE):**
+&mdash; **def [mock\_add\_paths](/recipe_modules/path/api.py#902)(self, path: config_types.Path, kind: FileType=FileType.FILE):**
 
 For testing purposes, mark that |path| exists.
 
-&mdash; **def [mock\_copy\_paths](/recipe_modules/path/api.py#916)(self, source: config_types.Path, dest: config_types.Path):**
+&mdash; **def [mock\_copy\_paths](/recipe_modules/path/api.py#917)(self, source: config_types.Path, dest: config_types.Path):**
 
 For testing purposes, copy |source| to |dest|.
 
-&mdash; **def [mock\_remove\_paths](/recipe_modules/path/api.py#923)(self, path: config_types.Path, should_remove: Callable[([str], bool)]=(lambda p: True)):**
+&mdash; **def [mock\_remove\_paths](/recipe_modules/path/api.py#924)(self, path: config_types.Path, should_remove: Callable[([str], bool)]=(lambda p: True)):**
 
 For testing purposes, mark that |path| doesn't exist.
 
@@ -3241,34 +3241,34 @@ Args:
   should_remove: Called for every candidate path. Return True to remove this
     path.
 
-&mdash; **def [normpath](/recipe_modules/path/api.py#832)(self, path):**
+&mdash; **def [normpath](/recipe_modules/path/api.py#833)(self, path):**
 
 Equivalent to os.path.normpath.
 
-&emsp; **@property**<br>&mdash; **def [pardir](/recipe_modules/path/api.py#718)(self):**
+&emsp; **@property**<br>&mdash; **def [pardir](/recipe_modules/path/api.py#719)(self):**
 
 Equivalent to os.pardir.
 
-&emsp; **@property**<br>&mdash; **def [pathsep](/recipe_modules/path/api.py#728)(self):**
+&emsp; **@property**<br>&mdash; **def [pathsep](/recipe_modules/path/api.py#729)(self):**
 
 Equivalent to os.pathsep.
 
-&mdash; **def [realpath](/recipe_modules/path/api.py#820)(self, path: (config_types.Path | str)):**
+&mdash; **def [realpath](/recipe_modules/path/api.py#821)(self, path: (config_types.Path | str)):**
 
 Equivalent to os.path.realpath.
 
-&mdash; **def [relpath](/recipe_modules/path/api.py#824)(self, path, start):**
+&mdash; **def [relpath](/recipe_modules/path/api.py#825)(self, path, start):**
 
 Roughly equivalent to os.path.relpath.
 
 Unlike os.path.relpath, `start` is _required_. If you want the 'current
 directory', use the `recipe_engine/context` module's `cwd` property.
 
-&emsp; **@property**<br>&mdash; **def [sep](/recipe_modules/path/api.py#723)(self):**
+&emsp; **@property**<br>&mdash; **def [sep](/recipe_modules/path/api.py#724)(self):**
 
 Equivalent to os.sep.
 
-&mdash; **def [split](/recipe_modules/path/api.py#775)(self, path):**
+&mdash; **def [split](/recipe_modules/path/api.py#776)(self, path):**
 
 For "foo/bar/baz", return ("foo/bar", "baz").
 
@@ -3282,7 +3282,7 @@ Args:
 
 Returns (dirname(path), basename(path)).
 
-&mdash; **def [splitext](/recipe_modules/path/api.py#796)(self, path: (config_types.Path | str)):**
+&mdash; **def [splitext](/recipe_modules/path/api.py#797)(self, path: (config_types.Path | str)):**
 
 For "foo/bar.baz", return ("foo/bar", ".baz").
 
@@ -3297,7 +3297,7 @@ Args:
 Returns:
   (name, extension_including_dot).
 
-&emsp; **@property**<br>&mdash; **def [start\_dir](/recipe_modules/path/api.py#638)(self):**
+&emsp; **@property**<br>&mdash; **def [start\_dir](/recipe_modules/path/api.py#639)(self):**
 
 This is the directory that the recipe started in. it's similar to `cwd`,
 except that it's constant for the duration of the entire program.
@@ -3306,7 +3306,7 @@ If you want to modify the current working directory for a set of steps,
 See the 'recipe_engine/context' module which allows modifying the cwd safely
 via a context manager.
 
-&emsp; **@property**<br>&mdash; **def [tmp\_base\_dir](/recipe_modules/path/api.py#658)(self):**
+&emsp; **@property**<br>&mdash; **def [tmp\_base\_dir](/recipe_modules/path/api.py#659)(self):**
 
 This directory is the system-configured temp dir.
 
@@ -4129,14 +4129,14 @@ Args:
   key_path: (str|Path) object pointing to a service account JSON key.
 ### *recipe_modules* / [step](/recipe_modules/step)
 
-[DEPS](/recipe_modules/step/__init__.py#10): [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [proto](#recipe_modules-proto), [warning](#recipe_modules-warning)
+[DEPS](/recipe_modules/step/__init__.py#11): [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [proto](#recipe_modules-proto), [warning](#recipe_modules-warning)
 
 
 Step is the primary API for running steps (external programs, etc.)
 
-#### **class [StepApi](/recipe_modules/step/api.py#31)([RecipeApi](/recipe_engine/recipe_api.py#439)):**
+#### **class [StepApi](/recipe_modules/step/api.py#32)([RecipeApi](/recipe_engine/recipe_api.py#439)):**
 
-&emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#150)(self):**
+&emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#151)(self):**
 
 InfraFailure is a subclass of StepFailure, and will translate to a purple
 build.
@@ -4144,15 +4144,15 @@ build.
 This exception is raised from steps which are marked as `infra_step`s when
 they fail.
 
-&emsp; **@property**<br>&mdash; **def [MAX\_CPU](/recipe_modules/step/api.py#122)(self):**
+&emsp; **@property**<br>&mdash; **def [MAX\_CPU](/recipe_modules/step/api.py#123)(self):**
 
 Returns the maximum number of millicores this system has.
 
-&emsp; **@property**<br>&mdash; **def [MAX\_MEMORY](/recipe_modules/step/api.py#127)(self):**
+&emsp; **@property**<br>&mdash; **def [MAX\_MEMORY](/recipe_modules/step/api.py#128)(self):**
 
 Returns the maximum amount of memory on the system in MB.
 
-&mdash; **def [ResourceCost](/recipe_modules/step/api.py#55)(self, cpu=500, memory=50, disk=0, net=0):**
+&mdash; **def [ResourceCost](/recipe_modules/step/api.py#56)(self, cpu=500, memory=50, disk=0, net=0):**
 
 A structure defining the resources that a given step may need.
 
@@ -4211,7 +4211,7 @@ Returns:
   that passing `None` to api.step for the cost kwarg is equivalent to
   `ResourceCost(0, 0, 0, 0)`.
 
-&emsp; **@property**<br>&mdash; **def [StepFailure](/recipe_modules/step/api.py#132)(self):**
+&emsp; **@property**<br>&mdash; **def [StepFailure](/recipe_modules/step/api.py#133)(self):**
 
 This is the base Exception class for all step failures.
 
@@ -4221,12 +4221,12 @@ Usage:
   * `raise api.StepFailure("some reason")`
   * `except api.StepFailure:`
 
-&emsp; **@property**<br>&mdash; **def [StepWarning](/recipe_modules/step/api.py#144)(self):**
+&emsp; **@property**<br>&mdash; **def [StepWarning](/recipe_modules/step/api.py#145)(self):**
 
 StepWarning is a subclass of StepFailure, and will translate to a yellow
 build.
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#631)(self, name: str, cmd: (list[(((int | str) | Placeholder) | Path)] | None), ok_ret: ((Sequence[int] | Literal['any']) | Literal['all'])=(0,), infra_step: bool=False, raise_on_failure: bool=True, wrapper: Sequence[(((int | str) | Placeholder) | Path)]=(), timeout: ((int | timedelta) | None)=None, stdout: (Placeholder | None)=None, stderr: (Placeholder | None)=None, stdin: (Placeholder | None)=None, step_test_data: (Callable[([], StepTestData)] | None)=None, cost: _ResourceCost=_ResourceCost()):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#632)(self, name: str, cmd: (list[(((int | str) | Placeholder) | Path)] | None), ok_ret: ((Sequence[int] | Literal['any']) | Literal['all'])=(0,), infra_step: bool=False, raise_on_failure: bool=True, wrapper: Sequence[(((int | str) | Placeholder) | Path)]=(), timeout: ((int | timedelta) | None)=None, stdout: (Placeholder | None)=None, stderr: (Placeholder | None)=None, stdin: (Placeholder | None)=None, step_test_data: (Callable[([], StepTestData)] | None)=None, cost: _ResourceCost=_ResourceCost()):**
 
 Runs a step (subprocess).
 
@@ -4285,7 +4285,7 @@ Args:
 
 Returns a `step_data.StepData` for the running step.
 
-&emsp; **@property**<br>&mdash; **def [active\_result](/recipe_modules/step/api.py#160)(self):**
+&emsp; **@property**<br>&mdash; **def [active\_result](/recipe_modules/step/api.py#161)(self):**
 
 The currently active (open) result from the last step that was run. This
 is a `step_data.StepData` object.
@@ -4316,7 +4316,7 @@ finally:
     api.step.active_result.presentation.step_text = new_step_text
 ```
 
-&mdash; **def [close\_non\_nest\_step](/recipe_modules/step/api.py#193)(self):**
+&mdash; **def [close\_non\_nest\_step](/recipe_modules/step/api.py#194)(self):**
 
 Call this to explicitly terminate the currently open non-nest step.
 
@@ -4325,7 +4325,7 @@ context (if any).
 
 No-op if there's no currently active non-nest step.
 
-&mdash; **def [empty](/recipe_modules/step/api.py#303)(self, name, status='SUCCESS', step_text=None, log_text=None, log_name='stdout', raise_on_failure=True):**
+&mdash; **def [empty](/recipe_modules/step/api.py#304)(self, name, status='SUCCESS', step_text=None, log_text=None, log_name='stdout', raise_on_failure=True):**
 
 Runs an "empty" step (one without any command).
 
@@ -4347,7 +4347,7 @@ Args:
 
 Returns step_data.StepData.
 
-&mdash; **def [funcall](/recipe_modules/step/api.py#746)(self, name, func, \*args, \*\*kwargs):**
+&mdash; **def [funcall](/recipe_modules/step/api.py#747)(self, name, func, \*args, \*\*kwargs):**
 
 Call a function and store the results and exception in a step.
 
@@ -4355,7 +4355,7 @@ Sample usage:
 
 >>> api.step.funcall(None, some_function, 4, json=True)
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [nest](/recipe_modules/step/api.py#203)(self, name, status='worst'):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [nest](/recipe_modules/step/api.py#204)(self, name, status='worst'):**
 
 Nest allows you to nest steps hierarchically on the build UI.
 
@@ -4417,7 +4417,7 @@ Args:
 Yields a StepPresentation for this dummy step, which you may update as you
 please.
 
-&mdash; **def [raise\_on\_failure](/recipe_modules/step/api.py#455)(self, result, status_override=None):**
+&mdash; **def [raise\_on\_failure](/recipe_modules/step/api.py#456)(self, result, status_override=None):**
 
 Raise an appropriate exception if a step is not successful.
 
@@ -4439,7 +4439,7 @@ Raises:
   * StepWarning if the step's status is WARNING
   * InfraFailure if the step's status is EXCEPTION or CANCELED
 
-&mdash; **def [sub\_build](/recipe_modules/step/api.py#494)(self, name: str, cmd: (((int | str) | Placeholder) | Path), build: build_pb2.Build, raise_on_failure: bool=True, output_path: ((str | Path) | None)=None, legacy_global_namespace=False, merge_output_properties_to: (None | list[str])=None, timeout=None, step_test_data=None, cost=_ResourceCost()):**
+&mdash; **def [sub\_build](/recipe_modules/step/api.py#495)(self, name: str, cmd: (((int | str) | Placeholder) | Path), build: build_pb2.Build, raise_on_failure: bool=True, output_path: ((str | Path) | None)=None, legacy_global_namespace=False, merge_output_properties_to: (None | list[str])=None, timeout=None, step_test_data=None, cost=_ResourceCost()):**
 
 Launch a sub-build by invoking a LUCI executable. All steps in the
 sub-build will appear as child steps of this step (Merge Step).
@@ -5811,7 +5811,7 @@ This tests metadata features of the Future object.
 [DEPS](/recipe_modules/generator_script/examples/full.py#10): [generator\_script](#recipe_modules-generator_script), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/generator_script/examples/full.py#22)(api, script_name):**
+&mdash; **def [RunSteps](/recipe_modules/generator_script/examples/full.py#26)(api, props: full_pb.InputProperties):**
 ### *recipes* / [golang:examples/full](/recipe_modules/golang/examples/full.py)
 
 [DEPS](/recipe_modules/golang/examples/full.py#7): [golang](#recipe_modules-golang), [platform](#recipe_modules-platform), [step](#recipe_modules-step)
@@ -5840,16 +5840,16 @@ Test to assert that sort_keys=False preserves insertion order.
 &mdash; **def [RunSteps](/recipe_modules/json/tests/unsorted.py#19)(api):**
 ### *recipes* / [led:tests/full](/recipe_modules/led/tests/full.py)
 
-[DEPS](/recipe_modules/led/tests/full.py#17): [buildbucket](#recipe_modules-buildbucket), [led](#recipe_modules-led), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/led/tests/full.py#16): [buildbucket](#recipe_modules-buildbucket), [led](#recipe_modules-led), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/led/tests/full.py#33)(api, get_cmd, child_properties, sloppy_child_properties, do_bogus_edits):**
+&mdash; **def [RunSteps](/recipe_modules/led/tests/full.py#36)(api, props: full_pb.InputProperties):**
 ### *recipes* / [led:tests/led\_real\_build](/recipe_modules/led/tests/led_real_build.py)
 
-[DEPS](/recipe_modules/led/tests/led_real_build.py#18): [buildbucket](#recipe_modules-buildbucket), [led](#recipe_modules-led), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/led/tests/led_real_build.py#11): [buildbucket](#recipe_modules-buildbucket), [led](#recipe_modules-led), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/led/tests/led_real_build.py#30)(api, get_cmd):**
+&mdash; **def [RunSteps](/recipe_modules/led/tests/led_real_build.py#27)(api, props: led_real_build_pb.InputProperties):**
 ### *recipes* / [led:tests/no\_exist](/recipe_modules/led/tests/no_exist.py)
 
 [DEPS](/recipe_modules/led/tests/no_exist.py#7): [led](#recipe_modules-led), [step](#recipe_modules-step)
@@ -5876,20 +5876,20 @@ Test to assert that sort_keys=False preserves insertion order.
 &mdash; **def [RunSteps](/recipe_modules/legacy_annotation/examples/full.py#20)(api):**
 ### *recipes* / [luci\_analysis:tests/query\_failure\_rate\_test](/recipe_modules/luci_analysis/tests/query_failure_rate_test.py)
 
-[DEPS](/recipe_modules/luci_analysis/tests/query_failure_rate_test.py#13): [assertions](#recipe_modules-assertions), [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io)
+[DEPS](/recipe_modules/luci_analysis/tests/query_failure_rate_test.py#11): [assertions](#recipe_modules-assertions), [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io)
 
 
 Tests for query_failure_rate.
 
-&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/query_failure_rate_test.py#26)(api, input_list):**
+&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/query_failure_rate_test.py#33)(api, props: query_failure_rate_test_pb.InputProperties):**
 ### *recipes* / [luci\_analysis:tests/query\_stability\_test](/recipe_modules/luci_analysis/tests/query_stability_test.py)
 
-[DEPS](/recipe_modules/luci_analysis/tests/query_stability_test.py#11): [assertions](#recipe_modules-assertions), [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io)
+[DEPS](/recipe_modules/luci_analysis/tests/query_stability_test.py#13): [assertions](#recipe_modules-assertions), [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io)
 
 
 Tests for query_stability.
 
-&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/query_stability_test.py#24)(api, input_list):**
+&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/query_stability_test.py#60)(api, props: query_stability_test_pb.InputProperties):**
 ### *recipes* / [luci\_analysis:tests/test\_generate\_analysis](/recipe_modules/luci_analysis/tests/test_generate_analysis.py)
 
 [DEPS](/recipe_modules/luci_analysis/tests/test_generate_analysis.py#9): [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
@@ -5943,7 +5943,7 @@ Tests for query_variants.
 [DEPS](/recipe_modules/luci_config/tests/full.py#10): [buildbucket](#recipe_modules-buildbucket), [luci\_config](#recipe_modules-luci_config), [path](#recipe_modules-path)
 
 
-&mdash; **def [RunSteps](/recipe_modules/luci_config/tests/full.py#19)(api):**
+&mdash; **def [RunSteps](/recipe_modules/luci_config/tests/full.py#17)(api):**
 ### *recipes* / [milo:examples/full](/recipe_modules/milo/examples/full.py)
 
 [DEPS](/recipe_modules/milo/examples/full.py#9): [buildbucket](#recipe_modules-buildbucket), [milo](#recipe_modules-milo)
@@ -6074,10 +6074,10 @@ Test to cover legacy aspects of PathTestApi.
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query.py#24)(api):**
 ### *recipes* / [resultdb:examples/query\_new\_test\_variants](/recipe_modules/resultdb/examples/query_new_test_variants.py)
 
-[DEPS](/recipe_modules/resultdb/examples/query_new_test_variants.py#12): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/query_new_test_variants.py#11): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_new_test_variants.py#23)(api, invocation, baseline):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_new_test_variants.py#26)(api, props: query_new_test_variants_pb.InputProperties):**
 ### *recipes* / [resultdb:examples/query\_test\_result\_statistics](/recipe_modules/resultdb/examples/query_test_result_statistics.py)
 
 [DEPS](/recipe_modules/resultdb/examples/query_test_result_statistics.py#12): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb)
@@ -6086,16 +6086,16 @@ Test to cover legacy aspects of PathTestApi.
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_test_result_statistics.py#18)(api):**
 ### *recipes* / [resultdb:examples/query\_test\_results](/recipe_modules/resultdb/examples/query_test_results.py)
 
-[DEPS](/recipe_modules/resultdb/examples/query_test_results.py#12): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/query_test_results.py#11): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_test_results.py#22)(api, invocation, test_id_regexp):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_test_results.py#25)(api, props: query_test_results_pb.InputProperties):**
 ### *recipes* / [resultdb:examples/query\_test\_variants](/recipe_modules/resultdb/examples/query_test_variants.py)
 
-[DEPS](/recipe_modules/resultdb/examples/query_test_variants.py#12): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/query_test_variants.py#11): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_test_variants.py#24)(api, invocation, test_variant_status, field_mask_paths):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_test_variants.py#27)(api, props: query_test_variants_pb.InputProperties):**
 ### *recipes* / [resultdb:examples/resultsink](/recipe_modules/resultdb/examples/resultsink.py)
 
 [DEPS](/recipe_modules/resultdb/examples/resultsink.py#10): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
@@ -6119,7 +6119,7 @@ Test to cover legacy aspects of PathTestApi.
 [DEPS](/recipe_modules/resultdb/examples/update_invocation.py#15): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/update_invocation.py#27)(api, invocation, gitiles_commit, gerrit_changes):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/update_invocation.py#44)(api, props: update_invocation_pb.InputProperties):**
 ### *recipes* / [resultdb:examples/upload\_invocation\_artifacts](/recipe_modules/resultdb/examples/upload_invocation_artifacts.py)
 
 [DEPS](/recipe_modules/resultdb/examples/upload_invocation_artifacts.py#12): [resultdb](#recipe_modules-resultdb)
@@ -6161,13 +6161,13 @@ This file is a recipe demonstrating reading triggers of the current build.
 [DEPS](/recipe_modules/service_account/examples/full.py#9): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [service\_account](#recipe_modules-service_account)
 
 
-&mdash; **def [RunSteps](/recipe_modules/service_account/examples/full.py#23)(api, key_path, scopes):**
+&mdash; **def [RunSteps](/recipe_modules/service_account/examples/full.py#27)(api, props: full_pb.InputProperties):**
 ### *recipes* / [step:examples/full](/recipe_modules/step/examples/full.py)
 
-[DEPS](/recipe_modules/step/examples/full.py#9): [buildbucket](#recipe_modules-buildbucket), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/examples/full.py#10): [buildbucket](#recipe_modules-buildbucket), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/examples/full.py#26)(api, access_invalid_data, access_deep_invalid_data, assign_extra_junk, timeout):**
+&mdash; **def [RunSteps](/recipe_modules/step/examples/full.py#31)(api, props: full_pb.InputProperties):**
 ### *recipes* / [step:tests/active\_result](/recipe_modules/step/tests/active_result.py)
 
 [DEPS](/recipe_modules/step/tests/active_result.py#7): [step](#recipe_modules-step)
@@ -6200,10 +6200,10 @@ This file is a recipe demonstrating reading triggers of the current build.
 &mdash; **def [RunSteps](/recipe_modules/step/tests/nested.py#18)(api):**
 ### *recipes* / [step:tests/raise\_on\_failure](/recipe_modules/step/tests/raise_on_failure.py)
 
-[DEPS](/recipe_modules/step/tests/raise_on_failure.py#9): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/raise_on_failure.py#10): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/raise_on_failure.py#19)(api, infra_step, set_status_to_exception):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/raise_on_failure.py#24)(api, props: raise_on_failure_pb.InputProperties):**
 ### *recipes* / [step:tests/stdio](/recipe_modules/step/tests/stdio.py)
 
 [DEPS](/recipe_modules/step/tests/stdio.py#7): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
@@ -6233,7 +6233,7 @@ This file is a recipe demonstrating reading triggers of the current build.
 [DEPS](/recipe_modules/step/tests/timeout.py#9): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/timeout.py#20)(api, timeout):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/timeout.py#23)(api, props: timeout_pb.InputProperties):**
 ### *recipes* / [swarming:examples/full](/recipe_modules/swarming/examples/full.py)
 
 [DEPS](/recipe_modules/swarming/examples/full.py#13): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
@@ -6304,12 +6304,12 @@ This file is a recipe demonstrating reading triggers of the current build.
 &mdash; **def [RunSteps](/recipe_modules/time/examples/jitter.py#27)(api, properties):**
 ### *recipes* / [tricium:examples/add\_comment](/recipe_modules/tricium/examples/add_comment.py)
 
-[DEPS](/recipe_modules/tricium/examples/add_comment.py#15): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [tricium](#recipe_modules-tricium)
+[DEPS](/recipe_modules/tricium/examples/add_comment.py#13): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [tricium](#recipe_modules-tricium)
 
 
-&mdash; **def [CreateExpectedFinding](/recipe_modules/tricium/examples/add_comment.py#69)(api, input_comment):**
+&mdash; **def [CreateExpectedFinding](/recipe_modules/tricium/examples/add_comment.py#71)(api, input_comment):**
 
-&mdash; **def [RunSteps](/recipe_modules/tricium/examples/add_comment.py#117)(api, trigger_type_error):**
+&mdash; **def [RunSteps](/recipe_modules/tricium/examples/add_comment.py#119)(api, props: add_comment_pb.InputProperties):**
 ### *recipes* / [tricium:examples/wrapper](/recipe_modules/tricium/examples/wrapper.py)
 
 [DEPS](/recipe_modules/tricium/examples/wrapper.py#14): [buildbucket](#recipe_modules-buildbucket), [file](#recipe_modules-file), [path](#recipe_modules-path), [tricium](#recipe_modules-tricium)
@@ -6323,7 +6323,7 @@ An example of a recipe wrapping legacy analyzers.
 [DEPS](/recipe_modules/tricium/tests/add_comment_validation.py#10): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
 
 
-&mdash; **def [RunSteps](/recipe_modules/tricium/tests/add_comment_validation.py#43)(api, case):**
+&mdash; **def [RunSteps](/recipe_modules/tricium/tests/add_comment_validation.py#47)(api, props: add_comment_validation_pb.InputProperties):**
 ### *recipes* / [tricium:tests/enforce\_comments\_num\_limit](/recipe_modules/tricium/tests/enforce_comments_num_limit.py)
 
 [DEPS](/recipe_modules/tricium/tests/enforce_comments_num_limit.py#12): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [tricium](#recipe_modules-tricium)

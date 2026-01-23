@@ -4,19 +4,24 @@
 
 from __future__ import annotations
 
-from recipe_engine import recipe_api, recipe_test_api, post_process
+from PB.recipe_modules.recipe_engine.step.tests import raise_on_failure as raise_on_failure_pb
+from recipe_engine import recipe_test_api, post_process
 
 DEPS = [
     'properties',
     'step',
 ]
 
-PROPERTIES = {
-  'infra_step': recipe_api.Property(default=False),
-  'set_status_to_exception': recipe_api.Property(default=False),
+INLINE_PROPERTIES_PROTO = """
+message InputProperties {
+  bool infra_step = 1;
+  bool set_status_to_exception = 2;
 }
+"""
 
-def RunSteps(api, infra_step, set_status_to_exception):
+PROPERTIES = raise_on_failure_pb.InputProperties
+
+def RunSteps(api, props: raise_on_failure_pb.InputProperties):
   def failure_step_test_data():
     test_data = recipe_test_api.StepTestData()
     test_data.retcode = 1
@@ -25,12 +30,12 @@ def RunSteps(api, infra_step, set_status_to_exception):
   result = api.step(
       'non-raising step',
       ['bash', '-c', 'exit 1'],
-      infra_step=infra_step,
+      infra_step=props.infra_step,
       raise_on_failure=False,
       step_test_data=failure_step_test_data)
 
   status = None
-  if set_status_to_exception:
+  if props.set_status_to_exception:
     status = result.presentation.status
     result.presentation.status = api.step.EXCEPTION
 
@@ -50,7 +55,7 @@ def GenTests(api):
 
   yield api.test(
       'infra-step',
-      api.properties(infra_step=True),
+      api.properties(raise_on_failure_pb.InputProperties(infra_step=True)),
       api.post_process(post_process.MustRun, 'in-between step'),
       api.post_process(post_process.StepException, 'non-raising step'),
       api.post_process(post_process.StatusException),
@@ -60,7 +65,7 @@ def GenTests(api):
 
   yield api.test(
       'changed-status',
-      api.properties(set_status_to_exception=True),
+      api.properties(raise_on_failure_pb.InputProperties(set_status_to_exception=True)),
       api.post_process(post_process.MustRun, 'in-between step'),
       api.post_process(post_process.StepException, 'non-raising step'),
       api.post_process(post_process.StatusFailure),

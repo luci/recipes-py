@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from recipe_engine.recipe_api import Property
+from PB.recipe_modules.recipe_engine.generator_script.examples import full as full_pb
 from recipe_engine.post_process import DropExpectation
 
 DEPS = [
@@ -15,19 +15,23 @@ DEPS = [
   'step',
 ]
 
-PROPERTIES = {
-  'script_name': Property(kind=str),
+INLINE_PROPERTIES_PROTO = """
+message InputProperties {
+  string script_name = 1;
 }
+"""
 
-def RunSteps(api, script_name):
+PROPERTIES = full_pb.InputProperties
+
+def RunSteps(api, props: full_pb.InputProperties):
   api.generator_script(
-      path_to_script=api.properties['script_name'],
+      path_to_script=props.script_name,
       checkout_dir=api.path.tmp_base_dir)
 
 def GenTests(api):
   yield api.test(
       'basic',
-      api.properties(script_name="bogus"),
+      api.properties(full_pb.InputProperties(script_name="bogus")),
       api.generator_script(
           'bogus',
           {'name': 'mock.step.binary', 'cmd': ['echo', 'mock step binary']}
@@ -43,7 +47,7 @@ def GenTests(api):
 
   yield api.test(
       'basic_python',
-      api.properties(script_name="bogus.py"),
+      api.properties(full_pb.InputProperties(script_name="bogus.py")),
       api.generator_script(
           'bogus.py',
           {'name': 'mock.step.python', 'cmd': ['echo', 'mock step python']},
@@ -59,7 +63,7 @@ def GenTests(api):
 
   yield api.test(
       'presentation',
-      api.properties(script_name='presentation.py'),
+      api.properties(full_pb.InputProperties(script_name='presentation.py')),
       api.generator_script(
           'presentation.py', {
             'name': 'mock.step.presentation',
@@ -79,7 +83,7 @@ def GenTests(api):
 
   yield api.test(
       'always_run',
-      api.properties(script_name='always_run.py'),
+      api.properties(full_pb.InputProperties(script_name='always_run.py')),
       api.generator_script(
           'always_run.py',
           {'name': 'runs', 'cmd': ['echo', 'runs succeeds']},
@@ -98,7 +102,7 @@ def GenTests(api):
 
   yield api.test(
       'malformed_list',
-      api.properties(script_name='not_list.py'),
+      api.properties(full_pb.InputProperties(script_name='not_list.py')),
       api.step_data(
           'gen step(not_list.py)',
           api.json.output({'not': 'a list'})),
@@ -111,7 +115,7 @@ def GenTests(api):
 
   yield api.test(
       'malformed_command',
-      api.properties(script_name='malformed.py'),
+      api.properties(full_pb.InputProperties(script_name='malformed.py')),
       api.generator_script(
           'malformed.py',
           {'name': 'run', 'cmd': ['echo', 'there are', 4, 'cows']}),
@@ -124,7 +128,7 @@ def GenTests(api):
 
   yield api.test(
       'missing_name',
-      api.properties(script_name='missing_name.py'),
+      api.properties(full_pb.InputProperties(script_name='missing_name.py')),
       api.generator_script(
           'missing_name.py',
           {'cmd': ['echo', 'hey']}),
@@ -137,7 +141,7 @@ def GenTests(api):
 
   yield api.test(
       'bad_key',
-      api.properties(script_name='bad_key.py'),
+      api.properties(full_pb.InputProperties(script_name='bad_key.py')),
       api.generator_script(
           'bad_key.py',
           {'name': 'whatever', 'bad': 'key'}),

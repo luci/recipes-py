@@ -13,8 +13,6 @@ DEPS = [
     "recipe_engine/path",
 ]
 
-PROPERTIES = {}
-
 
 def RunSteps(api):
   assert api.luci_config.commit_queue(local_dir=api.path.start_dir)

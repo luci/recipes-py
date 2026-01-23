@@ -44,6 +44,7 @@ from typing import Any, Callable, Literal
 
 from recipe_engine import config_types, recipe_api, recipe_test_api, util
 
+from PB.recipe_modules.recipe_engine.path import properties as properties_pb
 from . import test_api
 
 
@@ -350,7 +351,7 @@ class PathApi(recipe_api.RecipeApi):
       'tmp_base',
   ])
 
-  def __init__(self, path_properties, **kwargs):
+  def __init__(self, path_properties: properties_pb.InputProperties, **kwargs):
     super().__init__(**kwargs)
 
     self._start_dir: str
@@ -376,27 +377,27 @@ class PathApi(recipe_api.RecipeApi):
       config_types.Path._OS_SEP = self._path_mod.sep
 
       for key in ('temp_dir', 'cache_dir', 'cleanup_dir'):
-        value = path_properties.get(key)
+        value = getattr(path_properties, key)
         if value and not os.path.isabs(value):
           raise ValueError(
               f'Path {value!r} in path module property {key!r} is not absolute')
 
       # These we can compute without _paths_client.
       self._home_dir: str = self._path_mod.expanduser('~')
-      self._temp_dir = path_properties.get('temp_dir', tempfile.gettempdir())
+      self._temp_dir = path_properties.temp_dir or tempfile.gettempdir()
 
       # These MAY be provided via the module properties - if they are, set them
       # here, otherwise they will be populated in initialize().
-      if cache_dir := path_properties.get('cache_dir'):
-        self._cache_dir = cache_dir
-      if cleanup_dir := path_properties.get('cleanup_dir'):
-        self._cleanup_dir = cleanup_dir
+      if path_properties.cache_dir:
+        self._cache_dir = path_properties.cache_dir
+      if path_properties.cleanup_dir:
+        self._cleanup_dir = path_properties.cleanup_dir
 
     else:
       assert not isinstance(self._test_data, recipe_test_api.DisabledTestData)
 
       for key in ('temp_dir', 'cache_dir', 'cleanup_dir'):
-        if value := path_properties.get(key):  # pragma: no cover
+        if value := getattr(path_properties, key):  # pragma: no cover
           raise ValueError(
               f'Base path mocking is not supported - got {key} = {value!r}')
 

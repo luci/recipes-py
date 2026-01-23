@@ -4,46 +4,52 @@
 
 from __future__ import annotations
 
-from recipe_engine.post_process import DropExpectation
-from recipe_engine.recipe_api import Property
-
+from PB.recipe_modules.recipe_engine.resultdb.examples import query_test_variants as query_test_variants_pb
 from PB.go.chromium.org.luci.resultdb.proto.v1 import resultdb
+from recipe_engine.post_process import DropExpectation
 
 DEPS = [
     'resultdb',
     'recipe_engine/properties',
 ]
 
-PROPERTIES = {
-    'invocation': Property(default=None, kind=str),
-    'test_variant_status': Property(default=None, kind=str),
-    'field_mask_paths': Property(default=None, kind=list),
+INLINE_PROPERTIES_PROTO = """
+message InputProperties {
+  string invocation = 1;
+  string test_variant_status = 2;
+  repeated string field_mask_paths = 3;
 }
+"""
+
+PROPERTIES = query_test_variants_pb.InputProperties
 
 
-def RunSteps(api, invocation, test_variant_status, field_mask_paths):
+def RunSteps(api, props: query_test_variants_pb.InputProperties):
   api.resultdb.query_test_variants(
-      [invocation],
-      test_variant_status=test_variant_status,
+      [props.invocation],
+      test_variant_status=props.test_variant_status,
       page_size=10,
-      field_mask_paths=field_mask_paths,
+      field_mask_paths=props.field_mask_paths,
   )
 
 
 def GenTests(api):
   yield api.test(
       'basic',
-      api.properties(invocation='invocations/build-8761170341278523313'),
+      api.properties(
+          query_test_variants_pb.InputProperties(
+              invocation='invocations/build-8761170341278523313')),
       api.resultdb.query_test_variants(resultdb.QueryTestVariantsResponse()),
       api.post_process(DropExpectation),
   )
   yield api.test(
       'status_and_fields',
       api.properties(
-          invocation='invocations/build-8761170341278523313',
-          test_variant_status='UNEXPECTED',
-          field_mask_paths=['results', 'sources_id'],
-      ),
+          query_test_variants_pb.InputProperties(
+              invocation='invocations/build-8761170341278523313',
+              test_variant_status='UNEXPECTED',
+              field_mask_paths=['results', 'sources_id'],
+          )),
       api.resultdb.query_test_variants(resultdb.QueryTestVariantsResponse()),
       api.post_process(DropExpectation),
   )

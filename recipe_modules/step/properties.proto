@@ -1,0 +1,11 @@
+// Copyright 2026 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+package recipe_modules.recipe_engine.step;
+
+message InputProperties {
+  // A list of PATH elements to prefix onto the PATH for every step.
+  repeated string prefix_path = 1;
+}

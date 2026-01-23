@@ -4,8 +4,9 @@
 
 from __future__ import annotations
 
-from recipe_engine.recipe_api import Property
-from recipe_engine.config import ConfigGroup, List
+from PB.recipe_modules.recipe_engine.step import properties as properties_pb
+
+PROPERTIES = properties_pb.InputProperties
 
 DEPS = [
     "context",
@@ -14,18 +15,6 @@ DEPS = [
     "proto",
     "warning",
 ]
-
-PROPERTIES = {
-  '$recipe_engine/step': Property(
-    help="Properties for the recipe_engine/step module",
-    param_name="step_properties",
-    kind=ConfigGroup(
-      # A list of PATH elements to prefix onto the PATH for every step.
-      prefix_path=List(str),
-    ), default={
-      'prefix_path': [],
-    }),
-}
 
 from .api import StepApi as API
 from .test_api import StepTestApi as TEST_API

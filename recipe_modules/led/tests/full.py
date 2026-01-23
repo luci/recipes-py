@@ -6,13 +6,12 @@ from __future__ import annotations
 
 import re
 
-from recipe_engine import post_process
-from recipe_engine.recipe_api import Property
-
 from PB.go.chromium.org.luci.buildbucket.proto import common
 from PB.go.chromium.org.luci.led.job import job
 from PB.go.chromium.org.luci.swarming.proto.api_v2 import swarming
-from PB.recipe_modules.recipe_engine.led.properties import InputProperties
+from PB.recipe_modules.recipe_engine.led.properties import InputProperties as LedInputProperties
+from PB.recipe_modules.recipe_engine.led.tests import full as full_pb
+from recipe_engine import post_process
 
 DEPS = [
   'buildbucket',
@@ -22,17 +21,20 @@ DEPS = [
   'step',
 ]
 
-PROPERTIES = {
-  'child_properties': Property(default=None, kind=dict),
-  'sloppy_child_properties': Property(default=None, kind=dict),
-  'get_cmd': Property(default=None, kind=list),
-  'do_bogus_edits': Property(default=False, kind=bool),
+INLINE_PROPERTIES_PROTO = """
+message InputProperties {
+  map<string, string> child_properties = 1;
+  map<string, string> sloppy_child_properties = 2;
+  repeated string get_cmd = 3;
+  bool do_bogus_edits = 4;
 }
+"""
+
+PROPERTIES = full_pb.InputProperties
 
 
-def RunSteps(api, get_cmd, child_properties, sloppy_child_properties,
-             do_bogus_edits):
-  intermediate = api.led(*get_cmd)
+def RunSteps(api, props: full_pb.InputProperties):
+  intermediate = api.led(*props.get_cmd)
   intermediate = intermediate.then(
       'edit-gerrit-cl', 'https://fake.url/c/project/123/+/456')
 
@@ -51,15 +53,15 @@ def RunSteps(api, get_cmd, child_properties, sloppy_child_properties,
     assert api.led.run_id
     intermediate = api.led.inject_input_recipes(intermediate)
 
-  if child_properties:
+  if props.child_properties:
     edit_args = ['edit']
-    for k, v in child_properties.items():
-      edit_args.extend(['-p', '%s=\"%s\"' % (k, v)])
-    for k, v in sloppy_child_properties.items():
+    for k, v in props.child_properties.items():
+      edit_args.extend(['-p', '%s="%s"' % (k, v)])
+    for k, v in props.sloppy_child_properties.items():
       edit_args.extend(['-pa', '%s=%s' % (k, v)])
     intermediate = intermediate.then(*edit_args)
 
-  if do_bogus_edits:
+  if props.do_bogus_edits:
     intermediate = intermediate.then('edit', '-bogus', 'bogus_arg_value')
     intermediate = intermediate.then('edit', '--bogus', 'double_bogus')
     intermediate = intermediate.then('edit', '--bogus=triple_bogus')
@@ -69,7 +71,8 @@ def RunSteps(api, get_cmd, child_properties, sloppy_child_properties,
   intermediate = intermediate.then('edit-recipe-bundle')
 
   api.step('print pre-launch', [
-      'echo', api.proto.encode(intermediate.result, 'JSONPB')])
+      'echo',
+      api.proto.encode(intermediate.result, 'JSONPB')])
 
   api.step('print rbh value', ['echo', intermediate.edit_rbh_value])
 
@@ -83,12 +86,12 @@ def GenTests(api):
 
   yield (
       api.test('basic') +
-      api.properties(get_cmd=['get-builder', 'chromium/try:linux-rel'])
+      api.properties(full_pb.InputProperties(get_cmd=['get-builder', 'chromium/try:linux-rel']))
   )
 
   yield (
       api.test('project/bucket/builder') +
-      api.properties(get_cmd=['get-builder', 'chromium/try/linux-rel']) +
+      api.properties(full_pb.InputProperties(get_cmd=['get-builder', 'chromium/try/linux-rel'])) +
       api.post_process(post_process.DropExpectation)
   )
 
@@ -96,7 +99,7 @@ def GenTests(api):
   mock_build.buildbucket.name = "hi, get-builder"
   yield (
       api.test('old bucket syntax') +
-      api.properties(get_cmd=['get-builder', 'luci.chromium.try:linux-rel']) +
+      api.properties(full_pb.InputProperties(get_cmd=['get-builder', 'luci.chromium.try:linux-rel'])) +
       api.led.mock_get_builder(mock_build, 'chromium', 'try', 'linux-rel')
   )
 
@@ -104,23 +107,23 @@ def GenTests(api):
   mock_build.buildbucket.name = "hi, get-build"
   yield (
       api.test('get-build') +
-      api.properties(get_cmd=['get-build', '123456789']) +
+      api.properties(full_pb.InputProperties(get_cmd=['get-build', '123456789'])) +
       api.led.mock_get_build(mock_build, 123456789)
   )
 
   def _apply_always(build, cmd, cwd):
-    '''Applies on every edit invocation.'''
+    """Applies on every edit invocation."""
     build.buildbucket.name += " always"
 
   def _apply_builder(build, cmd, cwd):
-    '''Applies on every edit invocation targeting the builder.'''
+    """Applies on every edit invocation targeting the builder."""
     build.buildbucket.name += " builder"
 
   def _apply_never(build, cmd, cwd):
     assert False # pragma: no cover
 
   def _apply_bogus_arg(build, cmd, cwd):
-    '''Applies only on edit invocations with the -bogus arg.'''
+    """Applies only on edit invocations with the -bogus arg."""
     vals = api.led.get_arg_values(cmd, 'bogus')
     assert len(vals) == 1
     assert 'bogus' in vals[0]
@@ -132,41 +135,43 @@ def GenTests(api):
   yield (
       api.test('edit mock') +
       api.properties(
-          get_cmd=['get-builder', 'luci.chromium.try:linux-rel'],
-          do_bogus_edits=True,
-      ) +
-      api.led.mock_edit(_apply_always) +
-      api.led.mock_edit(_apply_builder,
-                        build_id='buildbucket/builder/chromium/try/linux-rel') +
-      api.led.mock_edit(_apply_never,
-                        build_id='buildbucket/builder/nope/nope/nope') +
-      api.led.mock_edit(_apply_bogus_arg, cmd_filter=[
+          full_pb.InputProperties(
+              get_cmd=['get-builder', 'luci.chromium.try:linux-rel'],
+              do_bogus_edits=True,
+          )
+      )
+      + api.led.mock_edit(_apply_always)
+      + api.led.mock_edit(_apply_builder,
+                        build_id='buildbucket/builder/chromium/try/linux-rel')
+      + api.led.mock_edit(_apply_never,
+                        build_id='buildbucket/builder/nope/nope/nope')
+      + api.led.mock_edit(_apply_bogus_arg, cmd_filter=[
         # A real user of this test would probably not use this regex since
         # they'd control the argument. Alternately they'd always apply
         # _apply_bogus_arg and just have it do nothing if the '-bogus' flag
         # wasn't present.
         'edit', Ellipsis, re.compile('--?bogus(=.*)?'),
-      ]) +
-      api.led.mock_edit(_apply_never, cmd_filter=[
+      ])
+      + api.led.mock_edit(_apply_never, cmd_filter=[
         'edit', Ellipsis, '-walrus',
-      ]) +
-      api.led.mock_edit(_stop_application) +
-      api.led.mock_edit(_apply_never)
+      ])
+      + api.led.mock_edit(_stop_application)
+      + api.led.mock_edit(_apply_never)
   )
 
   mock_build = job.Definition()
   mock_build.buildbucket.name = "hi, get-swarm"
   yield (
       api.test('get-swarm') +
-      api.properties(get_cmd=['get-swarm', 'deadbeef']) +
+      api.properties(full_pb.InputProperties(get_cmd=['get-swarm', 'deadbeef'])) +
       api.led.mock_get_swarm(mock_build, 'deadbeef')
   )
 
   led_run_id = 'led/user_example.com/deadbeef'
   yield (
       api.test('with-rbe-cas-input') +
-      api.properties(get_cmd=['get-builder', 'chromium/try:linux-rel']) +
-      led_props(InputProperties(
+      api.properties(full_pb.InputProperties(get_cmd=['get-builder', 'chromium/try:linux-rel'])) +
+      led_props(LedInputProperties(
           led_run_id=led_run_id,
           rbe_cas_input=swarming.CASReference(
               cas_instance='projects/example/instances/default_instance',
@@ -184,10 +189,10 @@ def GenTests(api):
   )
   yield (
       api.test('with-cipd-input') +
-      api.properties(get_cmd=['get-builder', 'chromium/try:linux-rel']) +
-      led_props(InputProperties(
+      api.properties(full_pb.InputProperties(get_cmd=['get-builder', 'chromium/try:linux-rel'])) +
+      led_props(LedInputProperties(
           led_run_id=led_run_id,
-          cipd_input=InputProperties.CIPDInput(
+          cipd_input=LedInputProperties.CIPDInput(
               package=cipd_source.cipd_package,
               version=cipd_source.cipd_version,
           ),
@@ -196,7 +201,9 @@ def GenTests(api):
 
   yield (
       api.test('edit-properties') +
-      api.properties(get_cmd=['get-builder', 'chromium/try:linux-rel']) +
-      api.properties(child_properties={'prop': 'val'}) +
-      api.properties(sloppy_child_properties={'sloppy': 'val'}) +
-      led_props(InputProperties(led_run_id=led_run_id)))
+      api.properties(full_pb.InputProperties(
+          get_cmd=['get-builder', 'chromium/try:linux-rel'],
+          child_properties={'prop': 'val'},
+          sloppy_child_properties={'sloppy': 'val'},
+      ))
+      + led_props(LedInputProperties(led_run_id=led_run_id)))
