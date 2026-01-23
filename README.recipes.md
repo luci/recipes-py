@@ -60,7 +60,6 @@
   * [bcid_reporter:tests/retry](#recipes-bcid_reporter_tests_retry)
   * [bcid_verifier:tests/test-verify](#recipes-bcid_verifier_tests_test-verify)
   * [buildbucket:examples/full](#recipes-buildbucket_examples_full) &mdash; This file is a recipe demonstrating the buildbucket recipe module.
-  * [buildbucket:run/multi](#recipes-buildbucket_run_multi) &mdash; Launches multiple builds at the same revision.
   * [buildbucket:tests/add_build_tags](#recipes-buildbucket_tests_add_build_tags)
   * [buildbucket:tests/add_step_tags](#recipes-buildbucket_tests_add_step_tags)
   * [buildbucket:tests/backend](#recipes-buildbucket_tests_backend)
@@ -5096,14 +5095,6 @@ same repo as the issue() call.
 This file is a recipe demonstrating the buildbucket recipe module.
 
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/examples/full.py#28)(api):**
-### *recipes* / [buildbucket:run/multi](/recipe_modules/buildbucket/run/multi.py)
-
-[DEPS](/recipe_modules/buildbucket/run/multi.py#13): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [swarming](#recipe_modules-swarming)
-
-
-Launches multiple builds at the same revision.
-
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/run/multi.py#31)(api, build_requests, collect_builds):**
 ### *recipes* / [buildbucket:tests/add\_build\_tags](/recipe_modules/buildbucket/tests/add_build_tags.py)
 
 [DEPS](/recipe_modules/buildbucket/tests/add_build_tags.py#7): [buildbucket](#recipe_modules-buildbucket), [step](#recipe_modules-step)
