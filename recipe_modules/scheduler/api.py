@@ -29,21 +29,17 @@ from PB.go.chromium.org.luci.scheduler.api.scheduler.v1 import (
 class SchedulerApi(recipe_api.RecipeApi):
   """A module for interacting with LUCI Scheduler service."""
 
-  def __init__(self, init_state, **kwargs):
+  def __init__(self, props, **kwargs):
     super().__init__(**kwargs)
-    self._host = init_state.get('hostname') or 'luci-scheduler.appspot.com'
-    self._job_id = init_state.get('job')
-    self._invocation_id = init_state.get('invocation')
+    self._host = props.hostname or 'luci-scheduler.appspot.com'
+    self._job_id = props.job
+    self._invocation_id = props.invocation
+    self._triggers = props.triggers
 
     self._fake_uuid_count = 0
 
-    self._triggers = []
-    for t_dict in init_state.get('triggers') or []:
-      self._triggers.append(
-          json_format.ParseDict(t_dict, triggers_pb2.Trigger()))
-
   @property
-  def triggers(self):
+  def triggers(self) -> list[triggers_pb2.Trigger]:
     """Returns a list of triggers that triggered the current build.
 
     A trigger is an instance of triggers_pb2.Trigger.

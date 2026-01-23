@@ -9,6 +9,10 @@ from past.builtins import basestring
 from recipe_engine.recipe_api import Property
 from recipe_engine.config import ConfigGroup, List, Single
 
+from PB.recipe_modules.recipe_engine.scheduler import (
+    properties as properties_pb,
+)
+
 DEPS = [
   'buildbucket',
   'json',
@@ -18,22 +22,7 @@ DEPS = [
   'time',
 ]
 
-PROPERTIES = {
-  '$recipe_engine/scheduler': Property(
-      help='Internal property to initialize scheduler module',
-      param_name='init_state',
-      kind=ConfigGroup(
-          hostname=Single(basestring, required=False),
-          job=Single(basestring, required=False),
-          invocation=Single(basestring, required=False),
-          # A list of scheduler triggers that triggered the current build.
-          # A trigger is JSON-formatted dict of a scheduler.Trigger protobuf
-          # message.
-          triggers=List(dict),
-      ),
-      default={},
-  ),
-}
+PROPERTIES = properties_pb.InputProperties
 
 from .api import SchedulerApi as API
 from .test_api import SchedulerTestApi as TEST_API

@@ -1,0 +1,17 @@
+// Copyright 2026 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+package recipe_modules.recipe_engine.scheduler;
+
+import "go.chromium.org/luci/scheduler/api/scheduler/v1/triggers.proto";
+
+message InputProperties {
+  string hostname = 1;
+  string job = 2;
+  string invocation = 3;
+
+  // A list of scheduler triggers that triggered the current build.
+  repeated .scheduler.Trigger triggers = 4;
+}
