@@ -205,8 +205,10 @@ class _ProtoInfo:
 
     split_relpath = relpath.split('/')
     if (split_relpath[0] == 'recipe_modules' and
-        split_relpath[2] in ('tests', 'examples')):
+        split_relpath[2] in ('tests', 'examples') or
+        split_relpath[0] == 'recipes'):
       namespace.append(posixpath.splitext(split_relpath[-1])[0])
+
     print(f'package {".".join(namespace)};', file=buf)
     print(inline_properties_proto, file=buf)
 
