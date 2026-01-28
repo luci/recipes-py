@@ -5603,10 +5603,10 @@ Tests that step presentation properties can be ordered.
 &mdash; **def [RunSteps](/recipes/engine_tests/sort_properties.py#13)(api):**
 ### *recipes* / [engine\_tests/undeclared\_method](/recipes/engine_tests/undeclared_method.py)
 
-[DEPS](/recipes/engine_tests/undeclared_method.py#10): [cipd](#recipe_modules-cipd), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/undeclared_method.py#14): [cipd](#recipe_modules-cipd), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipes/engine_tests/undeclared_method.py#22)(api, from_recipe, attribute, module):**
+&mdash; **def [RunSteps](/recipes/engine_tests/undeclared_method.py#30)(api, props: undeclared_method_pb.InputProperties):**
 ### *recipes* / [engine\_tests/unicode](/recipes/engine_tests/unicode.py)
 
 [DEPS](/recipes/engine_tests/unicode.py#8): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
@@ -5615,12 +5615,12 @@ Tests that step presentation properties can be ordered.
 &mdash; **def [RunSteps](/recipes/engine_tests/unicode.py#13)(api):**
 ### *recipes* / [engine\_tests/whitelist\_steps](/recipes/engine_tests/whitelist_steps.py)
 
-[DEPS](/recipes/engine_tests/whitelist_steps.py#14): [context](#recipe_modules-context), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/whitelist_steps.py#18): [context](#recipe_modules-context), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
 Tests that step_data can accept multiple specs at once.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/whitelist_steps.py#24)(api, fakeit):**
+&mdash; **def [RunSteps](/recipes/engine_tests/whitelist_steps.py#32)(api, props: whitelist_steps_pb.InputProperties):**
 ### *recipes* / [file:examples/chmod](/recipe_modules/file/examples/chmod.py)
 
 [DEPS](/recipe_modules/file/examples/chmod.py#7): [file](#recipe_modules-file), [path](#recipe_modules-path)

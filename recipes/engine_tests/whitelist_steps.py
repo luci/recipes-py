@@ -7,6 +7,10 @@
 
 from __future__ import annotations
 
+from PB.recipes.recipe_engine.engine_tests import (
+    whitelist_steps as whitelist_steps_pb,
+)
+
 from recipe_engine import post_process
 from recipe_engine.recipe_api import Property
 from recipe_engine.post_process import Filter, DoesNotRun, MustRun
@@ -17,11 +21,16 @@ DEPS = [
   'properties',
 ]
 
-PROPERTIES = {
-  'fakeit': Property(kind=bool, default=True),
+INLINE_PROPERTIES_PROTO = """
+message InputProperties {
+  bool dontfakeit = 1;
 }
+"""
 
-def RunSteps(api, fakeit):
+PROPERTIES = whitelist_steps_pb.InputProperties
+
+def RunSteps(api, props: whitelist_steps_pb.InputProperties):
+  fakeit = not props.dontfakeit
   api.step('something unimportant', ['echo', 'sup doc'])
   with api.context(env={'FLEEM': 'VERY YES'}):
     api.step('something important', ['echo', 'crazy!'])
@@ -46,7 +55,7 @@ def GenTests(api):
   f = Filter()
   f = f.include_re(r'.*\bimportant', ['cmd', 'env'], at_least=2, at_most=2)
   yield (api.test('selection')
-    + api.properties(fakeit=False)
+    + api.properties(dontfakeit=True)
     + api.post_process(DoesNotRun, 'fakestep')
     + api.post_process(f)
   )

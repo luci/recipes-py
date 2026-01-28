@@ -4,6 +4,10 @@
 
 from __future__ import annotations
 
+from PB.recipes.recipe_engine.engine_tests import (
+    undeclared_method as undeclared_method_pb,
+)
+
 from recipe_engine import post_process
 from recipe_engine.recipe_api import Property
 
@@ -13,18 +17,22 @@ DEPS = [
   'cipd',
 ]
 
-PROPERTIES = {
-  'from_recipe': Property(kind=bool, default=False),
-  'attribute': Property(kind=bool, default=False),
-  'module': Property(kind=bool, default=False),
+INLINE_PROPERTIES_PROTO = """
+message InputProperties {
+  bool from_recipe = 1;
+  bool attribute = 2;
+  bool module = 3;
 }
+"""
 
-def RunSteps(api, from_recipe, attribute, module):
-  if from_recipe:
+PROPERTIES = undeclared_method_pb.InputProperties
+
+def RunSteps(api, props: undeclared_method_pb.InputProperties):
+  if props.from_recipe:
     api.missing_module('baz')
-  if attribute:
+  if props.attribute:
     api.cipd.missing_method('baz')
-  if module:
+  if props.module:
     api.cipd.m.missing_module('baz')
 
 def GenTests(api):
