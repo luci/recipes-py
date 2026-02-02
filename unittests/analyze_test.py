@@ -245,7 +245,7 @@ class AnalyzeSmokeTest(test_env.RecipeEngineUnitTest):
       'files': ['.vpython3'],  # vpython is included via .gitattributes
       'recipes': [
         'engine_tests/unicode',
-        'engine_tests/whitelist_steps',
+        'engine_tests/allowlist_steps',
       ],
     })
     self.assertDictEqual(
@@ -255,7 +255,7 @@ class AnalyzeSmokeTest(test_env.RecipeEngineUnitTest):
             'invalidRecipes': [],
             'recipes': [
                 'engine_tests/unicode',
-                'engine_tests/whitelist_steps',
+                'engine_tests/allowlist_steps',
             ],
         })
     self.assertEqual(exit_code, 0)

@@ -45,7 +45,7 @@ class TestSimulation(test_env.RecipeEngineUnitTest):
         'The following modules lack any form of test coverage:\n   modname',
         output)
 
-  def test_no_coverage_whitelisted(self):
+  def test_no_coverage_allowlisted(self):
     deps = self.FakeRecipeDeps()
 
     with deps.main_repo.write_module('modname') as mod:
@@ -86,7 +86,7 @@ class TestSimulation(test_env.RecipeEngineUnitTest):
     self.assertEqual(retcode, 1)
     self.assertIn('FATAL: Insufficient total coverage', output)
 
-  def test_incomplete_coverage_whitelisted(self):
+  def test_incomplete_coverage_allowlisted(self):
     deps = self.FakeRecipeDeps()
 
     # Even with disabled strict coverage, regular coverage (100%)
@@ -141,7 +141,7 @@ class TestSimulation(test_env.RecipeEngineUnitTest):
     self.assertEqual(retcode, 1)
     self.assertIn('FATAL: Insufficient total coverage', output)
 
-  def test_recipe_coverage_strict_whitelisted(self):
+  def test_recipe_coverage_strict_allowlisted(self):
     deps = self.FakeRecipeDeps()
 
     with deps.main_repo.write_module('modname') as mod:

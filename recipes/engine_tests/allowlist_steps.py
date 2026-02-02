@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 from PB.recipes.recipe_engine.engine_tests import (
-    whitelist_steps as whitelist_steps_pb,
+    allowlist_steps as allowlist_steps_pb,
 )
 
 from recipe_engine import post_process
@@ -27,9 +27,9 @@ message InputProperties {
 }
 """
 
-PROPERTIES = whitelist_steps_pb.InputProperties
+PROPERTIES = allowlist_steps_pb.InputProperties
 
-def RunSteps(api, props: whitelist_steps_pb.InputProperties):
+def RunSteps(api, props: allowlist_steps_pb.InputProperties):
   fakeit = not props.dontfakeit
   api.step('something unimportant', ['echo', 'sup doc'])
   with api.context(env={'FLEEM': 'VERY YES'}):

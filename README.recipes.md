@@ -112,6 +112,7 @@
   * [defer:tests/non_deferred](#recipes-defer_tests_non_deferred)
   * [defer:tests/result](#recipes-defer_tests_result)
   * [defer:tests/suppressed](#recipes-defer_tests_suppressed)
+  * [engine_tests/allowlist_steps](#recipes-engine_tests_allowlist_steps) &mdash; Tests that step_data can accept multiple specs at once.
   * [engine_tests/bad_subprocess](#recipes-engine_tests_bad_subprocess) &mdash; Tests that daemons that hang on to STDOUT can't cause the engine to hang.
   * [engine_tests/comprehensive_ui](#recipes-engine_tests_comprehensive_ui) &mdash; A fast-running recipe which comprehensively covers all StepPresentation features available in the recipe engine.
   * [engine_tests/config_operations](#recipes-engine_tests_config_operations) &mdash; Tests that recipes can modify configuration options in various ways.
@@ -135,7 +136,6 @@
   * [engine_tests/sort_properties](#recipes-engine_tests_sort_properties) &mdash; Tests that step presentation properties can be ordered.
   * [engine_tests/undeclared_method](#recipes-engine_tests_undeclared_method)
   * [engine_tests/unicode](#recipes-engine_tests_unicode)
-  * [engine_tests/whitelist_steps](#recipes-engine_tests_whitelist_steps) &mdash; Tests that step_data can accept multiple specs at once.
   * [file:examples/chmod](#recipes-file_examples_chmod)
   * [file:examples/compute_hash](#recipes-file_examples_compute_hash)
   * [file:examples/copy](#recipes-file_examples_copy)
@@ -5413,6 +5413,14 @@ Generates response Runs for a test.
 
 
 &mdash; **def [RunSteps](/recipe_modules/defer/tests/suppressed.py#32)(api: recipe_api.RecipeApi, props: properties_pb2.SuppressedInputProps):**
+### *recipes* / [engine\_tests/allowlist\_steps](/recipes/engine_tests/allowlist_steps.py)
+
+[DEPS](/recipes/engine_tests/allowlist_steps.py#18): [context](#recipe_modules-context), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+
+
+Tests that step_data can accept multiple specs at once.
+
+&mdash; **def [RunSteps](/recipes/engine_tests/allowlist_steps.py#32)(api, props: allowlist_steps_pb.InputProperties):**
 ### *recipes* / [engine\_tests/bad\_subprocess](/recipes/engine_tests/bad_subprocess.py)
 
 [DEPS](/recipes/engine_tests/bad_subprocess.py#9): [platform](#recipe_modules-platform), [step](#recipe_modules-step)
@@ -5613,14 +5621,6 @@ Tests that step presentation properties can be ordered.
 
 
 &mdash; **def [RunSteps](/recipes/engine_tests/unicode.py#13)(api):**
-### *recipes* / [engine\_tests/whitelist\_steps](/recipes/engine_tests/whitelist_steps.py)
-
-[DEPS](/recipes/engine_tests/whitelist_steps.py#18): [context](#recipe_modules-context), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
-
-
-Tests that step_data can accept multiple specs at once.
-
-&mdash; **def [RunSteps](/recipes/engine_tests/whitelist_steps.py#32)(api, props: whitelist_steps_pb.InputProperties):**
 ### *recipes* / [file:examples/chmod](/recipe_modules/file/examples/chmod.py)
 
 [DEPS](/recipe_modules/file/examples/chmod.py#7): [file](#recipe_modules-file), [path](#recipe_modules-path)

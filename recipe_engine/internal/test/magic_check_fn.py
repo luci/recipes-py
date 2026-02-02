@@ -219,7 +219,7 @@ class Check(namedtuple('Check', (
         `check("something was run", (step_name in step_odict))`
           step_odict.keys(): ['something important', 'fakestep', '$result']
           step_name: 'fakiestep'
-      added /.../recipes-py/recipes/engine_tests/whitelist_steps.py:28
+      added /.../recipes-py/recipes/engine_tests/allowlist_steps.py:28
         MustRun('fakiestep')
     '''
 
