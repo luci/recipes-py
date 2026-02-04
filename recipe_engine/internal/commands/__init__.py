@@ -17,12 +17,6 @@ import sys
 
 from builtins import zip
 
-if sys.version_info >= (3, 5): # we're running python > 3.5
-  OS_WALK = os.walk
-else:
-  # From vpython
-  from scandir import walk as OS_WALK
-
 # pylint: disable=wrong-import-position
 from .. import simple_cfg
 from ..recipe_deps import RecipeDeps
@@ -113,7 +107,7 @@ def _cleanup_pyc(recipe_deps):
   """
   for repo in recipe_deps.repos.values():
     for to_walk in (repo.recipes_dir, repo.modules_dir):
-      for root, _dirs, files in OS_WALK(to_walk):
+      for root, _dirs, files in os.walk(to_walk):
         for fname in files:
           if not fname.endswith('.pyc'):
             continue
