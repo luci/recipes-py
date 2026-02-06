@@ -5,8 +5,9 @@
 from __future__ import annotations
 
 DEPS = [
-  'bcid_reporter',
-  'recipe_engine/path',
+    'bcid_reporter',
+    'recipe_engine/cipd',
+    'recipe_engine/path',
 ]
 
 def RunSteps(api):
@@ -38,6 +39,25 @@ def RunSteps(api):
       "beefdead",
       server_url="http://test.local")
 
+  api.bcid_reporter.create_from_yaml(
+      api.path.start_dir / 'fake-package.yaml',
+      refs=['latest'],
+      tags={'key': 'value'},
+      metadata=[api.cipd.Metadata(key='k', value='v')],
+      pkg_vars={'pkg_var_1': 'pkg_val_1'},
+      compression_level=9,
+      verification_timeout='20m')
+
+  api.bcid_reporter.create_from_pkg(
+      pkg_def=api.cipd.PackageDefinition(
+          'infra/fake-package',
+          api.path.start_dir / 'some_subdir',
+          'copy',
+          preserve_mtime=True,
+          preserve_writable=True),
+      refs=['latest'],
+      tags={'key': 'value'},
+      metadata=[api.cipd.Metadata(key='k', value='v')])
 
 def GenTests(api):
   yield api.test('simple') + api.bcid_reporter(54321)

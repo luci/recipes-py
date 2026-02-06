@@ -371,7 +371,7 @@ def GenTests(api):
 ```
 ### *recipe_modules* / [bcid\_reporter](/recipe_modules/bcid_reporter)
 
-[DEPS](/recipe_modules/bcid_reporter/__init__.py#7): [cipd](#recipe_modules-cipd), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/bcid_reporter/__init__.py#7): [cipd](#recipe_modules-cipd), [file](#recipe_modules-file), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
 
 #### **class [BcidReporterApi](/recipe_modules/bcid_reporter/api.py#22)([RecipeApi](/recipe_engine/recipe_api.py#439)):**
@@ -384,6 +384,48 @@ Returns the path to the broker binary.
 
 When the property is accessed the first time, the latest stable, released
 broker will be installed using cipd.
+
+&mdash; **def [create\_from\_pkg](/recipe_modules/bcid_reporter/api.py#228)(self, pkg_def, refs=None, tags=None, metadata=None, compression_level=None, verification_timeout=None):**
+
+Builds and uploads a package based on a PackageDefinition object and
+reports cipd digest to local provenance server.
+
+This builds, uploads and reports the package in one step.
+
+Args:
+  * pkg_def - The description of the package we want to create.
+  * refs - A list of ref names to set for the package instance.
+  * tags - A map of tag name -> value to set for the package instance.
+  * metadata - A list of metadata entries to attach.
+  * compression_level - Deflate compression level. If None, defaults to 5
+    (0 - disable, 1 - best speed, 9 - best compression).
+  * verification_timeout - Duration string that controls the time to
+    wait for backend-side package hash verification. Valid time units are
+    "s", "m", "h". Default is "5m".
+
+Returns the CIPDApi.Pin instance.
+
+&mdash; **def [create\_from\_yaml](/recipe_modules/bcid_reporter/api.py#177)(self, pkg_def, refs=None, tags=None, metadata=None, pkg_vars=None, compression_level=None, verification_timeout=None):**
+
+Builds and uploads a package based on on-disk YAML package definition
+file and reports cipd digest to local provenance server.
+
+This builds, uploads and reports the package in one step.
+
+Args:
+  * pkg_def - The path to the yaml file.
+  * refs - A list of ref names to set for the package instance.
+  * tags - A map of tag name -> value to set for the package instance.
+  * metadata - A list of metadata entries to attach.
+  * pkg_vars - A map of var name -> value to use for vars
+    referenced in package definition file.
+  * compression_level - Deflate compression level. If None, defaults to 5
+    (0 - disable, 1 - best speed, 9 - best compression).
+  * verification_timeout - Duration string that controls the time to
+    wait for backend-side package hash verification. Valid time units are
+    "s", "m", "h". Default is "5m".
+
+Returns the CIPDApi.Pin instance.
 
 &emsp; **@retry**<br>&mdash; **def [report\_cipd](/recipe_modules/bcid_reporter/api.py#82)(self, digest, pkg, iid, server_url=None):**
 
@@ -5071,10 +5113,10 @@ same repo as the issue() call.
 &mdash; **def [RunSteps](/recipe_modules/assertions/tests/max_diff.py#15)(api):**
 ### *recipes* / [bcid\_reporter:examples/usage](/recipe_modules/bcid_reporter/examples/usage.py)
 
-[DEPS](/recipe_modules/bcid_reporter/examples/usage.py#7): [bcid\_reporter](#recipe_modules-bcid_reporter), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/bcid_reporter/examples/usage.py#7): [bcid\_reporter](#recipe_modules-bcid_reporter), [cipd](#recipe_modules-cipd), [path](#recipe_modules-path)
 
 
-&mdash; **def [RunSteps](/recipe_modules/bcid_reporter/examples/usage.py#12)(api):**
+&mdash; **def [RunSteps](/recipe_modules/bcid_reporter/examples/usage.py#13)(api):**
 ### *recipes* / [bcid\_reporter:tests/retry](/recipe_modules/bcid_reporter/tests/retry.py)
 
 [DEPS](/recipe_modules/bcid_reporter/tests/retry.py#7): [bcid\_reporter](#recipe_modules-bcid_reporter), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io)

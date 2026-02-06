@@ -173,3 +173,100 @@ class BcidReporterApi(recipe_api.RecipeApi):
       args.extend(['-backend-url', server_url])
 
     self.m.step('snoop: report_sbom', args)
+
+  def create_from_yaml(
+      self,
+      pkg_def,
+      refs=None,
+      tags=None,
+      metadata=None,
+      pkg_vars=None,
+      compression_level=None,
+      verification_timeout=None,
+  ):
+    """Builds and uploads a package based on on-disk YAML package definition
+    file and reports cipd digest to local provenance server.
+
+    This builds, uploads and reports the package in one step.
+
+    Args:
+      * pkg_def - The path to the yaml file.
+      * refs - A list of ref names to set for the package instance.
+      * tags - A map of tag name -> value to set for the package instance.
+      * metadata - A list of metadata entries to attach.
+      * pkg_vars - A map of var name -> value to use for vars
+        referenced in package definition file.
+      * compression_level - Deflate compression level. If None, defaults to 5
+        (0 - disable, 1 - best speed, 9 - best compression).
+      * verification_timeout - Duration string that controls the time to
+        wait for backend-side package hash verification. Valid time units are
+        "s", "m", "h". Default is "5m".
+
+    Returns the CIPDApi.Pin instance.
+    """
+    package_path = self.m.path.mkstemp(prefix="bcid_cipd_")
+    pin = self.m.cipd.build_from_yaml(pkg_def, package_path, pkg_vars,
+                                      compression_level)
+    pin = self.m.cipd.register(
+        pin.package,
+        package_path,
+        refs,
+        tags,
+        metadata,
+        verification_timeout,
+    )
+
+    try:
+      package_hash = self.m.file.file_hash(package_path, test_data='deadbeef')
+      self.report_cipd(package_hash, pin.package, pin.instance_id)
+    except Exception:  # pragma: no cover
+      self.m.step.active_result.presentation.status = self.m.step.WARNING
+      raise
+
+    return pin
+
+  def create_from_pkg(
+      self,
+      pkg_def,
+      refs=None,
+      tags=None,
+      metadata=None,
+      compression_level=None,
+      verification_timeout=None,
+  ):
+    """Builds and uploads a package based on a PackageDefinition object and
+    reports cipd digest to local provenance server.
+
+    This builds, uploads and reports the package in one step.
+
+    Args:
+      * pkg_def - The description of the package we want to create.
+      * refs - A list of ref names to set for the package instance.
+      * tags - A map of tag name -> value to set for the package instance.
+      * metadata - A list of metadata entries to attach.
+      * compression_level - Deflate compression level. If None, defaults to 5
+        (0 - disable, 1 - best speed, 9 - best compression).
+      * verification_timeout - Duration string that controls the time to
+        wait for backend-side package hash verification. Valid time units are
+        "s", "m", "h". Default is "5m".
+
+    Returns the CIPDApi.Pin instance.
+    """
+    package_path = self.m.path.mkstemp(prefix="bcid_cipd_")
+    pin = self.m.cipd.build_from_pkg(pkg_def, package_path, compression_level)
+    pin = self.m.cipd.register(
+        pin.package,
+        package_path,
+        refs,
+        tags,
+        metadata,
+        verification_timeout,
+    )
+
+    try:
+      package_hash = self.m.file.file_hash(package_path, test_data='deadbeef')
+      self.report_cipd(package_hash, pin.package, pin.instance_id)
+    except Exception:  # pragma: no cover
+      self.m.step.active_result.presentation.status = self.m.step.WARNING
+
+    return pin

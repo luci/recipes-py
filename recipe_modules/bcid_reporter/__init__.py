@@ -6,6 +6,7 @@ from __future__ import annotations
 
 DEPS = [
     'recipe_engine/cipd',
+    'recipe_engine/file',
     'recipe_engine/path',
     'recipe_engine/properties',
     'recipe_engine/step',

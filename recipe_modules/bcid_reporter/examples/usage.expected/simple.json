@@ -113,6 +113,178 @@
     "name": "snoop: report_sbom (2)"
   },
   {
+    "cmd": [
+      "cipd",
+      "pkg-build",
+      "-pkg-def",
+      "[START_DIR]/fake-package.yaml",
+      "-out",
+      "[CLEANUP]/bcid_cipd__tmp_1",
+      "-hash-algo",
+      "sha256",
+      "-pkg-var",
+      "pkg_var_1:pkg_val_1",
+      "-compression-level",
+      "9",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "infra_step": true,
+    "name": "build fake-package.yaml",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\",@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"fake-package.yaml\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "pkg-register",
+      "[CLEANUP]/bcid_cipd__tmp_1",
+      "-ref",
+      "latest",
+      "-tag",
+      "key:value",
+      "-metadata",
+      "build_id:0",
+      "-metadata",
+      "k:v",
+      "-verification-timeout",
+      "20m",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "infra_step": true,
+    "name": "register fake-package.yaml",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\",@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"fake-package.yaml\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@fake-package.yaml@https://chrome-infra-packages.appspot.com/p/fake-package.yaml/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "file_hash",
+      "[CLEANUP]/bcid_cipd__tmp_1"
+    ],
+    "infra_step": true,
+    "name": "Compute file hash",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[START_DIR]/reporter/snoopy_broker",
+      "-report-cipd",
+      "-digest",
+      "deadbeef",
+      "-pkg-name",
+      "fake-package.yaml",
+      "-iid",
+      "40-chars-fake-of-the-package-instance_id"
+    ],
+    "name": "snoop: report_cipd (2)"
+  },
+  {
+    "cmd": [
+      "cipd",
+      "pkg-build",
+      "-pkg-def",
+      "{\"data\": [], \"install_mode\": \"copy\", \"package\": \"infra/fake-package\", \"preserve_mtime\": true, \"preserve_writable\": true, \"root\": \"[START_DIR]/some_subdir\"}",
+      "-out",
+      "[CLEANUP]/bcid_cipd__tmp_2",
+      "-hash-algo",
+      "sha256",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "infra_step": true,
+    "name": "build infra/fake-package",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\",@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"infra/fake-package\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "pkg-register",
+      "[CLEANUP]/bcid_cipd__tmp_2",
+      "-ref",
+      "latest",
+      "-tag",
+      "key:value",
+      "-metadata",
+      "build_id:0",
+      "-metadata",
+      "k:v",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "infra_step": true,
+    "name": "register infra/fake-package",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\",@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"infra/fake-package\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@infra/fake-package@https://chrome-infra-packages.appspot.com/p/infra/fake-package/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "file_hash",
+      "[CLEANUP]/bcid_cipd__tmp_2"
+    ],
+    "infra_step": true,
+    "name": "Compute file hash (2)",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[START_DIR]/reporter/snoopy_broker",
+      "-report-cipd",
+      "-digest",
+      "deadbeef",
+      "-pkg-name",
+      "infra/fake-package",
+      "-iid",
+      "40-chars-fake-of-the-package-instance_id"
+    ],
+    "name": "snoop: report_cipd (3)"
+  },
+  {
     "name": "$result"
   }
 ]
