@@ -13,7 +13,9 @@ import "turboci/graph/orchestrator/v1/check_kind.proto";
 import "turboci/graph/orchestrator/v1/check_state.proto";
 import "turboci/graph/orchestrator/v1/datum.proto";
 import "turboci/graph/orchestrator/v1/dependencies.proto";
+import "turboci/graph/orchestrator/v1/edit.proto";
 import "turboci/graph/orchestrator/v1/field_options.proto";
+import "turboci/graph/orchestrator/v1/omit_reason.proto";
 import "turboci/graph/orchestrator/v1/revision.proto";
 import "turboci/graph/orchestrator/v1/stage_attempt_state.proto";
 
@@ -45,13 +47,21 @@ option java_multiple_files = true;
 //
 // See also:
 //   * Identifier.Check* (Identifiers for Checks, CheckOptions, etc.)
-//   * CheckView (graph view object for a Check and contained messages)
-//   * CheckEditView (graph view object for Edits of a Check)
 message Check {
   // The Check's identifier.
   //
   // `identifier.id` is provided by the Stage which creates this Check.
   optional ids.v1.Check identifier = 1 [(google.api.field_behavior) = IMMUTABLE];
+
+  // If set, the reason this Check's content was omitted. Only UNKNOWN
+  // (default value, used when the content was included) and PLACEHOLDER are
+  // valid for a Check, since Checks that were unwanted or inaccessible will be
+  // removed from the WorkPlan entirely.
+  //
+  // A few fields may be populated even if `omit_reason` is set:
+  //   * `identifier` will always be populated.
+  //   * `options`, `results` and `edits` may be populated.
+  optional OmitReason omit_reason = 11;
 
   // Actor which created the Check.
   optional Actor created_by = 2 [(google.api.field_behavior) = IMMUTABLE];
@@ -100,7 +110,13 @@ message Check {
   //
   // Checks may only depend on other Checks.
   //
-  // Once the Check is WAITING, this field is immutable.
+  // While the check is in PLANNING state, its dependencies can be mutated
+  // freely via WriteNodes calls.
+  //
+  // Once the Check is moved into PLANNED state by a WriteNodes call,
+  // dependencies are "locked" and the Orchestrator starts tracking their
+  // resolution. Once they are resolved, the Orchestrator will switch the check
+  // into WAITING state.
   optional Dependencies dependencies = 8 [(turboci).id.allowed = IDENTIFIER_KIND_CHECK];
 
   // Options form the bulk of 'how to answer this Check'.
@@ -139,12 +155,22 @@ message Check {
     // Identifier for this Result.
     optional ids.v1.CheckResult identifier = 1 [(google.api.field_behavior) = IMMUTABLE];
 
+    // If set, the reason this Result's content was omitted. Only UNKNOWN
+    // (default value, used when the content was included) and PLACEHOLDER are
+    // valid for a Result, since Results are included with their parent Check so
+    // they cannot be filtered on their own.
+    //
+    // A few fields may be populated even if `omit_reason` is set:
+    //   * `identifier` will always be populated.
+    //   * `data` may be populated.
+    optional OmitReason omit_reason = 11;
+
     // The entity which created this Result.
     //
     // This is the only entity which can modify this Result.
     optional Actor owner = 2 [(google.api.field_behavior) = IMMUTABLE];
 
-    // The database revsision (commit timestamp) at which this Result was
+    // The database revision (commit timestamp) at which this Result was
     // created.
     optional Revision created_at = 3 [(google.api.field_behavior) = IMMUTABLE];
 
@@ -165,7 +191,7 @@ message Check {
     // IDENTIFIER_KIND_CHECK_RESULT_DATUM.
     repeated Datum data = 4;
 
-    // The database revsision (commit timestamp) at which this Result is
+    // The database revision (commit timestamp) at which this Result is
     // finalized.
     //
     // This is set when:
@@ -196,6 +222,11 @@ message Check {
   // added to an existing Result. However, CheckEdits will still be produced for
   // each write to each Result datum.
   repeated Result results = 10 [(turboci).check.editable = CHECK_STATE_WAITING];
+
+  // Edits for this Check.
+  //
+  // Sorted ascending by `version`.
+  repeated Edit edits = 12;
 
   // TBD: Add another field for 'Resolved-To' edges to Checks for the case where
   // this Check is 'underspecified' and the Workflow resolves/evolves it to

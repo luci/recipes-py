@@ -261,7 +261,7 @@ class TestData(BaseTestData):
     self.expected_exceptions = []
     self.expected_status = None
     self.post_process_hooks: list[PostprocessHook] = []
-    self.assert_turboci_graph_hooks: list[PostprocessHook] = []
+    self.assert_workplan_hooks: list[PostprocessHook] = []
     self.turboci_write_nodes: list[WriteNodesBlock] = []
 
     # Filled in by recipe_deps.Recipe.gen_tests()
@@ -287,8 +287,8 @@ class TestData(BaseTestData):
     ret.post_process_hooks.extend(self.post_process_hooks)
     ret.post_process_hooks.extend(other.post_process_hooks)
 
-    ret.assert_turboci_graph_hooks.extend(self.assert_turboci_graph_hooks)
-    ret.assert_turboci_graph_hooks.extend(other.assert_turboci_graph_hooks)
+    ret.assert_workplan_hooks.extend(self.assert_workplan_hooks)
+    ret.assert_workplan_hooks.extend(other.assert_workplan_hooks)
 
     ret.turboci_write_nodes = self.turboci_write_nodes + other.turboci_write_nodes
 
@@ -331,10 +331,10 @@ class TestData(BaseTestData):
     self.post_process_hooks.append(PostprocessHook(func, args, kwargs, context))
 
   @escape.escape_warnings('.*')
-  def assert_turboci_graph(self, func, args, kwargs, context):
+  def assert_workplan(self, func, args, kwargs, context):
     for warning in getattr(func, 'recipe_warnings', ()):
       record_execution_warning(warning)
-    self.assert_turboci_graph_hooks.append(
+    self.assert_workplan_hooks.append(
         PostprocessHook(func, args, kwargs, context))
 
   def __repr__(self):
@@ -959,46 +959,43 @@ class RecipeTestApi:
     ret.post_process(post_check, (func,) + args, kwargs, context)
     return ret
 
-  def assert_turboci_graph(self, func, *args, **kwargs):
+  def assert_workplan(self, func, *args, **kwargs):
     """Add a check-only post-processing hook which asserts on the TurboCI
-    graph state.
+    WorkPlan state.
 
     Since the simulated/fake turboci interface only emultates a single WorkPlan,
-    this just passes your assertion function the faked GraphView (not a mapping
-    of workplan id -> GraphView as you might get back from query_nodes).
+    this just passes your assertion function the faked WorkPlan (not a list of
+    WorkPlans as you might get back from query_nodes).
 
-    This GraphView contains all nodes and data, for all data types, in the graph.
+    This WorkPlan contains all nodes and data, for all data types, in the graph.
 
     This is like post_process, except that func should look like:
 
-       from PB.turboci.graph.orchestrator.v1.graph_view import GraphView
+       from PB.turboci.graph.orchestrator.v1.workplan import WorkPlan
 
-       func(assert_, graph: GraphView, *args, **kwargs) -> None
+       func(assert_, workplan: WorkPlan, *args, **kwargs) -> None
 
     def GenTests(api):
-      def _assert_graph(assert_, graph: GraphView):
-        check_view = graph.checks[0]
+      def _assert_workplan(assert_, workplan: WorkPlan):
+        check_view = workplan.checks[0]
         assert_(check_view.check.identifier.id == 'bob')
 
-      yield api.test(
-        'whatever',
-        api.assert_turboci_graph(_check_graph),
-      )
+      yield api.test('whatever', api.assert_workplan(_check_workplan))
     """
 
-    def assert_turboci_graph(check, steps, f, *args, **kwargs):
+    def assert_workplan(check, steps, f, *args, **kwargs):
       f(check, steps, *args, **kwargs)
 
     ret = TestData()
     _, filename, lineno, _, _, _ = inspect.stack()[1]
     context = PostprocessHookContext(func, args, kwargs, filename, lineno)
-    ret.assert_turboci_graph(assert_turboci_graph, (func,) + args, kwargs, context)
+    ret.assert_workplan(assert_workplan, (func,) + args, kwargs, context)
     return ret
 
   def turboci_write_nodes(self, *nodes: WriteNodesRequest.CheckWrite):
-    """Set the initial state of the TurboCI graph.
+    """Set the initial state of the TurboCI workplan.
 
-    This block of nodes will be written to the turboci graph with a single
+    This block of nodes will be written to the turboci workplan with a single
     write_nodes call. If you concatenate multiple TestData together (with +), or
     use `api.turboci_write_nodes` multiple times, each block of nodes will be
     written as a single write_nodes call.

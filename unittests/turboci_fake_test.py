@@ -25,6 +25,7 @@ from PB.turboci.graph.orchestrator.v1.revision import Revision
 
 from recipe_engine import turboci
 from recipe_engine.turboci import dep_group, check_id
+from recipe_engine.internal.turboci.common import get_check_by_full_id
 from recipe_engine.internal.turboci.fake import _IndexEntrySnapshot
 from recipe_engine.internal.turboci.ids import AnyIdentifier, type_url_for, type_urls
 
@@ -123,7 +124,6 @@ class IndexEntrySnapshotTest(test_env.RecipeEngineUnitTest):
 
 
 class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
-
   def test_single_check_write(self):
     self.write_nodes(
         turboci.check(
@@ -137,11 +137,11 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
             Query.CollectChecks(options=True),
             node_set=turboci.collect_check_ids('hey'),
         ),
-        types=[demoStruct]).graph["L"]
+        types=[demoStruct]).workplans[0]
     self.assertEqual(len(rslt.checks), 1)
 
     # Check that option data is correct
-    check = rslt.checks['L:Chey'].check
+    check = get_check_by_full_id(rslt, 'L:Chey')
     self.assertEqual(len(check.options), 1)
     self.assertEqual(
         check.options[0],
@@ -182,8 +182,8 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         collect=Query.CollectChecks(options=True),
         types=[Struct],
     )[0]
-    self.assertEqual(len(rslt.check.options), 1)
-    self.assertEqual(rslt.check.options[0].value.value, _mkAny(demoStruct))
+    self.assertEqual(len(rslt.options), 1)
+    self.assertEqual(rslt.options[0].value.value, _mkAny(demoStruct))
 
   def test_check_state_PLANNING_overwrite_option(self):
     self.write_nodes(
@@ -201,8 +201,8 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         collect=Query.CollectChecks(options=True),
         types=[Struct],
     )[0]
-    self.assertEqual(len(rslt.check.options), 1)
-    self.assertEqual(rslt.check.options[0].value.value, _mkAny(demoStruct2))
+    self.assertEqual(len(rslt.options), 1)
+    self.assertEqual(rslt.options[0].value.value, _mkAny(demoStruct2))
 
   def test_check_state_PLANNING_add_second_option(self):
     self.write_nodes(
@@ -220,9 +220,9 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         collect=Query.CollectChecks(options=True),
         types=[Struct, Timestamp],
     )[0]
-    self.assertEqual(len(rslt.check.options), 2)
+    self.assertEqual(len(rslt.options), 2)
     # The order depends on implementation details (append), but verify existence
-    vals = {d.value.value.type_url: d.value.value for d in rslt.check.options}
+    vals = {d.value.value.type_url: d.value.value for d in rslt.options}
     self.assertEqual(vals[structURL], _mkAny(demoStruct))
     self.assertEqual(vals[tsURL], _mkAny(demoTS))
 
@@ -242,8 +242,8 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
             options=[demoStruct],
         ))
     rslt = self.read_checks('hey')[0]
-    self.assertEqual(len(rslt.check.dependencies.edges), 1)
-    self.assertEqual(rslt.check.dependencies.edges[0],
+    self.assertEqual(len(rslt.dependencies.edges), 1)
+    self.assertEqual(rslt.dependencies.edges[0],
                      Edge(check=Edge.Check(identifier=check_id('there'))))
 
   def test_error_check_state_missing_dep(self):
@@ -280,13 +280,13 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
             kind='CHECK_KIND_BUILD',
         ))
     rslt = self.read_checks('hey')[0]
-    self.assertEqual(len(rslt.check.dependencies.edges), 2)
+    self.assertEqual(len(rslt.dependencies.edges), 2)
     self.assertListEqual(
-        list(rslt.check.dependencies.edges), [
+        list(rslt.dependencies.edges), [
             Edge(check=Edge.Check(identifier=check_id('there'))),
             Edge(check=Edge.Check(identifier=check_id('moo'))),
         ])
-    self.assertEqual(rslt.check.dependencies.predicate,
+    self.assertEqual(rslt.dependencies.predicate,
                      Dependencies.Group(edges=[0, 1]))
 
   def test_check_state_PLANNING_evolve(self):
@@ -311,7 +311,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
       ))
     rslt = self.read_checks('hey')[0]
     # This had no dependencies so goes straight to WAITING.
-    self.assertEqual(rslt.check.state, CheckState.CHECK_STATE_WAITING)
+    self.assertEqual(rslt.state, CheckState.CHECK_STATE_WAITING)
 
   def test_check_state_PLANNED_start(self):
     self.write_nodes(
@@ -330,7 +330,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
 
     rslt = self.read_checks('hey')[0]
     # This had no dependencies so goes straight to WAITING.
-    self.assertEqual(rslt.check.state, CheckState.CHECK_STATE_WAITING)
+    self.assertEqual(rslt.state, CheckState.CHECK_STATE_WAITING)
 
   def test_check_state_PLANNED_with_deps(self):
     self.write_nodes(
@@ -352,7 +352,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         state='CHECK_STATE_PLANNED',
     ))
     rslt = self.read_checks('hey')[0]
-    self.assertEqual(rslt.check.state, CheckState.CHECK_STATE_PLANNED)
+    self.assertEqual(rslt.state, CheckState.CHECK_STATE_PLANNED)
 
     # completing `there` unblocks `hey`.
     self.write_nodes(turboci.check(
@@ -360,7 +360,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         state='CHECK_STATE_FINAL',
     ))
     rslt = self.read_checks('hey')[0]
-    self.assertEqual(rslt.check.state, CheckState.CHECK_STATE_WAITING)
+    self.assertEqual(rslt.state, CheckState.CHECK_STATE_WAITING)
 
   def test_check_linear_chain(self):
     self.write_nodes(
@@ -377,7 +377,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
             kind='CHECK_KIND_BUILD',
         ))
     ret = self.read_checks('a')[0]
-    self.assertEqual(ret.check.state, CheckState.CHECK_STATE_PLANNING)
+    self.assertEqual(ret.state, CheckState.CHECK_STATE_PLANNING)
 
     self.write_nodes(
         turboci.check(
@@ -389,7 +389,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         ))
 
     ret = self.read_checks('a')[0]
-    self.assertEqual(ret.check.state, CheckState.CHECK_STATE_PLANNED)
+    self.assertEqual(ret.state, CheckState.CHECK_STATE_PLANNED)
 
     self.write_nodes(turboci.check(
         'c',
@@ -397,7 +397,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
     ))
 
     ret = self.read_checks('b')[0]
-    self.assertEqual(ret.check.state, CheckState.CHECK_STATE_WAITING)
+    self.assertEqual(ret.state, CheckState.CHECK_STATE_WAITING)
 
     self.write_nodes(turboci.check(
         'b',
@@ -405,7 +405,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
     ))
 
     ret = self.read_checks('a')[0]
-    self.assertEqual(ret.check.state, CheckState.CHECK_STATE_WAITING)
+    self.assertEqual(ret.state, CheckState.CHECK_STATE_WAITING)
 
   def test_check_add_dep_to_FINAL(self):
     self.write_nodes(
@@ -419,7 +419,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
             state='CHECK_STATE_FINAL',
         ))
     ret = self.read_checks('a')[0]
-    self.assertEqual(ret.check.state, CheckState.CHECK_STATE_PLANNING)
+    self.assertEqual(ret.state, CheckState.CHECK_STATE_PLANNING)
 
     self.write_nodes(
         turboci.check(
@@ -428,7 +428,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
             deps=dep_group('b'),
         ))
     ret = self.read_checks('a')[0]
-    self.assertEqual(ret.check.state, CheckState.CHECK_STATE_WAITING)
+    self.assertEqual(ret.state, CheckState.CHECK_STATE_WAITING)
 
   def test_check_PLANNING_to_FINAL(self):
     self.write_nodes(turboci.check(
@@ -448,13 +448,12 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         collect=Query.CollectChecks(options=True, result_data=True),
         types=[demoStruct],
     )[0]
-    self.assertEqual(rslt.check.state, CheckState.CHECK_STATE_FINAL)
-    self.assertEqual(rslt.check.results[0].data[0].value.value.type_url,
+    self.assertEqual(rslt.state, CheckState.CHECK_STATE_FINAL)
+    self.assertEqual(rslt.results[0].data[0].value.value.type_url,
                      turboci.type_url_for(demoStruct))
-    self.assertTrue(rslt.check.results[0].HasField('created_at'))
-    self.assertTrue(rslt.check.results[0].HasField('finalized_at'))
-    self.assertEqual(rslt.check.results[0].data[0].value.value,
-                     _mkAny(demoStruct))
+    self.assertTrue(rslt.results[0].HasField('created_at'))
+    self.assertTrue(rslt.results[0].HasField('finalized_at'))
+    self.assertEqual(rslt.results[0].data[0].value.value, _mkAny(demoStruct))
 
   def test_check_WAITING_results(self):
     self.write_nodes(
@@ -464,7 +463,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
             state=CheckState.CHECK_STATE_WAITING,
         ))
     rslt = self.read_checks('hey')[0]
-    self.assertEqual(rslt.check.state, CheckState.CHECK_STATE_WAITING)
+    self.assertEqual(rslt.state, CheckState.CHECK_STATE_WAITING)
 
     self.write_nodes(turboci.check(
         'hey',
@@ -475,20 +474,20 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         collect=Query.CollectChecks(result_data=True),
         types=[demoStruct],
     )[0]
-    self.assertEqual(rslt.check.results[0].data[0].value.value.type_url,
+    self.assertEqual(rslt.results[0].data[0].value.value.type_url,
                      turboci.type_url_for(demoStruct))
 
-    self.assertTrue(rslt.check.results[0].HasField('created_at'))
-    created_ts = rslt.check.results[0].created_at
-    self.assertFalse(rslt.check.results[0].HasField('finalized_at'))
+    self.assertTrue(rslt.results[0].HasField('created_at'))
+    created_ts = rslt.results[0].created_at
+    self.assertFalse(rslt.results[0].HasField('finalized_at'))
 
     self.write_nodes(turboci.check(
         'hey',
         finalize_results=True,
     ))
     rslt = self.read_checks('hey')[0]
-    self.assertTrue(rslt.check.results[0].HasField('finalized_at'))
-    finalized_ts = rslt.check.results[0].finalized_at
+    self.assertTrue(rslt.results[0].HasField('finalized_at'))
+    finalized_ts = rslt.results[0].finalized_at
 
     self.assertGreater((finalized_ts.ts.seconds, finalized_ts.ts.nanos),
                        (created_ts.ts.seconds, created_ts.ts.nanos))
@@ -505,9 +504,9 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         turboci.make_query(
             Query.SelectChecks.Predicate(kind='CHECK_KIND_ANALYSIS'),
             Query.SelectChecks.Predicate(kind=CheckKind.CHECK_KIND_BUILD),
-        )).graph["L"]
+        )).workplans[0]
     self.assertEqual(len(ret.checks), 3)
-    self.assertEqual(set(ret.checks), {'L:Ca', 'L:Cc', 'L:Ccc'})
+    self.assertEqual(self.check_ids(ret.checks), {'L:Ca', 'L:Cc', 'L:Ccc'})
 
   def test_query_filter_option(self):
     self.write_nodes(
@@ -519,9 +518,9 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
     ret = self.query_nodes(
         turboci.make_query(
             Query.SelectChecks.Predicate(
-                with_option_type=turboci.type_set(demoStruct)),)).graph["L"]
+                with_option_type=turboci.type_set(demoStruct)),)).workplans[0]
     self.assertEqual(len(ret.checks), 2)
-    self.assertEqual(set(ret.checks), {'L:Ca', 'L:Cc'})
+    self.assertEqual(self.check_ids(ret.checks), {'L:Ca', 'L:Cc'})
 
   def test_query_filter_all_options(self):
     self.write_nodes(
@@ -535,12 +534,12 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
             Query.SelectChecks(),
             Query.CollectChecks(options=True),
         ),
-        types=('*',)).graph["L"]
+        types=('*',)).workplans[0]
     self.assertEqual(len(ret.checks), 3)
-    self.assertEqual(set(ret.checks), {'L:Ca', 'L:Cb', 'L:Cc'})
+    self.assertEqual(self.check_ids(ret.checks), {'L:Ca', 'L:Cb', 'L:Cc'})
     types = set()
-    for view in ret.checks.values():
-      types.update(d.value.value.type_url for d in view.check.options)
+    for check in ret.checks:
+      types.update(d.value.value.type_url for d in check.options)
     self.assertEqual(types, set(type_urls(demoStruct, demoTS)))
 
   def test_query_filter_result(self):
@@ -565,10 +564,11 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
     ret = self.query_nodes(
         turboci.make_query(
             Query.SelectChecks.Predicate(
-                with_result_data_type=turboci.type_set(demoStruct)),)).graph["L"]
+                with_result_data_type=turboci.type_set(demoStruct)),
+        )).workplans[0]
 
     self.assertEqual(len(ret.checks), 2)
-    self.assertEqual(set(ret.checks), {'L:Ca', 'L:Cc'})
+    self.assertEqual(self.check_ids(ret.checks), {'L:Ca', 'L:Cc'})
 
   def test_query_filter_follow_down(self):
     # make a simple diamond
@@ -600,8 +600,8 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         turboci.make_query(
             Query.SelectChecks.Predicate(kind='CHECK_KIND_ANALYSIS'),
             Query.ExpandDependencies(),
-        )).graph["L"]
-    self.assertEqual(set(ret.checks), {'L:Ca', 'L:Cb', 'L:Cc'})
+        )).workplans[0]
+    self.assertEqual(self.check_ids(ret.checks), {'L:Ca', 'L:Cb', 'L:Cc'})
 
   def test_query_filter_follow_up(self):
     # make a simple diamond
@@ -633,8 +633,8 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         turboci.make_query(
             Query.SelectChecks.Predicate(kind=CheckKind.CHECK_KIND_SOURCE),
             Query.ExpandDependents(),
-        )).graph["L"]
-    self.assertEqual(set(ret.checks), {'L:Cs', 'L:Cd'})
+        )).workplans[0]
+    self.assertEqual(self.check_ids(ret.checks), {'L:Cs', 'L:Cd'})
 
   def test_dependencies_edges(self):
     self.write_nodes(
@@ -660,8 +660,8 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         turboci.make_query(
             Query.ExpandDependencies(),
             node_set=turboci.collect_check_ids('D'),
-        )).graph["L"]
-    self.assertEqual(set(ret.checks.keys()), {'L:CD', 'L:CB', 'L:CC'})
+        )).workplans[0]
+    self.assertEqual(self.check_ids(ret.checks), {'L:CD', 'L:CB', 'L:CC'})
 
   def test_dependencies_satisfied(self):
     self.write_nodes(
@@ -688,8 +688,8 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         turboci.make_query(
             Query.ExpandDependencies(mode='QUERY_EXPAND_DEPS_MODE_SATISFIED'),
             node_set=turboci.collect_check_ids('D'),
-        )).graph["L"]
-    self.assertEqual(set(ret.checks.keys()), {'L:CD'})
+        )).workplans[0]
+    self.assertEqual(self.check_ids(ret.checks), {'L:CD'})
 
     # Once B and C are final, D should be unblocked
     self.write_nodes(
@@ -702,10 +702,10 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         turboci.make_query(
             Query.ExpandDependencies(mode='QUERY_EXPAND_DEPS_MODE_SATISFIED'),
             node_set=turboci.collect_check_ids('D'),
-        )).graph["L"]
-    self.assertEqual(set(ret.checks.keys()), {'L:CD', 'L:CB', 'L:CC'})
-    self.assertEqual(ret.checks['L:CD'].check.state,
-                     CheckState.CHECK_STATE_WAITING)
+        )).workplans[0]
+    self.assertEqual(self.check_ids(ret.checks), {'L:CD', 'L:CB', 'L:CC'})
+    self.assertEqual(
+        get_check_by_full_id(ret, 'L:CD').state, CheckState.CHECK_STATE_WAITING)
 
   def test_dependents_edges(self):
     self.write_nodes(
@@ -731,8 +731,8 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         turboci.make_query(
             Query.ExpandDependents(),
             node_set=turboci.collect_check_ids('A'),
-        )).graph["L"]
-    self.assertEqual(set(ret.checks.keys()), {'L:CA', 'L:CB', 'L:CC'})
+        )).workplans[0]
+    self.assertEqual(self.check_ids(ret.checks), {'L:CA', 'L:CB', 'L:CC'})
 
   def test_dependents_satisfied(self):
     self.write_nodes(
@@ -758,8 +758,8 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         turboci.make_query(
             Query.ExpandDependents(mode='QUERY_EXPAND_DEPS_MODE_SATISFIED'),
             node_set=turboci.collect_check_ids('A'),
-        )).graph["L"]
-    self.assertEqual(set(ret.checks.keys()), {'L:CA'})
+        )).workplans[0]
+    self.assertEqual(self.check_ids(ret.checks), {'L:CA'})
 
     self.write_nodes(turboci.check('A', state='CHECK_STATE_FINAL'))
 
@@ -767,8 +767,8 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         turboci.make_query(
             Query.ExpandDependents(mode='QUERY_EXPAND_DEPS_MODE_SATISFIED'),
             node_set=turboci.collect_check_ids('A'),
-        )).graph["L"]
-    self.assertEqual(set(ret.checks.keys()), {'L:CA', 'L:CB', 'L:CC'})
+        )).workplans[0]
+    self.assertEqual(self.check_ids(ret.checks), {'L:CA', 'L:CB', 'L:CC'})
 
   def test_ab_bc_resolution(self):
     self.write_nodes(
@@ -789,7 +789,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
     )
 
     p = self.read_checks('p')[0]
-    self.assertFalse(p.check.dependencies.HasField('resolution'))
+    self.assertFalse(p.dependencies.HasField('resolution'))
 
     # satisfy p->a and p->c
     self.write_nodes(
@@ -799,16 +799,16 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
 
     # still no resolution yet
     p = self.read_checks('p')[0]
-    self.assertFalse(p.check.dependencies.HasField('resolution'))
+    self.assertFalse(p.dependencies.HasField('resolution'))
 
     # satisfy p->d
     self.write_nodes(turboci.check('d', state='CHECK_STATE_FINAL'),)
 
     # resolved
     p = self.read_checks('p')[0]
-    self.assertTrue(p.check.dependencies.HasField('resolution'))
+    self.assertTrue(p.dependencies.HasField('resolution'))
     # and satisfied has the minimal set of just ['c', 'd']
-    self.assertEqual(p.check.dependencies.resolution, RESOLUTION_SATISFIED)
+    self.assertEqual(p.dependencies.resolution, RESOLUTION_SATISFIED)
 
   def test_check_versioning_invariant(self):
     # 1. Create Check with Option
@@ -819,11 +819,11 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
             options=[demoStruct],
         ))
 
-    view = self.read_checks(
+    check = self.read_checks(
         'check', collect=Query.CollectChecks(options=True),
         types=[demoStruct])[0]
-    check_v1 = view.check.version
-    opt_v1 = view.check.options[0].version
+    check_v1 = check.version
+    opt_v1 = check.options[0].version
 
     # 2. Modify Option
     self.write_nodes(turboci.check(
@@ -831,11 +831,11 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         options=[demoStruct2],
     ))
 
-    view = self.read_checks(
+    check = self.read_checks(
         'check', collect=Query.CollectChecks(options=True),
         types=[demoStruct])[0]
-    check_v2 = view.check.version
-    opt_v2 = view.check.options[0].version
+    check_v2 = check.version
+    opt_v2 = check.options[0].version
 
     # Check version should NOT change
     self.assertEqual(check_v1, check_v2)
@@ -851,12 +851,12 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
             results=[demoStruct],
         ))
 
-    view = self.read_checks(
+    check = self.read_checks(
         'check',
         collect=Query.CollectChecks(result_data=True),
         types=[demoStruct])[0]
-    check_v3 = view.check.version
-    rslt_v1 = view.check.results[0].data[0].version
+    check_v3 = check.version
+    rslt_v1 = check.results[0].data[0].version
 
     self.assertGreater((check_v3.ts.seconds, check_v3.ts.nanos),
                        (check_v2.ts.seconds, check_v2.ts.nanos))
@@ -867,12 +867,12 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         results=[demoStruct2],
     ))
 
-    view = self.read_checks(
+    check = self.read_checks(
         'check',
         collect=Query.CollectChecks(result_data=True),
         types=[demoStruct])[0]
-    check_v4 = view.check.version
-    rslt_v2 = view.check.results[0].data[0].version
+    check_v4 = check.version
+    rslt_v2 = check.results[0].data[0].version
 
     # Check version should NOT change
     self.assertEqual(check_v3, check_v4)
@@ -890,11 +890,12 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         ))
 
     # Read back the initial state
-    view = self.read_checks(
-        'versioned_check', collect=Query.CollectChecks(options=True),
+    check = self.read_checks(
+        'versioned_check',
+        collect=Query.CollectChecks(options=True),
         types=[demoStruct])[0]
-    check_v1 = view.check.version
-    opt_v1 = view.check.options[0].version
+    check_v1 = check.version
+    opt_v1 = check.options[0].version
 
     # 2. Modify the existing Option
     self.write_nodes(turboci.check(
@@ -903,11 +904,12 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
     ))
 
     # Read back the updated state
-    view = self.read_checks(
-        'versioned_check', collect=Query.CollectChecks(options=True),
+    check = self.read_checks(
+        'versioned_check',
+        collect=Query.CollectChecks(options=True),
         types=[demoStruct2])[0]
-    check_v2 = view.check.version
-    opt_v2 = view.check.options[0].version
+    check_v2 = check.version
+    opt_v2 = check.options[0].version
 
     # Check version must NOT change because we only modified an existing option's data
     self.assertEqual(check_v1, check_v2)
@@ -921,10 +923,11 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         options=[demoStruct2, demoTS],
     ))
 
-    view = self.read_checks(
-        'versioned_check', collect=Query.CollectChecks(options=True),
+    check = self.read_checks(
+        'versioned_check',
+        collect=Query.CollectChecks(options=True),
         types=[demoStruct2, demoTS])[0]
-    check_v3 = view.check.version
+    check_v3 = check.version
     self.assertGreater((check_v3.ts.seconds, check_v3.ts.nanos),
                        (check_v2.ts.seconds, check_v2.ts.nanos))
 
@@ -933,7 +936,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         turboci.check('A', kind='CHECK_KIND_BUILD', options=[demoStruct]))
     # Query check 'A' without requesting options data
     ret = self.read_checks('A')
-    check = ret[0].check
+    check = ret[0]
     self.assertEqual(len(check.options), 1)
     # Check that value is stripped but type_url is present
     self.assertEqual(check.options[0].value.value.type_url,
@@ -954,12 +957,12 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         )
     )
 
-    view = self.read_checks('check')[0]
-    self.assertEqual(view.check.state, CheckState.CHECK_STATE_PLANNING)
-    self.assertEqual(len(view.check.state_history), 1)
-    self.assertEqual(view.check.state_history[0].state,
+    check = self.read_checks('check')[0]
+    self.assertEqual(check.state, CheckState.CHECK_STATE_PLANNING)
+    self.assertEqual(len(check.state_history), 1)
+    self.assertEqual(check.state_history[0].state,
                      CheckState.CHECK_STATE_PLANNING)
-    v1 = view.check.state_history[0].version
+    v1 = check.state_history[0].version
 
     # 2. Move to PLANNED
     self.write_nodes(turboci.check(
@@ -967,14 +970,14 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         state='CHECK_STATE_PLANNED',
     ))
 
-    view = self.read_checks('check')[0]
-    self.assertEqual(view.check.state, CheckState.CHECK_STATE_PLANNED)
-    self.assertEqual(len(view.check.state_history), 2)
-    self.assertEqual(view.check.state_history[0].state,
+    check = self.read_checks('check')[0]
+    self.assertEqual(check.state, CheckState.CHECK_STATE_PLANNED)
+    self.assertEqual(len(check.state_history), 2)
+    self.assertEqual(check.state_history[0].state,
                      CheckState.CHECK_STATE_PLANNING)
-    self.assertEqual(view.check.state_history[1].state,
+    self.assertEqual(check.state_history[1].state,
                      CheckState.CHECK_STATE_PLANNED)
-    v2 = view.check.state_history[1].version
+    v2 = check.state_history[1].version
     self.assertGreater((v2.ts.seconds, v2.ts.nanos),
                        (v1.ts.seconds, v1.ts.nanos))
 
@@ -984,12 +987,12 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         state='CHECK_STATE_FINAL',
     ))
 
-    view = self.read_checks('check')[0]
-    self.assertEqual(view.check.state, CheckState.CHECK_STATE_WAITING)
-    self.assertEqual(len(view.check.state_history), 3)
-    self.assertEqual(view.check.state_history[2].state,
+    check = self.read_checks('check')[0]
+    self.assertEqual(check.state, CheckState.CHECK_STATE_WAITING)
+    self.assertEqual(len(check.state_history), 3)
+    self.assertEqual(check.state_history[2].state,
                      CheckState.CHECK_STATE_WAITING)
-    v3 = view.check.state_history[2].version
+    v3 = check.state_history[2].version
     self.assertGreater((v3.ts.seconds, v3.ts.nanos),
                        (v2.ts.seconds, v2.ts.nanos))
 
@@ -999,12 +1002,11 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         state='CHECK_STATE_FINAL',
     ))
 
-    view = self.read_checks('check')[0]
-    self.assertEqual(view.check.state, CheckState.CHECK_STATE_FINAL)
-    self.assertEqual(len(view.check.state_history), 4)
-    self.assertEqual(view.check.state_history[3].state,
-                     CheckState.CHECK_STATE_FINAL)
-    v4 = view.check.state_history[3].version
+    check = self.read_checks('check')[0]
+    self.assertEqual(check.state, CheckState.CHECK_STATE_FINAL)
+    self.assertEqual(len(check.state_history), 4)
+    self.assertEqual(check.state_history[3].state, CheckState.CHECK_STATE_FINAL)
+    v4 = check.state_history[3].version
     self.assertGreater((v4.ts.seconds, v4.ts.nanos),
                        (v3.ts.seconds, v3.ts.nanos))
 

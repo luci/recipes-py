@@ -24,18 +24,18 @@ A Check:
     are outputs for this particular Check, but may serve as additional inputs
     to processes attempting to resolve other Checks blocked on this one.
 
-Subsets of the graph state can be serialized as proto to be passed to another
+Subsets of the workplan state can be serialized as proto to be passed to another
 process.
 
-The graph state in this process can also be bulk-updated from such a serialized
-subset to allow an exported graph subset to be returned; however this
+The workplan state in this process can also be bulk-updated from such a serialized
+subset to allow an exported workplan subset to be returned; however this
 bulk-update will be lossy since there will be no central, synchronized, process
 to reconcile edits. (Once the real remote service exists, it will be able to
 allow many different processes to explicitly coordinate via edits to a single
-graph. The bulk update functionality will just be to help model this in limited
+workplan. The bulk update functionality will just be to help model this in limited
 contexts during the migration, e.g. when triggering one build from another).
 
-This fake does NO security handling for the graph data which will be present
+This fake does NO security handling for the workplan data which will be present
 in the real service. Functionality described by the protos, but not implemented
 by this fake, will raise NotImplementedError.
 """
@@ -63,21 +63,21 @@ from PB.turboci.graph.orchestrator.v1.check_state import (CheckState,
                                                           CHECK_STATE_PLANNING,
                                                           CHECK_STATE_WAITING,
                                                           CHECK_STATE_FINAL)
-from PB.turboci.graph.orchestrator.v1.check_view import CheckView
 from PB.turboci.graph.orchestrator.v1.datum import Datum
 from PB.turboci.graph.orchestrator.v1.dependencies import Dependencies
 from PB.turboci.graph.orchestrator.v1.edge import RESOLUTION_SATISFIED
-from PB.turboci.graph.orchestrator.v1.graph_view import GraphView
 from PB.turboci.graph.orchestrator.v1.query import Query
 from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesRequest
 from PB.turboci.graph.orchestrator.v1.query_nodes_response import QueryNodesResponse
 from PB.turboci.graph.orchestrator.v1.revision import Revision
 from PB.turboci.graph.orchestrator.v1.transaction_invariant import TransactionConflictFailure
 from PB.turboci.graph.orchestrator.v1.type_set import TypeSet
+from PB.turboci.graph.orchestrator.v1.workplan import WorkPlan
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 from PB.turboci.graph.orchestrator.v1.write_nodes_response import WriteNodesResponse
 from recipe_engine.internal.turboci import check_invariant
 from recipe_engine.internal.turboci import edge
+from recipe_engine.internal.turboci.common import get_check_by_full_id
 from recipe_engine.internal.turboci.errors import TransactionConflictException, InvalidArgumentException
 
 from .ids import from_id, to_id, wrap_id
@@ -442,25 +442,27 @@ class FakeTurboCIOrchestrator(TurboCIClient):
     check = self._apply_checkwrite_locked(write, deps)
     self._update_indices_locked(ident_str, idx_snap, check)
 
-  def _ensure_check_in_view(self, graph: GraphView, check_str: str) -> tuple[CheckView, Check] | tuple[None, None]:
+  def _ensure_check_in_workplan(self, workplan: WorkPlan,
+                                check_str: str) -> Check | tuple[None, None]:
     check = self._checks.get(check_str)
     if check is None:
       return None, None
 
-    ret = graph.checks[check_str]
-    if not ret.HasField('check'):
-      ret.check.CopyFrom(check)
+    ret = get_check_by_full_id(workplan, check_str)
+    if not ret:
+      ret = workplan.checks.add()
+      ret.CopyFrom(check)
 
-      for opt in ret.check.options:
+      for opt in ret.options:
         opt.value.value.ClearField('value')
         opt.ClearField('version')
 
-      for rslt in ret.check.results:
+      for rslt in ret.results:
         for dat in rslt.data:
           dat.value.value.ClearField('value')
           dat.ClearField('version')
 
-    return ret, check
+    return ret
 
 
   def _select_checks_locked(self, basis: set[str]|_all_nodes_set, sel: Query.SelectChecks|None) -> set[str]:
@@ -501,11 +503,10 @@ class FakeTurboCIOrchestrator(TurboCIClient):
 
 
   def _select_nodes_locked(
-      self, graph: GraphView, q: Query
-  ) -> tuple[
-      set[str],
-      dict[str, identifier.Identifier],
-  ]:
+      self, workplan: WorkPlan, q: Query) -> tuple[
+          set[str],
+          dict[str, identifier.Identifier],
+      ]:
     """Processes a Query.Select into a set of nodes_ids."""
     absent: dict[str, identifier.Identifier] = {}
     basis: _all_nodes_set | set[str]
@@ -552,16 +553,16 @@ class FakeTurboCIOrchestrator(TurboCIClient):
 
     selected = self._select_checks_locked(basis, q.select_checks)
     for node_id in selected:
-      self._ensure_check_in_view(graph, node_id)
+      self._ensure_check_in_workplan(workplan, node_id)
 
     return selected, absent
 
 
-  def _expand_nodes_locked(self, graph: GraphView, q: Query,
+  def _expand_nodes_locked(self, workplan: WorkPlan, q: Query,
                            toCollect: set[str]):
     """Expands the nodes in `toCollect` according to `q`.
 
-    This entails walking 'forwards' and 'backwards' through the graph along
+    This entails walking 'forwards' and 'backwards' through the workplan along
     dependency edges.
     """
     # Need separate set to avoid changing toCollect while iterating on it.
@@ -572,7 +573,7 @@ class FakeTurboCIOrchestrator(TurboCIClient):
         matches = self._dependencies.dependencies_of(
             node_ident_str, q.expand_dependencies.mode)
         for match in matches:
-          self._ensure_check_in_view(graph, match)
+          self._ensure_check_in_workplan(workplan, match)
         to_add.update(matches)
 
     if q.HasField('expand_dependents'):
@@ -580,16 +581,15 @@ class FakeTurboCIOrchestrator(TurboCIClient):
         matches = self._dependencies.dependents_of(
             node_ident_str, q.expand_dependents.mode)
         for match in matches:
-          self._ensure_check_in_view(graph, match)
+          self._ensure_check_in_workplan(workplan, match)
         to_add.update(matches)
 
     toCollect.update(to_add)
 
-  def _collect_nodes_locked(self, graph: GraphView, query: Query,
+  def _collect_nodes_locked(self, workplan: WorkPlan, query: Query,
                             type_info: QueryNodesRequest.TypeInfo,
-                            toCollect: set[str],
-                            require: Revision | None):
-    """Collect adds all required nodes to the GraphView."""
+                            toCollect: set[str], require: Revision | None):
+    """Collect adds all required nodes to the WorkPlan."""
     if query.collect_checks.HasField('edits'):
       raise NotImplementedError(
           "FakeTurboCIOrchestrator.QueryNodes: `query.collect_checks.edits`")
@@ -608,19 +608,19 @@ class FakeTurboCIOrchestrator(TurboCIClient):
             f"node {check_str} newer than {require}",
             failure_message=TransactionConflictFailure())
 
-      # This must already be in graph
-      view = graph.checks[check_str]
+      # This must already be in workplan
+      workplan_check = get_check_by_full_id(workplan, check_str)
 
       if collect_opts:
         for i, opt in enumerate(check.options):
           if _want_datum(type_info.wanted, opt):
-            view.check.options[i].CopyFrom(opt)
+            workplan_check.options[i].CopyFrom(opt)
 
       if collect_result_data:
         for result_idx, result in enumerate(check.results):
           for data_idx, dat in enumerate(result.data):
             if _want_datum(type_info.wanted, dat):
-              view.check.results[result_idx].data[data_idx].CopyFrom(dat)
+              workplan_check.results[result_idx].data[data_idx].CopyFrom(dat)
 
 
   def QueryNodes(self, req: QueryNodesRequest) -> QueryNodesResponse:
@@ -637,7 +637,8 @@ class FakeTurboCIOrchestrator(TurboCIClient):
           "FakeTurboCIOrchestrator.QueryNodes: `type_info.known`")
 
     with self._lock:
-      ret = GraphView(version=self._revision, identifier=identifier.WorkPlan(id=""))
+      ret = WorkPlan(
+          version=self._revision, identifier=identifier.WorkPlan(id=""))
       all_absent: dict[str, identifier.Identifier] = {}
       for query in req.query:
         toCollect, absent = self._select_nodes_locked(ret, query)
@@ -648,8 +649,9 @@ class FakeTurboCIOrchestrator(TurboCIClient):
             req.version.require if req.version.HasField('require') else None)
 
     return QueryNodesResponse(
-        graph={"L": ret},
+        workplans=[ret],
         absent=all_absent.values(),
+        version=self._revision,
     )
 
   def WriteNodes(self, req: WriteNodesRequest) -> WriteNodesResponse:
@@ -791,7 +793,7 @@ class FakeTurboCIOrchestrator(TurboCIClient):
       # Do this until there are no more edge propagations.
       #
       # In the real implementation, these would all be asynchronous background
-      # transactions on the graph state.
+      # transactions on the workplan state.
       while self._dependencies.has_events():
         self._advance_revision_locked()
         to_write = self._dependencies.process_queue(

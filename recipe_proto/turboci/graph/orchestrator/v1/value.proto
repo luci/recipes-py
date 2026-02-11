@@ -8,6 +8,7 @@ package turboci.graph.orchestrator.v1;
 
 import "google/api/field_behavior.proto";
 import "google/protobuf/any.proto";
+import "turboci/graph/orchestrator/v1/omit_reason.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
 option java_multiple_files = true;
@@ -49,32 +50,14 @@ message Value {
   // A ProtoJSON-serialized version of `value`.
   optional string value_json = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
-  // OmitReason details why this Value's content is omitted.
-  enum OmitReason {
-    // Default invalid value.
-    OMIT_REASON_UNKNOWN = 0;
-
-    // This Value has a type_url which was not requested by the caller.
-    //
-    // In this case `value.type_url` will be present, but other metadata (like
-    // orchestrator-visible index values) may be present as well.
-    OMIT_REASON_UNWANTED = 1;
-
-    // This Value has a type_url which WAS requested by the user, but the caller
-    // doesn't have access to it. See the surrounding Datum to see the realm to
-    // which this Value belongs.
-    //
-    // In this case ONLY `value.type_url` (and in the future any other
-    // 'disambiguator/key') will be present.
-    OMIT_REASON_NO_ACCESS = 2;
-  }
-
-  // If true, `value.value` was pruned from this message either due to
-  // permissions (no read access in the realm containing this Value) or due to
-  // a Query filter (not in type_info.wanted).
+  // If set, the reason this Value's content was omitted. Only UNKNOWN (default
+  // value, used when the content was included) and UNWANTED and NO_ACCESS are
+  // valid for a Value; PLACEHOLDER is not valid because Values do not have
+  // child nodes.
   //
-  // `value.type_url`, however will always be present as metadata.
-  optional OmitReason omitted = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // A few fields may be populated even if this Value's content is omitted:
+  //   * `value.type_url` will always be populated.
+  optional OmitReason omit_reason = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // TBD: An additional disambiguator/key in addition to value.type_url?
 

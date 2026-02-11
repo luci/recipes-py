@@ -36,7 +36,7 @@ class TransactionTest(turboci_test_helper.TestBaseClass):
 
     def _mutate(txn: turboci.Transaction):
       rslt = txn.read_checks("hey")[0]
-      if not rslt.check.options:
+      if not rslt.options:
         txn.write_nodes(
             turboci.check("hey", options=[demoStruct, demoTS]),
             turboci.reason('I feel like it'),
@@ -48,7 +48,7 @@ class TransactionTest(turboci_test_helper.TestBaseClass):
         'hey',
         collect=Query.CollectChecks(options=True),
         types=[demoStruct, demoTS])[0]
-    self.assertEqual(len(rslt.check.options), 2)
+    self.assertEqual(len(rslt.options), 2)
 
   def test_transaction_retry(self):
     self.write_nodes(
@@ -90,10 +90,10 @@ class TransactionTest(turboci_test_helper.TestBaseClass):
         collect=Query.CollectChecks(options=True),
         types=[demoStruct2, demoTS])[0]
     # We should have both data types in Struct, TS order.
-    self.assertEqual(len(rslt.check.options), 2)
-    self.assertEqual(rslt.check.options[0].value.value.type_url,
+    self.assertEqual(len(rslt.options), 2)
+    self.assertEqual(rslt.options[0].value.value.type_url,
                      turboci.type_url_for(demoStruct2))
-    self.assertEqual(rslt.check.options[1].value.value.type_url,
+    self.assertEqual(rslt.options[1].value.value.type_url,
                      turboci.type_url_for(demoTS))
 
   def test_transactional_creation(self):
@@ -130,8 +130,8 @@ class TransactionTest(turboci_test_helper.TestBaseClass):
         'hey', collect=Query.CollectChecks(options=True), types=[demoStruct])[0]
     # Since we only conditionally wrote, we see the kind written outside
     # the transaction but the option written by the transaction.
-    self.assertEqual(rslt.check.kind, CheckKind.CHECK_KIND_ANALYSIS)
-    self.assertEqual(rslt.check.options[0].value.value.type_url,
+    self.assertEqual(rslt.kind, CheckKind.CHECK_KIND_ANALYSIS)
+    self.assertEqual(rslt.options[0].value.value.type_url,
                      turboci.type_url_for(demoStruct))
 
 

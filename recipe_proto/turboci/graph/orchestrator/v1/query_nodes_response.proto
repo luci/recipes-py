@@ -7,20 +7,17 @@ syntax = "proto3";
 package turboci.graph.orchestrator.v1;
 
 import "turboci/graph/ids/v1/identifier.proto";
-import "turboci/graph/orchestrator/v1/graph_view.proto";
+import "turboci/graph/orchestrator/v1/revision.proto";
 import "turboci/graph/orchestrator/v1/stage.proto";
+import "turboci/graph/orchestrator/v1/workplan.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
 option java_multiple_files = true;
 
 // Response message for TurboCIGraphService.QueryNodes.
 message QueryNodesResponse {
-  // The graph view of the nodes matching the query.
-  //
-  // Indexed by WorkPlan's canonical string id.
-  //
-  // The `version` field of each GraphView will always be identical.
-  map<string, GraphView> graph = 1;
+  // The WorkPlan(s) containing nodes matching the request.
+  repeated WorkPlan workplans = 1;
 
   // A list of explicitly-selected nodes which were not found in the graph.
   repeated ids.v1.Identifier absent = 2;
@@ -29,6 +26,9 @@ message QueryNodesResponse {
   //
   // Only set if the `token` was for a stage attempt.
   optional StageAttemptCurrentState current_attempt_state = 3;
+
+  // The Spanner snapshot version used when executing all queries.
+  optional Revision version = 4;
 
   // TBD: A field to indicate which permissions were checked that the caller
   // didn't have access to.

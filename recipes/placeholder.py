@@ -5,9 +5,8 @@
 from __future__ import annotations
 
 from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
-from PB.turboci.graph.orchestrator.v1.graph_view import GraphView
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
-from recipe_engine.internal.turboci.common import get_check_view, get_option
+from recipe_engine.internal.turboci.common import get_check_by_short_id, get_option
 
 DEPS = [
   'buildbucket',
@@ -445,12 +444,14 @@ def GenTests(api):
           state='CHECK_STATE_FINAL',
       ))
 
-  def _assert_graph(assert_, graph: GraphView):
-    charlie_view = get_check_view(graph, 'charlie')
-    assert_(charlie_view.check.identifier.id == 'charlie')
-    assert_(charlie_view.check.kind == CheckKind.CHECK_KIND_BUILD)
+  def _assert_workplan(assert_, workplan: WorkPlan):
+    # TODO (b/483105203): get_check_by_short_id() is currently O(N), which readers
+    # might not expect. Remove this comment when we optimize the function later.
+    charlie = get_check_by_short_id(workplan, 'charlie')
+    assert_(charlie.identifier.id == 'charlie')
+    assert_(charlie.kind == CheckKind.CHECK_KIND_BUILD)
 
-    bob = get_check_view(graph, 'bob').check
+    bob = get_check_by_short_id(workplan, 'bob')
     assert_(bob.identifier.id == 'bob')
 
     url = turboci.type_url_for(GobSourceCheckOptions)
@@ -466,5 +467,5 @@ def GenTests(api):
       api.properties(write_checks_input),
       api.turboci_write_nodes(
           turboci.check('charlie', kind='CHECK_KIND_BUILD'),),
-      api.assert_turboci_graph(_assert_graph),
+      api.assert_workplan(_assert_workplan),
   )

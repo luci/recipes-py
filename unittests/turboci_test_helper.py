@@ -16,6 +16,7 @@ from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesReque
 
 from recipe_engine import turboci
 from recipe_engine.internal.turboci.fake import FakeTurboCIOrchestrator
+from recipe_engine.internal.turboci.ids import from_id, to_id
 from recipe_engine.internal.turboci.transaction import QueryMode
 
 
@@ -68,3 +69,6 @@ class TestBaseClass(test_env.RecipeEngineUnitTest):
   ):
     return turboci.run_transaction(
         txnFunc, retries=retries, query_mode=query_mode, client=self.CLIENT)
+
+  def check_ids(self, checks):
+    return set([from_id(c.identifier) for c in checks])

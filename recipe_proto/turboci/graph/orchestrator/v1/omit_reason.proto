@@ -1,0 +1,36 @@
+// Copyright 2026 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// OmitReason details why the containing node's content is omitted. The node's
+// Identifier will be present (maybe plus "disambiguator" fields if the node has
+// those), but no other fields will be populated other than references to other
+// nodes if this node is necessary to represent the graph structure.
+//
+// When a node qualifies for both OMIT_REASON_PLACEHOLDER and another reason,
+// the other reason will be chosen. When merging partial results across a
+// paginated query, callers should choose the other reason over
+// OMIT_REASON_PLACEHOLDER for the merged object.
+enum OmitReason {
+  // Default value. Indicates that the content for which this value applies was
+  // included, so no omit reason is applicable.
+  OMIT_REASON_UNKNOWN = 0;
+  // This node was not requested by the caller. For example a Value that has a
+  // type_url which was not requested by the caller.
+  OMIT_REASON_UNWANTED = 1;
+  // This node WAS requested by the user, but the caller doesn't have access to
+  // it due to the caller's permissions in the realm associated with the node.
+  OMIT_REASON_NO_ACCESS = 2;
+  // This node was included because we needed it to represent some aspect of the
+  // graph's structure when we would not otherwise have included the node. This
+  // could be a parent node to hold a child being returned, or a representation
+  // of the order of nodes in a list.
+  OMIT_REASON_PLACEHOLDER = 3;
+}

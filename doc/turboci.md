@@ -333,7 +333,7 @@ turboci.write_nodes(
 )
 ```
 
-The target checks must already be in the graph, OR must be created in the same
+The target checks must already be in the workplan, OR must be created in the same
 `write_nodes` call.
 
 #### Writing Result Data
@@ -388,9 +388,9 @@ transition to `CHECK_STATE_WAITING`.
 Similarly, when the Check has all the results it needs, you can evolve it to
 `CHECK_STATE_FINAL`, at which point it will be fully immutable.
 
-### Querying the graph
+### Querying the workplan
 
-To query the graph, you'll need to use `turboci.query_nodes` with one or more
+To query the workplan, you'll need to use `turboci.query_nodes` with one or more
 queries.
 
 In the simplest form, this looks like:
@@ -404,23 +404,22 @@ result = turboci.query_nodes(turboci.make_query(
 
 # NOTE: By default, this will only return nodes in the *current* workplan,
 # but this API is designed to allow queries across workplans. For that
-# reason `result.graph` is a map key'd by workplan ID.
+# reason `result.workplans` is a list of workplans.
 #
-# If you don't know what ID the current workplan is, you can get the
-# workplan view by doing:
+# You can get the first workplan by doing:
 #
 #   workplan = next(iter(result.graph.values()))
 #
 # And then this contains all our queried data:
 #
-#   workplan.checks["the_build"] => CheckView of the_build
+#   workplan.checks => list of Checks of the_build
 ```
 
-This [`CheckView`] however, may be sparser than you want. In order to see the
+This [`Check`] however, may be sparser than you want. In order to see the
 more pertinent content, we'll need to understand how TurboCI services queries in
 terms of query phases, and how TurboCI deals with data types.
 
-[`CheckView`]: https://chromium.googlesource.com/infra/turboci/proto/+/refs/heads/main/turboci/graph/orchestrator/v1/check_view.proto#17
+[`Check`]: https://chromium.googlesource.com/infra/turboci/proto/+/refs/heads/main/turboci/graph/orchestrator/v1/check.proto
 
 #### Query Phases
 
@@ -438,7 +437,7 @@ message.
 ##### Query Phase: Selection
 
 Each Query begins with the selection of one or more nodes by direct search in
-the graph. There are two main ways to do this:
+the workplan. There are two main ways to do this:
 
   * Direct supply of nodes:
     ```python
@@ -570,9 +569,9 @@ checks = turboci.read_checks(
     types=[MyMessageType],
 )
 # => [
-#  CheckView('the_build'),
-#  CheckView('other_check'),
-#  CheckView(check_identifier_object)
+#  Check('the_build'),
+#  Check('other_check'),
+#  Check(check_identifier_object)
 # ]
 ```
 
@@ -582,9 +581,9 @@ checks = turboci.read_checks(
 Individual `write_nodes` and `query_nodes` are always individually atomic, but
 sometimes you need to chain them together.
 
-In order to safely do read-modify-write operations on the graph, you need to use
-a transaction. A transaction in TurboCI essentially boils down to a series of
-`query_nodes` operations, followed by at most one `write_nodes`.
+In order to safely do read-modify-write operations on the workplan, you need to
+use a transaction. A transaction in TurboCI essentially boils down to a series
+of `query_nodes` operations, followed by at most one `write_nodes`.
 
 Care should be taken to not use/cache any data queried during the transaction
 until after the transaction finishes successfully.
@@ -637,9 +636,9 @@ fake integrates with this in the following ways in `GenTests`:
     before `RunSteps` executes with `api.turboci_write_nodes(*CheckWrite)`. Note
     that `turboci.check(...)` works nicely to prepare `CheckWrite` messages here
     as well.
-  * `api.assert_turboci_graph` works like `api.post_check` except that it's
-    given a [`GraphView`] for the entire fake TurboCI graph state at the end of the
-    test case (rather than getting a 'step dict').
+  * `api.assert_workplan` works like `api.post_check` except that it's given a
+    [`WorkPlan`] for the entire fake WorkPlan state at the end of the test case
+    (rather than getting a 'step dict').
 
 Putting this all together, you might do something like:
 
@@ -647,15 +646,15 @@ Putting this all together, you might do something like:
 def GenTests(api):
   ...
 
-  def _assert_graph(assert_, graph: GraphView):
-    assert_('build' in graph.checks)
-    build_view = graph.checks['build']
+  def _assert_workplan(assert_, workplan: WorkPlan):
+    build_check = get_check_by_short_id(workplan, 'build')
+    assertIsNotNone(build_check)
 
     # assert that our build check depends on the source check we wrote in
     # turboci_write_nodes below.
     assert_(any(
       edge.identifier.check.id == 'source'
-      for edge in build_view.check.dependencies.edges
+      for edge in build_check.dependencies.edges
     ))
 
     assert_(turboci.get_option(MyOption, build_view) == MyOption(...))
@@ -669,11 +668,11 @@ def GenTests(api):
         # NOTE: A `reason` is not needed here. The test will synthesize one.
         turboci.check('source', kind='CHECK_KIND_SOURCE', options=[...]),
     ),
-    api.assert_turboci_graph(_assert_graph)
+    api.assert_workplan(_assert_workplan)
   )
 ```
 
-[`GraphView`]: https://chromium.googlesource.com/infra/turboci/proto/+/refs/heads/main/turboci/graph/orchestrator/v1/graph_view.proto#17
+[`WorkPlan`]: https://chromium.googlesource.com/infra/turboci/proto/+/refs/heads/main/turboci/graph/orchestrator/v1/workplan.proto#17
 
 ### Limitations of the fake
 

@@ -15,16 +15,16 @@ from PB.turboci.graph.ids.v1 import identifier
 from PB.turboci.graph.orchestrator.v1.check import Check
 from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
 from PB.turboci.graph.orchestrator.v1.check_state import CheckState
-from PB.turboci.graph.orchestrator.v1.check_view import CheckView
 from PB.turboci.graph.orchestrator.v1.edge import Edge
-from PB.turboci.graph.orchestrator.v1.graph_view import GraphView
 from PB.turboci.graph.orchestrator.v1.query import Query
 from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesRequest
 from PB.turboci.graph.orchestrator.v1.query_nodes_response import QueryNodesResponse
+from PB.turboci.graph.orchestrator.v1.type_info import TypeInfo
+from PB.turboci.graph.orchestrator.v1.workplan import WorkPlan
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 from PB.turboci.graph.orchestrator.v1.write_nodes_response import WriteNodesResponse
 
-from .ids import collect_check_ids, type_url_for, type_set, check_id, stage_id
+from .ids import collect_check_ids, type_url_for, type_set, check_id, stage_id, to_id
 from recipe_engine.internal.turboci import ids
 
 
@@ -292,7 +292,7 @@ def make_query(*atoms: QueryAtoms | None, node_set: QueryNodeSet = NodesInWorkpl
     if atom is None:
       continue
     match atom:
-      # QuerySelectAtom
+    # QuerySelectAtom
       case Query.SelectChecks():
         ret.select_checks.MergeFrom(atom)
       case Query.SelectChecks.Predicate():
@@ -331,14 +331,14 @@ def query_nodes(
       QueryNodesRequest(
           version=version,
           query=queries,
-          type_info=QueryNodesRequest.TypeInfo(wanted=type_set(*types)),
+          type_info=TypeInfo(wanted=type_set(*types)),
       ))
 
 
-def read_checks(*ids: identifier.Check|str,
-                collect: Query.CollectChecks|None = None,
-                types: Sequence[str|Message|type[Message]] = (),
-                client: TurboCIClient|None = None) -> Sequence[CheckView]:
+def read_checks(*ids: identifier.Check | str,
+                collect: Query.CollectChecks | None = None,
+                types: Sequence[str | Message | type[Message]] = (),
+                client: TurboCIClient | None = None) -> Sequence[Check]:
   """Convenience function for reading one or more checks by ID.
 
   This just does a query_nodes for the ids specified by `ids`, and then unwraps
@@ -350,29 +350,37 @@ def read_checks(*ids: identifier.Check|str,
     raise ValueError(
         f'read_checks: got checks from more than one workplan: {work_plan}')
 
-  checks = next(
-      iter(
-          query_nodes(
-              make_query(
-                  collect,
-                  node_set=idents,
-              ),
-              types=types,
-              client=client).graph.values())).checks
-  return list(checks.values())
+  checks = query_nodes(
+      make_query(
+          collect,
+          node_set=idents,
+      ), types=types, client=client).workplans[0].checks
+  return checks
 
 
 MsgT = TypeVar('MsgT', bound=Message)
 
 
-def get_check_view(graph: GraphView, check_id: str) -> CheckView:
-  """Finds and returns the CheckView for the check whose id is `check_id`.
+def get_check_by_short_id(workplan: WorkPlan, check_id: str) -> Check:
+  """Finds and returns the Check for the check whose identifier.id is
+  `check_id`.
 
-  If this check is not found, returns an empty CheckView."""
-  for cv in graph.checks.values():
-    if cv.check.identifier.id == check_id:
-      return cv
-  return CheckView()
+  If this check is not found, returns None."""
+  # TODO (b/483105203): Update data model to index checks and stages by ID to
+  # allow O(1) lookup instead of O(N) lookup. Also remove other comments noting
+  # the O(N) nature of this call in the files where it's used.
+  for check in workplan.checks:
+    if check.identifier.id == check_id:
+      return check
+  return None
+
+
+def get_check_by_full_id(workplan: WorkPlan, check_id: str) -> Check:
+  """Finds and returns the Check for the check whose identifier's string
+  representation (e.g. 'L12345:C123') is `check_id`.
+
+  If this check is not found, returns None."""
+  return get_check_by_short_id(workplan, to_id(check_id).check.id)
 
 
 def get_option(msg: Type[MsgT], check: Check) -> MsgT | None:

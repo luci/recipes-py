@@ -17,7 +17,7 @@ Usage:
     def GenTests(api):
       api.test(
         'name',
-        api.assert_turboci_graph(...),
+        api.assert_workplan(...),
       )
 """
 
@@ -36,7 +36,7 @@ from .internal.turboci.common import (
     check_id,
     collect_check_ids,
     dep_group,
-    get_check_view,
+    get_check_by_short_id,
     get_option,
     get_results,
     make_query,
@@ -79,7 +79,7 @@ __all__ = [
     'collect_check_ids',
     'dep_group',
     'from_id',
-    'get_check_view',
+    'get_check_by_short_id',
     'get_client',
     'get_option',
     'get_results',

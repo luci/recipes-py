@@ -472,10 +472,9 @@ message WriteNodesRequest {
   // These aspects come from either the Executor which owns this Stage Attempt,
   // or the running Stage Attempt process.
   message CurrentAttemptWrite {
-    // Adds details to the Stage Attempt.details field.
+    // Sets details in the Stage Attempt.details field.
     //
-    // If a data type here is already present in the database, the data here
-    // must exactly equal the existing data; Otherwise the write is rejected.
+    // Overwrites any existing detail of the same type.
     repeated Value details = 1;
 
     // Progress messages to add to the current Stage Attempt.

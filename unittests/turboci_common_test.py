@@ -28,6 +28,7 @@ from PB.turboci.graph.orchestrator.v1.edge import Edge
 from PB.turboci.graph.orchestrator.v1.query import Query
 from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesRequest
 from PB.turboci.graph.orchestrator.v1.revision import Revision
+from PB.turboci.graph.orchestrator.v1.type_info import TypeInfo
 from PB.turboci.graph.orchestrator.v1.type_set import TypeSet
 from PB.turboci.graph.orchestrator.v1.value import Value
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
@@ -229,22 +230,18 @@ class TestWriteNodes(test_env.RecipeEngineUnitTest):
 
     self.m.QueryNodes.assert_called_once_with(
         QueryNodesRequest(
-            type_info=QueryNodesRequest.TypeInfo(wanted=TypeSet()),
+            type_info=TypeInfo(wanted=TypeSet()),
             query=[
                 Query(
-                  nodes_by_id=Query.NodesByID(nodes=[
-                      identifier.Identifier(
-                          check=identifier.Check(id="bob"))
-                  ]),
-                ),
+                    nodes_by_id=Query.NodesByID(nodes=[
+                        identifier.Identifier(check=identifier.Check(id="bob"))
+                    ]),),
                 Query(
                     nodes_in_workplan=identifier.WorkPlan(),
                     select_checks=Query.SelectChecks(predicates=[
                         Query.SelectChecks.Predicate(kind='CHECK_KIND_TEST'),
                     ]),
-                    collect_checks=Query.CollectChecks(
-                      options=True,
-                    ),
+                    collect_checks=Query.CollectChecks(options=True,),
                 ),
             ],
             version=QueryNodesRequest.VersionRestriction(
@@ -263,14 +260,15 @@ class TestGetOptionsResults(turboci_test_helper.TestBaseClass):
                 'hello': [1, 2, 3, 4],
             })]))
 
-    cv = self.read_checks(
+    returned_check = self.read_checks(
         'a',
         collect=Query.CollectChecks(options=True),
         types=list(type_urls(Struct)))[0]
 
-    self.assertEqual(get_option(Struct, cv.check), {
-        'hello': [1, 2, 3, 4],
-    })
+    self.assertEqual(
+        get_option(Struct, returned_check), {
+            'hello': [1, 2, 3, 4],
+        })
 
   def test_get_result(self):
     self.write_nodes(
@@ -282,14 +280,15 @@ class TestGetOptionsResults(turboci_test_helper.TestBaseClass):
                 'hello': [1, 2, 3, 4],
             })]))
 
-    cv = self.read_checks(
+    returned_check = self.read_checks(
         'a',
         collect=Query.CollectChecks(result_data=True),
         types=list(type_urls(Struct)))[0]
 
-    self.assertEqual(get_results(Struct, cv.check), [{
-        'hello': [1, 2, 3, 4],
-    }])
+    self.assertEqual(
+        get_results(Struct, returned_check), [{
+            'hello': [1, 2, 3, 4],
+        }])
 
 
 if __name__ == '__main__':

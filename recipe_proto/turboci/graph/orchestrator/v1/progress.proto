@@ -43,3 +43,11 @@ message ProgressEvolvePending {
     // message.
   }
 }
+
+// ProgressIgnoredDetail is a Progress detail message attached to Stage Attempts
+// when a CurrentAttemptWrite call writes a Stage Attempt detail whose type is
+// already present, but with a different value.
+message ProgressIgnoredDetail {
+  // The type_url(s) of the detail(s) which had an overwrite attempt.
+  repeated string type_url = 1;
+}

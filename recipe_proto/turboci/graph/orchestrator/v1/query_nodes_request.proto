@@ -8,7 +8,7 @@ package turboci.graph.orchestrator.v1;
 
 import "turboci/graph/orchestrator/v1/query.proto";
 import "turboci/graph/orchestrator/v1/revision.proto";
-import "turboci/graph/orchestrator/v1/type_set.proto";
+import "turboci/graph/orchestrator/v1/type_info.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
 option java_multiple_files = true;
@@ -23,59 +23,19 @@ message QueryNodesRequest {
   //
   // This is in addition to regular RPC authorization.
   //
-  // If missing, this RPC will check that the caller additionally has the
-  // 'turboci.workplans.readExternal' on the implied workplans.
+  // If the token is populated and its workplan ID matches the workplan ID in
+  // the request, this RPC will check that the caller has the relevant 'read'
+  // permissions. Otherwise, the relevant 'readExternal' permissions will be
+  // checked.
   optional string token = 1;
 
-  // TypeInfo lets the orchestrator know which auxiliary type(s) the caller
-  // wants to see in Check Options, Check Results, Stage args, Edits, etc.
-  message TypeInfo {
-    // Set of type URLs that the caller wants to see in the response. Any child
-    // Node whose type URL is not specified here will be omitted in the
-    // response.
-    //
-    // The set may contain an URL with a trailing wildcard to indicate that you
-    // want all data whose type appears in this proto namespace. For example:
-    //   * type.googleapis.com/turboci.data.*
-    //   * type.googleapis.com/*
-    //
-    // Use this power wisely! This can have the following adverse affects:
-    //   * It can send your client much more data than it needs (and the server
-    //     will do more work to obtain and serialize this useless data).
-    //   * It can make coupling analysis harder; if all nodes are reading all
-    //     data, then it makes it much harder to answer "who depends on this
-    //     data type?"
-    //
-    // Good usages of this (especially the full wildcard, "*") include:
-    //   * Humans trying to debug/observe data in the graph (via UI or CLI).
-    //   * LLMs trying to analyze data in the graph.
-    optional TypeSet wanted = 1;
-
-    // If specified the orchestrator will encode all Values with this
-    // alternate encoding, excluding types listed in `known`.
-    //
-    // Note that the orchestrator may have an out-of-date version of the
-    // descriptors - if this happens then Value.has_unknown_fields may be set
-    // to `true`.
-    //
-    // This is intended to support:
-    //   * Humans trying to debug/observe data in the graph (via UI or CLI).
-    //   * LLMs trying to analyze data in the graph.
-    //
-    // Stage implementations, monitoring pipelines and scripts should ideally
-    // be written to directly use the original binary encoded proto data.
-    optional bool unknown_jsonpb = 2;
-
-    // Set of type URLs that the caller has descriptors for. Used with
-    // `unknown_jsonpb` to avoid encoding types the caller does actually have
-    // descriptors for.
-    optional TypeSet known = 3;
-  }
-  // A description of the desired Value types this query should return.
+  // Describes which types of `Value` messages should be included in the
+  // response, and how to encode them. Has no effect on whether "core" message
+  // types within type.googleapis.com/turboci.graph.* such as Check or Stage
+  // are returned.
   //
-  // Only Value types listed by `wanted` will have their values in the response.
-  //
-  // Datum objects with unwanted type_urls will be omitted from the response.
+  // `Value` messages whose type_url is not listed in this TypeInfo's `wanted`
+  // list will have their data omitted and the OMIT_REASON_UNWANTED value set.
   optional TypeInfo type_info = 2;
 
   // VersionRestriction describes how this query can be constrained by database

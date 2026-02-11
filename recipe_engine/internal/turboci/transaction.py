@@ -10,15 +10,15 @@ from typing import Callable, Literal, Mapping, Sequence
 from google.protobuf.message import Message
 
 from PB.turboci.graph.ids.v1 import identifier
-from PB.turboci.graph.orchestrator.v1.check_view import CheckView
-from PB.turboci.graph.orchestrator.v1.graph_view import GraphView
 from PB.turboci.graph.orchestrator.v1.query import Query
 from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesRequest
 from PB.turboci.graph.orchestrator.v1.revision import Revision
+from PB.turboci.graph.orchestrator.v1.workplan import WorkPlan
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 from PB.turboci.graph.orchestrator.v1.write_nodes_response import WriteNodesResponse
 
 from . import common
+from .common import get_check_by_short_id
 from .ids import from_id, to_id
 from .errors import TransactionConflictException, TransactionUseAfterWriteException
 
@@ -63,22 +63,22 @@ class Transaction:
   # necessary for correctness for the live service.
   _did_write: bool = False
 
-  def _observe_graph(self, graphs: Mapping[str, GraphView]):
-    # checks
-    for graph in graphs.values():
-      if not self._revision:
-        self._revision = graph.version
-      for view in graph.checks.values():
-        self.observed_nodes.add(from_id(view.check.identifier))
-        for datum in view.check.options:
+  def _observe_graph(self, workplans: List[WorkPlan], query_revision: Revision):
+    if not self._revision:
+      self._revision = query_revision
+    for workplan in workplans:
+      # checks
+      for check in workplan.checks:
+        self.observed_nodes.add(from_id(check.identifier))
+        for datum in check.options:
           self.observed_nodes.add(from_id(datum.identifier))
-        for result in view.check.results:
+        for result in check.results:
           for datum in result.data:
             self.observed_nodes.add(from_id(datum.identifier))
 
       # stages
-      for view in graph.stages.values():
-        self.observed_nodes.add(from_id(view.stage.identifier))
+      for view in workplan.stages:
+        self.observed_nodes.add(from_id(stage.identifier))
 
   def write_nodes(
       self,
@@ -114,7 +114,7 @@ class Transaction:
   def query_nodes(self,
                   *query: Query,
                   types: Sequence[str | Message | type[Message]] = (),
-                  observe_graph=True) -> Mapping[str, GraphView]:
+                  observe_graph=True) -> (List[WorkPlan], Revision):
     """Runs run or more queries and returns their combined result.
 
     Will add all observed nodes to Transaction.observed_nodes unless
@@ -137,17 +137,17 @@ class Transaction:
     req.query.extend(query)
     rsp = self._client.QueryNodes(req)
     if observe_graph:
-      self._observe_graph(rsp.graph)
+      self._observe_graph(rsp.workplans, rsp.version)
       for absent in rsp.absent:
         self.observed_nodes.add(from_id(absent))
-    return rsp.graph
+    return (rsp.workplans, rsp.version)
 
   def read_checks(
       self,
       *ids: identifier.Check | str,
       collect: Query.CollectChecks | None = None,
       types: Sequence[str | Message | type[Message]] = ()
-  ) -> Sequence[CheckView]:
+  ) -> Sequence[Check]:
     """Convenience function for reading one or more checks by ID.
 
     This just does a query_nodes for the ids specified by `ids`, and then unwraps
@@ -155,22 +155,26 @@ class Transaction:
     """
     # TODO: share implementation between common.read_checks and here.
     idents = list(common.collect_check_ids(*ids))
-    work_plan = {ident.check.work_plan.id for ident in idents}
-    if len(work_plan) > 1:
+    work_plan_id = {ident.check.work_plan.id for ident in idents}
+    if len(work_plan_id) > 1:
       raise ValueError(
-          f'read_checks: got checks from more than one workplan: {work_plan}')
+          f'read_checks: got checks from more than one workplan: {work_plan_id}'
+      )
 
-    checks = next(
-        iter(
-            self.query_nodes(
-                common.make_query(
-                    Query.SelectChecks(),
-                    collect,
-                    node_set=idents,
-                ),
-                types=types,
-            ).values())).checks
-    return [checks[ident.check.id] for ident in idents]
+    workplans, query_revision = self.query_nodes(
+        common.make_query(
+            Query.SelectChecks(),
+            collect,
+            node_set=idents,
+        ),
+        types=types,
+    )
+    workplan = workplans[0]
+
+    # TODO (b/483105203): get_check_by_short_id() is currently O(N), which
+    # readers might not expect. Remove this comment when we optimize the
+    # function later.
+    return [get_check_by_short_id(workplan, ident.check.id) for ident in idents]
 
 
 # The mode for QueryNodes's version restriction.

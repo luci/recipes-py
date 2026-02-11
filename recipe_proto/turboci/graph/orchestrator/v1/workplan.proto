@@ -1,0 +1,64 @@
+// Copyright 2026 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "google/api/field_behavior.proto";
+import "turboci/graph/ids/v1/identifier.proto";
+import "turboci/graph/orchestrator/v1/check.proto";
+import "turboci/graph/orchestrator/v1/omit_reason.proto";
+import "turboci/graph/orchestrator/v1/revision.proto";
+import "turboci/graph/orchestrator/v1/stage.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// WorkPlan provides a collated, partial, view of a single workplan.
+//
+// Nodes (specifically, anything which can be named with an Identifier) may be
+// omitted from the nested hierarchy under these conditions:
+// - The caller does not have permission to view the node.
+// - The caller only requested a subset of possible nodes (e.g. via query/filter
+// parameters)
+// - The caller only requested a subset of the possible data types (e.g. Check
+// options)
+// - The content requested by the caller is being returned over several
+// paginated queries.
+//
+// Nodes may be omitted entirely (not present in the hierarchical structure) or
+// included only as a "placeholder" node with only the node's identifier
+// populated. These placeholder nodes are used to represent structure in the
+// hierarchy when the node isn't otherwise populated in the results of an API
+// call returning this WorkPlan, or to represent the ordering of child nodes in
+// a list within a parent node when the parent is present but the children are
+// omitted.
+message WorkPlan {
+  // The WorkPlan to which all nodes in this WorkPlan belong.
+  optional ids.v1.WorkPlan identifier = 1;
+
+  // If set, the reason this WorkPlan's content was omitted. Only UNKNOWN
+  // (default value, used when the content was included) and PLACEHOLDER are
+  // valid for a WorkPlan.
+  //
+  // A few fields may be populated even if `omit_reason` is set:
+  //   * `identifier` will always be populated.
+  //   * `checks` and `stages` may be partially populated.
+  optional OmitReason omit_reason = 2;
+
+  // When a WorkPlan is returned from a read operation (e.g. QueryNodes),
+  // version will be the Revision of the WorkPlan row used to prepare this
+  // WorkPlan.
+  optional Revision version = 3;
+
+  // Maps this WorkPlan to a security realm.
+  optional string realm = 4 [(google.api.field_behavior) = IMMUTABLE];
+
+  // Checks in the graph.
+  repeated Check checks = 5;
+
+  // Stages in the graph.
+  repeated Stage stages = 6;
+}

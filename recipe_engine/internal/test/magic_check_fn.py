@@ -647,18 +647,20 @@ def post_process(test_failures: Outcome.Results, raw_expectations,
         v['name'] = k
       raw_expectations = rslt
 
-  if test_data.assert_turboci_graph_hooks:
-    graph_state = turboci.query_nodes(turboci.make_query(
-        Query.SelectChecks(),
-        Query.CollectChecks(
-            options=True,
-            result_data=True,
+  if test_data.assert_workplan_hooks:
+    workplan = turboci.query_nodes(
+        turboci.make_query(
+            Query.SelectChecks(),
+            Query.CollectChecks(
+                options=True,
+                result_data=True,
+            ),
         ),
-    ), types=('*',)).graph["L"]
-    for hook, args, kwargs, context in test_data.assert_turboci_graph_hooks:
-      graph_state_copy = copy.deepcopy(graph_state)
-      assert_ = Checker(context, graph_state_copy)
-      hook(assert_, graph_state_copy, *args, **kwargs)
+        types=('*',)).workplans[0]
+    for hook, args, kwargs, context in test_data.assert_workplan_hooks:
+      workplan_copy = copy.deepcopy(workplan)
+      assert_ = Checker(context, workplan_copy)
+      hook(assert_, workplan_copy, *args, **kwargs)
       failed_checks += assert_.failed_checks
 
   for check in failed_checks:
