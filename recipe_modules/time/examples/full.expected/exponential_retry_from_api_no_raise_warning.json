@@ -1,0 +1,82 @@
+[
+  {
+    "cmd": [],
+    "name": "sleep 5"
+  },
+  {
+    "cmd": [
+      "echo",
+      "1337000001.5"
+    ],
+    "name": "echo"
+  },
+  {
+    "cmd": [],
+    "name": "running"
+  },
+  {
+    "cmd": [],
+    "name": "running (2)"
+  },
+  {
+    "cmd": [],
+    "name": "running (3)"
+  },
+  {
+    "cmd": [],
+    "name": "running (4)"
+  },
+  {
+    "cmd": [],
+    "name": "running (5)"
+  },
+  {
+    "cmd": [],
+    "name": "running (6)",
+    "~followup_annotations": [
+      "@@@STEP_WARNINGS@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "echo",
+      "\"hello\""
+    ],
+    "luci_context": {
+      "deadline": {
+        "grace_period": 30.0,
+        "soft_deadline": 1337000106.5
+      }
+    },
+    "name": "timeout step"
+  },
+  {
+    "cmd": [
+      "echo",
+      "\"hello\""
+    ],
+    "luci_context": {
+      "deadline": {
+        "grace_period": 30.0,
+        "soft_deadline": 1337000127.5
+      }
+    },
+    "name": "timeout step (2)"
+  },
+  {
+    "cmd": [
+      "echo",
+      "\"hello\""
+    ],
+    "luci_context": {
+      "deadline": {
+        "grace_period": 30.0,
+        "soft_deadline": 1337000019.0
+      }
+    },
+    "name": "foo"
+  },
+  {
+    "name": "$result"
+  }
+]

@@ -6,8 +6,15 @@ from __future__ import annotations
 
 import datetime
 
-from recipe_engine.recipe_api import StepFailure
-from recipe_engine.post_process import StepSuccess, DoesNotRun, DropExpectation
+from recipe_engine import recipe_api
+from recipe_engine.post_process import (
+    StepSuccess,
+    StepFailure,
+    StepWarning,
+    StepException,
+    DoesNotRun,
+    DropExpectation,
+)
 from RECIPE_MODULES.recipe_engine.time.api import exponential_retry
 
 DEPS = [
@@ -55,6 +62,49 @@ def RunSteps(api):
     except:
       pass
 
+  if api.properties.get('use_exponential_retry_from_api_no_raise_failure'):
+    # Delay doesn't matter since this is a test.
+    @api.time.exponential_retry(
+        5, datetime.timedelta(seconds=1), raise_on_failure=False)
+    def test_retries():
+      api.step('running', None)
+      raise recipe_api.StepFailure('')
+
+    test_retries()
+
+  if api.properties.get('use_exponential_retry_from_api_no_raise_warning'):
+    # Delay doesn't matter since this is a test.
+    @api.time.exponential_retry(
+        5, datetime.timedelta(seconds=1), raise_on_failure=False)
+    def test_retries():
+      api.step('running', None)
+      raise recipe_api.StepWarning('')
+
+    test_retries()
+
+  if api.properties.get('use_exponential_retry_from_api_no_raise_infra'):
+    # Delay doesn't matter since this is a test.
+    @api.time.exponential_retry(
+        5, datetime.timedelta(seconds=1), raise_on_failure=False)
+    def test_retries():
+      api.step('running', None)
+      raise recipe_api.InfraFailure('')
+
+    test_retries()
+
+  if api.properties.get('use_exponential_retry_from_api_no_raise_other'):
+    # Delay doesn't matter since this is a test.
+    @api.time.exponential_retry(
+        5, datetime.timedelta(seconds=1), raise_on_failure=False)
+    def test_retries():
+      api.step('running', None)
+      raise ValueError('other exception')
+
+    try:
+      test_retries()
+    except:
+      pass
+
   if api.properties.get("use_exponential_retry_from_import_on_class_method"):
     t = TestClass(api)
     try:
@@ -81,7 +131,7 @@ def RunSteps(api):
   with api.time.timeout(datetime.timedelta(minutes=2)):
     api.step('timeout step', ['echo', '"hello"'])
 
-  with api.assertions.assertRaises(StepFailure):
+  with api.assertions.assertRaises(recipe_api.StepFailure):
     api.time.timeout(seconds=-1.)
 
   # This does not actually have the intended effect of extending the timeout,
@@ -120,6 +170,40 @@ def GenTests(api):
       api.post_process(StepSuccess, 'running (4)'),
       api.post_process(StepSuccess, 'running (5)'),
       api.post_process(StepSuccess, 'running (6)'),
+      api.post_process(DoesNotRun, 'running (7)'),
+      api.post_process(DropExpectation),
+  )
+
+  yield api.test(
+      'exponential_retry_from_api_no_raise_failure',
+      api.properties(use_exponential_retry_from_api_no_raise_failure=True),
+      api.post_process(StepSuccess, 'running'),
+      api.post_process(StepSuccess, 'running (2)'),
+      api.post_process(StepSuccess, 'running (3)'),
+      api.post_process(StepSuccess, 'running (4)'),
+      api.post_process(StepSuccess, 'running (5)'),
+      api.post_process(StepFailure, 'running (6)'),
+      api.post_process(DoesNotRun, 'running (7)'),
+  )
+
+  yield api.test(
+      'exponential_retry_from_api_no_raise_warning',
+      api.properties(use_exponential_retry_from_api_no_raise_warning=True),
+      api.post_process(StepWarning, 'running (6)'),
+      api.post_process(DoesNotRun, 'running (7)'),
+  )
+
+  yield api.test(
+      'exponential_retry_from_api_no_raise_infra',
+      api.properties(use_exponential_retry_from_api_no_raise_infra=True),
+      api.post_process(StepException, 'running (6)'),
+      api.post_process(DoesNotRun, 'running (7)'),
+  )
+
+  yield api.test(
+      'exponential_retry_from_api_no_raise_other',
+      api.properties(use_exponential_retry_from_api_no_raise_other=True),
+      api.post_process(StepSuccess, 'running (6)'), # Exception is raised, not caught by suppressor
       api.post_process(DoesNotRun, 'running (7)'),
       api.post_process(DropExpectation),
   )

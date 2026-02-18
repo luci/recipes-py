@@ -24,9 +24,11 @@ class exponential_retry:
   See TimeApi.exponential_retry for full documentation.
   """
 
-  def __init__(self, retries: int,
+  def __init__(self,
+               retries: int,
                delay: datetime.timedelta,
                condition: Callable[[Exception], bool] | None = None,
+               raise_on_failure: bool = True,
                time_api: TimeApi = None):
     """Creates a new exponential retry decorator.
 
@@ -47,6 +49,9 @@ class exponential_retry:
       condition (func): If not None, a function that will be passed the
           exception as its one argument. Retries will only happen if this
           function returns True. If None, retries will always happen.
+      raise_on_failure (bool): If True, raise the exception from the last
+          failed attempt. Otherwise only the status of the last attemp will be
+          set.
     """
     # NOTE: Because the decorator can exist as module-level state, it is
     # important that these values are READ-ONLY. Writing to them will act like
@@ -57,6 +62,7 @@ class exponential_retry:
     self.retries = retries
     self.delay = delay
     self.condition = condition or (lambda e: True)
+    self.raise_on_failure = raise_on_failure
 
   def __call__(self,
                f: Callable[[...], ReturnType]) -> Callable[[...], ReturnType]:
@@ -80,7 +86,18 @@ class exponential_retry:
           return f(*args, **kwargs)
         except Exception as e:
           if i >= self.retries or not self.condition(e):
-            raise
+            if self.raise_on_failure:
+              raise
+            if isinstance(e, time_api.m.step.StepWarning):
+              status = time_api.m.step.WARNING
+            elif isinstance(e, time_api.m.step.InfraFailure):
+              status = time_api.m.step.EXCEPTION
+            elif isinstance(e, time_api.m.step.StepFailure):
+              status = time_api.m.step.FAILURE
+            else:
+              raise
+            time_api.m.step.active_result.presentation.status = status
+            return
           to_sleep = retry_delay.total_seconds()
           # Jitter the amount to sleep by plus or minus 15%.
           # Jitter helps avoid
@@ -132,6 +149,7 @@ class TimeApi(recipe_api.RecipeApi):
       retries: int,
       delay: datetime.timedelta,
       condition: Callable[[Exception], bool] = None,
+      raise_on_failure: bool = True,
   ) -> exponential_retry:
     """Adds exponential retry to a function.
 
@@ -199,7 +217,7 @@ class TimeApi(recipe_api.RecipeApi):
       helper_funciton(api)
     ```
     """
-    return exponential_retry(retries, delay, condition, self)
+    return exponential_retry(retries, delay, condition, raise_on_failure, self)
 
   def time(self) -> float:
     """Returns current timestamp as a float number of seconds since epoch."""
