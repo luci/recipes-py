@@ -17,7 +17,10 @@ _LATEST_STABLE_VERSION = 'git_revision:94ca00f962f62fd49166b3d7fbeb0056dfc3499e'
 
 # Spike is failing intermittently due to issues calling the swarming API, this
 # retry can decorate each report method.
-retry = exponential_retry(3, datetime.timedelta(seconds=5))
+def retry(raise_on_failure=True):
+  return exponential_retry(
+      3, datetime.timedelta(seconds=5), raise_on_failure=raise_on_failure)
+
 
 class BcidReporterApi(recipe_api.RecipeApi):
   """API for interacting with Provenance server using the broker tool."""
@@ -47,9 +50,10 @@ class BcidReporterApi(recipe_api.RecipeApi):
       self._broker_bin = reporter_dir / 'snoopy_broker'
     return self._broker_bin
 
-  @retry
+  @retry(raise_on_failure=False)
   def report_stage(self, stage, server_url=None):
-    """Reports task stage to local provenance server.
+    """Reports task stage to local provenance server. This is best-effort and
+    won't abort the execution on errors.
 
     Args:
       * stage (str) - The stage at which task is executing currently, e.g.
@@ -79,7 +83,7 @@ class BcidReporterApi(recipe_api.RecipeApi):
 
     self.m.step('snoop: report_stage', args)
 
-  @retry
+  @retry()
   def report_cipd(self, digest, pkg, iid, server_url=None):
     """Reports cipd digest to local provenance server.
 
@@ -109,7 +113,7 @@ class BcidReporterApi(recipe_api.RecipeApi):
 
     self.m.step('snoop: report_cipd', args)
 
-  @retry
+  @retry()
   def report_gcs(self, digest, guri, server_url=None):
     """Reports gcs digest to local provenance server.
 
@@ -137,7 +141,7 @@ class BcidReporterApi(recipe_api.RecipeApi):
 
     self.m.step('snoop: report_gcs', args)
 
-  @retry
+  @retry()
   def report_sbom(self, digest, guri, sbom_subjects=None, server_url=None):
     """Reports SBOM gcs digest to local provenance server.
 
