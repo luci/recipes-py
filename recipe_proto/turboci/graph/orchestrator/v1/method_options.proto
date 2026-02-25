@@ -29,8 +29,15 @@ message MethodOptions {
     // The node(s) whose realm will be checked.
     repeated ids.v1.IdentifierKind in = 3;
 
+    // The permission is checked in the Value (ValueWrite/ValueRef) realm.
+    optional bool in_value_realm = 4;
+
+    // Conditional attribute names against which a permission binding may be
+    // granted conditionally.
+    repeated string potentially_conditional_on = 5;
+
     // Short description of when this permission is checked.
-    repeated string for = 4;
+    repeated string for = 6;
   }
 
   // Permissions that this RPC will check, including the realms and/or the

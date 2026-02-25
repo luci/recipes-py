@@ -1,0 +1,51 @@
+// Copyright 2026 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "google/protobuf/any.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// ValueData holds actual data (via either binary or JSONPB encoded protobuf)
+// embedded inside of a TurboCI node (Checks/Stages) and referenced via
+// [ValueRef].
+//
+// If a [ValueRef] references a ValueData via `digest`, it will be returned to
+// the reader via a 'value_data' map which looks like:
+//
+//   map<string, ValueData> value_data;
+//
+// ValueData is written via [ValueWrite] - the orchestrator service will
+// transform these into [ValueRef] and ValueData, and choose via heruistics to
+// either store the ValueData inline in the [ValueRef] or referenced via digest.
+message ValueData {
+  // JsonAny is like a `google.protobuf.Any`, except the value is encoded JSON.
+  message JsonAny {
+    // The type_url of this data. Exactly the same form as
+    // google.protobuf.Any.type_url.
+    //
+    // Will have the form `type.googleapis.com/proto.package.MessageName`.
+    optional string type_url = 1;
+
+    // The value of the data encoded as JSONPB.
+    optional string value = 2;
+
+    // If true, the server was unable to fully encode the raw binary data, and
+    // `value` above is missing unknown fields.
+    optional bool has_unknown_fields = 3;
+  }
+
+  // The actual data.
+  oneof data {
+    // Binary encoded data.
+    google.protobuf.Any binary = 1;
+
+    // JSON encoded data.
+    JsonAny json = 2;
+  }
+}

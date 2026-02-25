@@ -24,33 +24,18 @@ enum IdentifierKind {
   // An Identifier.Check.
   IDENTIFIER_KIND_CHECK = 2;
 
-  // An Identifier.CheckOption.
-  IDENTIFIER_KIND_CHECK_OPTION = 3;
-
   // An Identifier.CheckResult.
-  IDENTIFIER_KIND_CHECK_RESULT = 4;
-
-  // An Identifier.CheckResultDatum.
-  IDENTIFIER_KIND_CHECK_RESULT_DATUM = 5;
+  IDENTIFIER_KIND_CHECK_RESULT = 3;
 
   // An Identifier.CheckEdit.
-  IDENTIFIER_KIND_CHECK_EDIT = 6;
-
-  // An Identifier.CheckEditOption.
-  IDENTIFIER_KIND_CHECK_EDIT_OPTION = 7;
-
-  // An Identifier.CheckEditReason
-  IDENTIFIER_KIND_CHECK_EDIT_REASON = 11;
+  IDENTIFIER_KIND_CHECK_EDIT = 4;
 
   // An Identifier.Stage.
-  IDENTIFIER_KIND_STAGE = 8;
+  IDENTIFIER_KIND_STAGE = 5;
 
   // An Identifier.StageAttempt.
-  IDENTIFIER_KIND_STAGE_ATTEMPT = 9;
+  IDENTIFIER_KIND_STAGE_ATTEMPT = 6;
 
   // An Identifier.StageEdit.
-  IDENTIFIER_KIND_STAGE_EDIT = 10;
-
-  // An Identifier.StageEditReason
-  IDENTIFIER_KIND_STAGE_EDIT_REASON = 12;
+  IDENTIFIER_KIND_STAGE_EDIT = 7;
 }

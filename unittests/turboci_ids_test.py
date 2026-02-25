@@ -63,16 +63,6 @@ _test_cases: list[_id_test_case] = [
       "L1234567:Ccool/beans & stuff"),
 
   _id_test_case(
-      "check_option",
-      identifier.CheckOption(
-          check=identifier.Check(
-              work_plan=identifier.WorkPlan(id="1234567"),
-              id="cool/beans & stuff"),
-          idx=8,
-      ),
-      "L1234567:Ccool/beans & stuff:O8"),
-
-  _id_test_case(
       "check_result",
       identifier.CheckResult(
           check=identifier.Check(
@@ -83,18 +73,6 @@ _test_cases: list[_id_test_case] = [
       "L1234567:Ccool/beans & stuff:R3"),
 
   _id_test_case(
-      "check_result_datum",
-      identifier.CheckResultDatum(
-          result=identifier.CheckResult(
-              check=identifier.Check(
-                work_plan=identifier.WorkPlan(id="1234567"),
-                id="cool/beans & stuff"),
-              idx=3),
-          idx=8,
-      ),
-      "L1234567:Ccool/beans & stuff:R3:D8"),
-
-  _id_test_case(
       "check_edit",
       identifier.CheckEdit(
           check=identifier.Check(
@@ -103,31 +81,6 @@ _test_cases: list[_id_test_case] = [
           version=_testTS,
       ),
       "L1234567:Ccool/beans & stuff:V12345/7890"),
-
-  _id_test_case(
-      "check_edit_reason",
-      identifier.CheckEditReason(
-          check_edit=identifier.CheckEdit(
-              check=identifier.Check(
-                  work_plan=identifier.WorkPlan(id="1234567"),
-                  id="cool/beans & stuff"),
-              version=_testTS,
-          ),
-          idx=3,
-      ),
-      "L1234567:Ccool/beans & stuff:V12345/7890:R3"),
-
-  _id_test_case(
-      "check_edit_option",
-      identifier.CheckEditOption(
-          check_edit=identifier.CheckEdit(
-              check=identifier.Check(
-                  work_plan=identifier.WorkPlan(id="1234567"),
-                  id="cool/beans & stuff"),
-              version=_testTS),
-          idx=2,
-      ),
-      "L1234567:Ccool/beans & stuff:V12345/7890:O2"),
 
   _id_test_case(
       "stage",
@@ -199,22 +152,6 @@ _test_cases: list[_id_test_case] = [
       ),
       "L1234567:Ssome stuff that is awesome:V12345/7890",
   ),
-
-
-  _id_test_case(
-      "stage_edit_reason",
-      identifier.StageEditReason(
-          stage_edit=identifier.StageEdit(
-              stage=identifier.Stage(
-                work_plan=identifier.WorkPlan(id="1234567"),
-                is_worknode=False,
-                id="some stuff that is awesome"),
-              version=_testTS,
-          ),
-          idx=3,
-      ),
-      "L1234567:Ssome stuff that is awesome:V12345/7890:R3"),
-
 ]
 
 

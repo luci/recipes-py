@@ -109,9 +109,9 @@ enum CollectStageAttempts {
 //    │collect_checks│       │collect_stages│      Collect
 //    └──────┬───────┘       └───────┬──────┘
 //           │                       │
-//           │      ┌─────────┐      │
-//           └─────►│GraphView│◄─────┘
-//                  └─────────┘
+//           │      ┌────────┐       │
+//           └─────►│WorkPlan│◄──────┘
+//                  └────────┘
 //
 // See QueryNodesRequest.version for how this Query interacts with transactions.
 //
@@ -273,7 +273,7 @@ message Query {
   optional ExpandDependents expand_dependents = 7;
 
   // TBD: Expand other edge types, such as created_by or written_by?
-  // If we include them, how would we indicate these relationships in GraphView?
+  // If we include them, how would we indicate these relationships in WorkPlan?
   // We may need created_by/written_by as explicit fields in the various
   // nodes.
 

@@ -46,18 +46,13 @@ AnyIdentifier = (
     identifier.Identifier
     | identifier.WorkPlan
     | identifier.Check
-    | identifier.CheckOption
     | identifier.CheckResult
-    | identifier.CheckResultDatum
 
   # Unsupported in the fake for now:
     | identifier.CheckEdit
-    | identifier.CheckEditReason
-    | identifier.CheckEditOption
     | identifier.Stage
     | identifier.StageAttempt
     | identifier.StageEdit
-    | identifier.StageEditReason
 )
 
 
@@ -124,23 +119,11 @@ def from_id(ident: AnyIdentifier) -> str:
     case identifier.Check():
       return f'{from_id(ident.work_plan)}:C{ident.id}'
 
-    case identifier.CheckOption():
-      return f'{from_id(ident.check)}:O{ident.idx}'
-
     case identifier.CheckResult():
       return f'{from_id(ident.check)}:R{ident.idx}'
 
-    case identifier.CheckResultDatum():
-      return f'{from_id(ident.result)}:D{ident.idx}'
-
     case identifier.CheckEdit():
       return f'{from_id(ident.check)}:V{fmt_rev(ident.version)}'
-
-    case identifier.CheckEditReason():
-      return f'{from_id(ident.check_edit)}:R{ident.idx}'
-
-    case identifier.CheckEditOption():
-      return f'{from_id(ident.check_edit)}:O{ident.idx}'
 
     case identifier.Stage():
       pfx = '?'
@@ -153,9 +136,6 @@ def from_id(ident: AnyIdentifier) -> str:
 
     case identifier.StageEdit():
       return f'{from_id(ident.stage)}:V{fmt_rev(ident.version)}'
-
-    case identifier.StageEditReason():
-      return f'{from_id(ident.stage_edit)}:R{ident.idx}'
 
     case _:
       raise NotImplementedError(f'from_id({type(ident)})')
@@ -196,44 +176,17 @@ def to_id(ident_str: str) -> identifier.Identifier:
         ret.check.work_plan.id = trim[0]
       ret.check.id = trim[1]
 
-    case ['L', 'C', 'O']:
-      if trim[0]:
-        ret.check_option.check.work_plan.id = trim[0]
-      ret.check_option.check.id = trim[1]
-      ret.check_option.idx = int(trim[2])
-
     case ['L', 'C', 'R']:
       if trim[0]:
         ret.check_result.check.work_plan.id = trim[0]
       ret.check_result.check.id = trim[1]
       ret.check_result.idx = int(trim[2])
 
-    case ['L', 'C', 'R', 'D']:
-      if trim[0]:
-        ret.check_result_datum.result.check.work_plan.id = trim[0]
-      ret.check_result_datum.result.check.id = trim[1]
-      ret.check_result_datum.result.idx = int(trim[2])
-      ret.check_result_datum.idx = int(trim[3])
-
     case ['L', 'C', 'V']:
       if trim[0]:
         ret.check_edit.check.work_plan.id = trim[0]
       ret.check_edit.check.id = trim[1]
       parse_vers(trim[2], ret.check_edit.version )
-
-    case ['L', 'C', 'V', 'R']:
-      if trim[0]:
-        ret.check_edit_reason.check_edit.check.work_plan.id = trim[0]
-      ret.check_edit_reason.check_edit.check.id = trim[1]
-      parse_vers(trim[2], ret.check_edit_reason.check_edit.version )
-      ret.check_edit_reason.idx = int(trim[3])
-
-    case ['L', 'C', 'V', 'O']:
-      if trim[0]:
-        ret.check_edit_option.check_edit.check.work_plan.id = trim[0]
-      ret.check_edit_option.check_edit.check.id = trim[1]
-      parse_vers(trim[2], ret.check_edit_option.check_edit.version)
-      ret.check_edit_option.idx = int(trim[3])
 
     case ['L', _]:
       if trim[0]:
@@ -255,14 +208,6 @@ def to_id(ident_str: str) -> identifier.Identifier:
       ret.stage_edit.stage.id = trim[1]
       parse_vers(trim[2], ret.stage_edit.version)
 
-    case ['L', _, 'V', 'R']:
-      if trim[0]:
-        ret.stage_edit_reason.stage_edit.stage.work_plan.id = trim[0]
-      ret.stage_edit_reason.stage_edit.stage.id = trim[1]
-      parse_is_worknode(ret.stage_edit_reason.stage_edit.stage)
-      parse_vers(trim[2], ret.stage_edit_reason.stage_edit.version )
-      ret.stage_edit_reason.idx = int(trim[3])
-
   if not ret.WhichOneof('type'):
     raise NotImplementedError(f'to_id: unrecognized ID {ident_str!r}')
 
@@ -278,26 +223,16 @@ def wrap_id(ident: AnyIdentifier) -> identifier.Identifier:
       return identifier.Identifier(work_plan=ident)
     case identifier.Check():
       return identifier.Identifier(check=ident)
-    case identifier.CheckOption():
-      return identifier.Identifier(check_option=ident)
     case identifier.CheckResult():
       return identifier.Identifier(check_result=ident)
-    case identifier.CheckResultDatum():
-      return identifier.Identifier(check_result_datum=ident)
     case identifier.CheckEdit():
       return identifier.Identifier(check_edit=ident)
-    case identifier.CheckEditReason():
-      return identifier.Identifier(check_edit_reason=ident)
-    case identifier.CheckEditOption():
-      return identifier.Identifier(check_edit_option=ident)
     case identifier.Stage():
       return identifier.Identifier(stage=ident)
     case identifier.StageAttempt():
       return identifier.Identifier(stage_attempt=ident)
     case identifier.StageEdit():
       return identifier.Identifier(stage_edit=ident)
-    case identifier.StageEditReason():
-      return identifier.Identifier(stage_edit_reason=ident)
     case _:
       raise NotImplementedError(f'wrap_id({type(ident)})')
 

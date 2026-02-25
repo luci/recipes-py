@@ -10,6 +10,7 @@ from typing import Callable, Literal, Mapping, Sequence
 from google.protobuf.message import Message
 
 from PB.turboci.graph.ids.v1 import identifier
+from PB.turboci.graph.orchestrator.v1.check import Check
 from PB.turboci.graph.orchestrator.v1.query import Query
 from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesRequest
 from PB.turboci.graph.orchestrator.v1.revision import Revision
@@ -63,21 +64,16 @@ class Transaction:
   # necessary for correctness for the live service.
   _did_write: bool = False
 
-  def _observe_graph(self, workplans: List[WorkPlan], query_revision: Revision):
+  def _observe_graph(self, workplans: list[WorkPlan], query_revision: Revision):
     if not self._revision:
       self._revision = query_revision
     for workplan in workplans:
       # checks
       for check in workplan.checks:
         self.observed_nodes.add(from_id(check.identifier))
-        for datum in check.options:
-          self.observed_nodes.add(from_id(datum.identifier))
-        for result in check.results:
-          for datum in result.data:
-            self.observed_nodes.add(from_id(datum.identifier))
 
       # stages
-      for view in workplan.stages:
+      for stage in workplan.stages:
         self.observed_nodes.add(from_id(stage.identifier))
 
   def write_nodes(
@@ -114,7 +110,7 @@ class Transaction:
   def query_nodes(self,
                   *query: Query,
                   types: Sequence[str | Message | type[Message]] = (),
-                  observe_graph=True) -> (List[WorkPlan], Revision):
+                  observe_graph=True) -> tuple[list[WorkPlan], Revision]:
     """Runs run or more queries and returns their combined result.
 
     Will add all observed nodes to Transaction.observed_nodes unless

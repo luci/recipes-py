@@ -63,7 +63,6 @@ from PB.turboci.graph.orchestrator.v1.check_state import (CheckState,
                                                           CHECK_STATE_PLANNING,
                                                           CHECK_STATE_WAITING,
                                                           CHECK_STATE_FINAL)
-from PB.turboci.graph.orchestrator.v1.datum import Datum
 from PB.turboci.graph.orchestrator.v1.dependencies import Dependencies
 from PB.turboci.graph.orchestrator.v1.edge import RESOLUTION_SATISFIED
 from PB.turboci.graph.orchestrator.v1.query import Query
@@ -72,6 +71,8 @@ from PB.turboci.graph.orchestrator.v1.query_nodes_response import QueryNodesResp
 from PB.turboci.graph.orchestrator.v1.revision import Revision
 from PB.turboci.graph.orchestrator.v1.transaction_invariant import TransactionConflictFailure
 from PB.turboci.graph.orchestrator.v1.type_set import TypeSet
+from PB.turboci.graph.orchestrator.v1.value_ref import ValueRef
+from PB.turboci.graph.orchestrator.v1.value_write import ValueWrite
 from PB.turboci.graph.orchestrator.v1.workplan import WorkPlan
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 from PB.turboci.graph.orchestrator.v1.write_nodes_response import WriteNodesResponse
@@ -114,9 +115,9 @@ def _type_set_to_re(ts: TypeSet) -> re.Pattern:
   return re.compile(f'({")|(".join(fragments)})')
 
 
-def _want_datum(type_set: TypeSet, datum: Datum) -> bool:
+def _want_value_ref(type_set: TypeSet, value_ref: ValueRef) -> bool:
   pat = _type_set_to_re(type_set)
-  return bool(pat.match(datum.value.value.type_url))
+  return bool(pat.match(value_ref.type_url))
 
 
 @dataclass
@@ -133,12 +134,12 @@ class _IndexEntrySnapshot:
 
     result_types: set[str] = set()
     for result in check.results:
-      result_types.update(entry.value.value.type_url for entry in result.data)
+      result_types.update(entry.type_url for entry in result.data)
 
     return _IndexEntrySnapshot(
         kind=check.kind,
         state=check.state,
-        option_types=set(entry.value.value.type_url for entry in check.options),
+        option_types=set(entry.type_url for entry in check.options),
         result_types=result_types,
     )
 
@@ -296,48 +297,44 @@ class FakeTurboCIOrchestrator(TurboCIClient):
       self._checks[ident_str] = check
       _touch()
 
-    def _write_data(
-        to_write: RepeatedCompositeFieldContainer[WriteNodesRequest.RealmValue],
-        container: RepeatedCompositeFieldContainer[Datum],
-        mk_ident: Callable[[int], identifier.Identifier],
+    def _write_values(
+        to_write: RepeatedCompositeFieldContainer[ValueWrite],
+        container: RepeatedCompositeFieldContainer[ValueRef],
     ):
-      typId: dict[str, identifier.Identifier] = {
-          d.value.value.type_url: wrap_id(d.identifier) for d in container
+      type_url_set: set[str] = {
+          value_ref.type_url for value_ref in container
       }
       # TODO: Assert that realm does not mutate, and for newly created data
       # without a specified realm, mirror the check's realm.
-      for realmValue in to_write:
-        type_url = realmValue.value.value.type_url
-        if (cur_id := typId.get(type_url)) is None:
-          # we're adding a new datum
-          _touch()
-          # add to check container
-          dat = container.add()
-          cur_id = mk_ident(len(container))
-          dat.identifier.CopyFrom(cur_id)
-          typId[type_url] = wrap_id(cur_id)
-        else:
-          # updating existing datum
+      for value_write in to_write:
+        type_url = value_write.data.type_url
+        if type_url in type_url_set:
+          # updating existing ValueRef
           # find it in container
-          for d in container:
-            if d.value.value.type_url == type_url:
-              dat = d
+          for vr in container:
+            if vr.type_url == type_url:
+              value_ref = vr
               break
           else:
-            # Should be unreachable if typId logic is correct
-            raise AssertionError("datum not found in container")
+            # Should be unreachable if type_url_set logic is correct
+            raise AssertionError("ValueWrite not found in container")
+        else:
+          # we're adding a new ValueRef
+          # add to check container
+          value_ref = container.add()
+          type_url_set.add(type_url)
 
-        # Update datum fields
-        dat.version.CopyFrom(self._revision)
-        if realmValue.realm:
-          dat.realm = realmValue.realm
-        dat.value.CopyFrom(realmValue.value)
+        # Update ValueRef fields
+        if value_write.realm:
+          value_ref.realm = value_write.realm
+        value_ref.type_url = type_url
+        value_ref.inline.binary.CopyFrom(value_write.data)
+
+        # Update the check's version
+        _touch()
 
     if write.options:
-      _write_data(
-          write.options, check.options, lambda idx: identifier.Identifier(
-              check_option=identifier.CheckOption(
-                  check=write.identifier, idx=idx)))
+      _write_values(write.options, check.options)
 
     finalize_results = write.finalize_results or write.state == CHECK_STATE_FINAL
 
@@ -350,13 +347,7 @@ class FakeTurboCIOrchestrator(TurboCIClient):
       # multiple results for a single check. In the real system, each unique
       # stage attempt writing to a check would get a different CheckResult to
       # write into.
-      _write_data(
-          write.results, check.results[0].data,
-          lambda idx: identifier.Identifier(
-              check_result_datum=identifier.CheckResultDatum(
-                  result=identifier.CheckResult(check=write.identifier, idx=1),
-                  idx=idx,
-              )))
+      _write_values(write.results, check.results[0].data)
 
     if finalize_results:
       check.results[0].finalized_at.CopyFrom(self._revision)
@@ -454,13 +445,11 @@ class FakeTurboCIOrchestrator(TurboCIClient):
       ret.CopyFrom(check)
 
       for opt in ret.options:
-        opt.value.value.ClearField('value')
-        opt.ClearField('version')
+        opt.inline.binary.ClearField('value')
 
       for rslt in ret.results:
         for dat in rslt.data:
-          dat.value.value.ClearField('value')
-          dat.ClearField('version')
+          dat.inline.binary.ClearField('value')
 
     return ret
 
@@ -613,13 +602,13 @@ class FakeTurboCIOrchestrator(TurboCIClient):
 
       if collect_opts:
         for i, opt in enumerate(check.options):
-          if _want_datum(type_info.wanted, opt):
+          if _want_value_ref(type_info.wanted, opt):
             workplan_check.options[i].CopyFrom(opt)
 
       if collect_result_data:
         for result_idx, result in enumerate(check.results):
           for data_idx, dat in enumerate(result.data):
-            if _want_datum(type_info.wanted, dat):
+            if _want_value_ref(type_info.wanted, dat):
               workplan_check.results[result_idx].data[data_idx].CopyFrom(dat)
 
 
@@ -666,7 +655,7 @@ class FakeTurboCIOrchestrator(TurboCIClient):
       raise NotImplementedError(
           "FakeTurboCIOrchestrator.WriteNodes: `current_stage`")
 
-    if not req.reasons:
+    if not req.reason:
       raise InvalidArgumentException(
           "WriteNodes: at least one reason is required")
     # TODO: check duplicate reason (realm, type)
@@ -674,7 +663,7 @@ class FakeTurboCIOrchestrator(TurboCIClient):
     if req.HasField('txn'):
       for ident in req.txn.nodes_observed:
         match typ := ident.WhichOneof('type'):
-          case 'check' | 'check_option' | 'check_result_datum':
+          case 'check' | 'check_option':
             pass
           case _:
             raise InvalidArgumentException(
@@ -725,7 +714,7 @@ class FakeTurboCIOrchestrator(TurboCIClient):
       if req.txn.nodes_observed:
         too_new: set[str] = set()
 
-        def _observe(ident_str: str | None) -> Check | Datum | None:
+        def _observe(ident_str: str | None) -> Check | ValueWrite | None:
           if not ident_str:
             return None
           if (cur := self._checks.get(ident_str, None)) is not None:
@@ -737,23 +726,7 @@ class FakeTurboCIOrchestrator(TurboCIClient):
           _observe(from_id(ident))
         # now observe all implied nodes
         for cwrite in req.checks:
-          cur = cast(Check | None, _observe(from_id(cwrite.identifier)))
-          if cur:
-            opt_typ_to_ident = {
-                d.value.value.type_url: from_id(d.identifier)
-                for d in cur.options
-            }
-            for opt in cwrite.options:
-              _observe(opt_typ_to_ident.get(opt.value.value.type_url))
-            # Our fake only supports one 'stage', so all results are recorded on
-            # results[0].
-            if cur.results:
-              rslt_typ_to_ident = {
-                  d.value.value.type_url: from_id(d.identifier)
-                  for d in cur.results[0].data
-              }
-              for rslt in cwrite.results:
-                _observe(rslt_typ_to_ident.get(rslt.value.value.type_url))
+          _observe(from_id(cwrite.identifier))
 
         if too_new:
           raise TransactionConflictException(

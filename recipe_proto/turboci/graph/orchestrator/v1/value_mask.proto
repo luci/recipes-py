@@ -1,0 +1,29 @@
+// Copyright 2026 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// Specifies the subset of the fields to return from Values in nodes matching a
+// query.
+enum ValueMask {
+  // UNKNOWN is the default value. Equivalent to VALUE_MASK_TYPE.
+  VALUE_MASK_UNKNOWN = 0;
+
+  // Collect only `value.type_url`.
+  VALUE_MASK_TYPE = 1;
+
+  // Collect `value.type_url` and `value.value`.
+  VALUE_MASK_TYPE_VALUE = 2;
+
+  // FUTURE: Collect `value.type_url` and `tags`.
+  // VALUE_MASK_TYPE_TAGS = 3;
+
+  // FUTURE: Collect `value.type_url`, `tags`, and `value.value`.
+  // VALUE_MASK_TYPE_TAGS_VALUE = 4;
+}

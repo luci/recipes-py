@@ -11,17 +11,19 @@ from PB.turboci.graph.orchestrator.v1.check_state import (CHECK_STATE_PLANNING,
                                                           CHECK_STATE_WAITING,
                                                           CHECK_STATE_FINAL,
                                                           CheckState)
+from PB.turboci.graph.orchestrator.v1.value_write import ValueWrite
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
+
 
 from .ids import from_id
 from .edge import extract_ident_condition
 from .errors import CheckWriteInvariantException
 
 
-def _dup_types(vals: Sequence[WriteNodesRequest.RealmValue]) -> set[str]:
+def _dup_types(vals: Sequence[ValueWrite]) -> set[str]:
   count: dict[str, int] = defaultdict(int)
   for val in vals:
-    count[val.value.value.type_url] += 1
+    count[val.data.type_url] += 1
   return {typ_url for typ_url, amt in count.items() if amt > 1}
 
 

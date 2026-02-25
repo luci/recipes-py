@@ -1,0 +1,63 @@
+// Copyright 2026 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "google/api/field_behavior.proto";
+import "turboci/graph/orchestrator/v1/omit_reason.proto";
+import "turboci/graph/orchestrator/v1/value_data.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// ValueRef is a reference to [ValueData].
+message ValueRef {
+  // The Type URL of the referenced data.
+  //
+  // Will have the form `type.googleapis.com/proto.package.MessageName`.
+  //
+  // Note that for inline data, this is duplicated with data.inline.*.type_url.
+  optional string type_url = 1;
+
+  // The concrete realm to which this data belongs.
+  //
+  // Note that this will always be set, and will never be "$from_token" or
+  // "$from_container" as you may write via [ValueWrite.realm].
+  optional string realm = 2;
+
+  // The data for this ValueRef.
+  oneof data {
+    // Serialized [ValueDigest] for the data.
+    //
+    // This indicates that the data must be retrieved from the `value_data` map
+    // in the response (or from some other CAS system using `digest` as the
+    // effective key)
+    string digest = 3;
+
+    // Inline contains the actual data, if the orchestrator decided that this
+    // data was too small/unique to store indirectly via `digest`.
+    //
+    // It is expected that clients will always use a library function to manage
+    // the possible states of this oneof (digest, inline binary, inline JSON).
+    ValueData inline = 4;
+  }
+
+  // If set, the reason this ValueRef's content was omitted from the response.
+  //
+  // If unset, it means that the caller has access to this data, and that the
+  // data matched the [ValueFilter] provided by the user.
+  //
+  // NOTE: For paged responses it is possible that the actual [ValueData] will
+  // be provided in a subsequent page. In this case, OmitReason will be unset,
+  // even if the [ValueData] is not in the current page.
+  optional OmitReason omit_reason = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // TBD: An additional disambiguator/key in addition to `type_url`?
+
+  // TBD: Orchestrator-visible index values.
+
+  // TBD: Compression? Adds potential extra complexity for clients.
+}

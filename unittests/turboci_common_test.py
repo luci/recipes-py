@@ -30,7 +30,8 @@ from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesReque
 from PB.turboci.graph.orchestrator.v1.revision import Revision
 from PB.turboci.graph.orchestrator.v1.type_info import TypeInfo
 from PB.turboci.graph.orchestrator.v1.type_set import TypeSet
-from PB.turboci.graph.orchestrator.v1.value import Value
+from PB.turboci.graph.orchestrator.v1.value_ref import ValueRef
+from PB.turboci.graph.orchestrator.v1.value_write import ValueWrite
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 
 from recipe_engine.internal.turboci import common
@@ -43,9 +44,11 @@ def _mkStruct(d: dict) -> Struct:
   return cast(Struct, parse(Struct, d))
 
 
-def _mkValue(msg: Message) -> Value:
-  ret = Value()
-  ret.value.Pack(msg, deterministic=True)
+def _mkValue(msg: Message, realm: str | None = None) -> ValueWrite:
+  ret = ValueWrite()
+  if realm:
+    ret.realm = realm
+  ret.data.Pack(msg, deterministic=True)
   return ret
 
 
@@ -72,13 +75,12 @@ class TestCheckID(test_env.RecipeEngineUnitTest):
 
 class TestReason(test_env.RecipeEngineUnitTest):
   def test_ok(self):
-    r = reason("some string", _mkStruct({'a': 'b'}), realm='project/realm')
+    r = reason("some string", _mkStruct({'a': 'b'}))
 
     self.assertEqual(
         r,
         WriteNodesRequest.Reason(
             message="some string",
-            realm="project/realm",
             details=[_mkValue(_mkStruct({'a': 'b'}))],
         ))
 
@@ -147,12 +149,10 @@ class TestCheck(test_env.RecipeEngineUnitTest):
             realm='project/check/realm',
             kind=CheckKind.CHECK_KIND_TEST,
             options=[
-                WriteNodesRequest.RealmValue(
-                    value=_mkValue(_mkStruct({'a': 'b'})),),
-                WriteNodesRequest.RealmValue(
-                    realm='project/check/option/realm',
-                    value=_mkValue(StructValue(string_value='realm_option')),
-                ),
+                _mkValue(_mkStruct({'a': 'b'})),
+                _mkValue(
+                    StructValue(string_value='realm_option'),
+                    realm='project/check/option/realm'),
             ],
             dependencies=WriteNodesRequest.DependencyGroup(
                 edges=[
@@ -160,12 +160,10 @@ class TestCheck(test_env.RecipeEngineUnitTest):
                     Edge(check=Edge.Check(identifier=check_id('things'))),
                 ],),
             results=[
-                WriteNodesRequest.RealmValue(
-                    value=_mkValue(_mkStruct({'cool': ['result']})),),
-                WriteNodesRequest.RealmValue(
-                    realm='project/check/result/realm',
-                    value=_mkValue(StructValue(string_value='realm_result')),
-                ),
+                _mkValue(_mkStruct({'cool': ['result']})),
+                _mkValue(
+                    StructValue(string_value='realm_result'),
+                    realm='project/check/result/realm'),
             ],
             finalize_results=True,
             state=CheckState.CHECK_STATE_PLANNED,
@@ -198,20 +196,15 @@ class TestWriteNodes(test_env.RecipeEngineUnitTest):
     # Raw API call to common.CLIENT.
     self.m.WriteNodes.assert_called_once_with(
         WriteNodesRequest(
-            reasons=[
-                WriteNodesRequest.Reason(
-                    message="I feel like it",
-                    details=[_mkValue(_mkStruct({'hello': 'world'}))],
-                )
-            ],
+            reason=WriteNodesRequest.Reason(
+                message="I feel like it",
+                details=[_mkValue(_mkStruct({'hello': 'world'}))],
+            ),
             checks=[
                 WriteNodesRequest.CheckWrite(
                     identifier=identifier.Check(id="someid"),
                     kind=CheckKind.CHECK_KIND_BUILD,
-                    options=[
-                        WriteNodesRequest.RealmValue(
-                            value=_mkValue(_mkStruct({'cool_opt': [1, 2, 3]})),)
-                    ],
+                    options=[_mkValue(_mkStruct({'cool_opt': [1, 2, 3]}))],
                 ),
             ],
         ))

@@ -36,11 +36,11 @@ message ChildBuild {
 }
 
 message TurboCIWrite {
-  // The reasons to record along with these writes.
+  // The reason to record along with these writes.
   //
-  // If no reasons are provided, Placeholder will write a simple reason with the
+  // If no reason is provided, Placeholder will write a simple reason with the
   // text:  "written by step 'name-of-step'".
-  repeated turboci.graph.orchestrator.v1.WriteNodesRequest.Reason reasons = 1;
+  optional turboci.graph.orchestrator.v1.WriteNodesRequest.Reason reason = 1;
 
   // Arbitrary CheckWrites to make into the current TurboCI WorkPlan (or just to
   // the in-memory fake if this recipe doesn't run as part of a WorkPlan).

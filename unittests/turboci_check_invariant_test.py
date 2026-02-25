@@ -20,7 +20,8 @@ from PB.turboci.graph.ids.v1 import identifier
 from PB.turboci.graph.orchestrator.v1.check import Check
 from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
 from PB.turboci.graph.orchestrator.v1.check_state import CheckState
-from PB.turboci.graph.orchestrator.v1.datum import Datum
+from PB.turboci.graph.orchestrator.v1.value_ref import ValueRef
+from PB.turboci.graph.orchestrator.v1.value_write import ValueWrite
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 
 demoStruct = Struct(fields={'hello': Value(string_value='world')})
@@ -32,17 +33,15 @@ demoTS2 = Timestamp(seconds=200, nanos=200)
 
 def _mkOptions(id: str,
                *msg: type[Message] | Message,
-               in_workplan: str = "") -> list[Datum]:
+               in_workplan: str = "") -> list[ValueRef]:
   ident = check_id(id, in_workplan=in_workplan)
   ret = []
   for i, m in enumerate(msg):
-    d = Datum(
-        identifier=identifier.Identifier(
-            check_option=identifier.CheckOption(check=ident, idx=i + 1)))
+    vr = ValueRef()
     if isinstance(m, type):
       m = m()
-    d.value.value.Pack(m, deterministic=True)
-    ret.append(d)
+    vr.inline.binary.Pack(m, deterministic=True)
+    ret.append(vr)
   return ret
 
 

@@ -14,7 +14,7 @@ import "turboci/graph/orchestrator/v1/check_delta.proto";
 import "turboci/graph/orchestrator/v1/field_options.proto";
 import "turboci/graph/orchestrator/v1/revision.proto";
 import "turboci/graph/orchestrator/v1/stage_delta.proto";
-import "turboci/graph/orchestrator/v1/value.proto";
+import "turboci/graph/orchestrator/v1/value_ref.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
 option java_multiple_files = true;
@@ -26,8 +26,7 @@ option java_multiple_files = true;
 // type of the edit.
 //
 // Edit Deltas are designed to be quite slim. Heavy bits of the delta (like
-// Option Data) will be stored separately from this Edit record and will have a
-// shorter TTL.
+// Option Data) will be stored separately from this Edit.
 message Edit {
   // The node which this Edit is associated with.
   optional ids.v1.Identifier for_node = 1 [
@@ -47,22 +46,14 @@ message Edit {
   // TBD: Add RPC to extend the TTL of an Edit and its data.
   optional google.protobuf.Timestamp expire_at = 3;
 
-  // The time at which heavyweight data associated with this Edit (e.g.
-  // CheckEditOptions) will be automatically garbage collected.
-  //
-  // Defaults to 30 days from the time of the Edit.
-  //
-  // This currently has no effect for Stage edits, because Stage edits don't
-  // retain any heavy data.
-  //
-  // TBD: Add RPC to extend the TTL of an Edit and its data.
-  optional google.protobuf.Timestamp data_expire_at = 4;
-
   // The security realm for this Edit (duplicated from the affected Check/Stage
   // to allow easy ACL resolution).
   //
   // The premise is that if you can read a Check or Stage, you can read the
   // edits for that Check or Stage.
+  //
+  // Read access to the Edit is governed by the same permission used for the
+  // base node (e.g. turboci.checks.read or turboci.stages.read).
   optional string realm = 5 [(google.api.field_behavior) = IMMUTABLE];
 
   // The entity which generated this Edit.
@@ -103,52 +94,35 @@ message Edit {
   // write could be an issue.
   optional bool oblivious_write = 11;
 
-  // Human and machine-readable reasons for this Edit (provided as part of
+  // Human and machine-readable reason for this Edit (provided as part of
   // WriteNodes).
   message Reason {
-    // The identifier of this specific Reason.
-    optional ids.v1.Identifier identifier = 4 [
-      (turboci).id.allowed = IDENTIFIER_KIND_CHECK_EDIT_REASON,
-      (turboci).id.allowed = IDENTIFIER_KIND_STAGE_EDIT_REASON
-    ];
-
-    // The security realm for this reason.
-    //
-    // This is set by the writer which created this Edit. In WriteNodseRequest,
-    // this defaults to the writer's realm unless explicitly set, and so may
-    // differ from the Edit's realm.
-    //
-    // The premise is that the Edit is a property of the Check/Stage but
-    // details of why an Edit was made are controlled by the writer that made
-    // them.
-    optional string realm = 1;
-
     // A 'low effort' reason for this edit.
     //
     // This is 'low effort' because it's preferable for the writer to provide
     // detailed machine-readable data in the `details` field below.
-    optional string message = 2;
+    optional string message = 1;
 
     // Machine-readable reason(s) for this edit.
     //
     // This is repeated to allow for standardized reason message types in
     // conjunction with workflow-specific details as part of the same write
     // record.
-    repeated Value details = 3;
+    //
+    // By convention, these should be ordered from most to least specific, so
+    // if a client has permission for multiple details of the same type, the
+    // first in this list for a given type_url should be a superset of the
+    // others.
+    //
+    // These are be unique by (type_url, realm)
+    //
+    // NOTE: When viewing Edits, the reader will only see the details for which
+    // they have read permissions (that is - two different users may see
+    // different versions of this otherwise entirely-immutable Edit).
+    repeated ValueRef details = 2;
   }
-  // The writer-provided reason(s) for this Edit.
-  //
-  // The only reason to have multiple Reason messages is to allow for different
-  // realms.
-  //
-  // NOTE: When viewing Edits, the reader will only see the reasons for which
-  // they have read permissions (that is - two different users may see
-  // different versions of this otherwise entirely-immutable Edit).
-  //
-  // By convention, these should be ordered from most to least specific, so if
-  // a client only wants to display one Reason, it should be the first in this
-  // list.
-  repeated Reason reasons = 8;
+  // The writer-provided reason for this Edit.
+  optional Reason reason = 8;
 
   // TBD: Allow indication that this Edit is "important" to be able to garbage
   // collect it at a slower cadence?

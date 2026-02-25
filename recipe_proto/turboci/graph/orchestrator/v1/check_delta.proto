@@ -8,9 +8,9 @@ package turboci.graph.orchestrator.v1;
 
 import "turboci/graph/ids/v1/identifier.proto";
 import "turboci/graph/orchestrator/v1/check_state.proto";
-import "turboci/graph/orchestrator/v1/datum.proto";
 import "turboci/graph/orchestrator/v1/dependencies.proto";
 import "turboci/graph/orchestrator/v1/field_options.proto";
+import "turboci/graph/orchestrator/v1/value_ref.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
 option java_multiple_files = true;
@@ -41,16 +41,10 @@ message CheckDelta {
 
   // Options written as part of this edit.
   //
-  // NOTE: The identifier.idx will tell you which 'slots' were written.
+  // Only those options which were modified as part of this edit are included.
   //
-  // NOTE: For now, the Data here will be devoid of their 'value' field, as we
-  // expect it to sometimes be very large (potentially large content times
-  // potentially large number of edits) and there's a (small) risk that for a
-  // poorly-behaved workflow this content could exceed Spanner limits, resulting
-  // in an outage for the full orchestrator. Until we invest in code that
-  // gracefully protects us from that situation, we'll avoid storing the 'value'
-  // field.
-  repeated Datum options = 3;
+  // This field is kept sorted, and unique, by `type_url`.
+  repeated ValueRef options = 3;
 
   // Information about a single Check.Result written as part of this edit.
   message Result {
@@ -62,13 +56,10 @@ message CheckDelta {
 
     // The data written as part of this edit.
     //
-    // NOTE: The identifier.idx will tell you which data 'slots' were written
-    // to.
+    // Only those data which were modified as part of this edit are included.
     //
-    // NOTE: For now, the Data here will be devoid of their 'value' field, as we
-    // expect it to be noisy and not particularly useful to see all the
-    // intermediate data.
-    repeated Datum data = 3;
+    // This field is kept sorted, and unique, by `type_url`.
+    repeated ValueRef data = 3;
 
     // If true, this edit finalized the Check.Result.
     //

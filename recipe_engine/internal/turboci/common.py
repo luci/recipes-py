@@ -106,12 +106,12 @@ def dep_group(*contained: str | identifier.Identifier | identifier.Check
   return ret
 
 
-def reason(message: str, *details: Message, realm: str|None = None) -> WriteNodesRequest.Reason:
+def reason(message: str, *details: Message) -> WriteNodesRequest.Reason:
   """Helper to generate a WriteNodesRequest.Reason for WriteNodes."""
-  ret = WriteNodesRequest.Reason(message=message, realm=realm)
+  ret = WriteNodesRequest.Reason(message=message)
   for detail in details:
     a = ret.details.add()
-    a.value.Pack(detail, deterministic=True)
+    a.data.Pack(detail, deterministic=True)
   return ret
 
 
@@ -177,19 +177,19 @@ def check(
 
   for opt in options:
     el = ret.options.add()
-    el.value.value.Pack(opt, deterministic=True)
+    el.data.Pack(opt, deterministic=True)
 
   for realm, opt in realm_options:
     el = ret.options.add(realm=realm)
-    el.value.value.Pack(opt, deterministic=True)
+    el.data.Pack(opt, deterministic=True)
 
   for rslt in results:
     el = ret.results.add()
-    el.value.value.Pack(rslt, deterministic=True)
+    el.data.Pack(rslt, deterministic=True)
 
   for realm, rslt in realm_results:
     el = ret.results.add(realm=realm)
-    el.value.value.Pack(rslt, deterministic=True)
+    el.data.Pack(rslt, deterministic=True)
 
   return ret
 
@@ -204,7 +204,8 @@ def write_nodes(
 ) -> WriteNodesResponse:
   """Convenience function for client.WriteNodes.
 
-  At least one Reason is required.
+  At least one Reason is required. If more than one is provided, they will be
+  merged sequentially in the order provided in `atoms`.
 
   Also see `check` and `reason` to help generate CheckWrite and Reason messages.
   """
@@ -220,11 +221,11 @@ def write_nodes(
       case WriteNodesRequest.StageWrite():
         req.stages.append(atom)
       case WriteNodesRequest.Reason():
-        req.reasons.append(atom)
+        req.reason.MergeFrom(atom)
       case _:
         raise TypeError(f'write_nodes: unknown atom {type(atom)}')
-  if not req.reasons:
-    raise ValueError('At least one reason is require for write_nodes.')
+  if not req.reason:
+    raise ValueError('A reason is required for write_nodes.')
   return (client or CLIENT).WriteNodes(req)
 
 
@@ -396,9 +397,9 @@ def get_option(msg: Type[MsgT], check: Check) -> MsgT | None:
   """
   url = type_url_for(msg)
   for option in check.options:
-    if option.value.value.type_url == url:
+    if option.type_url == url:
       ret = msg()
-      option.value.value.Unpack(ret)
+      option.inline.binary.Unpack(ret)
       return ret
   return None
 
@@ -419,8 +420,8 @@ def get_results(msg: Type[MsgT], check: Check) -> list[MsgT]:
   ret: list[MsgT] = []
   for result in check.results:
     for dat in result.data:
-      if dat.value.value.type_url == url:
+      if dat.type_url == url:
         val = msg()
-        dat.value.value.Unpack(val)
+        dat.inline.binary.Unpack(val)
         ret.append(val)
   return ret

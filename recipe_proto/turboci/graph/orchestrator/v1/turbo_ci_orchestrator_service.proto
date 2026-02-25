@@ -79,6 +79,7 @@ service TurboCIOrchestrator {
         internal: "turboci.stages.create"
         external: "turboci.stages.createExternal"
         in: IDENTIFIER_KIND_STAGE
+        potentially_conditional_on: "args.type_url"
         for: "adding new stages"
       }
 
@@ -86,6 +87,7 @@ service TurboCIOrchestrator {
         internal: "turboci.stages.cancel"
         external: "turboci.stages.cancelExternal"
         in: IDENTIFIER_KIND_STAGE
+        potentially_conditional_on: "args.type_url"
         for: "cancelling stages"
       }
 
@@ -100,6 +102,8 @@ service TurboCIOrchestrator {
         internal: "turboci.checks.write"
         external: "turboci.checks.writeExternal"
         in: IDENTIFIER_KIND_CHECK
+        potentially_conditional_on: "kind"
+        potentially_conditional_on: "state"
         for: "creating checks"
         for: "updating checks"
         for: "writing check options"
@@ -107,19 +111,11 @@ service TurboCIOrchestrator {
       }
 
       permission: {
-        internal: "turboci.checkOptions.write"
-        external: "turboci.checkOptions.writeExternal"
-        in: IDENTIFIER_KIND_CHECK_OPTION
-        for: "creating check options"
-        for: "updating check options"
-      }
-
-      permission: {
-        internal: "turboci.checkResultData.write"
-        external: "turboci.checkResultData.writeExternal"
-        in: IDENTIFIER_KIND_CHECK_RESULT_DATUM
-        for: "creating check result data"
-        for: "updating check result data"
+        internal: "turboci.values.write"
+        external: "turboci.values.writeExternal"
+        in_value_realm: true
+        potentially_conditional_on: "type_url"
+        for: "writing Values"
       }
     };
   }
@@ -137,27 +133,16 @@ service TurboCIOrchestrator {
   rpc QueryNodes(QueryNodesRequest) returns (QueryNodesResponse) {
     option (turboci_rpc) = {
       permission: {
+        internal: "turboci.workplans.read"
+        external: "turboci.workplans.readExternal"
+        in: IDENTIFIER_KIND_WORK_PLAN
+        for: "all reads"
+      }
+
+      permission: {
         internal: "turboci.checks.read"
         external: "turboci.checks.readExternal"
         in: IDENTIFIER_KIND_CHECK
-        for: "reading checks and their associated values (options, result data, edits)"
-      }
-
-      permission: {
-        internal: "turboci.checkOptions.read"
-        external: "turboci.checkOptions.readExternal"
-
-        in: IDENTIFIER_KIND_CHECK_OPTION
-        for: "reading options in checks"
-
-        in: IDENTIFIER_KIND_CHECK_EDIT_OPTION
-        for: "reading options in check edits"
-      }
-
-      permission: {
-        internal: "turboci.checkResultData.read"
-        external: "turboci.checkResultData.readExternal"
-        in: IDENTIFIER_KIND_CHECK_RESULT_DATUM
         for: "reading checks and their associated values (options, result data, edits)"
       }
 
@@ -175,11 +160,10 @@ service TurboCIOrchestrator {
       }
 
       permission: {
-        internal: "turboci.editReasons.read"
-        external: "turboci.editReasons.readExternal"
-        in: IDENTIFIER_KIND_CHECK_EDIT_REASON
-        in: IDENTIFIER_KIND_STAGE_EDIT_REASON
-        for: "reading edit reasons"
+        internal: "turboci.values.read"
+        external: "turboci.values.readExternal"
+        in_value_realm: true
+        for: "reading Values"
       }
     };
   }

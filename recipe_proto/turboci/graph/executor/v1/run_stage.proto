@@ -8,6 +8,7 @@ package turboci.graph.executor.v1;
 
 import "turboci/graph/ids/v1/identifier.proto";
 import "turboci/graph/orchestrator/v1/stage.proto";
+import "turboci/graph/orchestrator/v1/value_data.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/executor/v1;executorpb";
 option java_multiple_files = true;
@@ -16,6 +17,11 @@ option java_multiple_files = true;
 message RunStageRequest {
   // Stage to run.
   optional orchestrator.v1.Stage stage = 1;
+
+  // A map containing [ValueData] for `stage`.
+  //
+  // This is key'd by [ValueRef].digest.
+  map<string, orchestrator.v1.ValueData> value_data = 4;
 
   // ID of the stage attempt to run.
   optional ids.v1.StageAttempt attempt = 2;

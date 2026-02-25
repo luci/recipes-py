@@ -91,10 +91,9 @@ class TransactionTest(turboci_test_helper.TestBaseClass):
         types=[demoStruct2, demoTS])[0]
     # We should have both data types in Struct, TS order.
     self.assertEqual(len(rslt.options), 2)
-    self.assertEqual(rslt.options[0].value.value.type_url,
+    self.assertEqual(rslt.options[0].type_url,
                      turboci.type_url_for(demoStruct2))
-    self.assertEqual(rslt.options[1].value.value.type_url,
-                     turboci.type_url_for(demoTS))
+    self.assertEqual(rslt.options[1].type_url, turboci.type_url_for(demoTS))
 
   def test_transactional_creation(self):
     first_attempt = [True]
@@ -131,8 +130,7 @@ class TransactionTest(turboci_test_helper.TestBaseClass):
     # Since we only conditionally wrote, we see the kind written outside
     # the transaction but the option written by the transaction.
     self.assertEqual(rslt.kind, CheckKind.CHECK_KIND_ANALYSIS)
-    self.assertEqual(rslt.options[0].value.value.type_url,
-                     turboci.type_url_for(demoStruct))
+    self.assertEqual(rslt.options[0].type_url, turboci.type_url_for(demoStruct))
 
 
 if __name__ == '__main__':

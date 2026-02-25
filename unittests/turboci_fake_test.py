@@ -17,11 +17,11 @@ from PB.turboci.graph.ids.v1 import identifier
 from PB.turboci.graph.orchestrator.v1.check import Check
 from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
 from PB.turboci.graph.orchestrator.v1.check_state import CheckState
-from PB.turboci.graph.orchestrator.v1.datum import Datum
 from PB.turboci.graph.orchestrator.v1.dependencies import Dependencies
 from PB.turboci.graph.orchestrator.v1.edge import RESOLUTION_SATISFIED, Edge
 from PB.turboci.graph.orchestrator.v1.query import Query
 from PB.turboci.graph.orchestrator.v1.revision import Revision
+from PB.turboci.graph.orchestrator.v1.value_ref import ValueRef
 
 from recipe_engine import turboci
 from recipe_engine.turboci import dep_group, check_id
@@ -45,45 +45,37 @@ def _mkAny(value: Message) -> Any:
   return ret
 
 
-def _mkDatum(ident: AnyIdentifier, value: Message, version: Revision) -> Datum:
-  ret = Datum(identifier=turboci.wrap_id(ident), version=version)
-  ret.value.value.Pack(value, deterministic=True)
+def _mkValueRef(value: Message, version: Revision) -> ValueRef:
+  ret = ValueRef(type_url=type_url_for(value))
+  ret.inline.binary.Pack(value, deterministic=True)
   return ret
 
 
 def _mkOptions(id: str,
                *msg: type[Message] | Message,
-               in_workplan: str = "") -> list[Datum]:
-  ident = check_id(id, in_workplan=in_workplan)
+               in_workplan: str = "") -> list[ValueRef]:
   ret = []
   for i, m in enumerate(msg):
-    d = Datum(
-        identifier=identifier.Identifier(
-            check_option=identifier.CheckOption(check=ident, idx=i + 1)))
+    value_ref = ValueRef(type_url=type_url_for(m))
     if isinstance(m, type):
       m = m()
-    d.value.value.Pack(m, deterministic=True)
-    ret.append(d)
+    value_ref.inline.binary.Pack(m, deterministic=True)
+    ret.append(value_ref)
   return ret
 
 
 def _mkResults(id: str,
                *msg: type[Message] | Message,
                in_workplan: str = "",
-               result_idx: int = 1) -> list[Datum]:
+               result_idx: int = 1) -> list[ValueRef]:
   ident = check_id(id, in_workplan=in_workplan)
   ret = []
   for i, m in enumerate(msg):
-    d = Datum(
-        identifier=identifier.Identifier(
-            check_result_datum=identifier.CheckResultDatum(
-                result=identifier.CheckResult(check=ident, idx=result_idx),
-                idx=i + 1,
-            )))
+    value_ref = ValueRef(type_url=type_url_for(m))
     if isinstance(m, type):
       m = m()
-    d.value.value.Pack(m, deterministic=True)
-    ret.append(d)
+    value_ref.inline.binary.Pack(m, deterministic=True)
+    ret.append(value_ref)
   return ret
 
 
@@ -143,13 +135,10 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
     # Check that option data is correct
     check = get_check_by_full_id(rslt, 'L:Chey')
     self.assertEqual(len(check.options), 1)
-    self.assertEqual(
-        check.options[0],
-        _mkDatum(
-            turboci.wrap_id(check.options[0].identifier),
-            demoStruct,
-            rslt.version,
-        ))
+    self.assertEqual(check.options[0], _mkValueRef(
+        demoStruct,
+        rslt.version,
+    ))
 
     self.assertEqual(
         check,
@@ -183,7 +172,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         types=[Struct],
     )[0]
     self.assertEqual(len(rslt.options), 1)
-    self.assertEqual(rslt.options[0].value.value, _mkAny(demoStruct))
+    self.assertEqual(rslt.options[0].inline.binary, _mkAny(demoStruct))
 
   def test_check_state_PLANNING_overwrite_option(self):
     self.write_nodes(
@@ -202,7 +191,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         types=[Struct],
     )[0]
     self.assertEqual(len(rslt.options), 1)
-    self.assertEqual(rslt.options[0].value.value, _mkAny(demoStruct2))
+    self.assertEqual(rslt.options[0].inline.binary, _mkAny(demoStruct2))
 
   def test_check_state_PLANNING_add_second_option(self):
     self.write_nodes(
@@ -222,7 +211,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
     )[0]
     self.assertEqual(len(rslt.options), 2)
     # The order depends on implementation details (append), but verify existence
-    vals = {d.value.value.type_url: d.value.value for d in rslt.options}
+    vals = {o.type_url: o.inline.binary for o in rslt.options}
     self.assertEqual(vals[structURL], _mkAny(demoStruct))
     self.assertEqual(vals[tsURL], _mkAny(demoTS))
 
@@ -449,11 +438,11 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         types=[demoStruct],
     )[0]
     self.assertEqual(rslt.state, CheckState.CHECK_STATE_FINAL)
-    self.assertEqual(rslt.results[0].data[0].value.value.type_url,
+    self.assertEqual(rslt.results[0].data[0].type_url,
                      turboci.type_url_for(demoStruct))
     self.assertTrue(rslt.results[0].HasField('created_at'))
     self.assertTrue(rslt.results[0].HasField('finalized_at'))
-    self.assertEqual(rslt.results[0].data[0].value.value, _mkAny(demoStruct))
+    self.assertEqual(rslt.results[0].data[0].inline.binary, _mkAny(demoStruct))
 
   def test_check_WAITING_results(self):
     self.write_nodes(
@@ -474,7 +463,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         collect=Query.CollectChecks(result_data=True),
         types=[demoStruct],
     )[0]
-    self.assertEqual(rslt.results[0].data[0].value.value.type_url,
+    self.assertEqual(rslt.results[0].data[0].type_url,
                      turboci.type_url_for(demoStruct))
 
     self.assertTrue(rslt.results[0].HasField('created_at'))
@@ -539,7 +528,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
     self.assertEqual(self.check_ids(ret.checks), {'L:Ca', 'L:Cb', 'L:Cc'})
     types = set()
     for check in ret.checks:
-      types.update(d.value.value.type_url for d in check.options)
+      types.update(o.type_url for o in check.options)
     self.assertEqual(types, set(type_urls(demoStruct, demoTS)))
 
   def test_query_filter_result(self):
@@ -823,7 +812,6 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         'check', collect=Query.CollectChecks(options=True),
         types=[demoStruct])[0]
     check_v1 = check.version
-    opt_v1 = check.options[0].version
 
     # 2. Modify Option
     self.write_nodes(turboci.check(
@@ -835,13 +823,10 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         'check', collect=Query.CollectChecks(options=True),
         types=[demoStruct])[0]
     check_v2 = check.version
-    opt_v2 = check.options[0].version
 
-    # Check version should NOT change
-    self.assertEqual(check_v1, check_v2)
-    # Option version SHOULD change
-    self.assertGreater((opt_v2.ts.seconds, opt_v2.ts.nanos),
-                       (opt_v1.ts.seconds, opt_v1.ts.nanos))
+    # Check version SHOULD change
+    self.assertGreater((check_v2.ts.seconds, check_v2.ts.nanos),
+                       (check_v1.ts.seconds, check_v1.ts.nanos))
 
     # 3. Add Result (Check version should change because we added a result)
     self.write_nodes(
@@ -856,7 +841,6 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         collect=Query.CollectChecks(result_data=True),
         types=[demoStruct])[0]
     check_v3 = check.version
-    rslt_v1 = check.results[0].data[0].version
 
     self.assertGreater((check_v3.ts.seconds, check_v3.ts.nanos),
                        (check_v2.ts.seconds, check_v2.ts.nanos))
@@ -872,13 +856,10 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         collect=Query.CollectChecks(result_data=True),
         types=[demoStruct])[0]
     check_v4 = check.version
-    rslt_v2 = check.results[0].data[0].version
 
-    # Check version should NOT change
-    self.assertEqual(check_v3, check_v4)
-    # Result version SHOULD change
-    self.assertGreater((rslt_v2.ts.seconds, rslt_v2.ts.nanos),
-                       (rslt_v1.ts.seconds, rslt_v1.ts.nanos))
+    # Check version SHOULD change
+    self.assertGreater((check_v4.ts.seconds, check_v4.ts.nanos),
+                       (check_v3.ts.seconds, check_v3.ts.nanos))
 
   def test_check_option_versioning(self):
     # 1. Create Check with an initial Option
@@ -895,7 +876,6 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         collect=Query.CollectChecks(options=True),
         types=[demoStruct])[0]
     check_v1 = check.version
-    opt_v1 = check.options[0].version
 
     # 2. Modify the existing Option
     self.write_nodes(turboci.check(
@@ -909,13 +889,10 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         collect=Query.CollectChecks(options=True),
         types=[demoStruct2])[0]
     check_v2 = check.version
-    opt_v2 = check.options[0].version
 
-    # Check version must NOT change because we only modified an existing option's data
-    self.assertEqual(check_v1, check_v2)
-    # Option version MUST change
-    self.assertGreater((opt_v2.ts.seconds, opt_v2.ts.nanos),
-                       (opt_v1.ts.seconds, opt_v1.ts.nanos))
+    # Check version MUST change
+    self.assertGreater((check_v2.ts.seconds, check_v2.ts.nanos),
+                       (check_v1.ts.seconds, check_v1.ts.nanos))
 
     # 3. Adding a NEW option SHOULD change the check version
     self.write_nodes(turboci.check(
@@ -939,9 +916,9 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
     check = ret[0]
     self.assertEqual(len(check.options), 1)
     # Check that value is stripped but type_url is present
-    self.assertEqual(check.options[0].value.value.type_url,
+    self.assertEqual(check.options[0].type_url,
                      turboci.type_url_for(demoStruct))
-    self.assertFalse(check.options[0].value.value.value)
+    self.assertFalse(check.options[0].inline.binary.value)
 
   def test_check_state_history(self):
     # 1. Create in PLANNING

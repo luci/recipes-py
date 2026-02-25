@@ -1,0 +1,65 @@
+// Copyright 2026 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "turboci/graph/orchestrator/v1/type_info.proto";
+import "turboci/graph/orchestrator/v1/value_mask.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// Describes how ValueData messages within the WorkPlan content matching the
+// query criteria should be selected for inclusion in the response. We allow
+// some aspects of this selection to be specified hierarchically (on a
+// per-field basis) while other aspects are specified on a per-type_url basis.
+//
+// For a ValueRef's ValueData to be included in the response, the field
+// containing the ValueRef (e.g. Check.options) must have a ValueMask that
+// includes the ValueData (e.g. VALUE_MASK_TYPE_VALUE) and also type_info.wanted
+// must include content matching the ValueRef's type_url. If either of these
+// conditions is not met, the ValueRef will be populated but the ValueData will
+// not be present in the value_data map on the response and (for inline
+// ValueData content) the `inline` field will be unset. In both cases,
+// ValueRef's omit_reason will be set to UNWANTED.
+message ValueFilter {
+  // How to handle per-type_url decisions about including Values.
+  optional TypeInfo type_info = 1;
+
+  // These ValueMask fields control the selection behavior of the Value messages
+  // in each node type. ValueMasks are specified on a per-field basis, so each
+  // field that can hold ValueRefs can have desired behavior specified for that
+  // field. This allows callers to request behavior such as "include values for
+  // Check.options, but only include the basic type_url information for
+  // Check.results.data."
+
+  // ValueMask for Values in Check.options.
+  optional ValueMask check_options = 2;
+
+  // ValueMask for Values in Check.results.data.
+  optional ValueMask check_result_data = 3;
+
+  // ValueMask for Values in Edit.check.options.
+  optional ValueMask check_edit_options = 4;
+
+  // ValueMask for Values in Edit.check.results.data.
+  optional ValueMask check_edit_result_data = 5;
+
+  // ValueMask for Values in Stage.args.
+  optional ValueMask stage_args = 6;
+
+  // ValueMask for Values in Stage.attempts.details.
+  optional ValueMask stage_attempt_details = 7;
+
+  // ValueMask for Values in Stage.attempts.progress.details.
+  optional ValueMask stage_attempt_progress_details = 8;
+
+  // ValueMask for Values in Edit.stage.attempts.details.
+  optional ValueMask stage_edit_attempt_details = 9;
+
+  // ValueMask for Values in Edit.stage.attempts.progress.details.
+  optional ValueMask stage_edit_attempt_progress_details = 10;
+}

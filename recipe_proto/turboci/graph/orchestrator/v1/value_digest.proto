@@ -1,0 +1,71 @@
+// Copyright 2026 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// ValueHashAlgo identifies the type of hash used for a particular ValueRef.
+//
+// The server may only implement a subset of these.
+enum ValueHashAlgo {
+  // Unknown, invalid, hash algorithm.
+  VALUE_HASH_ALGO_UNKNOWN = 0;
+
+  // SHA256(Any())
+  //
+  // The Any is serialized the same way that the Bazel Remote Build API defines
+  // hashing protos, namely:
+  //
+  // * Fields are serialized in tag order.
+  // * There are no unknown fields.
+  // * There are no duplicate fields.
+  // * Fields are serialized according to the default semantics for their type.
+  //
+  // Specifically, this means that this is computed as:
+  //
+  //   SHA256(protoTag(1, bytes) || type_url || protoTag(2, bytes) || value)
+  //
+  // Which is the *typical* encoding of a `google.protobuf.Any` using standard
+  // serializers.
+  //
+  // len(hash) = 32
+  VALUE_HASH_ALGO_SHA256 = 1;
+}
+
+// ValueDigest is the de-serialized form of a ValueRef.digest.
+//
+// The TurboCI API always uses these in their serialized (URL safe string)
+// form, not as protos - however this message is included because it is
+// occasionally useful to extract the raw hash and/or size of the original
+// hashed data.
+//
+// Serialized as:
+//
+//   BASE64_URLSAFE(hash || varint(size_bytes) || byte(algo))
+//
+// And de-serialized as:
+//
+//   rawDecoded = BASE64_URLSAFE_dec(encoded)
+//   algo = ALGOS[rawDecoded[-1]]
+//   rawHash = rawDecoded[algo.len]
+//   size = varintDecode(rawDecoded[algo.len:-1])
+//
+// This puts `hash` at the front, rather than `algo`, in order to help uses of
+// the ValueDigest as a primary key to avoid hotspotting. For the same reason,
+// the algo is always put at the end because it will have the lowest entropy
+// (almost certainly will always be the value '1').
+message ValueDigest {
+  // Required. The raw bytes of the hash.
+  optional bytes hash = 1;
+
+  // Required. The size of the hashed data in bytes.
+  optional int64 size_bytes = 2;
+
+  // Required. The algorithm used to compute `hash`.
+  optional ValueHashAlgo algo = 3;
+}

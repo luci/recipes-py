@@ -29,27 +29,21 @@ message Identifier {
 
     // A Check within a WorkPlan.
     Check check = 2;
-    // Option data for a Check.
-    CheckOption check_option = 3;
+
     // A particular Check.Result.
-    CheckResult check_result = 4;
-    // Data associated with a particular result in a Check.
-    CheckResultDatum check_result_datum = 5;
+    CheckResult check_result = 3;
+
     // An edit to a Check.
-    CheckEdit check_edit = 6;
-    // Option data for an edit to a Check.
-    CheckEditOption check_edit_option = 7;
-    // A reason for an edit to a Check.
-    CheckEditReason check_edit_reason = 11;
+    CheckEdit check_edit = 4;
 
     // A Stage within a WorkPlan.
-    Stage stage = 8;
+    Stage stage = 5;
+
     // A specific attempt at a Stage.
-    StageAttempt stage_attempt = 9;
+    StageAttempt stage_attempt = 6;
+
     // An edit to a Stage.
-    StageEdit stage_edit = 10;
-    // A reason for an edit to a Stage.
-    StageEditReason stage_edit_reason = 12;
+    StageEdit stage_edit = 7;
   }
 }
 
@@ -81,26 +75,6 @@ message Check {
   optional string id = 2;
 }
 
-// Identifies an option associated with a Check within a WorkPlan.
-//
-// Serializes as "<check>:O<idx>".
-//
-// E.g. "L<check.work_plan.id>:C<check.id>:O<idx>"
-//
-// A CheckOption is a single `Datum`.
-//
-// This is separate from `Check` because it may reside in a different realm
-// than the Check itself.
-message CheckOption {
-  // The check that this option belongs to.
-  optional Check check = 1;
-
-  // The 1-based index of this datum within the Check.options list.
-  //
-  // This is 1-based to distinguish it from 0/unset (which is invalid).
-  optional int32 idx = 2;
-}
-
 // Identifies a Check Result within a WorkPlan.
 //
 // Serialized as "<check>:R<results_idx>".
@@ -119,24 +93,6 @@ message CheckResult {
   optional int32 idx = 2;
 }
 
-// Identifies a Datum for a Check's Result within a WorkPlan.
-//
-// Serialized as "<result>:D<results_data_idx>".
-//
-// E.g. "L<result.check.work_plan.id>:C<result.check.id>:R<result.idx>:D<idx>"
-//
-// This is separate from `Check` because it may reside in a different realm
-// than the Check itself.
-message CheckResultDatum {
-  // The check resunt that this datum belongs to.
-  optional CheckResult result = 1;
-
-  // The 1-based index of this datum within the Check.Result.data list.
-  //
-  // This is 1-based to distinguish it from 0/unset (which is invalid).
-  optional int32 idx = 2;
-}
-
 // Identifies a CheckEdit within a WorkPlan.
 //
 // Serialized as "<check>:V<version>".
@@ -149,39 +105,6 @@ message CheckEdit {
 
   // The version of the Check at the time this edit was made.
   optional google.protobuf.Timestamp version = 2;
-}
-
-// Identifies a CheckEditOption within a WorkPlan.
-//
-// Serialized as "<check_edit>:O<idx>".
-//
-// E.g.
-// "L<check_edit.check.work_plan.id>:C<check_edit.check.id>:V<check_edit.version.seconds>/<check_edit.version.nanos>:O<idx>"
-//
-// This is separate from `CheckEdit` because it may reside in a different
-// realm than the CheckEdit itself.
-message CheckEditOption {
-  // The check edit that this option belongs to.
-  optional CheckEdit check_edit = 1;
-
-  // The 1-based index of this datum within the check.options list.
-  //
-  // This is 1-based to distinguish it from 0/unset (which is invalid).
-  optional int32 idx = 2;
-}
-
-// Identifies a Reason within a CheckEdit.
-//
-// Serialized as "<edit>:R<idx>".
-//
-// E.g.
-// "L<check.work_plan.id>:C<check.id>:V<version.seconds>/<version.nanos>:R1"
-message CheckEditReason {
-  // The check edit that this reason belongs to.
-  optional CheckEdit check_edit = 1;
-
-  // The 1-based index of this Reason in the edit.
-  optional int32 idx = 2;
 }
 
 // Identifies a Stage within a WorkPlan.
@@ -247,18 +170,4 @@ message StageEdit {
 
   // The version of the Stage at the time this edit was made.
   optional google.protobuf.Timestamp version = 2;
-}
-
-// Identifies a Reason within a StageEdit.
-//
-// Serialized as "<edit>:R<idx>".
-//
-// E.g.
-// "L<stage.work_plan.id>:<stage.id>:V<version.seconds>/<version.nanos>:R1"
-message StageEditReason {
-  // The stage edit that this reason belongs to.
-  optional StageEdit stage_edit = 1;
-
-  // The 1-based index of this Reason in the edit.
-  optional int32 idx = 2;
 }

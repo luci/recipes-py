@@ -16,7 +16,7 @@ import "turboci/graph/orchestrator/v1/revision.proto";
 import "turboci/graph/orchestrator/v1/stage.proto";
 import "turboci/graph/orchestrator/v1/stage_attempt_execution_policy.proto";
 import "turboci/graph/orchestrator/v1/stage_execution_policy.proto";
-import "turboci/graph/orchestrator/v1/value.proto";
+import "turboci/graph/orchestrator/v1/value_write.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
 option java_multiple_files = true;
@@ -26,25 +26,6 @@ option java_multiple_files = true;
 // Allows atomically writing to multiple nodes (Checks, Stages) in a single
 // transaction.
 message WriteNodesRequest {
-  // RealmValue describes a Value which resides in a given security realm.
-  //
-  // This is used to write objects which appear in the graph as Datum messages.
-  message RealmValue {
-    // The realm to assign to this value (if the value is being created). If
-    // it's unset/empty, it will inherit from the realm of the object containing
-    // it (so, for Check options or result data, this would be the Check's
-    // realm).
-    //
-    // If provided, must be the absolute form "<project>:<name>".
-    //
-    // If the value is being overwritten and `realm` is provided, it must match
-    // the already-written value's realm.
-    optional string realm = 1 [(turboci).creation_only = true];
-
-    // The value to set.
-    optional Value value = 2;
-  }
-
   // An in-line representation of Dependencies.Group.
   //
   // The Orchestrator will deduplicate edges into Dependencies.edges in the
@@ -75,7 +56,7 @@ message WriteNodesRequest {
     optional string message = 1;
 
     // Machine-readable details for this progress item.
-    repeated Value details = 2;
+    repeated ValueWrite details = 2;
 
     // An optional field for preventing duplicate progress messages.
     //
@@ -138,50 +119,42 @@ message WriteNodesRequest {
   // CheckWrites/StageWrites.
   optional string token = 1;
 
-  // Reason is the write-request analogue of Edit.Reason.
+  // The reason that the caller is performing this write.
   //
-  // NOTE: If this WriteNodes is a no-op because it's a retry of a previous
-  // successful WriteNodes, these Reasons will not be recorded in the graph
-  // because there will not be any applied writes. This means that if you
-  // vary the Reasons from retry to retry, it's possible to see a successful
-  // WriteNodes where the provided reasons are not retained.
+  // Includes a low-effort English display message plus zero or more detail
+  // messages.
   message Reason {
-    // The security realm for this reason.
+    // A 'low-effort' reason for this write.
     //
-    // If provided, must be the absolute form "<project>:<name>".
+    // This is required, and is intended to be shown as a quick English summary
+    // when displaying Check and Stage Edits in debugging tools and UIs. This
+    // should explain in simple terms why this write is happening.
     //
-    // If absent the written Stage will copy its realm from the implied realm
-    // of the `token`. For Stage Attempt tokens, this will be the Stage's
-    // realm, and for Creator tokens, this will be the WorkPlan's realm.
-    optional string realm = 1 [(turboci).realm_inherits_writer = true];
-
-    // A 'low effort' reason for this edit.
+    // This should NOT be made to be parsable/machine-readable (use
+    // reason_details for this).
     //
-    // This is 'low effort' because it's preferable for the writer to provide
-    // detailed machine-readable data in the `details` field below.
-    optional string message = 2;
+    // This will be reflected in the CheckEdit or StageEdit logs for all
+    // Checks and/or Stages affected by this write, and thus readable under ALL
+    // realms implied by this set of Checks and/or Stages.
+    optional string message = 1;
 
     // Machine-readable reason(s) for this edit.
     //
-    // This is repeated to allow for standardized reason message types in
-    // conjunction with workflow-specific details as part of the same write
-    // record.
-    repeated Value details = 3;
+    // These are optional, but are meant to be a way to communicate
+    // machine-readable context for this write.
+    //
+    // These must be unique by (type_url, realm), and their order will be
+    // preserved in the generated Edit messages.
+    //
+    // By convention, these should be ordered from most to least specific, so
+    // if a client has permission for multiple details of the same type, the
+    // first in this list should be a superset of the others.
+    repeated ValueWrite details = 2;
   }
-  // The reason for this write operation, as supplied by the entity performing
-  // the write.
+  // Required reason for this write.
   //
-  // This should be used to detail any information about WHY this write is
-  // happening, or details about what changes are being made.
-  //
-  // This will be reflected in the CheckEdit or StageEdit logs for all
-  // Checks and/or Stages affected by this write.
-  //
-  // This is repeated to allow reasons in multiple security domains; By
-  // convention, these should be ordered from most to least specific, so if
-  // a client only wants to display one Reason, it should be the first in this
-  // list which they have access to.
-  repeated Reason reasons = 2;
+  // At minimum, reason.message must be supplied.
+  optional Reason reason = 2;
 
   // TransactionDetails encapsulates the information necessary to make this
   // write safe by describing the snapshot of the graph which the writer
@@ -224,11 +197,11 @@ message WriteNodesRequest {
     // A list of all nodes observed which lead to this write.
     //
     // This SHOULD include all nodes which your computation used as inputs
-    // for making a decision. If you locally filtered the GraphView before the
+    // for making a decision. If you locally filtered the WorkPlan before the
     // computation, it is OK to omit nodes which were filtered out, because you
     // would do the same write regardless of those filtered nodes' content.
     //
-    // This MAY include nodes which were absent from the GraphView - this means
+    // This MAY include nodes which were absent from the WorkPlan - this means
     // that the write is conditional on their absence (e.g. "I queried for X and
     // didn't find it, so I'm doing a write based on that information. If X DOES
     // exist at the time of the write, I want to abort and try again.").
@@ -242,12 +215,10 @@ message WriteNodesRequest {
     // may be conflicting with a previous incarnation of your own process!
     repeated ids.v1.Identifier nodes_observed = 1 [
       (turboci).id.allowed = IDENTIFIER_KIND_CHECK,
-      (turboci).id.allowed = IDENTIFIER_KIND_CHECK_OPTION,
-      (turboci).id.allowed = IDENTIFIER_KIND_CHECK_RESULT_DATUM,
       (turboci).id.allowed = IDENTIFIER_KIND_STAGE
     ];
 
-    // The 'version' of the GraphView returned from QueryNodes.
+    // The 'version' of the WorkPlan returned from QueryNodes.
     //
     // If multiple queries were made in this transaction, this revision MUST be
     // the first revision observed. Providing version.require to QueryNodes
@@ -311,8 +282,8 @@ message WriteNodesRequest {
 
     // The list of Options to write/overwrite.
     //
-    // Must be unique on `RealmValue.value.type_url`.
-    repeated RealmValue options = 4 [(turboci).check.editable = CHECK_STATE_PLANNING];
+    // Must be unique on `ValueWrite.data.type_url`.
+    repeated ValueWrite options = 4 [(turboci).check.editable = CHECK_STATE_PLANNING];
 
     // Dependency predicate for this Check.
     //
@@ -339,7 +310,9 @@ message WriteNodesRequest {
     //
     // The data here will overwrite existing data of the same type in the
     // selected Result for this Stage Attempt.
-    repeated RealmValue results = 6 [(turboci).check.editable = CHECK_STATE_WAITING];
+    //
+    // Must be unique on `ValueWrite.data.type_url`.
+    repeated ValueWrite results = 6 [(turboci).check.editable = CHECK_STATE_WAITING];
 
     // If set, finalize the Check.Result.
     //
@@ -378,35 +351,25 @@ message WriteNodesRequest {
     // The arguments of the Stage.
     //
     // A Stage MUST have `args` - if this write would create the Stage and
-    // `args` is omitted, the write will be rejected.
+    // `args` is omitted, the write will be rejected. If the Stage already
+    // exists and `args` is specified, the supplied args must match the existing
+    // Stages's `args` exactly.
     //
     // TBD: Document executor registration/selection process.
-    //
-    // TBD: What to do on double-creation? Do we compare args (protobuf
-    // serialization is not canonical/deterministic, but in practice if the
-    // same process creates the same stage twice, it will likely have the same
-    // args).
-    //
-    // We could just accept 'same type' == OK and ignore the value, but this
-    // feels a bit wishy-washy.
-    optional Value args = 2 [(turboci).creation_only = true];
+    optional ValueWrite args = 2 [(turboci).creation_only = true];
 
     // Realm to assign to this Stage.
     //
-    // If provided, must be the absolute form "<project>:<name>".
+    // If provided, must be the absolute form "<project>:<name>", or a
+    // special form "$from_token" or "$from_container". "$from_token" works
+    // as documented in [ValueWrite]. "$from_container" means "the same realm
+    // as the WorkPlan".
     //
     // If the Stage already exists, this will only result in an error if it
     // doesn't match the existing realm.
     //
-    // If absent the written Stage will copy its realm from the implied realm of
-    // the `token`. For Stage Attempt tokens, this will be the Stage's realm,
-    // and for Creator tokens, this will be the WorkPlan's realm.
-    //
-    // If `token` is unset and this field is absent, the write will be rejected.
-    optional string realm = 3 [
-      (turboci).creation_only = true,
-      (turboci).realm_inherits_writer = true
-    ];
+    // Defaults to "$from_token" if unset while creating a Stage.
+    optional string realm = 3 [(turboci).creation_only = true];
 
     // Dependency predicate for this Stage.
     //
@@ -475,7 +438,7 @@ message WriteNodesRequest {
     // Sets details in the Stage Attempt.details field.
     //
     // Overwrites any existing detail of the same type.
-    repeated Value details = 1;
+    repeated ValueWrite details = 1;
 
     // Progress messages to add to the current Stage Attempt.
     //

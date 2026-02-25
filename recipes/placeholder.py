@@ -131,12 +131,12 @@ def RunSteps(api, properties):
     api.buildbucket.collect_builds(build_ids_to_collect, step_name=step_name)
 
   def TurboCIWrite(step_name: str, req: TurboCIWrite):
-    reasons = req.reasons
-    if not reasons:
-      reasons = [turboci.reason(f'written by step {step_name!r}')]
+    reason = req.reason
+    if not reason.message:
+      reason.CopyFrom(turboci.reason(f'written by step {step_name!r}'))
     with api.step.nest(step_name) as pres:
       try:
-        rawReq = WriteNodesRequest(reasons=reasons, checks=req.check_writes)
+        rawReq = WriteNodesRequest(reason=reason, checks=req.check_writes)
         pres.logs['request'] = str(rawReq)
 
         rawRsp = turboci.get_client().WriteNodes(rawReq)
@@ -455,7 +455,7 @@ def GenTests(api):
     assert_(bob.identifier.id == 'bob')
 
     url = turboci.type_url_for(GobSourceCheckOptions)
-    bob_opts = [opt.value.value.type_url for opt in bob.options]
+    bob_opts = [opt.type_url for opt in bob.options]
     assert_(url in bob_opts)
 
     opt = get_option(GobSourceCheckOptions, bob)

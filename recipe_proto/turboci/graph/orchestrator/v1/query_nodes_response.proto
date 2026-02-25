@@ -9,6 +9,7 @@ package turboci.graph.orchestrator.v1;
 import "turboci/graph/ids/v1/identifier.proto";
 import "turboci/graph/orchestrator/v1/revision.proto";
 import "turboci/graph/orchestrator/v1/stage.proto";
+import "turboci/graph/orchestrator/v1/value_data.proto";
 import "turboci/graph/orchestrator/v1/workplan.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
@@ -18,6 +19,11 @@ option java_multiple_files = true;
 message QueryNodesResponse {
   // The WorkPlan(s) containing nodes matching the request.
   repeated WorkPlan workplans = 1;
+
+  // A map containing requested [ValueData] for nodes in `workplans`.
+  //
+  // This is key'd by [ValueRef].digest.
+  map<string, ValueData> value_data = 5;
 
   // A list of explicitly-selected nodes which were not found in the graph.
   repeated ids.v1.Identifier absent = 2;

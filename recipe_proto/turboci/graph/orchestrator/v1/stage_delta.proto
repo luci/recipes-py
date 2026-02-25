@@ -11,7 +11,7 @@ import "turboci/graph/orchestrator/v1/dependencies.proto";
 import "turboci/graph/orchestrator/v1/field_options.proto";
 import "turboci/graph/orchestrator/v1/stage_attempt_state.proto";
 import "turboci/graph/orchestrator/v1/stage_state.proto";
-import "turboci/graph/orchestrator/v1/value.proto";
+import "turboci/graph/orchestrator/v1/value_ref.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
 option java_multiple_files = true;
@@ -36,10 +36,7 @@ message StageDelta {
     optional StageAttemptState state = 2;
 
     // Details written as part of this edit.
-    //
-    // NOTE: For now, the Value here will be devoid of content other than
-    // `type_url`.
-    repeated Value details = 3;
+    repeated ValueRef details = 3;
 
     // The index of the progress message(s) written as part of this edit.
     repeated int64 progress = 4;

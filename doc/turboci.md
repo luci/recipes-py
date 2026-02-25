@@ -51,8 +51,8 @@ TurboCI includes two node types with distinct purposes:
       determinations on them (e.g. "some of these tests are flaky", "the CL
       didn't cause the failures here", etc.)
   * `Stages` - These are executable actions done as part of the workflow, which
-    edit the graph by recording results on Checks, and/or modify the plan by
-    editing Checks and/or adding more Stages to the graph. The orchestration
+    edit the workplan by recording results on Checks, and/or modify the plan by
+    editing Checks and/or adding more Stages to the workplan. The orchestration
     service is in charge of executing these stages. A recipe executing in
     a Buildbucket Builder is an example of a Stage.
 
@@ -68,15 +68,15 @@ If you already understand the API concepts, you can skip forward to
 
 TurboCI has two main RPCs; WriteNodes and QueryNodes.
 
-[`WriteNodes`] allows you to write data to a large number of Checks and/or Stages in
-a single transactional write.
+[`WriteNodes`] allows you to write data to a large number of Checks and/or
+Stages in a single transactional write.
 
-[`QueryNodes`] allows you to inspect the current state of the graph by querying
-for Checks by various structural aspects (e.g. id, kind, types of options, types
-of results, current state).
+[`QueryNodes`] allows you to inspect the current state of the workplan by
+querying for Checks by various structural aspects (e.g. id, kind, types of
+options, types of results, current state).
 
 The two RPCs can also be used in conjunction to implement a read-modify-write
-transaction on arbitrary subsets of the graph.
+transaction on arbitrary subsets of the workplan.
 
 
 The recipe engine provides a convenient wrapper around these with
@@ -94,7 +94,7 @@ If you want to use the raw client interface, you may get the client via
 
 All nodes in TurboCI exhibit a lifecycle which is enforced by TurboCI itself.
 The spirit of this lifecycle enforcement is to make the evolution of data in the
-graph predictable by making as much of it 'append only' as possible.
+workplan predictable by making as much of it 'append only' as possible.
 
 There are, however, some concessions for practicality (for example, the ability
 to overwrite option data during a Check's PLANNING state to allow
@@ -194,7 +194,7 @@ Dependencies have 3 parts:
   * Resolution events
   * Resolution
 
-Writers to the graph are only concerned about composing the predicate, which is
+Writers to the workplan are only concerned about composing the predicate, which is
 a [`DependencyGroup`] which is composed of:
   * Edges
   * Nested DependencyGroups
@@ -205,7 +205,7 @@ for the overall DependencyGroup to be satisfied. If it's unset, it means 'all of
 the items'.
 
 This allows you to express simple boolean logic expressions in terms of edges in
-the graph (e.g. `A or B` using a threshold of 1), as well as more complex
+the workplan (e.g. `A or B` using a threshold of 1), as well as more complex
 expressions in a compact form (e.g. 'two of A, B, C or D' using a threshold of
 2).
 
@@ -275,9 +275,9 @@ turboci.write_nodes(
 )
 ```
 
-This would ensure that there is a BUILD Check called `the_build` in the graph
+This would ensure that there is a BUILD Check called `the_build` in the workplan
 (but not much else). This could raise an error if there was already a non-BUILD
-Check in the graph called `the_build`.
+Check in the workplan called `the_build`.
 
 #### Reason? What's that?
 
@@ -408,7 +408,7 @@ result = turboci.query_nodes(turboci.make_query(
 #
 # You can get the first workplan by doing:
 #
-#   workplan = next(iter(result.graph.values()))
+#   workplan = next(iter(result.workplan.values()))
 #
 # And then this contains all our queried data:
 #
@@ -621,8 +621,8 @@ Transactions enable serialization of writes to mutable data (mostly Check
 Options), but also can allow safe conditional creation of Stages (e.g. read
 check X, then write stage Y (but only if X didn't change in the meantime)).
 
-Transactions are granular to the level of individual nodes (down to specific
-datums). It's allowed for multiple processes to mutate different existing option
+Transactions are granular to the level of individual nodes (Checks, Stages,
+Edits). It's allowed for multiple processes to mutate different existing option
 data at the same time without conflicting, as long as those two processes don't
 also read that other data.
 
@@ -657,7 +657,7 @@ def GenTests(api):
       for edge in build_check.dependencies.edges
     ))
 
-    assert_(turboci.get_option(MyOption, build_view) == MyOption(...))
+    assert_(turboci.get_option(MyOption, build_check) == MyOption(...))
 
     # etc.
 
@@ -665,7 +665,8 @@ def GenTests(api):
     'turboci_test',
     # ... Regular test inputs, assertions, etc.
     api.turboci_write_nodes(
-        # NOTE: A `reason` is not needed here. The test will synthesize one.
+        # NOTE: A `reason` is not required here. The test will synthesize one
+        # if one is not provided.
         turboci.check('source', kind='CHECK_KIND_SOURCE', options=[...]),
     ),
     api.assert_workplan(_assert_workplan)

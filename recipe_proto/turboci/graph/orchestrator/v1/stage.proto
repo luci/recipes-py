@@ -21,7 +21,7 @@ import "turboci/graph/orchestrator/v1/stage_attempt_state.proto";
 import "turboci/graph/orchestrator/v1/stage_concluded_reason.proto";
 import "turboci/graph/orchestrator/v1/stage_execution_policy.proto";
 import "turboci/graph/orchestrator/v1/stage_state.proto";
-import "turboci/graph/orchestrator/v1/value.proto";
+import "turboci/graph/orchestrator/v1/value_ref.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
 option java_multiple_files = true;
@@ -60,10 +60,9 @@ message Stage {
 
   // The arguments of the Stage.
   //
-  // `identifier` is always empty.
-  //
-  // The type of this Datum must be pre-registered with the Orchestrator, and
-  // that registration will indicate which Executor should handle this Stage.
+  // The type of this ValueRef must be pre-registered with the Orchestrator,
+  // and that registration will indicate which Executor should handle this
+  // Stage.
   //
   // NOTE: It's assumed that args.type_url will be a sufficient routing key to
   // the various registered Executors, but it's POSSIBLE that we may need to
@@ -77,15 +76,15 @@ message Stage {
   //     type_url) instead of just type_url.
   //
   // Looking at WorkNode, there are definitely multiple executor types which
-  // accept the same arguments in WorkParameters, but these could be represented
-  // by adding a new field to WorkParameters. There is also the PARTIAL_RERUN
-  // executor type which is used when duplicating WorkNodes, but this seems like
-  // it will be handled differently with Checks (i.e. Checks of the same options
-  // would be added, and new Results of the cached results would be added. There
-  // wouldn't be a need to add placeholder Stages into such a graph). There
-  // are also some executor types which serve as a way to separate ACLs, but
-  // we expect this to be handled by realms.
-  optional Value args = 4 [(google.api.field_behavior) = IMMUTABLE];
+  // accept the same arguments in WorkParameters, but these could be
+  // represented by adding a new field to WorkParameters. There is also the
+  // PARTIAL_RERUN executor type which is used when duplicating WorkNodes, but
+  // this seems like it will be handled differently with Checks (i.e. Checks of
+  // the same options would be added, and new Results of the cached results
+  // would be added. There wouldn't be a need to add placeholder Stages into
+  // such a graph). There are also some executor types which serve as a way to
+  // separate ACLs, but we expect this to be handled by realms.
+  optional ValueRef args = 4 [(google.api.field_behavior) = IMMUTABLE];
 
   // The version of this Stage.
   //
@@ -293,7 +292,7 @@ message Stage {
     // Attempt is not final (i.e. a state prior to COMPLETE or INCOMPLETE).
     //
     // Kept sorted by, and unique on, type_url.
-    repeated Value details = 6;
+    repeated ValueRef details = 6;
 
     // Attempt-specific progress information.
     //
@@ -311,7 +310,7 @@ message Stage {
       // Machine-readable details for this progress item.
       //
       // Kept sorted by, and unique on, type_url.
-      repeated Value details = 3;
+      repeated ValueRef details = 3;
 
       // The entity which created this progress message.
       //
