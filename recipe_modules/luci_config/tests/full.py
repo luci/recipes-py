@@ -20,6 +20,7 @@ def RunSteps(api):
   assert api.luci_config.milo()
   assert api.luci_config.scheduler()
   assert api.luci_config.scheduler()  # To test cache.
+  api.luci_config.clear_cache()
 
 
 def GenTests(api):

@@ -28,6 +28,9 @@ class LuciConfigApi(recipe_api.RecipeApi):
     super().__init__(*args, **kwargs)
     self._config_cache = {}
 
+  def clear_cache(self):
+    self._config_cache = {}
+
   def fetch_config_raw(
       self,
       config_name: str,

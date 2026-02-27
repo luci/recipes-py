@@ -2897,11 +2897,13 @@ Module for polling and parsing luci config files via the luci-config API.
 Depends on `prpc` binary being available in $PATH:
     https://godoc.org/go.chromium.org/luci/grpc/cmd/prpc
 
-&mdash; **def [buildbucket](/recipe_modules/luci_config/api.py#163)(self, \*\*kwargs):**
+&mdash; **def [buildbucket](/recipe_modules/luci_config/api.py#166)(self, \*\*kwargs):**
 
-&mdash; **def [commit\_queue](/recipe_modules/luci_config/api.py#167)(self, config_name: (str | None)=None, \*\*kwargs):**
+&mdash; **def [clear\_cache](/recipe_modules/luci_config/api.py#31)(self):**
 
-&mdash; **def [fetch\_config](/recipe_modules/luci_config/api.py#84)(self, config_name: str, message_type: MessageType, project: (str | None)=None, local_dir: (config_types.Path | None)=None, allow_unknown_fields: bool=False, allow_cache: bool=True):**
+&mdash; **def [commit\_queue](/recipe_modules/luci_config/api.py#170)(self, config_name: (str | None)=None, \*\*kwargs):**
+
+&mdash; **def [fetch\_config](/recipe_modules/luci_config/api.py#87)(self, config_name: str, message_type: MessageType, project: (str | None)=None, local_dir: (config_types.Path | None)=None, allow_unknown_fields: bool=False, allow_cache: bool=True):**
 
 Fetch and parse config file from the luci-config API as a proto.
 
@@ -2928,7 +2930,7 @@ Args:
     allow_cache: Allow retrieving from a cache if we've already retrieved
         this config before.
 
-&mdash; **def [fetch\_config\_raw](/recipe_modules/luci_config/api.py#31)(self, config_name: str, project: (str | None)=None, local_dir: (config_types.Path | None)=None, allow_cache: bool=True):**
+&mdash; **def [fetch\_config\_raw](/recipe_modules/luci_config/api.py#34)(self, config_name: str, project: (str | None)=None, local_dir: (config_types.Path | None)=None, allow_cache: bool=True):**
 
 Fetch and parse config file from the luci-config API as a proto.
 
@@ -2948,9 +2950,9 @@ Args:
     allow_cache: Allow retrieving from a cache if we've already retrieved
         this config before.
 
-&mdash; **def [milo](/recipe_modules/luci_config/api.py#175)(self, \*\*kwargs):**
+&mdash; **def [milo](/recipe_modules/luci_config/api.py#178)(self, \*\*kwargs):**
 
-&mdash; **def [scheduler](/recipe_modules/luci_config/api.py#178)(self, \*\*kwargs):**
+&mdash; **def [scheduler](/recipe_modules/luci_config/api.py#181)(self, \*\*kwargs):**
 ### *recipe_modules* / [milo](/recipe_modules/milo)
 
 [DEPS](/recipe_modules/milo/__init__.py#7): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [resultdb](#recipe_modules-resultdb), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
