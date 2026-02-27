@@ -20,15 +20,30 @@ def RunSteps(api):
   assert api.luci_config.milo()
   assert api.luci_config.scheduler()
   assert api.luci_config.scheduler()  # To test cache.
+
   api.luci_config.clear_cache()
+  assert api.luci_config.commit_queue(local_dir=api.path.start_dir)
+  assert api.luci_config.milo()
 
 
 def GenTests(api):
-  yield (api.test("basic") + api.buildbucket.try_build(project="project") +
-         api.luci_config.mock_local_config("project", "commit-queue.cfg",
-                                           cv_config_pb2.Config()) +
-         api.luci_config.mock_config(
-             "project",
-             "luci-milo.cfg",
-             milo_pb2.Project(consoles=[milo_pb2.Console(id="global_ci")]),
-         ))
+  yield api.test(
+      "basic",
+      api.buildbucket.try_build(project="project"),
+      api.luci_config.mock_local_config("project", "commit-queue.cfg",
+                                        cv_config_pb2.Config()),
+      api.luci_config.mock_local_config("project", "commit-queue.cfg",
+                                        cv_config_pb2.Config(),
+                                        iteration=2),
+      api.luci_config.mock_config(
+          "project",
+          "luci-milo.cfg",
+          milo_pb2.Project(consoles=[milo_pb2.Console(id="global_ci")]),
+      ),
+      api.luci_config.mock_config(
+          "project",
+          "luci-milo.cfg",
+          milo_pb2.Project(consoles=[milo_pb2.Console(id="global_ci_2")]),
+          iteration=2,
+      ),
+  )
