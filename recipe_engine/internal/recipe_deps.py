@@ -898,11 +898,6 @@ class Recipe:
 
     return recipe_globals
 
-  # TODO: py2 compat: Remove
-  is_python_version_labeled = True
-  python_version_compatibility = 'PY3'
-  effective_python_compatibility = 'PY3'
-
   @cached_property
   def full_name(self) -> str:
     """The fully qualified name of the recipe (e.g. `repo::path/to/recipe`, or

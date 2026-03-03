@@ -92,8 +92,6 @@ def process_modules(ret, rd, mod_names):
     mRecord = ret.modules[full_mod_name]
     mRecord.repo = repo
     mRecord.name = mod_name
-    mRecord.claimed_py3_status = py_compat(mod.python_version_compatibility)
-    mRecord.effective_py3_status = py_compat(mod.effective_python_compatibility)
 
     mods = set(extract_module_names(mod))
     mRecord.deps.extend(mods)
@@ -113,8 +111,6 @@ def process_recipes(ret, recipes):
     rRecord.repo = recipe.repo.name
     rRecord.name = recipe.name
     rRecord.is_recipe = True
-    rRecord.claimed_py3_status = py_compat(recipe.python_version_compatibility)
-    rRecord.effective_py3_status = py_compat(
         recipe.effective_python_compatibility)
     rRecord.deps.extend(extract_module_names(recipe))
 
@@ -127,27 +123,14 @@ def process_recipes(ret, recipes):
 
 
 def output_cli(ret):
-  to_emoji = {
-    deps.CANNOT_RUN: '💀',
-    deps.PYTHON2_ONLY: '❌',
-    deps.PYTHON2_AND_PYTHON3: '✅',
-    deps.PYTHON3_ONLY: '🦄',
-  }
-
   print("recipes:")
   for _, recipe in sorted(ret.recipes.items()):
-    print("  %s %s %s::%s - %s" % (
-      to_emoji[recipe.claimed_py3_status],
-      to_emoji[recipe.effective_py3_status],
-      recipe.repo, recipe.name, recipe.url))
+    print("  %s::%s - %s" % (recipe.repo, recipe.name, recipe.url))
 
   print()
   print("modules:")
   for _, module in sorted(ret.modules.items()):
-    print("  %s %s %s/%s - %s" % (
-      to_emoji[module.claimed_py3_status],
-      to_emoji[module.effective_py3_status],
-      module.repo, module.name, module.url))
+    print("  %s/%s - %s" % (module.repo, module.name, module.url))
 
 
 def output_json(fd, ret):
