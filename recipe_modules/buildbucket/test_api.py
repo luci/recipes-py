@@ -305,6 +305,8 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       priority=30,
       tags=None,
       experiments=(),
+      execution_timeout=None,
+      start_time=None,
       created_by='user:user@example.com'):
     """Emulates a generic build w/o input GitilesCommit or GerritChanges."""
     build = build_pb2.Build(
@@ -325,6 +327,12 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         ),
         input=build_pb2.Build.Input(experiments=experiments),
     )
+
+    if execution_timeout:
+      build.execution_timeout.FromSeconds(execution_timeout)
+
+    self._set_time(build.start_time, start_time)
+
     return self.build(build)
 
   def backend_build_message(

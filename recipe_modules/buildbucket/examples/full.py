@@ -162,7 +162,8 @@ def GenTests(api):
       api.buildbucket.generic_build(
           project='project',
           bucket='cron',
-          builder='cron-builder'),
+          builder='cron-builder',
+          execution_timeout=100),
       api.post_process(DropExpectation),
   )
 
