@@ -40,7 +40,7 @@ def _mkOptions(id: str,
     vr = ValueRef()
     if isinstance(m, type):
       m = m()
-    vr.inline.binary.Pack(m, deterministic=True)
+    vr.inline.Pack(m, deterministic=True)
     ret.append(vr)
   return ret
 

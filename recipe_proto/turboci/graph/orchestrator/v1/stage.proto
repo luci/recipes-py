@@ -14,7 +14,6 @@ import "turboci/graph/orchestrator/v1/check_state.proto";
 import "turboci/graph/orchestrator/v1/dependencies.proto";
 import "turboci/graph/orchestrator/v1/edit.proto";
 import "turboci/graph/orchestrator/v1/field_options.proto";
-import "turboci/graph/orchestrator/v1/omit_reason.proto";
 import "turboci/graph/orchestrator/v1/revision.proto";
 import "turboci/graph/orchestrator/v1/stage_attempt_execution_policy.proto";
 import "turboci/graph/orchestrator/v1/stage_attempt_state.proto";
@@ -34,20 +33,10 @@ option java_multiple_files = true;
 // See also:
 //   * Identifier.Stage* (Identifiers for Stages, StageAttempts, etc.)
 //
-// Next ID: 17
+// Next ID: 16
 message Stage {
   // The Stage's identifier.
   optional ids.v1.Stage identifier = 1 [(google.api.field_behavior) = IMMUTABLE];
-
-  // If set, the reason this Stage's content was omitted. Only UNKNOWN (default
-  // value, used when the content was included) and PLACEHOLDER are valid for a
-  // Stage, since Stages that were unwanted or inaccessible will be removed from
-  // the WorkPlan entirely.
-  //
-  // A few fields may be populated even if `omit_reason` is set:
-  //   * `identifier` will always be populated.
-  //   * `edits` may be populated.
-  optional OmitReason omit_reason = 15;
 
   // Actor which created the Stage.
   optional Actor created_by = 2 [(google.api.field_behavior) = IMMUTABLE];
@@ -88,8 +77,8 @@ message Stage {
 
   // The version of this Stage.
   //
-  // Updated any time fields in this Stage change, which includes all changes to
-  // the active Stage Attempt (if state is ATTEMPTING).
+  // Updated any time fields in this Stage change, which includes adding a new
+  // Attempt to the Stage but does not include edits to an Attempt.
   optional Revision version = 5;
 
   // The current state of the Stage.
@@ -178,19 +167,10 @@ message Stage {
   // TBD: Pull this into its own top-level StageAttempt entity because it will
   // need to have its own state and lifecycle/transactions.
   //
-  // Next ID: 15
+  // Next ID: 9, then 12
   message Attempt {
     // The Stage Attempt's identifier.
     optional ids.v1.StageAttempt identifier = 1 [(google.api.field_behavior) = IMMUTABLE];
-
-    // If set, the reason this Attempt's content was omitted. Only UNKNOWN
-    // (default value, used when the content was included) and PLACEHOLDER are
-    // valid for an Attempt, since Attempts that were unwanted or inaccessible
-    // will be removed from the WorkPlan entirely.
-    //
-    // A few fields may be populated even if `omit_reason` is set:
-    //   * `identifier` will always be populated.
-    optional OmitReason omit_reason = 14;
 
     // The version of this Attempt.
     //
@@ -327,7 +307,7 @@ message Stage {
       // See WriteNodesRequest.StageAttemptProgress.
       optional string idempotency_key = 5;
     }
-    // Append-only Executor-specefic progress messages.
+    // Append-only Executor-specific progress messages.
     repeated Progress progress = 7;
 
     // Actual execution policy for this StageAttempt.
@@ -414,7 +394,7 @@ message Stage {
   // StageEdits for this Stage.
   //
   // Sorted ascending by `version`.
-  repeated Edit edits = 16;
+  repeated Edit edits = 15;
 }
 
 // StageAttemptClaimedFailure is a gRPC error detail message returned by

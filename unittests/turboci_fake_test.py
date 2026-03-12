@@ -47,7 +47,7 @@ def _mkAny(value: Message) -> Any:
 
 def _mkValueRef(value: Message, version: Revision) -> ValueRef:
   ret = ValueRef(type_url=type_url_for(value))
-  ret.inline.binary.Pack(value, deterministic=True)
+  ret.inline.Pack(value, deterministic=True)
   return ret
 
 
@@ -59,7 +59,7 @@ def _mkOptions(id: str,
     value_ref = ValueRef(type_url=type_url_for(m))
     if isinstance(m, type):
       m = m()
-    value_ref.inline.binary.Pack(m, deterministic=True)
+    value_ref.inline.Pack(m, deterministic=True)
     ret.append(value_ref)
   return ret
 
@@ -74,7 +74,7 @@ def _mkResults(id: str,
     value_ref = ValueRef(type_url=type_url_for(m))
     if isinstance(m, type):
       m = m()
-    value_ref.inline.binary.Pack(m, deterministic=True)
+    value_ref.inline.Pack(m, deterministic=True)
     ret.append(value_ref)
   return ret
 
@@ -172,7 +172,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         types=[Struct],
     )[0]
     self.assertEqual(len(rslt.options), 1)
-    self.assertEqual(rslt.options[0].inline.binary, _mkAny(demoStruct))
+    self.assertEqual(rslt.options[0].inline, _mkAny(demoStruct))
 
   def test_check_state_PLANNING_overwrite_option(self):
     self.write_nodes(
@@ -191,7 +191,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
         types=[Struct],
     )[0]
     self.assertEqual(len(rslt.options), 1)
-    self.assertEqual(rslt.options[0].inline.binary, _mkAny(demoStruct2))
+    self.assertEqual(rslt.options[0].inline, _mkAny(demoStruct2))
 
   def test_check_state_PLANNING_add_second_option(self):
     self.write_nodes(
@@ -211,7 +211,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
     )[0]
     self.assertEqual(len(rslt.options), 2)
     # The order depends on implementation details (append), but verify existence
-    vals = {o.type_url: o.inline.binary for o in rslt.options}
+    vals = {o.type_url: o.inline for o in rslt.options}
     self.assertEqual(vals[structURL], _mkAny(demoStruct))
     self.assertEqual(vals[tsURL], _mkAny(demoTS))
 
@@ -442,7 +442,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
                      turboci.type_url_for(demoStruct))
     self.assertTrue(rslt.results[0].HasField('created_at'))
     self.assertTrue(rslt.results[0].HasField('finalized_at'))
-    self.assertEqual(rslt.results[0].data[0].inline.binary, _mkAny(demoStruct))
+    self.assertEqual(rslt.results[0].data[0].inline, _mkAny(demoStruct))
 
   def test_check_WAITING_results(self):
     self.write_nodes(
@@ -918,7 +918,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
     # Check that value is stripped but type_url is present
     self.assertEqual(check.options[0].type_url,
                      turboci.type_url_for(demoStruct))
-    self.assertFalse(check.options[0].inline.binary.value)
+    self.assertFalse(check.options[0].inline.value)
 
   def test_check_state_history(self):
     # 1. Create in PLANNING

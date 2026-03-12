@@ -7,8 +7,8 @@ syntax = "proto3";
 package turboci.graph.orchestrator.v1;
 
 import "google/api/field_behavior.proto";
+import "google/protobuf/any.proto";
 import "turboci/graph/orchestrator/v1/omit_reason.proto";
-import "turboci/graph/orchestrator/v1/value_data.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
 option java_multiple_files = true;
@@ -34,15 +34,19 @@ message ValueRef {
     //
     // This indicates that the data must be retrieved from the `value_data` map
     // in the response (or from some other CAS system using `digest` as the
-    // effective key)
+    // effective key).
     string digest = 3;
 
     // Inline contains the actual data, if the orchestrator decided that this
     // data was too small/unique to store indirectly via `digest`.
     //
-    // It is expected that clients will always use a library function to manage
-    // the possible states of this oneof (digest, inline binary, inline JSON).
-    ValueData inline = 4;
+    // It is expected that clients will always use a library function to handle
+    // inline vs. digest-referenced data. Server-provided JSON via ValueData
+    // will always be provided via digest, rather than stored inline.
+    //
+    // See [ValueDigest] for how to compute `digest` from `inline`, should
+    // it be necessary.
+    google.protobuf.Any inline = 4;
   }
 
   // If set, the reason this ValueRef's content was omitted from the response.

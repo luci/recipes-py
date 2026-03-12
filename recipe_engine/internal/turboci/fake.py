@@ -70,6 +70,7 @@ from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesReque
 from PB.turboci.graph.orchestrator.v1.query_nodes_response import QueryNodesResponse
 from PB.turboci.graph.orchestrator.v1.revision import Revision
 from PB.turboci.graph.orchestrator.v1.transaction_invariant import TransactionConflictFailure
+from PB.turboci.graph.orchestrator.v1.type_info import TypeInfo
 from PB.turboci.graph.orchestrator.v1.type_set import TypeSet
 from PB.turboci.graph.orchestrator.v1.value_ref import ValueRef
 from PB.turboci.graph.orchestrator.v1.value_write import ValueWrite
@@ -328,7 +329,7 @@ class FakeTurboCIOrchestrator(TurboCIClient):
         if value_write.realm:
           value_ref.realm = value_write.realm
         value_ref.type_url = type_url
-        value_ref.inline.binary.CopyFrom(value_write.data)
+        value_ref.inline.CopyFrom(value_write.data)
 
         # Update the check's version
         _touch()
@@ -445,11 +446,11 @@ class FakeTurboCIOrchestrator(TurboCIClient):
       ret.CopyFrom(check)
 
       for opt in ret.options:
-        opt.inline.binary.ClearField('value')
+        opt.inline.ClearField('value')
 
       for rslt in ret.results:
         for dat in rslt.data:
-          dat.inline.binary.ClearField('value')
+          dat.inline.ClearField('value')
 
     return ret
 
@@ -576,7 +577,7 @@ class FakeTurboCIOrchestrator(TurboCIClient):
     toCollect.update(to_add)
 
   def _collect_nodes_locked(self, workplan: WorkPlan, query: Query,
-                            type_info: QueryNodesRequest.TypeInfo,
+                            type_info: TypeInfo,
                             toCollect: set[str], require: Revision | None):
     """Collect adds all required nodes to the WorkPlan."""
     if query.collect_checks.HasField('edits'):

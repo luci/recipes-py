@@ -1,0 +1,87 @@
+// Copyright 2026 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "turboci/graph/ids/v1/identifier.proto";
+import "turboci/graph/ids/v1/identifier_kind.proto";
+import "turboci/graph/orchestrator/v1/field_options.proto";
+import "turboci/graph/orchestrator/v1/revision.proto";
+import "turboci/graph/orchestrator/v1/value_filter.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// Request message for TurboCIGraphService.ReadWorkPlan.
+message ReadWorkPlanRequest {
+  // The token which indicates that the request is coming from within a specific
+  // WorkPlan.
+  //
+  // The token may be either a stage attempt token or a workplan creator token.
+  // A suitable token is provided to the Executor of a Stage or to the creator
+  // of an empty Workplan.
+  //
+  // This is in addition to regular RPC authorization.
+  //
+  // If the token is populated:
+  // * If its workplan ID matches the workplan ID in the request, this RPC will
+  //   check that the caller has the relevant 'read' permissions.
+  // * If it doesn't match, this RPC will reject the request.
+  // If the token is not populated, the relevant 'readExternal' permissions will
+  // be checked.
+  optional string token = 1;
+
+  // The ID of the workplan from which to select nodes to return.
+  optional ids.v1.WorkPlan workplan_id = 2;
+
+  // The set of node types for which we should return nodes. If none are
+  // provided, the request will be rejected with INVALID_ARGUMENT.
+  //
+  // These identifier types are not supported, should not be requested and will
+  // be ignored:
+  // - WorkPlans. The associated WorkPlan will always be returned.
+  // - CheckResults. They will always be returned as part of their parent Check.
+  //
+  // Because StageAttempts are returned nested in their parent Stage, any
+  // StageAttempts returned will have their parent Stage included even if that
+  // Stage would otherwise have been excluded from the response (including if
+  // IDENTIFIER_KIND_STAGE is not specified).
+  repeated ids.v1.IdentifierKind included_node_types = 3 [
+    (turboci).id.allowed = IDENTIFIER_KIND_CHECK,
+    (turboci).id.allowed = IDENTIFIER_KIND_CHECK_EDIT,
+    (turboci).id.allowed = IDENTIFIER_KIND_STAGE,
+    (turboci).id.allowed = IDENTIFIER_KIND_STAGE_ATTEMPT,
+    (turboci).id.allowed = IDENTIFIER_KIND_STAGE_EDIT
+  ];
+
+  // Returns only nodes whose Revision is > this value. If omitted or set to 0,
+  // returns all nodes matching the request irrespective of their revision.
+  //
+  // This allows a caller that has previously retrieved a workplan's nodes to
+  // retrieve only nodes that have changed since the revision at which that
+  // previous retrieval was performed.
+  optional Revision since_version = 4;
+
+  // Describes how ValueData messages within the node types matching the query
+  // criteria should be filtered in/out of the response. All other fields of
+  // ValueRef messages will always be included.
+  //
+  // ValueData messages will be included only if:
+  // * Their containing node is included via `included_node_types`
+  // * AND their `type_url` matches the expression in `ValueFilter.wanted`
+  // * AND their containing node type's ValueMask in ValueFilter includes DATA
+  optional ValueFilter value_filter = 5;
+
+  // Pagination token, so this query can resume consuming nodes with the next
+  // node in the stream. If omitted, returns nodes beginning with the first node
+  // in the stream.
+  //
+  // If provided, the other fields of the ReadWorkPlanRequest need to match
+  // their values from the first page of this request. Attempting to use a
+  // pagination token while changing any other attributes of the request may
+  // result in unexpected or inconsistent results.
+  optional string pagination_token = 6;
+}

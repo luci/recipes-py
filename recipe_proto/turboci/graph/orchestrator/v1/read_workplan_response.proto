@@ -1,0 +1,55 @@
+// Copyright 2026 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "turboci/graph/orchestrator/v1/revision.proto";
+import "turboci/graph/orchestrator/v1/stage.proto";
+import "turboci/graph/orchestrator/v1/value_data.proto";
+import "turboci/graph/orchestrator/v1/workplan.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// Response message for TurboCIGraphService.ReadWorkPlan.
+message ReadWorkPlanResponse {
+  // The WorkPlan for which this query is retrieving data.
+  //
+  // Callers may need to merge WorkPlans across pages for this query, and may
+  // need to merge results from a query with `since_version` specified into
+  // a previously-retrieved WorkPlan.
+  // * Edits and StageAttempts are fully populated in a single page, and require
+  //   no merges.
+  // * Checks are fully populated except for their Edit lists.
+  // * Stages are fully populated except for their Edit and Attempt lists.
+  // * WorkPlans are fully populated except for their Check and Stage lists.
+  optional WorkPlan workplan = 1;
+
+  // A map containing requested [ValueData] for nodes in `workplan` (or in a prior
+  // response page, when a node's [ValueData] don't all fit in the page).
+  //
+  // This is keyed by [ValueRef].digest.
+  map<string, ValueData> value_data = 2;
+
+  // State of the current stage attempt.
+  //
+  // Only set if the `token` was for a stage attempt.
+  optional StageAttemptCurrentState current_attempt_state = 3;
+
+  // The snapshot version used when executing all queries. Can be passed as
+  // `since_version` to later ReadWorkPlan calls to get changes since this
+  // response.
+  //
+  // NOTE: Pass as `since_version` when performing a new query in the future,
+  // not when retrieving later pages for the current query.
+  optional Revision version = 4;
+
+  // Opaque pagination token, so follow-on queries can resume consuming nodes
+  // with the next node in the stream. Callers looking to retrieve additional
+  // pages of results can do so by providing this token. If omitted, there are
+  // no further pages of results so no further queries are needed.
+  optional string pagination_token = 5;
+}

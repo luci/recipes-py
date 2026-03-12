@@ -30,11 +30,11 @@ message ValueFilter {
   optional TypeInfo type_info = 1;
 
   // These ValueMask fields control the selection behavior of the Value messages
-  // in each node type. ValueMasks are specified on a per-field basis, so each
-  // field that can hold ValueRefs can have desired behavior specified for that
-  // field. This allows callers to request behavior such as "include values for
-  // Check.options, but only include the basic type_url information for
-  // Check.results.data."
+  // in specific fields of Turbo CI node types. ValueMasks are specified on a
+  // per-field basis, so we can specify desired behavior for each field that can
+  // hold ValueRefs. This allows callers to request behavior such as "include
+  // values for Check.options, but only include the basic type_url information
+  // for Check.results.data."
 
   // ValueMask for Values in Check.options.
   optional ValueMask check_options = 2;

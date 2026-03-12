@@ -14,7 +14,6 @@ import "turboci/graph/orchestrator/v1/check_state.proto";
 import "turboci/graph/orchestrator/v1/dependencies.proto";
 import "turboci/graph/orchestrator/v1/edit.proto";
 import "turboci/graph/orchestrator/v1/field_options.proto";
-import "turboci/graph/orchestrator/v1/omit_reason.proto";
 import "turboci/graph/orchestrator/v1/revision.proto";
 import "turboci/graph/orchestrator/v1/stage_attempt_state.proto";
 import "turboci/graph/orchestrator/v1/value_ref.proto";
@@ -44,16 +43,6 @@ message Check {
   //
   // `identifier.id` is provided by the Stage which creates this Check.
   optional ids.v1.Check identifier = 1 [(google.api.field_behavior) = IMMUTABLE];
-
-  // If set, the reason this Check's content was omitted. Only UNKNOWN
-  // (default value, used when the content was included) and PLACEHOLDER are
-  // valid for a Check, since Checks that were unwanted or inaccessible will be
-  // removed from the WorkPlan entirely.
-  //
-  // A few fields may be populated even if `omit_reason` is set:
-  //   * `identifier` will always be populated.
-  //   * `options`, `results` and `edits` may be populated.
-  optional OmitReason omit_reason = 11;
 
   // Actor which created the Check.
   optional Actor created_by = 2 [(google.api.field_behavior) = IMMUTABLE];
@@ -139,16 +128,6 @@ message Check {
     // Identifier for this Result.
     optional ids.v1.CheckResult identifier = 1 [(google.api.field_behavior) = IMMUTABLE];
 
-    // If set, the reason this Result's content was omitted. Only UNKNOWN
-    // (default value, used when the content was included) and PLACEHOLDER are
-    // valid for a Result, since Results are included with their parent Check so
-    // they cannot be filtered on their own.
-    //
-    // A few fields may be populated even if `omit_reason` is set:
-    //   * `identifier` will always be populated.
-    //   * `data` may be populated.
-    optional OmitReason omit_reason = 11;
-
     // The entity which created this Result.
     //
     // This is the only entity which can modify this Result.
@@ -199,7 +178,7 @@ message Check {
   // Edits for this Check.
   //
   // Sorted ascending by `version`.
-  repeated Edit edits = 12;
+  repeated Edit edits = 11;
 
   // TBD: Add another field for 'Resolved-To' edges to Checks for the case where
   // this Check is 'underspecified' and the Workflow resolves/evolves it to

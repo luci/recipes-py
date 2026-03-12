@@ -399,7 +399,7 @@ def get_option(msg: Type[MsgT], check: Check) -> MsgT | None:
   for option in check.options:
     if option.type_url == url:
       ret = msg()
-      option.inline.binary.Unpack(ret)
+      option.inline.Unpack(ret)
       return ret
   return None
 
@@ -422,6 +422,6 @@ def get_results(msg: Type[MsgT], check: Check) -> list[MsgT]:
     for dat in result.data:
       if dat.type_url == url:
         val = msg()
-        dat.inline.binary.Unpack(val)
+        dat.inline.Unpack(val)
         ret.append(val)
   return ret
