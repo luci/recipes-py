@@ -714,10 +714,6 @@ class RecipeModule:
     """
     return getattr(self.do_import(), 'DISABLE_STRICT_COVERAGE', False)
 
-  # TODO: py2 compat: Remove
-  is_python_version_labeled = True
-  python_version_compatibility = 'PY3'
-  effective_python_compatibility = 'PY3'
 
   @classmethod
   def create(cls, repo: RecipeRepo, name: str) -> RecipeModule:

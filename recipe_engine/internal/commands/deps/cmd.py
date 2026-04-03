@@ -20,16 +20,6 @@ def extract_module_names(obj):
     yield '%s/%s' % (repo, name)
 
 
-def py_compat(py_compat_str):
-  if py_compat_str is None:
-    return deps.CANNOT_RUN
-  if py_compat_str == 'PY3':
-    return deps.PYTHON3_ONLY
-  if py_compat_str == 'PY2+3':
-    return deps.PYTHON2_AND_PYTHON3
-  return deps.PYTHON2_ONLY
-
-
 def load_recipes_modules(rd, target, include_test_recipes, include_dependants):
   recipes = []
   mod_names = set()
@@ -111,7 +101,6 @@ def process_recipes(ret, recipes):
     rRecord.repo = recipe.repo.name
     rRecord.name = recipe.name
     rRecord.is_recipe = True
-        recipe.effective_python_compatibility)
     rRecord.deps.extend(extract_module_names(recipe))
 
     cfg = recipe.repo.recipes_cfg_pb2
