@@ -24,8 +24,6 @@ from typing import (
 
 from functools import reduce
 
-from builtins import str as text
-
 import attr
 from gevent.local import local
 from google.protobuf import json_format as json_pb
@@ -155,11 +153,11 @@ def _fix_stringlike(value: str | bytes) -> str:
   """_fix_stringlike will decode `bytes` with backslashreplace and return
   the decoded value.
 
-  If `value` is a text or str, returns it unchanged.
+  If `value` is a str, returns it unchanged.
 
   Otherwise rases ValueError.
   """
-  if isinstance(value, (text, str)):
+  if isinstance(value, str):
     return value
 
   if isinstance(value, bytes):
@@ -227,7 +225,7 @@ class _OrderedDictString(collections.OrderedDict[str, 'StoredLogDataType']):
   def __setitem__(self, key: str, value: 'LogDataType') -> None:
     # late proto import
     from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
-    if isinstance(value, (common_pb2.Log, text, str, _StringSequence)):
+    if isinstance(value, (common_pb2.Log, str, _StringSequence)):
       # these values are fine
       pass
     elif isinstance(value, bytes):
@@ -534,7 +532,7 @@ class StepPresentation:
         step_stream.append_log(log)
       else:
         with step_stream.new_log_stream(name) as log_stream:
-          if isinstance(log, (text, str, bytes)):
+          if isinstance(log, (str, bytes)):
             self.write_data(log_stream, log)
           elif isinstance(log, collections.abc.Iterable):
             for line in log:
@@ -548,7 +546,7 @@ class StepPresentation:
       #
       # TODO(iannucci) - This seems simultaneously beneficial (?) and woefully
       # insufficient.
-      step_stream.add_step_link(text(label), text(url).replace(" ", "%20"))
+      step_stream.add_step_link(str(label), str(url).replace(' ', '%20'))
     for key, value in sorted(self._properties.items()):
       if isinstance(value, message.Message):
         value = json_pb.MessageToDict(value)
@@ -571,17 +569,13 @@ class StepPresentation:
         historical reason, data is str in py2 that doesn't have valid utf-8
         encoding is accepted but discouraged.
     """
-    if isinstance(data, text):
-      # unicode in py2 and str in py3
-      log_stream.write_split(data)
-    elif isinstance(data, str):  # str in py2
+    if isinstance(data, str):
       # TODO(yiwzhang): try decode and warn user if non-valid utf-8
       # encoded data is supplied because log_stream only supports valid utf-8
-      # text in python3.
       log_stream.write_split(data)
-    elif isinstance(data, bytes):  #  bytes in py3
-      # We assume data is valid utf-8 encoded bytes here after transition to
-      # python3. If there's a need to write raw bytes, we should support binary
+    elif isinstance(data, bytes):
+      # We assume data is valid utf-8 encoded bytes here.
+      # If there's a need to write raw bytes, we should support binary
       # log stream here.
       log_stream.write_split(data.decode('utf-8'))
     else:
