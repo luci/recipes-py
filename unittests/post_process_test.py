@@ -521,6 +521,16 @@ class TestStepText(PostProcessUnitTest):
                    'check((step_odict[step].step_summary_text == expected))',
                    "expected: 'bad'")
 
+  def test_step_summary_text_contains_pass(self):
+    self.expect_pass(post_process.StepSummaryContains, 'x', ['test', 'summary'])
+
+  def test_step_summary_text_contains_fail(self):
+    failures = self.expect_fails(1, post_process.StepSummaryContains, 'x',
+                                 ['bad'])
+    self.assertHas(failures[0],
+                   'check((expected in step_odict[step].step_summary_text))',
+                   "expected: 'bad'")
+
 
   def test_step_text_contains_fail(self):
     failures = self.expect_fails(

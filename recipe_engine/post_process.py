@@ -446,6 +446,26 @@ def StepSummaryEquals(check: magic_check_fn.Checker, step_odict: StepODict,
   check(step_odict[step].step_summary_text == expected)
 
 
+def StepSummaryContains(check: magic_check_fn.Checker, step_odict: StepODict,
+                        step: str, expected_substrs: Sequence[str]) -> None:
+  """Check that the step's step_summary_text contains given substrings.
+
+  Args:
+    step (str) - The step to check the step_text of
+    expected_substrs (list(str)) - The expected substrings the step_text should
+        contain.
+
+  Usage:
+    yield api.test(
+        ..., api.post_process(StepSummaryContains, 'step-name',
+                              ['substr1', 'substr2']))
+  """
+  assert not isinstance(expected_substrs, basestring), \
+      'expected_substrs must be an iterable of strings and must not be a string'
+  for expected in expected_substrs:
+    check(expected in step_odict[step].step_summary_text)
+
+
 def StepEnvContains(check: magic_check_fn.Checker, step_odict: StepODict,
                     step: str, env_dict: Mapping[str, str]) -> None:
   """Assert that a step's env contains the given key/value pairs.
