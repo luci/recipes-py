@@ -83,7 +83,13 @@ def deserialize(data):
         ignore_unknown_fields=True
     )
 
-  for line in data.splitlines():
+  # Use an explicit \n split instead of .splitlines() since .splitlines() can
+  # split on characters that are in the JSON such as \u0085, resulting in JSON
+  # loading errors due to truncated lines.
+  for line in data.split('\n'):
+    # Can have empty lines due to the use of .split() instead of .splitlines().
+    if not line:
+      continue
     entry = json.loads(line)
     assert isinstance(entry, dict), line
 
