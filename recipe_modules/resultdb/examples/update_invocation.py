@@ -58,7 +58,7 @@ def RunSteps(api, props: update_invocation_pb.InputProperties):
   api.resultdb.update_invocation(
       parent_inv=props.invocation,
       source_spec=invocation_pb.SourceSpec(
-          sources=invocation_pb.Sources(
+          sources=common_pb.Sources(
               gitiles_commit=gitiles_commit,
               changelists=gerrit_changes,
           )),

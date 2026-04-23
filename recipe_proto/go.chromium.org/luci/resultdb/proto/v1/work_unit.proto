@@ -1,0 +1,527 @@
+// Copyright 2025 The LUCI Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package luci.resultdb.v1;
+
+import "google/api/field_behavior.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "go.chromium.org/luci/resultdb/proto/v1/common.proto";
+import "go.chromium.org/luci/resultdb/proto/v1/instruction.proto";
+import "go.chromium.org/luci/resultdb/proto/v1/predicate.proto";
+
+option go_package = "go.chromium.org/luci/resultdb/proto/v1;resultpb";
+option java_package = "com.google.luci.resultdb.v1";
+option java_multiple_files = true;
+
+// A process step that contributes results to a root invocation.
+// Work units contain test results, artifacts and exonerations. Work units may
+// also contain other work units and (legacy) invocations.
+// Next ID: 27.
+message WorkUnit {
+  // The resource name of this work unit.
+  // Format: `rootInvocations/{ROOT_INVOCATION_ID}/workUnits/{WORK_UNIT_ID}`
+  // See also https://aip.dev/122.
+  //
+  // Output only.
+  string name = 1 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.field_behavior) = IMMUTABLE
+  ];
+
+  // The work unit identifier. This identifier is unique within
+  // an enclosing root invocation, but not necessarily globally unique.
+  //
+  // Output only.
+  string work_unit_id = 2 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.field_behavior) = IMMUTABLE
+  ];
+
+  // The type of work unit. This captures the process the work unit is
+  // performing and the infrastructure that is creating it.
+  //
+  // Each infrastructure layer should reserve its own prefix (e.g. TF_, TFC_...)
+  // and document it below to avoid generating conflicts. Reach out to ResultDB
+  // owners if you'd like help updating this comment.
+  //
+  // Known values:
+  // - Android Test Production: ATP_INVOCATION
+  // - Tradefed: TF_MODULE, TF_TEST_RUN
+  // - Tradefed Cluster: TFC_COMMAND, TFC_COMMAND_TASK
+  // - Bazel: G3_BLAZE_INVOCATION, G3_TEST_TARGET, G3_ACTION, G3_MODULE
+  // - Buildbucket: BUILDBUCKET_BUILD
+  // - ResultSink: RDB_STREAM
+  //
+  // Regex: ^[A-Z0-9]+(_[A-Z0-9]+)+$. Limited to 50 characters in length.
+  // Required.
+  string kind = 25 [
+    (google.api.field_behavior) = IMMUTABLE
+  ];
+
+  // The execution state of the work unit.
+  enum State {
+    // The default value. This value is unused.
+    STATE_UNSPECIFIED = 0;
+
+    // Non-final states.
+
+    // The work unit has not yet started running.
+    PENDING = 1;
+
+    // The work unit is currently running.
+    RUNNING = 2;
+
+    // Final states. When transitioned to one of these states, the
+    // the work unit will also start to finalize (become immutable).
+
+    // Can be used as a bitmask to identify final states.
+    FINAL_STATE_MASK = 4;
+
+    // The work unit, including its child work units, completed
+    // successfully. If any child work units failed, they were
+    // retried, and those retries succeeded.
+    //
+    // This status means results are complete and correct, i.e.:
+    // - all tests to be run (or skipped) were identified.
+    // - test results were successfully uploaded to ResultDB
+    //   for each such test.
+    //
+    // This status generally does not say anything about the test content;
+    // tests could have FAILED, some could have even failed to
+    // produce a result (EXECUTION_ERRORED).
+    //
+    // If any test results were reported with a status of PRECLUDED (i.e.
+    // had their execution blocked by a higher-level error), do not use
+    // this status. Instead report the status ERRORED, and indicate what
+    // higher-level error precluded the execution of those tests (e.g.
+    // loss of system under test).
+    SUCCEEDED = 12; // 8 | FINAL_STATE_MASK
+
+    // The work unit determined no tests need to be run.
+    // For example, the build dependency graph indicates the CL did
+    // not modify the module to be tested.
+    // This status usually indicates no test results were uploaded.
+    SKIPPED = 20; // 16 | FINAL_STATE_MASK
+
+    // The work unit, or one of its child work units, encountered an error.
+    // Moreover, that error was not resolved by retry within the work unit.
+    //
+    // This status means the results may be incomplete, e.g. because of an
+    // issue:
+    // - identifying the tests to be run (and skipped), or
+    // - running those tests, or
+    // - uploading the work unit, or any of its test results or artifacts,
+    //   to ResultDB.
+    //
+    // Common causes are timeout, crash of the device under test and tool failure.
+    // It can also indicate the bot running the work unit was shut down
+    // unexpectedly.
+    //
+    // If you report any test results with a status of `PRECLUDED`, you
+    // MUST use this status and indicate what higher-level error
+    // precluded their execution (e.g. timeout or loss of system
+    // under test) in the summary_markdown field.
+    //
+    // If this work unit is forcefully finalized because the `deadline`
+    // expired, it will be automatically transitioned to this state as
+    // there is an implied failure to upload results to ResultDB.
+    FAILED = 36; // 32 | FINAL_STATE_MASK
+
+    // The work unit never started or may be incomplete, because
+    // an external factor requested its cancellation (e.g. presubmit
+    // run was no longer needed).
+    CANCELLED = 68; // 64 | FINAL_STATE_MASK
+  }
+
+  // The overall state of the work unit, including any child work units.
+  // See also: https://google.aip.dev/216.
+  //
+  // An accompanying human-readable description should be uploaded for FAILED,
+  // CANCELLED and SKIPPED states to `summary_markdown`.
+  State state = 22;
+
+  // A summary of the final state of the work unit, to be displayed on the UI.
+  // MUST be escaped prior to rendering on the UI.
+  //
+  // E.g. if the work unit failed, the reason/stack trace describing why
+  // it failed.
+  //
+  // Can be elided if the work unit succeeded.
+  //
+  // The size of the summary must be equal to or smaller than 4096 bytes in
+  // UTF-8.
+  string summary_markdown = 23;
+
+  // Indicates whether the work unit, and its children, are immutable.
+  enum FinalizationState {
+    // The default value. This value is unused.
+    FINALIZATION_STATE_UNSPECIFIED = 0;
+
+    // The work unit is mutable.
+    // The work unit will be int his state when `state` is in a non-final
+    // state.
+    ACTIVE = 1;
+
+    // The work unit is in the process of moving to the FINALIZED state.
+    //
+    // In this state, the work unit itself is immutable, but its
+    // contained work units may still be mutable. When the work unit
+    // is immutable, the work unit record may not be updated, and
+    // no test results, exonerations or artifacts be created
+    // inside it.
+    //
+    // The work unit automatically enters this state when the work unit
+    // `state` transitions to a final state (SUCCEEDED, SKIPPED, FAILED,
+    // CANCELLED).
+    FINALIZING = 2;
+
+    // The work unit is immutable and no longer accepts new results
+    // directly or indirectly.
+    //
+    // This work unit automatically enters this state shortly after it is
+    // FINALIZING and all included work units become FINALIZED.
+    FINALIZED = 3;
+  }
+
+  // Current finalization state of the work unit.
+  //
+  // Output only.
+  FinalizationState finalization_state = 3 [
+    (google.api.field_behavior) = OUTPUT_ONLY
+  ];
+
+  // The realm of the work unit. This controls the ACLs that apply to the
+  // work unit and its contents.
+  //
+  // For example, 'chromium:try'.
+  //
+  // See go/luci-authorization for more information.
+  string realm = 4 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.field_behavior) = IMMUTABLE
+  ];
+
+  // When the work unit was created.
+  // Output only.
+  google.protobuf.Timestamp create_time = 5 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.field_behavior) = IMMUTABLE
+  ];
+
+  // LUCI identity (e.g. "user:<email>") who created the work unit.
+  // Typically, a LUCI service account (e.g.
+  // "user:cr-buildbucket@appspot.gserviceaccount.com"), but can also be a user
+  // (e.g. "user:johndoe@example.com").
+  //
+  // Output only.
+  string creator = 6 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.field_behavior) = IMMUTABLE
+  ];
+
+  // When the work unit was last updated.
+  // Output only.
+  google.protobuf.Timestamp last_updated = 20 [
+    (google.api.field_behavior) = OUTPUT_ONLY
+  ];
+
+  // == Finalization ===========================================================
+
+  // When the work unit started to finalize, i.e. transitioned to a finalization
+  // state of FINALIZING. This means the work unit is immutable but directly or
+  // indirectly included work units may not be.
+  //
+  // Output only.
+  google.protobuf.Timestamp finalize_start_time = 7
+      [ (google.api.field_behavior) = OUTPUT_ONLY ];
+
+  // When the work unit was finalized, i.e. transitioned to a finalization
+  // state of FINALIZED.
+  // If this field is set, implies that the work units is finalized. This
+  // means the work unit, and all directly and indirectly included work units,
+  // are immutable.
+  //
+  // Output only.
+  google.protobuf.Timestamp finalize_time = 8
+      [ (google.api.field_behavior) = OUTPUT_ONLY ];
+
+  // Timestamp when the work unit will be forcefully finalized.
+  // Can be extended with UpdateWorkUnit until finalized.
+  google.protobuf.Timestamp deadline = 9;
+
+  // == Hierarchy ==============================================================
+
+  // The parent resource of this work unit. This is typically
+  // another work unit, except for the root work unit, for which
+  // it is the root invocation.
+  string parent = 10 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.field_behavior) = IMMUTABLE
+  ];
+
+  // Resource names of child work units.
+  //
+  // This field only covers children; to find grandchildren, great
+  // grandchildren, etc. traverse recursively.
+  //
+  // To create a new child work unit, use Recorder.CreateWorkUnit
+  // and specify this work unit as the parent.
+  //
+  // Output only (append via (Batch)CreateWorkUnit(s)).
+  repeated string child_work_units = 11
+      [ (google.api.field_behavior) = OUTPUT_ONLY ];
+
+  // Resource names of child (legacy) invocations.
+  //
+  // This field only covers children; to find grandchildren, great
+  // grandchildren, etc. traverse recursively.
+  //
+  // Output only (append via UpdateIncludedInvocations).
+  repeated string child_invocations = 12
+      [ (google.api.field_behavior) = OUTPUT_ONLY ];
+
+  // == General ================================================================
+
+  // The module this work unit is reporting results for.
+  //
+  // The value set here will inherit to (and cannot be overridden by) all descendent
+  // work units created under this work unit.
+  //
+  // This field must be set if this work unit will (directly) contain any test
+  // results or test result artifacts, as test results and test result
+  // artifacts uploaded to this work unit will need to match this module.
+  //
+  // This field does not need to be set to upload work unit-level artifacts
+  // (artifacts not associated with a test result).
+  //
+  // If results from multiple modules need to be reported, leave module_id blank
+  // on the work unit and create a child work unit for each module.
+  // This field may be left unset if this work unit is not associated with a module,
+  // only has child work units, and will not be uploading test results itself.
+  //
+  // This field is immutable, it can only be set at work unit creation time.
+  ModuleIdentifier module_id = 19 [
+    (google.api.field_behavior) = IMMUTABLE
+  ];
+
+  // The identifier of the module-shard this work unit is running.
+  //
+  // This is used when computing module aggregations. Module aggregations
+  // consider only top-level module work units; a top-level module work unit is
+  // any work unit that sets module_id AND has no ancestor (parent, grandparent
+  // etc.) that sets a module_id.
+  //
+  // A module is considered to succeed if only if there is at least one SUCCEEDED
+  // or SKIPPED top-level module work unit for each shard key seen.
+  // (Or, if no sharding key is reported, there is at least one SUCCEEDED or SKIPPED
+  // top-level module work unit for the module.)
+  //
+  // If sharding is not used, leave blank. Shard keys must be coordinated within
+  // a root invocation-module so that the same shard key refers to the same shard,
+  // wherever it is used in the root invocation.
+  //
+  // This field may only be set when module_id is also set. It will inherit to
+  // all descendent work units created under this work unit. It can only be set
+  // at work unit creation time.
+  //
+  // Regex: ^[a-z0-9_\-]+$. Limited to 50 characters in length.
+  string module_shard_key = 24 [
+    (google.api.field_behavior) = IMMUTABLE
+  ];
+
+  // The resource that produced results in this work unit.
+  ProducerResource producer_resource = 26 [ (google.api.field_behavior) = IMMUTABLE ];
+
+  // Work unit-level string key-value pairs.
+  // A key can be repeated.
+  //
+  // These tags may be re-exported alongside each test result.
+  //
+  // Total size (as measured by proto.Size()) must be <= 16 KB.
+  repeated StringPair tags = 14;
+
+  // Arbitrary JSON object that contains structured, domain-specific properties
+  // of the work unit.
+  //
+  // The value must contain a field "@type" which is a URL/resource name that
+  // uniquely identifies the type of the source protocol buffer message that
+  // defines the schema of these properties. This string must contain at least
+  // one "/" character. The last segment of the URL's path must represent the
+  // fully qualified name of the type (e.g. foo.com/x/some.package.MyMessage).
+  // See google.protobuf.Any for more information.
+  //
+  // N.B. We do not use google.protobuf.Any here to remove a requirement for
+  // ResultDB to know the schema of customer-defined protos. We do however use
+  // a format equivalent to google.protobuf.Any's JSON representation.
+  //
+  // The serialized size must be <= 16 KB.
+  google.protobuf.Struct properties = 15;
+
+  // Additional JSON object(s) that contain additional structured data about the
+  // work unit. Unlike `properties` this field is not included (denormalized)
+  // in the test results export, it is only available in the finalized
+  // work units BigQuery export.
+  //
+  // All google.protobuf.Struct values must contain a field '@type' which is
+  // a URL/resource name that uniquely identifies the type of the source
+  // protocol buffer message. This string must contain at least
+  // one "/" character. The last segment of the URL's path must represent the
+  // fully qualified name of the type (e.g. foo.com/x/some.package.MyMessage)
+  //
+  // ResultDB will not validate the contents with respect to this schema, but
+  // downstream systems may depend on the '@type' field to inform how the
+  // contents are interpreted.
+  //
+  // Each key is limited to 63 characters matching
+  // ^[a-z]([a-z0-9_]{0,61}[a-z0-9])?$.
+  // The size of each value is limited to <= 512 KB.
+  // The total size of the map (as measured by proto.Size())
+  // is limited to <= 2 MB.
+  //
+  // The following paths can be used for field masks:
+  // * "extended_properties" to target the whole extended_properties,
+  // * "extended_properties.some_key" to target one key of extended_properties.
+  map<string, google.protobuf.Struct> extended_properties = 16;
+
+  // Reproduction instructions for steps and test results represented by
+  // this work unit. It may also contain instructions for test results in
+  // included work units.
+  Instructions instructions = 17;
+
+  // Whether the work unit has been masked so that it includes only metadata.
+  // The metadata fields for a WorkUnit are:
+  // * name
+  // * work_unit_id
+  // * kind
+  // * finalization_state
+  // * state
+  // * summary_markdown (truncated to the first 140 bytes)
+  // * realm
+  // * create_time
+  // * creator
+  // * last_updated
+  // * finalize_start_time
+  // * finalize_time
+  // * deadline
+  // * parent
+  // * child_work_units
+  // * child_invocations
+  // * module_id (all fields except `module_variant`)
+  // * module_shard_key
+  // * producer_resource
+  //
+  // Output only.
+  bool is_masked = 18 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // This checksum is computed by the server based on the value of other
+  // fields, and may be sent on update requests to ensure the client
+  // has an up-to-date value before proceeding.
+  // See also https://google.aip.dev/154.
+  string etag = 21;
+}
+
+// The following request / response messages appear below as they are
+// implemented by both the ResultDB and Recorder service. They are
+// implemented by both services for client ergonomics and to seperate
+// the recorder and reader-side failure domains. In the recorder service,
+// the Get methods facilitate atomic updates using etags for optimistic
+// concurrency control.
+// In the ResultDB service, they support reading the uploaded work units.
+
+// A request message for the GetWorkUnit RPC.
+message GetWorkUnitRequest {
+  // The name of the work unit to read, see WorkUnit.name.
+  string name = 1 [ (google.api.field_behavior) = REQUIRED ];
+
+  // The view to apply to the returned work unit. Defaults to BASIC.
+  WorkUnitView view = 2;
+}
+
+// A request message for the BatchGetWorkUnits RPC.
+//
+// As per google.aip.dev/231, this request will be handled atomically:
+// either it will succeed in reading all nominated work units or it will fail.
+message BatchGetWorkUnitsRequest {
+  // The parent root invocation shared by all work units being retrieved.
+  // Format: rootInvocations/{root_invocation_id}
+  // The parent of all work units specified in `names` must match this
+  // field.
+  // Required.
+  string parent = 1 [ (google.api.field_behavior) = REQUIRED ];
+
+  // The names of the work units to retrieve.
+  // A maximum of 500 work units can be retrieved in a batch.
+  // Format: rootInvocations/{root_invocation_id}/workUnits/{work_unit_id}
+  repeated string names = 2 [ (google.api.field_behavior) = REQUIRED ];
+
+  // The view to apply to returned work units. Using the view BASIC is
+  // strongly recommended as response size limits could be easily exceeded
+  // if FULL is used (as each work unit's extended properties may be up to
+  // ~2MB). Defaults to BASIC.
+  WorkUnitView view = 3;
+}
+
+// A response message for the BatchGetWorkUnits RPC.
+message BatchGetWorkUnitsResponse {
+  // The work units requested. These will appear in the same order as
+  // names in the request, i.e. work_units[i] corresponds to names[i].
+  repeated WorkUnit work_units = 1;
+}
+
+// A request message for the QueryWorkUnits RPC.
+message QueryWorkUnitsRequest {
+  // Resource name of the root invocation to query.
+  // Format: rootInvocations/{ROOT_INVOCATION_ID}
+  string parent = 1 [ (google.api.field_behavior) = REQUIRED ];
+
+  // The predicate to filter the workunits to be returned.
+  // Pagination is not supported if predicate.AncestorsOf is specified,
+  // page_size and page_token will be ignored.
+  WorkUnitPredicate predicate = 2;
+
+  // The view to apply to returned work units. Using the view BASIC is
+  // strongly recommended as response size limits could be easily exceeded
+  // if FULL is used (as each work unit's extended properties may be up to
+  // ~2MB). Defaults to BASIC.
+  WorkUnitView view = 3;
+
+  // The maximum number of work units to return.
+  //
+  // The service may return fewer than this value.
+  // If unspecified, at most 100 work units will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 4;
+
+  // A page token, received from a previous `QueryWorkUnitsRequest` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `QueryWorkUnitsRequest` MUST
+  // match the call that provided the page token.
+  string page_token = 5;
+}
+
+// A response message for the QueryWorkUnits RPC.
+message QueryWorkUnitsResponse {
+  // The workunits matching the query.
+  repeated WorkUnit work_units = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there were no subsequent pages at the time of
+  // request.
+  // If the root work unit is not finalized, more results may appear later.
+  string next_page_token = 2;
+}

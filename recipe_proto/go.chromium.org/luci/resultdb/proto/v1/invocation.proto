@@ -32,7 +32,7 @@ option java_multiple_files = true;
 // buildbucket build, CQ attempt.
 // Composable: can include other invocations, see inclusion.proto.
 //
-// Next id: 25.
+// Next id: 26.
 message Invocation {
   reserved 3; // bool interrupted, crbug.com/1078696.
   reserved 17,18; // step and test instructions.
@@ -87,6 +87,10 @@ message Invocation {
 
   // Invocation-level string key-value pairs.
   // A key can be repeated.
+  //
+  // These tags may be re-exported alongside each test result.
+  //
+  // Total size (as measured by proto.Size()) must be <= 16 KB.
   repeated StringPair tags = 5;
 
   // == Finalization ===========================================================
@@ -153,6 +157,15 @@ message Invocation {
   // BigQueryExports field.
   bool is_export_root = 21 [ (google.api.field_behavior) = IMMUTABLE ];
 
+  // The module this invocation is reporting results for.
+  //
+  // If set, test results and artifacts uploaded to this invocation will need to
+  // match this module.
+  //
+  // Once this field is set to a non-empty value, it becomes invariant and may
+  // not be changed.
+  ModuleIdentifier module_id = 25;
+
   // bigquery_exports indicates what BigQuery table(s) that results in this
   // invocation should export to.
   //
@@ -179,7 +192,7 @@ message Invocation {
   string realm = 12;
 
   // Deprecated. Values specified here are ignored.
-  HistoryOptions history_options = 13;
+  HistoryOptions history_options = 13 [ deprecated = true ];
 
   // Arbitrary JSON object that contains structured, domain-specific properties
   // of the invocation.
@@ -314,12 +327,12 @@ message BigQueryExport {
 // Deprecated: do not use.
 message HistoryOptions {
   // Set this to index the results by the containing invocation's create_time.
-  bool use_invocation_timestamp = 1;
+  bool use_invocation_timestamp = 1 [ deprecated = true ];
 
   // Set this to index by commit position.
   // It's up to the creator of the invocation to set this consistently over
   // time across the same test variant.
-  CommitPosition commit = 2;
+  CommitPosition commit = 2 [ deprecated = true ];
 }
 
 // Specifies the source code that was tested in an invocation, either directly
@@ -370,32 +383,4 @@ message SourceSpec {
    // must include the same invocation multiple times, they should
    // make the source position via all paths the same.
    bool inherit = 2;
-}
-
-// Specifies the source code that was tested.
-message Sources {
-    // The base version of code sources checked out. Mandatory.
-    // If necessary, we could add support for non-gitiles sources here in
-    // future, using a oneof statement. E.g.
-    // oneof system {
-    //    GitilesCommit gitiles_commit = 1;
-    //    SubversionRevision svn_revision = 4;
-    //    ...
-    // }
-    GitilesCommit gitiles_commit = 1;
-
-    // The changelist(s) which were applied upon the base version of sources
-    // checked out. E.g. in commit queue tryjobs.
-    //
-    // At most 10 changelist(s) may be specified here. If there
-    // are more, only include the first 10 and set is_dirty.
-    repeated GerritChange changelists = 2;
-
-    // Whether there were any changes made to the sources, not described above.
-    // For example, a version of a dependency was upgraded before testing (e.g.
-    // in an autoroller recipe).
-    //
-    // Cherry-picking a changelist on top of the base checkout is not considered
-    // making the sources dirty as it is reported separately above.
-    bool is_dirty = 3;
 }

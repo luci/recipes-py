@@ -12,6 +12,7 @@ from recipe_engine.post_process import (DropExpectation, StepSuccess,
   PropertyEquals)
 
 from PB.go.chromium.org.luci.resultdb.proto.v1 import invocation as invocation_pb2
+from PB.go.chromium.org.luci.resultdb.proto.v1 import test_exoneration as test_exoneration_pb2
 from PB.go.chromium.org.luci.resultdb.proto.v1 import test_result as test_result_pb2
 
 DEPS = [
@@ -39,24 +40,24 @@ def RunSteps(api):
 
 def GenTests(api):
   inv_bundle = {
-     'task-chromium-swarm.appspot.com-deadbeef': api.resultdb.Invocation(
-        proto=invocation_pb2.Invocation(
-            state=invocation_pb2.Invocation.FINALIZED
-        ),
-        test_results=[
-          test_result_pb2.TestResult(
-            test_id='ninja://chromium/tests:browser_tests/',
-            expected=False,
-            status=test_result_pb2.FAIL,
+      'task-chromium-swarm.appspot.com-deadbeef':
+          api.resultdb.Invocation(
+              proto=invocation_pb2.Invocation(
+                  state=invocation_pb2.Invocation.FINALIZED),
+              test_results=[
+                  test_result_pb2.TestResult(
+                      test_id='ninja://chromium/tests:browser_tests/',
+                      expected=False,
+                      status=test_result_pb2.FAIL,
+                  ),
+              ],
+              test_exonerations=[
+                  test_exoneration_pb2.TestExoneration(
+                      test_id='ninja://chromium/tests:browser_tests/',
+                      explanation_html='Known to be flaky',
+                  ),
+              ],
           ),
-        ],
-        test_exonerations=[
-          test_result_pb2.TestExoneration(
-            test_id='ninja://chromium/tests:browser_tests/',
-            explanation_html='Known to be flaky',
-          ),
-        ],
-     ),
   }
   yield (
       api.test('basic') +

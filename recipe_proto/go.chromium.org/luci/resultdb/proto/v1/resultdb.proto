@@ -24,11 +24,14 @@ import "go.chromium.org/luci/resultdb/proto/v1/common.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/instruction.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/invocation.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/predicate.proto";
+import "go.chromium.org/luci/resultdb/proto/v1/root_invocation.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/test_aggregation.proto";
+import "go.chromium.org/luci/resultdb/proto/v1/test_exoneration.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/test_result.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/test_variant.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/test_verdict.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/test_metadata.proto";
+import "go.chromium.org/luci/resultdb/proto/v1/work_unit.proto";
 
 option go_package = "go.chromium.org/luci/resultdb/proto/v1;resultpb";
 option java_package = "com.google.luci.resultdb.v1";
@@ -36,14 +39,23 @@ option java_multiple_files = true;
 
 // Service to read test results.
 //
-// Use of LUCI is subject to the Google [Terms of Service](https://policies.google.com/terms)
-// and [Privacy Policy](https://policies.google.com/privacy).
+// Use of LUCI is subject to the Google [Terms of
+// Service](https://policies.google.com/terms) and [Privacy
+// Policy](https://policies.google.com/privacy).
 service ResultDB {
-  // Retrieves an invocation.
-  rpc GetInvocation(GetInvocationRequest) returns (Invocation) {};
+  // == Root invocations and work units ========================================
+  // Retrieves a root invocation.
+  rpc GetRootInvocation(GetRootInvocationRequest) returns (RootInvocation) {};
 
-  // Retrieve names of all root invocations for a given invocation.
-  rpc QueryRootInvocationNames(QueryRootInvocationNamesRequest) returns (QueryRootInvocationNamesResponse) {};
+  // Retrieves a work unit.
+  rpc GetWorkUnit(GetWorkUnitRequest) returns (WorkUnit) {};
+
+  // Retrieves a list of work units.
+  rpc BatchGetWorkUnits(BatchGetWorkUnitsRequest)
+      returns (BatchGetWorkUnitsResponse) {};
+
+  // Retrieves a list of work units based on a predicate.
+  rpc QueryWorkUnits(QueryWorkUnitsRequest) returns (QueryWorkUnitsResponse) {};
 
   // == Test results ===========================================================
 
@@ -81,77 +93,41 @@ service ResultDB {
   rpc QueryTestExonerations(QueryTestExonerationsRequest)
       returns (QueryTestExonerationsResponse) {};
 
-  // Retrieves the test result statistics of an invocation.
-  // Currently supports total number of test results belong to the invocation,
-  // directly and indirectly.
-  rpc QueryTestResultStatistics(QueryTestResultStatisticsRequest)
-      returns (QueryTestResultStatisticsResponse) {};
-
   // Calculate new test variants by running the difference between the tests
   // run in the given invocation against the submitted test history for the
   // source.
   rpc QueryNewTestVariants(QueryNewTestVariantsRequest)
       returns (QueryNewTestVariantsResponse) {};
 
-  // Retrieves test verdicts for a test run. A test run comprises only
-  // the test results from a single invocation and not its included
-  // invocations.
-  //
-  // Useful to incrementally ingest test results for an export root as its
-  // individual constituent invocations finalize, in conjunction with
-  // the invocations-ready-for-export pub/sub.
-  //
-  // Compared to the ListTestResults RPC, this RPC ensures all results
-  // for a test variant are returned together, which is useful when
-  // ingesting results into analyses that treat retried test results
-  // in a given test run differently to the first retry.
-  //
-  // To use, the caller must have `resultdb.testResults.list` permission
-  // on the queried invocation.
-  rpc QueryRunTestVerdicts(QueryRunTestVerdictsRequest) returns (QueryRunTestVerdictsResponse) {};
-
-  // Retrieves test verdicts from an invocation, recursively.
-  // Supports invocation inclusions.
-  // TODO(meiring): Update guidance usage to prefer QueryTestVerdicts
-  // for use cases where staleness is acceptable once we stablise that RPC.
-  rpc QueryTestVariants(QueryTestVariantsRequest) returns (QueryTestVariantsResponse) {};
-
-  // Retrieves test variants from a single invocation, matching the specified
-  // test IDs and hashes.
-  rpc BatchGetTestVariants(BatchGetTestVariantsRequest) returns (BatchGetTestVariantsResponse) {};
-
   // Retrieves test metadata from a LUCI project, matching the predicate.
-  rpc QueryTestMetadata(QueryTestMetadataRequest) returns (QueryTestMetadataResponse) {};
+  rpc QueryTestMetadata(QueryTestMetadataRequest)
+      returns (QueryTestMetadataResponse) {};
 
   // Retrieves an instruction for step or test result.
   // If the instruction contains placeholders, they will not be replaced.
-  // The callers of this RPC are responsible to populate the placeholders with real data.
+  // The callers of this RPC are responsible to populate the placeholders with
+  // real data.
   rpc GetInstruction(GetInstructionRequest) returns (Instruction) {};
 
   // Retrieves the instruction and the dependency chain for all targets.
-  // A maximum depth can be specified for the maximum number of dependency nodes to be returned.
-  // If an error occurs while traversing a chain (e.g. circular dependency, permission, not found...),
-  // the chain will stop and the rpc will return whatever it has found so far.
-  rpc QueryInstruction(QueryInstructionRequest) returns (QueryInstructionResponse) {};
+  // A maximum depth can be specified for the maximum number of dependency nodes
+  // to be returned. If an error occurs while traversing a chain (e.g. circular
+  // dependency, permission, not found...), the chain will stop and the rpc will
+  // return whatever it has found so far.
+  rpc QueryInstruction(QueryInstructionRequest)
+      returns (QueryInstructionResponse) {};
 
-  // UNSTABLE (until launched): This RPC is in development and API may change without notice.
-  //
   // Retrieves test aggregations for a single root invocation.
-  //
-  // Unlike QueryTestResults and QueryTestVariants which are guaranteed to read all test results
-  // uploaded to Recorder service up to the time of query, this RPC only guarantees eventual
-  // consistency (i.e. there may be a lag). Once an invocation is finalized, data is
-  // guaranteed to be consistent.
-  rpc QueryTestAggregations(QueryTestAggregationsRequest) returns (QueryTestAggregationsResponse) {};
+  rpc QueryTestAggregations(QueryTestAggregationsRequest)
+      returns (QueryTestAggregationsResponse) {};
 
-  // UNSTABLE (until launched): This RPC is in development and API may change without notice.
   // Retrieves test verdicts for a single root invocation.
-  //
-  // Unlike QueryTestResults and QueryTestVariants which are guaranteed to read all test results
-  // uploaded to Recorder service up to the time of query, this RPC only guarantees eventual
-  // consistency (i.e. there may be a lag). Once an invocation is finalized, data is
-  // guaranteed to be consistent.
-  rpc QueryTestVerdicts(QueryTestVerdictsRequest) returns (QueryTestVerdictsResponse) {};
+  rpc QueryTestVerdicts(QueryTestVerdictsRequest)
+      returns (QueryTestVerdictsResponse) {};
+
+  // Retrieves specified test verdicts from a given root invocation.
+  rpc BatchGetTestVerdicts(BatchGetTestVerdictsRequest)
+      returns (BatchGetTestVerdictsResponse) {};
 
   // == Artifacts =============================================================
 
@@ -175,53 +151,104 @@ service ResultDB {
   // such as severity and timestamp for each line.
   //
   // Currently supports artifacts with content types: [text/plain,]
-  rpc ListArtifactLines(ListArtifactLinesRequest) returns (ListArtifactLinesResponse) {};
+  rpc ListArtifactLines(ListArtifactLinesRequest)
+      returns (ListArtifactLinesResponse) {};
 
-  // Retrieves the line ranges in the given failure that do not usually appear
-  // in logs from passes.
+  // Retrieves the line and byte ranges in a log artifact from a failing test
+  // result that do not appear in the same artifact from recent passing results.
+  //
+  // This RPC allows clients to either get the content of these lines directly
+  // or use the returned byte ranges to fetch only the relevant portions of
+  // the artifact.
   //
   // Lines are normalized before comparison to remove numbers, dates, tmp file
   // paths, etc.
-  //
-  // Due to missed normalizations, sampling error or other reasons, this may
-  // not eliminate all lines that appear in passes.
-  rpc QueryArtifactFailureOnlyLines(QueryArtifactFailureOnlyLinesRequest) returns (QueryArtifactFailureOnlyLinesResponse) {};
+  rpc CompareArtifactLines(CompareArtifactLinesRequest)
+      returns (CompareArtifactLinesResponse) {};
 
   // == Log Search =============================================================
 
-  // Queries result level artifacts that matches a search_string. Support regex or exact match.
-  // Results are grouped by test_id, variant_hash, artifact_id.
-  // Within each group, artifacts are sorted by recency and at most 3 are returned.
-  // To obtain more matching artifacts of a particular group, uses QueryTestVariantArtifacts.
-  rpc QueryTestVariantArtifactGroups(QueryTestVariantArtifactGroupsRequest) returns (
-    QueryTestVariantArtifactGroupsResponse) {}
+  // Queries result level artifacts that matches a search_string. Support regex
+  // or exact match. Results are grouped by test_id, variant_hash, artifact_id.
+  // Within each group, artifacts are sorted by recency and at most 3 are
+  // returned. To obtain more matching artifacts of a particular group, uses
+  // QueryTestVariantArtifacts.
+  rpc QueryTestVariantArtifactGroups(QueryTestVariantArtifactGroupsRequest)
+      returns (QueryTestVariantArtifactGroupsResponse) {}
 
-  // Queries test result artifacts that match a search_string for given test_id, variant_hash and artifact_id.
-  rpc QueryTestVariantArtifacts(QueryTestVariantArtifactsRequest) returns (
-    QueryTestVariantArtifactsResponse) {}
+  // Queries test result artifacts that match a search_string for given test_id,
+  // variant_hash and artifact_id.
+  rpc QueryTestVariantArtifacts(QueryTestVariantArtifactsRequest)
+      returns (QueryTestVariantArtifactsResponse) {}
 
-  // Queries invocation level artifacts that matches a search_string. Support regex or exact match.
-  // Results are grouped by variant_union_hash, artifact_id.
-  // Within each group, artifacts are sorted by recency and at most 3 are returned.
-  // To obtain more matching artifacts of a particular group, uses QueryInvocationVariantArtifacts.
-  rpc QueryInvocationVariantArtifactGroups(QueryInvocationVariantArtifactGroupsRequest) returns (
-    QueryInvocationVariantArtifactGroupsResponse) {}
+  // Queries invocation level artifacts that matches a search_string. Support
+  // regex or exact match. Results are grouped by variant_union_hash,
+  // artifact_id. Within each group, artifacts are sorted by recency and at most
+  // 3 are returned. To obtain more matching artifacts of a particular group,
+  // uses QueryInvocationVariantArtifacts.
+  rpc QueryInvocationVariantArtifactGroups(
+      QueryInvocationVariantArtifactGroupsRequest)
+      returns (QueryInvocationVariantArtifactGroupsResponse) {}
 
-  // Queries invocation artifacts that match a search_string for given variant_union_hash and artifact_id.
-  rpc QueryInvocationVariantArtifacts(QueryInvocationVariantArtifactsRequest) returns (
-    QueryInvocationVariantArtifactsResponse) {}
+  // Queries invocation artifacts that match a search_string for given
+  // variant_union_hash and artifact_id.
+  rpc QueryInvocationVariantArtifacts(QueryInvocationVariantArtifactsRequest)
+      returns (QueryInvocationVariantArtifactsResponse) {}
+
+  // == Invocations ============================================================
+  // Retrieves an invocation.
+  //
+  // DEPRECATED: Use root invocations/work units, and GetRootInvocation/GetWorkUnit
+  // instead.
+  rpc GetInvocation(GetInvocationRequest) returns (Invocation) {};
+
+  // Retrieve names of all legacy invocation roots for a given invocation.
+  //
+  // DEPRECATED: Use root invocations. Then the root invocation of any
+  // work unit will always be known.
+  rpc QueryRootInvocationNames(QueryRootInvocationNamesRequest)
+      returns (QueryRootInvocationNamesResponse) {};
+
+  // Retrieves test verdicts for a test run. A test run comprises only
+  // the test results from a single invocation and not its included
+  // invocations.
+  //
+  // DEPRECATED: Use root invocations and the test results pub/sub instead.
+  rpc QueryRunTestVerdicts(QueryRunTestVerdictsRequest)
+      returns (QueryRunTestVerdictsResponse) {};
+
+  // Retrieves test verdicts from an invocation, recursively.
+  // Supports invocation inclusions.
+  //
+  // DEPRECATED: Use root invocations and QueryTestVerdicts instead.
+  rpc QueryTestVariants(QueryTestVariantsRequest)
+      returns (QueryTestVariantsResponse) {};
+
+  // Retrieves test variants from a single invocation, matching the specified
+  // test IDs and hashes.
+  // DEPRECATED: Use root invocations and BatchGetTestVerdicts instead.
+  rpc BatchGetTestVariants(BatchGetTestVariantsRequest)
+      returns (BatchGetTestVariantsResponse) {};
+
+  // Retrieves the test result statistics of an invocation.
+  // Currently supports total number of test results belong to the invocation,
+  // directly and indirectly.
+  //
+  // DEPRECATED: Use QueryTestAggregations instead.
+  rpc QueryTestResultStatistics(QueryTestResultStatisticsRequest)
+      returns (QueryTestResultStatisticsResponse) {};
 }
 
 // A request message for GetInvocation RPC.
 message GetInvocationRequest {
   // The name of the invocation to request, see Invocation.name.
-  string name = 1 [ (google.api.field_behavior) = REQUIRED ];
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
 // A request message for QueryRootInvocationNames RPC.
 message QueryRootInvocationNamesRequest {
   // The name of the invocation to request, see Invocation.name.
-  string name = 1 [ (google.api.field_behavior) = REQUIRED ];
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
 // A response message for QueryRootInvocationNames RPC.
@@ -235,21 +262,21 @@ message QueryRootInvocationNamesResponse {
   // the root_invocation_names will only contains the invocation in the request
   // (i.e. a invocation can be its own root).
   //
-  // root_invocation_names can be empty when no root is found (in the presence of cycles).
+  // root_invocation_names can be empty when no root is found (in the presence
+  // of cycles).
   repeated string root_invocation_names = 1;
 }
-
 
 // A request message for GetTestResult RPC.
 message GetTestResultRequest {
   // The name of the test result to request, see TestResult.name.
-  string name = 1 [ (google.api.field_behavior) = REQUIRED ];
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
 // A request message for ListTestResults RPC.
 message ListTestResultsRequest {
   // Name of the invocation, e.g. "invocations/{id}".
-  string invocation = 1 [ (google.api.field_behavior) = REQUIRED ];
+  string invocation = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The maximum number of test results to return.
   //
@@ -294,7 +321,7 @@ message GetTestExonerationRequest {
 // A request message for ListTestExonerations RPC.
 message ListTestExonerationsRequest {
   // Name of the invocation, e.g. "invocations/{id}".
-  string invocation = 1 [ (google.api.field_behavior) = REQUIRED ];
+  string invocation = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The maximum number of test exonerations to return.
   //
@@ -350,10 +377,9 @@ message QueryTestResultsRequest {
   string page_token = 5;
 
   // Fields to include in the response.
-  // If not set, the default mask is used where summary_html, properties and tags are
-  // excluded.
-  // Test result names will always be included even if "name" is not a part of
-  // the mask.
+  // If not set, the default mask is used where summary_html, properties and
+  // tags are excluded. Test result names will always be included even if "name"
+  // is not a part of the mask.
   google.protobuf.FieldMask read_mask = 6;
 }
 
@@ -379,7 +405,7 @@ message QueryTestExonerationsRequest {
 
   // A test exoneration in the response must satisfy this predicate.
   TestExonerationPredicate predicate = 2
-      [ (google.api.field_behavior) = REQUIRED ];
+      [(google.api.field_behavior) = REQUIRED];
 
   // The maximum number of test exonerations to return.
   //
@@ -427,14 +453,15 @@ message QueryTestResultStatisticsResponse {
 // A request message for GetArtifact RPC.
 message GetArtifactRequest {
   // The name of the artifact to request, see Artifact.name.
-  string name = 1 [ (google.api.field_behavior) = REQUIRED ];
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
 // A request message for ListArtifacts RPC.
 message ListArtifactsRequest {
-  // Name of the parent, e.g. an invocation (see Invocation.name) or
-  // a test result (see TestResult.name).
-  string parent = 1 [ (google.api.field_behavior) = REQUIRED ];
+  // Name of the parent, e.g. a work unit (see WorkUnit.name),
+  // a test result (see TestResult.name), or a legacy invocation name
+  // (see Invocation.name).
+  string parent = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The maximum number of artifacts to return.
   //
@@ -449,6 +476,13 @@ message ListArtifactsRequest {
   // When paginating, all other parameters provided to `ListArtifacts` MUST
   // match the call that provided the page token.
   string page_token = 3;
+
+  // Fields to include in the response.
+  // If not set, the default mask is used where all fields are included.
+  //
+  // In particular, the fetch_url field can slow down the request or in some cases introduce
+  // quota errors, so it is encouraged to not read the fetch_url field unless necessary.
+  google.protobuf.FieldMask read_mask = 4;
 }
 
 // A response message for ListArtifacts RPC.
@@ -459,18 +493,29 @@ message ListArtifactsResponse {
   // A token, which can be sent as `page_token` to retrieve the next page.
   // If this field is omitted, there were no subsequent pages at the time of
   // request.
-  // If the invocation is not finalized, more results may appear later.
+  // If the work unit is not finalized, more results may appear later.
   string next_page_token = 2;
 }
 
 // A request message for QueryArtifacts RPC.
+// Next ID: 8
 message QueryArtifactsRequest {
   // Retrieve artifacts included in these invocations, directly or indirectly
   // (via Invocation.included_invocations and via contained test results).
   //
   // Specifying multiple invocations is equivalent to querying one invocation
   // that includes these.
+  //
+  // DEPRECATED: Use parent instead.
   repeated string invocations = 1;
+
+  // The name of the root invocation to retrieve artifacts from, see RootInvocation.name.
+  //
+  // If set, the RPC will query artifacts of work units and test results recursively
+  // under this root invocation.
+  //
+  // Either `parent` or `invocations` must be specified, not both.
+  string parent = 8;
 
   // An artifact in the response must satisfy this predicate.
   ArtifactPredicate predicate = 2;
@@ -488,6 +533,14 @@ message QueryArtifactsRequest {
   // When paginating, all other parameters provided to `QueryArtifacts` MUST
   // match the call that provided the page token.
   string page_token = 5;
+
+  // Fields to include in the response.
+  // If not set, the default mask is used where all fields are included.
+  //
+  // In particular, the fetch_url field can slow down the request or in some
+  // cases introduce quota errors, so it is encouraged to not read the fetch_url
+  // field unless necessary.
+  google.protobuf.FieldMask read_mask = 6;
 }
 
 // A response message for QueryArtifacts RPC.
@@ -525,75 +578,122 @@ message ListArtifactLinesRequest {
 
 // A response for ListArtifactLines RPC
 message ListArtifactLinesResponse {
-
   // The log lines in the artifact.
   repeated ArtifactLine lines = 1;
 }
+// A request for the CompareArtifactLines RPC.
+message CompareArtifactLinesRequest {
+  // An enumeration of the different representations of the response.
+  enum View {
+    // The server will default to the RANGES_ONLY view.
+    VIEW_UNSPECIFIED = 0;
 
-// A request for the QueryArtifactFailureOnlyLines RPC.
-message QueryArtifactFailureOnlyLinesRequest {
-  // Retrieve log lines for this artifact.
-  // Invocation level artifacts are not yet supported.
-  // Format:
-  // - For test-result-level artifacts:
-  //   "invocations/{INVOCATION_ID}/tests/{URL_ESCAPED_TEST_ID}/results/{RESULT_ID}/artifacts/{ARTIFACT_ID}".
-  string parent = 1;
+    // Includes only the line and byte ranges, without the line content.
+    // This is the most efficient view if you only need the locations
+    // of the failure-only lines.
+    RANGES_ONLY = 1;
 
-  // If set to true, the content of the log lines will be returned in the
-  // response.  If left missing or false, only the line range indexes will
-  // be returned.
-  bool include_content = 2;
+    // Includes the full content of the failure-only lines in addition to
+    // the line and byte ranges.
+    RANGES_WITH_CONTENT = 2;
+  }
 
-  // The maximum number of line ranges to return.
+  // Required. The name of the artifact from a failing test result to be
+  // analyzed. Format:
+  // "invocations/{INVOCATION_ID}/tests/{URL_ESCAPED_TEST_ID}/results/{RESULT_ID}/artifacts/{ARTIFACT_ID}".
   //
+  // Note that this is typically used for a failing test artifact, but
+  // this is not a requirement, any artifact can be used here.  The
+  // failing vs comparison names are used to improve the readability
+  // of the documentation only.
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Required exactly one of `passing_results` or`artifacts` must be specified (not both).
+  // A list of names of passing test results to compare against.
+  // These should be for the same test_id and variant_hash as the failing
+  // result. The names are in the ResultDB test result name format, as returned
+  // by the TestHistory.QueryRecentPasses RPC.
+  repeated string passing_results = 2;
+
+  // Required exactly one of `passing_results` or`artifacts` must be specified (not both).
+  // A list of artifact names to compare against.
+  repeated string artifacts = 6;
+
+  // Optional. The view to control which fields are returned in the response.
+  View view = 3;
+
+  // Optional. The maximum number of failure-only ranges to return.
   // The service may return fewer than this value.
-  // If unspecified, at most 1000 line ranges will be returned.
+  // If unspecified, at most 1000 ranges will be returned.
   // The maximum value is 10,000; values above 10,000 will be coerced to 10,000.
   int32 page_size = 4;
 
-  // A page token, received from a previous `QueryArtifactFailureOnlyLines` call.
-  // Provide this to retrieve the subsequent page.
-  //
-  // When paginating, all other parameters provided to `QueryArtifactFailureOnlyLines` MUST
-  // match the call that provided the page token.
+  // Optional. A page token, received from a previous `CompareArtifactLines`
+  // call. Provide this to retrieve the subsequent page. When paginating, all
+  // other parameters provided to `CompareArtifactLines` MUST match the call
+  // that provided the page token.
   string page_token = 5;
 }
 
-// A response for the QueryArtifactFailureOnlyLines RPC.
-message QueryArtifactFailureOnlyLinesResponse {
-  // A representation of a range of lines in an artifact, where lines are
-  // represented by their index.  The first line is line 0.
-  message LineRange {
-    // The line index of the start of the line range.  The start is inclusive,
-    // i.e. the start line is included in the range.
-    int32 start = 1;
-    // The line index of the end of the line range.  The end is exclusive, i.e.
-    // the end line is not included in the range.
-    int32 end = 2;
+// A response for the CompareArtifactLines RPC.
+message CompareArtifactLinesResponse {
+  // Represents a contiguous range of lines and bytes in an artifact that
+  // are unique to the failing log.
+  message FailureOnlyRange {
+    // The zero-based index of the first line in this range, inclusive.
+    int32 start_line = 1;
+
+    // The zero-based index of the line after the last line in this
+    // range, exclusive.
+    int32 end_line = 2;
+
+    // The zero-based byte offset of the start of this range, inclusive.
+    int64 start_byte = 3;
+
+    // The zero-based byte offset of the end of this range, exclusive.
+    int64 end_byte = 4;
+
     // The content of the lines in the range.
-    // Only included if include_content in the request is set to true.
-    repeated string lines = 3;
+    // Only populated if the request's `view` was set to RANGES_WITH_CONTENT.
+    repeated string lines = 5;
   }
 
-  // Line ranges [start, end) in the requested artifact that do not typically
-  // appear versions of the artifact from passing test results.
-  // Line ranges are returned in sorted ascending order.
-  repeated LineRange failure_only_line_ranges = 1;
+  // Contiguous ranges in the requested artifact that do not appear in the
+  // corresponding artifacts from the provided passing test results or comparison
+  // artifacts. The ranges are sorted in ascending order by their starting position.
+  repeated FailureOnlyRange failure_only_ranges = 1;
 
   // A token, which can be sent as `page_token` to retrieve the next page.
   // If this field is omitted, there were no subsequent pages at the time of
   // request.
   string next_page_token = 2;
+
+  // DEPRECATED: Use `artifacts` instead.  This field is now empty, but left
+  //present temporarily for code compatibility.
+  repeated string used_passing_artifacts = 3 [deprecated = true];
+
+  // The names of the artifacts that were used for the comparison (either from
+  // passing results or from the artifacts field).
+  // There may be fewer than the artifacts/passing_results from the request if
+  // the caller did not have permission to some artifacts, or some results did
+  // not contain a corresponding artifact.
+  // Note that if this field is empty then no comparison was performed.
+  repeated string artifacts = 4;
 }
 
 // A request message for QueryTestVariants RPC.
-// Next id: 10.
+// Next id: 12.
 message QueryTestVariantsRequest {
-  // Retrieve test verdicts included in these invocations, directly or indirectly
-  // (via Invocation.included_invocations).
+  // The name of the root invocation to retrieve test variants from, see
+  // RootInvocation.name. Should be empty if invocations field is specified.
+  string parent = 11 [(google.api.field_behavior) = REQUIRED];
+
+  // Retrieve test verdicts included in these invocations, directly or
+  // indirectly (via Invocation.included_invocations).
   //
   // As of April 2024, a maximum of one invocation may be specified.
-  repeated string invocations = 2;
+  // DEPRECATED: Use parent instead.
+  repeated string invocations = 2 [deprecated = true];
 
   // A test variant must satisfy this predicate.
   TestVariantPredicate predicate = 6;
@@ -641,15 +741,42 @@ message QueryTestVariantsRequest {
   //
   // See https://google.aip.dev/132 for syntax.
   //
-  // For performance reasons, only two sort orders are supported:
-  // - verdict status v1 ascending (order is UNEXPECTED, UNEXPECTEDLY_SKIPPED,
-  //   FLAKY, EXONERATED, EXPECTED).
-  //   This is the default. It can be explicitly requested by "status" or "status asc".
-  // - effective verdict status v2 ascending (by verdict status v2 including any status overrides,
-  //   order is FAILED, EXECUTION_ERRORED, PRECLUDED, FLAKY, EXONERATED, SKIPPED & PASSED).
-  //   It can be requested by "status_v2_effective" or "status_v2_effective asc"
-  //   where status_v2_effective is a virtual field representing the above sort order.
+  // The only supported sort order is "status_v2_effective", which is also the
+  // default. It sorts by verdict status v2 including any status overrides,
+  // ordering results by FAILED, EXECUTION_ERRORED, PRECLUDED, FLAKY, EXONERATED,
+  // (SKIPPED & PASSED).
   string order_by = 9;
+
+  // An AIP-160 style filter to select test variants to return.
+  //
+  // Filtering supports a subset of [AIP-160
+  // filtering](https://google.aip.dev/160).
+  //
+  // All values are case-sensitive.
+  //
+  // A bare value is searched for in the column test_id. E.g. ninja.
+  //
+  // You can use AND, OR and NOT (case sensitive) logical operators, along
+  // with grouping. '-' is equivalent to NOT. Multiple bare values are
+  // considered to be AND separated.  E.g. These are equivalent:
+  // hello world
+  // and:
+  // hello AND world
+  //
+  // More examples:
+  // a OR b
+  // a AND NOT(b or -c)
+  //
+  // You can filter particular columns with '=', '!=' and ':' (has) operators.
+  // The right hand side of the operator must be a simple value. E.g:
+  // test_id:telemetry
+  // -variant.os:mac
+  //
+  // Supported columns to search on:
+  // - test_id
+  // - variant_hash
+  // - variant
+  string filter = 10;
 }
 
 // A response message for QueryTestVariants RPC.
@@ -663,13 +790,15 @@ message QueryTestVariantsResponse {
   // request.
   string next_page_token = 2;
 
-  // The code sources tested by the returned test variants. The sources are keyed
-  // by an ID which allows them to be cross-referenced from TestVariant.sources_id.
+  // The code sources tested by the returned test variants. The sources are
+  // keyed by an ID which allows them to be cross-referenced from
+  // TestVariant.sources_id.
   //
-  // The sources are returned via this map instead of directly on the TestVariant
-  // to avoid excessive response size. Each source message could be up to a few
-  // kilobytes and there are usually no more than a handful of different sources
-  // tested in an invocation, so deduplicating them here reduces response size.
+  // The sources are returned via this map instead of directly on the
+  // TestVariant to avoid excessive response size. Each source message could be
+  // up to a few kilobytes and there are usually no more than a handful of
+  // different sources tested in an invocation, so deduplicating them here
+  // reduces response size.
   map<string, Sources> sources = 3;
 }
 
@@ -720,6 +849,7 @@ message QueryRunTestVerdictsResponse {
 }
 
 // A request message for BatchGetTestVariants RPC.
+// Next ID: 5.
 message BatchGetTestVariantsRequest {
   message TestVariantIdentifier {
     // Option 1: Structured test identifier.
@@ -734,15 +864,20 @@ message BatchGetTestVariantsRequest {
 
     // The unique identifier of the test in a LUCI project. See the comment on
     // TestResult.test_id for full documentation.
-    string test_id = 1 [ (google.api.field_behavior) = REQUIRED ];
+    string test_id = 1 [(google.api.field_behavior) = REQUIRED];
 
     // Hash of the variant. See the comment on TestResult.variant_hash for full
     // documentation.
-    string variant_hash = 2 [ (google.api.field_behavior) = REQUIRED ];
+    string variant_hash = 2 [(google.api.field_behavior) = REQUIRED];
   }
 
+  // Name of the root invocation that the test variants are in, see
+  // RootInvocation.name. Should be empty if invocation is specified.
+  string parent = 4 [(google.api.field_behavior) = REQUIRED];
+
   // Name of the invocation that the test variants are in.
-  string invocation = 1;
+  // DEPRECATED: Use parent instead.
+  string invocation = 1 [deprecated = true];
 
   // A list of test variants to query. Size is limited to 500.
   // Any request for more than 500 variants will return an error.
@@ -764,14 +899,71 @@ message BatchGetTestVariantsResponse {
   // field, as no particular order is guaranteed.
   repeated TestVariant test_variants = 1;
 
-  // The code sources tested by the returned test variants. The sources are keyed
-  // by an ID which allows them to be cross-referenced from TestVariant.sources_id.
+  // The code sources tested by the returned test variants. The sources are
+  // keyed by an ID which allows them to be cross-referenced from
+  // TestVariant.sources_id.
   //
-  // The sources are returned via this map instead of directly on the TestVariant
-  // to avoid excessive response size. Each source message could be up to a few
-  // kilobytes and there are usually no more than a handful of different sources
-  // tested in an invocation, so deduplicating them here reduces response size.
+  // The sources are returned via this map instead of directly on the
+  // TestVariant to avoid excessive response size. Each source message could be
+  // up to a few kilobytes and there are usually no more than a handful of
+  // different sources tested in an invocation, so deduplicating them here
+  // reduces response size.
   map<string, Sources> sources = 2;
+}
+
+// A request message for BatchGetTestVerdicts RPC.
+//
+// This RPC retrieves verdicts corresponding to a specified list
+// of tests.
+message BatchGetTestVerdictsRequest {
+  // Name of the root invocation that the test variants are in, see
+  // RootInvocation.name.
+  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // NominatedTest represents a test to query the verdict for.
+  // Either test_id_structured or test_id_flat should be specified.
+  message NominatedTest {
+    oneof test {
+      // Option 1: Structured test identifier.
+      //
+      // See the comment on TestResult.test_id_structured for full documentation.
+      TestIdentifier test_id_structured = 1;
+
+      // Option 2: Flat test identifier.
+      FlatTestIdentifier test_id_flat = 2;
+    }
+  }
+
+  // A list of tests to query.
+  //
+  // Size is limited to 500 for TEST_VERDICT_VIEW_BASIC and 50 for
+  // TEST_VERDICT_VIEW_FULL. Any request for more than this number of tests
+  // will return an error.
+  //
+  // This list may contain duplicates. (If so, the response will contain
+  // duplicates.)
+  repeated NominatedTest tests = 2;
+
+  // The set of test verdict fields to return.
+  // The default is TEST_VERDICT_VIEW_BASIC.
+  TestVerdictView view = 3;
+}
+
+// A response message for BatchGetTestVerdicts RPC.
+message BatchGetTestVerdictsResponse {
+  // Test verdicts matching the requests.
+  //
+  // Verdicts in this list correspond 1:1 with those in the request,
+  // i.e. test_variants[i] in the request will correspond to test_verdicts[i]
+  // in the response.
+  //
+  // In the event that no results exist for one of the tests requested, an
+  // empty TestVerdict will be returned in its place with only the test information
+  // specified in the request and the status STATUS_UNSPECIFIED.
+  //
+  // Each verdict has its test results and exonerations truncated to a total
+  // size of 2 MB or 500 test results, whichever is less.
+  repeated TestVerdict test_verdicts = 1;
 }
 
 // A request message for QueryTestMetadata RPC.
@@ -816,19 +1008,18 @@ message QueryTestMetadataResponse {
 //   queried.
 message QueryNewTestVariantsRequest {
   // Name of the invocation, e.g. "invocations/{id}".
-  string invocation = 1 [ (google.api.field_behavior) = REQUIRED ];
+  string invocation = 1 [(google.api.field_behavior) = REQUIRED];
 
-  // The baseline to compare test variants against, to determine if they are new.
-  // e.g. “projects/{project}/baselines/{baseline_id}”.
-  // For example, in the project "chromium", the baseline_id may be
-  // "try:linux-rel".
-  string baseline = 2 [ (google.api.field_behavior) = REQUIRED ];
+  // The baseline to compare test variants against, to determine if they are
+  // new. e.g. “projects/{project}/baselines/{baseline_id}”. For example, in the
+  // project "chromium", the baseline_id may be "try:linux-rel".
+  string baseline = 2 [(google.api.field_behavior) = REQUIRED];
 }
 
 // A response message for QueryNewTestVariants RPC.
 message QueryNewTestVariantsResponse {
-
-  // Represents a new test, which contains minimal information to uniquely identify a TestVariant.
+  // Represents a new test, which contains minimal information to uniquely
+  // identify a TestVariant.
   message NewTestVariant {
     // A unique identifier of the test in a LUCI project.
     // Regex: ^[[::print::]]{1,256}$
@@ -844,7 +1035,6 @@ message QueryNewTestVariantsResponse {
   // Indicates whether the baseline has been populated with at least 72 hours
   // of data and the results can be relied upon.
   bool is_baseline_ready = 1;
-
 
   // Test variants that are new, meaning that they have not been part of
   // a submitted run prior.
@@ -864,8 +1054,8 @@ message QueryInstructionRequest {
   string name = 1;
 
   // The maximum depth to traverse the dependency chain. Default is 5.
-  // The maximum value we support is 10, value bigger than 10 will be adjusted to 10.
-  // Non-positive value will be adjusted to the default.
+  // The maximum value we support is 10, value bigger than 10 will be adjusted
+  // to 10. Non-positive value will be adjusted to the default.
   int32 dependency_max_depth = 2;
 }
 
@@ -895,14 +1085,15 @@ message InstructionDependencyChain {
     // The caller of this RPC is responsible for resolving the placeholders.
     string content = 2;
 
-    // In case the traversal encounters an error, the error will be returned in this field.
-    // If an error is returned, it will only be returned in the last dependency node,
-    // after that, the chain will stop.
+    // In case the traversal encounters an error, the error will be returned in
+    // this field. If an error is returned, it will only be returned in the last
+    // dependency node, after that, the chain will stop.
     string error = 3;
 
     // The descriptive name of the instruction that the dependency belongs to.
     // In the following cases, the descriptive name will not be set:
-    // - If the user does not have the permission to access the instruction for the node, or
+    // - If the user does not have the permission to access the instruction for
+    // the node, or
     // - If the instruction cannot be found.
     string descriptive_name = 4;
   }
@@ -910,7 +1101,8 @@ message InstructionDependencyChain {
   // List of dependencies.
   // The list will be sorted by the position in the dependency chain.
   // The direct dependency will be at position 0.
-  // If the dependency traversing encounters an error, the last node will contain the error.
+  // If the dependency traversing encounters an error, the last node will
+  // contain the error.
   repeated Node nodes = 2;
 }
 
@@ -928,26 +1120,27 @@ message QueryTestVariantArtifactGroupsRequest {
   // The artifact id matcher to restrict the scope of the search (optional).
   IDMatcher artifact_id_matcher = 4;
 
-  // The lower bound of the time range to search in UTC time (exclusive) (required).
-  // start_time must not be before 20 July 2024 UTC.
-  // start_time must be less than the end time.
-  // The duration between start_time and end_time must not be greater than 7 days.
+  // The lower bound of the time range to search in UTC time (exclusive)
+  // (required). start_time must not be before 20 July 2024 UTC. start_time must
+  // be less than the end time. The duration between start_time and end_time
+  // must not be greater than 7 days.
   google.protobuf.Timestamp start_time = 5;
 
-  // The upper bound of the time range to search in UTC time (inclusive) (required).
+  // The upper bound of the time range to search in UTC time (inclusive)
+  // (required).
   google.protobuf.Timestamp end_time = 6;
 
-  // The maximum number of match groups to return. The service may return fewer than
-  // this value.
-  // If unspecified, at most 100 items will be returned.
-  // The maximum value is 100; values above 100 will be coerced to 100.
+  // The maximum number of match groups to return. The service may return fewer
+  // than this value. If unspecified, at most 100 items will be returned. The
+  // maximum value is 100; values above 100 will be coerced to 100.
   int32 page_size = 7;
 
-  // A page token, received from a previous `QueryTestVariantArtifactGroups` call.
-  // Provide this to retrieve the subsequent page.
+  // A page token, received from a previous `QueryTestVariantArtifactGroups`
+  // call. Provide this to retrieve the subsequent page.
   //
-  // When paginating, all other parameters provided to `QueryTestVariantArtifactGroups` must
-  // match the call that provided the page token.
+  // When paginating, all other parameters provided to
+  // `QueryTestVariantArtifactGroups` must match the call that provided the page
+  // token.
   string page_token = 8;
 }
 
@@ -969,17 +1162,20 @@ message QueryTestVariantArtifactGroupsResponse {
     // ID of the artifact.
     string artifact_id = 4;
 
-    // Artifacts that matches the search for this (test id, variant_hash, artifact id) combination.
-    // Return at most 3 items, ordered by partition time DESC, artifact name ASC.
+    // Artifacts that matches the search for this (test id, variant_hash,
+    // artifact id) combination. Return at most 3 items, ordered by partition
+    // time DESC, artifact name ASC.
     repeated ArtifactMatchingContent artifacts = 5;
 
-    // The total number of matching artifacts for this (test id, variant_hash, artifact id) combination.
+    // The total number of matching artifacts for this (test id, variant_hash,
+    // artifact id) combination.
     int32 matching_count = 6;
   }
 
-  // Test variant artifacts are grouped by test_id, variant_hash and artifact_id.
-  // Groups are ordered by partition_time of the most recent artifact DESC in the group, test id, variant hash, artifact id.
-  repeated MatchGroup groups  = 1;
+  // Test variant artifacts are grouped by test_id, variant_hash and
+  // artifact_id. Groups are ordered by partition_time of the most recent
+  // artifact DESC in the group, test id, variant hash, artifact id.
+  repeated MatchGroup groups = 1;
 
   // A token, which can be sent as `page_token` to retrieve the next page.
   // If this field is omitted, there are no subsequent pages.
@@ -988,7 +1184,7 @@ message QueryTestVariantArtifactGroupsResponse {
 
 message QueryTestVariantArtifactsRequest {
   // The LUCI project (required).
-  string project =1;
+  string project = 1;
 
   // The search string to search in text artifact content (required).
   // Support regex or exact match.
@@ -1003,13 +1199,14 @@ message QueryTestVariantArtifactsRequest {
   // The artifact id (required).
   string artifact_id = 5;
 
-  // The lower bound of the time range to search in UTC time (exclusive) (required).
-  // start_time must not be before 20 July 2024 UTC.
-  // start_time must be less than the end time.
-  // The duration between start_time and end_time must not be greater than 7 days.
+  // The lower bound of the time range to search in UTC time (exclusive)
+  // (required). start_time must not be before 20 July 2024 UTC. start_time must
+  // be less than the end time. The duration between start_time and end_time
+  // must not be greater than 7 days.
   google.protobuf.Timestamp start_time = 6;
 
-  // The upper bound of the time range to search in UTC time (inclusive) (required).
+  // The upper bound of the time range to search in UTC time (inclusive)
+  // (required).
   google.protobuf.Timestamp end_time = 7;
 
   // The maximum number of items to return. The service may return fewer than
@@ -1021,8 +1218,9 @@ message QueryTestVariantArtifactsRequest {
   // A page token, received from a previous `QueryTestVariantArtifacts` call.
   // Provide this to retrieve the subsequent page.
   //
-  // When paginating, all other parameters provided to `QueryTestVariantArtifacts` must
-  // match the call that provided the page token.
+  // When paginating, all other parameters provided to
+  // `QueryTestVariantArtifacts` must match the call that provided the page
+  // token.
   string page_token = 9;
 }
 
@@ -1047,26 +1245,28 @@ message QueryInvocationVariantArtifactGroupsRequest {
   // The artifact id matcher to restrict the scope of the search (optional).
   IDMatcher artifact_id_matcher = 3;
 
-  // The lower bound of the time range to search in UTC time (exclusive) (required).
-  // start_time must not be before 20 July 2024 UTC.
-  // start_time must be less than the end time.
-  // The duration between start_time and end_time must not be greater than 7 days.
+  // The lower bound of the time range to search in UTC time (exclusive)
+  // (required). start_time must not be before 20 July 2024 UTC. start_time must
+  // be less than the end time. The duration between start_time and end_time
+  // must not be greater than 7 days.
   google.protobuf.Timestamp start_time = 4;
 
-  // The upper bound of the time range to search in UTC time (inclusive) (required).
+  // The upper bound of the time range to search in UTC time (inclusive)
+  // (required).
   google.protobuf.Timestamp end_time = 5;
 
-  // The maximum number of match groups to return. The service may return fewer than
-  // this value.
-  // If unspecified, at most 100 items will be returned.
-  // The maximum value is 100; values above 100 will be coerced to 100.
+  // The maximum number of match groups to return. The service may return fewer
+  // than this value. If unspecified, at most 100 items will be returned. The
+  // maximum value is 100; values above 100 will be coerced to 100.
   int32 page_size = 6;
 
-  // A page token, received from a previous `QueryInvocationVariantArtifactGroups` call.
-  // Provide this to retrieve the subsequent page.
+  // A page token, received from a previous
+  // `QueryInvocationVariantArtifactGroups` call. Provide this to retrieve the
+  // subsequent page.
   //
-  // When paginating, all other parameters provided to `QueryInvocationVariantArtifactGroups` must
-  // match the call that provided the page token.
+  // When paginating, all other parameters provided to
+  // `QueryInvocationVariantArtifactGroups` must match the call that provided
+  // the page token.
   string page_token = 7;
 }
 
@@ -1074,27 +1274,31 @@ message QueryInvocationVariantArtifactGroupsResponse {
   // Represents one group of matched artifacts.
   // variant_union_hash and artifact_id form the group key.
   message MatchGroup {
-    // Hash of the union of all variants of test results directly included by the invocation.
+    // Hash of the union of all variants of test results directly included by
+    // the invocation.
     string variant_union_hash = 1;
 
-    // Union of all variants of test results directly included by the invocation.
-    // Roughly defines a specific way to run an invocation.
+    // Union of all variants of test results directly included by the
+    // invocation. Roughly defines a specific way to run an invocation.
     Variant variant_union = 2;
 
     // ID of the artifact.
     string artifact_id = 3;
 
-    // Artifacts that matches the search for this (variant_union_hash, artifact id) combination.
-    // Return at most 3 items, ordered by partition time DESC, artifact name ASC.
+    // Artifacts that matches the search for this (variant_union_hash, artifact
+    // id) combination. Return at most 3 items, ordered by partition time DESC,
+    // artifact name ASC.
     repeated ArtifactMatchingContent artifacts = 4;
 
-    // The total number of matching artifacts for this (variant_union_hash, artifact id) combination.
+    // The total number of matching artifacts for this (variant_union_hash,
+    // artifact id) combination.
     int32 matching_count = 5;
   }
 
-  // Invocation variant artifacts  are grouped by variant_union_hash and artifact_id.
-  // Ordered by partition_time of the most recent artifact DESC in the group, variant_union_hash, artifact id.
-  repeated MatchGroup groups  = 1;
+  // Invocation variant artifacts  are grouped by variant_union_hash and
+  // artifact_id. Ordered by partition_time of the most recent artifact DESC in
+  // the group, variant_union_hash, artifact id.
+  repeated MatchGroup groups = 1;
 
   // A token, which can be sent as `page_token` to retrieve the next page.
   // If this field is omitted, there are no subsequent pages.
@@ -1109,19 +1313,21 @@ message QueryInvocationVariantArtifactsRequest {
   // Support regex or exact match.
   ArtifactContentMatcher search_string = 2;
 
-  // Hash of the union of all variants of test results directly included by the invocation (required).
+  // Hash of the union of all variants of test results directly included by the
+  // invocation (required).
   string variant_union_hash = 3;
 
   // The artifact id (required).
   string artifact_id = 4;
 
-  // The lower bound of the time range to search in UTC time (exclusive) (required).
-  // start_time must not be before 20 July 2024 UTC.
-  // start_time must be less than the end time.
-  // The duration between start_time and end_time must not be greater than 7 days.
+  // The lower bound of the time range to search in UTC time (exclusive)
+  // (required). start_time must not be before 20 July 2024 UTC. start_time must
+  // be less than the end time. The duration between start_time and end_time
+  // must not be greater than 7 days.
   google.protobuf.Timestamp start_time = 5;
 
-  // The upper bound of the time range to search in UTC time (inclusive) (required).
+  // The upper bound of the time range to search in UTC time (inclusive)
+  // (required).
   google.protobuf.Timestamp end_time = 6;
 
   // The maximum number of items to return. The service may return fewer than
@@ -1130,11 +1336,12 @@ message QueryInvocationVariantArtifactsRequest {
   // The maximum value is 100; values above 100 will be coerced to 100.
   int32 page_size = 7;
 
-  // A page token, received from a previous `QueryInvocationVariantArtifacts` call.
-  // Provide this to retrieve the subsequent page.
+  // A page token, received from a previous `QueryInvocationVariantArtifacts`
+  // call. Provide this to retrieve the subsequent page.
   //
-  // When paginating, all other parameters provided to `QueryInvocationVariantArtifacts` must
-  // match the call that provided the page token.
+  // When paginating, all other parameters provided to
+  // `QueryInvocationVariantArtifacts` must match the call that provided the
+  // page token.
   string page_token = 8;
 }
 
@@ -1163,17 +1370,18 @@ message ArtifactMatchingContent {
 
   // The test result status, only populated if it is a result level artifact.
   // Deprecated: Use test_status_v2 instead.
-  TestStatus test_status = 3 [ deprecated = true ];
+  TestStatus test_status = 3 [deprecated = true];
 
-  // The test result status (v2), only populated if it is a result level artifact.
+  // The test result status (v2), only populated if it is a result level
+  // artifact.
   TestResult.Status test_status_v2 = 6;
 
-  // Part of the artifact content that contains the first occurrence of the match.
-  // The snippet is at most 10 KiB.
-  // Prioritize fiting first match into the 10KiB first, divided the remaining bytes equally
-  // to fit content immediately before and after the first match, including at most one more line above and below.
-  // If the first match is more than 10KiB, it will be truncated.
-  // Ellipsis ("...") are added, if the snippet is truncated.
+  // Part of the artifact content that contains the first occurrence of the
+  // match. The snippet is at most 10 KiB. Prioritize fiting first match into
+  // the 10KiB first, divided the remaining bytes equally to fit content
+  // immediately before and after the first match, including at most one more
+  // line above and below. If the first match is more than 10KiB, it will be
+  // truncated. Ellipsis ("...") are added, if the snippet is truncated.
   string snippet = 4;
 
   // Represent the byte location of a match in snippet.
@@ -1184,17 +1392,20 @@ message ArtifactMatchingContent {
     int32 end_index = 2;
   }
 
-  // All non-overlapping matches exists in the snippet from front to end in order (i.e. matches[i].end_index <= matches[i+1].start_index).
+  // All non-overlapping matches exists in the snippet from front to end in
+  // order (i.e. matches[i].end_index <= matches[i+1].start_index).
   repeated Match matches = 5;
 }
 
 // Used to match a artifact content.
 message ArtifactContentMatcher {
   oneof matcher {
-    // The string is a regex expression. Use regex match to find matching artifact content.
+    // The string is a regex expression. Use regex match to find matching
+    // artifact content.
     string regex_contain = 1;
 
-    // Use case insensitive equality match with this string to find matching artifact content.
+    // Use case insensitive equality match with this string to find matching
+    // artifact content.
     string contain = 2;
   }
 }
@@ -1213,45 +1424,43 @@ message IDMatcher {
 // A request message for QueryTestAggregations RPC.
 // Next ID: 6.
 message QueryTestAggregationsRequest {
-  // The root invocation to retrieve aggregates for.
-  // Format: invocations/{INVOCATION_ID}.
-  // N.B. Specifying an invocation that is not an export root will yield an
-  // INVALID_ARGUMENT error.
-  string invocation = 1 [ (google.api.field_behavior) = REQUIRED ];
+  // The name of the root invocation to retrieve test variants from, see RootInvocation.name.
+  string parent = 1 [ (google.api.field_behavior) = REQUIRED ];
 
-  // The level of aggregate to return.
-  // All values except CASE are supported. For CASE-level aggregations,
-  // see QueryTestVerdicts instead.
-  AggregationLevel aggregation_level = 2;
+  // The predicate to filter test aggregations.
+  TestAggregationPredicate predicate = 2;
 
-  // The test prefix for which to return aggregates.
+  // The order to sort test aggregations by.
   //
-  // The test prefix must not be more precise than the requested aggregation_level.
-  // For example, if the requested aggregation_level is COARSE, you may not
-  // use a test_id_prefix with an aggregation_level of FINE.
+  // Refer to https://google.aip.dev/132#ordering for syntax.
   //
-  // Example #1: To obtain coarse-level aggregates in a module:
-  // - set the requested aggregation_level to COARSE.
-  // - set the test_prefix_filter.aggregation_level to MODULE, and
-  // - test_prefix_filter.id to the Test ID prefix of that module.
+  // For performance reasons, the only allowed sort orders are:
+  // - `id.level, id.id` (default)
+  // - `id.level, ui_priority desc, id.id`
   //
-  // Example #2: To obtain the invocation-level aggregate:
-  // - set the requested aggregation_level to INVOCATION.
-  // - leave the test_prefix_filter unset, or set it to
-  //   test_id_prefix.aggregation_level to INVOCATION.
-  TestIdentifierPrefix test_prefix_filter = 3;
+  // Where
+  // - `id.id` sorts by the lexicographical order of the test identifier prefix,
+  //   i.e. (module_name, module_scheme, module_variant, coarse_name, fine_name).
+  // - `ui_priority` is an opaque priority heuristic designed for LUCI UI use only and
+  //   is subject to change.
+  //
+  // For queries that filter to one level of aggregations, the `id.level` is
+  // implicit and can be omitted.
+  string order_by = 3;
 
   // The maximum number of items to return. The service may return fewer than
-  // this value.
-  // If unspecified, at most 1000 items will be returned.
-  // The maximum value is 10000; values above 10000 will be coerced to 10000.
+  // this value (including zero items), even if not at the end of the collection.
+  //
+  // If unspecified, at most 1_000 items will be returned.
+  // The maximum value is 10_000; values above 10_000 will be coerced to 10_000.
   int32 page_size = 4;
 
   // A page token, received from a previous `QueryTestAggregations` call.
   // Provide this to retrieve the subsequent page.
   //
-  // When paginating, all other parameters provided to `QueryTestAggregationsRequest` must
-  // match the call that provided the page token.
+  // When paginating, all other parameters provided to
+  // `QueryTestAggregationsRequest` must match the call that provided the page
+  // token.
   string page_token = 5;
 }
 
@@ -1259,8 +1468,9 @@ message QueryTestAggregationsRequest {
 // Next ID: 3.
 message QueryTestAggregationsResponse {
   // The test aggregations.
-  // Results are sorted by structured test identifier, lexicographically over the tuple
-  // (module_name, module_variant_hash, module_scheme, coarse_name, fine_name, case_name).
+  // Results are sorted by structured test identifier, lexicographically over
+  // the tuple (module_name, module_variant_hash, module_scheme, coarse_name,
+  // fine_name, case_name).
   //
   // Note: When querying invocations that are not yet finalized, aggregations
   // may be incomplete.
@@ -1272,47 +1482,67 @@ message QueryTestAggregationsResponse {
 }
 
 // A request message for QueryTestVerdicts RPC.
-// Next ID: 5.
+// Next ID: 7.
 message QueryTestVerdictsRequest {
-  // The root invocation to retrieve test verdicts for.
-  // Format: invocations/{INVOCATION_ID}.
-  // N.B. Specifying an invocation that is not an export root will yield an
-  // INVALID_ARGUMENT error.
-  string invocation = 1;
+  // The name of the root invocation to retrieve test variants from, see RootInvocation.name.
+  string parent = 1 [ (google.api.field_behavior) = REQUIRED ];
 
-  // The test prefix for which to return aggregates.
-  //
-  // The test prefix may have:
-  // - No fields set, to return all aggregates in the invocation.
-  // - Only module set, to return all aggregates within a module.
-  // - Module and coarse name set, to return aggregates with a coarse-level aggregation.
-  // - Module, coarse name and fine name set, to return aggregates within a fine-level aggregation.
-  //
-  // The test prefix should not be more precise than the requested aggregation_level.
-  // For example, if asking for a coarse-level aggregation, do not include a fine name in the
-  // test prefix filter.
-  TestIdentifierPrefix test_prefix_filter = 2;
+  // The predicate to filter test verdicts.
+  TestVerdictPredicate predicate = 2;
 
-  // The maximum number of items to return. The service may return fewer than
-  // this value.
-  // If unspecified, at most 1000 items will be returned.
-  // The maximum value is 10000; values above 10000 will be coerced to 10000.
-  int32 page_size = 3;
+  // The order to sort test verdicts by.
+  //
+  // Refer to https://google.aip.dev/132#ordering for syntax.
+  //
+  // The sort orders that can be requested are:
+  // - `test_id_structured` (test ID order)
+  // - `ui_priority, test_id_structured` (UI priority, then test ID order)
+  // - `ui_priority` (UI priority, then arbitrary system-preferred order)
+  //
+  // Where:
+  // - `test_id_structured` sorts by the lexicographical order of the test
+  //   identifier, i.e. (module_name, module_scheme, module_variant,
+  //   coarse_name, fine_name), and
+  // - `ui_priority` is an opaque priority heuristic designed for LUCI UI use
+  //   and is subject to change.
+  //
+  // If you do not require a particular ordering, it is best to leave this
+  // field unspecified. Results will be returned in the natural order of the
+  // underlying table, which is faster (usually substantially) than any
+  // specified order.
+  string order_by = 3;
+
+  // The set of test verdict fields to return.
+  // The default is TEST_VERDICT_VIEW_BASIC.
+  TestVerdictView view = 7;
+
+  // For result limit, if support added in future. Currently the implementation
+  // applies a standard limit of 500 results or 2 MiB per verdict, whichever is less.
+  reserved 4; reserved "result_limit";
+
+  // The maximum number of verdicts to return. The service may return fewer than
+  // this value (including zero verdicts), even if not at the end of the collection.
+  //
+  // If unspecified, at most 1_000 verdicts will be returned.
+  // The maximum value is 10_000; values above 10_000 will be coerced to 10_000.
+  int32 page_size = 5;
 
   // A page token, received from a previous `QueryTestVerdicts` call.
   // Provide this to retrieve the subsequent page.
   //
-  // When paginating, all other parameters provided to `QueryTestVerdictsRequest` must
-  // match the call that provided the page token.
-  string page_token = 4;
+  // When paginating, all other parameters provided to
+  // `QueryTestVerdictsRequest` must match the call that provided the page
+  // token.
+  string page_token = 6;
 }
 
 // A response message for QueryTestVerdicts RPC.
 // Next ID: 3.
 message QueryTestVerdictsResponse {
   // The test verdicts.
-  // Results are sorted by structured test identifier, lexicographically over the tuple
-  // (module_name, module_scheme, module_variant_hash, coarse_name, fine_name, case_name).
+  // Results are sorted by structured test identifier, lexicographically over
+  // the tuple (module_name, module_scheme, module_variant_hash, coarse_name,
+  // fine_name, case_name).
   repeated TestVerdict test_verdicts = 1;
 
   // A token, which can be sent as `page_token` to retrieve the next page.

@@ -23,17 +23,20 @@ import "google/protobuf/timestamp.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/common.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/test_metadata.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/failure_reason.proto";
+import "go.chromium.org/luci/resultdb/proto/v1/skipped_reason.proto";
 
 option go_package = "go.chromium.org/luci/resultdb/proto/v1;resultpb";
 option java_package = "com.google.luci.resultdb.v1";
 option java_multiple_files = true;
 
-// A result of a functional test case.
-// Often a single test case is executed multiple times and has multiple results,
-// a single test suite has multiple test cases,
-// and the same test suite can be executed in different variants
-// (OS, GPU, compile flags, etc).
+// A result of a functional test case, representing a single execution attempt.
+// Often a single test case is executed multiple times (attempts or runs) and
+// has multiple results. Test results are associated with a RootInvocation and
+// a WorkUnit that represents the execution context (like a swarming task
+// or build step).
 //
+// This message includes details about the test identity, its execution status/result,
+// timing, and potentially failure details.
 // This message does not specify the test id.
 // It should be available in the message that embeds this message.
 //
@@ -41,14 +44,15 @@ option java_multiple_files = true;
 message TestResult {
   reserved 11;  // test_location
 
-  // Can be used to refer to this test result, e.g. in ResultDB.GetTestResult
-  // RPC.
-  // Format:
-  // "invocations/{INVOCATION_ID}/tests/{URL_ESCAPED_TEST_ID}/results/{RESULT_ID}".
-  // where URL_ESCAPED_TEST_ID is test_id escaped with
-  // https://golang.org/pkg/net/url/#PathEscape See also https://aip.dev/122.
+  // This is the resource name of the test result. You can use it to refer
+  // to this test result in RPCs like ResultDB.GetTestResult.
+  // The format is:
+  // "rootinvocations/{ROOT_INVOCATION_ID}/workunits/{WORK_UNIT_ID}/tests/{URL_ESCAPED_TEST_ID}/results/{RESULT_ID}".
+  // Note that URL_ESCAPED_TEST_ID uses the flat test ID format.
   //
-  // Output only.
+  // This field is output only, meaning it's assigned by the server.
+  // Note: while ResultDB is being updated, a legacy name format that is different to the above may be returned.  This
+  // legacy format will also be accepted anywhere the updated format is accepted so they are functionally equivalent.
   string name = 1 [
     (google.api.field_behavior) = OUTPUT_ONLY,
     (google.api.field_behavior) = IMMUTABLE
@@ -77,8 +81,13 @@ message TestResult {
   // Output only. (Except for legacy uploaders.)
   string test_id = 2 [(google.api.field_behavior) = OUTPUT_ONLY, (google.api.field_behavior) = IMMUTABLE];
 
-  // Identifies a test result in a given invocation and test id.
-  // Regex: ^[a-z0-9\-_.]{1,32}$
+  // This identifies the specific test result within a given invocation and test ID.
+  // It's needed because a single test might run multiple times (e.g., retries).
+  // This ID should be unique for a given test within the invocation.
+  // Test runners or result uploaders typically generate this ID.
+  // This forms part of the name (or primary key) of the test result:
+  // (root_invocation_id, test_id, result_id)
+  // The format follows the regex: ^[a-z0-9\-_.]{1,32}$
   string result_id = 3 [
     (google.api.field_behavior) = IMMUTABLE,
     (google.api.field_behavior) = REQUIRED
@@ -222,27 +231,41 @@ message TestResult {
   // Metadata for this test result.
   // It might describe this particular execution or the test case.
   // A key can be repeated.
+  //
+  // Total size (as measured by proto.Size()) must be <= 16 KB.
   repeated StringPair tags = 10 [(google.api.field_behavior) = IMMUTABLE];
 
-  // Hash of the variant.
-  // hex(sha256(sorted(''.join('%s:%s\n' for k, v in variant.items())))).
+  // This is a SHA256 hash of the `test_id_structured.module_variant` key-value pairs,
+  // encoded as hex.
   //
-  // Output only.
+  // It provides a consistent way to identify unique variants for grouping and
+  // analysis.
+  //
+  // hex(sha256(sorted(''.join('%s:%s\n' for k, v in variant.items()))))
+  //
+  // For legacy test results which do not upload the test_id_structured field, the
+  // module_variant field is equivalent to the legacy `variant` field, and thus
+  // this field is effectively a hash of the `variant` field.
+  //
+  // This field is output only.
   string variant_hash = 12 [
     (google.api.field_behavior) = OUTPUT_ONLY,
     (google.api.field_behavior) = IMMUTABLE
   ];
 
-  // Information about the test at the time of its execution.
+  // This holds metadata about the test code itself, like its source code location,
+  // captured at the time the test was executed.
   TestMetadata test_metadata = 13;
 
-  // Information about the test failure.
-  //
+  // This provides structured information about why a test failed.
   // MUST be set (and only set) when status_v2 is FAILED.
   FailureReason failure_reason = 14;
 
   // Arbitrary JSON object that contains structured, domain-specific properties
   // of the test result.
+  //
+  // As well as allowing more structure than tags, it will be exported to BigQuery
+  // as a JSON field allowing faster querying than tags.
   //
   // The serialized size must be <= 8 KB.
   google.protobuf.Struct properties = 15;
@@ -251,16 +274,21 @@ message TestResult {
   // The metadata fields for a TestResult are:
   // * name
   // * test_id
+  // * test_id_structured (all fields except module_variant)
   // * result_id
-  // * expected
-  // * status
+  // * status_v2
   // * start_time
   // * duration
   // * variant_hash
-  // * failure_reason.primary_error_message (truncated to 140 characters)
-  // * skip_reason
+  // * failure_reason (primary_error_message and each error[i].message truncated to 140 characters,
+  //   all error[i].trace elided).
+  // * skipped_reason (reason_message truncated to 140 characters)
+  // * framework_extensions
+  // * skip_reason (deprecated)
+  // * expected (deprecated)
+  // * status (deprecated)
   //
-  // Output only.
+  // This field is output only.
   bool is_masked = 16 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Deprecated: Replaced by skipped_reason message.
@@ -278,78 +306,6 @@ message TestResult {
 
   // Test result framework-specific data model elements.
   FrameworkExtensions framework_extensions = 22;
-}
-
-// SkippedReason helps a developer answer the questions:
-// - Why was this test skipped?
-// - How do I stop it being skipped?
-message SkippedReason {
-  // Provides structured explanation for why a test was skipped.
-  // It must be populated when the status is SKIP.
-  // Open to extension.
-  enum Kind {
-    // Skipped reason was not specified. Do not use this value.
-    KIND_UNSPECIFIED = 0;
-
-    // Skipped by an annotation at the test declaration site.
-    //
-    // This includes:
-    // - JUnit4 @Ignore,
-    // - JUnit5 @Disabled, @DisabledIf/For/On... @EnabledIf/For/On...
-    //   annotations.
-    // - GoogleTest DISABLED_ text prefix.
-    // - Tast test skips from the declared software or hardware
-    //   dependencies being unsatisfied at runtime.
-    // and similar statically defined annotations at the test
-    // declaration site.
-    DISABLED_AT_DECLARATION = 1;
-
-    // Test body began to run but determined the test should
-    // not finish. For example, the test did not detect a valid
-    // environment meeting the test assumptions.
-    //
-    // This covers:
-    // - a JUnit4 or JUnit5 assumption failure in the body of a test,
-    //   from Assume.assumeThat(...) and similar methods.
-    // - Use of the GTEST_SKIP() macro within the body of a test.
-    // - Golang's t.Skip(...) in the body of a test.
-    SKIPPED_BY_TEST_BODY = 2;
-
-    // Used to indicate the test was skipped due to presubmit demotion
-    // (e.g. because the test was too flaky).
-    //
-    // You must specify a human-readable detail message if you use this status.
-    // Please explain the criteria that was met and how the user should get the
-    // test undemoted or reference a link that explains more.
-    DEMOTED = 3;
-
-    // The test was skipped by some other reason.
-    //
-    // This includes:
-    // - Blink web tests disabled in an expectation file.
-    //
-    // You must specify a human-readable detail message if you use this status.
-    OTHER = 4;
-  }
-  Kind kind = 1;
-
-  // A human-readable message providing more context or details about why the
-  // test was skipped. Limited to 1024 bytes of printable UTF-8.
-  //
-  // Required for skip kinds DEMOTED and OTHER, optional otherwise.
-  //
-  // For DISABLED_AT_DECLARATION, useful information would be:
-  // - For Tast, the Tast-provided skip reason (detailing the declared
-  //   hardware/software dependencies that were unmet).
-  //
-  // For SKIPPED_BY_TEST_BODY, useful information would be:
-  // - For JUnit, the JUnit assumption failure that led to the skip.
-  // - For GoogleTest, the file and line where the GTEST_SKIP() macro was
-  //   invoked and the message passed to it.
-  //
-  // For DEMOTED and OTHER, the criteria that led to the skip
-  // and how the user might get the test running again.
-  string reason_message = 2;
 }
 
 // Additional information about the test result in source test
@@ -402,6 +358,8 @@ message WebTest {
 // DEPRECATED: Use TestResult.Status instead.
 // Machine-readable status of a test result.
 enum TestStatus {
+  option deprecated = true;
+
   // Status was not specified.
   // Not to be used in actual test results; serves as a default value for an
   // unset field.
@@ -439,6 +397,8 @@ enum TestStatus {
 // Only reasons actually used are listed here, if you need a new reason
 // please add it here and send a CL to the OWNERS.
 enum SkipReason {
+  option deprecated = true;
+
   // Skip reason was not specified.
   // This represents an unset field which should be used for non-skip test
   // result statuses.  It can also be used if none of the other statuses
@@ -449,123 +409,4 @@ enum SkipReason {
   // flaky tests.
   // Used for ChromeOS CQ test filtering.
   AUTOMATICALLY_DISABLED_FOR_FLAKINESS = 1;
-}
-
-// Indicates the test subject (e.g. a CL) is absolved from blame
-// for an unexpected result of a test variant.
-// For example, the test variant fails both with and without CL, so it is not
-// CL's fault.
-// Next ID: 10.
-message TestExoneration {
-  // Can be used to refer to this test exoneration, e.g. in
-  // ResultDB.GetTestExoneration RPC.
-  // Format:
-  // invocations/{INVOCATION_ID}/tests/{URL_ESCAPED_TEST_ID}/exonerations/{EXONERATION_ID}.
-  // URL_ESCAPED_TEST_ID is test_variant.test_id escaped with
-  // https://golang.org/pkg/net/url/#PathEscape See also https://aip.dev/122.
-  //
-  // Output only.
-  string name = 1 [
-    (google.api.field_behavior) = OUTPUT_ONLY,
-    (google.api.field_behavior) = IMMUTABLE
-  ];
-
-  // The structured test identifier.
-  //
-  // Uniquely identifies the test that was run, including the specific way of running that
-  // test, e.g. build configuration, CPU architecture, OS.
-  //
-  // When uploading results, this should be specified in preference
-  // to test_id and variant. (Uploading test_id and variant is supported only for
-  // legacy uploaders).
-  TestIdentifier test_id_structured = 9 [(google.api.field_behavior) = IMMUTABLE];
-
-  // A unique identifier of the test in a LUCI project, excluding variant.
-  // Regex: ^[[::print::]]{1,512}$
-  //
-  // This is the flat-form encoding of the structured test variant ID above,
-  // excluding information about the specific way of running test (e.g. build configuration,
-  // CPU architecture). Such information is captured separately in the `variant` field below.
-  //
-  // See TestIdentifier for details how a structured test identifier is converted
-  // to flat test ID.
-  //
-  // Output only. (Except for legacy uploaders.)
-  string test_id = 2 [(google.api.field_behavior) = OUTPUT_ONLY, (google.api.field_behavior) = IMMUTABLE];
-
-  // Description of one specific way of running the test,
-  // e.g. build configuration, CPU architecture, OS.
-  //
-  // Output only. (Except for legacy uploaders.)
-  Variant variant = 3 [(google.api.field_behavior) = OUTPUT_ONLY, (google.api.field_behavior) = IMMUTABLE];
-
-  // Identifies an exoneration in a given invocation and test id.
-  // It is server-generated.
-  string exoneration_id = 4 [
-    (google.api.field_behavior) = OUTPUT_ONLY,
-    (google.api.field_behavior) = IMMUTABLE
-  ];
-
-  // Reasoning behind the exoneration, in HTML.
-  // MUST be sanitized before rendering in the browser.
-  string explanation_html = 5 [(google.api.field_behavior) = IMMUTABLE];
-
-  // Hash of the variant.
-  // hex(sha256(sorted(''.join('%s:%s\n' for k, v in variant.items())))).
-  string variant_hash = 6 [(google.api.field_behavior) = IMMUTABLE];
-
-  // Reasoning behind the exoneration, in machine-readable form.
-  // Used to assist downstream analyses, such as automatic bug-filing.
-  // This allow detection of e.g. critical tests failing in presubmit,
-  // even if they are being exonerated because they fail on other CLs.
-  ExonerationReason reason = 7 [(google.api.field_behavior) = IMMUTABLE];
-
-  // Whether the test exoneration has been masked so that it includes only
-  // metadata. The metadata fields for a TestExoneration are:
-  // * name
-  // * test_id
-  // * exoneration_id
-  // * variant_hash
-  // * explanation_html
-  // * reason
-  //
-  // Output only.
-  bool is_masked = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
-}
-
-// Reason why a test variant was exonerated.
-enum ExonerationReason {
-  // Reason was not specified.
-  // Not to be used in actual test exonerations; serves as a default value for
-  // an unset field.
-  EXONERATION_REASON_UNSPECIFIED = 0;
-
-  // Similar unexpected results were observed on a mainline branch
-  // (i.e. against a build without unsubmitted changes applied).
-  // (For avoidance of doubt, this includes both flakily and
-  // deterministically occurring unexpected results.)
-  // Applies to unexpected results in presubmit/CQ runs only.
-  OCCURS_ON_MAINLINE = 1;
-
-  // Similar unexpected results were observed in presubmit run(s) for other,
-  // unrelated CL(s). (This is suggestive of the issue being present
-  // on mainline but is not confirmed as there are possible confounding
-  // factors, like how tests are run on CLs vs how tests are run on
-  // mainline branches.)
-  // Applies to unexpected results in presubmit/CQ runs only.
-  OCCURS_ON_OTHER_CLS = 2;
-
-  // The tests are not critical to the test subject (e.g. CL) passing.
-  // This could be because more data is being collected to determine if
-  // the tests are stable enough to be made critical (as is often the
-  // case for experimental test suites).
-  // If information exists indicating the tests are producing unexpected
-  // results, and the tests are not critical for that reason,
-  // prefer more specific reasons OCCURS_ON_MAINLINE or OCCURS_ON_OTHER_CLS.
-  NOT_CRITICAL = 3;
-
-  // The test result was an unexpected pass. (Note that such an exoneration is
-  // not automatically created for unexpected passes, unless the option is
-  // specified to ResultSink or the project manually creates one).
-  UNEXPECTED_PASS = 4;
 }

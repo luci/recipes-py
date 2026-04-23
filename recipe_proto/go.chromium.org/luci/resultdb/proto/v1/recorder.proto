@@ -21,7 +21,10 @@ import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/artifact.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/invocation.proto";
+import "go.chromium.org/luci/resultdb/proto/v1/root_invocation.proto";
+import "go.chromium.org/luci/resultdb/proto/v1/test_exoneration.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/test_result.proto";
+import "go.chromium.org/luci/resultdb/proto/v1/work_unit.proto";
 
 option go_package = "go.chromium.org/luci/resultdb/proto/v1;resultpb";
 option java_package = "com.google.luci.resultdb.v1";
@@ -29,20 +32,173 @@ option java_multiple_files = true;
 
 // Service to record test results.
 //
-// CreateInvocation response includes a metadata key "update-token".
+// RPCs that mutate an root invocation, work unit or invocation return
+// FAILED_PRECONDITION error code if the resource is finalized (or finalizing).
+//
+// # Authorization
+//
+// The responses to CreateRootInvocation, CreateWorkUnit and CreateInvocation
+// include a metadata key "update-token".
 // It MUST be passed to all other mutation RPCs, such as CreateTestResult.
 // Otherwise the request will fail with UNAUTHENTICATED error code.
 //
-// RPCs that mutate an invocation return FAILED_PRECONDITION error code if the
-// invocation is finalized.
+// # Retry policy
+//
+// To ensure reliable recording of test results, please retry any error of type
+// INTERNAL, UNKNOWN or UNAVAILABLE with the following parameters:
+// - Initial backoff of 1 second (minimum).
+// - For each consecutive error, increase the minimum back-off period
+//   by a factor 2, exponentially up to 32 seconds.
+// For a minimum of 6 retries over 63 (=1+2+4+8+16+32) seconds.
+//
 //
 // Use of LUCI is subject to the Google [Terms of Service](https://policies.google.com/terms)
 // and [Privacy Policy](https://policies.google.com/privacy).
 service Recorder {
+  // == Root Invocations =======================================================
 
-  // == Invocations ============================================================
+  // Creates a new root invocation and its root work unit.
+  //
+  // The response header metadata contains "update-token" required for future
+  // updates to the root invocation and the root work unit, including finalization.
+  // The same update token is used for both resources.
+  //
+  // If RootInvocation with the given ID already exists, returns ALREADY_EXISTS
+  // error code.
+  //
+  // N.B. this method is an AIP-136 custom method as it creates two resources
+  // at once. As such, it does not follow the pattern of AIP-133.
+  rpc CreateRootInvocation(CreateRootInvocationRequest) returns (CreateRootInvocationResponse) {};
 
-  // Creates a new invocation.
+  // Updates an existing non-final RootInvocation.
+  rpc UpdateRootInvocation(UpdateRootInvocationRequest) returns (RootInvocation) {};
+
+  // Retrieves a root invocation.
+  //
+  // Unlike the GetRootInvocation RPC on the ResultDB service, this RPC
+  // uses update tokens to authorise reads and is designed for use with
+  // UpdateRootInvocation to make atomic updates (using aip.dev/154 etags for
+  // optimistic locking). It should be used (and only used by) recorders.
+  rpc GetRootInvocation(GetRootInvocationRequest) returns (RootInvocation) {};
+
+  // == Work Units =============================================================
+
+  // Creates a new work unit inside a root invocation.
+  //
+  // The response header metadata contains "update-token" required for future
+  // updates, including finalization.
+  //
+  // If a work unit with the given ID already exists, returns ALREADY_EXISTS
+  // error code.
+  //
+  // See CreateWorkUnitRequest for more details.
+  rpc CreateWorkUnit(CreateWorkUnitRequest) returns (WorkUnit) {};
+
+  // Creates multiple new work units inside a root invocation.
+  //
+  // Unlike CreateWorkUnit, update tokens are included directly in the response
+  // message to avoid limits on HTTP response headers. Do not log these values.
+  //
+  // If a work unit with the given ID already exists, returns ALREADY_EXISTS
+  // error code.
+  rpc BatchCreateWorkUnits(BatchCreateWorkUnitsRequest)
+      returns (BatchCreateWorkUnitsResponse) {};
+
+  // Updates an existing non-final work unit.
+  rpc UpdateWorkUnit(UpdateWorkUnitRequest) returns (WorkUnit) {};
+
+  // Updates multiple existing non-final work units.
+  rpc BatchUpdateWorkUnits(BatchUpdateWorkUnitsRequest)
+      returns (BatchUpdateWorkUnitsResponse) {};
+
+  // Retrieves a work unit.
+  //
+  // Unlike the GetWorkUnit RPC on the ResultDB service, this RPC
+  // uses update tokens to authorise reads. It is designed for use with
+  // UpdateWorkUnit to make atomic updates (using aip.dev/154 etags for
+  // optimistic locking). It should be used (and only used by) recorders.
+  rpc GetWorkUnit(GetWorkUnitRequest) returns (WorkUnit) {};
+
+  // Retrieves a list of work units.
+  //
+  // Unlike the BatchGetWorkUnits RPC on the ResultDB service, this RPC
+  // uses update tokens to authorise reads. It is designed for use with
+  // BatchUpdateWorkUnits to make atomic updates (using aip.dev/154 etags for
+  // optimistic locking). It should be used (and only used by) recorders.
+  rpc BatchGetWorkUnits(BatchGetWorkUnitsRequest)
+      returns (BatchGetWorkUnitsResponse) {};
+
+  // Ensures the given work unit is final, assigning it the given
+  // final state if it does not yet have one. This begins the process of
+  // transitioning the work unit to the finalization state FINALIZED.
+  //
+  // Suitable for reporting status of a work unit when exiting and
+  // for use by task schedulers to speculatively clean up after an
+  // upload task finishes.
+  rpc FinalizeWorkUnit(FinalizeWorkUnitRequest)
+      returns (WorkUnit) {};
+
+  // Ensures the given work units are final, assigning them the given
+  // final state(s) if they do not yet have one. This begins the process of
+  // transitioning them to the finalization state FINALIZED.
+  rpc BatchFinalizeWorkUnits(BatchFinalizeWorkUnitsRequest)
+      returns (BatchFinalizeWorkUnitsResponse) {};
+
+  // Ensures descendants of the given work unit are final, assigning them
+  // a given final state if they do not yet have one. Both this RPC and
+  // FinalizeWorkUnit should be called by task schedulers to speculatively
+  // clean up after upload tasks after they exit.
+  rpc FinalizeWorkUnitDescendants(FinalizeWorkUnitDescendantsRequest)
+      returns (google.protobuf.Empty) {};
+
+  // Mints an 'inclusion token' which can be used by another system to
+  // include new child invocations (of a nominated realm) in a work unit.
+  // The caller of this RPC authorises the declassification of test results
+  // from the nominated realm to the realm of the root invocation.
+  //
+  // See DelegateWorkUnitInclusionRequest for details.
+  rpc DelegateWorkUnitInclusion(DelegateWorkUnitInclusionRequest)
+      returns (DelegateWorkUnitInclusionResponse) {};
+
+  // == Baselines ==============================================================
+
+  // Recursively marks all test variants associated with the invocation as
+  // submitted, merging them into the invocation's associated baseline.
+  rpc MarkInvocationSubmitted(MarkInvocationSubmittedRequest)
+      returns (google.protobuf.Empty) {};
+
+  // == Test results ===========================================================
+
+  // Appends a test result to a non-finalized work unit.
+  rpc CreateTestResult(CreateTestResultRequest) returns (TestResult) {};
+
+  // Atomically appends multiple test results to one or more
+  // non-finalized work units.
+  rpc BatchCreateTestResults(BatchCreateTestResultsRequest)
+      returns (BatchCreateTestResultsResponse) {};
+
+  // Appends a test exoneration to a non-finalized work unit.
+  rpc CreateTestExoneration(CreateTestExonerationRequest)
+      returns (TestExoneration) {};
+
+  // Atomically appends multiple test exonerations to one or more
+  // non-finalized work units.
+  rpc BatchCreateTestExonerations(BatchCreateTestExonerationsRequest)
+      returns (BatchCreateTestExonerationsResponse) {};
+
+  // == Artifacts ==============================================================
+
+  // Atomically creates multiple artifacts in one or more non-finalized
+  // work units.
+  //
+  // An artifact can be either work unit-level or test-result-level.
+  // See Artifact.name for more info.
+  rpc BatchCreateArtifacts(BatchCreateArtifactsRequest)
+      returns (BatchCreateArtifactsResponse) {};
+
+  // == Invocations (Deprecated) ===================================================
+
+  // Deprecated. Creates a new invocation.
   // The request specifies the invocation id and its contents.
   //
   // The response header metadata contains "update-token" required for future
@@ -52,58 +208,555 @@ service Recorder {
   // error code.
   rpc CreateInvocation(CreateInvocationRequest) returns (Invocation) {};
 
-  // Creates multiple invocations in a single rpc.
+  // Deprecated. Creates multiple invocations in a single rpc.
   //
-  // The response header metadata contains a multi-valued "update-token"
-  // required for future updates, including finalization. The tokens will be
-  // given in the same order as BatchCreateInvocationRequest.requests.
+  // Unlike CreateInvocation, update tokens are included in the response message
+  // to avoid limits on HTTP response headers. Do not log these values.
   rpc BatchCreateInvocations(BatchCreateInvocationsRequest)
       returns (BatchCreateInvocationsResponse) {};
 
-  // Updates an existing non-finalized invocation.
+  // Deprecated. Updates an existing non-finalized invocation.
   rpc UpdateInvocation(UpdateInvocationRequest) returns (Invocation) {};
 
-  // Transitions the given invocation to the state FINALIZED.
+  // Deprecated. Transitions the given invocation to the state FINALIZED.
   rpc FinalizeInvocation(FinalizeInvocationRequest) returns (Invocation) {};
 
-  // Updates inclusions for a non-finalized invocation.
+  // Deprecated. Updates inclusions for a non-finalized invocation.
   rpc UpdateIncludedInvocations(UpdateIncludedInvocationsRequest)
       returns (google.protobuf.Empty) {};
-
-  // Recursively marks all test variants associated with the invocation as
-  // submitted, merging them into the invocation's associated baseline.
-  rpc MarkInvocationSubmitted(MarkInvocationSubmittedRequest)
-      returns (google.protobuf.Empty) {};
-
-  // == Test results ===========================================================
-
-  // Appends a test result to a non-finalized invocation.
-  rpc CreateTestResult(CreateTestResultRequest) returns (TestResult) {};
-  // Atomically appends a batch of test results to a non-finalized invocation.
-  rpc BatchCreateTestResults(BatchCreateTestResultsRequest)
-      returns (BatchCreateTestResultsResponse) {};
-
-  // Appends a test exoneration to a non-finalized invocation.
-  rpc CreateTestExoneration(CreateTestExonerationRequest)
-      returns (TestExoneration) {};
-  // Atomically appends a batch of test exonerations to a non-finalized
-  // invocation.
-  rpc BatchCreateTestExonerations(BatchCreateTestExonerationsRequest)
-      returns (BatchCreateTestExonerationsResponse) {};
-
-  // == Artifacts ==============================================================
-
-  // Create multiple artifacts.
-  //
-  // An artifact can be either invocation-level or test-result-level.
-  // See Artifact.name for more info.
-  rpc BatchCreateArtifacts(BatchCreateArtifactsRequest)
-      returns (BatchCreateArtifactsResponse) {};
 }
 
-// == Invocations ==============================================================
+// == Root Invocations =========================================================
 
-// A request message for CreateInvocation.
+// A request message for the CreateRootInvocation RPC.
+//
+// To use this RPC, the caller will need resultdb.rootInvocations.create and
+// resultdb.workUnits.create permission in the realm `root_invocation.realm`.
+//
+// The following permissions may also be required depending on the request:
+// - if an ID not starting with "u-" is specified,
+//   resultdb.rootInvocations.createWithReservedID permission is required.
+// - if the producer resource references a restricted system, such as
+//   "buildbucket", resultdb.rootInvocations.setProducerResource permission
+//   is required.
+// - if a baseline is set,
+//   resultdb.baselines.put permission is required in the ":@project" realm
+//   of the LUCI project the root invocation is being created in.
+message CreateRootInvocationRequest {
+  // RootInvocation identifier, becomes a part of the root_invocation.name.
+  // Only trusted systems with an agreed format negotiated with ResultDB
+  // may create nicely formatted IDs (e.g. "build-1234567890"), other
+  // clients must use IDs of the form "u-{GUID}".
+  //
+  // Regex: ^[a-z][a-z0-9_\-]*$.
+  string root_invocation_id = 1 [ (google.api.field_behavior) = REQUIRED ];
+
+  // The root invocation to create.
+  RootInvocation root_invocation = 2;
+
+  // The root work unit to create inside the above root invocation.
+  //
+  // The name of this work unit will always be
+  // "rootInvocations/{root_invocation_id}/workUnits/root".
+  //
+  // Do not set the realm or producer_resource fields, these will be inherited
+  // from the root invocation.
+  //
+  // Required.
+  WorkUnit root_work_unit = 3;
+
+  // A unique identifier for this request. Restricted to 36 ASCII characters.
+  // A random UUID is recommended.
+  //
+  // If the same request is replayed (see "Retry policy" at the top of this doc),
+  // this request_id guarantees idempotence.
+  //
+  // Required.
+  string request_id = 4;
+}
+
+// A response message for the CreateRootInvocation RPC.
+message CreateRootInvocationResponse {
+  // The root invocation that was created.
+  RootInvocation root_invocation = 1;
+
+  // The root work unit that was created inside the above root invocation.
+  // Test results, artifacts, exonerations and further work units can be
+  // created inside this resource.
+  WorkUnit root_work_unit = 2;
+}
+
+// A request message for the UpdateRootInvocation RPC.
+message UpdateRootInvocationRequest {
+  // The root invocation to update.
+  // If updating tags, the existing tags will be replaced with the new ones.
+  RootInvocation root_invocation = 1 [ (google.api.field_behavior) = REQUIRED ];
+
+  // The list of fields to be updated.
+  google.protobuf.FieldMask update_mask = 2;
+
+  // A unique identifier for this request. Restricted to 36 ASCII characters.
+  // A random UUID is recommended.
+  //
+  // If the same request is replayed (see "Retry policy" at the top of this doc),
+  // this request_id guarantees idempotence.
+  //
+  // Required.
+  string request_id = 3;
+}
+
+// == Work Units ===============================================================
+
+// A request message for the CreateWorkUnit RPC.
+//
+// To use this RPC, you must have:
+// 1. the update token from the parent work unit in the "update-token"
+//   request header, or alternatively, an inclusion token from
+//   DelegateWorkUnitInclusion in an "inclusion-token" request header.
+//   This authorises the modification of the parent work unit.
+// 2. If the realm of the work unit to be created differs from the parent
+//    work unit:
+//  - the resultdb.workunits.create permission on the realm the work unit
+//     is being created in, to verify the caller is trusted to maintain
+//     integrity of data in the realm to which it is writing.
+//  - resultdb.workunits.include permission for the realm the work unit is
+//    being created in. This ensures the caller is authorised to make the
+//    results of the child work unit visible within the parent work unit,
+//    and by extension the root invocation. This is because including the child
+//    work unit implicitly declassifies the results in the the realm of the
+//    root invocation. This is not necessary if an inclusion token was provided
+//    at point (1.) as this permission was checked when the token was minted.
+// 3. if the producer_resource field is set and references a restricted system,
+//    such as "buildbucket", resultdb.workUnits.setProducerResource permission is
+//    required.
+// 4. if a new base work unit ID not starting with "u-" is specified,
+//   the resultdb.workUnits.createWithReservedID permission (see work_unit_id
+//   below).
+//
+// This RPC returns an update token in a response header named "update-token".
+// This token is required to make future updates. Treat this token as you might
+// an OAuth token, do not log it.
+message CreateWorkUnitRequest {
+  // The parent work unit in which this work unit should be created.
+  // Format: rootInvocations/{ROOT_INVOCATION_ID}/workUnits/{PARENT_WORK_UNIT_ID}.
+  string parent = 1;
+
+  // WorkUnit identifier, becomes a part of the work_unit.name.
+  //
+  // # Base work unit IDs
+  //
+  // A base work unit ID looks like "build-1234567890" or "task-123456980a".
+  // It is any work ID that is not a prefixed work unit ID (see below).
+  //
+  // Each unique base work unit ID has its own update token which allows
+  // results to uploaded it only.
+  //
+  // Base work unit IDs are typically created by task scheduling systems,
+  // such as Swarming, ATE or ATP. Such systems are characterised by
+  // having a resilient backend that can guarantee FinalizeWorkUnit and
+  // FinalizeWorkUnitDescendants(...) are eventually called on the work unit.
+  //
+  // Only trusted systems with an agreed format negotiated with ResultDB
+  // (having resultdb.workUnits.createWithReservedID permission)
+  // may create base work unit IDs that are nicely formatted (e.g.
+  // "build-1234567890"). Other clients must use IDs of the form "u-{GUID}"
+  // or prefixed work unit IDs (see below).
+  //
+  // # Prefixed Work Unit IDs (:)
+  //
+  // A prefixed work unit ID is a work unit ID of the form
+  // `<base_id>:<child_id>`. A prefixed work unit 'derives' from
+  // a given base work unit ID and shares its update token.
+  //
+  // Prefixed work units IDs are useful for:
+  // - Creating and uploading to multiple work units from the same bot
+  //   (e.g. for multi-module or multi-attempt uploads).
+  //   As all prefixed work units share the same update token as the
+  //   base work unit ID, authentication is simpler and uploads to
+  //   multiple work units can be combined in the same Batch...()
+  //   RPC for efficiency.
+  // - Ensuring timely finalization for bot-created work units. Task
+  //   scheduling systems can clean up any forgotten work units following
+  //   non-graceful exit of the bot using the FinalizeWorkUnitDescendants RPC
+  //   on the base work unit ID, without accidentally finalizing other
+  //   work unit descendents owned by other task scheduling systems.
+  //
+  // Prefixed work units may only be created within their corresponding
+  // base work unit or a prefixed child thereof, i.e.
+  //
+  // Parent                 -> Child
+  // `<base_id>`            -> `<base_id>:child_1` is allowed
+  // `<base_id>:some_child` -> `<base_id>:child_2` is allowed
+  // `<other_id>`           -> `<base_id>:child_1` is not allowed
+  //
+  // Only single prefixing is possible; the ID construction
+  // `<base_id>:<child_1>:<grandchild_1>` is not allowed. You may
+  // however create `<base_id>:<grandchild_1>` under `<base_id>:<child_1>`
+  // to achieve the same effect.
+  //
+  // Prefixed work units do not offer the same isolation and integrity
+  // guarantees as non-prefixed work units because of the shared update
+  // token. Therefore, they should not be used outside the scope of a
+  // single bot and its scheduling backend.
+  //
+  // Regex: ^[a-z][a-z0-9_\-]*(:[a-z][a-z0-9_\-])?$. Limited to
+  // 100 characters in length.
+  string work_unit_id = 2 [ (google.api.field_behavior) = REQUIRED ];
+
+  // WorkUnit data to insert.
+  WorkUnit work_unit = 3;
+
+  // A unique identifier for this request. Restricted to 36 ASCII characters.
+  // A random UUID is recommended.
+  //
+  // If the same request is replayed (see "Retry policy" at the top of this doc),
+  // this request_id guarantees idempotence.
+  //
+  // Required (unless this request is nested in a BatchCreateWorkUnitsRequest).
+  string request_id = 4;
+}
+
+// A request message for BatchCreateWorkUnits RPC.
+//
+// The request will be handled atomically (i.e. all work units are
+// created or none are).
+//
+// See CreateWorkUnitRequest for details about required permissions.
+message BatchCreateWorkUnitsRequest {
+  // The work units to create.
+  //
+  // Nested structures of work units may be created in the same batch, by
+  // having later request entries refer to work units created by earlier
+  // request entries. For example, requests[1] may assume requests[0] has
+  // already been created and refer to it as its parent.
+  //
+  // There is one important caveat: only one "update-token" request metadata
+  // key (needed to modify the parent work unit) or "inclusion-token" metadata
+  // key may be provided per batch request. This means that all work units being
+  // created must be children of the same work unit parent OR children of work
+  // units sharing the same update token (see CreateWorkUnitRequest.work_unit_id
+  // for details about prefixed work unit IDs that share an update token).
+  //
+  // # Allowed usages
+  //
+  // Create multiple children in one request, sharing the same work unit parent
+  // "wu0":
+  //
+  // Root invocation
+  // ...
+  //   wu0 <-- Pre-existing
+  //     |- wu1
+  //     |- wu2
+  //
+  // Create multiple nested structures, all descending from work units sharing
+  // update token from "wu0":
+  //
+  // Root invocation
+  // ...
+  //   wu0:shard1  <-- Pre-existing
+  //     |- wu0:shard1-attempt1
+  //     |   |- wu0:shard1-attempt1-module1
+  //     |
+  //     |- wu0:shard1-attempt2
+  //         |- wu0:shard1-attempt1-module2
+  //
+  //   wu0:shard2  <-- Pre-existing
+  //     |- wu0:shard2-attempt1
+  //
+  // # Disallowed usages
+  //
+  // Create a nested structure, descending from work units with
+  // different update tokens:
+  //
+  // Root invocation
+  // ...
+  //   wu0 <-- Pre-existing
+  //     |- wu1 <--- Requires update token for "wu0".
+  //     |- wu2
+  //        |- wu21  <--- Requires update token for "wu2".
+  //
+  // Create multiple nested structures, descending from work units with
+  // different update tokens:
+  //
+  // Root invocation
+  // ...
+  //   wu0  <-- Pre-existing
+  //    |- wu1
+  //    |- wu2
+  //
+  //   wu20  <-- Pre-existing
+  //    |- wu21
+  //
+  // This will not succeed because the server needs the update token of both
+  // "wu0" and "wu20" to succeed, and only one update token can be supplied
+  // per request.
+  //
+  // Up to 500 requests. Total size of all requests (as measured by proto.Size())
+  // MUST be <= 10 MiB.
+  repeated CreateWorkUnitRequest requests = 1;
+
+  // A unique identifier for this request. Restricted to 36 ASCII characters.
+  // A random UUID is recommended.
+  //
+  // If the same request is replayed (see "Retry policy" at the top of this doc),
+  // this request_id guarantees idempotence.
+  //
+  // The request_id field in CreateWorkUnitRequest messages must either
+  // be empty or match this field.
+  //
+  // Required.
+  string request_id = 2;
+}
+
+// A response message for BatchCreateWorkUnits RPC.
+message BatchCreateWorkUnitsResponse {
+  // The created work units.
+  repeated WorkUnit work_units = 1;
+
+  // One token per each created work unit.
+  // These are passed in the response instead of as metadata, because large
+  // batches increase the size of the response headers beyond allowed limits.
+  // update_tokens[i] corresponds to work_units[i].
+  // *Do not log these values (they are secrets that should be treated
+  // similar to OAuth tokens)*.
+  repeated string update_tokens = 2;
+}
+
+// A request message for UpdateWorkUnit RPC.
+//
+// The request will be handled atomically (i.e. all work units are
+// updated or none are).
+message UpdateWorkUnitRequest {
+  // The work unit to update.
+  //
+  // If updating tags, the existing tags will be replaced with the new ones.
+  WorkUnit work_unit = 1 [ (google.api.field_behavior) = REQUIRED ];
+
+  // The list of fields to be updated.
+  google.protobuf.FieldMask update_mask = 2;
+
+  // A unique identifier for this request. Restricted to 36 ASCII characters.
+  // A random UUID is recommended.
+  //
+  // If the same request is replayed (see "Retry policy" at the top of this doc),
+  // this request_id guarantees idempotence.
+  //
+  // Required (unless this request is nested in a BatchUpdateWorkUnitsRequest).
+  string request_id = 3;
+}
+
+// A request message for BatchUpdateWorkUnits RPC.
+//
+// Note: As each request may only have one update token, batching is only
+// possible for work units sharing the same prefix (and thus update token).
+// See CreateWorkUnitRequest.work_unit_id.
+message BatchUpdateWorkUnitsRequest {
+  // The request messages specifying the work unit updates.
+  //
+  // Up to 500 requests. Total size of all requests (as measured by proto.Size())
+  // MUST be <= 10 MiB.
+  repeated UpdateWorkUnitRequest requests = 1;
+
+  // A unique identifier for this request. Restricted to 36 ASCII characters.
+  // A random UUID is recommended.
+  //
+  // If the same request is replayed (see "Retry policy" at the top of this doc),
+  // this request_id guarantees idempotence.
+  //
+  // The request_id field in UpdateWorkUnitRequest messages must either
+  // be empty or match this field.
+  //
+  // Required.
+  string request_id = 2;
+}
+
+// A response message for BatchUpdateWorkUnits RPC.
+message BatchUpdateWorkUnitsResponse {
+  // The updated work units.
+  // To limit response size, the `extended_properties` field is elided
+  // from work units.
+  repeated WorkUnit work_units = 1;
+}
+
+// A request message for FinalizeWorkUnit RPC.
+//
+// This RPC is idempotent: attempting to set a final state on a work unit
+// which already has a final state will have no effect.
+//
+// To limit response size, the `extended_properties` field is elided
+// from the work unit returned by the RPC.
+message FinalizeWorkUnitRequest {
+  // Resource name of the work unit to finalize.
+  string name = 1 [ (google.api.field_behavior) = REQUIRED ];
+
+  // The state to transition the work unit to. This must be
+  // a final state.
+  WorkUnit.State state = 2 [ (google.api.field_behavior) = REQUIRED ];
+
+  // A summary of the final state of the work unit, to be displayed on the UI.
+  //
+  // E.g. if the work unit failed, the reason/stack trace describing why
+  // it failed. Can be elided if the work unit succeeded.
+  //
+  // The size of the summary must be equal to or smaller than 4096 bytes in
+  // UTF-8.
+  string summary_markdown = 3;
+}
+
+// A request message for FinalizeWorkUnitDescendants RPC.
+//
+// This RPC is idempotent: attempting to set a final state on work unit(s)
+// which already have a final state will have no effect.
+//
+// Due to the large number of descendent work units that might exist, this
+// RPC is not guaranteed to be atomic.
+//
+// Next ID: 5.
+message FinalizeWorkUnitDescendantsRequest {
+  // Resource name of the work unit to finalize.
+  string name = 1;
+
+  // The final state to transition descendant work units to.
+  //
+  // As this RPC is designed only for bulk cleanup of work units
+  // that did not report a status in the ordinary course of events,
+  // this should be either FAILED or CANCELLED.
+  WorkUnit.State state = 2 [ (google.api.field_behavior) = REQUIRED ];
+
+  // A summary of the final state of the work unit, to be displayed on the UI.
+  //
+  // The size of the summary must be equal to or smaller than 4096 bytes in
+  // UTF-8.
+  string summary_markdown = 4;
+
+  // Describes the scope to finalize.
+  enum FinalizationScope {
+    // The scope is not specified. Do not use.
+    FINALIZATION_SCOPE_UNSPECIFIED = 0;
+
+    // Finalizes all prefixed descendents of a base work unit ID.
+    // See CreateWorkUnitRequest.work_unit_id for details about
+    // prefixed work unit IDs and base work unit IDs. The `name`
+    // field must refer to the base work unit.
+    //
+    // This is for use by a task scheduling system to speculatively
+    // clean up descendant work units for a task that has exited.
+    // Typically, the task scheduler will attempt to set state = FAILED
+    // or state = CANCELLED on these descendant work units to flag that
+    // the task failed to report a state for them.
+    PREFIXED_DESCENDANTS_ONLY = 1;
+  }
+
+  // Specifies the scope of finalization.
+  FinalizationScope finalization_scope = 3;
+}
+
+// A request message for BatchFinalizeWorkUnits RPC.
+//
+// The Batch will be handled atomically (i.e. all requests will
+// be processed or none will). In practice, the only case where
+// requests will not be processed is if a request is invalid or permission
+// is lacking; it is not an error if one of the work units is already
+// finalizing as the semantics of each request is defined idempotently.
+//
+// Note: As each request may only have one update token, batching is only
+// possible for work units sharing the same prefix (and thus update token).
+// See CreateWorkUnitRequest.work_unit_id.
+message BatchFinalizeWorkUnitsRequest {
+  // The request messages specifying the work units to finalize.
+  //
+  // A maximum of 500 work units can be finalized in one request.
+  repeated FinalizeWorkUnitRequest requests = 1;
+}
+
+// A response message for BatchFinalizeWorkUnits RPC.
+message BatchFinalizeWorkUnitsResponse {
+  // The finalized work units.
+  // To limit response size, the `extended_properties` field is elided
+  // from work units.
+  repeated WorkUnit work_units = 1;
+}
+
+// Request message to mint a work unit 'inclusion token' that grants the bearer:
+// 1. authority to include child work units in the nominated work unit;
+// 2. authority to declassify test results/artifacts from the nominated realm into
+//    the realm of the root invocation.
+//
+// This method is designed for situations where uploads are delegated between systems.
+// We will use the terms "delegator system" and "delagatee system".
+//
+// Compared to passing the update token of the current work unit to the delagatee
+// system, passing an inclusion token:
+// - prevents the delagatee from modifying the original work unit (beyond
+//   including new child work units)
+// - places responsibility on the delegator to authorize the declassification of results
+//   from the planned child work unit realm to the realm of the root invocation,
+//   rather than the delagatee. For the delagatee, this means their infrastructure
+//   is less likely to be accidentally abused (e.g. to upload results from
+//   restricted boards into public builders). This is predicated on public builders
+//   not having resultdb.workunits.include access to the restricted realms.
+//
+// The token returned by this RPC is in a response header metadata key
+// named "inclusion-token" and is a replacement to the update token that
+// is otherwise required by CreateWorkUnit.
+//
+// Security: Inclusion tokens should be treated with the same level of security
+// as update tokens, as they effectively grant permission to modify the parent work unit.
+// Treat them as secrets and do not log them.
+//
+// Extended explanation:
+//
+// This RPC allows the permissions required by CreateWorkUnit to be
+// split over two callers/systems:
+//
+//  1. The delegator, which owns the parent work unit and wishes to include
+//     a child work unit from a (possibly) different realm, but may not
+//     have one of the permissions required by CreateWorkUnit, e.g.:
+//     - permission to create work units in that realm
+//     (resultdb.workunits.create).
+//     - permission to create work units with reserved names
+//     (resultdb.workunits.createWithReservedID).
+//     - permission to create work units with any producer resource
+//     (resultdb.workunits.setProducerResource).
+//  2. The delegatee, which is happy to create work unit in a given realm
+//     and has permission to do so, but wants the delegator to prove it has
+//     resultdb.workunits.include access to the created work unit before it includes
+//     a work unit in the delegators's work unit (which implicitly declassifies
+//     the results into the root invocation).
+//
+// Use of this RPC is usually not necessary and is designed for systems
+// where multiple systems need to cooperate to create work units in a
+// secure manner. If the delegator has all required permissions, it is
+// common to call CreateWorkUnit directly with the update token to create a new
+// work unit. The ID of the created work unit and its update token can then be
+// passed to the delegatee to populate.
+message DelegateWorkUnitInclusionRequest {
+  // The resource name of the parent work unit in which further work units
+  // shall be included (created).
+  //
+  // The update token of this work unit must be passed in the
+  // "update-token" request metadata key, or a PERMISSION_DENIED error will
+  // be returned.
+  //
+  // The minted inclusion token will be scoped to this work unit; the token
+  // will not allow inclusion into any other work unit.
+  string work_unit = 1;
+
+  // The realm of the prospective child work unit(s).
+  // The caller must have resultdb.workunits.include permission on this realm.
+  string realm = 2;
+}
+
+// A response message for DelegateWorkUnitInclusion RPC.
+message DelegateWorkUnitInclusionResponse {
+  // The response header contains a metadata key named "inclusion-token".
+  // The token is not included in the response body to minimise the risk of
+  // accidentally logging this secret data.
+}
+
+// == Invocations (Legacy) =====================================================
+
+// A request message for CreateInvocation RPC.
 message CreateInvocationRequest {
   // Invocation identifier, becomes a part of the invocation.name.
   // LUCI systems MAY create invocations with nicely formatted IDs, such as
@@ -121,7 +774,7 @@ message CreateInvocationRequest {
   string request_id = 3;
 }
 
-// A request message for BatchCreateInvocations
+// A request message for BatchCreateInvocations RPC.
 message BatchCreateInvocationsRequest {
   // requests[i].request_id MUST be either empty or equal to request_id in
   // this message.
@@ -135,7 +788,6 @@ message BatchCreateInvocationsRequest {
   // strongly recommended to populate this field.
   string request_id = 2;
 }
-
 
 // A response message for BatchCreateInvocations RPC.
 message BatchCreateInvocationsResponse {
@@ -192,20 +844,31 @@ message UpdateIncludedInvocationsRequest {
   repeated string remove_invocations = 3;
 }
 
+// == Baselines ================================================================
+
 // A request message for MarkInvocationSubmitted RPC.
 // To use this RPC, callers need:
 // - resultdb.invocations.setSubmitted in the realm the <project>:@project, where
 //   project is the project of the nominated invocation.
 message MarkInvocationSubmittedRequest {
+  // Name of the root invocation, e.g. "rootInvocations/{id}".
+  string root_invocation = 2 [ (google.api.field_behavior) = REQUIRED ];
+
+  // DEPRECATED: use `root_invocation` instead.
   // Name of the invocation, e.g. "invocations/{id}".
-  string invocation = 1 [ (google.api.field_behavior) = REQUIRED ];
+  string invocation = 1 [ deprecated = true ];
 }
 
+// == Test results =============================================================
 
 // A request message for CreateTestResult RPC.
 message CreateTestResultRequest {
+  // Name of the parent work unit. See WorkUnit.name.
+  string parent = 4 [ (google.api.field_behavior) = REQUIRED ];
+
+  // DEPRECATED: Use `parent` instead.
   // Name of the parent invocation, see Invocation.name.
-  string invocation = 1 [ (google.api.field_behavior) = REQUIRED ];
+  string invocation = 1 [ deprecated = true ];
 
   // The test result to create.
   // Test id and result id are used to dedupe requests, i.e.
@@ -216,39 +879,62 @@ message CreateTestResultRequest {
 
   // A unique identifier for this request. Restricted to 36 ASCII characters.
   // A random UUID is recommended.
-  // This request is only idempotent if a `request_id` is provided, so it is
-  // strongly recommended to populate this field.
   //
-  // Impl note: this field is used to compute the spanner-level result id, which
-  // will encode tuple (request_id, index_of_request)", where
-  // - request_id is a random GUID if not provided by the user
-  // - index_of_request is 0 in CreateTestResult RPC, or index of the request
-  //   in BatchCreateTestResultsRequest in the batch RPC.
-  // TODO(jchinlee): remove this impl note when it is converted into code.
+  // If the same request is replayed (see "Retry policy" at the top of this doc),
+  // this request_id guarantees idempotence.
+  //
+  // Required (unless this request is nested in a BatchCreateTestResultsRequest).
   string request_id = 3;
 }
 
-// == Test results =============================================================
-
 // A request message for BatchCreateTestResults RPC.
+//
+// The request will be handled atomically (i.e. all test results are
+// created or none are).
+//
+// Use of batching for test result uploads is strongly encouraged for
+// performance and efficiency reasons. Clients implementing buffering for the
+// purposes of batching will typically cut a batch once any of the following
+// criteria are met:
+// - 500 test results are in the batch,
+// - the size of the batch would exceed 10 MiB,
+// - a given dwell time has elapsed (e.g. 1 minute), or
+// - all test results have completed and the last batch needs to be flushed.
+//
+// Batched test results can cover more than one work unit, provided all
+// work units share the same update token (i.e. in case of Prefixed work units;
+// see CreateWorkUnitRequest.work_unit_id for details). In such situations,
+// the batching for test results may be integrated with the batching of work
+// units (e.g. creating test results in a batch will be preceded by batch-
+// creating any pending work units to avoid NotFound errors).
 message BatchCreateTestResultsRequest {
-  // Name of the parent invocation, see Invocation.name.
-  string invocation = 1 [ (google.api.field_behavior) = REQUIRED ];
-
-  // Requests to create test results.
-  // requests[i].invocation MUST be either empty or equal to invocation in this
-  // message.
-  // requests[i].request_id MUST be either empty or equal to request_id in
-  // this message.
+  // Name of the parent work unit (if all test results to be created belong to the
+  // same work unit). See WorkUnit.name.
   //
-  // Up to 500 requests.
+  // If this set, then parent field in CreateTestResultRequest messages
+  // must either be empty or match this field.
+  string parent = 4;
+
+  // DEPRECATED: Use `parent` instead.
+  // Name of the parent invocation, see Invocation.name.
+  string invocation = 1 [ deprecated = true ];
+
+  // Request messages specifying the test results to be created.
+  //
+  // Up to 500 requests. Total size of all requests (as measured by proto.Size())
+  // MUST be <= 10 MiB.
   repeated CreateTestResultRequest requests = 2;
 
   // A unique identifier for this request. Restricted to 36 ASCII characters.
   // A random UUID is recommended.
-  // This request is only idempotent if a `request_id` is provided, so it is
-  // strongly recommended to populate this field.
   //
+  // If the same request is replayed (see "Retry policy" at the top of this doc),
+  // this request_id guarantees idempotence.
+  //
+  // The request_id field in CreateTestResultRequest messages must either
+  // be empty or match this field.
+  //
+  // Required.
   string request_id = 3;
 }
 
@@ -260,8 +946,12 @@ message BatchCreateTestResultsResponse {
 
 // A request message for CreateTestExoneration RPC.
 message CreateTestExonerationRequest {
+  // Name of the parent work unit. See WorkUnit.name.
+  string parent = 4 [ (google.api.field_behavior) = REQUIRED ];
+
+  // DEPRECATED: Use `parent` instead.
   // Name of the parent invocation, see Invocation.name.
-  string invocation = 1 [ (google.api.field_behavior) = REQUIRED ];
+  string invocation = 1 [ deprecated = true ];
 
   // The TestExoneration to create.
   TestExoneration test_exoneration = 2
@@ -269,28 +959,57 @@ message CreateTestExonerationRequest {
 
   // A unique identifier for this request. Restricted to 36 ASCII characters.
   // A random UUID is recommended.
-  // This request is only idempotent if a `request_id` is provided.
+  //
+  // If the same request is replayed (see "Retry policy" at the top of this doc),
+  // this request_id guarantees idempotence.
+  //
+  // Required (unless this request is nested in a BatchCreateTestExonerationsRequest).
   string request_id = 3;
 }
 
 // A request message for BatchCreateTestExonerations RPC.
+//
+// The request will be handled atomically (i.e. all test exonerations are
+// created or none are).
+//
+// Use of batching for exoneration uploads is strongly encouraged for
+// performance and efficiency reasons.
+//
+// Batched test exonerations can cover more than one work unit, provided all
+// work units share the same update token (i.e. in case of Prefixed work units;
+// see CreateWorkUnitRequest.work_unit_id for details). This is primarily
+// for consistency with the other Batch RPCs; in practice there is not
+// a lot of benefit to report exonerations through one work unit over another,
+// as they are a root invocation-level concept and are only reported through
+// work units for traceability reasons.
 message BatchCreateTestExonerationsRequest {
+  // Name of the parent work unit (if all test exonerations to be created belong to the
+  // same work unit). See WorkUnit.name.
+  //
+  // If this set, then parent field in CreateTestExonerationRequest messages
+  // must either be empty or match this field.
+  string parent = 4;
+
+  // DEPRECATED: Use `parent` instead.
   // Name of the parent invocation, see Invocation.name.
-  string invocation = 1 [ (google.api.field_behavior) = REQUIRED ];
+  string invocation = 1 [ deprecated = true ];
 
   // Requests to create TestExonerations.
-  // requests[i].invocation MUST be either empty or equal to invocation in this
-  // message.
-  // requests[i].request_id MUST be either empty or equal to request_id in
-  // this message.
   //
-  // Up to 500 requests.
+  // Up to 500 requests. Total size of all requests (as measured by proto.Size())
+  // MUST be <= 10 MiB.
   repeated CreateTestExonerationRequest requests = 2;
 
   // A unique identifier for this request. Restricted to 36 ASCII characters.
   // A random UUID is recommended.
-  // This request is only idempotent if a `request_id` is provided, so it is
-  // strongly recommended to populate this field.
+  //
+  // If the same request is replayed (see "Retry policy" at the top of this doc),
+  // this request_id guarantees idempotence.
+  //
+  // The request_id field in CreateTestResultRequest messages must either
+  // be empty or match this field.
+  //
+  // Required.
   string request_id = 3;
 }
 
@@ -304,40 +1023,90 @@ message BatchCreateTestExonerationsResponse {
 
 // A request message for CreateArtifactRequest.
 message CreateArtifactRequest {
-
-  // Name of the parent invocation, see Invocation.name.
+  // Name of the parent work unit. See WorkUnit.name.
   //
   // To create test result-level artifacts, set test_id_structured and result_id on
-  // the Artifact. Otherwise, to create invocation-level artifacts, leave
+  // the Artifact. Otherwise, to create work unit-level artifacts, leave
   // test_id_structured and result_id blank.
   //
-  // Legacy uploaders can also use the name format:
-  // invocations/{INVOCATION_ID}/tests/{URL_ENCODED_TEST_ID}/results/{RESULT_ID}
+  // Legacy uploaders can also use the name formats:
+  // - invocations/{INVOCATION_ID} for create artifacts in an invocation.
+  // - invocations/{INVOCATION_ID}/tests/{URL_ENCODED_TEST_ID}/results/{RESULT_ID}
   // to create test result-level artifacts (in this case, test_id_structured and
   // result_id MUST be left blank on the Artifact).
   string parent = 1 [ (google.api.field_behavior) = REQUIRED ];
 
   // Artifact to upload.
-  // The length of the artifact contents MUST be <= 512KiB.
   // artifact.artifact_id MUST be set.
   // artifact.name will be ignored.
   Artifact artifact = 2 [ (google.api.field_behavior) = REQUIRED ];
+
+  // A unique identifier for this request. Restricted to 36 ASCII characters.
+  // A random UUID is recommended.
+  //
+  // If the same request is replayed (see "Retry policy" at the top of this doc),
+  // this request_id guarantees idempotence.
+  //
+  // Required (unless this request is nested in a BatchCreateArtifactsRequest).
+  string request_id = 3;
 }
 
 // A request message for BatchCreateArtifactsRequest.
-// Next ID: 4.
+//
+// The request will be handled atomically (i.e. all artifacts are
+// created or none are).
+//
+// Use of batching for artifacts uploads is strongly encouraged for
+// performance and efficiency reasons. Batches would typically but cut for
+// one of the following reasons:
+// - 500 test artifacts are in the batch,
+// - the size of the batch would exceed 10 MiB (this refers to the size of
+//   the field `requests` not the artifact contents), or
+// - a given dwell time has elapsed (e.g. 1 minute)
+//
+// Batched artifacts can cover more than one work unit, provided all
+// work units share the same update token (i.e. in case of Prefixed work units;
+// see CreateWorkUnitRequest.work_unit_id for details). In such situations,
+// the batching for artifacts may be integrated with the batching of work
+// units (e.g. creating artifacts in a batch will be preceded by batch-
+// creating any pending work units to avoid NotFound errors).
+//
+// To simplify batching, there is no requirement to create test results before
+// the corresponding test result artifacts are uploaded; the only ordering
+// requirement is for the work unit to be created before any artifacts are
+// uploaded to it.
+//
+// While this means it is technically possible to create orphaned test result
+// artifacts (by uploading the artifacts and never uploading the corresponding
+// test results), clients should not rely on being able to read such orphaned
+// artifacts later.
 message BatchCreateArtifactsRequest {
-  // Required. Name of the parent invocation, see Invocation.name.
-  // Can only be empty for legacy uploaders which specify requests[i].parent.
-  string parent = 3 [ (google.api.field_behavior) = REQUIRED ];
+  // Name of the parent work unit (if all artifacts to be created belong to the
+  // same work unit). See WorkUnit.name.
+  //
+  // If this set, then parent field in CreateArtifactRequest messages
+  // must either be empty or match this field.
+  //
+  // Legacy clients may also use an invocation name, see Invocation.name.
+  string parent = 3;
 
   // Requests to create Artifacts.
-  // The sum of the content lengths MUST be <= 10MiB.
-  // requests[i].parent MUST be either empty or equal to parent in this
-  // message.
-  // For legacy uploader requests[i].parent MUST be derived from the same invocation.
-  // Up to 500 requests.
+  //
+  // Up to 500 requests. Total size of all requests (as measured by proto.Size())
+  // MUST be <= 10 MiB.
   repeated CreateArtifactRequest requests = 2;
+
+  // A unique identifier for this request. Restricted to 36 ASCII characters.
+  // A random UUID is recommended.
+  //
+  // If the same request is replayed (see "Retry policy" at the top of this doc),
+  // this request_id guarantees idempotence.
+  //
+  // The request_id field in CreateArtifactRequest messages must either
+  // be empty or match this field.
+  //
+  // Required.
+  string request_id = 4;
 }
 
 message BatchCreateArtifactsResponse {

@@ -22,6 +22,8 @@ option go_package = "go.chromium.org/luci/resultdb/proto/v1;resultpb";
 option java_package = "com.google.luci.resultdb.v1";
 option java_multiple_files = true;
 
+// TestAggregation represents a summary of all test cases in a root invocation,
+// module, coarse_name or fine_name.
 message TestAggregation {
   // The test identifier prefix represented by the test aggregate.
   TestIdentifierPrefix id = 1;
@@ -34,40 +36,180 @@ message TestAggregation {
   // is test verdicts.
   AggregationLevel next_finer_level = 2;
 
-  // Counts of verdicts, by status v2.
+  // Counts of test case verdicts, by status v2.
   message VerdictCounts {
-    // Counts of verdicts by base status.
+    // Counts by effective status (after any status override like exoneration).
 
-    // The number of failed verdicts.
-    // Count includes both exonerated and non-exonerated verdicts.
+    // The number of failed test cases.
+    // A test case is failed if it has a failed result and no passed results.
+    // Count includes only non-exonerated failed verdicts.
     int32 failed = 1;
-    // The number of flaky verdicts.
+    // The number of flaky test cases.
+    // A flaky test case is any test case with both a passed and a failed result.
+    // Count includes only non-exonerated flaky verdicts.
     int32 flaky = 2;
-    // The number of passed verdicts.
+    // The number of passed test cases.
+    // A test case is passed if it has a passed result and no failed results.
     int32 passed = 3;
-    // The number of skipped verdicts.
+    // The number of skipped test cases.
+    // A test case is skipped if it has a skipped result and no passed or failed results.
     int32 skipped = 4;
-    // The number of execution errored verdicts.
-    // Count includes both exonerated and non-exonerated verdicts.
+    // The number of execution errored test cases.
+    // A test case is execution errored if it has an execution errored result, and no
+    // passing, failing or skipped results.
+    // Count includes only non-exonerated execution errored verdicts.
     int32 execution_errored = 5;
-    // The number of precluded verdicts.
-    // Count includes both exonerated and non-exonerated verdicts.
+    // The number of precluded test cases.
+    // A test case is precluded if it only has precluded results.
+    // Count includes only non-exonerated precluded verdicts.
     int32 precluded = 6;
+    // The number of exonerated test cases.
+    int32 exonerated = 7;
 
-    // Breakdown of selected failing statuses by override status.
-    // Summing all _exonerated_count(s) below yields the total number
-    // of exonerated verdicts.
+    // Counts by base status (before any status override like exoneration).
 
-    // The number of failed verdicts with exonerations.
-    int32 failed_exonerated = 7;
-    // The number of execution errored verdicts with exonerations.
-    int32 execution_errored_exonerated = 8;
-    // The number of precluded verdicts with exonerations.
-    int32 precluded_exonerated = 9;
+    // A test case is failed if it has a failed result and no passed results.
+    // This differs from `failed` in that it includes exonerated failures.
+    int32 failed_base = 8;
+    // A flaky test case is any test case with both a passed and a failed result.
+    // This differs from `flaky` in that it includes exonerated flakes.
+    int32 flaky_base = 9;
+    // A test case is passed if it has a passed result and no failed results.
+    // This is currently always the same as `passed` but could diverge if additional
+    // status overrides are introduced.
+    int32 passed_base = 10;
+    // A test case is skipped if it has a skipped result and no passed or failed results.
+    // This is currently always the same as `skipped` but could diverge if additional
+    // status overrides are introduced.
+    int32 skipped_base = 11;
+    // A test case is execution errored if it has an execution errored result, and no
+    // passing, failing or skipped results.
+    // This differs from `execution_errored` in that it includes exonerated
+    // execution errored verdicts.
+    int32 execution_errored_base = 12;
+    // A test case is precluded if it only has precluded results.
+    // This differs from `precluded` in that it includes exonerated precluded verdicts.
+    int32 precluded_base = 13;
   }
 
-  // The counts of test verdict statuses rolling up to this aggregation.
-  VerdictCounts verdict_counts = 3;
+  // The counts of all test verdicts in the aggregation.
+  VerdictCounts total_verdict_counts = 3;
 
-  // In future, we will add module status counts (e.g. failed, flaky) here.
+  // The counts of test verdicts in the test aggregation, which matched:
+  // - QueryTestAggregationsRequest.predicate.contents_filter (if any) and
+  // - QueryTestAggregationsRequest.predicate.status_filter (if any).
+  //
+  // If neither filter was specified, this is the same as `total_verdict_counts`.
+  //
+  // This field is not populated when listening to test aggregations via the pub/sub
+  // (TestAggregationsNotification).
+  VerdictCounts matched_verdict_counts = 6;
+
+  // Module status. This is based on the status of the top-level* work units
+  // linked the the module and reflects the success running and uploading
+  // test results to ResultDB, not the success of the test cases themselves.
+  //
+  // For example, the module status SUCCEEDED with all test results FAILED
+  // is a valid and common scenario.
+  //
+  // *A top-level work unit is the first work unit, in any chain from the
+  // root work unit down to a leaf work unit, that specifies a module_id.
+  //
+  // In root invocations that are finalized, it is guaranteed that the
+  // status RUNNING and PENDING will never occur as all work units will
+  // be in final states.
+  enum ModuleStatus {
+    MODULE_STATUS_UNSPECIFIED = 0;
+    // The module succeeded.
+    //
+    // This means all tests were run and had their results uploaded. It does
+    // NOT mean that all tests passed.
+    //
+    // Technical definition (in finalized invocations):
+    // At least one module-shard has a succeeded top-level work unit and
+    // all other module-shards have at least one skipped or succeeded top-level
+    // work unit. Moreover, no module-shard will have a failed top-level
+    // work unit.
+    SUCCEEDED = 1;
+    // The module succeeded, but only after retries.
+    //
+    // This means all tests were run and had their results uploaded (eventually).
+    // It does NOT mean that all tests passed.
+    //
+    // Technical definition (in finalized invocations):
+    // At least one module-shard has a succeeded top-level work unit and
+    // all other module-shards have at least one skipped or succeeded top-level
+    // work unit. Moreover, at least one shard will have a failed top-level
+    // work unit.
+    FLAKY = 7;
+    // The module failed to run and/or upload all test cases.
+    //
+    // This does not say anything about the test results which have
+    // been uploaded (if any).
+    //
+    // Technical definition (in finalized invocations):
+    // At least one module-shard has a failed top-level work unit,
+    // and moreover does not have a succeeded or skipped top-level work unit.
+    FAILED = 2;
+    // The module was skipped.
+    //
+    // Technical definition (in finalized invocations):
+    // For every module-shard, there was a top-level work unit with a status of SKIPPED.
+    // Moreover, there was no module-shard with a top-level work unit that
+    // had a status of SUCCEEDED.
+    SKIPPED = 3;
+    // The module was cancelled.
+    //
+    // Technical definition (in finalized invocations):
+    // There was at least one module-shard that consisted only of CANCELLED top-level
+    // work units. Moreover, the definition for a FAILED module was not met.
+    CANCELLED = 4;
+    // The module is running.
+    RUNNING = 5;
+    // The module is pending.
+    PENDING = 6;
+  }
+
+  // The module status. Set only for module-level aggregations.
+  //
+  // This reflects the success running and uploading test results to ResultDB,
+  // not the success of the test cases themselves.
+  //
+  // In case of the modules with the module name "legacy", it is possible that
+  // no work unit has reported a status for this module; in that case, the status
+  // here will be MODULE_STATUS_UNSPECIFIED.
+  ModuleStatus module_status = 4;
+
+  // Whether the:
+  // - the module or one of its test results matched
+  //   QueryTestAggregationsRequest.predicate.contents_filter (if any), and
+  // - the module status matched QueryTestAggregationsRequest.predicate.status_filter
+  //   (if any).
+  //
+  // If neither filter was specified, this is always true.
+  //
+  // This field is not populated when listening to test aggregations via the pub/sub
+  // (TestAggregationsNotification).
+  bool matched_module = 7;
+
+  // Counts of module statuses.
+  message ModuleStatusCounts {
+    // The number of modules that succeeded.
+    int32 succeeded = 1;
+    // The number of modules that were flaky.
+    int32 flaky = 7;
+    // The number of modules that failed.
+    int32 failed = 2;
+    // The number of modules that skipped.
+    int32 skipped = 3;
+    // The number of modules that were cancelled.
+    int32 cancelled = 4;
+    // The number of modules that are running.
+    int32 running = 5;
+    // The number of modules that are pending.
+    int32 pending = 6;
+  }
+
+  // The module status counts. Set only for invocation-level aggregations.
+  ModuleStatusCounts module_status_counts = 5;
 }

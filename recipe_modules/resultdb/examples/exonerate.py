@@ -8,6 +8,7 @@ from recipe_engine.post_process import (DropExpectation, StepSuccess,
                                         DoesNotRun)
 
 from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
+from PB.go.chromium.org.luci.resultdb.proto.v1 import test_exoneration as test_exoneration_pb2
 from PB.go.chromium.org.luci.resultdb.proto.v1 import test_result as test_result_pb2
 
 DEPS = [
@@ -19,21 +20,21 @@ DEPS = [
 ]
 
 test_exonerations = [
-    test_result_pb2.TestExoneration(
+    test_exoneration_pb2.TestExoneration(
         test_id='ninja://chromium/tests:browser_tests/t1',
         variant={'def': {
             'key1': 'value1'
         }},
         explanation_html='Failed in without patch step',
-        reason=test_result_pb2.ExonerationReason.OCCURS_ON_MAINLINE,
+        reason=test_exoneration_pb2.ExonerationReason.OCCURS_ON_MAINLINE,
     ),
-    test_result_pb2.TestExoneration(
+    test_exoneration_pb2.TestExoneration(
         test_id='ninja://chromium/tests:browser_tests/t2',
         variant={'def': {
             'key2': 'value2'
         }},
         explanation_html='Failed in without patch step',
-        reason=test_result_pb2.ExonerationReason.OCCURS_ON_MAINLINE,
+        reason=test_exoneration_pb2.ExonerationReason.OCCURS_ON_MAINLINE,
     )
 ]
 

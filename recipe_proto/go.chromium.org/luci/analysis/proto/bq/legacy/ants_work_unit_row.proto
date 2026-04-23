@@ -1,0 +1,97 @@
+// Copyright 2025 The LUCI Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package luci.analysis.bq.legacy;
+
+import "google/protobuf/timestamp.proto";
+import "go.chromium.org/luci/common/bq/pb/options.proto";
+import "go.chromium.org/luci/analysis/proto/bq/legacy/ants_common.proto";
+
+option go_package = "go.chromium.org/luci/analysis/proto/bq/legacy;bqpb";
+
+// AntsWorkUnitRow represents a row in a BigQuery table for an AnTS work unit.
+// Next ID: 30.
+message AntsWorkUnitRow {
+
+  // Indicates Module details.
+  message ModuleInfo {
+    // The module name, matching TestIdentifier.module.
+    string name = 1;
+    // The module parameters, matching TestIdentifier.module_parameters.
+    repeated StringPair module_parameters = 2;
+  }
+
+  // The type of the build.
+  BuildType build_type = 1;
+
+  // The ID of the build.
+  string build_id = 2;
+
+  // The provider of the build.
+  string build_provider = 3;
+
+  // The branch of the build.
+  string branch = 4;
+
+  // The target of the build.
+  string build_target = 5;
+
+  // The name of the work unit.
+  string name = 6;
+
+  // The ID of the work unit.
+  string id = 7;
+
+  // The ID of the parent work unit.
+  string parent_id = 8;
+
+  // The ID of the invocation.
+  string invocation_id = 9;
+
+  Timing timing = 10;
+
+  // A generic key-value property definition.
+  repeated StringPair properties = 11;
+
+  // Labels associated with the work unit.
+  repeated string labels = 12;
+
+  // The state of the work unit.
+  SchedulerState state = 13;
+
+  // The debug information for a WorkUnit.
+  DebugInfo debug_info = 14;
+
+  string type = 15;
+
+  // Indicates Module details.
+  ModuleInfo module_info = 16;
+
+  // Message explaining why a test was skipped.
+  SkippedReason skipped_reason = 17;
+
+  // Aconfig flag overrides.
+  AconfigFlagOverrides aconfig_flag_overrides = 18;
+
+  // The completion time of the work unit.
+  // Use to partition the BigQuery table.
+  google.protobuf.Timestamp completion_time = 19;
+
+  // The time when the BigQuery started inserting the row into the BigQuery
+  // table.
+  google.protobuf.Timestamp insert_time = 20 [(bqschema.options).default_value = "CURRENT_TIMESTAMP()"];
+}
+

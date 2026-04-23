@@ -1,0 +1,390 @@
+// Copyright 2025 The LUCI Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package luci.resultdb.v1;
+
+import "google/api/field_behavior.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "go.chromium.org/luci/resultdb/proto/v1/common.proto";
+
+option go_package = "go.chromium.org/luci/resultdb/proto/v1;resultpb";
+option java_package = "com.google.luci.resultdb.v1";
+option java_multiple_files = true;
+
+// A top-level container of test results.
+// Next ID: 26.
+message RootInvocation {
+  // The resource name of this root invocation.
+  // Format: `rootInvocations/{ROOT_INVOCATION_ID}`
+  // See also https://aip.dev/122.
+  //
+  // Output only.
+  string name = 1 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.field_behavior) = IMMUTABLE
+  ];
+
+  // The root invocation ID.
+  //
+  // Output only.
+  string root_invocation_id = 2 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.field_behavior) = IMMUTABLE
+  ];
+
+  // Indicates whether the root invocation, and its work units, are immutable.
+  enum FinalizationState {
+    // The default value. This value is used if the finalization state is omitted.
+    FINALIZATION_STATE_UNSPECIFIED = 0;
+
+    // The root invocation is mutable.
+    ACTIVE = 1;
+
+    // The root invocation is in the process of moving to the FINALIZED state.
+    //
+    // In this state, the root invocation and root work unit records are immutable,
+    // but its contained work units may still be mutable.
+    //
+    // The root invocation will automatically enter this state at the same time
+    // as the root work unit enters the FINALIZING state.
+    FINALIZING = 2;
+
+    // The root invocation is immutable and no longer accepts new results
+    // directly or indirectly. The root work unit will enter this state at the
+    // same time as the root work unit enters the FINALIZED state.
+    FINALIZED = 3;
+  }
+
+  // Current finalization state of the root invocation. This is an output only
+  // field and is based on the finalization state of the root work unit.
+  FinalizationState finalization_state = 3 [
+    (google.api.field_behavior) = OUTPUT_ONLY
+  ];
+
+  // The execution state of the root invocation.
+  enum State {
+    // The default value. This value is unused.
+    STATE_UNSPECIFIED = 0;
+
+    // Non-final states.
+
+    // The root invocation has not yet started running.
+    PENDING = 1;
+
+    // The root invocation is currently running.
+    RUNNING = 2;
+
+    // Final states. When transitioned to one of these states, the
+    // the root invocation will also start to finalize (become immutable).
+
+    // Can be used as a bitmask to identify final states.
+    FINAL_STATE_MASK = 4;
+
+    // The root invocation completed successfully.
+    //
+    // This status means results are complete and correct, i.e.:
+    // - all tests to be run (or skipped) were identified.
+    // - test results were successfully uploaded to ResultDB
+    //   for each such test.
+    //
+    // This status generally does not say anything about the test content;
+    // tests could have FAILED, some could have even failed to
+    // produce a result (EXECUTION_ERRORED).
+    SUCCEEDED = 12; // 8 | FINAL_STATE_MASK
+
+    // The root invocation determined no tests need to be run.
+    // For example, the build dependency graph indicates the CL did
+    // not modify the module to be tested.
+    // This status usually indicates no test results were uploaded.
+    SKIPPED = 20; // 16 | FINAL_STATE_MASK
+
+    // The root invocation encountered an error, which was not resolved
+    // by retry.
+    //
+    // This status means the results may be incomplete.
+    FAILED = 36; // 32 | FINAL_STATE_MASK
+
+    // The root invocation never started or may be incomplete, because
+    // an external factor requested its cancellation (e.g. presubmit
+    // run was no longer needed).
+    CANCELLED = 68; // 64 | FINAL_STATE_MASK
+  }
+
+  // The overall state of the root invocation. This is an output only
+  // field and is based on the state of the root work unit.
+  //
+  // See also: https://google.aip.dev/216.
+  State state = 17 [
+    (google.api.field_behavior) = OUTPUT_ONLY
+  ];
+
+  // A summary of the final state of the root invocation, to be displayed on the UI.
+  // MUST be escaped prior to rendering on the UI.
+  //
+  // This is an output only field and based on the summary of the root work unit.
+  string summary_markdown = 18 [
+    (google.api.field_behavior) = OUTPUT_ONLY
+  ];
+
+  // The realm of the root invocation. This controls the ACLs that apply to the
+  // root invocation and its contents.
+  //
+  // For example, 'chromium:try'.
+  //
+  // See go/luci-authorization for more information.
+  string realm = 4 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.field_behavior) = IMMUTABLE
+  ];
+
+  // When the invocation was created.
+  // Output only.
+  google.protobuf.Timestamp create_time = 5 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.field_behavior) = IMMUTABLE
+  ];
+
+  // LUCI identity (e.g. "user:<email>") who created the invocation.
+  // Typically, a LUCI service account (e.g.
+  // "user:cr-buildbucket@appspot.gserviceaccount.com"), but can also be a user
+  // (e.g. "user:johndoe@example.com").
+  //
+  // Output only.
+  string creator = 6 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.field_behavior) = IMMUTABLE
+  ];
+
+  // When the root invocation was last updated.
+  // Output only.
+  google.protobuf.Timestamp last_updated = 20 [
+    (google.api.field_behavior) = OUTPUT_ONLY
+  ];
+
+  // == Finalization ===========================================================
+
+  // When the invocation started to finalize, i.e. transitioned to a finalization
+  // state of FINALIZING. This means the invocation is immutable but directly or
+  // indirectly included invocations may not be.
+  //
+  // Output only.
+  google.protobuf.Timestamp finalize_start_time = 7
+      [ (google.api.field_behavior) = OUTPUT_ONLY ];
+
+  // When the invocation was finalized, i.e. transitioned to a finalization state
+  // of FINALIZED.
+  // If this field is set, implies that the invocation is finalized. This
+  // means the invocation and directly or indirectly included invocations
+  // are immutable.
+  //
+  // Output only.
+  google.protobuf.Timestamp finalize_time = 8
+      [ (google.api.field_behavior) = OUTPUT_ONLY ];
+
+  // == General ================================================================
+
+  // The resource that produced results in this root invocation.
+  // Required.
+  ProducerResource producer_resource = 25 [
+    (google.api.field_behavior) = IMMUTABLE,
+    (google.api.field_behavior) = OUTPUT_ONLY
+  ];
+
+  // The process definition of the root invocation. Root invocations with the same
+  // definition share the same root invocation history.
+  //
+  // Setting this field is recommended but can be elided in case of local and
+  // other emphemeral test runs which are not suitable to be plotted into a history.
+  RootInvocationDefinition definition = 21;
+
+  // The code sources which were tested by this root invocation.
+  // This is used to index test results for test history, and for
+  // related analyses (e.g. culprit analysis / changepoint analyses).
+  //
+  // Required.
+  Sources sources = 11;
+
+  // The primary build which was tested by this root invocation.
+  BuildDescriptor primary_build = 23;
+
+  // Extra builds which were tested by this root invocation.
+  // Limit of 10 extra builds.
+  repeated BuildDescriptor extra_builds = 24;
+
+  // Root invocation-level string key-value pairs.
+  // A key can be repeated.
+  //
+  // Total size (as measured by proto.Size()) must be <= 16 KB.
+  repeated StringPair tags = 13;
+
+  // Arbitrary JSON object that contains structured, domain-specific properties
+  // of the root invocation.
+  //
+  // The value must contain a field "@type" which is a URL/resource name that
+  // uniquely identifies the type of the source protocol buffer message that
+  // defines the schema of these properties. This string must contain at least
+  // one "/" character. The last segment of the URL's path must represent the
+  // fully qualified name of the type (e.g. foo.com/x/some.package.MyMessage).
+  // See google.protobuf.Any for more information.
+  //
+  // N.B. We do not use google.protobuf.Any here to remove a requirement for
+  // ResultDB to know the schema of customer-defined protos. We do however use
+  // a format equivalent to google.protobuf.Any's JSON representation.
+  //
+  // The serialized size must be <= 16 KB.
+  google.protobuf.Struct properties = 14;
+
+  // The test baseline that this root invocation should contribute to.
+  //
+  // This is a user-specified identifier. Typically, this identifier is generated
+  // from the name of the source that generated the test result, such as the
+  // builder name for Chromium. For example, `try:linux-rel`.
+  //
+  // The supported syntax for a baseline identifier is
+  // ^[a-z0-9\-_.]{1,100}:[a-zA-Z0-9\-_.\(\) ]{1,128}$. This syntax was selected
+  // to allow <buildbucket bucket name>:<buildbucket builder name> as a valid
+  // baseline ID.
+  //
+  // Baselines are used to identify new tests; subtracting from the tests in the
+  // root invocation the set of test variants in the baseline yields the new
+  // tests run in the invocation. Those tests can then be e.g. subject to additional
+  // presubmit checks, such as to validate they are not flaky.
+  string baseline_id = 15;
+
+  // StreamingExportState controls the operation of streaming (low-latency)
+  // exports from the root invocation. Streaming exports are designed to
+  // commence while the root invocation is still running.
+  enum StreamingExportState {
+    // The default value. Do not use this value.
+    STREAMING_EXPORT_STATE_UNSPECIFIED = 0;
+
+    // The metadata fields on the root invocation have not yet been set (or
+    // are not yet set to their final values). The streaming exports can
+    // not start yet.
+    //
+    // While this option is set, test result exports to downstream clients
+    // will be delayed. Please set this value to METADATA_FINAL as soon as
+    // practicable.
+    //
+    // See documentation on `streaming_export_state` for a definition of
+    // the metadata fields.
+    WAIT_FOR_METADATA = 1;
+
+    // The metadata fields on the root invocation have been set and can be made
+    // immutable. Streaming exports can commence.
+    //
+    // See documentation on `streaming_export_state` for a definition of
+    // the metadata fields.
+    METADATA_FINAL = 2;
+  }
+
+  // Controls the operation of streaming exports.
+  //
+  // Various clients (e.g. changepoint analysis, presubmit flake suppression
+  // systems) rely on having timely access to test result data for their
+  // performance and request uploaders set this field to `METADATA_FINAL`
+  // as soon as practicable.
+  //
+  // Before METADATA_FINAL can be set, the following metadata fields on the
+  // root invocation must have been populated with their final values:
+  // - `definition`
+  // - `sources`
+  // - `primary_build`
+  // - `extra_builds`
+  //
+  // This field is client owned. Consistent with https://google.aip.dev/129,
+  // it will not be forced to METADATA_FINAL when the root invocation starts
+  // to finalize (but exports will start anyway at this point, if they
+  // were not started earlier).
+  //
+  // Required.
+  StreamingExportState streaming_export_state = 19;
+
+  // This checksum is computed by the server based on the value of other
+  // fields, and may be sent on update requests to ensure the client
+  // has an up-to-date value before proceeding.
+  // See also https://google.aip.dev/154.
+  string etag = 16;
+}
+
+// The following request message appears below as GetRootInvocation is
+// implemented by both the ResultDB and Recorder service. They are
+// implemented by both services for client ergonomics and to separate
+// the recorder and reader-side failure domains. In the recorder service,
+// the Get methods facilitate atomic updates using etags for optimistic
+// concurrency control.
+// In the ResultDB service, they support reading the uploaded work units.
+
+// A request message for the GetRootInvocation RPC.
+message GetRootInvocationRequest {
+  // The name of the root invocation to read, see RootInvocation.name.
+  string name = 1 [ (google.api.field_behavior) = REQUIRED ];
+}
+
+// RootInvocationMetadata contains RootInvocation fields which are immutable at
+// the time the RootInvocation's streaming_export_state is set to METADATA_FINAL.
+//
+// This record is attached to streaming exports to provide context about
+// the root invocation being exported, without including fields which may be
+// incomplete and subject to data races.
+//
+// Follows the same field IDs as RootInvocation.
+message RootInvocationMetadata {
+  // The resource name of the root invocation.
+  // Format: `rootInvocations/{ROOT_INVOCATION_ID}`
+  // See also https://aip.dev/122.
+  string name = 1;
+
+  // The root invocation ID.
+  //
+  // Output only.
+  string root_invocation_id = 2;
+
+  // The realm of the root invocation. This controls the ACLs that apply to the
+  // root invocation and its contents.
+  //
+  // For example, 'chromium:try'.
+  //
+  // See go/luci-authorization for more information.
+  string realm = 4;
+
+  // When the invocation was created.
+  // Output only.
+  google.protobuf.Timestamp create_time = 5;
+
+  // The producer resource.
+  ProducerResource producer_resource = 25;
+
+  // The process definition of the root invocation. Root invocations with the same
+  // definition share the same root invocation history.
+  //
+  // Setting this field is recommended but can be elided in case of local and
+  // other emphemeral test runs which are not suitable to be plotted into a history.
+  RootInvocationDefinition definition = 21;
+
+  // The code sources which were tested by this root invocation.
+  // This is used to index test results for test history, and for
+  // related analyses (e.g. culprit analysis / changepoint analyses).
+  Sources sources = 11;
+
+  // The primary build which was tested by this root invocation.
+  BuildDescriptor primary_build = 23;
+
+  // Extra builds which were tested by this root invocation.
+  // Limit of 10 extra builds.
+  repeated BuildDescriptor extra_builds = 24;
+}

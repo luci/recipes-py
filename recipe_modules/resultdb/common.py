@@ -10,6 +10,7 @@ import json
 from google.protobuf import json_format
 
 from PB.go.chromium.org.luci.resultdb.proto.v1 import invocation as invocation_pb2
+from PB.go.chromium.org.luci.resultdb.proto.v1 import test_exoneration as test_exoneration_pb2
 from PB.go.chromium.org.luci.resultdb.proto.v1 import test_result as test_result_pb2
 
 
@@ -24,15 +25,17 @@ class Invocation:
   # - protobuf_type is the collection element type
   # - serialization_key: a dict key used in serialization format.
   _COLLECTIONS = (
-    ('test_results', test_result_pb2.TestResult, 'testResult'),
-    ('test_exonerations', test_result_pb2.TestExoneration, 'testExoneration'),
+      ('test_results', test_result_pb2.TestResult, 'testResult'),
+      ('test_exonerations', test_exoneration_pb2.TestExoneration,
+       'testExoneration'),
   )
 
   def __init__(self, proto=None, test_results=None, test_exonerations=None):
     assert proto is None or isinstance(proto, invocation_pb2.Invocation), proto
     assert _all_of_type(test_results, test_result_pb2.TestResult), test_results
-    assert _all_of_type(test_exonerations, test_result_pb2.TestExoneration), (
-        test_exonerations)
+    assert _all_of_type(test_exonerations,
+                        test_exoneration_pb2.TestExoneration), (
+                            test_exonerations)
     self.proto = proto or invocation_pb2.Invocation()
     self.test_results = test_results or []
     self.test_exonerations = test_exonerations or []

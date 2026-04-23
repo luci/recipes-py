@@ -6080,10 +6080,10 @@ Test to cover legacy aspects of PathTestApi.
 &mdash; **def [RunSteps](/recipe_modules/raw_io/tests/output_mismatch.py#17)(api):**
 ### *recipes* / [resultdb:examples/exonerate](/recipe_modules/resultdb/examples/exonerate.py)
 
-[DEPS](/recipe_modules/resultdb/examples/exonerate.py#13): [context](#recipe_modules-context), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/resultdb/examples/exonerate.py#14): [context](#recipe_modules-context), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/exonerate.py#41)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/exonerate.py#42)(api):**
 ### *recipes* / [resultdb:examples/get\_included\_invocations](/recipe_modules/resultdb/examples/get_included_invocations.py)
 
 [DEPS](/recipe_modules/resultdb/examples/get_included_invocations.py#9): [assertions](#recipe_modules-assertions), [resultdb](#recipe_modules-resultdb)
@@ -6104,10 +6104,10 @@ Test to cover legacy aspects of PathTestApi.
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/include.py#19)(api):**
 ### *recipes* / [resultdb:examples/query](/recipe_modules/resultdb/examples/query.py)
 
-[DEPS](/recipe_modules/resultdb/examples/query.py#17): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/resultdb/examples/query.py#18): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query.py#24)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query.py#25)(api):**
 ### *recipes* / [resultdb:examples/query\_new\_test\_variants](/recipe_modules/resultdb/examples/query_new_test_variants.py)
 
 [DEPS](/recipe_modules/resultdb/examples/query_new_test_variants.py#11): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
