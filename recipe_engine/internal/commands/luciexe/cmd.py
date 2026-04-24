@@ -25,6 +25,7 @@ from ...stream.invariants import StreamEngineInvariants
 from ...stream.luci import LUCIStreamEngine
 from ...turboci import common as turboci_common
 from ...turboci import fake as turboci_fake
+from ...turboci import turboci as turboci_real
 
 from . import RunBuildContractViolation
 
@@ -93,9 +94,12 @@ def _main_impl(args):
   LOG.info('finished parsing Build message')
   LOG.debug('build proto: %s', jsonpb.MessageToJson(build))
 
-  # TODO: Wire this up to a real client when luci_context indicates that we're
-  # running as a Stage.
-  turboci_common.CLIENT = turboci_fake.FakeTurboCIOrchestrator(test_mode=False)
+  turboci_endpoint = build.infra.turboci.hostname
+  if turboci_endpoint:
+    turboci_common.CLIENT = turboci_real.TurboCIOrchestrator(turboci_endpoint)
+  else:
+    turboci_common.CLIENT = turboci_fake.FakeTurboCIOrchestrator(
+        test_mode=False)
 
   properties = jsonpb.MessageToDict(build.input.properties)
   properties.update(_synth_properties(build, properties))

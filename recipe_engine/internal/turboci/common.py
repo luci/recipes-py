@@ -19,6 +19,8 @@ from PB.turboci.graph.orchestrator.v1.edge import Edge
 from PB.turboci.graph.orchestrator.v1.query import Query
 from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesRequest
 from PB.turboci.graph.orchestrator.v1.query_nodes_response import QueryNodesResponse
+from PB.turboci.graph.orchestrator.v1.read_workplan_request import ReadWorkPlanRequest
+from PB.turboci.graph.orchestrator.v1.read_workplan_response import ReadWorkPlanResponse
 from PB.turboci.graph.orchestrator.v1.type_info import TypeInfo
 from PB.turboci.graph.orchestrator.v1.workplan import WorkPlan
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
@@ -34,6 +36,9 @@ class TurboCIClient(Protocol):
     ...
 
   def QueryNodes(self, req: QueryNodesRequest) -> QueryNodesResponse:
+    ...
+
+  def ReadWorkPlan(self, req: ReadWorkPlanRequest) -> ReadWorkPlanResponse:
     ...
 
 

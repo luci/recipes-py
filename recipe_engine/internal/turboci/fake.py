@@ -68,6 +68,8 @@ from PB.turboci.graph.orchestrator.v1.edge import RESOLUTION_SATISFIED
 from PB.turboci.graph.orchestrator.v1.query import Query
 from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesRequest
 from PB.turboci.graph.orchestrator.v1.query_nodes_response import QueryNodesResponse
+from PB.turboci.graph.orchestrator.v1.read_workplan_request import ReadWorkPlanRequest
+from PB.turboci.graph.orchestrator.v1.read_workplan_response import ReadWorkPlanResponse
 from PB.turboci.graph.orchestrator.v1.revision import Revision
 from PB.turboci.graph.orchestrator.v1.transaction_invariant import TransactionConflictFailure
 from PB.turboci.graph.orchestrator.v1.type_info import TypeInfo
@@ -783,3 +785,6 @@ class FakeTurboCIOrchestrator(TurboCIClient):
                 f' type {type(node).__name__}')
 
     return WriteNodesResponse(written_version=new_version)
+
+  def ReadWorkPlan(self, req: ReadWorkPlanRequest) -> ReadWorkPlanResponse:
+    raise NotImplementedError("FakeTurboCIOrchestrator.ReadWorkPlan")
