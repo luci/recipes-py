@@ -94,12 +94,10 @@ def _main_impl(args):
   LOG.info('finished parsing Build message')
   LOG.debug('build proto: %s', jsonpb.MessageToJson(build))
 
-  turboci_endpoint = build.infra.turboci.hostname
-  if turboci_endpoint:
-    turboci_common.CLIENT = turboci_real.TurboCIOrchestrator(turboci_endpoint)
-  else:
-    turboci_common.CLIENT = turboci_fake.FakeTurboCIOrchestrator(
-        test_mode=False)
+  # TODO(b/502646298): Wire up the real TurboCI client after supporting
+  # current QueryNodes use cases - firstly by calling ReadWorkPlan under
+  # the hood and then do post-filtering to match the request parameters.
+  turboci_common.CLIENT = turboci_fake.FakeTurboCIOrchestrator(test_mode=False)
 
   properties = jsonpb.MessageToDict(build.input.properties)
   properties.update(_synth_properties(build, properties))
