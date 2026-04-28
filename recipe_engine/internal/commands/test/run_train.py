@@ -6,6 +6,7 @@ import collections
 import json
 import os
 import shutil
+import tempfile
 
 import coverage
 import gevent
@@ -128,8 +129,12 @@ def _run(test_results, recipe_deps, use_emoji, test_filter, is_train,
                              show_warnings, show_durations)
 
   cov_dir = None
-  total_cov = coverage.Coverage(config_file=False, data_file='.total_coverage',
-                                data_suffix=True)
+  # We use a non-suffixed file in a temp directory to avoid polluting the
+  # checkout and avoid sharing issues.
+  total_cov_file = tempfile.NamedTemporaryFile(prefix='total_coverage', delete=False)
+  total_cov_file.close()
+  total_cov = coverage.Coverage(config_file=False, data_file=total_cov_file.name,
+                                data_suffix=False)
   total_cov.save() # Force to ensure the coverage data file is created.
   try:
     # in case of crash; don't want this undefined in finally clause.
@@ -216,6 +221,10 @@ def _run(test_results, recipe_deps, use_emoji, test_filter, is_train,
     if cov_dir:
       shutil.rmtree(cov_dir, ignore_errors=True)
     total_cov.erase()
+    try:
+      os.remove(total_cov_file.name)
+    except OSError:
+      pass
 
 def main(args):
   """Runs simulation tests on a given repo of recipes.
