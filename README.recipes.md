@@ -145,6 +145,7 @@
   * [file:examples/flatten_single_directories](#recipes-file_examples_flatten_single_directories)
   * [file:examples/glob](#recipes-file_examples_glob)
   * [file:examples/handle_json_file](#recipes-file_examples_handle_json_file)
+  * [file:examples/is_executable](#recipes-file_examples_is_executable)
   * [file:examples/listdir](#recipes-file_examples_listdir)
   * [file:examples/raw_copy](#recipes-file_examples_raw_copy)
   * [file:examples/read_write_proto](#recipes-file_examples_read_write_proto)
@@ -1945,7 +1946,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#691)(self, name: str, dest: (config_types.Path | str), mode: int=511):**
+&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#713)(self, name: str, dest: (config_types.Path | str), mode: int=511):**
 
 Ensures that `dest` exists and is a directory.
 
@@ -1974,7 +1975,7 @@ Returns:
 Raises:
   file.Error and ValueError if passed paths input is not str or Path.
 
-&mdash; **def [filesizes](/recipe_modules/file/api.py#713)(self, name: str, files: Sequence[(config_types.Path | str)], test_data: (Sequence[int] | None)=None):**
+&mdash; **def [filesizes](/recipe_modules/file/api.py#735)(self, name: str, files: Sequence[(config_types.Path | str)], test_data: (Sequence[int] | None)=None):**
 
 Returns list of filesizes for the given files.
 
@@ -1985,7 +1986,7 @@ Args:
 
 Returns size of each file in bytes.
 
-&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#887)(self, name: str, path: (config_types.Path | str)):**
+&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#909)(self, name: str, path: (config_types.Path | str)):**
 
 Flattens singular directories, starting at path.
 
@@ -2044,7 +2045,18 @@ Returns all paths found.
 
 Raises: file.Error.
 
-&mdash; **def [listdir](/recipe_modules/file/api.py#652)(self, name: str, source: (config_types.Path | str), recursive: bool=False, test_data: Sequence[str]=(), include_log: bool=True):**
+&mdash; **def [is\_executable](/recipe_modules/file/api.py#632)(self, name: str, path: (config_types.Path | str), test_data: bool=True):**
+
+Checks if a file is executable.
+
+Args:
+  * name: The name of the step.
+  * path: The path of the file to check.
+  * test_data: Default data for simulation.
+
+Returns: True if the file is executable, False otherwise.
+
+&mdash; **def [listdir](/recipe_modules/file/api.py#674)(self, name: str, source: (config_types.Path | str), recursive: bool=False, test_data: Sequence[str]=(), include_log: bool=True):**
 
 Lists all files inside a directory.
 
@@ -2138,7 +2150,7 @@ Returns: The content of the file.
 
 Raises: file.Error
 
-&mdash; **def [remove](/recipe_modules/file/api.py#632)(self, name: str, source: (config_types.Path | str)):**
+&mdash; **def [remove](/recipe_modules/file/api.py#654)(self, name: str, source: (config_types.Path | str)):**
 
 Removes a file.
 
@@ -2150,7 +2162,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmcontents](/recipe_modules/file/api.py#763)(self, name: str, source: (config_types.Path | str)):**
+&mdash; **def [rmcontents](/recipe_modules/file/api.py#785)(self, name: str, source: (config_types.Path | str)):**
 
 Similar to rmtree, but removes only contents not the directory.
 
@@ -2165,7 +2177,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmglob](/recipe_modules/file/api.py#786)(self, name: str, source: (config_types.Path | str), pattern: str, recursive: bool=True, include_hidden: bool=True):**
+&mdash; **def [rmglob](/recipe_modules/file/api.py#808)(self, name: str, source: (config_types.Path | str), pattern: str, recursive: bool=True, include_hidden: bool=True):**
 
 Removes all entries in `source` matching the glob `pattern`.
 
@@ -2194,7 +2206,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmtree](/recipe_modules/file/api.py#741)(self, name: str, source: (config_types.Path | str)):**
+&mdash; **def [rmtree](/recipe_modules/file/api.py#763)(self, name: str, source: (config_types.Path | str)):**
 
 Recursively removes a directory.
 
@@ -2208,7 +2220,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [symlink](/recipe_modules/file/api.py#838)(self, name: str, source: ((config_types.Path | str) | recipe_api.Placeholder), linkname: ((config_types.Path | str) | recipe_api.Placeholder)):**
+&mdash; **def [symlink](/recipe_modules/file/api.py#860)(self, name: str, source: ((config_types.Path | str) | recipe_api.Placeholder), linkname: ((config_types.Path | str) | recipe_api.Placeholder)):**
 
 Creates a symlink on the local filesystem.
 
@@ -2221,14 +2233,14 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#861)(self, root: (config_types.Path | str)):**
+&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#883)(self, root: (config_types.Path | str)):**
 
 Creates a SymlinkTree, given a root directory.
 
 Args:
   * root: root of a tree of symlinks.
 
-&mdash; **def [truncate](/recipe_modules/file/api.py#869)(self, name: str, path: (config_types.Path | str), size_mb: int=100):**
+&mdash; **def [truncate](/recipe_modules/file/api.py#891)(self, name: str, path: (config_types.Path | str), size_mb: int=100):**
 
 Creates an empty file with path and size_mb on the local filesystem.
 
@@ -5720,6 +5732,12 @@ Tests that step presentation properties can be ordered.
 
 
 &mdash; **def [RunSteps](/recipe_modules/file/examples/handle_json_file.py#13)(api):**
+### *recipes* / [file:examples/is\_executable](/recipe_modules/file/examples/is_executable.py)
+
+[DEPS](/recipe_modules/file/examples/is_executable.py#7): [file](#recipe_modules-file), [path](#recipe_modules-path)
+
+
+&mdash; **def [RunSteps](/recipe_modules/file/examples/is_executable.py#13)(api):**
 ### *recipes* / [file:examples/listdir](/recipe_modules/file/examples/listdir.py)
 
 [DEPS](/recipe_modules/file/examples/listdir.py#7): [file](#recipe_modules-file), [path](#recipe_modules-path)

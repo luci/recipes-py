@@ -154,6 +154,16 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
     return (self.m.raw_io.stream_output_text('\n'.join(sorted(map(str, names))))
             + self.errno(errno_name))
 
+  def is_executable(self, result: bool = True, errno_name: str | int = 0):
+    """Provides test mock for the `is_executable` method.
+
+    Args:
+      result: The result to return.
+      errno_name: The error name for this step to return, if any.
+    """
+    return (self.m.raw_io.stream_output_text(str(result))
+            + self.errno(errno_name))
+
   def errno(self, errno_name=None):
     """Provides test mock for any file module method, causing the step to raise
     a file.Error exception.

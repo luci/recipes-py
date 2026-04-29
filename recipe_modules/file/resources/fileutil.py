@@ -175,6 +175,10 @@ def _Remove(path):
     if e.errno != errno.ENOENT:
       raise
 
+
+def _IsExecutable(path):
+  print(os.access(path, os.X_OK))
+
 def _Truncate(path, size_mb):
   with open(path, 'w') as f:
     f.truncate(size_mb * 1024 * 1024)
@@ -382,6 +386,12 @@ def main(args):
       help='Remove a file')
   subparser.add_argument('source', help='The file to remove.')
   subparser.set_defaults(func=lambda opts: _Remove(opts.source))
+
+  # Subcommand: is_executable
+  subparser = subparsers.add_parser('is_executable',
+      help='Check if a file is executable.')
+  subparser.add_argument('path', help='The file to check.')
+  subparser.set_defaults(func=lambda opts: _IsExecutable(opts.path))
 
   # Subcommand: listdir
   subparser = subparsers.add_parser('listdir',

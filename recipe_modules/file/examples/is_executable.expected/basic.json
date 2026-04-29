@@ -1,0 +1,49 @@
+[
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "content",
+      "[START_DIR]/some_file"
+    ],
+    "infra_step": true,
+    "name": "create file",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@some_file@content@@@",
+      "@@@STEP_LOG_END@some_file@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "is_executable",
+      "[START_DIR]/some_file"
+    ],
+    "infra_step": true,
+    "name": "check executable"
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "is_executable",
+      "[START_DIR]/some_file"
+    ],
+    "infra_step": true,
+    "name": "check non-executable"
+  },
+  {
+    "name": "$result"
+  }
+]

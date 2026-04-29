@@ -629,6 +629,28 @@ class FileApi(recipe_api.RecipeApi):
     result.presentation.logs["glob"] = [str(x) for x in ret]
     return ret
 
+  def is_executable(
+      self,
+      name: str,
+      path: config_types.Path | str,
+      test_data: bool = True,
+  ) -> bool:
+    """Checks if a file is executable.
+
+    Args:
+      * name: The name of the step.
+      * path: The path of the file to check.
+      * test_data: Default data for simulation.
+
+    Returns: True if the file is executable, False otherwise.
+    """
+    self.m.path.assert_absolute(path)
+    result = self._run(
+        name, ['is_executable', path],
+        step_test_data=lambda: self.test_api.is_executable(test_data),
+        stdout=self.m.raw_io.output_text())
+    return result.stdout.strip() == 'True'
+
   def remove(
       self,
       name: str,
