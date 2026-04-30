@@ -46,14 +46,14 @@ enum ValueHashAlgo {
 //
 // Serialized as:
 //
-//   BASE64_URLSAFE(hash || varint(size_bytes) || byte(algo))
+//   BASE64_URLSAFE(hash || uvarint(size_bytes) || byte(algo))
 //
 // And de-serialized as:
 //
 //   rawDecoded = BASE64_URLSAFE_dec(encoded)
 //   algo = ALGOS[rawDecoded[-1]]
 //   rawHash = rawDecoded[algo.len]
-//   size = varintDecode(rawDecoded[algo.len:-1])
+//   size = uvarintDecode(rawDecoded[algo.len:-1])
 //
 // This puts `hash` at the front, rather than `algo`, in order to help uses of
 // the ValueDigest as a primary key to avoid hotspotting. For the same reason,
@@ -64,7 +64,7 @@ message ValueDigest {
   optional bytes hash = 1;
 
   // Required. The size of the hashed data in bytes.
-  optional int64 size_bytes = 2;
+  optional uint64 size_bytes = 2;
 
   // Required. The algorithm used to compute `hash`.
   optional ValueHashAlgo algo = 3;

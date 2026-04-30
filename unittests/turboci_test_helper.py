@@ -9,6 +9,7 @@ import test_env
 
 from google.protobuf.message import Message
 
+from PB.turboci.graph.orchestrator.v1.transaction_details import TransactionDetails
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 from PB.turboci.graph.ids.v1 import identifier
 from PB.turboci.graph.orchestrator.v1.query import Query
@@ -35,7 +36,7 @@ class TestBaseClass(test_env.RecipeEngineUnitTest):
       *nodes: (WriteNodesRequest.CheckWrite | WriteNodesRequest.StageWrite
                | WriteNodesRequest.Reason),
       current_stage: WriteNodesRequest.CurrentStageWrite | None = None,
-      txn: WriteNodesRequest.TransactionDetails | None = None,
+      txn: TransactionDetails | None = None,
   ):
     if not any(isinstance(node, WriteNodesRequest.Reason) for node in nodes):
       nodes += (turboci.reason('test write'),)

@@ -39,7 +39,7 @@ def assert_can_apply(write: WriteNodesRequest.CheckWrite, check: None | Check):
   if dups := _dup_types(write.options):
     raise exc(f'options: duplicate types: {dups}')
 
-  if dups := _dup_types(write.results):
+  if dups := _dup_types(write.result_data):
     raise exc(f'results: duplicate types: {dups}')
 
   if check is None:
@@ -54,7 +54,7 @@ def assert_can_apply(write: WriteNodesRequest.CheckWrite, check: None | Check):
     # can set results as long as:
     #   * there are no dependencies
     #   * the target state is PLANNED or later.
-    if write.results:
+    if write.result_data:
       if write.HasField('dependencies') or state < CHECK_STATE_PLANNED:
         raise exc(
             f"new check: cannot add results in state {CheckState.Name(state)!r}"
@@ -112,7 +112,7 @@ def assert_can_apply(write: WriteNodesRequest.CheckWrite, check: None | Check):
     # write.dependencies is normalized by the calling function, so we don't need
     # to check for well-formedness here.
 
-  if write.results or write.finalize_results:
+  if write.result_data or write.finalize_results:
     if check.state != CHECK_STATE_WAITING and (
         write.state != CHECK_STATE_WAITING and
         write.state != CHECK_STATE_FINAL):

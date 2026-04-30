@@ -9,6 +9,7 @@ package turboci.graph.executor.v1;
 import "turboci/graph/ids/v1/identifier.proto";
 import "turboci/graph/orchestrator/v1/stage.proto";
 import "turboci/graph/orchestrator/v1/value_data.proto";
+import "turboci/graph/orchestrator/v1/workplan.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/executor/v1;executorpb";
 option java_multiple_files = true;
@@ -17,6 +18,11 @@ option java_multiple_files = true;
 message RunStageRequest {
   // Stage to run.
   optional orchestrator.v1.Stage stage = 1;
+
+  // The partial view of the parent work plan.
+  //
+  // Stages and Checks are omitted.
+  optional orchestrator.v1.WorkPlan workplan = 5;
 
   // A map containing [ValueData] for `stage`.
   //

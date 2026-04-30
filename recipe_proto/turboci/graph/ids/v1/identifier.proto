@@ -20,6 +20,15 @@ option java_multiple_files = true;
 //
 // No string identifiers here may contain a colon.
 message Identifier {
+  reserved "check_option";
+  reserved 3;
+
+  reserved "check_result_datum";
+  reserved 5;
+
+  reserved "check_edit_option";
+  reserved 7;
+
   // The type of this Identifier.
   //
   // This should be kept in sync with the `IdentifierKind` enum.
@@ -31,19 +40,19 @@ message Identifier {
     Check check = 2;
 
     // A particular Check.Result.
-    CheckResult check_result = 3;
+    CheckResult check_result = 4;
 
     // An edit to a Check.
-    CheckEdit check_edit = 4;
+    CheckEdit check_edit = 6;
 
     // A Stage within a WorkPlan.
-    Stage stage = 5;
+    Stage stage = 8;
 
     // A specific attempt at a Stage.
-    StageAttempt stage_attempt = 6;
+    StageAttempt stage_attempt = 9;
 
     // An edit to a Stage.
-    StageEdit stage_edit = 7;
+    StageEdit stage_edit = 10;
   }
 }
 

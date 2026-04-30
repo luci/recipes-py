@@ -33,7 +33,7 @@ option java_multiple_files = true;
 // See also:
 //   * Identifier.Stage* (Identifiers for Stages, StageAttempts, etc.)
 //
-// Next ID: 16
+// Next ID: 17
 message Stage {
   // The Stage's identifier.
   optional ids.v1.Stage identifier = 1 [(google.api.field_behavior) = IMMUTABLE];
@@ -87,6 +87,33 @@ message Stage {
   // If this stage was cancelled, this indicates the Actor which cancelled
   // it.
   optional Actor cancelled_by = 14;
+
+  // Set for stages that represent legacy WorkNodes.
+  message Legacy {
+    // Fully populated encoded WorkNode proto.
+    //
+    // Note the value of this field is changing over lifetime of the stage. It
+    // matches identically to what the legacy WorkPlan API returns.
+    //
+    // Type URL is type.googleapis.com/wireless.android.launchcontrol.WorkNode.
+    // The realm always matches the realm of the stage.
+    //
+    // This field, just like other ValueRef fields, is a subject of type
+    // filtering and JSON encoding during reads.
+    optional ValueRef worknode = 1;
+
+    // The WorkExecutorType as extracted from `worknode`.
+    //
+    // Have it as a separate field is useful for skipping decoding large proto
+    // during ACL checks (that just need the executor type).
+    optional int32 work_executor_type = 2;
+  }
+
+  // Set only for stages that represent legacy WorkNodes.
+  //
+  // Such stages are submitted either via legacy WorkPlan API or as a special
+  // kind of a Stage (with `args` having type TBD).
+  optional Legacy legacy = 16;
 
   // StateHistoryEntry records the database revision (commit timestamp) when
   // each time this Stage's state changes.

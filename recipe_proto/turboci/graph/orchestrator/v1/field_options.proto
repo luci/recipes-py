@@ -29,7 +29,7 @@ message FieldOptions {
     //       (turboci).check.editable = CHECK_STATE_PLANNING
     //     ];
     //   }
-    optional CheckState editable = 1;
+    repeated CheckState editable = 1;
   }
   // Field options which apply to Check messages.
   optional CheckFieldOptions check = 1;

@@ -159,7 +159,7 @@ class TestCheck(test_env.RecipeEngineUnitTest):
                     Edge(check=Edge.Check(identifier=check_id('stuff'))),
                     Edge(check=Edge.Check(identifier=check_id('things'))),
                 ],),
-            results=[
+            result_data=[
                 _mkValue(_mkStruct({'cool': ['result']})),
                 _mkValue(
                     StructValue(string_value='realm_result'),

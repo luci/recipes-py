@@ -14,6 +14,7 @@ from PB.turboci.graph.orchestrator.v1.check import Check
 from PB.turboci.graph.orchestrator.v1.query import Query
 from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesRequest
 from PB.turboci.graph.orchestrator.v1.revision import Revision
+from PB.turboci.graph.orchestrator.v1.transaction_details import TransactionDetails
 from PB.turboci.graph.orchestrator.v1.workplan import WorkPlan
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 from PB.turboci.graph.orchestrator.v1.write_nodes_response import WriteNodesResponse
@@ -93,9 +94,9 @@ class Transaction:
       raise TransactionUseAfterWriteException("WriteNodes called twice.")
     self._did_write = True
 
-    txn: WriteNodesRequest.TransactionDetails | None = None
+    txn: TransactionDetails | None = None
     if self._revision:
-      txn = WriteNodesRequest.TransactionDetails(
+      txn = TransactionDetails(
           nodes_observed=(to_id(node) for node in self.observed_nodes),
           snapshot_version=self._revision,
       )

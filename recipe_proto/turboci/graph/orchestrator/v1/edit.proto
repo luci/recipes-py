@@ -14,6 +14,7 @@ import "turboci/graph/orchestrator/v1/check_delta.proto";
 import "turboci/graph/orchestrator/v1/field_options.proto";
 import "turboci/graph/orchestrator/v1/revision.proto";
 import "turboci/graph/orchestrator/v1/stage_delta.proto";
+import "turboci/graph/orchestrator/v1/transaction_details.proto";
 import "turboci/graph/orchestrator/v1/value_ref.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
@@ -27,6 +28,8 @@ option java_multiple_files = true;
 //
 // Edit Deltas are designed to be quite slim. Heavy bits of the delta (like
 // Option Data) will be stored separately from this Edit.
+//
+// Next ID: 14
 message Edit {
   // The node which this Edit is associated with.
   optional ids.v1.Identifier for_node = 1 [
@@ -59,40 +62,37 @@ message Edit {
   // The entity which generated this Edit.
   optional Actor created_by = 6;
 
-  // This is the set of nodes which were included in the same WriteNodes
-  // RPC as this Edit (one per `checks`, `stages`, and/or
-  // `current_stage_write`). For simplicity, this will also always include
-  // `for_node`.
-  //
-  // This may contain more nodes than were actually written in the case of
-  // a partially applied write, e.g.
-  //
-  //   * One writer writes Check["foo", BUILD]
-  //   * Another writer writes Check["foo", BUILD], Check["bar", BUILD].
-  //
-  // In this case, the edit on "bar" from the second write will include "foo"
-  // in this set because the requested write is compatible with the state of
-  // "foo".
-  //
-  // This can only happen with WriteNodes requests with `txn` unset (i.e.
-  // 'oblivious writes').
-  //
-  // If you need to detect this, load e.g. `Check["foo"] / Edit[version]`. If
-  // the edit does not exist, then it means foo was already written before this
+  reserved 7;
+
+  // This is a copy of `txn` from the WriteNodes request which generated this
   // Edit.
-  repeated ids.v1.Identifier transactional_set = 7 [
+  //
+  // Will be unset if the RPC was an `oblivious write` (that is; `txn` was
+  // unset).
+  //
+  // For Orchestrator-generated changes (see `created_by`), this may be empty
+  // (even if the orchestrator implementation is not actually making an
+  // oblivious change).
+  optional TransactionDetails txn = 12;
+
+  // This is the set of node writes ids from the WriteNodes request which
+  // generated this Edit, one per `checks`, `stages`, `current_stage`, and/or
+  // `current_attempt`).
+  //
+  // Note that this will be a superset of the actual nodes written; If the
+  // transaction determines that a write to a given target node is a no-op,
+  // there will be no corresponding edit on the target node with the same
+  // version.
+  //
+  // For Orchestrator-generated changes, this may be empty.
+  repeated ids.v1.Identifier write_node_set = 13 [
     (turboci).id.allowed = IDENTIFIER_KIND_CHECK,
     (turboci).id.allowed = IDENTIFIER_KIND_STAGE,
-    // IDENTIFIER_KIND_STAGE_ATTEMPT corresponds to `current_stage_write`.
+    // IDENTIFIER_KIND_STAGE_ATTEMPT corresponds to `current_attempt`.
     (turboci).id.allowed = IDENTIFIER_KIND_STAGE_ATTEMPT
   ];
 
-  // If set, then the WriteNodes which created this edit was done as an
-  // 'oblivious' write - that is, `txn` was not supplied in WriteNodseRequest.
-  //
-  // This is intended to be a hint when debugging that a non-transactional
-  // write could be an issue.
-  optional bool oblivious_write = 11;
+  reserved 11;
 
   // Human and machine-readable reason for this Edit (provided as part of
   // WriteNodes).
@@ -114,7 +114,8 @@ message Edit {
     // first in this list for a given type_url should be a superset of the
     // others.
     //
-    // These are be unique by (type_url, realm)
+    // These are be unique by (type_url, realm), and partially ordered by
+    // type_url.
     //
     // NOTE: When viewing Edits, the reader will only see the details for which
     // they have read permissions (that is - two different users may see

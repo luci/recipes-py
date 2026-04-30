@@ -76,5 +76,5 @@ message CheckDelta {
   // will only contain a single Result.
   //
   // Unique and sorted on `Result.identifier`.
-  repeated Result result = 4;
+  repeated Result results = 4;
 }

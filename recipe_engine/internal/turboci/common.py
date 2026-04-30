@@ -21,6 +21,7 @@ from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesReque
 from PB.turboci.graph.orchestrator.v1.query_nodes_response import QueryNodesResponse
 from PB.turboci.graph.orchestrator.v1.read_workplan_request import ReadWorkPlanRequest
 from PB.turboci.graph.orchestrator.v1.read_workplan_response import ReadWorkPlanResponse
+from PB.turboci.graph.orchestrator.v1.transaction_details import TransactionDetails
 from PB.turboci.graph.orchestrator.v1.type_info import TypeInfo
 from PB.turboci.graph.orchestrator.v1.workplan import WorkPlan
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
@@ -189,11 +190,11 @@ def check(
     el.data.Pack(opt, deterministic=True)
 
   for rslt in results:
-    el = ret.results.add()
+    el = ret.result_data.add()
     el.data.Pack(rslt, deterministic=True)
 
   for realm, rslt in realm_results:
-    el = ret.results.add(realm=realm)
+    el = ret.result_data.add(realm=realm)
     el.data.Pack(rslt, deterministic=True)
 
   return ret
@@ -204,7 +205,7 @@ def write_nodes(
     | WriteNodesRequest.Reason,
     current_stage: WriteNodesRequest.CurrentStageWrite | None = None,
     current_attempt: WriteNodesRequest.CurrentAttemptWrite | None = None,
-    txn: WriteNodesRequest.TransactionDetails | None = None,
+    txn: TransactionDetails | None = None,
     client: TurboCIClient | None = None,
 ) -> WriteNodesResponse:
   """Convenience function for client.WriteNodes.

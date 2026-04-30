@@ -9,6 +9,7 @@ package turboci.graph.executor.v1;
 import "turboci/graph/orchestrator/v1/stage.proto";
 import "turboci/graph/orchestrator/v1/stage_execution_policy.proto";
 import "turboci/graph/orchestrator/v1/value_data.proto";
+import "turboci/graph/orchestrator/v1/workplan.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/executor/v1;executorpb";
 option java_multiple_files = true;
@@ -17,6 +18,11 @@ option java_multiple_files = true;
 message ValidateStageRequest {
   // Stage to validate.
   optional orchestrator.v1.Stage stage = 1;
+
+  // The partial view of the parent work plan.
+  //
+  // Stages and Checks are omitted.
+  optional orchestrator.v1.WorkPlan workplan = 5;
 
   // A map containing [ValueData] for `stage`.
   //
@@ -35,4 +41,18 @@ message ValidateStageResponse {
   //
   // Required.
   optional orchestrator.v1.StageExecutionPolicy stage_execution_policy = 1;
+
+  // Service accounts the stage can potentially use to call Turbo CI APIs.
+  //
+  // The stage attempt token passed to RunStage will be bound to these accounts
+  // (i.e. it can only be presented together with credentials of some account
+  // in this set). These accounts will be subjected to an ACL check that
+  // verifies they are allowed to be used in the work plan at all.
+  //
+  // Each entry is either an email or a special value "EUC", which means
+  // the stage will use the end user credentials of whoever submitted it to
+  // call Turbo CI APIs.
+  //
+  // If omitted, defaults to ["EUC"].
+  repeated string stage_service_accounts = 2;
 }

@@ -11,6 +11,24 @@ import "google/protobuf/any.proto";
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
 option java_multiple_files = true;
 
+// DataConversionFailure indicates why a ValueData was not successfully
+// converted to JSON from Binary.
+enum DataConversionFailure {
+  // The default, unknown, value for the failure.
+  DATA_CONVERSION_FAILURE_UNKNOWN = 0;
+
+  // The data could not be converted because the descriptor was missing.
+  DATA_CONVERSION_FAILURE_NO_DESCRIPTOR = 1;
+
+  // The data could not be converted due to an error.
+  //
+  // Usually this indicates that the server had an incompatible descriptor.
+  // This could happen if the protos in question had backwards incompatible
+  // changes made to their proto definitions, but the server and client are
+  // using different versions of the descriptor.
+  DATA_CONVERSION_FAILURE_ERROR = 2;
+}
+
 // ValueData holds actual data (via either binary or JSONPB encoded protobuf)
 // embedded inside of a TurboCI node (Checks/Stages) and referenced via
 // [ValueRef].
@@ -48,4 +66,8 @@ message ValueData {
     // JSON encoded data.
     JsonAny json = 2;
   }
+
+  // If set, indicates that the ValueData was requested in JSON form, but
+  // could not be converted.
+  optional DataConversionFailure conversion_failure = 3;
 }

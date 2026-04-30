@@ -7,6 +7,7 @@ syntax = "proto3";
 package turboci.graph.orchestrator.v1;
 
 import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
 import "turboci/graph/orchestrator/v1/stage_attempt_execution_policy.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
@@ -100,4 +101,15 @@ message StageExecutionPolicy {
   // executor may augment the policy by merging the requested policy and what
   // is in the configs.
   optional StageAttemptExecutionPolicy attempt_execution_policy_template = 4;
+
+  // If set, specifies the earliest time the stage is allowed to run.
+  //
+  // If the stage is unblocked before that time, its first attempt will be
+  // created in THROTTLED state and it won't start running until the given time.
+  // If the stage is unblocked past that time, it will start running its first
+  // attempt right away.
+  //
+  // If unset, the stage will start running its first attempt as soon as it is
+  // unblocked.
+  optional google.protobuf.Timestamp throttle_first_attempt_until = 5;
 }

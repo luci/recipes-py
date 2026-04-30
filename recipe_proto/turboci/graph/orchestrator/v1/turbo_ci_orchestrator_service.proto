@@ -6,6 +6,8 @@ syntax = "proto3";
 
 package turboci.graph.orchestrator.v1;
 
+import "turboci/graph/orchestrator/v1/allocate_worknode_ids_request.proto";
+import "turboci/graph/orchestrator/v1/allocate_worknode_ids_response.proto";
 import "turboci/graph/orchestrator/v1/create_workplan_request.proto";
 import "turboci/graph/orchestrator/v1/create_workplan_response.proto";
 import "turboci/graph/orchestrator/v1/method_options.proto";
@@ -245,9 +247,23 @@ service TurboCIOrchestrator {
     };
   }
 
-  // TBD: Idempotent way to allocate N WorkNode IDs - this will allow safe node
-  // ID allocation outside of a transaction so that WorkNodes can be
-  // transactionally inserted.
+  // AllocateWorkNodeIDs generates a bunch of WorkNode Stage identifiers that
+  // are compatible with WorkPlan API and which are guaranteed to be unused yet.
+  //
+  // They then can be passed to WriteNodes to create new WorkNode stages. Note
+  // this should only be used for compatibility with WorkPlan API. Non-worknode
+  // stages must use more meaningful string-based identifiers instead and
+  // guarantee their uniqueness (or non-uniqueness) based on what the stage
+  // actually does.
+  rpc AllocateWorkNodeIDs(AllocateWorkNodeIDsRequest) returns (AllocateWorkNodeIDsResponse) {
+    option (turboci_rpc) = {
+      permission: {
+        internal: "turboci.workplans.update"
+        external: "turboci.workplans.updateExternal"
+        in: IDENTIFIER_KIND_WORK_PLAN
+      }
+    };
+  }
 
   // TBD: An (idempotent) way to kick off a configured, named workplan.
   //

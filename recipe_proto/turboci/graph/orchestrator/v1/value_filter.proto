@@ -62,4 +62,7 @@ message ValueFilter {
 
   // ValueMask for Values in Edit.stage.attempts.progress.details.
   optional ValueMask stage_edit_attempt_progress_details = 10;
+
+  // ValueMask for Values in Stage.legacy.worknode.
+  optional ValueMask stage_legacy_worknode = 11;
 }

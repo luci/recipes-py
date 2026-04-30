@@ -341,16 +341,16 @@ class FakeTurboCIOrchestrator(TurboCIClient):
 
     finalize_results = write.finalize_results or write.state == CHECK_STATE_FINAL
 
-    if (write.results or finalize_results) and not check.results:
+    if (write.result_data or finalize_results) and not check.results:
       _touch()
       check.results.append(Check.Result(created_at=self._revision))
 
-    if write.results:
+    if write.result_data:
       # NOTE: results[0] is because there is no way in this fake to end up with
       # multiple results for a single check. In the real system, each unique
       # stage attempt writing to a check would get a different CheckResult to
       # write into.
-      _write_values(write.results, check.results[0].data)
+      _write_values(write.result_data, check.results[0].data)
 
     if finalize_results:
       check.results[0].finalized_at.CopyFrom(self._revision)
@@ -687,7 +687,7 @@ class FakeTurboCIOrchestrator(TurboCIClient):
         if opt.realm:
           raise NotImplementedError("FakeTurboCIOrchestrator.WriteNodes: "
                                     "`checks.options.realm`")
-      for rslt in cwrite.results:
+      for rslt in cwrite.result_data:
         if rslt.realm:
           raise NotImplementedError("FakeTurboCIOrchestrator.WriteNodes: "
                                     "`checks.results.realm`")

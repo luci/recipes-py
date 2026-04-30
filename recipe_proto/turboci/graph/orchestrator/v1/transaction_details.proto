@@ -1,0 +1,94 @@
+// Copyright 2026 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "turboci/graph/ids/v1/identifier.proto";
+import "turboci/graph/orchestrator/v1/field_options.proto";
+import "turboci/graph/orchestrator/v1/revision.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// TransactionDetails encapsulates the information necessary to make a
+// WriteNodes RPC conditional based on the state of some previously observed
+// nodes. It does this by describing the snapshot of the graph which the writer
+// observed. TurboCI Orchestrator will ensure that these nodes haven't changed
+// since the writer observed them.
+//
+// It is valid to include nodes which were absent from the snapshot, if the
+// writer wants to make its write conditional on their absence.
+//
+// Transaction Procedure:
+//   retry {
+//     nodes, snapshot_version = QueryNodes(...)
+//     # computations
+//
+//     more_nodes, _ = QueryNodes(..., ensure_version=snapshot_version)
+//     # This will cause QueryNodes to fail if any returned nodes have
+//     # a version greater than `snapshot_version`. This will allow the
+//     # transaction loop to retry immediately, rather than waiting for the
+//     # WriteNodes call.
+//
+//     # computations
+//
+//     if WriteNodes(..., txn={nodes+more_nodes, snapshot_version}) {
+//       # Success!
+//
+//       # If you need to make another write, you CAN use the written_version
+//       # in the response from WriteNodes as an input snapshot_version to the
+//       # subsequent transaction. However, it's important that if this second
+//       # transaction gets a conflict that it will need to re-query for the
+//       # new state of the graph. For this reason it's recommended to either
+//       # include all the writes in a single WriteNodes call, or just make
+//       # a second transaction loop for the second transaction.
+//       break
+//     } else {
+//       # failure - retry from the top
+//     }
+//   }
+//
+// Note that go.chromium.org/luci/turboci will provide a helper to manage
+// transactions on the client side.
+message TransactionDetails {
+  // A list of all nodes observed which lead to this write.
+  //
+  // This SHOULD include all nodes which your computation used as inputs
+  // for making a decision. If you locally filtered the WorkPlan before the
+  // computation, it is OK to omit nodes which were filtered out, because you
+  // would do the same write regardless of those filtered nodes' content.
+  //
+  // This MAY include nodes which were absent from the WorkPlan - this means
+  // that the write is conditional on their absence (e.g. "I queried for X and
+  // didn't find it, so I'm doing a write based on that information. If X DOES
+  // exist at the time of the write, I want to abort and try again.").
+  //
+  // NOTE: If you are writing what you THINK are all new nodes, but haven't
+  // done a query to verify this, just providing `txn` with `nodes_observed`
+  // and `snapshot_version` left unset (zero) is sufficient to guard against
+  // the nodes already being written.
+  //
+  // However, if you get a TransactionConflictFailure because the nodes already
+  // exist, when you recover make sure to do the query before you try the write
+  // again! You may be conflicting with a previous incarnation of your own
+  // process!
+  repeated ids.v1.Identifier nodes_observed = 1 [
+    (turboci).id.allowed = IDENTIFIER_KIND_CHECK,
+    (turboci).id.allowed = IDENTIFIER_KIND_STAGE,
+    (turboci).id.allowed = IDENTIFIER_KIND_STAGE_ATTEMPT
+  ];
+
+  // The 'version' of the WorkPlan returned from QueryNodes.
+  //
+  // If multiple queries were made in this transaction, this revision MUST be
+  // the *first* revision observed. Providing version.require to QueryNodes
+  // will help enforce this.
+  //
+  // If `snapshot_version` is unset, it is treated as a 0 value (which means
+  // that all `nodes_observed` plus all nodes being written in this request
+  // must not already exist).
+  optional Revision snapshot_version = 2;
+}

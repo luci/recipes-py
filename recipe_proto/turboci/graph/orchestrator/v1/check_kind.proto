@@ -41,4 +41,10 @@ enum CheckKind {
   // meta-determiniation. For example, an Analysis could consume sources, builds
   // and tests and make a determiation like "this CL can land".
   CHECK_KIND_ANALYSIS = 4;
+
+  // KICKOFF is a Check which is used to store information that will be used to
+  // kick off a set of additional stages. Typically used at the beginning of a
+  // workplan to represent the work that will be done by other, not-yet-created,
+  // stages during that workplan's run.
+  CHECK_KIND_KICKOFF = 5;
 }

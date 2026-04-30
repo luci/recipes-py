@@ -86,13 +86,13 @@ message Check {
   //
   // Checks may only depend on other Checks.
   //
-  // While the check is in PLANNING state, its dependencies can be mutated
+  // While the check is in the PLANNING state, its dependencies can be mutated
   // freely via WriteNodes calls.
   //
   // Once the Check is moved into PLANNED state by a WriteNodes call,
   // dependencies are "locked" and the Orchestrator starts tracking their
   // resolution. Once they are resolved, the Orchestrator will switch the check
-  // into WAITING state.
+  // into the WAITING state.
   optional Dependencies dependencies = 8 [(turboci).id.allowed = IDENTIFIER_KIND_CHECK];
 
   // Options form the bulk of 'how to answer this Check'.
@@ -173,7 +173,10 @@ message Check {
   // data for this Check, you would see 3 Result messages. Similarly, if you
   // had one Stage with 3 Attempts, all 3 of which add result data for this
   // check, you would see 3 Result messages.
-  repeated Result results = 10 [(turboci).check.editable = CHECK_STATE_WAITING];
+  repeated Result results = 10 [
+    (turboci).check.editable = CHECK_STATE_PLANNED,
+    (turboci).check.editable = CHECK_STATE_WAITING
+  ];
 
   // Edits for this Check.
   //
