@@ -86,6 +86,7 @@ from recipe_engine.internal.turboci.errors import TransactionConflictException, 
 
 from .ids import from_id, to_id, wrap_id
 from .common import TurboCIClient
+from .query_util import type_set_to_re, want_value_ref
 
 
 def _is_rev_newer(a: Revision, b: Revision) -> bool:
@@ -104,23 +105,6 @@ class _all_nodes_set:
 
   def __contains__(self, other):
     return True
-
-
-def _type_set_to_re(ts: TypeSet) -> re.Pattern:
-  fragments: list[str] = []
-  for frag in ts.type_urls:
-    q = re.escape(frag)
-    if q.endswith(r'\*'):
-      fragments.append(q.removesuffix(r'\*')+'.*')
-    else:
-      fragments.append(q)
-
-  return re.compile(f'({")|(".join(fragments)})')
-
-
-def _want_value_ref(type_set: TypeSet, value_ref: ValueRef) -> bool:
-  pat = _type_set_to_re(type_set)
-  return bool(pat.match(value_ref.type_url))
 
 
 @dataclass
@@ -478,13 +462,13 @@ class FakeTurboCIOrchestrator(TurboCIClient):
         toIntersect.append(self._checks_by_state[st] & basis)
 
       if ot := p.with_option_type:
-        pat = _type_set_to_re(ot)
+        pat = type_set_to_re(ot)
         for type_url, node_ids in self._checks_by_opt_type.items():
           if pat.match(type_url):
             toIntersect.append(node_ids & basis)
 
       if rdt := p.with_result_data_type:
-        pat = _type_set_to_re(rdt)
+        pat = type_set_to_re(rdt)
         for type_url, node_ids in self._checks_by_result_type.items():
           if pat.match(type_url):
             toIntersect.append(node_ids & basis)
@@ -603,15 +587,17 @@ class FakeTurboCIOrchestrator(TurboCIClient):
       # This must already be in workplan
       workplan_check = get_check_by_full_id(workplan, check_str)
 
+      pat = type_set_to_re(type_info.wanted)
       if collect_opts:
         for i, opt in enumerate(check.options):
-          if _want_value_ref(type_info.wanted, opt):
+          if want_value_ref(pat, opt):
             workplan_check.options[i].CopyFrom(opt)
 
       if collect_result_data:
+        pat = type_set_to_re(type_info.wanted)
         for result_idx, result in enumerate(check.results):
           for data_idx, dat in enumerate(result.data):
-            if _want_value_ref(type_info.wanted, dat):
+            if want_value_ref(pat, dat):
               workplan_check.results[result_idx].data[data_idx].CopyFrom(dat)
 
 
