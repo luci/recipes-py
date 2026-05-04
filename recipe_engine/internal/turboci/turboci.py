@@ -6,23 +6,20 @@
 import logging
 import sys
 
-from collections import defaultdict
 from gevent import subprocess
 
 from google.protobuf import json_format as jsonpb
+from google.protobuf.message import Message
 
 from PB.turboci.graph.ids.v1 import identifier
 from PB.turboci.graph.ids.v1 import identifier_kind
 from PB.turboci.graph.orchestrator.v1.check import Check
-from PB.turboci.graph.orchestrator.v1.query import Query, CollectStageAttempts
+from PB.turboci.graph.orchestrator.v1.query import Query
 from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesRequest
 from PB.turboci.graph.orchestrator.v1.query_nodes_response import QueryNodesResponse
 from PB.turboci.graph.orchestrator.v1.read_workplan_request import ReadWorkPlanRequest
 from PB.turboci.graph.orchestrator.v1.read_workplan_response import ReadWorkPlanResponse
-from PB.turboci.graph.orchestrator.v1.stage import Stage
-from PB.turboci.graph.orchestrator.v1.type_set import TypeSet
 from PB.turboci.graph.orchestrator.v1.value_mask import VALUE_MASK_VALUE_TYPE
-from PB.turboci.graph.orchestrator.v1.workplan import WorkPlan
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 from PB.turboci.graph.orchestrator.v1.write_nodes_response import WriteNodesResponse
 
@@ -40,7 +37,7 @@ class TurboCIOrchestrator(TurboCIClient):
     self.endpoint = endpoint
 
   def WriteNodes(self, req: WriteNodesRequest) -> WriteNodesResponse:
-    LOG.info('write-nodes request: %s', jsonpb.MessageToJson(req))
+    self._log_request('write-nodes', req)
     ret = self._run_cmd('write-nodes', req.SerializeToString())
     res = WriteNodesResponse()
     res.ParseFromString(ret)
@@ -48,7 +45,7 @@ class TurboCIOrchestrator(TurboCIClient):
     return res
 
   def QueryNodes(self, req: QueryNodesRequest) -> QueryNodesResponse:
-    LOG.info('query-nodes request: %s', jsonpb.MessageToJson(req))
+    self._log_request('query-nodes', req)
     # Calls ReadWorkPlan under the hood, with some limitations:
     # * Currently only supports the case where all queries are searching the
     # same Workplan.
@@ -64,7 +61,7 @@ class TurboCIOrchestrator(TurboCIClient):
     return res
 
   def ReadWorkPlan(self, req: ReadWorkPlanRequest) -> ReadWorkPlanResponse:
-    LOG.info('read-workplan request: %s', jsonpb.MessageToJson(req))
+    self._log_request('read-workplan', req)
     ret = self._run_cmd('read-workplan', req.SerializeToString())
     res = ReadWorkPlanResponse()
     res.ParseFromString(ret)
@@ -81,6 +78,14 @@ class TurboCIOrchestrator(TurboCIClient):
       LOG.error('stderr: %s', e.stderr)
       raise
     return proc.stdout
+
+  def _log_request(self, name: str, req: Message):
+    """Redacts token and logs the request."""
+    req_copy = req.__class__()
+    req_copy.CopyFrom(req)
+    if hasattr(req_copy, 'token') and req_copy.token:
+      req_copy.token = '<redacted>'
+    LOG.info('%s request: %s', name, jsonpb.MessageToJson(req_copy))
 
   # functions to make QueryNodes to call ReadWorkplan under the hood.
   def _query_to_read_work_plan_request(
