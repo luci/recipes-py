@@ -25,6 +25,7 @@ def RunSteps(api):
                    api.context.luciexe)
   api.assertions.assertEqual(
       'invocations/inv', api.context.resultdb_invocation_name)
+  api.assertions.assertEqual('token', api.context.turboci.token)
 
   api.assertions.assertEqual('proj:realm', api.context.realm)
   with api.context(env={'UNRELATED_CHANGE': 1}):
@@ -45,9 +46,7 @@ def RunSteps(api):
                    api.context.luciexe)
 
 def GenTests(api):
-  yield (
-    api.test('basic')
-    + api.context.luci_context(
+  yield (api.test('basic') + api.context.luci_context(
       luciexe=sections_pb2.LUCIExe(cache_dir='/path/to/cache'),
       realm=sections_pb2.Realm(name='proj:realm'),
       resultdb=sections_pb2.ResultDB(
@@ -56,8 +55,8 @@ def GenTests(api):
               update_token='token',
           ),
           hostname='rdbhost',
-      )
-    )
-  )
+      ),
+      turboci=sections_pb2.TurboCI(token='token'),
+  ))
 
   assert api.context.realm is None

@@ -1478,7 +1478,7 @@ with api.context(cwd=api.path.start_dir / 'subdir'):
 
 #### **class [ContextApi](/recipe_modules/context/api.py#80)([RecipeApi](/recipe_engine/recipe_api.py#439)):**
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/context/api.py#112)(self, cwd: (config_types.Path | None)=None, env_prefixes: (Mapping[(str, Sequence[str])] | None)=None, env_suffixes: (Mapping[(str, Sequence[str])] | None)=None, env: (Mapping[(str, str)] | None)=None, infra_steps: (bool | None)=None, luciexe: (sections_pb2.LUCIExe | None)=None, realm: str=None, deadline: (sections_pb2.Deadline | None)=None):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/context/api.py#113)(self, cwd: (config_types.Path | None)=None, env_prefixes: (Mapping[(str, Sequence[str])] | None)=None, env_suffixes: (Mapping[(str, Sequence[str])] | None)=None, env: (Mapping[(str, str)] | None)=None, infra_steps: (bool | None)=None, luciexe: (sections_pb2.LUCIExe | None)=None, realm: str=None, deadline: (sections_pb2.Deadline | None)=None):**
 
 Allows adjustment of multiple context values in a single call.
 
@@ -1528,7 +1528,7 @@ as the last path component if it is not empty.
 
 Look at the examples in "examples/" for examples of context module usage.
 
-&emsp; **@property**<br>&mdash; **def [cwd](/recipe_modules/context/api.py#263)(self):**
+&emsp; **@property**<br>&mdash; **def [cwd](/recipe_modules/context/api.py#264)(self):**
 
 Returns the current working directory that steps will run in.
 
@@ -1536,13 +1536,13 @@ Returns the current working directory that steps will run in.
 equivalent to api.path.start_dir, though only occurs if no cwd has been
 set (e.g. in the outermost context of RunSteps).
 
-&emsp; **@property**<br>&mdash; **def [deadline](/recipe_modules/context/api.py#356)(self):**
+&emsp; **@property**<br>&mdash; **def [deadline](/recipe_modules/context/api.py#357)(self):**
 
 Returns the current value (sections_pb2.Deadline) of deadline section in
 the current LUCI_CONTEXT. Returns `{grace_period: 30}` if deadline is not
 defined, per LUCI_CONTEXT spec.
 
-&emsp; **@property**<br>&mdash; **def [env](/recipe_modules/context/api.py#273)(self):**
+&emsp; **@property**<br>&mdash; **def [env](/recipe_modules/context/api.py#274)(self):**
 
 Returns modifications to the environment.
 
@@ -1553,7 +1553,7 @@ https://chromium.googlesource.com/infra/luci/recipes-py/+/refs/heads/main/doc/us
 **Returns (dict)** - The env-key -> value mapping of current environment
   modifications.
 
-&emsp; **@property**<br>&mdash; **def [env\_prefixes](/recipe_modules/context/api.py#288)(self):**
+&emsp; **@property**<br>&mdash; **def [env\_prefixes](/recipe_modules/context/api.py#289)(self):**
 
 Returns Path prefix modifications to the environment.
 
@@ -1563,7 +1563,7 @@ prefixes registered with the environment.
 **Returns (dict)** - The env-key -> value(Path) mapping of current
 environment prefix modifications.
 
-&emsp; **@property**<br>&mdash; **def [env\_suffixes](/recipe_modules/context/api.py#302)(self):**
+&emsp; **@property**<br>&mdash; **def [env\_suffixes](/recipe_modules/context/api.py#303)(self):**
 
 Returns Path suffix modifications to the environment.
 
@@ -1573,7 +1573,7 @@ suffixes registered with the environment.
 **Returns (dict)** - The env-key -> value(Path) mapping of current
 environment suffix modifications.
 
-&emsp; **@property**<br>&mdash; **def [infra\_step](/recipe_modules/context/api.py#316)(self):**
+&emsp; **@property**<br>&mdash; **def [infra\_step](/recipe_modules/context/api.py#317)(self):**
 
 Returns the current value of the infra_step setting.
 
@@ -1581,30 +1581,35 @@ Returns the current value of the infra_step setting.
 
 &mdash; **def [initialize](/recipe_modules/context/api.py#90)(self):**
 
-&emsp; **@property**<br>&mdash; **def [luci\_context](/recipe_modules/context/api.py#324)(self):**
+&emsp; **@property**<br>&mdash; **def [luci\_context](/recipe_modules/context/api.py#325)(self):**
 
 Returns the currently tracked LUCI_CONTEXT sections as a dict of proto
 messages.
 
-Only contains `luciexe`, `realm`, 'resultdb' and `deadline`.
+Only contains `luciexe`, `realm`, 'resultdb', `deadline` and `turboci`.
 
-&emsp; **@property**<br>&mdash; **def [luciexe](/recipe_modules/context/api.py#336)(self):**
+&emsp; **@property**<br>&mdash; **def [luciexe](/recipe_modules/context/api.py#337)(self):**
 
 Returns the current value (sections_pb2.LUCIExe) of luciexe section in
 the current LUCI_CONTEXT. Returns None if luciexe is not defined.
 
-&emsp; **@property**<br>&mdash; **def [realm](/recipe_modules/context/api.py#346)(self):**
+&emsp; **@property**<br>&mdash; **def [realm](/recipe_modules/context/api.py#347)(self):**
 
 Returns the LUCI realm of the current context.
 
 May return None if the task is not running in the realm-aware mode. This is
 a transitional period. Eventually all tasks will be associated with realms.
 
-&emsp; **@property**<br>&mdash; **def [resultdb\_invocation\_name](/recipe_modules/context/api.py#367)(self):**
+&emsp; **@property**<br>&mdash; **def [resultdb\_invocation\_name](/recipe_modules/context/api.py#368)(self):**
 
 Returns the ResultDB invocation name of the current context.
 
 Returns None if resultdb is not defined.
+
+&emsp; **@property**<br>&mdash; **def [turboci](/recipe_modules/context/api.py#378)(self):**
+
+Returns the current value (sections_pb2.TurboCI) of turboci section in
+the current LUCI_CONTEXT. Returns None if turboci is not defined.
 ### *recipe_modules* / [cq](/recipe_modules/cq)
 
 [DEPS](/recipe_modules/cq/__init__.py#9): [cv](#recipe_modules-cv), [properties](#recipe_modules-properties), [warning](#recipe_modules-warning)

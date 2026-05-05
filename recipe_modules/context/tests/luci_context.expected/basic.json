@@ -17,6 +17,9 @@
           "update_token": "token"
         },
         "hostname": "rdbhost"
+      },
+      "turboci": {
+        "token": "token"
       }
     },
     "name": "start"
@@ -40,6 +43,9 @@
           "update_token": "token"
         },
         "hostname": "rdbhost"
+      },
+      "turboci": {
+        "token": "token"
       }
     },
     "name": "new luciexe"
@@ -62,6 +68,9 @@
           "update_token": "token"
         },
         "hostname": "rdbhost"
+      },
+      "turboci": {
+        "token": "token"
       }
     },
     "name": "end"
