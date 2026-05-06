@@ -93,11 +93,10 @@ class ContextApi(recipe_api.RecipeApi):
       # Add other LUCI_CONTEXT sections in the following dict to support
       # modification through this module.
       init_sections = {
-          'deadline': sections_pb2.Deadline,
-          'luciexe': sections_pb2.LUCIExe,
-          'realm': sections_pb2.Realm,
-          'resultdb': sections_pb2.ResultDB,
-          'turboci': sections_pb2.TurboCI,
+        'deadline': sections_pb2.Deadline,
+        'luciexe': sections_pb2.LUCIExe,
+        'realm': sections_pb2.Realm,
+        'resultdb': sections_pb2.ResultDB,
       }
 
       # reset luci_context so that when we write into it without it becoming
@@ -327,7 +326,7 @@ class ContextApi(recipe_api.RecipeApi):
     """Returns the currently tracked LUCI_CONTEXT sections as a dict of proto
     messages.
 
-    Only contains `luciexe`, `realm`, 'resultdb', `deadline` and `turboci`.
+    Only contains `luciexe`, `realm`, 'resultdb' and `deadline`.
     """
     ret = {}
     for section, msg in self._state.luci_context.items():
@@ -374,13 +373,3 @@ class ContextApi(recipe_api.RecipeApi):
     resultdb = self._state.luci_context.get('resultdb')
     return (resultdb.current_invocation.name if
             resultdb and resultdb.current_invocation else '')
-
-  @property
-  def turboci(self) -> sections_pb2.TurboCI | None:
-    """Returns the current value (sections_pb2.TurboCI) of turboci section in
-    the current LUCI_CONTEXT. Returns None if turboci is not defined."""
-    ret = None
-    if 'turboci' in self._state.luci_context:
-      ret = sections_pb2.TurboCI()
-      ret.CopyFrom(self._state.luci_context['turboci'])
-    return ret
