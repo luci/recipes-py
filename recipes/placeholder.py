@@ -5,15 +5,16 @@
 from __future__ import annotations
 
 from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
+from PB.turboci.graph.orchestrator.v1.read_workplan_request import ReadWorkPlanRequest
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 from recipe_engine.internal.turboci.common import get_check_by_short_id, get_option
 
 DEPS = [
-  'buildbucket',
-  'properties',
-  'step',
-  'swarming',
-  'time',
+    'buildbucket',
+    'properties',
+    'step',
+    'swarming',
+    'time',
 ]
 
 from google.protobuf import json_format
@@ -23,13 +24,14 @@ from PB.recipe_engine import result as result_pb2
 from PB.recipes.recipe_engine.placeholder import (InputProps, Step, FakeStep,
                                                   CollectChildren, ChildBuild,
                                                   Buildbucket, LifeTime,
-                                                  TurboCIWrite)
+                                                  TurboCIWrite, TurboCIQuery)
 from PB.go.chromium.org.luci.buildbucket.proto.builder_common import BuilderID
 from PB.go.chromium.org.luci.buildbucket.proto.common import Status
 
 from PB.turboci.data.gerrit.v1.gob_source_check_options import GobSourceCheckOptions
 from PB.turboci.data.gerrit.v1.gob_source_check_results import GobSourceCheckResults
 from PB.turboci.data.gerrit.v1.gerrit_change_info import GerritChangeInfo
+from PB.turboci.graph.orchestrator.v1.query import Query
 
 from recipe_engine import post_process
 
@@ -69,6 +71,8 @@ def RunSteps(api, properties):
         collectChild(step.name, step.collect_children)
       case 'turboci_write':
         TurboCIWrite(step.name, step.turboci_write)
+      case 'turboci_query':
+        TurboCIQuery(step.name, step.turboci_query)
       case _:  # pragma: no cover
         assert False, 'unreachable'
 
@@ -144,6 +148,34 @@ def RunSteps(api, properties):
       except turboci.TurboCIException as ex:
         pres.status = api.step.EXCEPTION
         pres.step_text = f'turboci.write_nodes failed'
+        pres.logs['exception'] = f'{type(ex).__name__}: {ex}'
+
+  def TurboCIQuery(step_name: str, req: TurboCIQuery):
+    workplan_id = None
+    if req.workplan_id:
+      workplan_id = turboci.to_id(req.workplan_id).work_plan
+    else:
+      workplan_id = turboci.to_id(
+          api.buildbucket.build.infra.turboci.stage_attempt_id).work_plan
+    if not workplan_id:
+      return  # pragma: no cover
+
+    with api.step.nest(step_name) as pres:
+      query = turboci.make_query(
+          Query.SelectChecks(),
+          Query.CollectChecks(
+              options=True,
+              result_data=True,
+          ),
+          node_set=workplan_id,
+      )
+
+      try:
+        workplan = turboci.query_nodes(query, types=('*',)).workplans[0]
+        pres.logs['response'] = json_format.MessageToJson(workplan)
+      except Exception as ex:
+        pres.status = api.step.EXCEPTION
+        pres.step_text = f'turboci.query failed'
         pres.logs['exception'] = f'{type(ex).__name__}: {ex}'
 
   if not (properties.status and properties.status & Status.ENDED_MASK):
@@ -468,4 +500,44 @@ def GenTests(api):
       api.turboci_write_nodes(
           turboci.check('charlie', kind='CHECK_KIND_BUILD'),),
       api.assert_workplan(_assert_workplan),
+  )
+
+  def _mock_turboci_build():
+    b = api.buildbucket.try_build_message(
+        project='proj',
+        builder='try-builder',
+        git_repo='https://chrome-internal.googlesource.com/a/repo.git',
+        revision='a' * 40,
+        build_number=123,
+    )
+    b.infra.turboci.stage_attempt_id = 'L0000000001:S1:A1'
+    return api.buildbucket.build(b)
+
+  yield api.test(
+      'turboci_query_with_current_workplan', _mock_turboci_build(),
+      api.turboci_write_nodes(
+          turboci.check('charlie', kind='CHECK_KIND_BUILD'),),
+      api.properties(
+          InputProps(
+              steps=[Step(name='query it', turboci_query=TurboCIQuery())],
+              status=Status.SUCCESS,
+          )),
+      api.post_process(post_process.LogContains, 'query it', 'response',
+                       ['charlie']),
+      api.post_process(post_process.DropExpectation))
+
+  yield api.test(
+      'turboci_query_with_provided_workplan',
+      api.properties(
+          InputProps(
+              steps=[
+                  Step(
+                      name='query it',
+                      turboci_query=TurboCIQuery(workplan_id='L0000000001'))
+              ],
+              status=Status.SUCCESS,
+          )),
+      api.post_process(post_process.LogContains, 'query it', 'exception',
+                       ['NotImplementedError']),
+      api.post_process(post_process.DropExpectation),
   )

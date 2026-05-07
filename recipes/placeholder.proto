@@ -51,6 +51,12 @@ message TurboCIWrite {
   repeated turboci.graph.orchestrator.v1.WriteNodesRequest.CheckWrite check_writes = 2;
 }
 
+message TurboCIQuery {
+  // ID of the workplan to query.
+  // If unset, will use the current WorkPlan ID of the build for the query.
+  optional string workplan_id = 1;
+}
+
 // CollectChildren represents a step which waits for child build(s).
 message CollectChildren {
   // Ids of the child build step this step should collect.
@@ -132,6 +138,7 @@ message Step {
     ChildBuild child_build = 3;
     CollectChildren collect_children = 4;
     TurboCIWrite turboci_write = 5;
+    TurboCIQuery turboci_query = 6;
   }
 }
 
