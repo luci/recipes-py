@@ -156,7 +156,8 @@ def RunSteps(api, properties):
       workplan_id = turboci.to_id(req.workplan_id).work_plan
     else:
       workplan_id = turboci.to_id(
-          api.buildbucket.build.infra.turboci.stage_attempt_id).work_plan
+          api.buildbucket.build.infra.turboci.stage_attempt_id
+      ).stage_attempt.stage.work_plan
     if not workplan_id:
       return  # pragma: no cover
 
@@ -510,7 +511,10 @@ def GenTests(api):
         revision='a' * 40,
         build_number=123,
     )
-    b.infra.turboci.stage_attempt_id = 'L0000000001:S1:A1'
+    # Hack: currently TurboCI fake uses an empty string as its local workplan
+    # ID. To test the query_by_current_workplan case, also set the current
+    # workplan ID to ''.
+    b.infra.turboci.stage_attempt_id = 'L:S1:A1'
     return api.buildbucket.build(b)
 
   yield api.test(
