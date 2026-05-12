@@ -94,7 +94,10 @@ class TurboCIOrchestrator(TurboCIClient):
     wp_id = self._workplan_id_from_query_request(req)
 
     # Convert request.
-    read_req = ReadWorkPlanRequest(workplan_id=wp_id)
+    read_req = ReadWorkPlanRequest()
+    if wp_id:
+      read_req.workplan_id.CopyFrom(wp_id)
+
     if req.HasField('token'):
       read_req.token = req.token
 
@@ -102,7 +105,7 @@ class TurboCIOrchestrator(TurboCIClient):
     return read_req
 
   def _workplan_id_from_query_request(
-      self, req: QueryNodesRequest) -> identifier.WorkPlan:
+      self, req: QueryNodesRequest) -> identifier.WorkPlan | None:
     wp_id = None
 
     def set_wp_id(new_wp_id):
@@ -126,8 +129,6 @@ class TurboCIOrchestrator(TurboCIClient):
         raise NotImplementedError(
             f'QueryNodes with node_set type {node_set_type} is not supported')
 
-    if not wp_id or wp_id.id == '':
-      raise ValueError('Failed to extract workplan id from QueryNodesRequest.')
     return wp_id
 
   def _infer_read_workplan_args(self, query_req: QueryNodesRequest,

@@ -227,14 +227,6 @@ class TurboCIClientTest(test_env.RecipeEngineUnitTest):
     with self.assertRaisesRegex(NotImplementedError, 'nodes_across_workplans'):
       self.client.QueryNodes(req)
 
-  def test_query_nodes_no_workplan_id(self):
-    """Tests that QueryNodes raises when no workplan ID can be found."""
-    req = QueryNodesRequest()
-    query = req.query.add()
-    query.nodes_by_id.nodes.add(check=Check(id='check1'))
-    with self.assertRaisesRegex(ValueError, 'Failed to extract workplan id'):
-      self.client.QueryNodes(req)
-
   def test_query_nodes_for_edits(self):
     """Tests that QueryNodes raises for edits."""
     req = QueryNodesRequest()
