@@ -95,7 +95,7 @@ class TurboCIOrchestrator(TurboCIClient):
 
     # Convert request.
     read_req = ReadWorkPlanRequest()
-    if wp_id:
+    if wp_id and wp_id.id:
       read_req.workplan_id.CopyFrom(wp_id)
 
     if req.HasField('token'):
@@ -107,14 +107,21 @@ class TurboCIOrchestrator(TurboCIClient):
   def _workplan_id_from_query_request(
       self, req: QueryNodesRequest) -> identifier.WorkPlan | None:
     wp_id = None
+    first_query = True
 
     def set_wp_id(new_wp_id):
       nonlocal wp_id
-      if not wp_id:
-        wp_id = new_wp_id
-      elif wp_id != new_wp_id:
-        raise NotImplementedError(
-            'QueryNodes with multiple workplans is not supported')
+      nonlocal first_query
+      if first_query:
+        if new_wp_id and new_wp_id.id:
+          wp_id = new_wp_id
+        first_query = False
+        return
+
+      if not first_query:
+        if wp_id != new_wp_id:
+          raise NotImplementedError(
+              'QueryNodes with multiple workplans is not supported')
 
     for query in req.query:
       node_set_type = query.WhichOneof('node_set')

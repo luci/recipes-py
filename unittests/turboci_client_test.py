@@ -166,6 +166,54 @@ class TurboCIClientTest(test_env.RecipeEngineUnitTest):
         identifier_kind.IDENTIFIER_KIND_CHECK,
     ])
 
+  def test_query_to_read_work_plan_request_without_workplan_id(self):
+    req = QueryNodesRequest()
+
+    query1 = req.query.add()
+    query1.nodes_in_workplan.id = ""
+    query1.collect_checks.options = True
+
+    with mock.patch.object(self.client,
+                           '_read_work_plan') as mock_read_work_plan:
+      # _read_work_plan should return a ReadWorkPlanResponse
+      mock_read_work_plan.return_value = ReadWorkPlanResponse()
+      self.client.QueryNodes(req)
+
+    mock_read_work_plan.assert_called_once()
+    read_req = mock_read_work_plan.call_args[0][0]
+    self.assertIsInstance(read_req, ReadWorkPlanRequest)
+    self.assertFalse(read_req.HasField('workplan_id'))
+
+  def test_query_to_read_work_plan_request_with_different_workplan_id(self):
+    req = QueryNodesRequest()
+
+    # Query 1: wants checks with options
+    query1 = req.query.add()
+    query1.nodes_in_workplan.id = "wp_id"
+    query1.collect_checks.options = True
+
+    # Query 2: wants checks with results
+    query2 = req.query.add()
+    query2.nodes_in_workplan.id = "wp2_id"
+    query1.collect_checks.result_data = True
+    with self.assertRaisesRegex(NotImplementedError, 'multiple workplans'):
+      self.client.QueryNodes(req)
+
+  def test_query_to_read_work_plan_request_with_and_without_workplan_id(self):
+    req = QueryNodesRequest()
+
+    # Query 1: wants checks with options
+    query1 = req.query.add()
+    query1.nodes_in_workplan.id = "wp_id"
+    query1.collect_checks.options = True
+
+    # Query 2: wants checks with results
+    query2 = req.query.add()
+    query2.nodes_in_workplan.id = ""
+    query1.collect_checks.result_data = True
+    with self.assertRaisesRegex(NotImplementedError, 'multiple workplans'):
+      self.client.QueryNodes(req)
+
   def test_filter_read_work_plan_responses_with_option_type(self):
     """Tests filtering checks and stages by various attributes."""
     mock_response = ReadWorkPlanResponse()
