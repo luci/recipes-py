@@ -666,17 +666,6 @@ class FakeTurboCIOrchestrator(TurboCIClient):
       if cwrite.identifier.work_plan.id:
         raise NotImplementedError("FakeTurboCIOrchestrator.WriteNodes: "
                                   "`checks.idententifier.work_plan.id`")
-      if cwrite.realm:
-        raise NotImplementedError("FakeTurboCIOrchestrator.WriteNodes: "
-                                  "`checks.realm`")
-      for opt in cwrite.options:
-        if opt.realm:
-          raise NotImplementedError("FakeTurboCIOrchestrator.WriteNodes: "
-                                    "`checks.options.realm`")
-      for rslt in cwrite.result_data:
-        if rslt.realm:
-          raise NotImplementedError("FakeTurboCIOrchestrator.WriteNodes: "
-                                    "`checks.results.realm`")
 
       if cwrite.HasField('dependencies'):
         check_deps.append(edge.extract_dependencies(cwrite.dependencies))
