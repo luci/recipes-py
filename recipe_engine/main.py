@@ -40,22 +40,7 @@ if sys.platform == 'darwin':
 # overhead, we can sometimes exceed the default.
 sys.setrecursionlimit(sys.getrecursionlimit() * 2)
 
-# Hack 3; Lookup all available codecs (crbug.com/932259).
-# TODO(crbug.com/1147793): try to remove this in python3.
-def _hack_lookup_codecs():
-  import encodings
-  import pkgutil
-  import codecs
-  for _, name, _ in pkgutil.iter_modules(encodings.__path__):
-    if name in ('aliases', 'mbcs'):
-      continue
-    if name == 'oem':
-      continue
-    codecs.lookup(name)
-_hack_lookup_codecs()
-del _hack_lookup_codecs
-
-# Hack 4; Drop sys.path[0], which is ROOT_DIR/recipe_engine. This prevents user
+# Hack 3; Drop sys.path[0], which is ROOT_DIR/recipe_engine. This prevents user
 # recipe code from doing things like `import util` and getting
 # recipe_engine/util.py.
 #
