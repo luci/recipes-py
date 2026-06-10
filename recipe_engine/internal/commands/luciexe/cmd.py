@@ -94,8 +94,11 @@ def _main_impl(args):
   LOG.info('finished parsing Build message')
   LOG.debug('build proto: %s', jsonpb.MessageToJson(build))
 
+  turboci_experiment = (
+    "luci.buildbucket.run_in_turboci" in build.input.experiments
+  )
   turboci_endpoint = build.infra.turboci.hostname
-  if turboci_endpoint:
+  if turboci_experiment and turboci_endpoint:
     turboci_common.CLIENT = turboci_real.TurboCIOrchestrator(turboci_endpoint)
   else:
     turboci_common.CLIENT = turboci_fake.FakeTurboCIOrchestrator(
