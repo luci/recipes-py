@@ -637,11 +637,33 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     test_res = builds_service_pb2.BatchResponse()
     for r in schedule_build_requests:
+      build_args = {
+          'id': self._next_test_build_id,
+          'builder': r.builder,
+      }
+      input_obj = {}
+
+      if r.HasField('gitiles_commit'):
+        input_obj['gitiles_commit'] = r.gitiles_commit
+
+      if r.gerrit_changes:
+        input_obj['gerrit_changes'] = r.gerrit_changes
+
+      if r.experiments:
+        input_obj['experiments'] = sorted(
+            [k for k, v in r.experiments.items() if v])
+
+      if r.properties.fields:
+        input_obj['properties'] = r.properties
+
+      if input_obj:
+        build_args['input'] = input_obj
+
+      if r.tags:
+        build_args['tags'] = r.tags
+
       test_res.responses.add(
-          schedule_build=dict(
-              id=self._next_test_build_id,
-              builder=r.builder,
-          )
+          schedule_build=dict(**build_args)
       )
       self._next_test_build_id += 1
 
