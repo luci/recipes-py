@@ -658,6 +658,8 @@
       "md_0:v1",
       "-metadata",
       "md_1:v2",
+      "-attestation",
+      "[START_DIR]\\packages\\attestations.jsonl",
       "-json-output",
       "/path/to/tmp/json"
     ],

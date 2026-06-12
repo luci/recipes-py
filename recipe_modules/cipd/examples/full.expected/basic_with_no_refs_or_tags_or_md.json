@@ -478,6 +478,8 @@
       "fake-package-path",
       "-metadata",
       "build_id:0",
+      "-attestation",
+      "[START_DIR]/packages/attestations.jsonl",
       "-json-output",
       "/path/to/tmp/json"
     ],

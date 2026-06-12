@@ -103,7 +103,7 @@ def RunSteps(api, props: full_pb.InputProperties):
                  compression_level=9, install_mode='copy',
                  preserve_mtime=True, preserve_writable=True)
   api.cipd.register('infra/fake-package', 'fake-package-path',
-                    refs=props.refs, tags=props.tags, metadata=md)
+                    refs=props.refs, tags=props.tags, metadata=md, attestation=cipd_root/'attestations.jsonl')
 
   # Create (build & register).
   if props.use_pkg:

@@ -12,7 +12,7 @@ DEPS = [
 
 def RunSteps(api):
   api.bcid_reporter.report_stage("start")
-  api.bcid_reporter.report_cipd("deadbeef", "example/cipd/package", "fakeiid")
+  api.bcid_reporter.report_cipd("deadbeef", "example/cipd/package", "fakeiid", api.path.start_dir / 'attestation.jsonl')
   api.bcid_reporter.report_gcs("deadbeef", "gs://bucket/path/to/binary")
   api.bcid_reporter.report_sbom("deadbeef", "gs://bucket/path/to/binary.spdx.jsonl")
 

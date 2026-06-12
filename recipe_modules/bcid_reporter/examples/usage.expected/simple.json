@@ -62,6 +62,8 @@
       "example/cipd/package",
       "-iid",
       "fakeiid",
+      "-attestation-path",
+      "[START_DIR]/attestation.jsonl",
       "-backend-url",
       "http://test.local"
     ],
@@ -143,37 +145,6 @@
   },
   {
     "cmd": [
-      "cipd",
-      "pkg-register",
-      "[CLEANUP]/bcid_cipd__tmp_1",
-      "-ref",
-      "latest",
-      "-tag",
-      "key:value",
-      "-metadata",
-      "build_id:0",
-      "-metadata",
-      "k:v",
-      "-verification-timeout",
-      "20m",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "infra_step": true,
-    "name": "register fake-package.yaml",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\",@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"fake-package.yaml\"@@@",
-      "@@@STEP_LOG_LINE@json.output@  }@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@",
-      "@@@STEP_LINK@fake-package.yaml@https://chrome-infra-packages.appspot.com/p/fake-package.yaml/+/40-chars-fake-of-the-package-instance_id@@@"
-    ]
-  },
-  {
-    "cmd": [
       "vpython3",
       "-u",
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
@@ -197,9 +168,44 @@
       "-pkg-name",
       "fake-package.yaml",
       "-iid",
-      "40-chars-fake-of-the-package-instance_id"
+      "40-chars-fake-of-the-package-instance_id",
+      "-attestation-path",
+      "[CLEANUP]/bcid_cipd_attestation__tmp_1"
     ],
     "name": "snoop: report_cipd (2)"
+  },
+  {
+    "cmd": [
+      "cipd",
+      "pkg-register",
+      "[CLEANUP]/bcid_cipd__tmp_1",
+      "-ref",
+      "latest",
+      "-tag",
+      "key:value",
+      "-metadata",
+      "build_id:0",
+      "-metadata",
+      "k:v",
+      "-verification-timeout",
+      "20m",
+      "-attestation",
+      "[CLEANUP]/bcid_cipd_attestation__tmp_1",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "infra_step": true,
+    "name": "register fake-package.yaml",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\",@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"fake-package.yaml\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@fake-package.yaml@https://chrome-infra-packages.appspot.com/p/fake-package.yaml/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
   },
   {
     "cmd": [
@@ -228,35 +234,6 @@
   },
   {
     "cmd": [
-      "cipd",
-      "pkg-register",
-      "[CLEANUP]/bcid_cipd__tmp_2",
-      "-ref",
-      "latest",
-      "-tag",
-      "key:value",
-      "-metadata",
-      "build_id:0",
-      "-metadata",
-      "k:v",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "infra_step": true,
-    "name": "register infra/fake-package",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\",@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"infra/fake-package\"@@@",
-      "@@@STEP_LOG_LINE@json.output@  }@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@",
-      "@@@STEP_LINK@infra/fake-package@https://chrome-infra-packages.appspot.com/p/infra/fake-package/+/40-chars-fake-of-the-package-instance_id@@@"
-    ]
-  },
-  {
-    "cmd": [
       "vpython3",
       "-u",
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
@@ -280,9 +257,42 @@
       "-pkg-name",
       "infra/fake-package",
       "-iid",
-      "40-chars-fake-of-the-package-instance_id"
+      "40-chars-fake-of-the-package-instance_id",
+      "-attestation-path",
+      "[CLEANUP]/bcid_cipd_attestation__tmp_2"
     ],
     "name": "snoop: report_cipd (3)"
+  },
+  {
+    "cmd": [
+      "cipd",
+      "pkg-register",
+      "[CLEANUP]/bcid_cipd__tmp_2",
+      "-ref",
+      "latest",
+      "-tag",
+      "key:value",
+      "-metadata",
+      "build_id:0",
+      "-metadata",
+      "k:v",
+      "-attestation",
+      "[CLEANUP]/bcid_cipd_attestation__tmp_2",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "infra_step": true,
+    "name": "register infra/fake-package",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\",@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"infra/fake-package\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@infra/fake-package@https://chrome-infra-packages.appspot.com/p/infra/fake-package/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
   },
   {
     "name": "$result"

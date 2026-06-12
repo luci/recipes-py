@@ -569,14 +569,22 @@ class CIPDApi(recipe_api.RecipeApi):
           'compression_level must be >=0 and <=9, got %d' % compression_level)
     return ['-compression-level', str(compression_level)]
 
+  @staticmethod
+  def _attestation_opts(attestation: Path | None) -> list[str]:
+    if attestation is None:
+      return []
+    check_type('attestation', attestation, Path)
+    return ['-attestation', attestation]
+
   def register(
       self,
       package_name: str,
       package_path: Path,
       refs: Sequence[str] | None = None,
       tags: Mapping[str, str] | None = None,
-      metadata: Sequence[Metadata] = None,
+      metadata: Sequence[Metadata] | None = None,
       verification_timeout: str | None = None,
+      attestation: Path | None = None,
   ) -> Pin:
     """Uploads and registers package instance in the package repository.
 
@@ -590,6 +598,7 @@ class CIPDApi(recipe_api.RecipeApi):
       * verification_timeout (str) - Duration string that controls the time to
         wait for backend-side package hash verification. Valid time units are
         "s", "m", "h". Default is "5m".
+      * attestation (Path) - Path to an attestation bundle file.
 
     Returns:
       The CIPDApi.Pin instance.
@@ -597,6 +606,7 @@ class CIPDApi(recipe_api.RecipeApi):
     cmd: list[str | Path | util.Placeholder] = ['pkg-register', package_path]
     cmd.extend(self._metadata_opts(refs, tags, metadata, add_build_id_metadata=True))
     cmd.extend(self._verification_timeout_opts(verification_timeout))
+    cmd.extend(self._attestation_opts(attestation))
 
     step_result = self._run(
         'register %s' % package_name,
@@ -613,10 +623,11 @@ class CIPDApi(recipe_api.RecipeApi):
       pkg_def_file_or_placeholder: Path | util.Placeholder,
       refs: Sequence[str] | None = None,
       tags: Mapping[str, str] | None = None,
-      metadata: Sequence[Metadata] = None,
-      pkg_vars: Mapping[str, str] = None,
+      metadata: Sequence[Metadata] | None = None,
+      pkg_vars: Mapping[str, str] | None = None,
       compression_level: CompressionLevel | None = None,
       verification_timeout: str | None = None,
+      attestation: Path | None = None,
   ) -> Pin:
     cmd: list[str | Path | util.Placeholder] = [
         'create',
@@ -629,6 +640,7 @@ class CIPDApi(recipe_api.RecipeApi):
                                    add_build_id_metadata=True))
     cmd.extend(self._compression_level_opts(compression_level))
     cmd.extend(self._verification_timeout_opts(verification_timeout))
+    cmd.extend(self._attestation_opts(attestation))
 
     step_result = self._run(
         'create %s' % pkg_name,
@@ -657,6 +669,7 @@ class CIPDApi(recipe_api.RecipeApi):
       pkg_vars: Mapping[str, str] | None = None,
       compression_level: CompressionLevel | None = None,
       verification_timeout: str | None = None,
+      attestation: Path | None = None,
   ) -> Pin:
     """Builds and uploads a package based on on-disk YAML package definition
     file.
@@ -675,6 +688,7 @@ class CIPDApi(recipe_api.RecipeApi):
       * verification_timeout - Duration string that controls the time to
         wait for backend-side package hash verification. Valid time units are
         "s", "m", "h". Default is "5m".
+      * attestation - Path to an attestation bundle file.
 
     Returns the CIPDApi.Pin instance.
     """
@@ -685,7 +699,8 @@ class CIPDApi(recipe_api.RecipeApi):
         refs, tags, metadata,
         pkg_vars,
         compression_level,
-        verification_timeout)
+        verification_timeout,
+        attestation)
 
   def create_from_pkg(
       self,
@@ -695,6 +710,7 @@ class CIPDApi(recipe_api.RecipeApi):
       metadata: Sequence[Metadata] | None = None,
       compression_level: CompressionLevel | None = None,
       verification_timeout: str | None = None,
+      attestation: Path | None = None,
   ) -> Pin:
     """Builds and uploads a package based on a PackageDefinition object.
 
@@ -710,6 +726,7 @@ class CIPDApi(recipe_api.RecipeApi):
       * verification_timeout - Duration string that controls the time to
         wait for backend-side package hash verification. Valid time units are
         "s", "m", "h". Default is "5m".
+      * attestation - Path to an attestation bundle file.
 
     Returns the CIPDApi.Pin instance.
     """
@@ -720,7 +737,8 @@ class CIPDApi(recipe_api.RecipeApi):
         refs, tags, metadata,
         None,
         compression_level,
-        verification_timeout)
+        verification_timeout,
+        attestation)
 
   def ensure(
       self,

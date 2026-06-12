@@ -21,6 +21,7 @@ def RunSteps(api):
       "deadbeef",
       "example/cipd/package",
       "fakeiid",
+      api.path.start_dir / 'attestation.jsonl',
       server_url="http://test.local")
 
   # Report gcs artifact digest.

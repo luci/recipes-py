@@ -84,7 +84,7 @@ class BcidReporterApi(recipe_api.RecipeApi):
     self.m.step('snoop: report_stage', args)
 
   @retry()
-  def report_cipd(self, digest, pkg, iid, server_url=None):
+  def report_cipd(self, digest, pkg, iid, attestation, server_url=None):
     """Reports cipd digest to local provenance server.
 
     This is used to report produced artifacts hash and metadata to provenance,
@@ -94,6 +94,7 @@ class BcidReporterApi(recipe_api.RecipeApi):
       * digest (str) - The hash of the artifact.
       * pkg (str) - Name of the cipd package built.
       * iid (str) - Instance ID of the package.
+      * attestation (str) - Path to output the attestation file.
       * server_url (Optional[str]) - URL for the local provenance server, the
         broker tool will use default if not specified.
     """
@@ -106,6 +107,8 @@ class BcidReporterApi(recipe_api.RecipeApi):
       pkg,
       '-iid',
       iid,
+      '-attestation-path',
+      attestation,
     ]
 
     if server_url:
@@ -209,8 +212,13 @@ class BcidReporterApi(recipe_api.RecipeApi):
     Returns the CIPDApi.Pin instance.
     """
     package_path = self.m.path.mkstemp(prefix="bcid_cipd_")
+    attestation_path = self.m.path.mkstemp(prefix="bcid_cipd_attestation_")
     pin = self.m.cipd.build_from_yaml(pkg_def, package_path, pkg_vars,
                                       compression_level)
+
+    package_hash = self.m.file.file_hash(package_path, test_data='deadbeef')
+    self.report_cipd(package_hash, pin.package, pin.instance_id, attestation_path)
+
     pin = self.m.cipd.register(
         pin.package,
         package_path,
@@ -218,14 +226,8 @@ class BcidReporterApi(recipe_api.RecipeApi):
         tags,
         metadata,
         verification_timeout,
+        attestation_path
     )
-
-    try:
-      package_hash = self.m.file.file_hash(package_path, test_data='deadbeef')
-      self.report_cipd(package_hash, pin.package, pin.instance_id)
-    except Exception:  # pragma: no cover
-      self.m.step.active_result.presentation.status = self.m.step.WARNING
-      raise
 
     return pin
 
@@ -257,7 +259,12 @@ class BcidReporterApi(recipe_api.RecipeApi):
     Returns the CIPDApi.Pin instance.
     """
     package_path = self.m.path.mkstemp(prefix="bcid_cipd_")
+    attestation_path = self.m.path.mkstemp(prefix="bcid_cipd_attestation_")
     pin = self.m.cipd.build_from_pkg(pkg_def, package_path, compression_level)
+
+    package_hash = self.m.file.file_hash(package_path, test_data='deadbeef')
+    self.report_cipd(package_hash, pin.package, pin.instance_id, attestation_path)
+
     pin = self.m.cipd.register(
         pin.package,
         package_path,
@@ -265,12 +272,7 @@ class BcidReporterApi(recipe_api.RecipeApi):
         tags,
         metadata,
         verification_timeout,
+        attestation_path
     )
-
-    try:
-      package_hash = self.m.file.file_hash(package_path, test_data='deadbeef')
-      self.report_cipd(package_hash, pin.package, pin.instance_id)
-    except Exception:  # pragma: no cover
-      self.m.step.active_result.presentation.status = self.m.step.WARNING
 
     return pin
