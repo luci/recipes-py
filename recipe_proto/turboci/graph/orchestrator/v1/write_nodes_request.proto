@@ -114,9 +114,9 @@ message WriteNodesRequest {
   //
   // This is in addition to regular RPC authorization.
   //
-  // If missing, this RPC will check that the caller additionally has the
-  // 'turboci.workplans.writeExternal' permission on Workplan(s) in the
-  // CheckWrites/StageWrites.
+  // If missing, this Orchestrator will check that the caller is permitted to
+  // act "externally" in the work plan, see http://go/turbo-ci-acls (Googlers
+  // only) for details.
   optional string token = 1;
 
   // The reason that the caller is performing this write.
@@ -176,36 +176,44 @@ message WriteNodesRequest {
   optional TransactionDetails txn = 3;
 
   // A description of modifications to make to a single Check.
+  //
+  // All fields annotated as `(turboci).creation_only = true` can be set only
+  // once in a sense that if a CheckWrite updates an existing check, values
+  // of all these fields (if they are set) must match existing check values.
   message CheckWrite {
     // The check to write to.
     //
-    // If the WorkPlan is left blank, will be populated with the WorkPlan in
-    // `token`, if it's provided.
+    // The work plan in the ID can either be unset or be equal to the work plan
+    // the WriteNodesRequest's token is associated with. If there's no token,
+    // the work plan in the ID must be set.
     //
-    // Otherwise, the Check must belong to the token's WorkPlan, or the caller
-    // must have the additional "turboci.workplans.writeExternal" permission in
-    // the check's realm (or in the realm of the option/result data).
+    // Required.
     optional ids.v1.Check identifier = 1;
 
     // Realm to assign to this Check.
     //
-    // If provided, must be the absolute form "<project>:<name>", or a
-    // special form "$from_token" or "$from_container". "$from_token" works
-    // as documented in [ValueWrite]. "$from_container" means "the same realm
-    // as the WorkPlan".
+    // If provided, must be in the absolute form "<project>:<name>" or be one
+    // of special values:
+    //   * "$from_token" - see [ValueWrite] for how it works.
+    //   * "$from_container" means "the same realm as the WorkPlan".
     //
-    // If omitted, it means that this check must already exist.
+    // Required when inserting a new check.
     optional string realm = 2 [(turboci).creation_only = true];
 
     // Kind to assign to this check.
     //
-    // If this is set, and the Check DOES already exist, this MUST match the
-    // existing Check kind.
+    // Required when inserting a new check.
     optional CheckKind kind = 3 [(turboci).creation_only = true];
+
+    // The display name of this Check.
+    //
+    // Optional. If set, overrides the existing value.
+    optional string display_name = 9 [(turboci).check.editable = CHECK_STATE_PLANNING];
 
     // The list of Options to write/overwrite.
     //
-    // Must be unique on `ValueWrite.data.type_url`.
+    // Must be unique on `ValueWrite.data.type_url`. Changing realms of existing
+    // options is not allowed.
     repeated ValueWrite options = 4 [(turboci).check.editable = CHECK_STATE_PLANNING];
 
     // Dependency predicate for this Check.
@@ -260,50 +268,63 @@ message WriteNodesRequest {
   // Note that the `state` of a Stage is managed entirely by the Orchestrator
   // itself. If you are a Stage implementation and need to manage the state of
   // your own Stage Attempt, see CurrentStageWrite.
+  //
+  // There are only two sorts of writes currently allowed: inserting a new stage
+  // or cancelling an existing stage.
+  //
+  // All fields annotated as `(turboci).creation_only = true` can be set only
+  // once in a sense that if a StageWrite overwrites an existing stage, values
+  // of all these fields (if they are set) must match existing stage values.
+  //
+  // All these fields are also optional when cancelling a stage. If they are
+  // set, they'll act as a precondition for cancellation, i.e. the stage will be
+  // cancelled only if its existing values match the provided ones.
   message StageWrite {
     // The stage to write to.
     //
-    // If the WorkPlan is left blank, will be populated with the WorkPlan in
-    // `token`, if it's provided.
+    // The work plan in the ID can either be unset or be equal to the work plan
+    // the WriteNodesRequest's token is associated with. If there's no token,
+    // the work plan in the ID must be set.
     //
-    // Otherwise, the Stage must belong to the token's WorkPlan, or the caller
-    // must have the additional "turboci.workplans.writeExternal" permission in
-    // the stage's realm.
+    // When inserting a new stage, if `identifier.is_worknode` is true, `args`
+    // must be type.googleapis.com/wireless.android.launchcontrol.WorkNodeStage
+    // (only vice versa: if a WorkNodeStage is given as `args, the ID must be
+    // `is_worknode`). Such writes can be used to insert legacy work nodes using
+    // Turbo CI APIs. IDs for such stages must be preallocated via
+    // AllocateWorkNodeIDs RPC.
     //
-    // The `is_worknode` field should also be omitted - it will be filled in by
-    // the server according to the type of `args`.
+    // Required.
     optional ids.v1.Stage identifier = 1;
 
-    // The arguments of the Stage.
+    // The arguments of the Stage when inserting a new stage.
     //
-    // A Stage MUST have `args` - if this write would create the Stage and
-    // `args` is omitted, the write will be rejected. If the Stage already
-    // exists and `args` is specified, the supplied args must match the existing
-    // Stages's `args` exactly.
-    //
-    // TBD: Document executor registration/selection process.
+    // Required when inserting a new stage. The realm must match `realm` (or
+    // be "$from_container", which will make it match the stage realm).
     optional ValueWrite args = 2 [(turboci).creation_only = true];
 
-    // Realm to assign to this Stage.
+    // Realm to assign to this Stage when inserting it.
     //
-    // If provided, must be the absolute form "<project>:<name>", or a
-    // special form "$from_token" or "$from_container". "$from_token" works
-    // as documented in [ValueWrite]. "$from_container" means "the same realm
-    // as the WorkPlan".
+    // If provided, must be in the absolute form "<project>:<name>" or be one
+    // of special values:
+    //   * "$from_token" - see [ValueWrite] for how it works.
+    //   * "$from_container" means "the same realm as the WorkPlan".
+    //   * "$legacy_worknode" means to use legacy WorkPlan API ACLs. Can only be
+    //     used if `identifier.is_worknode` is true.
     //
-    // If the Stage already exists, this will only result in an error if it
-    // doesn't match the existing realm.
-    //
-    // Defaults to "$from_token" if unset while creating a Stage.
+    // When inserting a new stage defaults to:
+    //   * "$from_token" if `identifier.is_worknode` is false.
+    //   * "$legacy_worknode" if `identifier.is_worknode` is true.
     optional string realm = 3 [(turboci).creation_only = true];
+
+    // The display name of this Stage.
+    //
+    // Optional.
+    optional string display_name = 8 [(turboci).creation_only = true];
 
     // Dependency predicate for this Stage.
     //
     // If set, used to populate the dependencies.edges and
     // dependencies.predicate fields in the target Check.
-    //
-    // If the Stage already exists, this will only result in an error if it
-    // doesn't match the existing dependencies identically.
     //
     // NOTE: Currently Stages in this group must only point to Stages created by
     // the Stage performing this write. In theory, this should help prevent
@@ -325,29 +346,19 @@ message WriteNodesRequest {
 
     // The requested execution policy of the Stage.
     //
-    // If the Stage already exists, this will only result in an error if this
-    // requested policy doesn't match the existing requested policy.
-    //
-    // If this write creates the stage and the requested_stage_execution_policy
-    // is omitted, the stage will get the default StageExecutionPolicy from the
-    // Executor.
+    // Optional. If omitted when creating a stage, the executor will decide what
+    // policy to enforce in its ValidateStage RPC.
     optional StageExecutionPolicy requested_stage_execution_policy = 5 [(turboci).creation_only = true];
 
     // The Check assignments of the Stage.
     //
-    // If the Stage already exists, this will only result in an error if it
-    // doesn't match the existing assignments.
+    // Currently not implemented.
     repeated Stage.Assignment assignments = 6 [(turboci).creation_only = true];
 
     // If true, ensures that this Stage is marked for cancellation.
     //
-    // If the Stage is in the ATTEMPTING state, and the current Attempt is
-    // RUNNING, the Attempt will transition to CANCELLING - Otherwise the
-    // current Attempt will be marked INCOMPLETE.
-    //
-    // If the Stage is already marked for cancellation, setting this is a no-op.
-    //
-    // A value of `false` is the same as `unset` (no-op).
+    // See Stage.cancelled_by for how cancellation affects stages in different
+    // lifecycle states.
     //
     // Use the top-level `reason` field to provide the cancellation reason.
     optional bool cancelled = 7;
@@ -362,7 +373,9 @@ message WriteNodesRequest {
   message CurrentAttemptWrite {
     // Sets details in the Stage Attempt.details field.
     //
-    // Overwrites any existing detail of the same type.
+    // Details are stored in an append-only map "type URL -> ValueRef".
+    // Overwrites of existing details are ignored (see ProgressIgnoredDetail
+    // message).
     repeated ValueWrite details = 1;
 
     // Progress messages to add to the current Stage Attempt.

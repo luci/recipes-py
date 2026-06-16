@@ -49,6 +49,10 @@ message ValueWrite {
   //       * Edit Reasons for a Check or Stage are contained in their
   //         respective Edit, which always has the same realm as the Check or
   //         Stage to which the Edit belongs.
+  //   * "$legacy_worknode" - Can only be used only for Values contained by
+  //     a stage that has `identifier.is_worknode` set to true. Indicates that
+  //     access to the value is governed by legacy WorkPlan API ACLs, not
+  //     realms. Useful for compatibility with WorkPlan executors.
   //
   // See the surrounding context for this ValueWrite for which permissions
   // will be checked for writing and/or reading this data.

@@ -20,7 +20,7 @@ message Actor {
   message WorkplanCreator {}
 
   // External indicates that the edit came from some Actor using an External
-  // permission variant (no write token used).
+  // permission variant (no stage attempt or work plan creator token used).
   message External {
     // TBD: Add a field here for the external account identity. Note that
     // doing this properly will require nuance to distinguish between e.g.

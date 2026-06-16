@@ -61,6 +61,9 @@ message StageAttemptExecutionPolicy {
     // The expected duration that a Stage Attempt can be in the SCHEDULED
     // state without sending a heartbeat.
     //
+    // Also applies to CANCELLING state if the attempt was cancelled while
+    // still being SCHEDULED.
+    //
     // If unset, then there is no required heartbeat cadence, though the stage
     // is still subject to timeouts for the phase.
     optional google.protobuf.Duration scheduled = 1;
@@ -68,12 +71,11 @@ message StageAttemptExecutionPolicy {
     // The expected duration that a Stage Attempt can be in the RUNNING state
     // without sending a heartbeat.
     //
+    // Also applies to CANCELLING state if the attempt was cancelled while
+    // still being RUNNING.
+    //
     // If unset, then there is no required heartbeat cadence, though the stage
     // is still subject to timeouts for the phase.
-    //
-    // NOTE: This heartbeat still applies during the CANCELLING state - it's
-    // expected that CANCELLING only applies to Stage Attempts which are
-    // RUNNING, but before the Stage Attempt actually knows this.
     optional google.protobuf.Duration running = 2;
 
     // The expected duration that a Stage Attempt can be in the TEARING_DOWN
@@ -121,21 +123,37 @@ message StageAttemptExecutionPolicy {
 
     // The maximum amount of time a Stage Attempt can be RUNNING.
     //
-    // NOTE: This timeout still applies during the CANCELLING state - it's
-    // expected that CANCELLING only applies to Stage Attempts which are
-    // RUNNING, but before the Stage Attempt actually knows this.
-    //
     // If unset or zero, it is assumed the executor is a synchronous one, i.e.
     // it moves attempts immediately into COMPLETE or INCOMPLETE states,
     // bypassing SCHEDULED/RUNNING.
     optional google.protobuf.Duration running = 3;
 
+    // The maximum amount of time a Stage Attempt can be CANCELLING.
+    //
+    // This is also an upper bound on how long the orchestrator will keep
+    // retrying calling CancelStage RPC.
+    //
+    // If unset or zero, it is assumed the executor doesn't implement graceful
+    // cancellation. In that case cancelling a stage will make the attempt
+    // INCOMPLETE right away without any graceful tear down.
+    //
+    // For executors that implement graceful cancellation, the value here should
+    // generally be pretty small (minutes), since the executor is expected to
+    // acknowledge the cancellation ASAP e.g. by transitioning the attempt to
+    // TEARING_DOWN (which has its own timeout).
+    //
+    // To make sure cancelled stages terminate in a timely manner no matter
+    // what, the orchestrator puts a hard upper bound on a value of this timeout
+    // (currently 15 min).
+    optional google.protobuf.Duration cancelling = 5;
+
     // The maximum amount of time a Stage Attempt can be TEARING_DOWN.
     //
-    // Can be unset or zero if `running` is also unset or zero or if the
-    // executor doesn't implement stage cancellation at all. Otherwise it should
-    // be set to something to avoid premature termination of a cancelled
-    // attempt as timed out during the tear down.
+    // If unset or zero, the orchestrator will use some default value.
+    //
+    // To make sure cancelled stages terminate in a timely manner no matter
+    // what, the orchestrator puts a hard upper bound on a value of this timeout
+    // (currently 15 min).
     optional google.protobuf.Duration tearing_down = 4;
   }
   // The timeout policies for the StageAttempt.

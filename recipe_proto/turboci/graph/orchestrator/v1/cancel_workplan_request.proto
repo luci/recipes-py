@@ -1,0 +1,41 @@
+// Copyright 2026 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "turboci/graph/ids/v1/identifier.proto";
+import "turboci/graph/orchestrator/v1/value_write.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// Request message for TurboCIOrchestrator.CancelWorkPlan.
+message CancelWorkPlanRequest {
+  // The token which constrains this request to a specific Workplan.
+  //
+  // A suitable token is provided to the Executor of a Stage or to the creator
+  // of an empty Workplan. If no token is given, the request is considered
+  // "external" to the work plan and will require extra permissions.
+  //
+  // This is in addition to regular RPC authorization.
+  optional string token = 1;
+
+  // The ID of the work plan to cancel.
+  //
+  // Can be omitted if `token` is set in which case the workplan_id will be that
+  // of the token's.
+  optional ids.v1.WorkPlan workplan_id = 2;
+
+  // The reason that the caller is cancelling the plan.
+  message Reason {
+    // A human-readable reason. Required.
+    optional string message = 1;
+    // Machine-readable reasons. See WriteNodesRequest for semantics. Optional.
+    repeated ValueWrite details = 2;
+  }
+  // Reason for cancellation. Required.
+  optional Reason reason = 3;
+}

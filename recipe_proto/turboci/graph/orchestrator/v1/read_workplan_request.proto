@@ -25,16 +25,11 @@ message ReadWorkPlanRequest {
   // of an empty Workplan.
   //
   // This is in addition to regular RPC authorization.
-  //
-  // If the token is populated:
-  // * If its workplan ID matches the workplan ID in the request, this RPC will
-  //   check that the caller has the relevant 'read' permissions.
-  // * If it doesn't match, this RPC will reject the request.
-  // If the token is not populated, the relevant 'readExternal' permissions will
-  // be checked.
   optional string token = 1;
 
-  // The ID of the workplan from which to select nodes to return.
+  // The ID of the workplan from which to select nodes to return. If not
+  // provided and `token` is provided, the workplan ID from the token will be
+  // used. If not provided and not inferable, the request will be rejected.
   optional ids.v1.WorkPlan workplan_id = 2;
 
   // The set of node types for which we should return nodes. If none are

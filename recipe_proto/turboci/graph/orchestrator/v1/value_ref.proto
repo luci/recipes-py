@@ -28,26 +28,29 @@ message ValueRef {
   // "$from_container" as you may write via [ValueWrite.realm].
   optional string realm = 2;
 
-  // The data for this ValueRef.
-  oneof data {
-    // Serialized [ValueDigest] for the data.
-    //
-    // This indicates that the data must be retrieved from the `value_data` map
-    // in the response (or from some other CAS system using `digest` as the
-    // effective key).
-    string digest = 3;
+  // Serialized [ValueDigest] for the data.
+  //
+  // This indicates that the data must be retrieved from the `value_data` map
+  // in the response (or from some other CAS system using `digest` as the
+  // effective key).
+  //
+  // NOTE: The current implementation of the TurboCI Orchestrator will always
+  // populate this field for non-omitted ValueRefs in its response.
+  optional string digest = 3;
 
-    // Inline contains the actual data, if the orchestrator decided that this
-    // data was too small/unique to store indirectly via `digest`.
-    //
-    // It is expected that clients will always use a library function to handle
-    // inline vs. digest-referenced data. Server-provided JSON via ValueData
-    // will always be provided via digest, rather than stored inline.
-    //
-    // See [ValueDigest] for how to compute `digest` from `inline`, should
-    // it be necessary.
-    google.protobuf.Any inline = 4;
-  }
+  // Inline contains the actual data, if the orchestrator decided that this
+  // data was too small/unique to store indirectly via `digest`.
+  //
+  // It is expected that clients will always use a library function to handle
+  // inline vs. digest-referenced data. Server-provided JSON via ValueData
+  // will always be provided via digest, rather than stored inline.
+  //
+  // See [ValueDigest] for how to compute `digest` from `inline`, should
+  // it be necessary.
+  //
+  // NOTE: The current implementation of the TurboCI Orchestrator will
+  // never populate this field for ValueRefs in its response.
+  optional google.protobuf.Any inline = 4;
 
   // If set, the reason this ValueRef's content was omitted from the response.
   //

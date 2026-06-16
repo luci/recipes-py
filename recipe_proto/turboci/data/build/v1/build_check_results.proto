@@ -15,7 +15,7 @@ option java_multiple_files = true;
 
 // BuildCheckResults represent the output of a build. This is mainly centered around the artifacts
 // generated from the build and their locations.
-message BuildCheckResult {
+message BuildCheckResults {
   // Whether the build succeeded or failed. "success = true" means that all required build actions
   // succeeded. Any failed actions result in "success = false". If the build failed, display_message
   // will contain human-readable information about the failure reason. Additional product-specific

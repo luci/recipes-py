@@ -1,0 +1,25 @@
+// Copyright 2026 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "turboci/graph/orchestrator/v1/revision.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// Response message for TurboCIOrchestrator.CancelWorkPlan.
+message CancelWorkPlanResponse {
+  // The revision at which the work plan was cancelled.
+  //
+  // This is either a new revision that was just committed or some previous
+  // revision (if the work plan was already cancelled previously).
+  //
+  // Note that `cancelled_at` field of individual stages will generally be in
+  // the future compared to this revision, since cancellation propagates through
+  // the graph asynchronously.
+  optional Revision cancelled_at = 1;
+}

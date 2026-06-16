@@ -33,18 +33,28 @@ option java_multiple_files = true;
 // See also:
 //   * Identifier.Stage* (Identifiers for Stages, StageAttempts, etc.)
 //
-// Next ID: 17
+// Next ID: 20.
 message Stage {
   // The Stage's identifier.
   optional ids.v1.Stage identifier = 1 [(google.api.field_behavior) = IMMUTABLE];
+
+  // Optional, non-unique, display name of this Stage.
+  //
+  // Should only be set if it provides meaningful context for what this Stage
+  // is above and beyond the Stage's identifier.id, args.type_url and sub_type.
+  optional string display_name = 18;
 
   // Actor which created the Stage.
   optional Actor created_by = 2 [(google.api.field_behavior) = IMMUTABLE];
 
   // The security realm for this Stage.
   //
-  // When a Stage inserts another, the inserted Stage will inherit the realm of
-  // the inserting Stage, unless this is explicitly set.
+  // See WriteNodesRequest.StageWrite for how it is determined.
+  //
+  // Can be unset if this stage represents a legacy work node created via
+  // WorkPlan API. In that case access to this stage (and all realmless
+  // ValueRefs in it) is authorized using legacy WorkPlan API ACLs (which are
+  // based on Google groups, not realms).
   optional string realm = 3 [(google.api.field_behavior) = IMMUTABLE];
 
   // The arguments of the Stage.
@@ -53,27 +63,31 @@ message Stage {
   // and that registration will indicate which Executor should handle this
   // Stage.
   //
-  // NOTE: It's assumed that args.type_url will be a sufficient routing key to
-  // the various registered Executors, but it's POSSIBLE that we may need to
-  // have multiple Executors handle exactly the same Stage type, at which point
-  // we would need to either:
-  //   * Add a secondary type to distinguish them; this would have the
-  //     additional benefit of allowing us to clearly delineate the differences
-  //     via documentation, but if we have this situation a lot, it could be
-  //     confusing.
-  //   * Add another field to Stage to allow registration on (newfield,
-  //     type_url) instead of just type_url.
+  // Type type.googleapis.com/wireless.android.launchcontrol.WorkNodeStage is
+  // recognized by the Orchestrator natively. It can be used to insert legacy
+  // work nodes using Turbo CI API. Such nodes will be accessible both via
+  // WorkPlan API and Turbo CI API. WorkPlan API will always use legacy ACLs
+  // (based on Google groups). Turbo CI API will either use the legacy ACLs
+  // as well (if the stage was inserted with "$legacy_worknode" realm) or
+  // realm ACLs (if the stage with inserted with any other realm).
   //
-  // Looking at WorkNode, there are definitely multiple executor types which
-  // accept the same arguments in WorkParameters, but these could be
-  // represented by adding a new field to WorkParameters. There is also the
-  // PARTIAL_RERUN executor type which is used when duplicating WorkNodes, but
-  // this seems like it will be handled differently with Checks (i.e. Checks of
-  // the same options would be added, and new Results of the cached results
-  // would be added. There wouldn't be a need to add placeholder Stages into
-  // such a graph). There are also some executor types which serve as a way to
-  // separate ACLs, but we expect this to be handled by realms.
+  // Stages with WorkNodeStage type have `is_worknode` set to true in their
+  // `identifier` and they have numeric IDs. See AllocateWorkNodeIDs RPC.
+  //
+  // The realm always matches the realm of the stage.
   optional ValueRef args = 4 [(google.api.field_behavior) = IMMUTABLE];
+
+  // A disambiguating sub-type for this Stage returned by the stage executor
+  // from ValidateStage.
+  //
+  // Used to identify a specific, named, variant of this stage when many exist,
+  // to differentiate metrics between stage sub-types. This value should be
+  // computed by the executor from `args` with some pure function (for example,
+  // this could be the `config` field of a hypothetical args message, or
+  // combination of `os` and `flagset` fields).
+  //
+  // Must adhere to the regex: /^[a-zA-Z0-9\(\)\-_./ ]{0,256}$/
+  optional string sub_type = 19;
 
   // The version of this Stage.
   //
@@ -84,9 +98,28 @@ message Stage {
   // The current state of the Stage.
   optional StageState state = 6;
 
-  // If this stage was cancelled, this indicates the Actor which cancelled
-  // it.
+  // If this stage was cancelled, this indicates the Actor which cancelled it.
+  //
+  // It is populated immediately after the cancellation was submitted and
+  // signals that the stage is pending cancellation. The stage may still be in
+  // non-final state for some time, since the cancellation process is generally
+  // asynchronous.
+  //
+  // Here's what cancellation does to stages in different states:
+  //  * PLANNED: the stage will remain PLANNED as long as it has unresolved
+  //    dependencies. When they are resolved, the stage will immediately
+  //    switch into FINAL state (instead of ATTEMPTING).
+  //  * ATTEMPTING: the current stage attempt will be moved to CANCELLING state
+  //    (followed by TEARING_DOWN, followed by COMPLETE or INCOMPLETE). No new
+  //    attempts will be allowed. Once the current attempt is COMPLETE or
+  //    INCOMPLETE, the stage will switch into AWAITING_GROUP or FINAL states,
+  //    just as if it finished normally.
+  //  * AWAITING_GROUP, FINAL: cancellation has no effect on stages in this
+  //    state (they have finished running already).
   optional Actor cancelled_by = 14;
+
+  // When the stage was cancelled (i.e. when `cancelled_by` was set).
+  optional Revision cancelled_at = 17;
 
   // Set for stages that represent legacy WorkNodes.
   message Legacy {
@@ -105,14 +138,16 @@ message Stage {
     // The WorkExecutorType as extracted from `worknode`.
     //
     // Have it as a separate field is useful for skipping decoding large proto
-    // during ACL checks (that just need the executor type).
+    // during legacy ACL checks (that just need the executor type).
     optional int32 work_executor_type = 2;
   }
 
   // Set only for stages that represent legacy WorkNodes.
   //
-  // Such stages are submitted either via legacy WorkPlan API or as a special
-  // kind of a Stage (with `args` having type TBD).
+  // Such stages are submitted either via legacy WorkPlan API (in which case
+  // their realm will be unset) or via Turbo CI API using special `args` of
+  // type type.googleapis.com/wireless.android.launchcontrol.WorkNodeStage
+  // (in which case the realm may or may not be set, see `args`).
   optional Legacy legacy = 16;
 
   // StateHistoryEntry records the database revision (commit timestamp) when
@@ -150,9 +185,6 @@ message Stage {
   //
   // `requested` is set by the stage creator. This is validated and augmented by
   // the Executor to become the `validated` policy.
-  //
-  // In the future, this may also include a `dynamic` policy which could allow
-  // additional restrictions to be added after the Stage is created.
   message ExecutionPolicyState {
     // Requested execution policy is the policy which is set by the creator of
     // this Stage.
@@ -160,8 +192,8 @@ message Stage {
     // This will be validated by the Executor prior to the Stage being committed
     // to the graph.
     //
-    // If omitted, the Executor will provide a full StageExecutionPolicy according to
-    // its own logic/configuration.
+    // If omitted, the Executor will provide a full StageExecutionPolicy
+    // according to its own logic/configuration.
     optional StageExecutionPolicy requested = 1 [(google.api.field_behavior) = IMMUTABLE];
 
     // Actual execution policy is the policy validated and returned by the
@@ -170,17 +202,6 @@ message Stage {
     // This is the policy that TurboCI will use to drive Attempts for this
     // Stage.
     optional StageExecutionPolicy validated = 2;
-
-    // TBD: Potentially allow a `dynamic` ExecutionPolicy which callers can use
-    // to decrease the effective limits on this Stage.
-    //
-    // If this is done:
-    //   * Stage type configuration should indicate that dynamic execution
-    //   policy is supported.
-    //   * TurboCI must ensure this dynamic policy only ever shrinks.
-    //   * If the changes are on `attempt_execution_policy_template`, TurboCI
-    //   will set the requested policy for the future attempts to this updated
-    //   policy. But the current attempt will not be affected.
   }
 
   // Execution policy for this Stage.
@@ -191,10 +212,7 @@ message Stage {
   // Stages in the AWAITING state ALWAYS have an active Attempt, even before
   // the Orchestrator sends the first RPC to the Executor for this Stage.
   //
-  // TBD: Pull this into its own top-level StageAttempt entity because it will
-  // need to have its own state and lifecycle/transactions.
-  //
-  // Next ID: 9, then 12
+  // Next ID: 12.
   message Attempt {
     // The Stage Attempt's identifier.
     optional ids.v1.StageAttempt identifier = 1 [(google.api.field_behavior) = IMMUTABLE];
@@ -246,6 +264,10 @@ message Stage {
     //   * AWAITING_RETRY - This Attempt was created as a retry of a previous
     //     INCOMPLETE attempt, and the Orchestrator will not advance it to
     //     PENDING until this time.
+    //   * CANCELLING - The Orchestrator called CancelStage, but the attempt
+    //     is still in CANCELLING state (i.e. it didn't progress to TEARING_DOWN
+    //     or concluded). The Orchestrator will try calling CancelStage again
+    //     after this time.
     //
     // In all other states, this field is unset.
     optional google.protobuf.Timestamp waiting_until = 11;
@@ -324,6 +346,7 @@ message Stage {
       // If created_by is Orchestrator, then `details` may contain the
       // following:
       //   * turboci.graph.orchestrator.v1.ProgressEvolvePending
+      //   * turboci.graph.orchestrator.v1.ProgressCancelling
       //   * turboci.graph.orchestrator.v1.ProgressIgnoredDetail
       optional Actor created_by = 4;
 
@@ -356,7 +379,7 @@ message Stage {
   // Stage. While the Stage is ATTEMPTING, the Stage's revision only changes
   // when:
   //   * A new Attempt is created
-  //   * The Stage is canceled
+  //   * The Stage is cancelled
   repeated Attempt attempts = 10;
 
   // Assignment describes the workflow's intent that this Stage will handle one
@@ -415,7 +438,7 @@ message Stage {
 
   // Describes why this stage is not PLANNED or ATTEMPTING anymore.
   //
-  // Set for stages that are in AWAITING_GROUP or FINAL states.
+  // Always set for stages that are in AWAITING_GROUP or FINAL states.
   optional StageConcludedReason concluded_reason = 13;
 
   // StageEdits for this Stage.
@@ -451,22 +474,7 @@ message StageAttemptCurrentState {
   // NOTE: This is authoritative, and could be in a state which is later than
   // the one that the client which made the RPC expects.
   //
-  //   * CANCELLING - The Stage has been cancelled, but there has not yet been
-  //     a heartbeat from the the Stage Attempt. As soon as there is a
-  //     current_stage write from the Stage Attempt, this state will turn into
-  //     TEARING_DOWN.
-  //   * TEARING_DOWN - The Stage was cancelled while a Stage Attempt was
-  //     RUNNING. When a WriteNodes with current_stage set happens, the
-  //     orchestrator will transition to TEARING_DOWN in that same
-  //     transaction and report this state here. The still-running attempt
-  //     should do any graceful shutdown it can before
-  //     `current_state_deadline` and then do a WriteNodes to mark the
-  //     current attempt as either COMPLETE or INCOMPLETE.
-  //   * COMPLETE/INCOMPLETE - Something already marked this attempt as
-  //     finished. The still-running attempt should immediately shutdown
-  //     without attempting to do any further QueryNodes/WriteNodes calls.
-  //     Note that this could happen if a Stage is cancelled while PENDING or
-  //     SCHEDULED.
+  // See StageAttemptState for all details.
   optional StageAttemptState state = 1;
 
   // The version of the Stage Attempt that the orchestrator observed.
@@ -479,4 +487,7 @@ message StageAttemptCurrentState {
   // If set, the timestamp for when the orchestrator expects the next
   // heartbeat.
   optional google.protobuf.Timestamp heartbeat_by = 4;
+
+  // Set if the stage was cancelled.
+  optional Revision cancelled_at = 5;
 }

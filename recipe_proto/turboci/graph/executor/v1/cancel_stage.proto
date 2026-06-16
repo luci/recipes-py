@@ -15,7 +15,7 @@ option java_multiple_files = true;
 
 // Request to cancel an asynchronous stage attempt.
 message CancelStageRequest {
-  // Stage with the attempt being canceled.
+  // Stage with the attempt being cancelled.
   optional orchestrator.v1.Stage stage = 1;
 
   // A map containing [ValueData] for `stage`.

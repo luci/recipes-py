@@ -29,4 +29,19 @@ message CreateWorkPlanRequest {
   // Required. Must be at least 8 bytes long. Can be a randomly generated
   // string.
   optional string idempotency_key = 2;
+
+  // The optional name of the workflow that this WorkPlan is an instance of.
+  //
+  // This should describe the 'class' of the workplan within the given project,
+  // e.g. "presubmit", "postsubmit", etc. The classes used over time should
+  // be fairly static - this must *not* include high-cardinality data like:
+  //   * ChangeIds or Git Commits
+  //   * Build numbers
+  //   * etc.
+  //
+  // This is *not* intended to be globally unique, but rather to be used to
+  // group together workplans of similar purpose/intent.
+  //
+  // Must adhere to the regex: /^[a-zA-Z0-9\(\)\-_./ ]{0,256}$/
+  optional string workflow_name = 3;
 }

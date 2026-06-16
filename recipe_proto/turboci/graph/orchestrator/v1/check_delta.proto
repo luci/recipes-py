@@ -31,6 +31,9 @@ message CheckDelta {
   // NOTE: Check.kind is not here (it's immutable, so just read it @HEAD on the
   // Check.)
 
+  // The display_name of the check, if it was modified.
+  optional string display_name = 5;
+
   // Dependencies written as part of this edit.
   //
   // The fields within reflect what was changed in this edit:

@@ -7,42 +7,14 @@ syntax = "proto3";
 package turboci.graph.orchestrator.v1;
 
 import "google/protobuf/descriptor.proto";
-import "turboci/graph/ids/v1/identifier_kind.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
 option java_multiple_files = true;
 
 // MethodOptions are method options which apply to RPC method definitions.
 message MethodOptions {
-  // Which permissions this RPC may check, and under what conditions.
-  //
-  // This is purely for documentation purposes.
-  message Permission {
-    // The name of the permission checked for operations in the same
-    // workplan as the token.
-    optional string internal = 1;
-
-    // The name of the permission checked for operations outside the
-    // workplan of the token, or for operations with no token at all.
-    optional string external = 2;
-
-    // The node(s) whose realm will be checked.
-    repeated ids.v1.IdentifierKind in = 3;
-
-    // The permission is checked in the Value (ValueWrite/ValueRef) realm.
-    optional bool in_value_realm = 4;
-
-    // Conditional attribute names against which a permission binding may be
-    // granted conditionally.
-    repeated string potentially_conditional_on = 5;
-
-    // Short description of when this permission is checked.
-    repeated string for = 6;
-  }
-
-  // Permissions that this RPC will check, including the realms and/or the
-  // conditions under which they are checked.
-  repeated Permission permission = 1 [retention = RETENTION_SOURCE];
+  reserved 1;
+  reserved "permission";
 }
 
 extend google.protobuf.MethodOptions {

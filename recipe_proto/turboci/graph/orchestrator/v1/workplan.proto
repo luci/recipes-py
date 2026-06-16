@@ -36,6 +36,8 @@ option java_multiple_files = true;
 // Within a node, all ValueRefs will be present, but they may reference the
 // digest of a ValueData that is not present in the WorkPlan based on the
 // parameters the caller provides in the request.
+//
+// Next ID: 7
 message WorkPlan {
   // The WorkPlan to which all nodes in this WorkPlan belong.
   optional ids.v1.WorkPlan identifier = 1;
@@ -47,6 +49,19 @@ message WorkPlan {
 
   // Maps this WorkPlan to a security realm.
   optional string realm = 3 [(google.api.field_behavior) = IMMUTABLE];
+
+  // The optional name of the workflow that this WorkPlan is an instance of.
+  //
+  // This will describe the 'class' of the workplan within the given project -
+  // two workplans with the same 'workflow_name' do 'the same thing' (as defined
+  // by the owners of the workplan). An example of this may be "presubmit" or
+  // "postsubmit", etc.
+  //
+  // This will not include any high cardinality information (like commits,
+  // change IDs, build numbers, etc.).
+  //
+  // Must adhere to the regex: /^[a-zA-Z0-9\(\)\-_./ ]{0,256}$/
+  optional string workflow_name = 6;
 
   // Checks in the graph.
   repeated Check checks = 4;

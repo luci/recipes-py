@@ -132,17 +132,27 @@ message Dependencies {
   // This MAY include non-zero propagation time from the time that the target of
   // Edge entered a satisfying state for this Edge.
   message ResolutionEvent {
-    // The version of the containing node which included this event.
+    // The version of the containing node (e.g. Stage or Check) which included
+    // this event.
     //
-    // This MAY be substantially after the target of the edge is FINAL, e.g. if
+    // This MAY be substantially after the edge condition was resolved, e.g. if
     // the containing node was created or became PLANNED far after the target
-    // was FINAL.
+    // condition was met.
+    //
+    // See `condition_version` below for the revision of the condition itself.
     optional Revision version = 1;
 
     // Was the criteria for this edge satisfied or not?
     //
     // Will never be `UNKNOWN`.
     optional Resolution resolution = 2;
+
+    // The version of the Edge target when the edge's condition was originally
+    // resolved.
+    //
+    // This MAY be substantially before `version` (even before the
+    // containing node was created).
+    optional Revision condition_version = 3;
   }
   // While containing node is in the PLANNED state, this will accumulate all
   // incoming resolution events.

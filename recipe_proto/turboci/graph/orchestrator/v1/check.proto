@@ -38,11 +38,19 @@ option java_multiple_files = true;
 //
 // Checks are not, themselves, executable, but Stages are the executable nodes
 // which operate to plan and resolve Checks.
+//
+// Next ID: 13
 message Check {
   // The Check's identifier.
   //
   // `identifier.id` is provided by the Stage which creates this Check.
   optional ids.v1.Check identifier = 1 [(google.api.field_behavior) = IMMUTABLE];
+
+  // Optional, non-unique, display name of this Check.
+  //
+  // Should only be set if it provides meaningful context for what this Check
+  // is for, above and beyond the Check's identifier.id and kind.
+  optional string display_name = 12 [(turboci).check.editable = CHECK_STATE_PLANNING];
 
   // Actor which created the Check.
   optional Actor created_by = 2 [(google.api.field_behavior) = IMMUTABLE];
