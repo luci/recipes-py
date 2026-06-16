@@ -276,15 +276,15 @@ class StepApi(recipe_api.RecipeApi):
         # If they didn't set a presentation.status, calculate one.
         if pres.status is None:
           if caught_exc:
-            if not isinstance(caught_exc, recipe_api.StepFailure):
+            if recipe_api.was_cancelled(caught_exc):
+              # CancelledBuild inherits from BaseException rather than
+              # StepFailure, so we check for cancellation first to prevent it
+              # from defaulting to EXCEPTION.
+              pres.status = 'CANCELED'
+            elif not isinstance(caught_exc, recipe_api.StepFailure):
               pres.status = self.EXCEPTION
             elif isinstance(caught_exc, recipe_api.StepWarning):
               pres.status = self.WARNING
-            elif caught_exc.was_cancelled:
-              # Both `InfraFailures` and non-infra `StepFailures` can have
-              # `was_cancelled=True`, hence this check needs to come before the
-              # `InfraFailure` check.
-              pres.status = 'CANCELED'
             elif isinstance(caught_exc, recipe_api.InfraFailure):
               pres.status = self.EXCEPTION
             else:
