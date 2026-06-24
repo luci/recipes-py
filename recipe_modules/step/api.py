@@ -594,8 +594,12 @@ class StepApi(recipe_api.RecipeApi):
     self._validate_cmd_list(cmd)
     cmd = list(cmd)
     # The command may have positional arguments, so place the output flag
-    # right after cmd0.
-    cmd[1:1] = ['--output', self._sub_build_output(output_path)]
+    # right before the split marker '--', or fallback to right after cmd0.
+    try:
+      idx = cmd.index('--')
+    except ValueError:
+      idx = 1
+    cmd[idx:idx] = ['--output', self._sub_build_output(output_path)]
 
     new_tmp_dir = str(self.m.path.mkdtemp())
     with self.m.context(

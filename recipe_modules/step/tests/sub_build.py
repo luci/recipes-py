@@ -36,9 +36,15 @@ def RunSteps(api, props):
   with api.context(infra_steps=props.infra_step):
     input_build = props.input_build if props.HasField('input_build') else (
         build_pb2.Build(id=11111, status=common_pb2.SCHEDULED))
+    cmd = ['luciexe']
+    if props.use_delim:
+      cmd.extend(['subcmd', '--', 'user_arg1', api.json.output()])
+    else:
+      cmd.extend(['--foo', 'bar', '--json-summary', api.json.output()])
+
     ret = api.step.sub_build(
       'launch sub build',
-      ['luciexe', '--foo', 'bar', '--json-summary', api.json.output()],
+      cmd,
       input_build,
       output_path=output_path,
       legacy_global_namespace=props.legacy,
@@ -61,6 +67,15 @@ def GenTests(api):
       api.properties(properties_pb2.SubBuildInputProps(
           expected_sub_build=build_pb2.Build(
               id=11111, status=common_pb2.SUCCESS),
+      )),
+  )
+
+  yield api.test(
+      'with_delim',
+      api.properties(properties_pb2.SubBuildInputProps(
+          expected_sub_build=build_pb2.Build(
+              id=11111, status=common_pb2.SUCCESS),
+          use_delim=True,
       )),
   )
 

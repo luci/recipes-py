@@ -20,4 +20,5 @@ message SubBuildInputProps {
   .buildbucket.v2.Build expected_sub_build = 4;
 
   bool legacy = 5;
+  bool use_delim = 6;
 }
