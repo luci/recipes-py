@@ -13,6 +13,7 @@ from typing import Any, Callable, OrderedDict
 import test_env
 
 from recipe_engine import post_process
+from recipe_engine.config_types import Path, ResolvedBasePath
 from recipe_engine.internal.test import magic_check_fn
 from recipe_engine.recipe_test_api import RecipeTestApi
 
@@ -789,6 +790,73 @@ class TestTags(PostProcessUnitTest):
                                  'x', r'^fooo+$')
     self.assertHas(failures[0],
                    'check(re.search(pattern, step.tags[tag]))')
+
+class TestStepCwdEquals(PostProcessUnitTest):
+  """Test case for StepCwdEquals."""
+
+  @property
+  def step_dict(self) -> dict[str, dict[str, Any]]:
+    """Return a standard step dict for this test case."""
+    return collections.OrderedDict([
+        ('step-with-cwd', {
+            'name': 'step-with-cwd',
+            'cwd': 'expected/path',
+        }),
+        ('step-without-cwd', {
+            'name': 'step-without-cwd',
+        }),
+    ])
+
+  def test_pass(self):
+    self.expect_pass(
+        post_process.StepCwdEquals, 'step-with-cwd', 'expected/path')
+
+  def test_pass_path(self):
+    Path._OS_SEP = '/'
+    try:
+      expected_path = Path(ResolvedBasePath('expected'), 'path')
+      self.expect_pass(
+          post_process.StepCwdEquals, 'step-with-cwd', expected_path)
+    finally:
+      Path._OS_SEP = None
+
+  def test_fail_path(self):
+    Path._OS_SEP = '/'
+    try:
+      expected_path = Path(ResolvedBasePath('wrong'), 'path')
+      failures = self.expect_fails(
+          1, post_process.StepCwdEquals, 'step-with-cwd', expected_path)
+      self.assertHas(
+          failures[0],
+          "step step-with-cwd cwd is wrong/path (actual: expected/path)",
+      )
+    finally:
+      Path._OS_SEP = None
+
+  def test_fail_different_cwd(self):
+    failures = self.expect_fails(
+        1, post_process.StepCwdEquals, 'step-with-cwd', 'wrong/path')
+    self.assertHas(
+        failures[0],
+        "step step-with-cwd cwd is wrong/path (actual: expected/path)",
+    )
+
+  def test_fail_missing_cwd(self):
+    # If cwd is missing in the step dict, it defaults to ''
+    failures = self.expect_fails(
+        1, post_process.StepCwdEquals, 'step-without-cwd', 'expected/path')
+    self.assertHas(
+        failures[0],
+        "step step-without-cwd cwd is expected/path (actual: )",
+    )
+
+  def test_pass_missing_cwd_expected_empty(self):
+    self.expect_pass(post_process.StepCwdEquals, 'step-without-cwd', '')
+
+  def test_fail_step_not_found(self):
+    failures = self.expect_fails(
+        1, post_process.StepCwdEquals, 'non-existent-step', 'expected/path')
+    self.assertHas(failures[0], "step non-existent-step exists")
 
 
 if __name__ == '__main__':

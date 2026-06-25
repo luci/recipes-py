@@ -17,6 +17,7 @@ from recipe_engine import post_process_inputs
 
 if TYPE_CHECKING:
   from recipe_engine.internal.test import magic_check_fn
+  from recipe_engine.config_types import Path
 
 StepODict = Mapping[str, post_process_inputs.Step | dict[str, Any]]
 
@@ -289,6 +290,24 @@ def StepCanceled(check: magic_check_fn.Checker, step_odict: StepODict,
     yield api.test(..., api.post_process(StepCanceled, 'step-name'))
   """
   check(step_odict[step].status == 'CANCELED')
+
+
+def StepCwdEquals(check: magic_check_fn.Checker, step_odict: StepODict,
+                  step: str, expected_cwd: str | Path) -> None:
+  """Assert that a step ran in the given directory.
+
+  Args:
+    step: The step to check the cwd of.
+    expected_cwd: The path the step should be executed from.
+
+  Usage:
+    yield api.test(..., api.post_process(StepCwdEquals, 'step', 'dir'))
+  """
+  step_obj = step_odict.get(step)
+  if check('step %s exists' % step, step_obj is not None):
+    actual_cwd = step_obj.cwd
+    check('step %s cwd is %s (actual: %s)' % (step, expected_cwd, actual_cwd),
+          expected_cwd == actual_cwd)
 
 
 def _fullmatch(pattern: str | re.Pattern, string: str) -> bool:
