@@ -120,7 +120,7 @@ def _run(test_results, recipe_deps, use_emoji, test_filter, is_train,
           module.name
           for module in main_repo.modules.values()
           if not (
-            module.uses_sloppy_coverage or module.recipes or module.warnings)
+            module.recipes or module.uses_sloppy_coverage or module.warnings)
       )
   ))
 
