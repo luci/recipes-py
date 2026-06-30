@@ -5,7 +5,6 @@
 import bdb
 import copy
 import datetime
-import inspect
 import io
 import json
 import logging
@@ -274,7 +273,12 @@ class RecipeEngine:
     if greenlet_name is not None:
       ret.name = greenlet_name
     # need stack frames here, rather than greenlet 'lightweight' stack
-    ret.spawning_frames = [frame_tup[0] for frame_tup in inspect.stack(2)]
+    f = sys._getframe()
+    frames = []
+    while f:
+      frames.append(f)
+      f = f.f_back
+    ret.spawning_frames = frames
     current_step.greenlets.append(ret)
     return ret
 

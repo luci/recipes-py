@@ -339,7 +339,7 @@ class TestWarningRecorder(test_env.RecipeEngineUnitTest):
 
 @contextlib.contextmanager
 def create_test_frames(frame_file):
-  """Execute a program and mock `inspect.stack` to return the list of
+  """Execute a program and mock `sys._getframe` to return the list of
   frames.
   [
     file: frame_file, line: 3,
@@ -359,7 +359,7 @@ frames = outer()
   try:
     ns = {}
     exec(compile(program, frame_file, 'exec'), globals(), ns)
-    with mock.patch('inspect.stack', mock.Mock(return_value=ns["frames"])):
+    with mock.patch('sys._getframe', lambda depth=0: ns["frames"][depth][0]):
       yield
   finally:
     del ns['frames']

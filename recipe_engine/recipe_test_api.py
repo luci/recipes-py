@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import inspect
+import sys
 from collections import defaultdict
 from collections import namedtuple
 from functools import reduce
@@ -923,7 +923,9 @@ class RecipeTestApi:
         )
     """
     ret = TestData()
-    _, filename, lineno, _, _, _ = inspect.stack()[1]
+    frame = sys._getframe(1)
+    filename = frame.f_code.co_filename
+    lineno = frame.f_lineno
     context = PostprocessHookContext(func, args, kwargs, filename, lineno)
     ret.post_process(func, args, kwargs, context)
     return ret
@@ -954,7 +956,9 @@ class RecipeTestApi:
     def post_check(check, steps, f, *args, **kwargs):
       f(check, steps, *args, **kwargs)
     ret = TestData()
-    _, filename, lineno, _, _, _ = inspect.stack()[1]
+    frame = sys._getframe(1)
+    filename = frame.f_code.co_filename
+    lineno = frame.f_lineno
     context = PostprocessHookContext(func, args, kwargs, filename, lineno)
     ret.post_process(post_check, (func,) + args, kwargs, context)
     return ret
@@ -987,7 +991,9 @@ class RecipeTestApi:
       f(check, steps, *args, **kwargs)
 
     ret = TestData()
-    _, filename, lineno, _, _, _ = inspect.stack()[1]
+    frame = sys._getframe(1)
+    filename = frame.f_code.co_filename
+    lineno = frame.f_lineno
     context = PostprocessHookContext(func, args, kwargs, filename, lineno)
     ret.assert_workplan(assert_workplan, (func,) + args, kwargs, context)
     return ret
@@ -1021,7 +1027,9 @@ class RecipeTestApi:
       )
     """
     ret = TestData()
-    _, filename, lineno, _, _, _ = inspect.stack()[1]
+    frame = sys._getframe(1)
+    filename = frame.f_code.co_filename
+    lineno = frame.f_lineno
     ret.turboci_write_nodes = [WriteNodesBlock(nodes, filename, lineno)]
     return ret
 

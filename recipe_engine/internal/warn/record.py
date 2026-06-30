@@ -4,9 +4,9 @@
 
 """record warnings during recipe executions."""
 
-import inspect
 import os
 import re
+import sys
 import types
 
 from collections import defaultdict
@@ -140,13 +140,17 @@ class WarningRecorder:
         attributing the warning to user code. The default of 1 skips the
         immediate caller.
     """
-    stack = inspect.stack()[skip+1:]
-    # [1] is the frame filename, but unfortunately python2 uses a bare tuple.
-    name = self._resolve_name(name, stack[0][1])
+    # sys._getframe() is used instead of inspect.stack() for O(1) performance,
+    # avoiding disk I/O to calculate code context lines.
+    f = sys._getframe(skip + 1)
+    name = self._resolve_name(name, f.f_code.co_filename)
 
     # grab all the frames and then ensure the stack is freed.
-    frames = [frame_tup[0] for frame_tup in stack]
-    del stack
+    frames = []
+    while f:
+      frames.append(f)
+      f = f.f_back
+    del f
 
     # Now make sure the caller of record_execution_warning is immune to
     # attribution for this warning. This is able to see through multiple
