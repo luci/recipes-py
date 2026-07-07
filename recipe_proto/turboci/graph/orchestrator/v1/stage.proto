@@ -33,7 +33,7 @@ option java_multiple_files = true;
 // See also:
 //   * Identifier.Stage* (Identifiers for Stages, StageAttempts, etc.)
 //
-// Next ID: 20.
+// Next ID: 20
 message Stage {
   // The Stage's identifier.
   optional ids.v1.Stage identifier = 1 [(google.api.field_behavior) = IMMUTABLE];
@@ -212,7 +212,7 @@ message Stage {
   // Stages in the AWAITING state ALWAYS have an active Attempt, even before
   // the Orchestrator sends the first RPC to the Executor for this Stage.
   //
-  // Next ID: 12.
+  // Next ID: 12
   message Attempt {
     // The Stage Attempt's identifier.
     optional ids.v1.StageAttempt identifier = 1 [(google.api.field_behavior) = IMMUTABLE];

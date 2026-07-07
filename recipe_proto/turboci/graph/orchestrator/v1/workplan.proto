@@ -37,7 +37,7 @@ option java_multiple_files = true;
 // digest of a ValueData that is not present in the WorkPlan based on the
 // parameters the caller provides in the request.
 //
-// Next ID: 7
+// Next ID: 8
 message WorkPlan {
   // The WorkPlan to which all nodes in this WorkPlan belong.
   optional ids.v1.WorkPlan identifier = 1;
@@ -50,7 +50,7 @@ message WorkPlan {
   // Maps this WorkPlan to a security realm.
   optional string realm = 3 [(google.api.field_behavior) = IMMUTABLE];
 
-  // The optional name of the workflow that this WorkPlan is an instance of.
+  // The name of the workflow of which this this WorkPlan is an instance.
   //
   // This will describe the 'class' of the workplan within the given project -
   // two workplans with the same 'workflow_name' do 'the same thing' (as defined
@@ -61,7 +61,18 @@ message WorkPlan {
   // change IDs, build numbers, etc.).
   //
   // Must adhere to the regex: /^[a-zA-Z0-9\(\)\-_./ ]{0,256}$/
-  optional string workflow_name = 6;
+  oneof name {
+    // A workflow name from pre-registered service configuration.
+    string workflow_name = 6;
+
+    // A workflow name provided manually by the caller of CreateWorkPlan.
+    //
+    // This may look like a `workflow_name`, but only has syntactic validation.
+    // Do not assume that workplans with a dynamic_workflow_name have any
+    // correlation whatsoever with other workplans with the same
+    // dynamic_workflow_name, or workplans with the same workflow_name.
+    string dynamic_workflow_name = 7;
+  }
 
   // Checks in the graph.
   repeated Check checks = 4;

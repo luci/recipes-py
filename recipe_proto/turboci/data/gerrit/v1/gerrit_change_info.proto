@@ -128,6 +128,9 @@ message GerritChangeInfo {
   // Whether the owner of the CL is a bot or not.
   optional bool is_owner_bot = 19;
 
+  // Original commit SHA if this is a cherry-pick.
+  optional string cherrypicked_from = 21;
+
   // Future convergence: last non-trivial patchset
   // We know that both Chrome and Android use some variation of "last non-trivial patchset"
   // but the exact algorithm for determining "non-trivial" is not clear and therefore we
@@ -136,7 +139,7 @@ message GerritChangeInfo {
   // clear how each product defines "non-trivial".
   // For reference, how Android does it today: http://shortn/_nRwyXPcucE
 
-  // Next field number to use: 21
+  // Next field number to use: 22
 }
 
 // Sourced from https://gerrit-review.googlesource.com/Documentation/rest-api-accounts.html#account-info
@@ -237,9 +240,18 @@ message CommitInfo {
   repeated CommitInfo parents = 2;
 
   // The author of this commit.
+  //
+  // Note that Gerrit REST API actually uses
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#git-person-info
+  // for author, we chose to use AccountInfo instead.
   optional AccountInfo author = 3;
 
   // The committer of this commit.
+  //
+  // Note that Gerrit REST API actually uses
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#git-person-info
+  // for committer, we chose to use AccountInfo instead, and use
+  // CommitInfo.date for the commit date.
   optional AccountInfo committer = 4;
 
   // The subject of the commit (header line of the commit message).
@@ -247,6 +259,29 @@ message CommitInfo {
 
   // The commit message.
   optional string message = 6;
+
+  // Additional information about the commit that's not present in
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#commit-info.
+
+  // Whether the commit is a robot commit or not.
+  optional bool is_robot_commit = 7;
+
+  // A list of bugs associated with the commit (likely via its commit message).
+  repeated int64 bug_id = 8;
+
+  // Hash of the tree object that represents the snapshot of the project's root
+  // directory at the moment that commit was made, can be used to identify blank
+  // commits.
+  optional string tree_id = 9;
+
+  // The timestamp of the commit.
+  //
+  // Sourced from the `date` field of
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#git-person-info.
+  //
+  // We choose to use AccountInfo instead of GerritPersonInfo for `committer`
+  // and `author`, while need the commit date, so adding it to CommitInfo.
+  optional google.protobuf.Timestamp date = 10;
 }
 
 // Sourced from https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#file-info
