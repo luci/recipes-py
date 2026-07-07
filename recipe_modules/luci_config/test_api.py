@@ -66,3 +66,37 @@ class LuciConfigTestApi(recipe_test_api.RecipeTestApi):
     if iteration:
       step_name = f"{step_name} ({iteration})"
     return self.step_data(step_name, self.m.file.read_text(data))
+
+  def mock_config_signed_url(self,
+                             project: str,
+                             config_name: str,
+                             data: message.Message | str,
+                             signed_url: str = "https://example.com/config",
+                             nesting: str | None = None,
+                             iteration: int = 0):
+    """Mock a config returned by the luci-config API via signed URL.
+
+    Args:
+        project: The LUCI project name.
+        config_name: The name of the config file to mock, e.g.
+            "commit-queue.cfg".
+        data: The mock data that should be returned.
+            Either a string containing a textproto, or a protobuf object.
+        signed_url: The signed URL to mock.
+        nesting: Parent step under which this step is nested.
+        iteration: Iteration number for step name.
+    """
+    if not isinstance(data, str):
+      data = textpb.MessageToString(data)
+    step_name = f"fetch {project} {config_name}"
+    if nesting:  # pragma: no cover
+      step_name = f"{nesting}.{step_name}"
+    if iteration:
+      step_name = f"{step_name} ({iteration})"
+    prpc_step_name = f"{step_name}.get"
+    url_step_name = f"{step_name}.fetch {config_name} via signed URL"
+    return (self.step_data(
+        prpc_step_name,
+        self.m.proto.output_stream(
+            config_service_pb2.Config(signed_url=signed_url)),
+    ) + self.m.url.raw(url_step_name, data.encode()))

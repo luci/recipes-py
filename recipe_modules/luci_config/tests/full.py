@@ -47,3 +47,23 @@ def GenTests(api):
           iteration=2,
       ),
   )
+
+  yield api.test(
+      "signed_url",
+      api.buildbucket.try_build(project="project"),
+      api.luci_config.mock_local_config("project", "commit-queue.cfg",
+                                        cv_config_pb2.Config()),
+      api.luci_config.mock_local_config(
+          "project", "commit-queue.cfg", cv_config_pb2.Config(), iteration=2),
+      api.luci_config.mock_config_signed_url(
+          "project",
+          "luci-milo.cfg",
+          milo_pb2.Project(consoles=[milo_pb2.Console(id="global_ci")]),
+      ),
+      api.luci_config.mock_config_signed_url(
+          "project",
+          "luci-milo.cfg",
+          milo_pb2.Project(consoles=[milo_pb2.Console(id="global_ci_2")]),
+          iteration=2,
+      ),
+  )

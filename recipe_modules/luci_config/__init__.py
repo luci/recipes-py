@@ -9,6 +9,7 @@ DEPS = [
     "recipe_engine/file",
     "recipe_engine/proto",
     "recipe_engine/step",
+    "recipe_engine/url",
 ]
 
 from .api import LuciConfigApi as API

@@ -152,16 +152,16 @@ class LuciConfigApi(recipe_api.RecipeApi):
             config_service_pb2.Config(raw_content=b"")),
     ).stdout
 
-    # Responses for extremely large config files will have the `signed_url`
-    # populated instead of `raw_content` and the file must be fetched using
-    # the signed URL. At time of writing this code is not used to fetch
-    # config files of that size, so support for signed URLs is not required.
-    if resp.WhichOneof("content") != "raw_content":
-      raise Exception(  # pragma: no cover
-          f"{config_name} can only be fetched by signed URL. "
-          "TODO(you): Implemented signed URL fetching :)")
-
-    return resp.raw_content
+    if resp.WhichOneof("content") == "raw_content":
+      return resp.raw_content
+    elif resp.WhichOneof("content") == "signed_url":
+      return self.m.url.get_raw(
+          resp.signed_url,
+          step_name=f"fetch {config_name} via signed URL",
+      ).output
+    else:  # pragma: no cover
+      raise Exception(f"Unexpected content type for {config_name}: "
+                      f"{resp.WhichOneof('content')}")
 
   def buildbucket(self, **kwargs) -> bb_pb2.BuildbucketCfg:
     return self.fetch_config("cr-buildbucket.cfg", bb_pb2.BuildbucketCfg,

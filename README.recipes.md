@@ -2903,7 +2903,7 @@ Returns:
     projects/{project}/clusters/{cluster_algorithm}/{cluster_id}.
 ### *recipe_modules* / [luci\_config](/recipe_modules/luci_config)
 
-[DEPS](/recipe_modules/luci_config/__init__.py#7): [buildbucket](#recipe_modules-buildbucket), [file](#recipe_modules-file), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/luci_config/__init__.py#7): [buildbucket](#recipe_modules-buildbucket), [file](#recipe_modules-file), [proto](#recipe_modules-proto), [step](#recipe_modules-step), [url](#recipe_modules-url)
 
 
 #### **class [LuciConfigApi](/recipe_modules/luci_config/api.py#20)([RecipeApi](/recipe_engine/recipe_api.py#439)):**
