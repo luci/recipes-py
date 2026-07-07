@@ -9,21 +9,33 @@ This is not necessarily used for all proto files in this directory;
 but should update those listed in SUB_PATHS.
 """
 
+import argparse
 import json
 import os
-import re
-import subprocess
-import tarfile
-
 from pathlib import Path
+import re
+import tarfile
 
 import requests
 
 BASE_URL = 'https://chromium.googlesource.com/infra/turboci/proto'
-LOG_URL = BASE_URL+'/+log/main?format=JSON&n=1'
-TAR_URL = BASE_URL+'/+archive/{}/{}.tar.gz'
+LOG_URL = BASE_URL + '/+log/main?format=JSON&n=1'
+TAR_URL = BASE_URL + '/+archive/{}/{}.tar.gz'
 
-REPO_PATH = 'turboci'
+REPO_PROTO_PATH = 'turboci'
+REPO_PY_PATH = 'py/turboci'
+
+importRewriteRE = re.compile(
+    r'^from (turboci.*) import (.*)_pb2$',
+    flags=re.M,
+)
+
+
+def rewrite_py_proto_imports(pyfile: Path):
+  pyfile.write_text(
+      importRewriteRE.sub(r'from PB.\1 import \2 as \2_pb2', pyfile.read_text())
+  )
+
 
 def print_commit_message(prev_commit: str, target: str):
   print('{0:=^80}'.format(' START[Commit Message] '))
@@ -32,52 +44,76 @@ def print_commit_message(prev_commit: str, target: str):
   changelog = f'{BASE_URL}/+log/{prev_commit}..{target}'
   print(f'Changelog: {changelog}')
   print()
-  clog = json.loads(requests.get(changelog+"?format=JSON").text[4:])
+  clog = json.loads(requests.get(changelog + '?format=JSON').text[4:])
   for commit in clog['log']:
-    first_line = commit["message"].split("\n")[0]
+    first_line = commit['message'].split('\n')[0]
     print(f'{commit["commit"][:8]} {first_line}')
   print()
   print('{0:=^80}'.format(' END[Commit Message] '))
 
-def main():
-  """Automatically updates the .proto files in this directory."""
-  base_dir = Path(__file__).parent
 
-  readme_path = base_dir / 'README.md'
+def main():
+  """Automatically updates the turboci .proto and python utils."""
+  parser = argparse.ArgumentParser()
+  parser.add_argument(
+      '-f',
+      '--force',
+      action='store_true',
+      help='Run import even if there are no apparent changes.',
+  )
+  parser.add_argument(
+      'commit',
+      nargs='?',
+      help='Sync to this commit instead of HEAD.',
+  )
+  args = parser.parse_args()
+
+  base_proto_dir = Path(__file__).parent
+  base_py_dir = base_proto_dir.parent.parent / 'turboci'
+
+  readme_path = base_proto_dir / 'README.md'
 
   with open(readme_path, 'r') as rmd:
     prev_commit = re.match(
-        r'.*/([a-f0-9]{40})/.*',
-        rmd.read(),
-        re.MULTILINE|re.DOTALL
+        r'.*/([a-f0-9]{40})/.*', rmd.read(), re.MULTILINE | re.DOTALL
     ).group(1)
 
   to_remove = set()
-  for root, _, files in os.walk(base_dir):
+  for root, _, files in os.walk(base_proto_dir):
     for file in files:
       if file.endswith('.proto'):
         to_remove.add(Path(root) / file)
 
-  resp = requests.get(LOG_URL)
-  target = str(json.loads(resp.text[4:])['log'][0]['commit'])
+  target: str = args.commit
+  if not target:
+    resp = requests.get(LOG_URL)
+    target = str(json.loads(resp.text[4:])['log'][0]['commit'])
 
   if prev_commit == target:
-    print('Nothing to update.')
-    return
+    if not args.force:
+      print('Nothing to update.')
+      return
+    else:
+      print('Nothing to update (force overridden).')
 
   print(f'Updating to {target!r}')
 
-  resp = requests.get(TAR_URL.format(target, REPO_PATH), stream=True).raw
+  # Update recipe_proto/turboci/.*
+  resp = requests.get(TAR_URL.format(target, REPO_PROTO_PATH), stream=True).raw
   with tarfile.open(mode='r|*', fileobj=resp) as tar:
     for item in tar:
       if not item.name.endswith('.proto'):
         continue
       if item.name.startswith('data/chrome/depot_tools'):
-        print(f'Skipping {item.name!r}, turboci.data.chrome.depot_tools is imported in depot_tools recipe repo')
+        print(
+            f'Skipping {item.name!r}, turboci.data.chrome.depot_tools is'
+            ' imported in depot_tools recipe repo'
+        )
         continue
       if item.name.startswith('data/chrome/build'):
         print(
-            f'Skipping {item.name!r}, turboci.data.chrome.build is imported in build recipe repo'
+            f'Skipping {item.name!r}, turboci.data.chrome.build is imported in'
+            ' build recipe repo'
         )
         continue
       if item.name.startswith('data/chrome'):
@@ -90,20 +126,36 @@ def main():
         print(f'Skipping {item.name!r}')
         continue
       print(f'Extracting {item.name!r}')
-      tar.extract(item, path=base_dir)
-      to_remove.discard(base_dir / item.name)
+      tar.extract(item, path=base_proto_dir)
+      to_remove.discard(base_proto_dir / item.name)
+
+  # Update turboci/.*
+  resp = requests.get(TAR_URL.format(target, REPO_PY_PATH), stream=True).raw
+  with tarfile.open(mode='r|*', fileobj=resp) as tar:
+    for item in tar:
+      if not item.name.endswith('.py'):
+        continue
+      if item.name.endswith('_pb2.py'):
+        continue
+      print(f'Extracting {item.name!r}')
+      tar.extract(item, path=base_py_dir)
+      rewrite_py_proto_imports(base_py_dir / item.name)
+      to_remove.discard(base_py_dir / item.name)
 
   if to_remove:
-    print('Removing stale proto')
+    print('Removing stale proto/py files')
     for file in to_remove:
       os.remove(file)
 
   with open(readme_path, 'w') as rmd:
     print('// Generated by update.py. DO NOT EDIT.', file=rmd)
     print('\nThese protos were copied from:', file=rmd)
-    print(f'\n{BASE_URL}/+/{target}/{REPO_PATH}', file=rmd)
+    print(f'\n{BASE_URL}/+/{target}/{REPO_PROTO_PATH}', file=rmd)
 
-  print_commit_message(prev_commit, target)
+  if prev_commit != target:
+    print_commit_message(prev_commit, target)
+  else:
+    print('Skipping commit message (--force)')
 
   print('Done.')
 

@@ -31,6 +31,7 @@ def CheckCommon(input_api, output_api):
       input_api, output_api, license_header=header(input_api),
       excluded_paths=[
           r'.+_pb2\.py',
+          r'turboci/.*',
       ],
   )
 

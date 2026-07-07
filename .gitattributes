@@ -1,5 +1,6 @@
 /recipes.py         recipes
 /recipe_engine/**   recipes
+/turboci/**         recipes
 /**/unittests/**   -recipes
 .vpython3           recipes
 
