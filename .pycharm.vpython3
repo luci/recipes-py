@@ -126,6 +126,19 @@ wheel: <
   version: "version:23.0"
 >
 
+wheel: <
+  name: "infra/python/wheels/googleapis-common-protos-py2_py3"
+  version: "version:1.69.2"
+>
+wheel: <
+  name: "infra/python/wheels/grpcio-status-py3"
+  version: "version:1.74.0"
+>
+wheel: <
+  name: "infra/python/wheels/grpcio/${vpython_platform}"
+  version: "version:1.74.0"
+>
+
 # Above this line must exactly match .vpython3, and PRESUBMIT.py will check
 # this.
 #
