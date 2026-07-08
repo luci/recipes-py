@@ -42,7 +42,6 @@ by this fake, will raise NotImplementedError.
 
 from __future__ import annotations
 
-import re
 import time
 
 from collections import defaultdict
@@ -50,7 +49,7 @@ from dataclasses import dataclass, field
 from functools import reduce
 from itertools import chain
 from threading import Lock
-from typing import Callable, cast
+from typing import cast
 
 from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 from google.protobuf.timestamp_pb2 import Timestamp
@@ -73,7 +72,6 @@ from PB.turboci.graph.orchestrator.v1.read_workplan_response import ReadWorkPlan
 from PB.turboci.graph.orchestrator.v1.revision import Revision
 from PB.turboci.graph.orchestrator.v1.transaction_invariant import TransactionConflictFailure
 from PB.turboci.graph.orchestrator.v1.type_info import TypeInfo
-from PB.turboci.graph.orchestrator.v1.type_set import TypeSet
 from PB.turboci.graph.orchestrator.v1.value_ref import ValueRef
 from PB.turboci.graph.orchestrator.v1.value_write import ValueWrite
 from PB.turboci.graph.orchestrator.v1.workplan import WorkPlan
@@ -83,8 +81,8 @@ from recipe_engine.internal.turboci import check_invariant
 from recipe_engine.internal.turboci import edge
 from recipe_engine.internal.turboci.common import get_check_by_full_id
 from recipe_engine.internal.turboci.errors import TransactionConflictException, InvalidArgumentException
+from turboci.utils import ids
 
-from .ids import from_id, to_id, wrap_id
 from .common import TurboCIClient
 from .query_util import type_set_to_re, want_value_ref
 
@@ -104,6 +102,7 @@ class _all_nodes_set:
     return other
 
   def __contains__(self, other):
+    _ = other
     return True
 
 
@@ -257,7 +256,7 @@ class FakeTurboCIOrchestrator(TurboCIClient):
     NOTE: This function should never consider write.dependencies in any
     capacity.
     """
-    ident_str = from_id(write.identifier)
+    ident_str = ids.to_string(write.identifier)
     check: Check
 
     touched = [False]
@@ -414,7 +413,7 @@ class FakeTurboCIOrchestrator(TurboCIClient):
                                      deps: Dependencies | None):
     """Apply a check write and its normalized dependencies, ensuring that the indexes
     reflect this write."""
-    ident_str = from_id(write.identifier)
+    ident_str = ids.to_string(write.identifier)
     idx_snap = _IndexEntrySnapshot.for_check(
         cast(Check | None, self._checks.get(ident_str)))
     check = self._apply_checkwrite_locked(write, deps)
@@ -498,7 +497,7 @@ class FakeTurboCIOrchestrator(TurboCIClient):
           match typ := ident.WhichOneof('type'):
             case 'check':
               implied_select_checks = True
-              ident_str = from_id(ident)
+              ident_str = ids.to_string(ident)
               if ident_str in self._checks:
                 basis.add(ident_str)
               else:
@@ -586,6 +585,7 @@ class FakeTurboCIOrchestrator(TurboCIClient):
 
       # This must already be in workplan
       workplan_check = get_check_by_full_id(workplan, check_str)
+      assert workplan_check
 
       pat = type_set_to_re(type_info.wanted)
       if collect_opts:
@@ -672,7 +672,7 @@ class FakeTurboCIOrchestrator(TurboCIClient):
       else:
         check_deps.append(None)
 
-      ident_str = from_id(cwrite.identifier)
+      ident_str = ids.to_string(cwrite.identifier)
       if ident_str not in seen_ids:
         seen_ids.add(ident_str)
       else:
@@ -701,10 +701,10 @@ class FakeTurboCIOrchestrator(TurboCIClient):
             return cur
 
         for ident in req.txn.nodes_observed:
-          _observe(from_id(ident))
+          _observe(ids.to_string(ident))
         # now observe all implied nodes
         for cwrite in req.checks:
-          _observe(from_id(cwrite.identifier))
+          _observe(ids.to_string(cwrite.identifier))
 
         if too_new:
           raise TransactionConflictException(
@@ -715,13 +715,13 @@ class FakeTurboCIOrchestrator(TurboCIClient):
       needed_checks: set[str] = set()
       added_checks: set[str] = set()
       for cwrite, deps in zip(req.checks, check_deps):
-        ident_str = from_id(cwrite.identifier)
+        ident_str = ids.to_string(cwrite.identifier)
         added_checks.add(ident_str)
         cur = self._checks.get(ident_str)
         check_invariant.assert_can_apply(cwrite, cast(Check | None, cur))
         if deps:
           needed_checks.update(
-              from_id(e.check.identifier)
+              ids.to_string(e.check.identifier)
               for e in deps.edges
               if e.WhichOneof('target') == 'check')
 
@@ -762,4 +762,5 @@ class FakeTurboCIOrchestrator(TurboCIClient):
     return WriteNodesResponse(written_version=new_version)
 
   def ReadWorkPlan(self, req: ReadWorkPlanRequest) -> ReadWorkPlanResponse:
+    _ = req
     raise NotImplementedError("FakeTurboCIOrchestrator.ReadWorkPlan")

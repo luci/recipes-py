@@ -14,15 +14,14 @@ from google.protobuf.timestamp_pb2 import Timestamp
 
 from recipe_engine import turboci
 from recipe_engine.internal.turboci import check_invariant, edge
-from recipe_engine.internal.turboci.common import check_id
 
 from PB.turboci.graph.ids.v1 import identifier
 from PB.turboci.graph.orchestrator.v1.check import Check
 from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
 from PB.turboci.graph.orchestrator.v1.check_state import CheckState
 from PB.turboci.graph.orchestrator.v1.value_ref import ValueRef
-from PB.turboci.graph.orchestrator.v1.value_write import ValueWrite
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
+from turboci.utils import ids
 
 demoStruct = Struct(fields={'hello': Value(string_value='world')})
 demoStruct2 = Struct(fields={'hola': Value(string_value='mundo')})
@@ -31,12 +30,9 @@ demoTS = Timestamp(seconds=100, nanos=100)
 demoTS2 = Timestamp(seconds=200, nanos=200)
 
 
-def _mkOptions(id: str,
-               *msg: type[Message] | Message,
-               in_workplan: str = "") -> list[ValueRef]:
-  ident = check_id(id, in_workplan=in_workplan)
+def _mkOptions(*msg: type[Message] | Message) -> list[ValueRef]:
   ret = []
-  for i, m in enumerate(msg):
+  for _, m in enumerate(msg):
     vr = ValueRef()
     if isinstance(m, type):
       m = m()
@@ -63,7 +59,7 @@ class CheckDeltaTest(test_env.RecipeEngineUnitTest):
             identifier=turboci.check_id('hey'),
             kind='CHECK_KIND_ANALYSIS',
             state='CHECK_STATE_PLANNING',
-            options=_mkOptions('hey', demoStruct),
+            options=_mkOptions(demoStruct),
             dependencies=edge.extract_dependencies(turboci.dep_group('neat')),
         ))
 
@@ -104,10 +100,10 @@ class CheckDeltaTest(test_env.RecipeEngineUnitTest):
 
   def test_PLANNING_errors(self):
     check = Check(
-        identifier=check_id('hey'),
+        identifier=ids.check('hey'),
         kind=CheckKind.CHECK_KIND_ANALYSIS,
         state=CheckState.CHECK_STATE_PLANNING,
-        options=_mkOptions('hey', demoStruct),
+        options=_mkOptions(demoStruct),
         dependencies=edge.extract_dependencies(turboci.dep_group('neat')),
     )
 
@@ -141,10 +137,10 @@ class CheckDeltaTest(test_env.RecipeEngineUnitTest):
 
   def test_PLANNED_errors(self):
     check = Check(
-        identifier=check_id('hey'),
+        identifier=ids.check('hey'),
         kind='CHECK_KIND_ANALYSIS',
         state='CHECK_STATE_PLANNED',
-        options=_mkOptions('hey', demoStruct),
+        options=_mkOptions(demoStruct),
         dependencies=edge.extract_dependencies(turboci.dep_group('neat')),
     )
 

@@ -2,6 +2,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 """The turboci module implements a client for the TurboCI service whose
+
 API protos are at:
 
   https://chromium.googlesource.com/infra/turboci/proto
@@ -21,20 +22,56 @@ Usage:
       )
 """
 
-from .internal.turboci.ids import (
-    from_id,
-    to_id,
-    type_url_for,
-    type_urls,
-    type_set,
-    wrap_id,
-)
+import typing
+
+from google.protobuf.message import Message
+from PB.turboci.graph.ids.v1 import identifier as _identifier
+from PB.turboci.graph.orchestrator.v1 import type_set as _type_set
+from turboci.utils import ids as _ids
+from turboci.utils import value as _value
+
+
+def from_id(ident: _ids.AnyIdentifier) -> str:
+  return _ids.to_string(ident)
+
+
+def to_id(ident_str: str) -> _identifier.Identifier:
+  return _ids.from_string(ident_str)
+
+
+def type_url_for(msg: type[Message] | Message) -> str:
+  return _value.url(msg)
+
+
+def type_urls(*msgs: str | type[Message] | Message) -> typing.Iterable[str]:
+  return (x if isinstance(x, str) else _value.url(x) for x in msgs)
+
+
+def type_set(*msgs: str | type[Message] | Message) -> _type_set.TypeSet:
+  return _type_set.TypeSet(type_urls=list(type_urls(*msgs)))
+
+
+def wrap_id(ident: _ids.AnyIdentifier) -> _identifier.Identifier:
+  return _ids.wrap(ident)
+
+
+def check_id(id: str, *, in_workplan: str = '') -> _identifier.Check:
+  return _ids.check(id, _ids.workplan(in_workplan) if in_workplan else None)
+
+
+def collect_check_ids(
+    *idents: _identifier.Check | str, in_workplan: str = ''
+) -> typing.Iterable[_identifier.Identifier]:
+  wp = _ids.workplan(in_workplan) if in_workplan else None
+  for id in idents:
+    if not isinstance(id, _identifier.Check):
+      id = _ids.check(id, wp)
+    yield _ids.wrap(id)
+
 
 from .internal.turboci.common import (
     TurboCIClient,
     check,
-    check_id,
-    collect_check_ids,
     dep_group,
     get_check_by_short_id,
     get_option,

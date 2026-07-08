@@ -15,9 +15,10 @@ from PB.turboci.graph.orchestrator.v1.value_write import ValueWrite
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 
 
-from .ids import from_id
 from .edge import extract_ident_condition
 from .errors import CheckWriteInvariantException
+
+from turboci.utils import ids
 
 
 def _dup_types(vals: Sequence[ValueWrite]) -> set[str]:
@@ -29,7 +30,7 @@ def _dup_types(vals: Sequence[ValueWrite]) -> set[str]:
 
 def assert_can_apply(write: WriteNodesRequest.CheckWrite, check: None | Check):
   """Raises CheckWriteInvariantException if `write` cannot apply to `check`."""
-  ident_str = from_id(write.identifier)
+  ident_str = ids.to_string(write.identifier)
   exc = lambda msg: CheckWriteInvariantException(
       f"WriteNodes.CheckWrite({ident_str!r}): {msg}",)
 

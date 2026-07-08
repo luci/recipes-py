@@ -45,6 +45,9 @@ ALLOWED_MODULES = [
     r'attr',
     r'google\.protobuf',
 
+    # Turbo CI utils
+    r'turboci\.utils',
+
     # From recipe ecosystem
     r'PB',
     r'RECIPE_MODULES',

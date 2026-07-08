@@ -12,6 +12,7 @@ from typing import Iterable, Literal, Protocol, Sequence, Type, TypeVar, cast
 from google.protobuf.message import Message
 
 from PB.turboci.graph.ids.v1 import identifier
+from PB.turboci.graph.orchestrator.v1 import type_set
 from PB.turboci.graph.orchestrator.v1.check import Check
 from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
 from PB.turboci.graph.orchestrator.v1.check_state import CheckState
@@ -27,8 +28,7 @@ from PB.turboci.graph.orchestrator.v1.workplan import WorkPlan
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 from PB.turboci.graph.orchestrator.v1.write_nodes_response import WriteNodesResponse
 
-from .ids import collect_check_ids, type_url_for, type_set, check_id, stage_id, to_id
-from recipe_engine.internal.turboci import ids
+from turboci.utils import ids, value
 
 
 class TurboCIClient(Protocol):
@@ -76,6 +76,7 @@ def dep_group(*contained: str | identifier.Identifier | identifier.Check
   threshold keyword arg.
   """
   ret = WriteNodesRequest.DependencyGroup()
+  wp = ids.workplan(in_workplan) if in_workplan else None
 
   for obj in contained:
     match obj:
@@ -94,11 +95,10 @@ def dep_group(*contained: str | identifier.Identifier | identifier.Check
       case identifier.Stage():
         ret.edges.add(stage=Edge.Stage(identifier=obj))
       case str():
-        ret.edges.add(check=Edge.Check(
-            identifier=check_id(obj, in_workplan=in_workplan)))
+        ret.edges.add(check=Edge.Check(identifier=ids.check(obj, wp)))
 
   for stage_bare in stages:
-    ret.edges.add(stage=Edge.Stage(identifier=stage_id(stage_bare, in_workplan=in_workplan)))
+    ret.edges.add(stage=Edge.Stage(identifier=ids.stage(stage_bare, wp)))
 
   if threshold > (N := len(contained) + len(stages)):
     raise ValueError(
@@ -160,8 +160,9 @@ def check(
       is, for some given type 'types.googleapis.com/foo.FooMsg', it cannot occur
       in BOTH `options` and `realm_options`.
   """
+  wp = ids.workplan(in_workplan) if in_workplan else None
   ret = WriteNodesRequest.CheckWrite(realm=realm)
-  ret.identifier.CopyFrom(check_id(id, in_workplan=in_workplan))
+  ret.identifier.CopyFrom(ids.check(id, wp))
 
   if kind:
     if isinstance(kind, str):
@@ -289,9 +290,7 @@ def make_query(*atoms: QueryAtoms | None, node_set: QueryNodeSet = NodesInWorkpl
     case Query.NodesAcrossWorkPlans():
       ret.nodes_across_workplans.CopyFrom(node_set)
     case collections.abc.Iterable():
-      ret.nodes_by_id.nodes.extend(
-          ids.wrap_id(x) for x in node_set
-      )
+      ret.nodes_by_id.nodes.extend(ids.wrap(x) for x in node_set)
     case _:
       raise TypeError(f'make_query: unknown node_set {type(node_set)}')
 
@@ -338,20 +337,25 @@ def query_nodes(
       QueryNodesRequest(
           version=version,
           query=queries,
-          type_info=TypeInfo(wanted=type_set(*types)),
+          type_info=TypeInfo(wanted=type_set.TypeSet(type_urls=[
+            x if isinstance(x, str) else value.url(x) for x in types
+          ])),
       ))
 
 
-def read_checks(*ids: identifier.Check | str,
+def read_checks(*idents: identifier.Check | str,
                 collect: Query.CollectChecks | None = None,
                 types: Sequence[str | Message | type[Message]] = (),
                 client: TurboCIClient | None = None) -> Sequence[Check]:
   """Convenience function for reading one or more checks by ID.
 
-  This just does a query_nodes for the ids specified by `ids`, and then unwraps
-  the result.
+  This just does a query_nodes for the ids specified by `idents`, and then
+  unwraps the result.
   """
-  idents = list(collect_check_ids(*ids))
+  idents: tuple[identifier.Identifier, ...] = tuple(
+      ids.wrap(x if isinstance(x, identifier.Check) else ids.check(x))
+      for x in idents
+  )
   work_plan = {ident.check.work_plan.id for ident in idents}
   if len(work_plan) > 1:
     raise ValueError(
@@ -368,7 +372,7 @@ def read_checks(*ids: identifier.Check | str,
 MsgT = TypeVar('MsgT', bound=Message)
 
 
-def get_check_by_short_id(workplan: WorkPlan, check_id: str) -> Check:
+def get_check_by_short_id(workplan: WorkPlan, check_id: str) -> Check|None:
   """Finds and returns the Check for the check whose identifier.id is
   `check_id`.
 
@@ -382,12 +386,12 @@ def get_check_by_short_id(workplan: WorkPlan, check_id: str) -> Check:
   return None
 
 
-def get_check_by_full_id(workplan: WorkPlan, check_id: str) -> Check:
+def get_check_by_full_id(workplan: WorkPlan, check_id: str) -> Check|None:
   """Finds and returns the Check for the check whose identifier's string
   representation (e.g. 'L12345:C123') is `check_id`.
 
   If this check is not found, returns None."""
-  return get_check_by_short_id(workplan, to_id(check_id).check.id)
+  return get_check_by_short_id(workplan, ids.from_string(check_id).check.id)
 
 
 def get_option(msg: Type[MsgT], check: Check) -> MsgT | None:
@@ -401,7 +405,7 @@ def get_option(msg: Type[MsgT], check: Check) -> MsgT | None:
     dat = get_option(MyMessage, graph.checks['foo'])
     # dat is None or an instance of MyMessage
   """
-  url = type_url_for(msg)
+  url = value.url(msg)
   for option in check.options:
     if option.type_url == url:
       ret = msg()
@@ -422,7 +426,7 @@ def get_results(msg: Type[MsgT], check: Check) -> list[MsgT]:
     dat = get_results(MyMessage, graph.checks['foo'])
     # dat is a possibly-empty list of instances of MyMessage
   """
-  url = type_url_for(msg)
+  url = value.url(msg)
   ret: list[MsgT] = []
   for result in check.results:
     for dat in result.data:

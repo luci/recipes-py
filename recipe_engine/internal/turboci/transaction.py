@@ -5,11 +5,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Callable, Literal, Mapping, Sequence
+from typing import Callable, Literal, Sequence
+import typing
 
 from google.protobuf.message import Message
 
 from PB.turboci.graph.ids.v1 import identifier
+from PB.turboci.graph.orchestrator.v1 import type_set
 from PB.turboci.graph.orchestrator.v1.check import Check
 from PB.turboci.graph.orchestrator.v1.query import Query
 from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesRequest
@@ -18,10 +20,10 @@ from PB.turboci.graph.orchestrator.v1.transaction_details import TransactionDeta
 from PB.turboci.graph.orchestrator.v1.workplan import WorkPlan
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 from PB.turboci.graph.orchestrator.v1.write_nodes_response import WriteNodesResponse
+from turboci.utils import ids, value
 
 from . import common
 from .common import get_check_by_short_id
-from .ids import from_id, to_id
 from .errors import TransactionConflictException, TransactionUseAfterWriteException
 
 
@@ -65,17 +67,21 @@ class Transaction:
   # necessary for correctness for the live service.
   _did_write: bool = False
 
-  def _observe_graph(self, workplans: list[WorkPlan], query_revision: Revision):
+  def _observe_graph(
+      self,
+      workplans: typing.Iterable[WorkPlan],
+      query_revision: Revision,
+  ):
     if not self._revision:
       self._revision = query_revision
     for workplan in workplans:
       # checks
       for check in workplan.checks:
-        self.observed_nodes.add(from_id(check.identifier))
+        self.observed_nodes.add(ids.to_string(check.identifier))
 
       # stages
       for stage in workplan.stages:
-        self.observed_nodes.add(from_id(stage.identifier))
+        self.observed_nodes.add(ids.to_string(stage.identifier))
 
   def write_nodes(
       self,
@@ -97,7 +103,7 @@ class Transaction:
     txn: TransactionDetails | None = None
     if self._revision:
       txn = TransactionDetails(
-          nodes_observed=(to_id(node) for node in self.observed_nodes),
+          nodes_observed=(ids.from_string(node) for node in self.observed_nodes),
           snapshot_version=self._revision,
       )
 
@@ -108,10 +114,12 @@ class Transaction:
         txn=txn,
         client=self._client)
 
-  def query_nodes(self,
-                  *query: Query,
-                  types: Sequence[str | Message | type[Message]] = (),
-                  observe_graph=True) -> tuple[list[WorkPlan], Revision]:
+  def query_nodes(
+      self,
+      *query: Query,
+      types: Sequence[str | Message | type[Message]] = (),
+      observe_graph=True,
+  ) -> tuple[typing.Iterable[WorkPlan], Revision]:
     """Runs run or more queries and returns their combined result.
 
     Will add all observed nodes to Transaction.observed_nodes unless
@@ -123,7 +131,8 @@ class Transaction:
 
     req = QueryNodesRequest()
     if types:
-      req.type_info.wanted.MergeFrom(common.type_set(*types))
+      req.type_info.wanted.MergeFrom(type_set.TypeSet(
+        type_urls=[x if isinstance(x, str) else value.url(x) for x in types]))
 
     if self._revision:
       match self._query_mode:
@@ -136,12 +145,12 @@ class Transaction:
     if observe_graph:
       self._observe_graph(rsp.workplans, rsp.version)
       for absent in rsp.absent:
-        self.observed_nodes.add(from_id(absent))
+        self.observed_nodes.add(ids.to_string(absent))
     return (rsp.workplans, rsp.version)
 
   def read_checks(
       self,
-      *ids: identifier.Check | str,
+      *idents: identifier.Check | str,
       collect: Query.CollectChecks | None = None,
       types: Sequence[str | Message | type[Message]] = ()
   ) -> Sequence[Check]:
@@ -150,28 +159,34 @@ class Transaction:
     This just does a query_nodes for the ids specified by `ids`, and then unwraps
     the result.
     """
-    # TODO: share implementation between common.read_checks and here.
-    idents = list(common.collect_check_ids(*ids))
-    work_plan_id = {ident.check.work_plan.id for ident in idents}
+    wrapped: tuple[identifier.Identifier, ...] = tuple(
+        ids.wrap(x if isinstance(x, identifier.Check) else ids.check(x))
+        for x in idents
+    )
+    work_plan_id = {ident.check.work_plan.id for ident in wrapped}
     if len(work_plan_id) > 1:
       raise ValueError(
           f'read_checks: got checks from more than one workplan: {work_plan_id}'
       )
 
-    workplans, query_revision = self.query_nodes(
+    workplans, _ = self.query_nodes(
         common.make_query(
             Query.SelectChecks(),
             collect,
-            node_set=idents,
+            node_set=wrapped,
         ),
         types=types,
     )
-    workplan = workplans[0]
+    workplan = next(iter(workplans))
 
     # TODO (b/483105203): get_check_by_short_id() is currently O(N), which
     # readers might not expect. Remove this comment when we optimize the
     # function later.
-    return [get_check_by_short_id(workplan, ident.check.id) for ident in idents]
+    return [
+        x
+        for ident in wrapped
+        if (x := get_check_by_short_id(workplan, ident.check.id))
+    ]
 
 
 # The mode for QueryNodes's version restriction.

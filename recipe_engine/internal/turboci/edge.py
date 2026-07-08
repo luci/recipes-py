@@ -10,7 +10,6 @@ from dataclasses import dataclass, field
 import enum
 from typing import Any, Callable, Iterable, Literal, cast
 
-from PB.turboci.graph.ids.v1 import identifier
 from PB.turboci.graph.orchestrator.v1.check import Check
 from PB.turboci.graph.orchestrator.v1.dependencies import Dependencies
 from PB.turboci.graph.orchestrator.v1.query import QueryExpandDepsMode
@@ -24,7 +23,7 @@ from PB.turboci.graph.orchestrator.v1.stage_state import StageState
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 from recipe_engine.internal.turboci.errors import InvalidArgumentException
 
-from .ids import from_id, to_id
+from turboci.utils import ids
 
 @dataclass(slots=True, frozen=True)
 class CheckCondition:
@@ -83,9 +82,9 @@ def extract_ident_condition(e: Edge) -> tuple[str, Condition]:
   """Extracts the string identifier and condition for this Edge."""
   match target := e.WhichOneof('target'):
     case 'check':
-      return from_id(e.check.identifier), CheckCondition.from_edge(e.check)
+      return ids.to_string(e.check.identifier), CheckCondition.from_edge(e.check)
     case 'stage':
-      return from_id(e.stage.identifier), StageCondition.from_edge(e.stage)
+      return ids.to_string(e.stage.identifier), StageCondition.from_edge(e.stage)
     case _:
       raise AssertionError(f'impossible: edge.target is {target!r}')
 
@@ -414,7 +413,7 @@ class DependencyIndex:
     them. If one or more conditions are resolved, adds events to the
     _resolution_events queue.
     """
-    node_ident_str = from_id(real_node.identifier)
+    node_ident_str = ids.to_string(real_node.identifier)
     node = self._data[node_ident_str]
 
     for condition, resolution in node.conditions.items():

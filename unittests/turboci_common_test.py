@@ -16,8 +16,6 @@ import turboci_test_helper
 
 from google.protobuf.message import Message
 
-from recipe_engine.internal.turboci.ids import type_urls
-
 from google.protobuf.struct_pb2 import Struct, Value as StructValue
 from google.protobuf.proto_json import parse
 
@@ -30,7 +28,6 @@ from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesReque
 from PB.turboci.graph.orchestrator.v1.revision import Revision
 from PB.turboci.graph.orchestrator.v1.type_info import TypeInfo
 from PB.turboci.graph.orchestrator.v1.type_set import TypeSet
-from PB.turboci.graph.orchestrator.v1.value_ref import ValueRef
 from PB.turboci.graph.orchestrator.v1.value_write import ValueWrite
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 
@@ -38,6 +35,8 @@ from recipe_engine.internal.turboci import common
 from recipe_engine.turboci import (write_nodes, reason, check, dep_group,
                                    check_id, query_nodes, make_query,
                                    get_option, get_results)
+
+from turboci.utils import value
 
 
 def _mkStruct(d: dict) -> Struct:
@@ -70,7 +69,7 @@ class TestCheckID(test_env.RecipeEngineUnitTest):
 
     with self.assertRaises(ValueError) as ex:
       check_id('just fine', in_workplan='bad news')
-    self.assertRegex(ex.exception.__notes__[0], 'in_workplan: id must be parsable')
+    self.assertRegex(str(ex.exception), 'work_plan: id must be parsable')
 
 
 class TestReason(test_env.RecipeEngineUnitTest):
@@ -256,7 +255,7 @@ class TestGetOptionsResults(turboci_test_helper.TestBaseClass):
     returned_check = self.read_checks(
         'a',
         collect=Query.CollectChecks(options=True),
-        types=list(type_urls(Struct)))[0]
+        types=[value.url(Struct)])[0]
 
     self.assertEqual(
         get_option(Struct, returned_check), {
@@ -276,7 +275,7 @@ class TestGetOptionsResults(turboci_test_helper.TestBaseClass):
     returned_check = self.read_checks(
         'a',
         collect=Query.CollectChecks(result_data=True),
-        types=list(type_urls(Struct)))[0]
+        types=[value.url(Struct)])[0]
 
     self.assertEqual(
         get_results(Struct, returned_check), [{
