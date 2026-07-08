@@ -3,7 +3,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from typing import Callable, Sequence
+from typing import Sequence
 
 import test_env
 
@@ -17,7 +17,6 @@ from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesReque
 
 from recipe_engine import turboci
 from recipe_engine.internal.turboci.fake import FakeTurboCIOrchestrator
-from recipe_engine.internal.turboci.transaction import QueryMode
 from turboci.utils import ids
 
 
@@ -60,16 +59,6 @@ class TestBaseClass(test_env.RecipeEngineUnitTest):
   ):
     return turboci.read_checks(
         *ids, types=types, collect=collect, client=self.CLIENT)
-
-  def run_transaction(
-      self,
-      txnFunc: Callable[[turboci.Transaction], None],
-      *,
-      retries=3,
-      query_mode: QueryMode = 'require',
-  ):
-    return turboci.run_transaction(
-        txnFunc, retries=retries, query_mode=query_mode, client=self.CLIENT)
 
   def check_ids(self, checks):
     return set([ids.to_string(c.identifier) for c in checks])
