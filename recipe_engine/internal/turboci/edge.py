@@ -21,7 +21,8 @@ from PB.turboci.graph.orchestrator.v1.edge import (
 from PB.turboci.graph.orchestrator.v1.revision import Revision
 from PB.turboci.graph.orchestrator.v1.stage_state import StageState
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
-from recipe_engine.internal.turboci.errors import InvalidArgumentException
+
+from .errors import InvalidArgumentException
 
 from turboci.utils import ids
 
@@ -97,7 +98,7 @@ def extract_dependencies(
   """Extracts a Dependencies value from a WriteNodesRequest.DependencyGroup.
 
   The DependencyGroup will be checked for well-formed-ness (no empty
-  groups, sensible threshold values). Raises InvalidArgumentException if there
+  groups, sensible threshold values). Raises RPCError if there
   are issues.
 
   Returns the normalized Dependencies if everything looks good.

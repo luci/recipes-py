@@ -16,7 +16,7 @@ from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesReque
 
 
 from .edge import extract_ident_condition
-from .errors import CheckWriteInvariantException
+from .errors import InvalidArgumentException
 
 from turboci.utils import ids
 
@@ -29,9 +29,9 @@ def _dup_types(vals: Sequence[ValueWrite]) -> set[str]:
 
 
 def assert_can_apply(write: WriteNodesRequest.CheckWrite, check: None | Check):
-  """Raises CheckWriteInvariantException if `write` cannot apply to `check`."""
+  """Raises RPCError if `write` cannot apply to `check`."""
   ident_str = ids.to_string(write.identifier)
-  exc = lambda msg: CheckWriteInvariantException(
+  exc = lambda msg: InvalidArgumentException(
       f"WriteNodes.CheckWrite({ident_str!r}): {msg}",)
 
   if ':' in write.identifier.id:

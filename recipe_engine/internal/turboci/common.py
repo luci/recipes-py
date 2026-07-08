@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import collections.abc
 
-from typing import Iterable, Literal, Protocol, Sequence, Type, TypeVar, cast
+from typing import Iterable, Literal, Protocol, Sequence, TypeVar, cast
 
 from google.protobuf.message import Message
 
@@ -352,11 +352,11 @@ def read_checks(*idents: identifier.Check | str,
   This just does a query_nodes for the ids specified by `idents`, and then
   unwraps the result.
   """
-  idents: tuple[identifier.Identifier, ...] = tuple(
+  wrapped: tuple[identifier.Identifier, ...] = tuple(
       ids.wrap(x if isinstance(x, identifier.Check) else ids.check(x))
       for x in idents
   )
-  work_plan = {ident.check.work_plan.id for ident in idents}
+  work_plan = {ident.check.work_plan.id for ident in wrapped}
   if len(work_plan) > 1:
     raise ValueError(
         f'read_checks: got checks from more than one workplan: {work_plan}')
@@ -364,7 +364,7 @@ def read_checks(*idents: identifier.Check | str,
   checks = query_nodes(
       make_query(
           collect,
-          node_set=idents,
+          node_set=wrapped,
       ), types=types, client=client).workplans[0].checks
   return checks
 

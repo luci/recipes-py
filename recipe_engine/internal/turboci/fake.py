@@ -70,7 +70,6 @@ from PB.turboci.graph.orchestrator.v1.query_nodes_response import QueryNodesResp
 from PB.turboci.graph.orchestrator.v1.read_workplan_request import ReadWorkPlanRequest
 from PB.turboci.graph.orchestrator.v1.read_workplan_response import ReadWorkPlanResponse
 from PB.turboci.graph.orchestrator.v1.revision import Revision
-from PB.turboci.graph.orchestrator.v1.transaction_invariant import TransactionConflictFailure
 from PB.turboci.graph.orchestrator.v1.type_info import TypeInfo
 from PB.turboci.graph.orchestrator.v1.value_ref import ValueRef
 from PB.turboci.graph.orchestrator.v1.value_write import ValueWrite
@@ -80,8 +79,9 @@ from PB.turboci.graph.orchestrator.v1.write_nodes_response import WriteNodesResp
 from recipe_engine.internal.turboci import check_invariant
 from recipe_engine.internal.turboci import edge
 from recipe_engine.internal.turboci.common import get_check_by_full_id
-from recipe_engine.internal.turboci.errors import TransactionConflictException, InvalidArgumentException
+from recipe_engine.internal.turboci.errors import InvalidArgumentException
 from turboci.utils import ids
+from turboci.utils import client
 
 from .common import TurboCIClient
 from .query_util import type_set_to_re, want_value_ref
@@ -579,9 +579,8 @@ class FakeTurboCIOrchestrator(TurboCIClient):
       check = self._checks[check_str]
 
       if require and _is_rev_newer(check.version, require):
-        raise TransactionConflictException(
-            f"node {check_str} newer than {require}",
-            failure_message=TransactionConflictFailure())
+        raise client.TransactionalPreconditionError(
+            f"node {check_str} newer than {require}")
 
       # This must already be in workplan
       workplan_check = get_check_by_full_id(workplan, check_str)
@@ -707,9 +706,9 @@ class FakeTurboCIOrchestrator(TurboCIClient):
           _observe(ids.to_string(cwrite.identifier))
 
         if too_new:
-          raise TransactionConflictException(
+          raise client.TransactionalPreconditionError(
               f"WriteNodes: nodes changed since snapshot_version: {too_new}",
-              failure_message=TransactionConflictFailure())
+          )
 
       # check that we can apply all deltas
       needed_checks: set[str] = set()

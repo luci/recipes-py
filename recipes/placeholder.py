@@ -5,8 +5,8 @@
 from __future__ import annotations
 
 from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
-from PB.turboci.graph.orchestrator.v1.read_workplan_request import ReadWorkPlanRequest
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
+from PB.turboci.graph.orchestrator.v1.workplan import WorkPlan
 from recipe_engine.internal.turboci.common import get_check_by_short_id, get_option
 
 DEPS = [
@@ -481,10 +481,12 @@ def GenTests(api):
     # TODO (b/483105203): get_check_by_short_id() is currently O(N), which readers
     # might not expect. Remove this comment when we optimize the function later.
     charlie = get_check_by_short_id(workplan, 'charlie')
+    assert charlie
     assert_(charlie.identifier.id == 'charlie')
     assert_(charlie.kind == CheckKind.CHECK_KIND_BUILD)
 
     bob = get_check_by_short_id(workplan, 'bob')
+    assert bob
     assert_(bob.identifier.id == 'bob')
 
     url = turboci.type_url_for(GobSourceCheckOptions)

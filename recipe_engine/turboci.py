@@ -29,6 +29,7 @@ from PB.turboci.graph.ids.v1 import identifier as _identifier
 from PB.turboci.graph.orchestrator.v1 import type_set as _type_set
 from turboci.utils import ids as _ids
 from turboci.utils import value as _value
+from turboci.utils import client as _client
 
 
 def from_id(ident: _ids.AnyIdentifier) -> str:
@@ -83,13 +84,13 @@ from .internal.turboci.common import (
     write_nodes,
 )
 
-from .internal.turboci.errors import (
-    CheckWriteInvariantException,
-    InvalidArgumentException,
-    TransactionConflictException,
-    TransactionUseAfterWriteException,
-    TurboCIException,
-)
+# These are all catchable as client.RPCError now.
+TransactionConflictException = _client.TransactionalPreconditionError
+InvalidArgumentException = _client.RPCError
+CheckWriteInvariantException = _client.RPCError
+TurboCIException = _client.RPCError
+
+TransactionUseAfterWriteException = _client.TransactionMultipleWritesError
 
 from recipe_engine.internal.turboci import common as _common
 

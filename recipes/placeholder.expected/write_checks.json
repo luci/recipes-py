@@ -132,7 +132,7 @@
       "@@@STEP_LOG_LINE@request@  state: CHECK_STATE_FINAL@@@",
       "@@@STEP_LOG_LINE@request@}@@@",
       "@@@STEP_LOG_END@request@@@",
-      "@@@STEP_LOG_LINE@exception@CheckWriteInvariantException: WriteNodes.CheckWrite(':Cbob'): cannot edit finalized results@@@",
+      "@@@STEP_LOG_LINE@exception@RPCError: INVALID_ARGUMENT: WriteNodes.CheckWrite(':Cbob'): cannot edit finalized results@@@",
       "@@@STEP_LOG_END@exception@@@",
       "@@@STEP_EXCEPTION@@@"
     ]
