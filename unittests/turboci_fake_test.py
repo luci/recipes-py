@@ -45,12 +45,6 @@ def _mkAny(value: Message) -> Any:
   return ret
 
 
-def _mkValueRef(msg: Message) -> ValueRef:
-  ret = ValueRef(type_url=value.url(msg))
-  ret.inline.Pack(msg, deterministic=True)
-  return ret
-
-
 def _mkOptions(*msg: type[Message] | Message) -> list[ValueRef]:
   ret = []
   for m in msg:
@@ -130,7 +124,8 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
     check = get_check_by_full_id(rslt, ':Chey')
     assert check
     self.assertEqual(len(check.options), 1)
-    self.assertEqual(check.options[0], _mkValueRef(demoStruct))
+
+    self.assertEqual(check.options[0], value.ref(demoStruct, 'fake:realm'))
 
     self.assertEqual(
         check,
@@ -144,6 +139,7 @@ class SimpleTurboCIFakeTest(turboci_test_helper.TestBaseClass):
               ),
             ],
             kind='CHECK_KIND_BUILD',
+            realm='fake:realm',
             version=rslt.version,
             options=check.options,  # we verified contents above
             dependencies=Dependencies(),

@@ -43,6 +43,7 @@ by this fake, will raise NotImplementedError.
 from __future__ import annotations
 
 import time
+import copy
 
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -50,6 +51,7 @@ from functools import reduce
 from itertools import chain
 from threading import Lock
 from typing import cast
+import typing
 
 from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 from google.protobuf.timestamp_pb2 import Timestamp
@@ -85,6 +87,8 @@ from turboci.utils import client
 
 from .common import TurboCIClient
 from .query_util import type_set_to_re, want_value_ref
+
+from turboci.utils import value
 
 
 def _is_rev_newer(a: Revision, b: Revision) -> bool:
@@ -272,6 +276,7 @@ class FakeTurboCIOrchestrator(TurboCIClient):
       check = Check(
           identifier=write.identifier,
           kind=write.kind,
+          realm='fake:realm',
       )
       self._set_check_state(check, CHECK_STATE_PLANNING)
       # New check without deps creates empty dependencies.
@@ -284,40 +289,18 @@ class FakeTurboCIOrchestrator(TurboCIClient):
       _touch()
 
     def _write_values(
-        to_write: RepeatedCompositeFieldContainer[ValueWrite],
+        to_write: typing.Sequence[ValueWrite],
         container: RepeatedCompositeFieldContainer[ValueRef],
     ):
-      type_url_set: set[str] = {
-          value_ref.type_url for value_ref in container
-      }
-      # TODO: Assert that realm does not mutate, and for newly created data
-      # without a specified realm, mirror the check's realm.
       for value_write in to_write:
-        type_url = value_write.data.type_url
-        if type_url in type_url_set:
-          # updating existing ValueRef
-          # find it in container
-          for vr in container:
-            if vr.type_url == type_url:
-              value_ref = vr
-              break
-          else:
-            # Should be unreachable if type_url_set logic is correct
-            raise AssertionError("ValueWrite not found in container")
-        else:
-          # we're adding a new ValueRef
-          # add to check container
-          value_ref = container.add()
-          type_url_set.add(type_url)
+        if value_write.realm in ('', '$from_container', '$from_token'):
+          value_write = copy.copy(value_write)
+          value_write.realm = check.realm
 
-        # Update ValueRef fields
-        if value_write.realm:
-          value_ref.realm = value_write.realm
-        value_ref.type_url = type_url
-        value_ref.inline.CopyFrom(value_write.data)
+        value.set_ref(container, value.ref_from_write(value_write))
 
-        # Update the check's version
-        _touch()
+      # Update the check's version
+      _touch()
 
     if write.options:
       _write_values(write.options, check.options)

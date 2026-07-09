@@ -27,6 +27,7 @@ import typing
 from google.protobuf.message import Message
 from PB.turboci.graph.ids.v1 import identifier as _identifier
 from PB.turboci.graph.orchestrator.v1 import type_set as _type_set
+from PB.turboci.graph.orchestrator.v1 import check as _check
 from turboci.utils import ids as _ids
 from turboci.utils import value as _value
 from turboci.utils import client as _client
@@ -69,14 +70,20 @@ def collect_check_ids(
       id = _ids.check(id, wp)
     yield _ids.wrap(id)
 
+_MsgT = typing.TypeVar('_MsgT', bound=Message)
+
+def get_option(msg: typing.Type[_MsgT], check: _check.Check) -> _MsgT | None:
+  return _value.lookup({}, check.options, msg)
+
+def get_results(msg: typing.Type[_MsgT], check: _check.Check) -> list[_MsgT]:
+  return _value.results({}, check, msg)
+
 
 from .internal.turboci.common import (
     TurboCIClient,
     check,
     dep_group,
     get_check_by_short_id,
-    get_option,
-    get_results,
     make_query,
     query_nodes,
     read_checks,

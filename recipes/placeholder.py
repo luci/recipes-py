@@ -7,7 +7,7 @@ from __future__ import annotations
 from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 from PB.turboci.graph.orchestrator.v1.workplan import WorkPlan
-from recipe_engine.internal.turboci.common import get_check_by_short_id, get_option
+from recipe_engine.turboci import get_check_by_short_id, get_option
 
 DEPS = [
     'buildbucket',

@@ -33,8 +33,7 @@ from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesReque
 
 from recipe_engine.internal.turboci import common
 from recipe_engine.turboci import (write_nodes, reason, check, dep_group,
-                                   check_id, query_nodes, make_query,
-                                   get_option, get_results)
+                                   check_id, query_nodes, make_query)
 
 from turboci.utils import value
 
@@ -239,48 +238,6 @@ class TestWriteNodes(test_env.RecipeEngineUnitTest):
             version=QueryNodesRequest.VersionRestriction(
                 require=Revision(ts=Timestamp(seconds=1234, nanos=5678)),),
         ))
-
-
-class TestGetOptionsResults(turboci_test_helper.TestBaseClass):
-
-  def test_get_option(self):
-    self.write_nodes(
-        check(
-            'a',
-            kind='CHECK_KIND_ANALYSIS',
-            options=[_mkStruct({
-                'hello': [1, 2, 3, 4],
-            })]))
-
-    returned_check = self.read_checks(
-        'a',
-        collect=Query.CollectChecks(options=True),
-        types=[value.url(Struct)])[0]
-
-    self.assertEqual(
-        get_option(Struct, returned_check), {
-            'hello': [1, 2, 3, 4],
-        })
-
-  def test_get_result(self):
-    self.write_nodes(
-        check(
-            'a',
-            kind='CHECK_KIND_ANALYSIS',
-            state='CHECK_STATE_WAITING',
-            results=[_mkStruct({
-                'hello': [1, 2, 3, 4],
-            })]))
-
-    returned_check = self.read_checks(
-        'a',
-        collect=Query.CollectChecks(result_data=True),
-        types=[value.url(Struct)])[0]
-
-    self.assertEqual(
-        get_results(Struct, returned_check), [{
-            'hello': [1, 2, 3, 4],
-        }])
 
 
 if __name__ == '__main__':
