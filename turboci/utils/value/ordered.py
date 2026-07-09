@@ -15,6 +15,8 @@ __all__ = [
 import typing
 import bisect
 
+from google.protobuf.internal import containers
+
 from PB.turboci.graph.orchestrator.v1 import value_ref as value_ref_pb2
 
 
@@ -63,8 +65,11 @@ def find(
 
 
 def set_ref(
-    refs: typing.MutableSequence[value_ref_pb2.ValueRef],
-    ref: value_ref_pb2.ValueRef
+    refs: (
+        typing.MutableSequence[value_ref_pb2.ValueRef]
+        | containers.RepeatedCompositeFieldContainer[value_ref_pb2.ValueRef]
+    ),
+    ref: value_ref_pb2.ValueRef,
 ):
   """Adds or overrides `ref` in `refs` by type_url.
 
@@ -75,8 +80,7 @@ def set_ref(
   The update will keep the sequence sorted by `type_url`.
 
   Args:
-    refs: MutableSequence of ValueRefs, expected to be sorted and unique
-      by `type_url`.
+    refs: sequence of ValueRefs, expected to be sorted and unique by `type_url`.
     ref: The ref data to insert in this sequence.
 
   Raises:
@@ -96,12 +100,18 @@ def set_ref(
           f'mismatched realms with {ref.type_url=!r}: {cur_realm=!r}'
           f' {want_realm=!r}'
       )
-    refs[start_idx] = ref
+    refs[start_idx].CopyFrom(ref)
   else:
     refs.insert(start_idx, ref)
 
 
-def add_ref(refs: typing.MutableSequence, ref: value_ref_pb2.ValueRef):
+def add_ref(
+    refs: (
+        typing.MutableSequence[value_ref_pb2.ValueRef]
+        | containers.RepeatedCompositeFieldContainer[value_ref_pb2.ValueRef]
+    ),
+    ref: value_ref_pb2.ValueRef,
+):
   """Adds `ref` in `refs`.
 
   Args:
