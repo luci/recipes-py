@@ -13,6 +13,7 @@ from __future__ import annotations
 from collections import defaultdict, namedtuple
 from collections.abc import Mapping, Sequence
 import contextlib
+import enum
 import hashlib
 from typing import Iterator, Literal
 
@@ -26,6 +27,17 @@ CIPD_SERVER_URL = 'https://chrome-infra-packages.appspot.com'
 
 CompressionLevel = Literal[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 InstallMode = Literal['copy', 'symlink']
+
+
+class ParanoidMode(enum.StrEnum):
+  """Valid ParanoidNode values.
+
+  Corresponds to the constants from
+  https://source.chromium.org/chromium/infra/infra_superproject/+/main:infra/go/src/go.chromium.org/luci/cipd/client/cipd/deployer/paranoia.go
+  """
+  NOT_PARANOID = 'NotParanoid'
+  CHECK_PRESENCE = 'CheckPresence'
+  CHECK_INTEGRITY = 'CheckIntegrity'
 
 
 class PackageDefinition:
@@ -163,6 +175,7 @@ class EnsureFile:
 
   def __init__(self):
     self.packages: dict[Path, list[Package]] = defaultdict(list)
+    self.paranoid_mode = None
 
   def add_package(self, name: str, version: str, subdir: str = '') -> EnsureFile:
     """Add a package to the ensure file.
@@ -175,15 +188,26 @@ class EnsureFile:
     self.packages[subdir].append(self.Package(name, version))
     return self
 
+  def with_paranoid_mode(self, paranoid_mode: ParanoidMode) -> EnsureFile:
+    """Sets the ParanoidMode for the ensure file.
+
+    Args:
+      * paranoid_mode: The ParanoidMode enum value to set the ensure file to.
+    """
+    self.paranoid_mode = paranoid_mode
+    return self
+
   def render(self) -> str:
     """Renders the ensure file as textual representation."""
-    package_list = []
+    file_content_lines = []
+    if self.paranoid_mode:
+      file_content_lines.append(f'$ParanoidMode {self.paranoid_mode}')
     for subdir in sorted(self.packages):
       if subdir:
-        package_list.append('@Subdir %s' % subdir)
+        file_content_lines.append('@Subdir %s' % subdir)
       for package in self.packages[subdir]:
-        package_list.append('%s %s' % (package.name, package.version))
-    return '\n'.join(package_list)
+        file_content_lines.append('%s %s' % (package.name, package.version))
+    return '\n'.join(file_content_lines)
 
 
 class Metadata:
@@ -256,6 +280,7 @@ class CIPDApi(recipe_api.RecipeApi):
   PackageDefinition = PackageDefinition
   EnsureFile = EnsureFile
   Metadata = Metadata
+  ParanoidMode = ParanoidMode
   UnrecognizedArchitecture = UnrecognizedArchitecture
 
   # A CIPD pin.

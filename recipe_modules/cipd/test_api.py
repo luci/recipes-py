@@ -7,12 +7,13 @@ from __future__ import annotations
 
 from recipe_engine import recipe_test_api
 
-from .api import EnsureFile
+from . import api as cipd_api
 
 
 class CIPDTestApi(recipe_test_api.RecipeTestApi):
 
-  EnsureFile = EnsureFile
+  EnsureFile = cipd_api.EnsureFile
+  ParanoidMode = cipd_api.ParanoidMode
 
   def make_resolved_package(self, v):
     return v.replace('${platform}', 'resolved-platform')
