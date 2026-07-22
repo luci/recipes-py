@@ -72,7 +72,10 @@ def _RmTree(path):
 
   if sys.platform == 'win32':
     # Give up and use cmd.exe's rd command.
-    cmd = ['cmd.exe', '/c', 'rd', '/q', '/s', os.path.normcase(path)]
+    path = os.path.normcase(path)
+    if '"' in path:
+      raise ValueError('path contains double quotes: %r' % path)
+    cmd = ['cmd.exe', '/c', 'rd', '/q', '/s', f'"{path}"']
     for _ in range(3):
       print('RemoveDirectory running %s' % (' '.join(cmd)))
       if not subprocess.call(cmd):
