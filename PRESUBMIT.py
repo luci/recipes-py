@@ -1,4 +1,4 @@
-# Copyright 2019 The LUCI Authors. All rights reserved.
+# Copyright 2019 The LUCI Authors
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
@@ -15,8 +15,7 @@ def header(input_api):
   allowed_years = (str(s) for s in reversed(range(2011, current_year + 1)))
   years_re = '(' + '|'.join(allowed_years) + ')'
   license_header = (
-    r'.*? Copyright %(year)s The LUCI Authors\. '
-      r'All rights reserved\.\n'
+    r'.*? Copyright %(year)s The LUCI Authors\n'
     r'.*? Use of this source code is governed under the Apache License, '
       r'Version 2\.0\n'
     r'.*? that can be found in the LICENSE file\.(?: \*/)?\n'
