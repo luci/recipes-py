@@ -14,7 +14,7 @@ from recipe_engine import recipe_api
 # Usage of the bcid_verifier recipe_module will have significant downstream
 # impact and to avoid any production outage, we pin the latest known good build
 # of the tool here. Upstream changes are intentionally left out.
-_LATEST_STABLE_VERSION = 'git_revision:c83273f7e3850f045420d836d5d92d64dcad3667'
+_LATEST_STABLE_VERSION = 'git_revision:fd82201d36fb54f8623fe8cfdc43f1a5d7e55ca0'
 
 VERIFY_FOR_ENFORCEMENT = "VERIFY_FOR_ENFORCEMENT"
 VERIFY_FOR_LOGGING = "VERIFY_FOR_LOGGING"
