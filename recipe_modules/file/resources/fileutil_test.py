@@ -16,53 +16,64 @@ from unittest import mock
 import fileutil
 
 
-def _win_normcase(path: str) -> str:
-  return path.replace('/', '\\').lower()
+def _win_normpath(path: str) -> str:
+  path = path.replace('/', '\\').lower()
+  while len(path) > 3 and path.endswith('\\'):
+    path = path[:-1]
+  return path
 
 
 class RmTreeTest(unittest.TestCase):
 
-  @mock.patch('os.path.normcase', side_effect=_win_normcase)
+  @mock.patch('os.path.normpath', side_effect=_win_normpath)
+  @mock.patch('os.path.normcase', side_effect=_win_normpath)
   @mock.patch('sys.platform', 'win32')
   @mock.patch('os.path.exists', return_value=True)
   @mock.patch('subprocess.call', return_value=0)
-  def test_rmtree_win32_trailing_backslash(self, mock_call, mock_exists, _):
+  def test_rmtree_win32_trailing_backslash(self, mock_call, mock_exists, _, __):
     fileutil._RmTree(
         'C:\\b\\s\\w\\ir\\cache\\builder\\src\\out\\5f91-win-build-perf-\\')
-    mock_call.assert_called_once_with([
-        'cmd.exe', '/c', 'rd', '/q', '/s',
-        '"c:\\b\\s\\w\\ir\\cache\\builder\\src\\out\\5f91-win-build-perf-"'
-    ])
+    mock_call.assert_called_once_with(
+        'cmd.exe /c rd /q /s "c:\\b\\s\\w\\ir\\cache\\builder\\src\\out\\5f91-win-build-perf-"'
+    )
 
-  @mock.patch('os.path.normcase', side_effect=_win_normcase)
+  @mock.patch('os.path.normpath', side_effect=_win_normpath)
+  @mock.patch('os.path.normcase', side_effect=_win_normpath)
   @mock.patch('sys.platform', 'win32')
   @mock.patch('os.path.exists', return_value=True)
   @mock.patch('subprocess.call', return_value=0)
-  def test_rmtree_win32_trailing_slash(self, mock_call, mock_exists, _):
+  def test_rmtree_win32_trailing_slash(self, mock_call, mock_exists, _, __):
     fileutil._RmTree('C:/b/s/w/ir/cache/builder/src/out/5f91-win-build-perf-/')
-    mock_call.assert_called_once_with([
-        'cmd.exe', '/c', 'rd', '/q', '/s',
-        '"c:\\b\\s\\w\\ir\\cache\\builder\\src\\out\\5f91-win-build-perf-"'
-    ])
+    mock_call.assert_called_once_with(
+        'cmd.exe /c rd /q /s "c:\\b\\s\\w\\ir\\cache\\builder\\src\\out\\5f91-win-build-perf-"'
+    )
 
-  @mock.patch('os.path.normcase', side_effect=_win_normcase)
+  @mock.patch('os.path.normpath', side_effect=_win_normpath)
+  @mock.patch('os.path.normcase', side_effect=_win_normpath)
   @mock.patch('sys.platform', 'win32')
   @mock.patch('os.path.exists', return_value=True)
   @mock.patch('subprocess.call', return_value=0)
-  def test_rmtree_win32_no_trailing_slash(self, mock_call, mock_exists, _):
+  def test_rmtree_win32_no_trailing_slash(self, mock_call, mock_exists, _, __):
     fileutil._RmTree(
         'C:\\b\\s\\w\\ir\\cache\\builder\\src\\out\\5f91-win-build-perf-')
-    mock_call.assert_called_once_with([
-        'cmd.exe', '/c', 'rd', '/q', '/s',
-        '"c:\\b\\s\\w\\ir\\cache\\builder\\src\\out\\5f91-win-build-perf-"'
-    ])
+    mock_call.assert_called_once_with(
+        'cmd.exe /c rd /q /s "c:\\b\\s\\w\\ir\\cache\\builder\\src\\out\\5f91-win-build-perf-"'
+    )
 
-  @mock.patch('os.path.normcase', side_effect=_win_normcase)
+  @mock.patch('os.path.normpath', side_effect=_win_normpath)
+  @mock.patch('os.path.normcase', side_effect=_win_normpath)
   @mock.patch('sys.platform', 'win32')
   @mock.patch('os.path.exists', return_value=True)
-  def test_rmtree_win32_double_quotes_raise(self, mock_exists, _):
-    with self.assertRaises(ValueError):
-      fileutil._RmTree('C:\\path\\"with"\\quotes')
+  def test_rmtree_win32_invalid_chars_raise(self, mock_exists, _, __):
+    for invalid_path in (
+        'C:\\path\\"with"\\quotes',
+        'C:\\path\\%var%\\dir',
+        'C:\\path\n\\dir',
+        'C:\\path\r\\dir',
+    ):
+      with self.subTest(invalid_path=invalid_path):
+        with self.assertRaises(ValueError):
+          fileutil._RmTree(invalid_path)
 
 
 if __name__ == '__main__':
