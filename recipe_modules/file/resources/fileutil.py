@@ -72,7 +72,7 @@ def _RmTree(path):
 
   if sys.platform == 'win32':
     # Give up and use cmd.exe's rd command.
-    path = os.path.normcase(path)
+    path = os.path.normcase(path).rstrip('\\/')
     if '"' in path:
       raise ValueError('path contains double quotes: %r' % path)
     cmd = ['cmd.exe', '/c', 'rd', '/q', '/s', f'"{path}"']
