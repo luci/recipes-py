@@ -77,18 +77,24 @@ class Logger(typing.Protocol):
 class NullLock:
   """A no-op context manager for async uses of State."""
 
-  def __enter__(self) -> None:
-    pass
+  def __enter__(self) -> bool:
+    return True
 
   def __exit__(self, exc_type, exc_val, exc_tb) -> None:
     _ = (exc_type, exc_val, exc_tb)
 
 
-_LockT = typing.TypeVar('_LockT', bound=typing.ContextManager[typing.Any])
+class LockT(typing.Protocol):
+
+  def __enter__(self) -> bool:
+    ...
+
+  def __exit__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
+    ...
 
 
 @dataclasses.dataclass(kw_only=True)
-class State(typing.Generic[_LockT]):
+class State:
   # (required) The workplan this client is bound to.
   wpid: identifier_pb2.WorkPlan
 
@@ -140,7 +146,7 @@ class State(typing.Generic[_LockT]):
   # Mutex protecting latest_attempt_state and on_state_change.
   #
   # Subclasses will populate this from __post_init__.
-  _state_mu: _LockT = dataclasses.field(
+  _state_mu: LockT = dataclasses.field(
       default_factory=NullLock, init=False  # type: ignore[assignment]
   )
 

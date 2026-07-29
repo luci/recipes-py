@@ -39,7 +39,7 @@ option java_multiple_files = true;
 // Checks are not, themselves, executable, but Stages are the executable nodes
 // which operate to plan and resolve Checks.
 //
-// Next ID: 13
+// Next ID: 14
 message Check {
   // The Check's identifier.
   //
@@ -62,6 +62,21 @@ message Check {
   //
   // Used as part of a Checks query for a coarse-grained filter.
   optional CheckKind kind = 3 [(google.api.field_behavior) = IMMUTABLE];
+
+  // An optinoal disambiguating sub-type of this check, controlled by the
+  // inserter of the Check.
+  //
+  // Identifies a specific, named, variant of this Check kind, to differentiate
+  // between Check kinds in metrics and queries. This value should be computed
+  // by the workflow in some deterministic, low-cardinality way.
+  //
+  // This must NOT contain high-cardinality data like change IDs, commit hashes,
+  // or arbitrary user-controlled data.
+  //
+  // Refer to WriteNodesRequest.CheckWrite.sub_type for more info and examples.
+  //
+  // Adheres to the regex: /^[a-zA-Z0-9\(\)\-_./ ]{0,256}$/
+  optional string sub_type = 13 [(google.api.field_behavior) = IMMUTABLE];
 
   // The security realm for this Check.
   //

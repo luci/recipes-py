@@ -60,23 +60,25 @@ message Dependencies {
     // May not contain empty groups.
     repeated Group groups = 2;
 
+    // Minimum combined number of satisfied `edges` and `groups` needed
+    // to resolve this group.
+    //
     // If unset, all `edges` and `groups` must be satisfied for this Group to
     // be satisfied (effectively 'AND' of edges and groups).
     //
-    // If set, indicates the number of edges and groups needed to resolve this
-    // Group.
-    //
-    // Setting threshold to `1` effectively means 'the first satisfied entry in
-    // edges or groups satisfies this group' (effectively making this an OR).
+    // Setting threshold to `1` means 'this group is satisfied if  at least
+    // one entry in `edges` or `groups` is satisfied' (effectively making
+    // this an OR).
     //
     // A value greater than `1` could be useful if you want to depend on the
-    // first N of multiple possible edges.
+    // first N of multiple possible `edges` or `groups` to be satisfied.
     //
     // For example, if this Group is
     //
     //    { edges: [a, b, c], groups: [GROUP], threshold: 2 }
     //
-    // Then this Group could be satisfied on the first of any:
+    // Then this Group could be satisfied as soon as any of the following
+    // combinations is satisfied:
     //   * a b
     //   * b c
     //   * a c
@@ -84,21 +86,18 @@ message Dependencies {
     //   * b GROUP
     //   * c GROUP
     //
-    // This is also equivalent to the much more verbose disjunctive normal form:
+    // This is equivalent to the more verbose disjunctive normal form:
     //
     //   { groups: [
-    //     { edges: [a, b] },
-    //     { edges: [b, c] },
-    //     { edges: [a, c] },
-    //     { edges: [a], groups: [GROUP] },
-    //     { edges: [b], groups: [GROUP] },
-    //     { edges: [c], groups: [GROUP] },
+    //       { edges: [a, b] },
+    //       { edges: [b, c] },
+    //       { edges: [a, c] },
+    //       { edges: [a], groups: [GROUP] },
+    //       { edges: [b], groups: [GROUP] },
+    //       { edges: [c], groups: [GROUP] },
+    //     ],
     //     threshold = 1,
     //   }
-    //
-    // NOTE: It is possible for a Group in `Dependencies.satisfied` to contain
-    // more edges/groups than `threshold` if all of those Edges were satisfied
-    // at the time the Dependencies were resolved.
     //
     // A threshold less than zero is an error.
     // A threshold greater than `len(edges) + len(groups)` is an error.
@@ -142,18 +141,19 @@ message Dependencies {
     // See `condition_version` below for the revision of the condition itself.
     optional Revision version = 1;
 
-    // Was the criteria for this edge satisfied or not?
+    // Whether the criteria for this Edge was satisfied.
     //
     // Will never be `UNKNOWN`.
     optional Resolution resolution = 2;
 
-    // The version of the Edge target when the edge's condition was originally
+    // The version of the Edge target when the Edge's condition was originally
     // resolved.
     //
     // This MAY be substantially before `version` (even before the
     // containing node was created).
     optional Revision condition_version = 3;
   }
+
   // While containing node is in the PLANNED state, this will accumulate all
   // incoming resolution events.
   //

@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import copy
 import dataclasses
-import threading
 import typing
 
 from google.protobuf import message
@@ -243,11 +242,8 @@ def apply_node_predicate(
     del data[digest]
 
 
-_LockT = typing.TypeVar('_LockT', bound=typing.ContextManager[typing.Any])
-
-
 @dataclasses.dataclass(kw_only=True)
-class _TransactionalBase(state.State[_LockT], typing.Generic[_LockT]):
+class _TransactionalBase(state.State):
   """Base class for transactional clients, holding shared state and hooks."""
 
   _observed: ObservedNodeSet = dataclasses.field(init=False)
@@ -326,12 +322,12 @@ class _TransactionalBase(state.State[_LockT], typing.Generic[_LockT]):
 
 
 @dataclasses.dataclass(kw_only=True)
-class Transactional(_TransactionalBase[threading.Lock], clients.Sync):
+class Transactional(_TransactionalBase, clients.Sync):
   """Transactional synchronous client for TurboCI Orchestrator."""
 
 
 @dataclasses.dataclass(kw_only=True)
-class TransactionalAsync(_TransactionalBase[state.NullLock], clients.Async):
+class TransactionalAsync(_TransactionalBase, clients.Async):
   """Transactional asynchronous client for TurboCI Orchestrator."""
 
 

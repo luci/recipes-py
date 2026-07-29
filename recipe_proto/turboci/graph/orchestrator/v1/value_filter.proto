@@ -8,61 +8,83 @@ package turboci.graph.orchestrator.v1;
 
 import "turboci/graph/orchestrator/v1/type_info.proto";
 import "turboci/graph/orchestrator/v1/value_mask.proto";
+import "turboci/graph/orchestrator/v1/value_slot.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
 option java_multiple_files = true;
 
-// Describes how ValueData messages within the WorkPlan content matching the
-// query criteria should be selected for inclusion in the response. We allow
-// some aspects of this selection to be specified hierarchically (on a
-// per-field basis) while other aspects are specified on a per-type_url basis.
+// Describes which data we want to include in the response, and how we want to
+// include it.
 //
-// For a ValueRef's ValueData to be included in the response, the field
-// containing the ValueRef (e.g. Check.options) must have a ValueMask that
-// includes the ValueData (e.g. VALUE_MASK_TYPE_VALUE) and also type_info.wanted
-// must include content matching the ValueRef's type_url. If either of these
-// conditions is not met, the ValueRef will be populated but the ValueData will
-// not be present in the value_data map on the response and (for inline
-// ValueData content) the `inline` field will be unset. In both cases,
-// ValueRef's omit_reason will be set to UNWANTED.
+// There are two components to this:
+//   * Is this a *type* that we want to handle?
+//     * And, as a secondary aspect, does this type need to be converted to
+//     JSONPB?
+//   * Is this in a slot (e.g. structural location in the graph) that we want
+//     to handle?
+//
+// Clients should request the narrowest possible amount of data necessary to
+// accomplish their task. Pulling data whose types or location in the graph the
+// client doesn't need will only waste time and bandwidth.
+//
+// The notable exception to this is clients which are retrieving data for
+// debugging or exploration (e.g. a UI where the user hasn't specifically
+// set a filter on the data to pull yet), or clients which are attempting to
+// serialize the graph in some agnostic way (though ideally the downstream
+// consumer of the serialized graph should just make its own queries instead).
+//
+// If a given ValueRef is 'wanted' (i.e. it has a type matched by `type_info`,
+// and is in a slot in `include_data`), the server will include the matching
+// data for it (keyed by digest) in the returned `value_data` map, which is part
+// of the query response.
+//
+// Some exceptions for wanted ValueRefs:
+//   * If you do not have read access, it will be marked as omitted with the
+//   NO_ACCESS reason. The digest will also be stripped in this case.
+//   * If the data is missing from the backend (e.g. expired), the omit reason
+//   will be MISSING (but the digest will be retained).
+//
+// ValueRefs which are unwanted (e.g. don't match `type_info` or `include_data`)
+// will be marked as omitted with the reason UNWANTED.
 message ValueFilter {
   // How to handle per-type_url decisions about including Values.
   optional TypeInfo type_info = 1;
 
-  // These ValueMask fields control the selection behavior of the Value messages
-  // in specific fields of Turbo CI node types. ValueMasks are specified on a
-  // per-field basis, so we can specify desired behavior for each field that can
-  // hold ValueRefs. This allows callers to request behavior such as "include
-  // values for Check.options, but only include the basic type_url information
-  // for Check.results.data."
+  // Which slots in the graph do we want to include *data* for?
+  //
+  // Such slots will have their data returned in the response value_data map.
+  //
+  // If `include_data` is non-empty, all deprecated ValueMask fields below are
+  // ignored.
+  repeated ValueSlot include_data = 12;
 
   // ValueMask for Values in Check.options.
-  optional ValueMask check_options = 2;
+  optional ValueMask check_options = 2 [deprecated = true];
 
   // ValueMask for Values in Check.results.data.
-  optional ValueMask check_result_data = 3;
+  optional ValueMask check_result_data = 3 [deprecated = true];
 
   // ValueMask for Values in Edit.check.options.
-  optional ValueMask check_edit_options = 4;
+  optional ValueMask check_edit_options = 4 [deprecated = true];
 
   // ValueMask for Values in Edit.check.results.data.
-  optional ValueMask check_edit_result_data = 5;
+  optional ValueMask check_edit_result_data = 5 [deprecated = true];
 
   // ValueMask for Values in Stage.args.
-  optional ValueMask stage_args = 6;
+  optional ValueMask stage_args = 6 [deprecated = true];
 
   // ValueMask for Values in Stage.attempts.details.
-  optional ValueMask stage_attempt_details = 7;
+  optional ValueMask stage_attempt_details = 7 [deprecated = true];
 
   // ValueMask for Values in Stage.attempts.progress.details.
-  optional ValueMask stage_attempt_progress_details = 8;
+  optional ValueMask stage_attempt_progress_details = 8 [deprecated = true];
 
   // ValueMask for Values in Edit.stage.attempts.details.
-  optional ValueMask stage_edit_attempt_details = 9;
+  optional ValueMask stage_edit_attempt_details = 9 [deprecated = true];
 
   // ValueMask for Values in Edit.stage.attempts.progress.details.
-  optional ValueMask stage_edit_attempt_progress_details = 10;
+  optional ValueMask stage_edit_attempt_progress_details = 10 [deprecated = true];
 
   // ValueMask for Values in Stage.legacy.worknode.
-  optional ValueMask stage_legacy_worknode = 11;
+  optional ValueMask stage_legacy_worknode = 11 [deprecated = true];
 }

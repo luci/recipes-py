@@ -35,7 +35,7 @@ __all__ = [
 
 
 @dataclasses.dataclass(kw_only=True)
-class Sync(state.State[threading.Lock]):
+class Sync(state.State):
   """Stateful, non-transactional synchronous client for TurboCI Orchestrator.
 
   This client internally handles retries for RetryableRPCError
@@ -136,7 +136,7 @@ class Sync(state.State[threading.Lock]):
 
 
 @dataclasses.dataclass(kw_only=True)
-class Async(state.State[state.NullLock]):
+class Async(state.State):
   """Stateful, non-transactional asynchronous client for TurboCI Orchestrator.
 
   This client internally handles retries for RetryableRPCError

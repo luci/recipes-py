@@ -180,6 +180,8 @@ message WriteNodesRequest {
   // All fields annotated as `(turboci).creation_only = true` can be set only
   // once in a sense that if a CheckWrite updates an existing check, values
   // of all these fields (if they are set) must match existing check values.
+  //
+  // Next ID: 11
   message CheckWrite {
     // The check to write to.
     //
@@ -204,6 +206,38 @@ message WriteNodesRequest {
     //
     // Required when inserting a new check.
     optional CheckKind kind = 3 [(turboci).creation_only = true];
+
+    // An optional disambiguating sub-type of this check.
+    //
+    // Used to identify a specific, named, variant of this Check kind within
+    // WorkPlans belonging to the same workflow, to differentiate metrics and
+    // queries between Check kinds. This value should be computed by the
+    // workflow in some deterministic, low-cardinality, way (including leaving
+    // it unset).
+    //
+    // This must NOT contain high-cardinality data like change IDs, commit
+    // hashes, or arbitrary user-controlled data.
+    //
+    // Good examples:
+    //   kind:SOURCE   sub_type:"gerrit"
+    //   kind:BUILD    sub_type:"${branch_name}"
+    //   kind:ANALYSIS sub_type:"presubmit"
+    //   kind:ANALYSIS sub_type:"experimental"
+    //
+    // OK examples:
+    //   kind:BUILD    sub_type:"${branch_name}-${build_config_name}"
+    //   # e.g. if build_config_name has only one value for a given workflow,
+    //   # it's not needed; but if it has hundreds of values, it may be too
+    //   # high-cardinality. But if it's only got a handful of values, this is
+    //   # OK.
+    //
+    // BAD examples:
+    //   kind:SOURCE   sub_type:"changeid:123456..."
+    //   kind:SOURCE   sub_type:"git:bad...c0ffee"
+    //   kind:BUILD    sub_type:"${branch_name}-${flag1}-${flag2}-${flag3}..."
+    //
+    // Must adhere to the regex: /^[a-zA-Z0-9\(\)\-_./ ]{0,256}$/
+    optional string sub_type = 10 [(turboci).creation_only = true];
 
     // The display name of this Check.
     //

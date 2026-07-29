@@ -1,0 +1,60 @@
+// Copyright 2026 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// ValueSlot describes each structural position within a WorkPlan where a
+// ValueRef may appear.
+//
+// This enum describes the Nth bit in a bitmask. E.g. a value_ref_slots field
+// (of type `fixed64`) encoding VALUE_SLOT_CHECK_OPTION and
+// VALUE_SLOT_STAGE_ARGS would have its 1st and 6th bits set.
+enum ValueSlot {
+  // The unknown ValueSlot.
+  VALUE_SLOT_UNKNOWN = 0;
+
+  // Check.options[*]
+  VALUE_SLOT_CHECK_OPTION = 1;
+
+  // Check.results[*].data[*]
+  VALUE_SLOT_CHECK_RESULT_DATA = 2;
+
+  // Check.edits[*].reason.details[*]
+  VALUE_SLOT_CHECK_EDIT_REASON_DETAIL = 3;
+
+  // Check.edits[*].check.options[*]
+  VALUE_SLOT_CHECK_EDIT_OPTION = 4;
+
+  // Check.edits[*].check.results[*].data[*]
+  VALUE_SLOT_CHECK_EDIT_RESULT_DATA = 5;
+
+  // Stage.args
+  VALUE_SLOT_STAGE_ARGS = 6;
+
+  // Stage.legacy.worknode
+  VALUE_SLOT_STAGE_LEGACY_WORKNODE = 7;
+
+  // Stage.Attempt.details[*]
+  VALUE_SLOT_ATTEMPT_DETAIL = 8;
+
+  // Stage.Attempt.progress[*].details[*]
+  VALUE_SLOT_ATTEMPT_PROGRESS_DETAIL = 9;
+
+  // Stage.edits[*].reason.details[*]
+  VALUE_SLOT_STAGE_EDIT_REASON_DETAIL = 10;
+
+  // Stage.edits[*].stage.attempts[*].details[*]
+  VALUE_SLOT_STAGE_EDIT_ATTEMPT_DETAIL = 11;
+
+  // NOTE: Enum values above MUST NOT exceed 64, as bitmask encoding
+  // stores each ValueSlot N at bit N-1 inside a 64-bit fixed64 field.
+
+  // Implies all above slots.
+  VALUE_SLOT_ALL = 65;
+}

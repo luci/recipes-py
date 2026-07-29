@@ -35,5 +35,7 @@ from turboci.utils.value.iter import *
 from turboci.utils.value.match import *
 from turboci.utils.value.ordered import *
 from turboci.utils.value.refs_writes import *
+from turboci.utils.value.slot import *
 from turboci.utils.value.type_filter import *
+
 # go/keep-sorted end
