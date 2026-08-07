@@ -9,13 +9,27 @@ from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesReque
 from PB.turboci.graph.orchestrator.v1.workplan import WorkPlan
 from recipe_engine.turboci import get_check_by_short_id, get_option
 
-DEPS = [
-    'buildbucket',
-    'properties',
-    'step',
-    'swarming',
-    'time',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+
+from RECIPE_MODULES.recipe_engine import (buildbucket, properties, step,
+                                          swarming, time)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  buildbucket: buildbucket.API
+  properties: properties.API
+  step: step.API
+  swarming: swarming.API
+  time: time.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  buildbucket: buildbucket.TEST_API
+  properties: properties.TEST_API
 
 from google.protobuf import json_format
 from google.protobuf.struct_pb2 import Struct
@@ -40,7 +54,7 @@ from recipe_engine import turboci
 PROPERTIES = InputProps
 
 
-def RunSteps(api, properties):
+def RunSteps(api: DEPS, properties):
   def handlePres(pres, step_pb):
     pres.step_text = step_pb.step_text
     for name, link in step_pb.links.items():
@@ -207,7 +221,7 @@ def RunSteps(api, properties):
   return result_pb2.RawResult(status=properties.status)
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'basic',
       api.properties(InputProps(status=Status.SUCCESS))

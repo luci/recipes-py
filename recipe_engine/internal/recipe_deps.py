@@ -36,12 +36,14 @@ All DEPS evaluation is also handled in this file.
 from __future__ import annotations
 
 import bdb
+import dataclasses
 import importlib
 import inspect
 import logging
 import os
 import re
 import sys
+import typing
 
 from collections.abc import Mapping, Sequence, Iterator
 from functools import cached_property
@@ -548,8 +550,9 @@ class RecipeModule:
 
     This imports the module code.
     """
-    DEPS = getattr(self.do_import(), 'DEPS', ())
-    return parse_deps_spec(self.repo.name, DEPS, source=self.path)
+    mod = self.do_import()
+    DEPS = getattr(mod, 'DEPS', ())
+    return parse_deps_spec(self.repo.name, DEPS, mod.__dict__, source=self.path)
 
   @cached_property
   def warnings(self) -> tuple[str, ...]:
@@ -906,14 +909,21 @@ class Recipe:
     Yields all TestData fixtures for this recipe. Fills in the .expect_file
     property on each with an absolute path to the expectation file.
     """
-    api = RecipeTestApi(module=None)
-    resolved_deps = _resolve(
-      self.repo.recipe_deps, self.normalized_DEPS, 'TEST_API', None, None)
-    api.__dict__.update({
-      local_name: resolved_dep
-      for local_name, resolved_dep in resolved_deps.items()
-      if resolved_dep is not None
-    })
+    resolved_deps = _resolve(self.repo.recipe_deps, self.normalized_TEST_DEPS,
+                             'TEST_API', None, None)
+    filtered_deps = {
+        local_name: resolved_dep
+        for local_name, resolved_dep in resolved_deps.items()
+        if resolved_dep is not None
+    }
+
+    test_deps_cls = self.global_symbols.get('TEST_DEPS')
+    if dataclasses.is_dataclass(test_deps_cls):
+      api = test_deps_cls(**filtered_deps)
+    else:
+      api = RecipeTestApi(module=None)
+      api.__dict__.update(filtered_deps)
+
     for test_data in self.global_symbols['GenTests'](api):
       test_data.expect_file = os.path.join(
           self.expectation_dir, filesystem_safe(test_data.name),
@@ -930,8 +940,21 @@ class Recipe:
 
     This reads the recipe code.
     """
-    return parse_deps_spec(self.repo.name, self.global_symbols.get('DEPS', ()),
-                           source=self.path)
+    return parse_deps_spec(
+        self.repo.name,
+        self.global_symbols.get('DEPS', ()),
+        self.global_symbols,
+        source=self.path)
+
+  @cached_property
+  def normalized_TEST_DEPS(self) -> dict[str, tuple[str, str]]:
+    """Returns a normalized form of the TEST_DEPS specification for GenTests."""
+    test_deps_spec = (
+        self.global_symbols.get('TEST_DEPS') or
+        self.global_symbols.get('DEPS', ()))
+    return parse_deps_spec(
+        self.repo.name, test_deps_spec, self.global_symbols, source=self.path)
+
 
   def mk_api(self, engine: RecipeEngine,
              test_data: RecipeTestData | None = None) -> RecipeScriptApi:
@@ -944,23 +967,25 @@ class Recipe:
     """
     test_data = test_data or DisabledTestData()
 
-    api = RecipeScriptApi(
-        test_data.get_module_test_data(None),
-        Path(
-            ResolvedBasePath.for_recipe_script_resources(
-                test_data.enabled, self)),
-        Path(ResolvedBasePath.for_bundled_repo(test_data.enabled, self.repo)),
-    )
     resolved_deps = _resolve(
       self.repo.recipe_deps, self.normalized_DEPS, 'API', engine, test_data)
     for _, (warning, importer) in enumerate(_collect_import_warnings(self)):
       from .warn import record
       record.GLOBAL.record_import_warning(warning, importer)
-    api.__dict__.update({
-      local_name: resolved_dep
-      for local_name, resolved_dep in resolved_deps.items()
-      if resolved_dep is not None
-    })
+
+    test_data_inst = test_data.get_module_test_data(None)
+    resource_path = Path(
+        ResolvedBasePath.for_recipe_script_resources(test_data.enabled, self))
+    repo_path = Path(
+        ResolvedBasePath.for_bundled_repo(test_data.enabled, self.repo))
+    deps = {k: v for k, v in resolved_deps.items() if v is not None}
+
+    deps_cls = self.global_symbols.get('DEPS')
+    if dataclasses.is_dataclass(deps_cls):
+      return deps_cls(test_data_inst, resource_path, repo_path, **deps)
+
+    api = RecipeScriptApi(test_data_inst, resource_path, repo_path)
+    api.__dict__.update(deps)
     return api
 
   def run_steps(self, api: RecipeScriptApi, engine: RecipeEngine) -> object:
@@ -1029,9 +1054,16 @@ def _scan_recipe_directory(path: str) -> Iterator[str]:
       yield raw_recipe_name.replace(os.path.sep, '/')
 
 
+# Field names from base API classes that should not be treated as DEPS recipe modules.
+_BASE_API_FIELDS: frozenset[str] = frozenset(
+    set(typing.get_type_hints(RecipeScriptApi))
+    | set(typing.get_type_hints(RecipeTestApi)))
+
+
 def parse_deps_spec(
     repo_name: str,
-    deps_spec: Sequence[str] | Mapping[str, str],
+    deps_spec: Sequence[str] | Mapping[str, str] | object,
+    globalns: dict[str, Any] | None = None,
     *,
     source: str,
 ) -> dict[str, tuple[str, str]]:
@@ -1047,10 +1079,12 @@ def parse_deps_spec(
 
      DEPS = ['module', 'repo/other_module']
      DEPS = {'local_name': 'module', 'other_name': 'repo/module'}
+     or @dataclass class DEPS
 
   Args:
     * repo_name - Repo that unscoped dependencies should be resolved against.
     * deps_spec - The deps specification.
+    * globalns: The global namespace dictionary used to resolve annotations.
     * source - Source file where DEPS lives, for errors.
 
   Returns fully qualified deps dict of {localname: (repo_name, module_name)}
@@ -1079,6 +1113,10 @@ def parse_deps_spec(
       for local_name, dep_name in deps_spec.items()
     }
 
+  # Dataclass declaration
+  elif dataclasses.is_dataclass(deps_spec):
+    deps = _parse_deps_class(deps_spec, source, globalns)
+
   elif not deps_spec:
     return {}
 
@@ -1086,6 +1124,36 @@ def parse_deps_spec(
     raise ValueError(
       f'Unknown DEPS type {type(deps_spec).__name__} in {source}')
 
+  return deps
+
+
+def _parse_deps_class(
+    deps_spec: object,
+    source: str,
+    globalns: dict[str, Any] | None = None,
+) -> dict[str, tuple[str, str]]:
+  """Validates that a DEPS or TEST_DEPS class has no custom methods and returns deps."""
+  for name, member in deps_spec.__dict__.items():
+    if name.startswith('__') and name.endswith('__'):
+      continue
+    if (inspect.isfunction(member) or inspect.ismethod(member) or
+        isinstance(member, (classmethod, staticmethod, property))):
+      raise ValueError(
+          f"Cannot define custom method '{name}' on {deps_spec.__name__} in"
+          f" {source}. {deps_spec.__name__} is only used for type hinting and"
+          " custom methods will not be available at runtime.")
+
+  deps = {}
+  hints = typing.get_type_hints(deps_spec, globalns=globalns)
+  for field_name, ann in hints.items():
+    if field_name in _BASE_API_FIELDS:  # Don't process base class type hints.
+      continue
+    parts = ann.__module__.split('.')
+    if len(parts) >= 3 and parts[0] == 'RECIPE_MODULES':
+      deps[field_name] = (parts[1], parts[2])
+    else:
+      raise ValueError(
+          f"Cannot infer DEPS path from {ann!r} in field '{field_name}'")
   return deps
 
 

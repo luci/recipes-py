@@ -199,6 +199,30 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
             output, r"No module named 'BAD_IMPORT'"),
         retcode=1)
 
+  def test_custom_method_on_deps_class(self):
+    deps = self.FakeRecipeDeps()
+    with deps.main_repo.write_file('recipes/foo.py') as buf:
+      buf.write('''
+      from dataclasses import dataclass
+      @dataclass
+      class DEPS:
+        def my_helper(self):
+          pass
+      def RunSteps(api):
+        pass
+      def GenTests(api):
+        pass
+      ''')
+
+    def assert_custom_method_error(output):
+      self.assertRegex(output,
+                       r"Cannot define custom method 'my_helper' on DEPS")
+
+    self._test_cmd(
+        deps, ['test', 'run', '--filter', 'foo'],
+        asserts=assert_custom_method_error,
+        retcode=1)
+
 
 if __name__ == '__main__':
   test_env.main()

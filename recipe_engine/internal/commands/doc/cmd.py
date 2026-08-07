@@ -89,22 +89,21 @@ def _unparse(node):
 
 
 def _find_value_of(mod_ast, target):
-  """Looks for an assignment to `target`, returning the assignment value AST
-  node and the line number of the assignment.
+  """Looks for an assignment or class definition named `target`, returning the
+  AST node and its line number.
 
   Example:
 
      some_var = 100
      other = 20 + 10
 
-     _find_value_of(<code>, 'some_var')  ->  ast.Num(100)
+     _find_value_of(<code>, 'some_var')  ->  (ast.Constant(value=100), 1)
 
   Args:
     * mod_ast (ast.Module) - The parsed Python module code.
-    * target (str) - The variable name to look for an assignment to.
+    * target (str) - The variable or class name to look for.
 
-  Returns the Python AST object which is the right-hand-side of an assignment to
-  `target`.
+  Returns (node, lineno) tuple where `node` is the AST value or ClassDef node.
   """
   assert isinstance(mod_ast, ast.Module), type(mod_ast)
   for node in mod_ast.body:
@@ -113,6 +112,8 @@ def _find_value_of(mod_ast, target):
           isinstance(node.targets[0], ast.Name) and
           node.targets[0].id == target):
         return node.value, node.lineno
+    elif isinstance(node, ast.ClassDef) and node.name == target:
+      return node, node.lineno
   return None, None
 
 
@@ -341,12 +342,11 @@ def parse_class(class_ast, relpath, imports):
   return ret
 
 
-def parse_deps(repo_name, mod_ast, relpath):
-  """Finds and parses the `DEPS` variable out of `mod_ast`.
+def parse_deps(spec, mod_ast, relpath):
+  """Finds the `DEPS` line number in `mod_ast` and builds Doc.Deps from `spec`.
 
   Args:
-    * repo_name (str) - The implicit repo_name for DEPS entries which do not
-      specify one.
+    * spec (dict) - The normalized_DEPS map {local_name: (repo_name, module_name)}.
     * mod_ast (ast.Module) - The Python module AST to parse from.
     * relpath (str) - The posix-style relative path which should be associated
       with the code in class_ast.
@@ -354,18 +354,16 @@ def parse_deps(repo_name, mod_ast, relpath):
   Returns Doc.Deps proto message.
   """
   assert isinstance(mod_ast, ast.Module), type(mod_ast)
-  ret = None
+  if not spec:
+    return None
 
-  DEPS, lineno = _find_value_of(mod_ast, 'DEPS')
-  if DEPS:
-    ret = doc.Doc.Deps(
+  _, lineno = _find_value_of(mod_ast, 'DEPS')
+  ret = doc.Doc.Deps(
       relpath=relpath,
-      lineno=lineno,
-    )
-    spec = parse_deps_spec(repo_name, ast.literal_eval(_unparse(DEPS)),
-                           source=relpath)
-    for dep_repo_name, mod_name in sorted(spec.values()):
-      ret.module_links.add(repo_name=dep_repo_name, name=mod_name)
+      lineno=lineno or 1,
+  )
+  for dep_repo_name, mod_name in sorted(spec.values()):
+    ret.module_links.add(repo_name=dep_repo_name, name=mod_name)
 
   return ret
 
@@ -517,13 +515,13 @@ def parse_recipe(recipe):
   funcs.pop('GenTests', None)
 
   return doc.Doc.Recipe(
-    name=recipe.name,
-    relpath=relpath,
-    docstring=ast.get_docstring(recipe_ast) or '',
-    deps=parse_deps(recipe.repo.name, recipe_ast, relpath),
-    parameters=parse_parameters(recipe_ast, relpath),
-    classes=classes,
-    funcs=funcs,
+      name=recipe.name,
+      relpath=relpath,
+      docstring=ast.get_docstring(recipe_ast) or '',
+      deps=parse_deps(recipe.normalized_DEPS, recipe_ast, relpath),
+      parameters=parse_parameters(recipe_ast, relpath),
+      classes=classes,
+      funcs=funcs,
   )
 
 
@@ -567,14 +565,14 @@ def parse_module(module):
   init_relpath = posixpath.join(relpath, '__init__.py')
 
   return doc.Doc.Module(
-    name=module.name,
-    relpath=relpath,
-    docstring=ast.get_docstring(api) or '',
-    api_class=api_class,
-    classes=classes,
-    funcs=funcs,
-    deps=parse_deps(module.repo.name, init, init_relpath),
-    parameters=parse_parameters(init, init_relpath),
+      name=module.name,
+      relpath=relpath,
+      docstring=ast.get_docstring(api) or '',
+      api_class=api_class,
+      classes=classes,
+      funcs=funcs,
+      deps=parse_deps(module.normalized_DEPS, init, init_relpath),
+      parameters=parse_parameters(init, init_relpath),
   )
 
 
