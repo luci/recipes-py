@@ -41,6 +41,7 @@ message StageDelta {
     // The index of the progress message(s) written as part of this edit.
     repeated int64 progress = 4;
   }
+
   // Attempt(s) which were modified as part of this edit.
   //
   // NOTE: This should have a maximum length of 2 when an old Attempt is made

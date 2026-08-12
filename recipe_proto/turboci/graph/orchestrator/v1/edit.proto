@@ -120,6 +120,7 @@ message Edit {
     // different versions of this otherwise entirely-immutable Edit).
     repeated ValueRef details = 2;
   }
+
   // The writer-provided reason for this Edit.
   optional Reason reason = 8;
 

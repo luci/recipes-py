@@ -31,6 +31,7 @@ message FieldOptions {
     //   }
     repeated CheckState editable = 1;
   }
+
   // Field options which apply to Check messages.
   optional CheckFieldOptions check = 1;
 
@@ -55,6 +56,7 @@ message FieldOptions {
     //
     // bool allow_cross_workplan;
   }
+
   // Field options which apply to fields containing Identifiers.
   optional IdentifierOptions id = 2;
 

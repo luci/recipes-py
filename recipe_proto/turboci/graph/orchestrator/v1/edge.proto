@@ -59,6 +59,7 @@ message Edge {
       // Defaults to "true".
       optional string expression = 2;
     }
+
     // The optional condition.
     //
     // If omitted, defaults to:
@@ -94,6 +95,7 @@ message Edge {
       // Defaults to "true".
       optional string expression = 2;
     }
+
     // The optional condition.
     //
     // If omitted, defaults to:

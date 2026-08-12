@@ -187,6 +187,7 @@ message Check {
     // explicitly by the owner, or by the Check advancing to the final state.
     optional StageAttemptState attempt_state = 6;
   }
+
   // The list of Results this Check has.
   //
   // Any time a StageAttempt adds new result *data* for this Check for the first

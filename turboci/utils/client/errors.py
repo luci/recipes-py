@@ -13,6 +13,7 @@ from PB.turboci.graph.orchestrator.v1 import transaction_invariant as transactio
 
 __all__ = [
     'MakeRPCError',
+    'RETRYABLE_RPC_CODES',
     'ParsedRPCStatus',
     'RPCError',
     'RetryableRPCError',
@@ -21,6 +22,17 @@ __all__ = [
     'TransactionMultipleWritesError',
     'TransactionalPreconditionError',
 ]
+
+# The set of RPC status codes which are considered retryable.
+RETRYABLE_RPC_CODES = (
+    code_pb2.ABORTED,
+    code_pb2.CANCELLED,
+    code_pb2.DEADLINE_EXCEEDED,
+    code_pb2.INTERNAL,
+    code_pb2.RESOURCE_EXHAUSTED,
+    code_pb2.UNAVAILABLE,
+    code_pb2.UNKNOWN,
+)
 
 
 class ParsedRPCStatus:
@@ -57,15 +69,7 @@ class ParsedRPCStatus:
   @property
   def retryable(self) -> bool:
     """Returns True for retriable codes."""
-    return not self.conflict and self.code in (
-        code_pb2.ABORTED,
-        code_pb2.CANCELLED,
-        code_pb2.DEADLINE_EXCEEDED,
-        code_pb2.INTERNAL,
-        code_pb2.RESOURCE_EXHAUSTED,
-        code_pb2.UNAVAILABLE,
-        code_pb2.UNKNOWN,
-    )
+    return not self.conflict and self.code in RETRYABLE_RPC_CODES
 
 
 def MakeRPCError(

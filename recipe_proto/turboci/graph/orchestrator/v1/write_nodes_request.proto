@@ -155,6 +155,7 @@ message WriteNodesRequest {
     // first in this list should be a superset of the others.
     repeated ValueWrite details = 2;
   }
+
   // Required reason for this write.
   //
   // At minimum, reason.message must be supplied.
@@ -294,6 +295,7 @@ message WriteNodesRequest {
     // Check.
     optional CheckState state = 8;
   }
+
   // Write to zero or more Checks.
   repeated CheckWrite checks = 4;
 
@@ -397,6 +399,7 @@ message WriteNodesRequest {
     // Use the top-level `reason` field to provide the cancellation reason.
     optional bool cancelled = 7;
   }
+
   // Write to zero or more Stages.
   repeated StageWrite stages = 5;
 
@@ -559,9 +562,11 @@ message WriteNodesRequest {
         Incomplete incomplete = 6;
       }
     }
+
     // A state transition to make in this write.
     optional StateTransition state_transition = 3;
   }
+
   // State for the current Stage Attempt as indicated by `token`.
   //
   // It is invalid to set this without also setting `token`.
@@ -595,6 +600,7 @@ message WriteNodesRequest {
     // continuation_group.
     optional DependencyGroup continuation_group = 1 [(turboci).id.allowed = IDENTIFIER_KIND_STAGE];
   }
+
   // State for the current Stage as indicated by `token`.
   //
   // It is invalid to set this without also setting `token`.

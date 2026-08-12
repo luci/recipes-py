@@ -306,6 +306,7 @@ message FileInfo {
     // The file was rewritten.
     STATUS_REWRITTEN = 6;
   }
+
   // The status of the file.
   optional Status status = 2;
 

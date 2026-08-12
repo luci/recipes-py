@@ -85,6 +85,7 @@ message StageAttemptExecutionPolicy {
     // is still subject to timeouts for the phase.
     optional google.protobuf.Duration tearing_down = 3;
   }
+
   // The heart policies for the StageAttempt.
   optional Heartbeat heartbeat = 1;
 
@@ -156,6 +157,7 @@ message StageAttemptExecutionPolicy {
     // (currently 15 min).
     optional google.protobuf.Duration tearing_down = 4;
   }
+
   // The timeout policies for the StageAttempt.
   optional Timeout timeout = 2;
 }

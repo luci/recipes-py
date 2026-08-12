@@ -66,6 +66,7 @@ message QueryNodesRequest {
       Revision snapshot = 2;
     }
   }
+
   // If omitted, QueryNodes will return the current version of any nodes in the
   // query from within a read-only transaction.
   //

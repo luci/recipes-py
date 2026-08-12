@@ -357,6 +357,7 @@ message Stage {
       // See WriteNodesRequest.StageAttemptProgress.
       optional string idempotency_key = 5;
     }
+
     // Append-only Executor-specific progress messages.
     repeated Progress progress = 7;
 
@@ -370,6 +371,7 @@ message Stage {
     // PENDING -> (SCHEDULED|RUNNING).
     optional StageAttemptExecutionPolicy execution_policy = 8;
   }
+
   // Current retry/attempts state of this Stage, stored in ascending order by
   // created time.
   //
@@ -415,6 +417,7 @@ message Stage {
     // the Check options, the writing Stage will fail to write out the options).
     optional CheckState goal_state = 2;
   }
+
   // The workflow's intent for this Stage.
   repeated Assignment assignments = 11 [(google.api.field_behavior) = IMMUTABLE];
 

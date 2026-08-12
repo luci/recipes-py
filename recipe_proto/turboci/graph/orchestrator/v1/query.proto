@@ -195,11 +195,13 @@ message Query {
       // the result set.
       optional TypeSet with_result_data_type = 4;
     }
+
     // Pick Checks matching any of these predicates (they are ORed together).
     //
     // If empty, all Checks will be selected.
     repeated Predicate predicates = 1;
   }
+
   // If present, indicates the query wants to examine Checks.
   //
   // At least one of `select_checks` or `select_stages` must be set.
@@ -227,11 +229,13 @@ message Query {
       // Pick Stages with Args matching the type filter.
       optional TypeSet with_args_type = 2;
     }
+
     // Pick Stages matching any of these predicates (they are ORed together).
     //
     // If empty, all Stages will be selected.
     repeated Predicate predicates = 1;
   }
+
   // If present, indicates the query wants to examine Stages.
   //
   // At least one of `select_checks` or `select_stages` must be set.
@@ -246,6 +250,7 @@ message Query {
 
     // TBD: Allow walking more than one dependency down?
   }
+
   // For each selected Check or Stage, include its immediate dependencies.
   //
   // So given:
@@ -263,6 +268,7 @@ message Query {
 
     // TBD: Allow walking more than one dependent up?
   }
+
   // For each selected Check or Stage, include any Checks/Stages which depend
   // on it.
   //
@@ -300,6 +306,7 @@ message Query {
     // is absent, no edits will be included.
     optional RevisionRange edits = 3;
   }
+
   // If present, indicates the caller is interested in Checks processed by
   // the query (including the originally selected checks, if any, and all checks
   // discovered during the Expand phase).
@@ -326,6 +333,7 @@ message Query {
     // is absent, no edits will be included.
     optional RevisionRange edits = 2;
   }
+
   // If present, indicates the caller is interested in Stages processed by
   // the query (including the originally selected stages, if any, and all stages
   // discovered during the Expand phase).

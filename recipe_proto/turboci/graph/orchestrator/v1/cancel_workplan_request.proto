@@ -36,6 +36,7 @@ message CancelWorkPlanRequest {
     // Machine-readable reasons. See WriteNodesRequest for semantics. Optional.
     repeated ValueWrite details = 2;
   }
+
   // Reason for cancellation. Required.
   optional Reason reason = 3;
 }

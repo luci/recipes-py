@@ -72,6 +72,7 @@ message CheckDelta {
     // `Check.Result.finalized_at` will match the timestamp of this Edit.
     optional bool finalized = 4;
   }
+
   // Result data written as part of this edit.
   //
   // This is repeated to allow for the Orchestrator to make a single edit

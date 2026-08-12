@@ -48,6 +48,7 @@ message StageExecutionPolicy {
     // TBD: May be worth adding a way to control implicit retry criteria
     // ('only retry if $condition').
   }
+
   // Policy for retrying this Stage across multiple Attempts.
   //
   // If omitted, the Stage will be attempted at most once (if at all permitted
