@@ -486,6 +486,65 @@ not allow access to environment variables.
 There's another way to define `PROPERTIES` which is deprecated, but it has no
 advantages over the proto method, and will (hopefully) be deleted soon.
 
+### Migrating to Standard Python (Dataclass DEPS)
+
+In order to provide a better developer experience such as IDE auto completion,
+type checking, and codesearch cross references, starting from August 2026,
+recipes are gradually migrated to a format more like standard Python code. You
+can migrate your existing recipes with the following steps:
+
+1. Import used recipe modules from `RECIPE_MODULES.<repo_name>`.
+2. Define a `@dataclass` named `DEPS` that inherits from `RecipeScriptApi`.
+3. Optionally define a `@dataclass` named `TEST_DEPS` that inherits from
+   `RecipeTestApi` for `GenTests`.
+4. Type-annotate the `api` parameter in `RunSteps(api: DEPS)` and
+   `GenTests(api: TEST_DEPS)`.
+5. Remove the old `DEPS` list or dict.
+
+Example:
+
+    from dataclasses import dataclass
+    from recipe_engine.recipe_api import RecipeScriptApi
+    from recipe_engine.recipe_test_api import RecipeTestApi
+
+    from RECIPE_MODULES.recipe_engine import (
+        context,
+        path,
+        properties,
+        step,
+    )
+    from RECIPE_MODULES.depot_tools import bot_update
+
+
+    @dataclass
+    class DEPS(RecipeScriptApi):
+      bot_update: bot_update.API
+      context: context.API
+      path: path.API
+      properties: properties.API
+      step: step.API
+
+
+    @dataclass
+    class TEST_DEPS(RecipeTestApi):
+      properties: properties.TEST_API
+      step: step.TEST_API
+
+
+    def RunSteps(api: DEPS):
+      # The existing code should just work without modification.
+      api.step('hello', ['echo', 'world'])
+      script_path = api.resource('helper.py')
+      ...
+
+
+    def GenTests(api: TEST_DEPS):
+      yield api.test(
+          'basic',
+          api.properties(some_prop='value'),
+      )
+
+
 ## Writing recipe_modules
 
 TODO(iannucci) - Document
