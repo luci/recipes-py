@@ -2,7 +2,7 @@
 // Use of this source code is governed under the Apache License, Version 2.0
 // that can be found in the LICENSE file.
 
-syntax = "proto3";
+edition = "2024";
 
 import "google/protobuf/struct.proto";
 
@@ -40,7 +40,7 @@ message TurboCIWrite {
   //
   // If no reason is provided, Placeholder will write a simple reason with the
   // text:  "written by step 'name-of-step'".
-  optional turboci.graph.orchestrator.v1.WriteNodesRequest.Reason reason = 1;
+  turboci.graph.orchestrator.v1.WriteNodesRequest.Reason reason = 1;
 
   // Arbitrary CheckWrites to make into the current TurboCI WorkPlan (or just to
   // the in-memory fake if this recipe doesn't run as part of a WorkPlan).
@@ -54,7 +54,7 @@ message TurboCIWrite {
 message TurboCIQuery {
   // ID of the workplan to query.
   // If unset, will use the current WorkPlan ID of the build for the query.
-  optional string workplan_id = 1;
+  string workplan_id = 1;
 }
 
 // CollectChildren represents a step which waits for child build(s).
