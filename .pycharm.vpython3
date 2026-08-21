@@ -138,6 +138,10 @@ wheel: <
   name: "infra/python/wheels/grpcio/${vpython_platform}"
   version: "version:1.81.1"
 >
+wheel: <
+  name: "infra/python/wheels/typing-extensions-py3"
+  version: "version:4.15.0"
+>
 
 # Above this line must exactly match .vpython3, and PRESUBMIT.py will check
 # this.
