@@ -47,6 +47,23 @@ class RunTest(test_env.RecipeEngineUnitTest):
     self.assertEqual(retcode, 0,
                      'ret code is not zero. Recipe output\n%s' % output)
 
+  def test_summary_markdown_too_long(self):
+    deps = self.FakeRecipeDeps()
+
+    with deps.main_repo.write_recipe('long_summary_recipe') as recipe:
+      recipe.RunSteps.write('''
+        from PB.recipe_engine.result import RawResult
+        from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
+        return RawResult(
+            summary_markdown="x" * 4001,
+            status=common_pb2.SUCCESS,
+        )
+      ''')
+      recipe.GenTests.write('pass')
+
+    output, retcode = deps.main_repo.recipes_py('run', 'long_summary_recipe')
+    self.assertEqual(retcode, 1)
+
   def test_run_incomplete_deps(self):
     deps = self.FakeRecipeDeps()
 
@@ -116,12 +133,14 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
 
   @parameterized.expand([
       ('context:examples/full',),
-      ('context:tests/env', {
-        # Set the "RECIPE_ENGINE_CONTEXT_TEST" environment variable to a known
-        # value, "default". This is used by the "context:tests/env" recipe module
-        # as a basis for runtime tests.
-        'RECIPE_ENGINE_CONTEXT_TEST': 'default',
-      }),
+      (
+          'context:tests/env',
+          {
+              # Set the "RECIPE_ENGINE_CONTEXT_TEST" environment variable to a
+              # known value, "default". This is used by the "context:tests/env"
+              # recipe module as a basis for runtime tests.
+              'RECIPE_ENGINE_CONTEXT_TEST': 'default',
+          }),
       ('file:examples/copy',),
       ('file:examples/copytree',),
       ('file:examples/glob',),
@@ -400,7 +419,8 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
     self.assertDictEqual(
         final_build, {
             'status': 'CANCELED',
-            'summary_markdown': "The build was cancelled: Step('sleep forever')\n",
+            'summary_markdown': "The build was cancelled: "
+                                "Step('sleep forever')\n",
             'steps': [
                 {
                     'name': 'setup_build',

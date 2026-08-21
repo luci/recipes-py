@@ -17,32 +17,31 @@ DEPS = [
 ]
 
 def RunSteps(api):
-    raw_result = result_pb2.RawResult()
-    try:
-        result = api.step('step_result',
-            ['cmd', api.json.output()], timeout=480)
-        if result.json.output:
-            raw_result.summary_markdown = result.json.output['summary']
-            raw_result.status = common_pb2.SUCCESS
-        else:
-            raw_result.summary_markdown = 'No json output.'
-            raw_result.status = common_pb2.FAILURE
-    except api.step.StepFailure:
-        step_data = api.step.active_result
-        if step_data.json.output:
-            raw_result.summary_markdown = step_data.json.output['summary']
+  raw_result = result_pb2.RawResult()
+  try:
+    result = api.step('step_result', ['cmd', api.json.output()], timeout=480)
+    if result.json.output:
+      raw_result.summary_markdown = result.json.output['summary']
+      raw_result.status = common_pb2.SUCCESS
+    else:
+      raw_result.summary_markdown = 'No json output.'
+      raw_result.status = common_pb2.FAILURE
+  except api.step.StepFailure:
+    step_data = api.step.active_result
+    if step_data.json.output:
+      raw_result.summary_markdown = step_data.json.output['summary']
 
-        if step_data.exc_result.had_timeout:
-            raw_result.summary_markdown += 'Failure : Timeout'
-            raw_result.status = common_pb2.FAILURE
-        elif step_data.exc_result.retcode == 1:
-            raw_result.status = common_pb2.FAILURE
-        else:
-            raw_result.status = common_pb2.INFRA_FAILURE
-        if raw_result.summary_markdown == '':
-            raise
+    if step_data.exc_result.had_timeout:
+      raw_result.summary_markdown += 'Failure : Timeout'
+      raw_result.status = common_pb2.FAILURE
+    elif step_data.exc_result.retcode == 1:
+      raw_result.status = common_pb2.FAILURE
+    else:
+      raw_result.status = common_pb2.INFRA_FAILURE
+    if raw_result.summary_markdown == '':
+      raise
 
-    return raw_result
+  return raw_result
 
 def GenTests(api):
   yield api.test(
@@ -104,6 +103,17 @@ def GenTests(api):
                     times_out_after=60*20),
       api.post_process(post_process.StatusFailure),
       api.post_process(post_process.SummaryMarkdown, "Failure : Timeout"),
+      api.post_process(post_process.DropExpectation),
+      status='FAILURE',
+  )
+
+  yield api.test(
+      'summary_markdown_too_long',
+      api.step_data('step_result', api.json.output({'summary': 'a' * 4001})),
+      api.post_process(
+          post_process.SummaryMarkdownRE,
+          r'^summary_markdown is greater than 4000 bytes \(4001 > 4000\)',
+      ),
       api.post_process(post_process.DropExpectation),
       status='FAILURE',
   )

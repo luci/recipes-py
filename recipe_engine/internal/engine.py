@@ -598,6 +598,13 @@ class RecipeEngine:
             result.status = common_pb2.FAILURE
             result.summary_markdown = ('"%r" is not a valid return type for '
             'recipes. Did you mean to use "RawResult"?' % (type(raw_result), ))
+          elif len(raw_result.summary_markdown.encode(
+              'utf-8')) > MAX_SUMMARY_MARKDOWN_SIZE:
+            result.status = common_pb2.FAILURE
+            result.summary_markdown = (
+                f'summary_markdown is greater than {MAX_SUMMARY_MARKDOWN_SIZE} '
+                f'bytes ({len(raw_result.summary_markdown.encode("utf-8"))} > '
+                f'{MAX_SUMMARY_MARKDOWN_SIZE})')
           else:
             result.CopyFrom(raw_result)
         finally:
@@ -639,7 +646,11 @@ class RecipeEngine:
 
         for i, reason in enumerate(reasons):
           # Always include the first exception.
-          if i == 0 or len('\n'.join([*parts, reason])) < max_size:
+          if i == 0:
+            if len(reason.encode('utf-8')) > max_size:
+              reason = reason[:max_size - 15] + '...\n(truncated)'
+            parts.append(reason)
+          elif len('\n'.join([*parts, reason]).encode('utf-8')) < max_size:
             parts.append(reason)
 
           else:
@@ -647,6 +658,7 @@ class RecipeEngine:
             parts.append(
                 f'\n({num_hidden}/{len(reasons)} errors truncated)'
             )
+            break
 
         result.summary_markdown = '\n'.join(parts)
 
