@@ -47,7 +47,7 @@ class _weakDataSource(typing.Protocol):
 
 
 class SimpleDataSource(
-    collections.UserDict[str, value_data_pb2.ValueData], MutableDataSource
+ collections.UserDict[str, value_data_pb2.ValueData], MutableDataSource
 ):
   """A implementation of DataSource which uses `pick_data` to apply updates.
 
@@ -72,7 +72,9 @@ class SimpleDataSource(
       key: The digest to update.
       data: The data to incorporate.
     """
-    super().__setitem__(key, pick_data(self.get(key), data))
+    super().__setitem__(
+        key, pick_data(cur_data=self.get(key), new_data=data)
+    )
 
 
 @typing.final
@@ -85,7 +87,7 @@ class LockedDataSource(MutableDataSource):
 
   def __init__(
       self,
-      *o: DataSource | typing.Iterable[tuple[str, value_data_pb2.ValueData]],
+ *o: DataSource | typing.Iterable[tuple[str, value_data_pb2.ValueData]],
       **kwargs: value_data_pb2.ValueData,
   ) -> None:
     self._mu = threading.Lock()
@@ -107,7 +109,9 @@ class LockedDataSource(MutableDataSource):
 
   def __setitem__(self, key: str, value: value_data_pb2.ValueData) -> None:
     with self._mu:
-      self._mapping[key] = pick_data(self._mapping.get(key), value)
+      self._mapping[key] = pick_data(
+          cur_data=self._mapping.get(key), new_data=value
+      )
 
   def __delitem__(self, key: str) -> None:
     with self._mu:
@@ -123,7 +127,7 @@ class LockedDataSource(MutableDataSource):
       *o: DataSource
       | _weakDataSource
       | typing.Iterable[tuple[str, value_data_pb2.ValueData]],
-      **kwargs: value_data_pb2.ValueData,
+            **kwargs: value_data_pb2.ValueData,
   ) -> None:
     if len(o) > 1:
       raise TypeError(f'dict expected at most 1 argument, got {len(o):d}')
@@ -152,46 +156,47 @@ class LockedDataSource(MutableDataSource):
 
     with self._mu:
       for key, value in updates:
-        self._mapping[key] = pick_data(self._mapping.get(key), value)
+        self._mapping[key] = pick_data(
+            cur_data=self._mapping.get(key), new_data=value
+        )
 
 
 def pick_data(
-    a: None | value_data_pb2.ValueData, b: value_data_pb2.ValueData
+    cur_data: None | value_data_pb2.ValueData,
+    new_data: value_data_pb2.ValueData,
 ) -> value_data_pb2.ValueData:
-  """Returns either `a` or `b` depending on which is better.
+  """Selects and returns the higher quality ValueData between cur_data and
+  new_data.
 
-  Both `a` and `b` must be well-formed (one of `binary` or `json` must be
-  populated)
-
-  Prefers JSON without unknown fields to JSON with unknown fields.
-  Prefers JSON to binary data.
-  Prefers binary data with conversion_failure enum to binary data without.
-
-  Args:
-    a: The left-hand-side ValueData (or None, if there is no current ValueData)
-    b: The right-hand-side ValueData.
-
-  Returns:
-    The selected ValueData.
+  If `new_data` is selected (or if `cur_data` is None), a deep copy of
+  `new_data` is returned to ensure it owns its C++ backing memory and is
+  decoupled from temporary RPC response lifetimes.
   """
-  if not a:
-    return b
+  if not cur_data:
+    copied = value_data_pb2.ValueData()
+    copied.CopyFrom(new_data)
+    return copied
 
-  a_binary, a_json = a.HasField('binary'), a.HasField('json')
-  b_binary, b_json = b.HasField('binary'), b.HasField('json')
+  c_binary, c_json = cur_data.HasField('binary'), cur_data.HasField('json')
+  n_binary, n_json = new_data.HasField('binary'), new_data.HasField('json')
 
-  if a_binary and b_json:
-    return b
+  chosen = cur_data
+  if c_binary and n_json:
+    chosen = new_data
+  elif c_json and n_binary:
+    if (cur_data.json.has_unknown_fields and
+        not new_data.json.has_unknown_fields):
+      chosen = new_data
+    else:
+      chosen = cur_data
+  elif c_json and not n_json:
+    chosen = cur_data
+  elif not cur_data.conversion_failure and new_data.conversion_failure:
+    chosen = new_data
 
-  if a_json and b_binary:
-    if a.json.has_unknown_fields and not b.json.has_unknown_fields:
-      return b
-    return a
-
-  if a_json and not b_json:
-    return a
-
-  if not a.conversion_failure and b.conversion_failure:
-    return b
-
-  return a
+  # If new_data was selected, deep-copy it so it owns its C++ backing memory
+  if chosen is not cur_data:
+    copied = value_data_pb2.ValueData()
+    copied.CopyFrom(chosen)
+    return copied
+  return cur_data

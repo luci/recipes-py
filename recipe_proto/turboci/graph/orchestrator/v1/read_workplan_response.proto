@@ -51,5 +51,13 @@ message ReadWorkPlanResponse {
   // with the next node in the stream. Callers looking to retrieve additional
   // pages of results can do so by providing this token. If omitted, there are
   // no further pages of results so no further queries are needed.
-  optional string pagination_token = 5;
+  //
+  // Deprecated, please use `next_page_token` instead.
+  optional string pagination_token = 5 [deprecated = true];
+
+  // Opaque pagination token, so follow-on queries can resume consuming nodes
+  // with the next node in the stream. Callers looking to retrieve additional
+  // pages of results can do so by providing this token. If omitted, there are
+  // no further pages of results so no further queries are needed.
+  optional string next_page_token = 6;
 }

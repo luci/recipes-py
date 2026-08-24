@@ -6,17 +6,26 @@
 from __future__ import annotations
 
 from google.protobuf import message
+from google.protobuf import message_factory
 from google.rpc import status_pb2
 import grpc
 from grpc_status import rpc_status
 from turboci.utils import client
 from turboci.utils.client import errors
 
+from PB.turboci.graph.orchestrator.v1 import turbo_ci_orchestrator_service as turbo_ci_orchestrator_service_pb2
+
 __all__ = [
     'GrpcTransport',
     'GrpcAsyncTransport',
 ]
 
+# The service descriptor contains all methods defined in the .proto files
+_SERVICE_DESC = (
+    turbo_ci_orchestrator_service_pb2.DESCRIPTOR.services_by_name[
+        'TurboCIOrchestrator'
+    ]
+)
 
 def _translate_grpc_error(err: grpc.RpcError) -> Exception:
   """Translates a grpc.RpcError into an RPCError.
@@ -42,8 +51,19 @@ def _translate_grpc_error(err: grpc.RpcError) -> Exception:
 class GrpcTransport:
   """Synchronous gRPC transport."""
 
-  def __init__(self, stub):
-    self.stub = stub
+  def __init__(self, channel: grpc.Channel):
+    self.channel = channel
+    self._methods = {}
+
+    # Automatically bind every RPC method defined in the service proto
+    for method in _SERVICE_DESC.methods:
+      resp_cls = message_factory.GetMessageClass(method.output_type)
+      path = f'/{_SERVICE_DESC.full_name}/{method.name}'
+      self._methods[method.name] = channel.unary_unary(
+          path,
+          request_serializer=lambda msg: msg.SerializeToString(),
+          response_deserializer=resp_cls.FromString,
+      )
 
   def call_unary(
       self,
@@ -51,7 +71,10 @@ class GrpcTransport:
       request: message.Message,
       options: client.CallOptions | None = None,
   ) -> message.Message:
-    method = getattr(self.stub, method_name)
+    method = self._methods.get(method_name)
+    if not method:
+      raise ValueError(f"Unknown RPC method: {method_name}")
+
     metadata = list(options.metadata.items()) if options else None
     timeout = (
         options.deadline.total_seconds()
@@ -67,8 +90,19 @@ class GrpcTransport:
 class GrpcAsyncTransport:
   """Asynchronous gRPC transport."""
 
-  def __init__(self, stub):
-    self.stub = stub
+  def __init__(self, channel: grpc.Channel):
+    self.channel = channel
+    self._methods = {}
+
+    # Automatically bind every RPC method defined in the service proto
+    for method in _SERVICE_DESC.methods:
+      resp_cls = message_factory.GetMessageClass(method.output_type)
+      path = f'/{_SERVICE_DESC.full_name}/{method.name}'
+      self._methods[method.name] = channel.unary_unary(
+          path,
+          request_serializer=lambda msg: msg.SerializeToString(),
+          response_deserializer=resp_cls.FromString,
+      )
 
   async def call_unary(
       self,
@@ -76,7 +110,9 @@ class GrpcAsyncTransport:
       request: message.Message,
       options: client.CallOptions | None = None,
   ) -> message.Message:
-    method = getattr(self.stub, method_name)
+    method = self._methods.get(method_name)
+    if not method:
+      raise ValueError(f"Unknown RPC method: {method_name}")
     metadata = list(options.metadata.items()) if options else None
     timeout = (
         options.deadline.total_seconds()

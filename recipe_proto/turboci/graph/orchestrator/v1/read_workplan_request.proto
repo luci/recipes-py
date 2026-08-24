@@ -82,5 +82,26 @@ message ReadWorkPlanRequest {
   // their values from the first page of this request. Attempting to use a
   // pagination token while changing any other attributes of the request may
   // result in unexpected or inconsistent results.
-  optional string pagination_token = 6;
+  //
+  // Deprecated, please use `page_token` instead.
+  optional string pagination_token = 6 [deprecated = true];
+
+  // Maximum page size in ***bytes**.
+  //
+  // * If unspecified, at most 10MB will be returned.
+  // * If specified with a value greater than 10MB, it will be coerced to 10MB.
+  // * If specified with a value that's too small to fit even one piece of data
+  //   (stage, check, value, etc), we would return a larger page size to fit one
+  //   piece of data.
+  optional int32 page_size = 7;
+
+  // Pagination token, so this query can resume consuming nodes with the next
+  // node in the stream. If omitted, returns nodes beginning with the first node
+  // in the stream.
+  //
+  // If provided, the other fields of the ReadWorkPlanRequest need to match
+  // their values from the first page of this request. Attempting to use a
+  // pagination token while changing any other attributes of the request may
+  // result in unexpected or inconsistent results.
+  optional string page_token = 8;
 }

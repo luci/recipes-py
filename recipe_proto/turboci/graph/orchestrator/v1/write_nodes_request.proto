@@ -311,11 +311,10 @@ message WriteNodesRequest {
   // All fields annotated as `(turboci).creation_only = true` can be set only
   // once in a sense that if a StageWrite overwrites an existing stage, values
   // of all these fields (if they are set) must match existing stage values.
-  //
-  // All these fields are also optional when cancelling a stage. If they are
-  // set, they'll act as a precondition for cancellation, i.e. the stage will be
-  // cancelled only if its existing values match the provided ones.
   message StageWrite {
+    reserved 7;
+    reserved "cancelled";
+
     // The stage to write to.
     //
     // The work plan in the ID can either be unset or be equal to the work plan
@@ -390,14 +389,6 @@ message WriteNodesRequest {
     //
     // Currently not implemented.
     repeated Stage.Assignment assignments = 6 [(turboci).creation_only = true];
-
-    // If true, ensures that this Stage is marked for cancellation.
-    //
-    // See Stage.cancelled_by for how cancellation affects stages in different
-    // lifecycle states.
-    //
-    // Use the top-level `reason` field to provide the cancellation reason.
-    optional bool cancelled = 7;
   }
 
   // Write to zero or more Stages.
@@ -607,4 +598,22 @@ message WriteNodesRequest {
   //
   // This does not impact the heartbeat timer for the current attempt.
   optional CurrentStageWrite current_stage = 7;
+
+  // Identifies a Stage for cancellation.
+  //
+  // Use the top-level `reason` field to provide the cancellation reason.
+  //
+  // A StageAttempt may not cancel its own Stage, because cancellation is an
+  // action taken by a different actor (and a StageAttempt cancelling its
+  // Stage is equivalent to a Stage cancelling itself). If a Stage wants to
+  // terminate itself, it should mark its attempt INCOMPLETE or COMPLETE.
+  message StageCancellation {
+    // The identifier of the stage to cancel.
+    //
+    // Required.
+    optional ids.v1.Stage identifier = 1;
+  }
+
+  // A list of Stages to cancel.
+  repeated StageCancellation stage_cancellations = 8;
 }

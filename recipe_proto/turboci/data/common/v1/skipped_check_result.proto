@@ -1,0 +1,24 @@
+// Copyright 2026 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.data.common.v1;
+
+option go_package = "go.chromium.org/turboci/proto/go/data/common/v1;commonpb";
+option java_multiple_files = true;
+
+// A common Check result for skipped checks.
+//
+// This Result should be included on a check while marking it FINAL, and should
+// be taken as an indicator that this check was intentionally skipped by the
+// workflow, with the given reasons.
+//
+// This common Check result is mainly for Chronical UI. If you have some other
+// machine readabale structured reasons for skipping the check, Please use
+// another CheckResult to capture that.
+message SkippedCheckResult {
+  // Human readable string message on why the check was skipped.
+  optional string message = 1;
+}
