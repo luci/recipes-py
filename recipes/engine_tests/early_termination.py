@@ -7,20 +7,37 @@ termination in different ways."""
 
 from __future__ import annotations
 
-DEPS = [
-  'file',
-  'futures',
-  'path',
-  'platform',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    file,
+    futures,
+    path,
+    platform,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  file: file.API
+  futures: futures.API
+  path: path.API
+  platform: platform.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  pass
 
 from PB.recipes.recipe_engine.engine_tests import early_termination
 
 PROPERTIES = early_termination.InputProperties
 
 
-def RunSteps(api, props):
+def RunSteps(api: DEPS, props):
   work = []
 
   output_touchfile = props.output_touchfile
@@ -88,5 +105,5 @@ def RunSteps(api, props):
     w.exception()  # mark exception as handled.
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test('basic')

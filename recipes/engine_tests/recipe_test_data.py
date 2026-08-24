@@ -8,12 +8,23 @@ from __future__ import annotations
 
 from recipe_engine.post_process import DropExpectation
 
-DEPS = [
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import step
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  pass
+
+
+def RunSteps(api: DEPS):
   target = 'production'
   if api._test_data.enabled:
     if 'target' in api._test_data:
@@ -21,7 +32,7 @@ def RunSteps(api):
   api.step('echo', ['echo', target])
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'default',
       api.post_check(

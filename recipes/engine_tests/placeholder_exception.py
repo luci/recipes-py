@@ -11,9 +11,20 @@ from recipe_engine import post_process
 from recipe_engine.util import InputPlaceholder
 from recipe_engine.recipe_api import StepFailure
 
-DEPS = [
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import step
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  pass
 
 class BadPlaceholder(InputPlaceholder):
   def render(self, test):
@@ -23,7 +34,7 @@ class BadPlaceholder(InputPlaceholder):
     return '<BadPlaceholder>'
 
 
-def RunSteps(api):
+def RunSteps(api: DEPS):
   api.step('innocent step', ['bash', '-c', "echo some step"])
 
   ph = BadPlaceholder('name')
@@ -33,7 +44,7 @@ def RunSteps(api):
   raise ValueError('Never reached')   # pragma: no cover
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield (
     api.test('basic') +
     api.expect_exception('Exception') +
@@ -42,4 +53,3 @@ def GenTests(api):
                      "Uncaught Exception: Exception('EXPLOSION')") +
     api.post_process(post_process.DropExpectation)
   )
-

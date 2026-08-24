@@ -6,19 +6,33 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'platform',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    platform,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  platform: platform.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  platform: platform.TEST_API
+
+
+def RunSteps(api: DEPS):
   api.step(
       'bad daemon',
       ['python3',
        api.resource('win.py' if api.platform.is_win else 'unix.py')])
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test('basic')
   yield api.test('basic_win') + api.platform(name='win', bits=64)

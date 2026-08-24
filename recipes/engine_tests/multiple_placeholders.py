@@ -8,14 +8,29 @@ from __future__ import annotations
 
 from recipe_engine.post_process import DropExpectation
 
-DEPS = [
-  'assertions',
-  'json',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    json,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  json: json.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  json: json.TEST_API
+
+
+def RunSteps(api: DEPS):
   # illegal; multiple unnamed placeholders of the same kind "json.output".
   with api.assertions.assertRaisesRegexp(
       ValueError, r'conflicting .*: \[\'json\.output unnamed\'\]'):
@@ -47,7 +62,7 @@ def RunSteps(api):
   ])
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield (
     api.test('basic')
     + api.step_data(

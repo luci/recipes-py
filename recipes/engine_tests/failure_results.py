@@ -11,12 +11,27 @@ from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 
 from recipe_engine import post_process
 
-DEPS = [
-  'step',
-  'json'
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    json,
+    step,
+)
 
-def RunSteps(api):
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  json: json.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  json: json.TEST_API
+
+
+def RunSteps(api: DEPS):
   raw_result = result_pb2.RawResult()
   try:
     result = api.step('step_result', ['cmd', api.json.output()], timeout=480)
@@ -43,7 +58,8 @@ def RunSteps(api):
 
   return raw_result
 
-def GenTests(api):
+
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'successful_result',
       api.step_data('step_result', api.json.output(

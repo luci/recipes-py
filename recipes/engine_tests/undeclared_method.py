@@ -11,11 +11,26 @@ from PB.recipes.recipe_engine.engine_tests import (
 from recipe_engine import post_process
 from recipe_engine.recipe_api import Property
 
-DEPS = [
-  'step',
-  'properties',
-  'cipd',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    cipd,
+    properties,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  cipd: cipd.API
+  properties: properties.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  properties: properties.TEST_API
 
 INLINE_PROPERTIES_PROTO = """
 message InputProperties {
@@ -27,7 +42,8 @@ message InputProperties {
 
 PROPERTIES = undeclared_method_pb.InputProperties
 
-def RunSteps(api, props: undeclared_method_pb.InputProperties):
+
+def RunSteps(api: DEPS, props: undeclared_method_pb.InputProperties):
   if props.from_recipe:
     api.missing_module('baz')
   if props.attribute:
@@ -35,7 +51,8 @@ def RunSteps(api, props: undeclared_method_pb.InputProperties):
   if props.module:
     api.cipd.m.missing_module('baz')
 
-def GenTests(api):
+
+def GenTests(api: TEST_DEPS):
   yield (
       api.test('from_recipe') +
       api.properties(from_recipe=True) +

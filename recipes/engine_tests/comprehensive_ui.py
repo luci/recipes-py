@@ -10,10 +10,24 @@ features available in the recipe engine."""
 
 from __future__ import annotations
 
-DEPS = [
-  'raw_io',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    raw_io,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  raw_io: raw_io.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  raw_io: raw_io.TEST_API
 
 from builtins import range
 
@@ -25,7 +39,7 @@ def named_step(api, name):
   return api.step(name, ['python3', '-u', api.resource('dual_output.py')])
 
 
-def RunSteps(api):
+def RunSteps(api: DEPS):
   with api.step.nest('names'):
     named_step(api, 'Some Name')
     named_step(api, 'Unicode Name 💩')
@@ -97,7 +111,7 @@ def RunSteps(api):
     )
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield (
     api.test('basic')
     + api.step_data('capture stdout', stdout=api.raw_io.output_text('OHAI'))

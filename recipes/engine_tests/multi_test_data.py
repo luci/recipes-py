@@ -6,18 +6,34 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'raw_io',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    raw_io,
+    step,
+)
 
-def RunSteps(api):
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  raw_io: raw_io.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  raw_io: raw_io.TEST_API
+
+
+def RunSteps(api: DEPS):
   doge = api.step('doge',
       ['doge'], stdout=api.raw_io.output(), stderr=api.raw_io.output())
   assert doge.stdout == b'such stdout'
   assert doge.stderr == b'so stderring'
 
-def GenTests(api):
+
+def GenTests(api: TEST_DEPS):
   yield (
     api.test('basic') +
     api.step_data('doge',

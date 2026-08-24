@@ -7,11 +7,26 @@ termination tests."""
 
 from __future__ import annotations
 
-DEPS = [
-  'futures',
-  'properties',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    futures,
+    properties,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  futures: futures.API
+  properties: properties.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  properties: properties.TEST_API
 
 from recipe_engine import recipe_api
 from recipe_engine.post_process import DropExpectation
@@ -21,7 +36,8 @@ from PB.recipes.recipe_engine.engine_tests import long_sleep
 
 PROPERTIES = long_sleep.InputProperties
 
-def RunSteps(api, props):
+
+def RunSteps(api: DEPS, props):
   def _inner():
     try:
       api.step('sleep a bit', ['sleep', '360'], timeout=5)
@@ -46,7 +62,8 @@ def RunSteps(api, props):
   finally:
     fut.exception()
 
-def GenTests(api):
+
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'basic',
       api.properties(check_retcode={}),

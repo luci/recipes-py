@@ -6,12 +6,23 @@ from __future__ import annotations
 
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 
-DEPS = [
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import step
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  pass
+
+
+def RunSteps(api: DEPS):
   try:
     api.step('normal step', ['missing_cmd0'])
   except:

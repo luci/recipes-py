@@ -6,13 +6,27 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'step',
-  'path',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    path,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  path: path.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  pass
+
+
+def RunSteps(api: DEPS):
   api.step('innocent step', ['bash', '-c', "echo some step"])
   api.step('nuke it', ['rm', '-rf', api.path.start_dir])
 
@@ -25,5 +39,5 @@ def RunSteps(api):
   api.step('python does not', ['python3', '-c', 'print("hi")'])
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test('basic')

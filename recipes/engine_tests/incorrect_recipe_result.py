@@ -11,23 +11,38 @@ from PB.recipes.recipe_engine.engine_tests.incorrect_recipe_result import InputP
 
 from recipe_engine import post_process
 
-DEPS = [
-  'step',
-  'json',
-  'properties'
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    json,
+    properties,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  json: json.API
+  properties: properties.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  properties: properties.TEST_API
 
 PROPERTIES = InputProps
 
 
-def RunSteps(api, props):
+def RunSteps(api: DEPS, props):
   if props.use_result_type:
     return result_pb2.Result()
 
   return {'summary': 'test'}
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'incorrect_object_returned',
       api.properties(InputProps(use_result_type=False)),

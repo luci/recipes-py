@@ -15,11 +15,26 @@ from recipe_engine import post_process
 from recipe_engine.recipe_api import Property
 from recipe_engine.post_process import Filter, DoesNotRun, MustRun
 
-DEPS = [
-  'context',
-  'step',
-  'properties',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    context,
+    properties,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  context: context.API
+  properties: properties.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  properties: properties.TEST_API
 
 INLINE_PROPERTIES_PROTO = """
 message InputProperties {
@@ -29,7 +44,8 @@ message InputProperties {
 
 PROPERTIES = allowlist_steps_pb.InputProperties
 
-def RunSteps(api, props: allowlist_steps_pb.InputProperties):
+
+def RunSteps(api: DEPS, props: allowlist_steps_pb.InputProperties):
   fakeit = not props.dontfakeit
   api.step('something unimportant', ['echo', 'sup doc'])
   with api.context(env={'FLEEM': 'VERY YES'}):
@@ -41,7 +57,7 @@ def RunSteps(api, props: allowlist_steps_pb.InputProperties):
   step_result.presentation.properties['test_build_property'] = True
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test('all_steps') + api.post_process(MustRun, 'fakestep')
 
   yield (api.test('single_step')

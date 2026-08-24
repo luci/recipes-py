@@ -41,17 +41,31 @@ def test2(c): # pragma: no cover
 
 
 # This is where the actual recipe code begins.
-DEPS = [
-  'step',
-  'json',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    json,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  json: json.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  pass
 
 def DumpRecipeEngineTestConfig(api, config):
   api.step('config', cmd=None).presentation.logs['config'] = api.json.dumps(
       config.as_jsonish(), indent=2).splitlines()
 
 
-def RunSteps(api):
+def RunSteps(api: DEPS):
   config = test1()        # api.module.set_config('test1')
   config = test2(config)  # api.module.apply_config('test2')
 
@@ -76,5 +90,5 @@ def RunSteps(api):
   DumpRecipeEngineTestConfig(api, config)
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test('basic')

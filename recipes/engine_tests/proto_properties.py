@@ -6,16 +6,30 @@ from __future__ import annotations
 
 from PB.recipes.recipe_engine.engine_tests import proto_properties
 
-DEPS = [
-    'assertions',
-    'properties',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    properties,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  properties: properties.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  properties: properties.TEST_API
 
 PROPERTIES = proto_properties.TestProperties
 ENV_PROPERTIES = proto_properties.EnvProperties
 
 
-def RunSteps(api, properties, env_props):
+def RunSteps(api: DEPS, properties, env_props):
   api.assertions.assertEqual(properties.an_int, 100)
   api.assertions.assertEqual(properties.some_string, 'hey there')
 
@@ -23,7 +37,7 @@ def RunSteps(api, properties, env_props):
   api.assertions.assertEqual(env_props.INT_ENV, 9000)
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield (
     api.test('full')
     + api.properties(

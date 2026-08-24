@@ -5483,43 +5483,43 @@ Generates response Runs for a test.
 &mdash; **def [RunSteps](/recipe_modules/defer/tests/suppressed.py#32)(api: recipe_api.RecipeApi, props: properties_pb2.SuppressedInputProps):**
 ### *recipes* / [engine\_tests/allowlist\_steps](/recipes/engine_tests/allowlist_steps.py)
 
-[DEPS](/recipes/engine_tests/allowlist_steps.py#18): [context](#recipe_modules-context), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/allowlist_steps.py#29): [context](#recipe_modules-context), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
 Tests that step_data can accept multiple specs at once.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/allowlist_steps.py#32)(api, props: allowlist_steps_pb.InputProperties):**
+&mdash; **def [RunSteps](/recipes/engine_tests/allowlist_steps.py#48)(api: DEPS, props: allowlist_steps_pb.InputProperties):**
 ### *recipes* / [engine\_tests/bad\_subprocess](/recipes/engine_tests/bad_subprocess.py)
 
-[DEPS](/recipes/engine_tests/bad_subprocess.py#9): [platform](#recipe_modules-platform), [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/bad_subprocess.py#19): [platform](#recipe_modules-platform), [step](#recipe_modules-step)
 
 
 Tests that daemons that hang on to STDOUT can't cause the engine to hang.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/bad_subprocess.py#15)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/bad_subprocess.py#29)(api: DEPS):**
 ### *recipes* / [engine\_tests/comprehensive\_ui](/recipes/engine_tests/comprehensive_ui.py)
 
-[DEPS](/recipes/engine_tests/comprehensive_ui.py#13): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/comprehensive_ui.py#23): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
 A fast-running recipe which comprehensively covers all StepPresentation
 features available in the recipe engine.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/comprehensive_ui.py#28)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/comprehensive_ui.py#42)(api: DEPS):**
 
-&mdash; **def [named\_step](/recipes/engine_tests/comprehensive_ui.py#24)(api, name):**
+&mdash; **def [named\_step](/recipes/engine_tests/comprehensive_ui.py#38)(api, name):**
 ### *recipes* / [engine\_tests/config\_operations](/recipes/engine_tests/config_operations.py)
 
-[DEPS](/recipes/engine_tests/config_operations.py#44): [json](#recipe_modules-json), [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/config_operations.py#54): [json](#recipe_modules-json), [step](#recipe_modules-step)
 
 
 Tests that recipes can modify configuration options in various ways.
 
 &mdash; **def [BaseConfig](/recipes/engine_tests/config_operations.py#15)(\*\*_kwargs):**
 
-&mdash; **def [DumpRecipeEngineTestConfig](/recipes/engine_tests/config_operations.py#49)(api, config):**
+&mdash; **def [DumpRecipeEngineTestConfig](/recipes/engine_tests/config_operations.py#63)(api, config):**
 
-&mdash; **def [RunSteps](/recipes/engine_tests/config_operations.py#54)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/config_operations.py#68)(api: DEPS):**
 
 &emsp; **@config_ctx()**<br>&mdash; **def [test1](/recipes/engine_tests/config_operations.py#30)(c):**
 
@@ -5528,40 +5528,40 @@ Tests that recipes can modify configuration options in various ways.
 &emsp; **@config_ctx()**<br>&mdash; **def [test2a](/recipes/engine_tests/config_operations.py#34)(c):**
 ### *recipes* / [engine\_tests/early\_termination](/recipes/engine_tests/early_termination.py)
 
-[DEPS](/recipes/engine_tests/early_termination.py#10): [file](#recipe_modules-file), [futures](#recipe_modules-futures), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/early_termination.py#23): [file](#recipe_modules-file), [futures](#recipe_modules-futures), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [step](#recipe_modules-step)
 
 
 Simple recipe which runs a bunch of subprocesses which react to early
 termination in different ways.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/early_termination.py#23)(api, props):**
+&mdash; **def [RunSteps](/recipes/engine_tests/early_termination.py#40)(api: DEPS, props):**
 ### *recipes* / [engine\_tests/expect\_exception](/recipes/engine_tests/expect_exception.py)
 
 
 Tests that tests with a single exception are handled correctly.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/expect_exception.py#18)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/expect_exception.py#29)(api: DEPS):**
 
-&mdash; **def [my\_function](/recipes/engine_tests/expect_exception.py#14)():**
+&mdash; **def [my\_function](/recipes/engine_tests/expect_exception.py#25)():**
 ### *recipes* / [engine\_tests/expect\_exceptions](/recipes/engine_tests/expect_exceptions.py)
 
 
 Tests that tests with multiple exceptions are handled correctly.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/expect_exceptions.py#25)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/expect_exceptions.py#37)(api: DEPS):**
 
-&mdash; **def [my\_function](/recipes/engine_tests/expect_exceptions.py#13)():**
+&mdash; **def [my\_function](/recipes/engine_tests/expect_exceptions.py#25)():**
 ### *recipes* / [engine\_tests/failure\_results](/recipes/engine_tests/failure_results.py)
 
-[DEPS](/recipes/engine_tests/failure_results.py#14): [json](#recipe_modules-json), [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/failure_results.py#24): [json](#recipe_modules-json), [step](#recipe_modules-step)
 
 
 Tests that run_steps is handling recipe failures correctly.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/failure_results.py#19)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/failure_results.py#34)(api: DEPS):**
 ### *recipes* / [engine\_tests/functools\_partial](/recipes/engine_tests/functools_partial.py)
 
-[DEPS](/recipes/engine_tests/functools_partial.py#18): [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/functools_partial.py#25): [step](#recipe_modules-step)
 
 
 Engine shouldn't explode when step_test_data gets functools.partial.
@@ -5571,35 +5571,35 @@ http://src.chromium.org/viewvc/chrome?revision=298072&view=revision
 
 When this recipe is run (by run_test.py), the _print_step code is exercised.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/functools_partial.py#20)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/functools_partial.py#34)(api: DEPS):**
 ### *recipes* / [engine\_tests/incorrect\_recipe\_result](/recipes/engine_tests/incorrect_recipe_result.py)
 
-[DEPS](/recipes/engine_tests/incorrect_recipe_result.py#14): [json](#recipe_modules-json), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/incorrect_recipe_result.py#25): [json](#recipe_modules-json), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
 Tests that engine.py can handle unknown recipe results.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/incorrect_recipe_result.py#23)(api, props):**
+&mdash; **def [RunSteps](/recipes/engine_tests/incorrect_recipe_result.py#38)(api: DEPS, props):**
 ### *recipes* / [engine\_tests/long\_sleep](/recipes/engine_tests/long_sleep.py)
 
-[DEPS](/recipes/engine_tests/long_sleep.py#10): [futures](#recipe_modules-futures), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/long_sleep.py#21): [futures](#recipe_modules-futures), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
 Simple recipe which sleeps in a subprocess forever to facilitate early
 termination tests.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/long_sleep.py#24)(api, props):**
+&mdash; **def [RunSteps](/recipes/engine_tests/long_sleep.py#40)(api: DEPS, props):**
 ### *recipes* / [engine\_tests/missing\_start\_dir](/recipes/engine_tests/missing_start_dir.py)
 
-[DEPS](/recipes/engine_tests/missing_start_dir.py#9): [path](#recipe_modules-path), [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/missing_start_dir.py#19): [path](#recipe_modules-path), [step](#recipe_modules-step)
 
 
 Tests that deleting the current working directory doesn't immediately fail
 
-&mdash; **def [RunSteps](/recipes/engine_tests/missing_start_dir.py#15)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/missing_start_dir.py#29)(api: DEPS):**
 ### *recipes* / [engine\_tests/module\_injection\_site](/recipes/engine_tests/module_injection_site.py)
 
-[DEPS](/recipes/engine_tests/module_injection_site.py#15): [path](#recipe_modules-path), [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/module_injection_site.py#25): [path](#recipe_modules-path), [step](#recipe_modules-step)
 
 
 This test serves to demonstrate that the ModuleInjectionSite object on
@@ -5608,87 +5608,87 @@ owns it.
 
 This was implemented to aid in refactoring some recipes (crbug.com/782142).
 
-&mdash; **def [RunSteps](/recipes/engine_tests/module_injection_site.py#20)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/module_injection_site.py#35)(api: DEPS):**
 ### *recipes* / [engine\_tests/multi\_test\_data](/recipes/engine_tests/multi_test_data.py)
 
-[DEPS](/recipes/engine_tests/multi_test_data.py#9): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/multi_test_data.py#19): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
 Tests that step_data can accept multiple specs at once.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/multi_test_data.py#14)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/multi_test_data.py#29)(api: DEPS):**
 ### *recipes* / [engine\_tests/multiple\_placeholders](/recipes/engine_tests/multiple_placeholders.py)
 
-[DEPS](/recipes/engine_tests/multiple_placeholders.py#11): [assertions](#recipe_modules-assertions), [json](#recipe_modules-json), [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/multiple_placeholders.py#22): [assertions](#recipe_modules-assertions), [json](#recipe_modules-json), [step](#recipe_modules-step)
 
 
 Tests error checking around multiple placeholders in a single step.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/multiple_placeholders.py#18)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/multiple_placeholders.py#33)(api: DEPS):**
 ### *recipes* / [engine\_tests/nonexistent\_command](/recipes/engine_tests/nonexistent_command.py)
 
-[DEPS](/recipes/engine_tests/nonexistent_command.py#9): [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/nonexistent_command.py#16): [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipes/engine_tests/nonexistent_command.py#14)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/nonexistent_command.py#25)(api: DEPS):**
 ### *recipes* / [engine\_tests/placeholder\_exception](/recipes/engine_tests/placeholder_exception.py)
 
-[DEPS](/recipes/engine_tests/placeholder_exception.py#14): [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/placeholder_exception.py#21): [step](#recipe_modules-step)
 
 
 Tests that placeholders can't wreck the world by exhausting the step stack.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/placeholder_exception.py#26)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/placeholder_exception.py#37)(api: DEPS):**
 ### *recipes* / [engine\_tests/proto\_output\_properties](/recipes/engine_tests/proto_output_properties.py)
 
-[DEPS](/recipes/engine_tests/proto_output_properties.py#12): [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/proto_output_properties.py#19): [step](#recipe_modules-step)
 
 
 Tests that output properties can be a proto message.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/proto_output_properties.py#16)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/proto_output_properties.py#28)(api: DEPS):**
 ### *recipes* / [engine\_tests/proto\_properties](/recipes/engine_tests/proto_properties.py)
 
-[DEPS](/recipes/engine_tests/proto_properties.py#9): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties)
+[DEPS](/recipes/engine_tests/proto_properties.py#19): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties)
 
 
-&mdash; **def [RunSteps](/recipes/engine_tests/proto_properties.py#18)(api, properties, env_props):**
+&mdash; **def [RunSteps](/recipes/engine_tests/proto_properties.py#32)(api: DEPS, properties, env_props):**
 ### *recipes* / [engine\_tests/recipe\_paths](/recipes/engine_tests/recipe_paths.py)
 
-[DEPS](/recipes/engine_tests/recipe_paths.py#9): [path](#recipe_modules-path), [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/recipe_paths.py#19): [path](#recipe_modules-path), [step](#recipe_modules-step)
 
 
 Tests that recipes have access to names, resources and their repo.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/recipe_paths.py#14)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/recipe_paths.py#29)(api: DEPS):**
 ### *recipes* / [engine\_tests/recipe\_test\_data](/recipes/engine_tests/recipe_test_data.py)
 
-[DEPS](/recipes/engine_tests/recipe_test_data.py#11): [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/recipe_test_data.py#18): [step](#recipe_modules-step)
 
 
 Tests that we can pass data via api.recipe_test_data.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/recipe_test_data.py#16)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/recipe_test_data.py#27)(api: DEPS):**
 ### *recipes* / [engine\_tests/sort\_properties](/recipes/engine_tests/sort_properties.py)
 
-[DEPS](/recipes/engine_tests/sort_properties.py#9): [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/sort_properties.py#16): [step](#recipe_modules-step)
 
 
 Tests that step presentation properties can be ordered.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/sort_properties.py#13)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/sort_properties.py#25)(api: DEPS):**
 ### *recipes* / [engine\_tests/undeclared\_method](/recipes/engine_tests/undeclared_method.py)
 
-[DEPS](/recipes/engine_tests/undeclared_method.py#14): [cipd](#recipe_modules-cipd), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/undeclared_method.py#25): [cipd](#recipe_modules-cipd), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipes/engine_tests/undeclared_method.py#30)(api, props: undeclared_method_pb.InputProperties):**
+&mdash; **def [RunSteps](/recipes/engine_tests/undeclared_method.py#46)(api: DEPS, props: undeclared_method_pb.InputProperties):**
 ### *recipes* / [engine\_tests/unicode](/recipes/engine_tests/unicode.py)
 
-[DEPS](/recipes/engine_tests/unicode.py#8): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/unicode.py#18): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipes/engine_tests/unicode.py#13)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/unicode.py#28)(api: DEPS):**
 ### *recipes* / [file:examples/chmod](/recipe_modules/file/examples/chmod.py)
 
 [DEPS](/recipe_modules/file/examples/chmod.py#7): [file](#recipe_modules-file), [path](#recipe_modules-path)
