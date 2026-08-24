@@ -16,6 +16,7 @@ from builtins import int
 from past.builtins import basestring
 
 from recipe_engine import recipe_api
+from recipe_engine import step_data
 from recipe_engine.config_types import Path
 from recipe_engine.engine_types import StepPresentation
 from recipe_engine.engine_types import ResourceCost as _ResourceCost
@@ -478,7 +479,7 @@ class StepApi(recipe_api.RecipeApi):
         result, [self.SUCCESS], status_override=status_override)
 
   def _run_or_raise_step(self, step_config):
-    ret = self.step_client.run_step(step_config)
+    ret: step_data.StepData = self.step_client.run_step(step_config)
     allowed_statuses = [self.SUCCESS]
     if not step_config.raise_on_failure:
       allowed_statuses += [self.WARNING, self.FAILURE, self.EXCEPTION]
@@ -645,7 +646,7 @@ class StepApi(recipe_api.RecipeApi):
                stderr: Placeholder | None = None,
                stdin: Placeholder | None = None,
                step_test_data: Callable[[], StepTestData] | None = None,
-               cost: _ResourceCost = _ResourceCost()):
+               cost: _ResourceCost = _ResourceCost()) -> step_data.StepData:
     """Runs a step (subprocess).
 
     Args:
