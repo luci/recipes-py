@@ -31,10 +31,6 @@ from PB.turboci.graph.orchestrator.v1.read_workplan_request import (
     ReadWorkPlanRequest,)
 from PB.turboci.graph.orchestrator.v1.read_workplan_response import (
     ReadWorkPlanResponse,)
-from PB.turboci.graph.orchestrator.v1.write_nodes_request import (
-    WriteNodesRequest,)
-from PB.turboci.graph.orchestrator.v1.write_nodes_response import (
-    WriteNodesResponse,)
 
 from . import query_util
 
@@ -92,7 +88,10 @@ class _LocalAuthTokenManager:
 
       try:
         payload = {
-            "scopes": ["https://www.googleapis.com/auth/userinfo.email"],
+            "scopes": [
+              "https://www.googleapis.com/auth/androidbuild.internal",
+              "https://www.googleapis.com/auth/userinfo.email"
+            ],
         }
         if self._default_account_id:
           payload["account_id"] = self._default_account_id
