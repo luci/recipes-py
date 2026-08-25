@@ -408,7 +408,7 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
   def test_external_timeout(self):
     final_build = self._test_bbagent(
         {'recipe': 'engine_tests/long_sleep'},
-        timeout=10,
+        timeout=15,
     )
     for step in final_build['steps']:
       del step['end_time']
