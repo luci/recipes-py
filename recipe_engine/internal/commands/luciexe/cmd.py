@@ -14,6 +14,7 @@ from google.protobuf import json_format as jsonpb
 from google.protobuf import text_format as textpb
 
 from PB.go.chromium.org.luci.buildbucket.proto.build import Build
+from turboci.utils import ids
 
 from ....third_party import luci_context
 from ....util import fix_json_object
@@ -26,6 +27,7 @@ from ...stream.luci import LUCIStreamEngine
 from ...turboci import common as turboci_common
 from ...turboci import fake as turboci_fake
 from ...turboci import turboci as turboci_real
+from ...turboci import grpc_client as turboci_grpc
 
 from . import RunBuildContractViolation
 
@@ -97,9 +99,23 @@ def _main_impl(args):
   turboci_experiment = (
     "luci.buildbucket.run_in_turboci" in build.input.experiments
   )
+  turboci_grpc_experiment = ("luci.buildbucket.run_in_turboci.grpc_client"
+                             in build.input.experiments)
   turboci_endpoint = build.infra.turboci.hostname
+  turboci_stage_attempt_id = build.infra.turboci.stage_attempt_id
+  wpid = None
+  if turboci_stage_attempt_id:
+    wpid, _, _ = ids.root(ids.from_string(turboci_stage_attempt_id))
+  turboci_ctx = luci_context.read('turboci')
+  turboci_token = turboci_ctx.get('token') if turboci_ctx else None
   if turboci_experiment and turboci_endpoint:
-    turboci_common.CLIENT = turboci_real.TurboCIOrchestrator(turboci_endpoint)
+    if turboci_grpc_experiment:
+      LOG.info('TurboCI: Initializing gRPC client.')
+      turboci_common.CLIENT = turboci_grpc.TurboCIGRPCClient(
+          turboci_endpoint, wpid=wpid, token=turboci_token)
+    else:
+      LOG.info('TurboCI: Initializing CLI subprocess client.')
+      turboci_common.CLIENT = turboci_real.TurboCIOrchestrator(turboci_endpoint)
   else:
     turboci_common.CLIENT = turboci_fake.FakeTurboCIOrchestrator(
         test_mode=False)
