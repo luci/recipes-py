@@ -677,8 +677,9 @@ class CIPDApi(recipe_api.RecipeApi):
     result = step_result.json.output['result']
     return self.Pin(**result)
 
-  def make_link(self, package: str, version: str) -> str:
-    return f'{CIPD_SERVER_URL}/p/{package}/+/{version}'
+  def make_link(self, package: str, version: str | None = None) -> str:
+    version_part = f'/+/{version}' if version else ''
+    return f'{CIPD_SERVER_URL}/p/{package}{version_part}'
 
   def add_instance_link(self, step_result: step_data.StepData) -> None:
     result = step_result.json.output['result']
