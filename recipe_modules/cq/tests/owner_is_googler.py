@@ -6,21 +6,39 @@ from __future__ import annotations
 
 from recipe_engine import post_process, recipe_api
 
-DEPS = [
-  'assertions',
-  'buildbucket',
-  'cq',
-  'properties',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    buildbucket,
+    cq,
+    properties,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  buildbucket: buildbucket.API
+  cq: cq.API
+  properties: properties.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  buildbucket: buildbucket.TEST_API
+  cq: cq.TEST_API
+  properties: properties.TEST_API
 
 
 @recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')
-def RunSteps(api):
+def RunSteps(api: DEPS):
   api.assertions.assertEqual(
        api.cq.owner_is_googler,  api.properties['expected_owner_is_googler'])
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield (
     api.test('default')
     + api.cq(run_mode=api.cq.FULL_RUN)

@@ -4,13 +4,29 @@
 
 from __future__ import annotations
 
-DEPS = [
-    'bcid_reporter',
-    'recipe_engine/cipd',
-    'recipe_engine/path',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    bcid_reporter,
+    cipd,
+    path,
+)
 
-def RunSteps(api):
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  bcid_reporter: bcid_reporter.API
+  cipd: cipd.API
+  path: path.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  bcid_reporter: bcid_reporter.TEST_API
+
+
+def RunSteps(api: DEPS):
   # Report task stage.
   api.bcid_reporter.report_stage("start")
   # Report another stage; the module shouldn't install broker again.
@@ -60,5 +76,6 @@ def RunSteps(api):
       tags={'key': 'value'},
       metadata=[api.cipd.Metadata(key='k', value='v')])
 
-def GenTests(api):
+
+def GenTests(api: TEST_DEPS):
   yield api.test('simple') + api.bcid_reporter(54321)

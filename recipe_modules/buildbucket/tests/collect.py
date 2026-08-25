@@ -6,14 +6,30 @@ from __future__ import annotations
 
 from recipe_engine import post_process
 
-DEPS = [
-  'buildbucket',
-  'properties',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    buildbucket,
+    properties,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  buildbucket: buildbucket.API
+  properties: properties.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  buildbucket: buildbucket.TEST_API
+  properties: properties.TEST_API
+
+
+def RunSteps(api: DEPS):
   api.buildbucket.collect_build(
       9016911228971028736, interval=30, step_name='collect1',
       mirror_status=True,
@@ -27,7 +43,7 @@ def RunSteps(api):
                                  eager=api.properties.get('eager', False))
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test('basic')
 
   yield api.test(

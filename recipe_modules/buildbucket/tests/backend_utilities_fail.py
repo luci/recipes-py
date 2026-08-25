@@ -12,13 +12,27 @@ from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import task as task_pb2
 
 
-DEPS = [
-    'assertions',
-    'buildbucket',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    buildbucket,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  buildbucket: buildbucket.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  buildbucket: buildbucket.TEST_API
+
+
+def RunSteps(api: DEPS):
   api.assertions.assertEqual(api.buildbucket.swarming_bot_dimensions, None)
   api.assertions.assertEqual(api.buildbucket.swarming_parent_run_id, None)
   api.assertions.assertEqual(api.buildbucket.swarming_priority, None)
@@ -26,7 +40,7 @@ def RunSteps(api):
     api.buildbucket.swarming_task_service_account, None)
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   task_details = struct_pb2.Struct(
       fields={
           "bot_dimensions": struct_pb2.Value(

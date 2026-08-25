@@ -6,15 +6,31 @@ from __future__ import annotations
 
 from recipe_engine import post_process
 
-DEPS = [
-    'assertions',
-    'properties',
-    'step',
-    'bcid_verifier',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    bcid_verifier,
+    properties,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  bcid_verifier: bcid_verifier.API
+  properties: properties.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  properties: properties.TEST_API
+
+
+def RunSteps(api: DEPS):
   api.bcid_verifier.verify_provenance(
       'bcid_policy://default',
       '/archive_dir/artifact',
@@ -22,7 +38,7 @@ def RunSteps(api):
       log_only_mode=api.properties.get('log_only', False))
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'enforce-verify',
       api.post_check(

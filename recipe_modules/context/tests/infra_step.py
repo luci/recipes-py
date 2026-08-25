@@ -4,13 +4,24 @@
 
 from __future__ import annotations
 
-DEPS = [
-  "context",
-  "path",
-  "step",
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    context,
+    path,
+    step,
+)
 
-def RunSteps(api):
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  context: context.API
+  path: path.API
+  step: step.API
+
+
+def RunSteps(api: DEPS):
   was_infra_failure = None
   try:
     api.step('boom', ['echo', 'hello'])
@@ -31,10 +42,10 @@ def RunSteps(api):
       assert False, 'impossible'
     assert was_infra_failure is True
 
-def GenTests(api):
+
+def GenTests(api: RecipeTestApi):
   yield (
     api.test('basic')
     + api.step_data('boom', retcode=1)
     + api.step_data('boom 2', retcode=1)
   )
-

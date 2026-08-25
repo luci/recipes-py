@@ -8,17 +8,37 @@ from recipe_engine import post_process
 
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 
-DEPS = [
-    'assertions',
-    'buildbucket',
-    'cv',
-    'json',
-    'properties',
-    'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    buildbucket,
+    cv,
+    json,
+    properties,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  buildbucket: buildbucket.API
+  cv: cv.API
+  json: json.API
+  properties: properties.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  buildbucket: buildbucket.TEST_API
+  cv: cv.TEST_API
+  json: json.TEST_API
+
+
+def RunSteps(api: DEPS):
   properties = {'foo': 'bar'}
   properties.update(api.cv.props_for_child_build)
   req = api.buildbucket.schedule_request(
@@ -29,7 +49,7 @@ def RunSteps(api):
   api.cv.record_triggered_builds(*child_builds)
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
 
   def check_has_bb_tag(check, steps, key, value):
     req = api.json.loads(steps['buildbucket.schedule'].logs['request'])

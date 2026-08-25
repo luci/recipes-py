@@ -255,7 +255,7 @@
 
 ### *recipe_modules* / [archive](/recipe_modules/archive)
 
-[DEPS](/recipe_modules/archive/__init__.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/archive/__init__.py#18): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [step](#recipe_modules-step)
 
 
 #### **class [ArchiveApi](/recipe_modules/archive/api.py#11)([RecipeApi](/recipe_engine/recipe_api.py#439)):**
@@ -373,7 +373,7 @@ def GenTests(api):
 ```
 ### *recipe_modules* / [bcid\_reporter](/recipe_modules/bcid_reporter)
 
-[DEPS](/recipe_modules/bcid_reporter/__init__.py#7): [cipd](#recipe_modules-cipd), [file](#recipe_modules-file), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/bcid_reporter/__init__.py#20): [cipd](#recipe_modules-cipd), [file](#recipe_modules-file), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
 
 #### **class [BcidReporterApi](/recipe_modules/bcid_reporter/api.py#25)([RecipeApi](/recipe_engine/recipe_api.py#439)):**
@@ -491,7 +491,7 @@ Args:
     broker tool will use default if not specified.
 ### *recipe_modules* / [bcid\_verifier](/recipe_modules/bcid_verifier)
 
-[DEPS](/recipe_modules/bcid_verifier/__init__.py#7): [cipd](#recipe_modules-cipd), [file](#recipe_modules-file), [path](#recipe_modules-path), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/bcid_verifier/__init__.py#18): [cipd](#recipe_modules-cipd), [file](#recipe_modules-file), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
 
 API for interacting with Software Verifier.
@@ -539,7 +539,7 @@ Args:
     failure.
 ### *recipe_modules* / [buildbucket](/recipe_modules/buildbucket)
 
-[DEPS](/recipe_modules/buildbucket/__init__.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [resultdb](#recipe_modules-resultdb), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid), [warning](#recipe_modules-warning)
+[DEPS](/recipe_modules/buildbucket/__init__.py#23): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [resultdb](#recipe_modules-resultdb), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid), [warning](#recipe_modules-warning)
 
 
 API for interacting with the buildbucket service.
@@ -1008,7 +1008,7 @@ Args:
 Set the buildbucket host while in context, then reverts it.
 ### *recipe_modules* / [cas](/recipe_modules/cas)
 
-[DEPS](/recipe_modules/cas/__init__.py#9): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cas/__init__.py#24): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
 
 API for interacting with cas client.
@@ -1056,7 +1056,7 @@ Return URL of cas viewer.
 Sets the CAS instance while in context, then reverts it.
 ### *recipe_modules* / [cas\_input](/recipe_modules/cas_input)
 
-[DEPS](/recipe_modules/cas_input/__init__.py#9): [cas](#recipe_modules-cas), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/cas_input/__init__.py#18): [cas](#recipe_modules-cas), [path](#recipe_modules-path)
 
 
 Simple API for handling CAS inputs to a recipe.
@@ -1092,7 +1092,7 @@ Returns:
 &emsp; **@property**<br>&mdash; **def [input\_caches](/recipe_modules/cas_input/api.py#30)(self):**
 ### *recipe_modules* / [change\_verifier](/recipe_modules/change_verifier)
 
-[DEPS](/recipe_modules/change_verifier/__init__.py#7): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [cv](#recipe_modules-cv), [luci\_config](#recipe_modules-luci_config), [proto](#recipe_modules-proto), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/change_verifier/__init__.py#21): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [cv](#recipe_modules-cv), [luci\_config](#recipe_modules-luci_config), [proto](#recipe_modules-proto), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
 Recipe API for LUCI Change Verifier.
@@ -1135,7 +1135,7 @@ Returns:
   A list of CV Runs ordered newest to oldest that match the given criteria.
 ### *recipe_modules* / [cipd](/recipe_modules/cipd)
 
-[DEPS](/recipe_modules/cipd/__init__.py#7): [buildbucket](#recipe_modules-buildbucket), [context](#recipe_modules-context), [file](#recipe_modules-file), [futures](#recipe_modules-futures), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [url](#recipe_modules-url)
+[DEPS](/recipe_modules/cipd/__init__.py#25): [buildbucket](#recipe_modules-buildbucket), [context](#recipe_modules-context), [file](#recipe_modules-file), [futures](#recipe_modules-futures), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [url](#recipe_modules-url)
 
 
 API for interacting with CIPD.
@@ -1612,7 +1612,7 @@ Returns the ResultDB invocation name of the current context.
 Returns None if resultdb is not defined.
 ### *recipe_modules* / [cq](/recipe_modules/cq)
 
-[DEPS](/recipe_modules/cq/__init__.py#9): [cv](#recipe_modules-cv), [properties](#recipe_modules-properties), [warning](#recipe_modules-warning)
+[DEPS](/recipe_modules/cq/__init__.py#19): [cv](#recipe_modules-cv), [properties](#recipe_modules-properties), [warning](#recipe_modules-warning)
 
 
 Wrapper for CV API.
@@ -1626,7 +1626,7 @@ This module is a thin wrapper of the cv module.
 Apply non-default value cq module properties to the cv module.
 ### *recipe_modules* / [cv](/recipe_modules/cv)
 
-[DEPS](/recipe_modules/cv/__init__.py#9): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cv/__init__.py#19): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
 Recipe API for LUCI CV, the pre-commit testing system.
@@ -1795,7 +1795,7 @@ Raises:
 Returns recorded Buildbucket build IDs as a list of integers.
 ### *recipe_modules* / [defer](/recipe_modules/defer)
 
-[DEPS](/recipe_modules/defer/__init__.py#7): [step](#recipe_modules-step)
+[DEPS](/recipe_modules/defer/__init__.py#13): [step](#recipe_modules-step)
 
 
 Runs a function but defers the result until a later time.
@@ -5091,396 +5091,396 @@ same repo as the issue() call.
 
 ### *recipes* / [archive:examples/full](/recipe_modules/archive/examples/full.py)
 
-[DEPS](/recipe_modules/archive/examples/full.py#9): [archive](#recipe_modules-archive), [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/archive/examples/full.py#25): [archive](#recipe_modules-archive), [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/archive/examples/full.py#21)(api):**
+&mdash; **def [RunSteps](/recipe_modules/archive/examples/full.py#42)(api: DEPS):**
 ### *recipes* / [assertions:tests/assert-raises](/recipe_modules/assertions/tests/assert-raises.py)
 
-[DEPS](/recipe_modules/assertions/tests/assert-raises.py#9): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/assertions/tests/assert-raises.py#20): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/assertions/tests/assert-raises.py#18)(api):**
+&mdash; **def [RunSteps](/recipe_modules/assertions/tests/assert-raises.py#34)(api: DEPS):**
 ### *recipes* / [assertions:tests/assert\_count\_equal](/recipe_modules/assertions/tests/assert_count_equal.py)
 
-[DEPS](/recipe_modules/assertions/tests/assert_count_equal.py#9): [assertions](#recipe_modules-assertions)
+[DEPS](/recipe_modules/assertions/tests/assert_count_equal.py#16): [assertions](#recipe_modules-assertions)
 
 
-&mdash; **def [RunSteps](/recipe_modules/assertions/tests/assert_count_equal.py#14)(api):**
+&mdash; **def [RunSteps](/recipe_modules/assertions/tests/assert_count_equal.py#20)(api: DEPS):**
 ### *recipes* / [assertions:tests/assertions](/recipe_modules/assertions/tests/assertions.py)
 
-[DEPS](/recipe_modules/assertions/tests/assertions.py#9): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/assertions/tests/assertions.py#20): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/assertions/tests/assertions.py#15)(api):**
+&mdash; **def [RunSteps](/recipe_modules/assertions/tests/assertions.py#31)(api: DEPS):**
 ### *recipes* / [assertions:tests/attribute\_error](/recipe_modules/assertions/tests/attribute_error.py)
 
-[DEPS](/recipe_modules/assertions/tests/attribute_error.py#9): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/assertions/tests/attribute_error.py#20): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/assertions/tests/attribute_error.py#15)(api):**
+&mdash; **def [RunSteps](/recipe_modules/assertions/tests/attribute_error.py#26)(api: DEPS):**
 ### *recipes* / [assertions:tests/long\_message](/recipe_modules/assertions/tests/long_message.py)
 
-[DEPS](/recipe_modules/assertions/tests/long_message.py#9): [assertions](#recipe_modules-assertions), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/assertions/tests/long_message.py#19): [assertions](#recipe_modules-assertions), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/assertions/tests/long_message.py#14)(api):**
+&mdash; **def [RunSteps](/recipe_modules/assertions/tests/long_message.py#24)(api: DEPS):**
 ### *recipes* / [assertions:tests/max\_diff](/recipe_modules/assertions/tests/max_diff.py)
 
-[DEPS](/recipe_modules/assertions/tests/max_diff.py#9): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/assertions/tests/max_diff.py#20): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/assertions/tests/max_diff.py#15)(api):**
+&mdash; **def [RunSteps](/recipe_modules/assertions/tests/max_diff.py#31)(api: DEPS):**
 ### *recipes* / [bcid\_reporter:examples/usage](/recipe_modules/bcid_reporter/examples/usage.py)
 
-[DEPS](/recipe_modules/bcid_reporter/examples/usage.py#7): [bcid\_reporter](#recipe_modules-bcid_reporter), [cipd](#recipe_modules-cipd), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/bcid_reporter/examples/usage.py#18): [bcid\_reporter](#recipe_modules-bcid_reporter), [cipd](#recipe_modules-cipd), [path](#recipe_modules-path)
 
 
-&mdash; **def [RunSteps](/recipe_modules/bcid_reporter/examples/usage.py#13)(api):**
+&mdash; **def [RunSteps](/recipe_modules/bcid_reporter/examples/usage.py#29)(api: DEPS):**
 ### *recipes* / [bcid\_reporter:tests/retry](/recipe_modules/bcid_reporter/tests/retry.py)
 
-[DEPS](/recipe_modules/bcid_reporter/tests/retry.py#7): [bcid\_reporter](#recipe_modules-bcid_reporter), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io)
+[DEPS](/recipe_modules/bcid_reporter/tests/retry.py#18): [bcid\_reporter](#recipe_modules-bcid_reporter), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io)
 
 
-&mdash; **def [RunSteps](/recipe_modules/bcid_reporter/tests/retry.py#13)(api):**
+&mdash; **def [RunSteps](/recipe_modules/bcid_reporter/tests/retry.py#24)(api: DEPS):**
 ### *recipes* / [bcid\_verifier:tests/test-verify](/recipe_modules/bcid_verifier/tests/test-verify.py)
 
-[DEPS](/recipe_modules/bcid_verifier/tests/test-verify.py#9): [assertions](#recipe_modules-assertions), [bcid\_verifier](#recipe_modules-bcid_verifier), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/bcid_verifier/tests/test-verify.py#21): [assertions](#recipe_modules-assertions), [bcid\_verifier](#recipe_modules-bcid_verifier), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/bcid_verifier/tests/test-verify.py#17)(api):**
+&mdash; **def [RunSteps](/recipe_modules/bcid_verifier/tests/test-verify.py#33)(api: DEPS):**
 ### *recipes* / [buildbucket:examples/full](/recipe_modules/buildbucket/examples/full.py)
 
-[DEPS](/recipe_modules/buildbucket/examples/full.py#17): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/examples/full.py#32): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
 
 This file is a recipe demonstrating the buildbucket recipe module.
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/examples/full.py#28)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/examples/full.py#51)(api: DEPS):**
 ### *recipes* / [buildbucket:tests/add\_build\_tags](/recipe_modules/buildbucket/tests/add_build_tags.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/add_build_tags.py#7): [buildbucket](#recipe_modules-buildbucket), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/tests/add_build_tags.py#17): [buildbucket](#recipe_modules-buildbucket), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/add_build_tags.py#13)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/add_build_tags.py#22)(api: DEPS):**
 ### *recipes* / [buildbucket:tests/add\_step\_tags](/recipe_modules/buildbucket/tests/add_step_tags.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/add_step_tags.py#7): [buildbucket](#recipe_modules-buildbucket), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/tests/add_step_tags.py#17): [buildbucket](#recipe_modules-buildbucket), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/add_step_tags.py#13)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/add_step_tags.py#22)(api: DEPS):**
 ### *recipes* / [buildbucket:tests/backend](/recipe_modules/buildbucket/tests/backend.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/backend.py#13): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/tests/backend.py#25): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/backend.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/backend.py#38)(api: DEPS):**
 ### *recipes* / [buildbucket:tests/backend\_utilities\_fail](/recipe_modules/buildbucket/tests/backend_utilities_fail.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/backend_utilities_fail.py#15): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket)
+[DEPS](/recipe_modules/buildbucket/tests/backend_utilities_fail.py#25): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket)
 
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/backend_utilities_fail.py#21)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/backend_utilities_fail.py#35)(api: DEPS):**
 ### *recipes* / [buildbucket:tests/build](/recipe_modules/buildbucket/tests/build.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/build.py#19): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/tests/build.py#31): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/build.py#27)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/build.py#44)(api: DEPS):**
 ### *recipes* / [buildbucket:tests/cancel](/recipe_modules/buildbucket/tests/cancel.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/cancel.py#12): [buildbucket](#recipe_modules-buildbucket)
+[DEPS](/recipe_modules/buildbucket/tests/cancel.py#19): [buildbucket](#recipe_modules-buildbucket)
 
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/cancel.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/cancel.py#28)(api: DEPS):**
 ### *recipes* / [buildbucket:tests/collect](/recipe_modules/buildbucket/tests/collect.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/collect.py#9): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/tests/collect.py#20): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/collect.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/collect.py#32)(api: DEPS):**
 ### *recipes* / [buildbucket:tests/get](/recipe_modules/buildbucket/tests/get.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/get.py#11): [buildbucket](#recipe_modules-buildbucket)
+[DEPS](/recipe_modules/buildbucket/tests/get.py#18): [buildbucket](#recipe_modules-buildbucket)
 
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/get.py#18)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/get.py#25)(api: DEPS):**
 ### *recipes* / [buildbucket:tests/list\_builders](/recipe_modules/buildbucket/tests/list_builders.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/list_builders.py#12): [buildbucket](#recipe_modules-buildbucket)
+[DEPS](/recipe_modules/buildbucket/tests/list_builders.py#19): [buildbucket](#recipe_modules-buildbucket)
 
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/list_builders.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/list_builders.py#28)(api: DEPS):**
 ### *recipes* / [buildbucket:tests/output\_commit](/recipe_modules/buildbucket/tests/output_commit.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/output_commit.py#11): [buildbucket](#recipe_modules-buildbucket), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/tests/output_commit.py#24): [buildbucket](#recipe_modules-buildbucket), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
 This recipe tests the buildbucket.set_output_gitiles_commit function.
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/output_commit.py#20)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/output_commit.py#32)(api: DEPS):**
 ### *recipes* / [buildbucket:tests/schedule](/recipe_modules/buildbucket/tests/schedule.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/schedule.py#17): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/tests/schedule.py#30): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/schedule.py#26)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/schedule.py#46)(api: DEPS):**
 ### *recipes* / [buildbucket:tests/search](/recipe_modules/buildbucket/tests/search.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/search.py#18): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/tests/search.py#31): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/search.py#38)(api, props):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/search.py#57)(api: DEPS, props):**
 ### *recipes* / [cas:examples/full](/recipe_modules/cas/examples/full.py)
 
-[DEPS](/recipe_modules/cas/examples/full.py#7): [cas](#recipe_modules-cas), [file](#recipe_modules-file), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cas/examples/full.py#21): [cas](#recipe_modules-cas), [file](#recipe_modules-file), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cas/examples/full.py#17)(api):**
+&mdash; **def [RunSteps](/recipe_modules/cas/examples/full.py#35)(api: DEPS):**
 ### *recipes* / [cas\_input:examples/full](/recipe_modules/cas_input/examples/full.py)
 
-[DEPS](/recipe_modules/cas_input/examples/full.py#7): [cas\_input](#recipe_modules-cas_input), [path](#recipe_modules-path), [properties](#recipe_modules-properties)
+[DEPS](/recipe_modules/cas_input/examples/full.py#18): [cas\_input](#recipe_modules-cas_input), [path](#recipe_modules-path), [properties](#recipe_modules-properties)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cas_input/examples/full.py#18)(api):**
+&mdash; **def [RunSteps](/recipe_modules/cas_input/examples/full.py#33)(api: DEPS):**
 ### *recipes* / [change\_verifier:tests/match\_config](/recipe_modules/change_verifier/tests/match_config.py)
 
-[DEPS](/recipe_modules/change_verifier/tests/match_config.py#9): [buildbucket](#recipe_modules-buildbucket), [change\_verifier](#recipe_modules-change_verifier), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/change_verifier/tests/match_config.py#20): [buildbucket](#recipe_modules-buildbucket), [change\_verifier](#recipe_modules-change_verifier), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/change_verifier/tests/match_config.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/change_verifier/tests/match_config.py#31)(api: DEPS):**
 ### *recipes* / [change\_verifier:tests/search](/recipe_modules/change_verifier/tests/search.py)
 
-[DEPS](/recipe_modules/change_verifier/tests/search.py#10): [change\_verifier](#recipe_modules-change_verifier), [proto](#recipe_modules-proto)
+[DEPS](/recipe_modules/change_verifier/tests/search.py#20): [change\_verifier](#recipe_modules-change_verifier), [proto](#recipe_modules-proto)
 
 
-&mdash; **def [RunSteps](/recipe_modules/change_verifier/tests/search.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/change_verifier/tests/search.py#30)(api: DEPS):**
 
-&mdash; **def [make\_runs](/recipe_modules/change_verifier/tests/search.py#39)(count=1):**
+&mdash; **def [make\_runs](/recipe_modules/change_verifier/tests/search.py#53)(count=1):**
 
 Generates response Runs for a test.
 ### *recipes* / [cipd:examples/full](/recipe_modules/cipd/examples/full.py)
 
-[DEPS](/recipe_modules/cipd/examples/full.py#16): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cipd/examples/full.py#31): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cipd/examples/full.py#49)(api, props: full_pb.InputProperties):**
+&mdash; **def [RunSteps](/recipe_modules/cipd/examples/full.py#72)(api: DEPS, props: full_pb.InputProperties):**
 ### *recipes* / [cipd:tests/ensure\_file](/recipe_modules/cipd/tests/ensure_file.py)
 
-[DEPS](/recipe_modules/cipd/tests/ensure_file.py#11): [assertions](#recipe_modules-assertions), [cipd](#recipe_modules-cipd), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/cipd/tests/ensure_file.py#22): [assertions](#recipe_modules-assertions), [cipd](#recipe_modules-cipd), [path](#recipe_modules-path)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cipd/tests/ensure_file.py#18)(api: recipe_api.RecipeScriptApi):**
+&mdash; **def [RunSteps](/recipe_modules/cipd/tests/ensure_file.py#28)(api: recipe_api.RecipeScriptApi):**
 ### *recipes* / [cipd:tests/platform](/recipe_modules/cipd/tests/platform.py)
 
-[DEPS](/recipe_modules/cipd/tests/platform.py#11): [cipd](#recipe_modules-cipd), [platform](#recipe_modules-platform), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cipd/tests/platform.py#22): [cipd](#recipe_modules-cipd), [platform](#recipe_modules-platform), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cipd/tests/platform.py#18)(api):**
+&mdash; **def [RunSteps](/recipe_modules/cipd/tests/platform.py#33)(api: DEPS):**
 ### *recipes* / [commit\_position:examples/full](/recipe_modules/commit_position/examples/full.py)
 
-[DEPS](/recipe_modules/commit_position/examples/full.py#7): [commit\_position](#recipe_modules-commit_position), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/commit_position/examples/full.py#17): [commit\_position](#recipe_modules-commit_position), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/commit_position/examples/full.py#13)(api):**
+&mdash; **def [RunSteps](/recipe_modules/commit_position/examples/full.py#22)(api: DEPS):**
 ### *recipes* / [context:examples/full](/recipe_modules/context/examples/full.py)
 
-[DEPS](/recipe_modules/context/examples/full.py#11): [context](#recipe_modules-context), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/context/examples/full.py#24): [context](#recipe_modules-context), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
 
-&mdash; **def [RunSteps](/recipe_modules/context/examples/full.py#20)(api):**
+&mdash; **def [RunSteps](/recipe_modules/context/examples/full.py#32)(api: DEPS):**
 ### *recipes* / [context:tests/cwd](/recipe_modules/context/tests/cwd.py)
 
-[DEPS](/recipe_modules/context/tests/cwd.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/context/tests/cwd.py#18): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/context/tests/cwd.py#13)(api):**
+&mdash; **def [RunSteps](/recipe_modules/context/tests/cwd.py#24)(api: DEPS):**
 ### *recipes* / [context:tests/env](/recipe_modules/context/tests/env.py)
 
-[DEPS](/recipe_modules/context/tests/env.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/context/tests/env.py#19): [context](#recipe_modules-context), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/context/tests/env.py#21)(api):**
+&mdash; **def [RunSteps](/recipe_modules/context/tests/env.py#32)(api: DEPS):**
 ### *recipes* / [context:tests/greenlet](/recipe_modules/context/tests/greenlet.py)
 
-[DEPS](/recipe_modules/context/tests/greenlet.py#7): [context](#recipe_modules-context), [futures](#recipe_modules-futures), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/context/tests/greenlet.py#18): [context](#recipe_modules-context), [futures](#recipe_modules-futures), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/context/tests/greenlet.py#13)(api):**
+&mdash; **def [RunSteps](/recipe_modules/context/tests/greenlet.py#24)(api: DEPS):**
 ### *recipes* / [context:tests/infra\_step](/recipe_modules/context/tests/infra_step.py)
 
-[DEPS](/recipe_modules/context/tests/infra_step.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/context/tests/infra_step.py#18): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/context/tests/infra_step.py#13)(api):**
+&mdash; **def [RunSteps](/recipe_modules/context/tests/infra_step.py#24)(api: DEPS):**
 ### *recipes* / [context:tests/luci\_context](/recipe_modules/context/tests/luci_context.py)
 
-[DEPS](/recipe_modules/context/tests/luci_context.py#9): [assertions](#recipe_modules-assertions), [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/context/tests/luci_context.py#21): [assertions](#recipe_modules-assertions), [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/context/tests/luci_context.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/context/tests/luci_context.py#33)(api: DEPS):**
 ### *recipes* / [cq:examples/ordered\_cls](/recipe_modules/cq/examples/ordered_cls.py)
 
-[DEPS](/recipe_modules/cq/examples/ordered_cls.py#12): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cq/examples/ordered_cls.py#25): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/examples/ordered_cls.py#21)(api):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/examples/ordered_cls.py#40)(api: DEPS):**
 ### *recipes* / [cq:examples/trigger\_child\_builds](/recipe_modules/cq/examples/trigger_child_builds.py)
 
-[DEPS](/recipe_modules/cq/examples/trigger_child_builds.py#11): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cq/examples/trigger_child_builds.py#25): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/examples/trigger_child_builds.py#21)(api):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/examples/trigger_child_builds.py#41)(api: DEPS):**
 ### *recipes* / [cq:tests/cl\_group\_key](/recipe_modules/cq/tests/cl_group_key.py)
 
-[DEPS](/recipe_modules/cq/tests/cl_group_key.py#9): [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq)
+[DEPS](/recipe_modules/cq/tests/cl_group_key.py#19): [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq)
 
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/cl_group_key.py#18)(api):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/cl_group_key.py#33)(api: DEPS):**
 ### *recipes* / [cq:tests/do\_not\_retry](/recipe_modules/cq/tests/do_not_retry.py)
 
-[DEPS](/recipe_modules/cq/tests/do_not_retry.py#9): [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cq/tests/do_not_retry.py#20): [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [step](#recipe_modules-step)
 
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/do_not_retry.py#19)(api):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/do_not_retry.py#29)(api: DEPS):**
 ### *recipes* / [cq:tests/experimental](/recipe_modules/cq/tests/experimental.py)
 
-[DEPS](/recipe_modules/cq/tests/experimental.py#9): [assertions](#recipe_modules-assertions), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cq/tests/experimental.py#21): [assertions](#recipe_modules-assertions), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/experimental.py#17)(api):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/experimental.py#34)(api: DEPS):**
 ### *recipes* / [cq:tests/inactive](/recipe_modules/cq/tests/inactive.py)
 
-[DEPS](/recipe_modules/cq/tests/inactive.py#9): [assertions](#recipe_modules-assertions), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties)
+[DEPS](/recipe_modules/cq/tests/inactive.py#20): [assertions](#recipe_modules-assertions), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties)
 
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/inactive.py#16)(api):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/inactive.py#31)(api: DEPS):**
 ### *recipes* / [cq:tests/mode\_of\_run](/recipe_modules/cq/tests/mode_of_run.py)
 
-[DEPS](/recipe_modules/cq/tests/mode_of_run.py#9): [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cq/tests/mode_of_run.py#20): [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/mode_of_run.py#16)(api):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/mode_of_run.py#32)(api: DEPS):**
 ### *recipes* / [cq:tests/owner\_is\_googler](/recipe_modules/cq/tests/owner_is_googler.py)
 
-[DEPS](/recipe_modules/cq/tests/owner_is_googler.py#9): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties)
+[DEPS](/recipe_modules/cq/tests/owner_is_googler.py#21): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties)
 
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/owner_is_googler.py#17)(api):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/owner_is_googler.py#35)(api: DEPS):**
 ### *recipes* / [cq:tests/reuse](/recipe_modules/cq/tests/reuse.py)
 
-[DEPS](/recipe_modules/cq/tests/reuse.py#9): [assertions](#recipe_modules-assertions), [cq](#recipe_modules-cq), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cq/tests/reuse.py#20): [assertions](#recipe_modules-assertions), [cq](#recipe_modules-cq), [step](#recipe_modules-step)
 
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/reuse.py#16)(api):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/reuse.py#26)(api: DEPS):**
 ### *recipes* / [cq:tests/triggered\_build\_ids](/recipe_modules/cq/tests/triggered_build_ids.py)
 
-[DEPS](/recipe_modules/cq/tests/triggered_build_ids.py#10): [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cq/tests/triggered_build_ids.py#21): [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [step](#recipe_modules-step)
 
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/triggered_build_ids.py#17)(api):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/triggered_build_ids.py#27)(api: DEPS):**
 ### *recipes* / [cv:examples/ordered\_cls](/recipe_modules/cv/examples/ordered_cls.py)
 
-[DEPS](/recipe_modules/cv/examples/ordered_cls.py#12): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cv/examples/ordered_cls.py#25): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cv/examples/ordered_cls.py#21)(api):**
+&mdash; **def [RunSteps](/recipe_modules/cv/examples/ordered_cls.py#40)(api: DEPS):**
 ### *recipes* / [cv:examples/trigger\_child\_builds](/recipe_modules/cv/examples/trigger_child_builds.py)
 
-[DEPS](/recipe_modules/cv/examples/trigger_child_builds.py#11): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cv/examples/trigger_child_builds.py#25): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cv/examples/trigger_child_builds.py#21)(api):**
+&mdash; **def [RunSteps](/recipe_modules/cv/examples/trigger_child_builds.py#41)(api: DEPS):**
 ### *recipes* / [cv:tests/attempt\_key](/recipe_modules/cv/tests/attempt_key.py)
 
-[DEPS](/recipe_modules/cv/tests/attempt_key.py#9): [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv)
+[DEPS](/recipe_modules/cv/tests/attempt_key.py#19): [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cv/tests/attempt_key.py#15)(api):**
+&mdash; **def [RunSteps](/recipe_modules/cv/tests/attempt_key.py#30)(api: DEPS):**
 ### *recipes* / [cv:tests/cl\_group\_key](/recipe_modules/cv/tests/cl_group_key.py)
 
-[DEPS](/recipe_modules/cv/tests/cl_group_key.py#9): [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv)
+[DEPS](/recipe_modules/cv/tests/cl_group_key.py#19): [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cv/tests/cl_group_key.py#17)(api):**
+&mdash; **def [RunSteps](/recipe_modules/cv/tests/cl_group_key.py#32)(api: DEPS):**
 ### *recipes* / [cv:tests/cl\_owner](/recipe_modules/cv/tests/cl_owner.py)
 
-[DEPS](/recipe_modules/cv/tests/cl_owner.py#9): [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv)
+[DEPS](/recipe_modules/cv/tests/cl_owner.py#19): [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cv/tests/cl_owner.py#17)(api):**
+&mdash; **def [RunSteps](/recipe_modules/cv/tests/cl_owner.py#32)(api: DEPS):**
 ### *recipes* / [cv:tests/do\_not\_retry](/recipe_modules/cv/tests/do_not_retry.py)
 
-[DEPS](/recipe_modules/cv/tests/do_not_retry.py#7): [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cv/tests/do_not_retry.py#18): [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cv/tests/do_not_retry.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/cv/tests/do_not_retry.py#27)(api: DEPS):**
 ### *recipes* / [cv:tests/experimental](/recipe_modules/cv/tests/experimental.py)
 
-[DEPS](/recipe_modules/cv/tests/experimental.py#9): [assertions](#recipe_modules-assertions), [cv](#recipe_modules-cv), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cv/tests/experimental.py#21): [assertions](#recipe_modules-assertions), [cv](#recipe_modules-cv), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cv/tests/experimental.py#17)(api):**
+&mdash; **def [RunSteps](/recipe_modules/cv/tests/experimental.py#34)(api: DEPS):**
 ### *recipes* / [cv:tests/inactive](/recipe_modules/cv/tests/inactive.py)
 
-[DEPS](/recipe_modules/cv/tests/inactive.py#9): [assertions](#recipe_modules-assertions), [cv](#recipe_modules-cv), [properties](#recipe_modules-properties)
+[DEPS](/recipe_modules/cv/tests/inactive.py#20): [assertions](#recipe_modules-assertions), [cv](#recipe_modules-cv), [properties](#recipe_modules-properties)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cv/tests/inactive.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/cv/tests/inactive.py#31)(api: DEPS):**
 ### *recipes* / [cv:tests/mode\_of\_run](/recipe_modules/cv/tests/mode_of_run.py)
 
-[DEPS](/recipe_modules/cv/tests/mode_of_run.py#7): [cv](#recipe_modules-cv), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cv/tests/mode_of_run.py#18): [cv](#recipe_modules-cv), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cv/tests/mode_of_run.py#14)(api):**
+&mdash; **def [RunSteps](/recipe_modules/cv/tests/mode_of_run.py#30)(api: DEPS):**
 ### *recipes* / [cv:tests/owner\_is\_googler](/recipe_modules/cv/tests/owner_is_googler.py)
 
-[DEPS](/recipe_modules/cv/tests/owner_is_googler.py#9): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv), [properties](#recipe_modules-properties)
+[DEPS](/recipe_modules/cv/tests/owner_is_googler.py#21): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv), [properties](#recipe_modules-properties)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cv/tests/owner_is_googler.py#17)(api):**
+&mdash; **def [RunSteps](/recipe_modules/cv/tests/owner_is_googler.py#35)(api: DEPS):**
 ### *recipes* / [cv:tests/reuse](/recipe_modules/cv/tests/reuse.py)
 
-[DEPS](/recipe_modules/cv/tests/reuse.py#7): [assertions](#recipe_modules-assertions), [cv](#recipe_modules-cv), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cv/tests/reuse.py#18): [assertions](#recipe_modules-assertions), [cv](#recipe_modules-cv), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cv/tests/reuse.py#14)(api):**
+&mdash; **def [RunSteps](/recipe_modules/cv/tests/reuse.py#24)(api: DEPS):**
 ### *recipes* / [cv:tests/triggered\_build\_ids](/recipe_modules/cv/tests/triggered_build_ids.py)
 
-[DEPS](/recipe_modules/cv/tests/triggered_build_ids.py#7): [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cv/tests/triggered_build_ids.py#18): [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cv/tests/triggered_build_ids.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/cv/tests/triggered_build_ids.py#27)(api: DEPS):**
 ### *recipes* / [defer:tests/collect](/recipe_modules/defer/tests/collect.py)
 
-[DEPS](/recipe_modules/defer/tests/collect.py#15): [context](#recipe_modules-context), [defer](#recipe_modules-defer), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/defer/tests/collect.py#27): [context](#recipe_modules-context), [defer](#recipe_modules-defer), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/defer/tests/collect.py#29)(api, props):**
+&mdash; **def [RunSteps](/recipe_modules/defer/tests/collect.py#45)(api: DEPS, props):**
 ### *recipes* / [defer:tests/context](/recipe_modules/defer/tests/context.py)
 
-[DEPS](/recipe_modules/defer/tests/context.py#15): [context](#recipe_modules-context), [defer](#recipe_modules-defer), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/defer/tests/context.py#27): [context](#recipe_modules-context), [defer](#recipe_modules-defer), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/defer/tests/context.py#29)(api, props):**
+&mdash; **def [RunSteps](/recipe_modules/defer/tests/context.py#45)(api: DEPS, props):**
 ### *recipes* / [defer:tests/non\_deferred](/recipe_modules/defer/tests/non_deferred.py)
 
-[DEPS](/recipe_modules/defer/tests/non_deferred.py#14): [context](#recipe_modules-context), [defer](#recipe_modules-defer), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/defer/tests/non_deferred.py#26): [context](#recipe_modules-context), [defer](#recipe_modules-defer), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/defer/tests/non_deferred.py#28)(api, props):**
+&mdash; **def [RunSteps](/recipe_modules/defer/tests/non_deferred.py#44)(api: DEPS, props):**
 ### *recipes* / [defer:tests/result](/recipe_modules/defer/tests/result.py)
 
-[DEPS](/recipe_modules/defer/tests/result.py#14): [context](#recipe_modules-context), [defer](#recipe_modules-defer), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/defer/tests/result.py#26): [context](#recipe_modules-context), [defer](#recipe_modules-defer), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/defer/tests/result.py#28)(api, props):**
+&mdash; **def [RunSteps](/recipe_modules/defer/tests/result.py#44)(api: DEPS, props):**
 ### *recipes* / [defer:tests/suppressed](/recipe_modules/defer/tests/suppressed.py)
 
-[DEPS](/recipe_modules/defer/tests/suppressed.py#15): [defer](#recipe_modules-defer), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/defer/tests/suppressed.py#26): [defer](#recipe_modules-defer), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/defer/tests/suppressed.py#32)(api: recipe_api.RecipeApi, props: properties_pb2.SuppressedInputProps):**
+&mdash; **def [RunSteps](/recipe_modules/defer/tests/suppressed.py#47)(api: recipe_api.RecipeApi, props: properties_pb2.SuppressedInputProps):**
 ### *recipes* / [engine\_tests/allowlist\_steps](/recipes/engine_tests/allowlist_steps.py)
 
 [DEPS](/recipes/engine_tests/allowlist_steps.py#29): [context](#recipe_modules-context), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

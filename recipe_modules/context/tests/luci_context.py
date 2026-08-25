@@ -6,14 +6,31 @@ from __future__ import annotations
 
 from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
 
-DEPS = [
-  'assertions',
-  'context',
-  'path',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    context,
+    path,
+    step,
+)
 
-def RunSteps(api):
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  context: context.API
+  path: path.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  context: context.TEST_API
+
+
+def RunSteps(api: DEPS):
   def assert_msg_equal(expected, actual):
     api.assertions.assertEqual(
       expected.SerializeToString(deterministic=True),
@@ -44,7 +61,8 @@ def RunSteps(api):
   assert_msg_equal(sections_pb2.LUCIExe(cache_dir='/path/to/cache'),
                    api.context.luciexe)
 
-def GenTests(api):
+
+def GenTests(api: TEST_DEPS):
   yield (
     api.test('basic')
     + api.context.luci_context(

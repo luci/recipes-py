@@ -4,17 +4,35 @@
 
 from __future__ import annotations
 
-DEPS = [
-    'cas',
-    'file',
-    'path',
-    'properties',
-    'runtime',
-    'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    cas,
+    file,
+    path,
+    properties,
+    runtime,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  cas: cas.API
+  file: file.API
+  path: path.API
+  properties: properties.API
+  runtime: runtime.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  runtime: runtime.TEST_API
+
+
+def RunSteps(api: DEPS):
   api.cas.instance
 
   # Prepare files.
@@ -34,6 +52,6 @@ def RunSteps(api):
   api.cas.download('download', digest, out)
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test('basic')
   yield api.test('experimental') + api.runtime(is_experimental=True)

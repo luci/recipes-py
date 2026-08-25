@@ -6,14 +6,29 @@ from __future__ import annotations
 
 from recipe_engine import post_process
 
-DEPS = [
-  'recipe_engine/buildbucket',
-  'recipe_engine/change_verifier',
-  'recipe_engine/step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    buildbucket,
+    change_verifier,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  buildbucket: buildbucket.API
+  change_verifier: change_verifier.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  buildbucket: buildbucket.TEST_API
+
+
+def RunSteps(api: DEPS):
   group = api.change_verifier.match_config(
       'chromium-review.googlesource.com',
       123456)
@@ -26,7 +41,7 @@ def RunSteps(api):
     api.step.empty('group not found')
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'pass',
       api.buildbucket.ci_build(),

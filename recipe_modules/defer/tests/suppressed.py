@@ -12,21 +12,36 @@ from PB.recipe_modules.recipe_engine.defer.tests import (
 )
 from recipe_engine import post_process, recipe_api, recipe_test_api
 
-DEPS = [
-    'defer',
-    'properties',
-    'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    defer,
+    properties,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  defer: defer.API
+  properties: properties.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  properties: properties.TEST_API
 
 PROPERTIES = properties_pb2.SuppressedInputProps
 
 
 class SuppressedFailure(Exception):
-    pass
+  pass
 
 
 class NormalFailure(Exception):
-    pass
+  pass
 
 
 def RunSteps(

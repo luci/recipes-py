@@ -6,20 +6,38 @@ from __future__ import annotations
 
 from recipe_engine import post_process
 
-DEPS = [
-    'assertions',
-    'buildbucket',
-    'cv',
-    'properties',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    buildbucket,
+    cv,
+    properties,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  buildbucket: buildbucket.API
+  cv: cv.API
+  properties: properties.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  buildbucket: buildbucket.TEST_API
+  cv: cv.TEST_API
+  properties: properties.TEST_API
+
+
+def RunSteps(api: DEPS):
   api.assertions.assertEqual(api.cv.owner_is_googler,
                              api.properties['expected_owner_is_googler'])
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield (api.test('default') + api.cv(run_mode=api.cv.FULL_RUN) +
          api.buildbucket.try_build(project='chrome') +
          api.properties(expected_owner_is_googler=False) +

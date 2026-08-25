@@ -8,16 +8,28 @@ from recipe_engine import recipe_api, config
 
 from PB.go.chromium.org.luci.lucictx.sections import Deadline
 
-DEPS = [
-  'context',
-  'path',
-  'raw_io',
-  'step',
-  'time',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    context,
+    path,
+    raw_io,
+    step,
+    time,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  context: context.API
+  path: path.API
+  raw_io: raw_io.API
+  step: step.API
+  time: time.API
+
+
+def RunSteps(api: DEPS):
   api.step('default step', ['bash', '-c', 'echo default!'])
 
   noop_context = {}
@@ -85,5 +97,5 @@ def RunSteps(api):
         pass
 
 
-def GenTests(api):
+def GenTests(api: RecipeTestApi):
   yield api.test('basic')

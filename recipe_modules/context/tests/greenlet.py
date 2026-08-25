@@ -4,13 +4,24 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'context',
-  'futures',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    context,
+    futures,
+    step,
+)
 
-def RunSteps(api):
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  context: context.API
+  futures: futures.API
+  step: step.API
+
+
+def RunSteps(api: DEPS):
   # We want to make sure that context is kept per-greenlet.
 
   chan = api.futures.make_channel()
@@ -29,5 +40,5 @@ def RunSteps(api):
   api.step('we made it', ['echo', 'woot'])
 
 
-def GenTests(api):
+def GenTests(api: RecipeTestApi):
   yield api.test('basic')

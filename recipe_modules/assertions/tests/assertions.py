@@ -6,13 +6,29 @@ from __future__ import annotations
 
 from recipe_engine import post_process
 
-DEPS = [
-    'assertions',
-    'properties',
-    'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    properties,
+    step,
+)
 
-def RunSteps(api):
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  properties: properties.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  properties: properties.TEST_API
+
+
+def RunSteps(api: DEPS):
   msg = api.properties.get('msg')
   try:
     api.assertions.assertEqual(0, 1, msg=msg)
@@ -25,7 +41,7 @@ def RunSteps(api):
           (expected_message, str(e)))
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'basic',
       api.post_process(post_process.MustRun, 'AssertionError'),

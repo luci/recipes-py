@@ -14,18 +14,41 @@ from recipe_engine.post_process import DropExpectation
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 
-DEPS = [
-    'buildbucket',
-    'json',
-    'platform',
-    'properties',
-    'raw_io',
-    'runtime',
-    'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    buildbucket,
+    json,
+    platform,
+    properties,
+    raw_io,
+    runtime,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  buildbucket: buildbucket.API
+  json: json.API
+  platform: platform.API
+  properties: properties.API
+  raw_io: raw_io.API
+  runtime: runtime.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  buildbucket: buildbucket.TEST_API
+  json: json.TEST_API
+  platform: platform.TEST_API
+  properties: properties.TEST_API
+  runtime: runtime.TEST_API
+
+
+def RunSteps(api: DEPS):
   build = api.buildbucket.build
   if build.builder.bucket == 'try':
     assert build.builder.project == 'proj'
@@ -116,7 +139,7 @@ def RunSteps(api):
   )
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'basic-try',
       api.buildbucket.try_build(

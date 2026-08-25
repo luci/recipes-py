@@ -6,11 +6,20 @@ from __future__ import annotations
 
 from PB.go.chromium.org.luci.cv.api.recipe.v1 import cq as cq_pb2
 
-DEPS = [
-    'buildbucket',
-    'properties',
-    'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from RECIPE_MODULES.recipe_engine import (
+    buildbucket,
+    properties,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  buildbucket: buildbucket.API
+  properties: properties.API
+  step: step.API
 
 PROPERTIES = cq_pb2.Input
 

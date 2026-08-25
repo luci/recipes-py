@@ -4,13 +4,22 @@
 
 from __future__ import annotations
 
-DEPS = [
-    'commit_position',
-    'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    commit_position,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  commit_position: commit_position.API
+  step: step.API
+
+
+def RunSteps(api: DEPS):
   expected = ('refs/heads/main', 12345)
   actual = api.commit_position.parse('refs/heads/main@{#12345}')
   assert actual == expected, (actual, expected)
@@ -25,5 +34,6 @@ def RunSteps(api):
   actual = api.commit_position.format('refs/heads/main', 12345)
   assert actual == expected, (actual, expected)
 
-def GenTests(api):
+
+def GenTests(api: RecipeTestApi):
   yield api.test('basic')

@@ -6,15 +6,32 @@ from __future__ import annotations
 
 from recipe_engine import post_process
 
-DEPS = [
-    'assertions',
-    'cv',
-    'properties',
-    'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    cv,
+    properties,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  cv: cv.API
+  properties: properties.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  cv: cv.TEST_API
+  properties: properties.TEST_API
+
+
+def RunSteps(api: DEPS):
   if 'raises' in api.properties:
     with api.assertions.assertRaises(api.cv.CQInactive):
       api.cv.experimental
@@ -28,7 +45,7 @@ def RunSteps(api):
                              in api.properties)
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield (api.test('default') + api.cv(run_mode=api.cv.FULL_RUN) +
          api.properties(expected_top_level=True) +
          api.post_process(post_process.DropExpectation))

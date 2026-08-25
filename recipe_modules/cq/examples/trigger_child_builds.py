@@ -8,18 +8,38 @@ from recipe_engine import post_process, recipe_api
 
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 
-DEPS = [
-  'assertions',
-  'buildbucket',
-  'cq',
-  'json',
-  'properties',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    buildbucket,
+    cq,
+    json,
+    properties,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  buildbucket: buildbucket.API
+  cq: cq.API
+  json: json.API
+  properties: properties.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  buildbucket: buildbucket.TEST_API
+  cq: cq.TEST_API
+  json: json.TEST_API
 
 
 @recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')
-def RunSteps(api):
+def RunSteps(api: DEPS):
   properties = {'foo': 'bar'}
   properties.update(api.cq.props_for_child_build)
   req = api.buildbucket.schedule_request(
@@ -30,7 +50,7 @@ def RunSteps(api):
   api.cq.record_triggered_builds(*child_builds)
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   def check_has_bb_tag(check, steps, key, value):
     req = api.json.loads(steps['buildbucket.schedule'].logs['request'])
     tags = req['requests'][0]['scheduleBuild'].get('tags', [])

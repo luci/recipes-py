@@ -6,19 +6,34 @@ from __future__ import annotations
 
 from recipe_engine import post_process, recipe_api
 
-DEPS = [
-  'assertions',
-  'cq',
-  'properties',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    cq,
+    properties,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  cq: cq.API
+  properties: properties.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  properties: properties.TEST_API
 
 
 @recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')
-def RunSteps(api):
+def RunSteps(api: DEPS):
   api.assertions.assertFalse(api.cq.active)
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield (
     api.test('no cq properties')
     + api.post_process(post_process.DropExpectation)

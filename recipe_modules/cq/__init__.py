@@ -6,11 +6,20 @@ from __future__ import annotations
 
 from PB.go.chromium.org.luci.cv.api.recipe.v1 import cq as cq_pb2
 
-DEPS = [
-    'cv',
-    'properties',
-    'warning',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from RECIPE_MODULES.recipe_engine import (
+    cv,
+    properties,
+    warning,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  cv: cv.API
+  properties: properties.API
+  warning: warning.API
 
 PROPERTIES = cq_pb2.Input
 

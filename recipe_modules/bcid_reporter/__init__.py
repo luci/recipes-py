@@ -4,14 +4,26 @@
 
 from __future__ import annotations
 
-DEPS = [
-    'recipe_engine/cipd',
-    'recipe_engine/file',
-    'recipe_engine/path',
-    'recipe_engine/properties',
-    'recipe_engine/step',
-    'time',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from RECIPE_MODULES.recipe_engine import (
+    cipd,
+    file,
+    path,
+    properties,
+    step,
+    time,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  cipd: cipd.API
+  file: file.API
+  path: path.API
+  properties: properties.API
+  step: step.API
+  time: time.API
 
 from .api import BcidReporterApi as API
 from .test_api import BcidReporterTestApi as TEST_API

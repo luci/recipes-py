@@ -16,15 +16,32 @@ from PB.go.chromium.org.luci.buildbucket.proto \
   import builder_common as builder_common_pb2
 
 
-DEPS = [
-  'assertions',
-  'buildbucket',
-  'properties',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    buildbucket,
+    properties,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  buildbucket: buildbucket.API
+  properties: properties.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  buildbucket: buildbucket.TEST_API
+  properties: properties.TEST_API
+
+
+def RunSteps(api: DEPS):
   text = text_format.MessageToString(api.buildbucket.build)
   api.step('build', ['echo'] + text.splitlines())
   api.step('hostname', ['echo', api.buildbucket.host])
@@ -56,7 +73,7 @@ def RunSteps(api):
       api.buildbucket.builder_full_name
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
 
   def case(name, **properties):
     return api.test(name) + api.properties(**properties)

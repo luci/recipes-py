@@ -6,16 +6,33 @@ from __future__ import annotations
 
 from recipe_engine import post_process, recipe_api
 
-DEPS = [
-  'assertions',
-  'cq',
-  'properties',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    cq,
+    properties,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  cq: cq.API
+  properties: properties.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  cq: cq.TEST_API
+  properties: properties.TEST_API
 
 
 @recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')
-def RunSteps(api):
+def RunSteps(api: DEPS):
   if 'raises' in api.properties:
     with api.assertions.assertRaises(api.cq.CQInactive):
       api.cq.experimental
@@ -29,7 +46,7 @@ def RunSteps(api):
       api.cq.top_level, 'expected_top_level' in api.properties)
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield (
     api.test('default')
     + api.cq(run_mode=api.cq.FULL_RUN)

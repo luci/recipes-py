@@ -4,17 +4,32 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'json',
-  'path',
-  'platform',
-  'raw_io',
-  'resultdb',
-  'runtime',
-  'step',
-  'uuid',
-  'warning',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from RECIPE_MODULES.recipe_engine import (
+    json,
+    path,
+    platform,
+    raw_io,
+    resultdb,
+    runtime,
+    step,
+    uuid,
+    warning,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  json: json.API
+  path: path.API
+  platform: platform.API
+  raw_io: raw_io.API
+  resultdb: resultdb.API
+  runtime: runtime.API
+  step: step.API
+  uuid: uuid.API
+  warning: warning.API
 
 from PB.recipe_modules.recipe_engine.buildbucket import properties
 

@@ -14,16 +14,36 @@ from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 from PB.go.chromium.org.luci.buildbucket.proto \
   import builds_service as builds_service_pb2
 
-DEPS = [
-  'buildbucket',
-  'json',
-  'properties',
-  'runtime',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    buildbucket,
+    json,
+    properties,
+    runtime,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  buildbucket: buildbucket.API
+  json: json.API
+  properties: properties.API
+  runtime: runtime.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  buildbucket: buildbucket.TEST_API
+  json: json.TEST_API
+  properties: properties.TEST_API
+  runtime: runtime.TEST_API
+
+
+def RunSteps(api: DEPS):
   # Convert from FrozenDict
   req_body = engine_types.thaw(api.properties.get('request_kwargs'))
   tags = api.properties.get('tags')
@@ -51,7 +71,7 @@ def RunSteps(api):
   api.buildbucket.run([], step_name='run nothing')
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
 
   def test(test_name,
            response=None,
@@ -226,19 +246,21 @@ def GenTests(api):
          api.post_process(post_process.DropExpectation))
 
   # It is in fact inheriting the parent's bucket.
-  yield (test(
-      test_name="schedule shadow child for led if provided bucket is parent's bucket",
-      shadowed_bucket='original') + api.properties(as_shadow=True) +
-         api.properties(child_bucket='original') +
-         api.post_process(post_process.LogContains, 'buildbucket.schedule',
-                          'request', ['original']) +
-         api.post_process(post_process.LogDoesNotContain,
-                          'buildbucket.schedule', 'request',
-                          ['inheritFromParent']) +
-         api.post_process(post_process.DropExpectation))
+  yield (
+      test(
+          test_name="schedule shadow child for led if provided bucket "
+          "is parent's bucket",
+          shadowed_bucket='original') + api.properties(as_shadow=True) +
+      api.properties(child_bucket='original') +
+      api.post_process(post_process.LogContains, 'buildbucket.schedule',
+                       'request', ['original']) +
+      api.post_process(post_process.LogDoesNotContain, 'buildbucket.schedule',
+                       'request', ['inheritFromParent']) +
+      api.post_process(post_process.DropExpectation))
 
   yield (test(
-      test_name="not schedule shadow child for led if provided bucket is not parent's bucket",
+      test_name="not schedule shadow child for led if provided bucket "
+      "is not parent's bucket",
       shadowed_bucket='original') + api.properties(as_shadow=True) +
          api.properties(child_bucket='special') +
          api.post_process(post_process.LogContains, 'buildbucket.schedule',

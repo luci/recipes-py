@@ -4,11 +4,21 @@
 
 from __future__ import annotations
 
-DEPS = [
-    'recipe_engine/cipd',
-    'recipe_engine/file',
-    'recipe_engine/path',
-    'recipe_engine/step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from RECIPE_MODULES.recipe_engine import (
+    cipd,
+    file,
+    path,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  cipd: cipd.API
+  file: file.API
+  path: path.API
+  step: step.API
 
 from .api import BcidVerifierApi as API

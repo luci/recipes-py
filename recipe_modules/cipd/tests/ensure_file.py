@@ -8,11 +8,21 @@ from typing import Iterator
 
 from recipe_engine import post_process, recipe_api, recipe_test_api
 
-DEPS = [
-    'assertions',
-    'cipd',
-    'path',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    cipd,
+    path,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  cipd: cipd.API
+  path: path.API
 
 
 def RunSteps(api: recipe_api.RecipeScriptApi) -> None:
@@ -60,9 +70,7 @@ def RunSteps(api: recipe_api.RecipeScriptApi) -> None:
   api.cipd.ensure_file_resolve(ef_integrity)
 
 
-def GenTests(
-    api: recipe_test_api.RecipeTestApi,
-) -> Iterator[recipe_test_api.TestData]:
+def GenTests(api: RecipeTestApi,) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
     'basic',
     api.post_process(post_process.DropExpectation),

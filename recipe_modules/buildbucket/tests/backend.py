@@ -10,10 +10,32 @@ from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import task as task_pb2
 
 
-DEPS = ['assertions', 'buildbucket', 'properties', 'step']
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    buildbucket,
+    properties,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  buildbucket: buildbucket.API
+  properties: properties.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  buildbucket: buildbucket.TEST_API
+  properties: properties.TEST_API
+
+
+def RunSteps(api: DEPS):
   api.assertions.assertEqual(api.buildbucket.backend_hostname, 'foo')
   api.assertions.assertEqual(
     api.buildbucket.backend_task_dimensions[0],
@@ -52,7 +74,7 @@ def RunSteps(api):
                                "abc123@email.com")
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
 
   def _setup_backend_build(update_backend_config=False,
                            use_default_bot_dims=True,

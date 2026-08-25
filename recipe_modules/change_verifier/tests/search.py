@@ -7,13 +7,27 @@ from __future__ import annotations
 from PB.go.chromium.org.luci.cv.api.v0 import run as run_pb
 from PB.go.chromium.org.luci.cv.api.v0 import service_runs as service_runs_pb
 
-DEPS = [
-    'change_verifier',
-    'proto',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    change_verifier,
+    proto,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  change_verifier: change_verifier.API
+  proto: proto.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  proto: proto.TEST_API
+
+
+def RunSteps(api: DEPS):
   # Lookup Runs by CL.
   runs = api.change_verifier.search_runs(
       'prj', cls=('x-review.googlesource.com', 123), step_name='search1cl')
@@ -44,7 +58,7 @@ def make_runs(count=1):
   return runs
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'basic',
       api.step_data('search1cl.request page 1',

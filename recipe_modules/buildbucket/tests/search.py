@@ -15,13 +15,32 @@ from PB.go.chromium.org.luci.buildbucket.proto import (
 from PB.recipe_modules.recipe_engine.buildbucket.tests import (search as
                                                                search_pb2)
 
-DEPS = [
-  'buildbucket',
-  'properties',
-  'raw_io',
-  'runtime',
-  'step'
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    buildbucket,
+    properties,
+    raw_io,
+    runtime,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  buildbucket: buildbucket.API
+  properties: properties.API
+  raw_io: raw_io.API
+  runtime: runtime.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  buildbucket: buildbucket.TEST_API
+  properties: properties.TEST_API
+  raw_io: raw_io.TEST_API
 
 INLINE_PROPERTIES_PROTO = """
 import "go.chromium.org/luci/buildbucket/proto/build.proto";
@@ -35,7 +54,7 @@ message SearchInputProps {
 PROPERTIES = search_pb2.SearchInputProps
 
 
-def RunSteps(api, props):
+def RunSteps(api: DEPS, props):
   limit = api.properties.get('limit')
 
   test_data = None
@@ -73,7 +92,7 @@ def RunSteps(api, props):
     ]
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
 
   def build():
     return api.buildbucket.try_build(

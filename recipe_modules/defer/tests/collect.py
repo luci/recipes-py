@@ -12,21 +12,37 @@ from PB.recipe_modules.recipe_engine.defer.tests import (
 )
 from recipe_engine import post_process, recipe_test_api, step_data
 
-DEPS = [
-    'context',
-    'defer',
-    'properties',
-    'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    context,
+    defer,
+    properties,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  context: context.API
+  defer: defer.API
+  properties: properties.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  properties: properties.TEST_API
 
 PROPERTIES = properties_pb2.CollectInputProps
 
 
 class CollectTestError(Exception):
-    pass
+  pass
 
 
-def RunSteps(api, props):
+def RunSteps(api: DEPS, props):
 
   def step(i):
     api.step(f'step {i}', ['cmd'])

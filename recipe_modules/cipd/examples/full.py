@@ -13,15 +13,38 @@ from recipe_engine.recipe_api import Property
 
 from PB.recipe_modules.recipe_engine.cipd.examples import full as full_pb
 
-DEPS = [
-  'buildbucket',
-  'cipd',
-  'json',
-  'path',
-  'platform',
-  'properties',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    buildbucket,
+    cipd,
+    json,
+    path,
+    platform,
+    properties,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  buildbucket: buildbucket.API
+  cipd: cipd.API
+  json: json.API
+  path: path.API
+  platform: platform.API
+  properties: properties.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  buildbucket: buildbucket.TEST_API
+  cipd: cipd.TEST_API
+  json: json.TEST_API
+  platform: platform.TEST_API
+  properties: properties.TEST_API
 
 INLINE_PROPERTIES_PROTO = """
 message PackageDir {
@@ -46,7 +69,7 @@ message InputProperties {
 PROPERTIES = full_pb.InputProperties
 
 
-def RunSteps(api, props: full_pb.InputProperties):
+def RunSteps(api: DEPS, props: full_pb.InputProperties):
   package_name = 'public/package/${platform}'
   package_instance_id = '7f751b2237df2fdf3c1405be00590fefffbaea2d'
   ensure_file = api.cipd.EnsureFile()
@@ -198,7 +221,7 @@ def RunSteps(api, props: full_pb.InputProperties):
   api.step('run some_exe', [exe, '-opt'])
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   def properties(
       use_pkg: bool = False,
       pkg_files: Sequence[str] = (),

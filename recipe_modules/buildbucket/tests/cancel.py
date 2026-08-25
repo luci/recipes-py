@@ -9,11 +9,23 @@ from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 from PB.go.chromium.org.luci.buildbucket.proto \
   import builds_service as builds_service_pb2
 
-DEPS = [
-  'buildbucket'
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import buildbucket
 
-def RunSteps(api):
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  buildbucket: buildbucket.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  buildbucket: buildbucket.TEST_API
+
+
+def RunSteps(api: DEPS):
   api.buildbucket.cancel_build(
     1785294945718829, step_name='cancel_without_reason')
   api.buildbucket.cancel_build(
@@ -24,7 +36,8 @@ def RunSteps(api):
   except Exception as e:
     assert isinstance(e, ValueError)
 
-def GenTests(api):
+
+def GenTests(api: TEST_DEPS):
   def construct_batch_response(build_id, status):
     return builds_service_pb2.BatchResponse(
       responses=[

@@ -4,11 +4,21 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'recipe_engine/json',
-  'recipe_engine/path',
-  'recipe_engine/platform',
-  'recipe_engine/step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from RECIPE_MODULES.recipe_engine import (
+    json,
+    path,
+    platform,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  json: json.API
+  path: path.API
+  platform: platform.API
+  step: step.API
 
 from .api import ArchiveApi as API

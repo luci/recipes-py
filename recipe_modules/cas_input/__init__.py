@@ -6,10 +6,18 @@ from __future__ import annotations
 
 from PB.recipe_modules.recipe_engine.cas_input import properties
 
-DEPS = [
-    'path',
-    'cas',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from RECIPE_MODULES.recipe_engine import (
+    cas,
+    path,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  cas: cas.API
+  path: path.API
 
 PROPERTIES = properties.InputProperties
 

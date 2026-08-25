@@ -6,19 +6,40 @@ from __future__ import annotations
 
 from recipe_engine.post_process import Filter
 
-DEPS = [
-  'recipe_engine/archive',
-  'recipe_engine/context',
-  'recipe_engine/file',
-  'recipe_engine/json',
-  'recipe_engine/path',
-  'recipe_engine/platform',
-  'recipe_engine/raw_io',
-  'recipe_engine/step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    archive,
+    context,
+    file,
+    json,
+    path,
+    platform,
+    raw_io,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  archive: archive.API
+  context: context.API
+  file: file.API
+  json: json.API
+  path: path.API
+  platform: platform.API
+  raw_io: raw_io.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  json: json.TEST_API
+  platform: platform.TEST_API
+
+
+def RunSteps(api: DEPS):
   # Prepare directories.
   out = api.path.start_dir.joinpath('output')
   api.file.rmtree('cleanup', out)
@@ -81,7 +102,7 @@ def RunSteps(api):
   api.step('listing output_sub', ['find', temp.joinpath('output_sub')])
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   # only really care about the archiving and extract steps
   keep = (Filter().
           include_re('archiving.*').

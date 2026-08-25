@@ -4,12 +4,23 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'context',
-  'path',
-  'raw_io',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    context,
+    path,
+    raw_io,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  context: context.API
+  path: path.API
+  raw_io: raw_io.API
+  step: step.API
 
 
 # This key is set by "//recipe_engine/unittests/run_test.py" to "default". This
@@ -18,7 +29,7 @@ DEPS = [
 _KEY = 'RECIPE_ENGINE_CONTEXT_TEST'
 
 
-def RunSteps(api):
+def RunSteps(api: DEPS):
   api.step('no env', ['echo', 'hello'])
 
   with api.context(env={'SOMETHING': '1'}):
@@ -94,5 +105,5 @@ def RunSteps(api):
       expect_step('env with empty value', str(shirt))
 
 
-def GenTests(api):
+def GenTests(api: RecipeTestApi):
   yield api.test('basic')

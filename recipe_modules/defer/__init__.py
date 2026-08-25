@@ -4,8 +4,13 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from RECIPE_MODULES.recipe_engine import step
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  step: step.API
 
 from .api import DeferApi as API
