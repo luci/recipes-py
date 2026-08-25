@@ -21,11 +21,6 @@ from ..global_shutdown import UNKILLED_PROC_GROUPS, GLOBAL_SOFT_DEADLINE
 from . import StepRunner
 
 if MSWINDOWS:
-  # subprocess.Popen(close_fds) raises an exception when attempting to do this
-  # and also redirect stdin/stdout/stderr. To be on the safe side, we just don't
-  # do this on Windows.
-  CLOSE_FDS = False
-
   # Windows has a bad habit of opening a dialog when a console program
   # crashes, rather than just letting it crash.  Therefore, when a
   # program crashes on Windows, we don't find out until the build step
@@ -47,8 +42,6 @@ if MSWINDOWS:
   # pylint: disable=no-member
   EXTRA_KWARGS = {'creationflags': subprocess.CREATE_NEW_PROCESS_GROUP}
 else:
-  # Non-Windows platforms implement close_fds in a safe way.
-  CLOSE_FDS = True
   EXTRA_KWARGS = {'preexec_fn': lambda: os.setpgid(0, 0)}
 
 
@@ -231,7 +224,7 @@ class SubprocessStepRunner(StepRunner):
           env=step.env,
           cwd=step.cwd,
           universal_newlines=True,
-          close_fds=CLOSE_FDS,
+          close_fds=True,
           **extra_kwargs)
     finally:
       os.environ['PATH'] = orig_path
