@@ -6,13 +6,30 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 
-DEPS = [
-  'futures',
-  'json',
-  'path',
-  'raw_io',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    futures,
+    json,
+    path,
+    raw_io,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  futures: futures.API
+  json: json.API
+  path: path.API
+  raw_io: raw_io.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  json: json.TEST_API
 
 
 HELPER_TIMEOUT = object()
@@ -84,14 +101,14 @@ def run_helper(api):
       management_channel.put(None)
 
 
-def RunSteps(api):
+def RunSteps(api: DEPS):
   with run_helper(api):
     api.step(
         'do something with live helper',
         ['python3', '-u', api.resource('do_something.py')])
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'basic',
       api.step_data('helper.wait for it', api.json.output({

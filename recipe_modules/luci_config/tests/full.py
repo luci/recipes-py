@@ -7,14 +7,30 @@ from __future__ import annotations
 from PB.go.chromium.org.luci.cv.api.config.v2 import config as cv_config_pb2
 from PB.go.chromium.org.luci.milo.proto.projectconfig import project as milo_pb2
 
-DEPS = [
-    "recipe_engine/luci_config",
-    "recipe_engine/buildbucket",
-    "recipe_engine/path",
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    buildbucket,
+    luci_config,
+    path,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  buildbucket: buildbucket.API
+  luci_config: luci_config.API
+  path: path.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  buildbucket: buildbucket.TEST_API
+  luci_config: luci_config.TEST_API
+
+
+def RunSteps(api: DEPS):
   assert api.luci_config.commit_queue(local_dir=api.path.start_dir)
   assert api.luci_config.buildbucket()
   assert api.luci_config.milo()
@@ -26,7 +42,7 @@ def RunSteps(api):
   assert api.luci_config.milo()
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test(
       "basic",
       api.buildbucket.try_build(project="project"),

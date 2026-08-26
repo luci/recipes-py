@@ -4,12 +4,27 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'platform',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    platform,
+    step,
+)
 
-def RunSteps(api):
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  platform: platform.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  platform: platform.TEST_API
+
+
+def RunSteps(api: DEPS):
   step_result = api.step('platform things', cmd=None)
   step_result.presentation.logs['name'] = [api.platform.name]
   step_result.presentation.logs['bits'] = [str(api.platform.bits)]
@@ -26,7 +41,7 @@ def RunSteps(api):
     assert api.platform.is_linux
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test('linux64') + api.platform('linux', 64)
   yield api.test('mac64') + api.platform('mac', 64)
   yield api.test('win32') + api.platform('win', 32)

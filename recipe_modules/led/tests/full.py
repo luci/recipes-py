@@ -13,13 +13,31 @@ from PB.recipe_modules.recipe_engine.led.properties import InputProperties as Le
 from PB.recipe_modules.recipe_engine.led.tests import full as full_pb
 from recipe_engine import post_process
 
-DEPS = [
-  'buildbucket',
-  'led',
-  'properties',
-  'proto',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    buildbucket,
+    led,
+    properties,
+    proto,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  buildbucket: buildbucket.API
+  led: led.API
+  properties: properties.API
+  proto: proto.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  led: led.TEST_API
+  properties: properties.TEST_API
 
 INLINE_PROPERTIES_PROTO = """
 message InputProperties {
@@ -33,7 +51,7 @@ message InputProperties {
 PROPERTIES = full_pb.InputProperties
 
 
-def RunSteps(api, props: full_pb.InputProperties):
+def RunSteps(api: DEPS, props: full_pb.InputProperties):
   intermediate = api.led(*props.get_cmd)
   intermediate = intermediate.then(
       'edit-gerrit-cl', 'https://fake.url/c/project/123/+/456')
@@ -80,7 +98,7 @@ def RunSteps(api, props: full_pb.InputProperties):
   api.step('print build id', ['echo', final_result.launch_result.build_id])
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   def led_props(input_properties):
     return api.properties(**{'$recipe_engine/led': input_properties})
 

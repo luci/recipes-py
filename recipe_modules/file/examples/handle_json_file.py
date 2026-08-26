@@ -4,13 +4,27 @@
 
 from __future__ import annotations
 
-DEPS = [
-  "file",
-  "path",
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    file,
+    path,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  file: file.API
+  path: path.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  file: file.TEST_API
+
+
+def RunSteps(api: DEPS):
   dest = api.path.start_dir / 'some_file.json'
   # Test a non-trivial number of keys in a dict.  This tests that the keys
   # are sorted in the output.
@@ -22,7 +36,8 @@ def RunSteps(api):
 
   assert read_data == data, (read_data, data)
 
-def GenTests(api):
+
+def GenTests(api: TEST_DEPS):
   yield api.test('basic')
   yield api.test(
       'failure',

@@ -4,12 +4,28 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'context',
-  'futures',
-  'path',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    context,
+    futures,
+    path,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  context: context.API
+  futures: futures.API
+  path: path.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  pass
 
 
 def Level2(api, i):
@@ -30,10 +46,10 @@ def Level1(api, i):
       api.futures.spawn(Level2, api, j)
 
 
-def RunSteps(api):
+def RunSteps(api: DEPS):
   for i in range(4):
     api.futures.spawn(Level1, api, i)
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test('basic')

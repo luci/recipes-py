@@ -10,13 +10,33 @@ from google.protobuf import json_format
 from PB.recipe_modules.recipe_engine.luci_analysis.tests import query_stability_test as query_stability_test_pb
 from recipe_engine import post_process
 
-DEPS = [
-    'luci_analysis',
-    'recipe_engine/assertions',
-    'recipe_engine/json',
-    'recipe_engine/properties',
-    'recipe_engine/raw_io',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    json,
+    luci_analysis,
+    properties,
+    raw_io,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  json: json.API
+  luci_analysis: luci_analysis.API
+  properties: properties.API
+  raw_io: raw_io.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  json: json.TEST_API
+  luci_analysis: luci_analysis.TEST_API
+  properties: properties.TEST_API
+  raw_io: raw_io.TEST_API
 
 INLINE_PROPERTIES_PROTO = """
 message Changelist {
@@ -57,7 +77,7 @@ message InputProperties {
 PROPERTIES = query_stability_test_pb.InputProperties
 
 
-def RunSteps(api, props: query_stability_test_pb.InputProperties):
+def RunSteps(api: DEPS, props: query_stability_test_pb.InputProperties):
   input_list = [
       json_format.MessageToDict(i, preserving_proto_field_name=False)
       for i in props.input_list
@@ -67,7 +87,7 @@ def RunSteps(api, props: query_stability_test_pb.InputProperties):
   api.assertions.assertIsNotNone(criteria)
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   input_list_dicts = api.luci_analysis.query_stability_example_input()
   input_list = [
       json_format.ParseDict(

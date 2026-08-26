@@ -4,13 +4,29 @@
 
 from __future__ import annotations
 
-DEPS = [
-  "assertions",
-  "file",
-  "path",
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    file,
+    path,
+)
 
-def RunSteps(api):
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  file: file.API
+  path: path.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  pass
+
+
+def RunSteps(api: DEPS):
   some_dir = api.path.start_dir / 'some_dir'
   api.file.ensure_directory('ensure some_dir', some_dir)
 
@@ -36,5 +52,5 @@ def RunSteps(api):
   api.assertions.assertEqual(result, expected)
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test('basic')

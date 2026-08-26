@@ -4,16 +4,31 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'path',
-  'proto',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    path,
+    proto,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  path: path.API
+  proto: proto.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  proto: proto.TEST_API
 
 from PB.recipe_modules.recipe_engine.proto.tests.placeholders import SomeMessage
 
 
-def RunSteps(api):
+def RunSteps(api: DEPS):
   step = api.step('read from script', [
     'python3', api.resource('dump.py'), api.proto.output(SomeMessage, 'JSONPB'),
   ])
@@ -52,7 +67,7 @@ def RunSteps(api):
   ])
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'basic',
       api.step_data('read from script', api.proto.output(

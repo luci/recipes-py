@@ -4,10 +4,24 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'futures',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    futures,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  futures: futures.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  pass
 
 
 def worker(api, sem, i, N):
@@ -17,7 +31,7 @@ def worker(api, sem, i, N):
     api.step('parallel work', ['python3', api.resource('sleep.py'), 5*N])
 
 
-def RunSteps(api):
+def RunSteps(api: DEPS):
   futures = []
   sem = api.futures.make_bounded_semaphore()
   # total time should be (5s * N) * 2
@@ -29,5 +43,5 @@ def RunSteps(api):
     api.step('Sleeper %d complete' % fut.meta, cmd=None)
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test('basic')

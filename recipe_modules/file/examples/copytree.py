@@ -6,16 +6,31 @@ from __future__ import annotations
 
 from PB.recipe_modules.recipe_engine.file.examples.copytree import Properties
 
-DEPS = [
-    "file",
-    "path",
-    "properties",
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    file,
+    path,
+    properties,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  file: file.API
+  path: path.API
+  properties: properties.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  properties: properties.TEST_API
 
 PROPERTIES = Properties
 
 
-def RunSteps(api, properties):
+def RunSteps(api: DEPS, properties):
   file_names = ['a', 'aa', 'b', 'bb', 'c', 'cc']
 
   test_base_dir = api.path.mkdtemp()
@@ -68,7 +83,7 @@ def RunSteps(api, properties):
   assert api.path.exists(dest2), dest2
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test('basic', api.properties(Properties(hardlink=False)))
   yield api.test('hardlink', api.properties(Properties(hardlink=True)))
   yield api.test('symlinks', api.properties(Properties(symlinks=True)))

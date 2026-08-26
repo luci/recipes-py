@@ -6,21 +6,39 @@ from __future__ import annotations
 
 from recipe_engine import post_process
 
-DEPS = [
-    'luci_analysis',
-    'recipe_engine/json',
-    'recipe_engine/raw_io',
-    'recipe_engine/step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    json,
+    luci_analysis,
+    raw_io,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  json: json.API
+  luci_analysis: luci_analysis.API
+  raw_io: raw_io.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  json: json.TEST_API
+  luci_analysis: luci_analysis.TEST_API
+  raw_io: raw_io.TEST_API
+
+
+def RunSteps(api: DEPS):
   # This is to get coverage of the test_api which is being used more extensively
   # outside this module
   api.step.empty('step')
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'basic',
       api.step_data(

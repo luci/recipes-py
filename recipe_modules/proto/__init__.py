@@ -4,9 +4,14 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'raw_io',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from RECIPE_MODULES.recipe_engine import raw_io
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  raw_io: raw_io.API
 
 from .api import ProtoApi as API
 from .test_api import ProtoTestApi as TEST_API

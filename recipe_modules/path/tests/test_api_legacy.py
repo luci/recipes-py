@@ -8,7 +8,20 @@ from __future__ import annotations
 from recipe_engine import recipe_api
 from recipe_engine.post_process import DropExpectation
 
-DEPS = ['path']
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import path
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  path: path.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  path: path.TEST_API
 
 GETATTR_NAMES = [
     'cache_dir',
@@ -20,7 +33,7 @@ GETATTR_NAMES = [
 
 
 @recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED')
-def RunSteps(api):
+def RunSteps(api: DEPS):
   for name in GETATTR_NAMES:
     p = getattr(api.path, name) / 'file'
     assert api.path.exists(p), p
@@ -29,7 +42,7 @@ def RunSteps(api):
   assert api.path.exists(getattr(api.path, 'checkout_dir') / 'file')
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   paths = [getattr(api.path, name) / 'file' for name in GETATTR_NAMES]
   paths.append(api.path.checkout_dir / 'file')
 

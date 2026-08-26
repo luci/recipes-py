@@ -4,13 +4,27 @@
 
 from __future__ import annotations
 
-DEPS = [
-    'file',
-    'path',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    file,
+    path,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  file: file.API
+  path: path.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  pass
+
+
+def RunSteps(api: DEPS):
   filepath = api.path.start_dir / 'some_file'
   size_mb = 300
 
@@ -23,5 +37,5 @@ def RunSteps(api):
   assert filesizes[0] == MBtoB(size_mb), ("size is %sMB" % BtoMB(filesizes[0]))
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test('basic')

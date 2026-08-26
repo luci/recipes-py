@@ -6,14 +6,29 @@ from __future__ import annotations
 
 from PB.recipe_modules.recipe_engine.file.examples.read_write_proto import SomeMessage
 
-DEPS = [
-  "file",
-  "path",
-  "proto",
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    file,
+    path,
+    proto,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  file: file.API
+  path: path.API
+  proto: proto.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  file: file.TEST_API
+
+
+def RunSteps(api: DEPS):
   msg = SomeMessage(fields=['abc', 'def'])
 
   dest = api.path.start_dir / 'message.textproto'
@@ -35,7 +50,8 @@ def RunSteps(api):
       SomeMessage,
       'TEXTPB')
 
-def GenTests(api):
+
+def GenTests(api: TEST_DEPS):
   yield api.test('basic')
   read_proto_data = api.file.read_proto(SomeMessage(fields=['abc', 'def']))
   yield (api.test('override_step_data')

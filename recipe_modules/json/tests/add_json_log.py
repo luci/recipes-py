@@ -4,12 +4,27 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'json',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    json,
+    step,
+)
 
-def RunSteps(api):
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  json: json.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  json: json.TEST_API
+
+
+def RunSteps(api: DEPS):
   example_dict = {'x': 1, 'y': 2}
 
   # not add a log for success
@@ -37,19 +52,22 @@ def RunSteps(api):
     assert actual_log_dict == example_dict
 
 
-def GenTests(api):
-  yield (
-    api.test('add_json_log')
-    + api.step_data(
+def GenTests(api: TEST_DEPS):
+  yield (api.test('add_json_log') + api.step_data(
       'no log on success',
-      stdout=api.json.output({'x': 1, 'y': 2}, name='log1'),
-    )
-    + api.step_data(
+      stdout=api.json.output({
+          'x': 1,
+          'y': 2
+      }, name='log1'),
+  ) + api.step_data(
       'add log on failure',
-      stdout=api.json.output({'x': 1, 'y': 2}, name='log2'),
+      stdout=api.json.output({
+          'x': 1,
+          'y': 2
+      }, name='log2'),
       retcode=1,
-    )
-    + api.post_check(lambda check, steps: check(
-        api.json.loads(steps['add log on failure'].logs['json.output[log2]'])
-        == {'x':1, 'y': 2}))
-  )
+  ) + api.post_check(lambda check, steps: check(
+      api.json.loads(steps['add log on failure'].logs['json.output[log2]']) == {
+          'x': 1,
+          'y': 2
+      })))

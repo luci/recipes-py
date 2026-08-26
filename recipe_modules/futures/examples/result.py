@@ -4,13 +4,27 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'futures',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    futures,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  futures: futures.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  pass
+
+
+def RunSteps(api: DEPS):
   # This normal step checks against regressions in the greenlet spawning
   # function. Previously the engine would accidentally add the spawned greenlet
   # to this normal step, resulting in deadlock at `fut.result()` below.
@@ -26,7 +40,8 @@ def RunSteps(api):
 
   api.step('run if success', cmd=None)
 
-def GenTests(api):
+
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'success',
       api.post_check(lambda check, steps: check(

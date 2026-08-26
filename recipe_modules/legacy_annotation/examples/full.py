@@ -4,11 +4,27 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'legacy_annotation',
-  'raw_io',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    legacy_annotation,
+    raw_io,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  legacy_annotation: legacy_annotation.API
+  raw_io: raw_io.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  legacy_annotation: legacy_annotation.TEST_API
+  step: step.TEST_API
 
 from recipe_engine import post_process
 
@@ -17,14 +33,14 @@ from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import step as step_pb2
 
 
-def RunSteps(api):
+def RunSteps(api: DEPS):
   api.legacy_annotation('run annotation script',
     cmd=['python', '-u', api.resource('anno.py')],
     step_test_data=lambda: api.legacy_annotation.test_api.success_step,
   )
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   sub_build = build_pb2.Build(id=1, status=common_pb2.SUCCESS)
   sub_build.steps.add().CopyFrom(
     step_pb2.Step(name='Hi Sub Annotation', status=common_pb2.SUCCESS),

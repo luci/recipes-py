@@ -17,16 +17,31 @@ from PB.recipe_modules.recipe_engine.futures.examples.lottasteps import Input
 from PB.recipe_engine.result import RawResult
 from PB.go.chromium.org.luci.buildbucket.proto import common
 
-DEPS = [
-  'futures',
-  'properties',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    futures,
+    properties,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  futures: futures.API
+  properties: properties.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  properties: properties.TEST_API
 
 PROPERTIES = Input
 
 
-def RunSteps(api, props):
+def RunSteps(api: DEPS, props):
   work = []
   for i in range(props.num_steps):
     work.append(api.futures.spawn_immediate(
@@ -40,7 +55,7 @@ def RunSteps(api, props):
   )
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield (
     api.test('basic')
     + api.properties(num_steps=10)

@@ -4,10 +4,18 @@
 
 from __future__ import annotations
 
-DEPS = [
-    'recipe_engine/json',
-    'recipe_engine/step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from RECIPE_MODULES.recipe_engine import (
+    json,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  json: json.API
+  step: step.API
 
 from .api import LuciAnalysisApi as API
 from .test_api import LuciAnalysisTestApi as TEST_API

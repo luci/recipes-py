@@ -4,14 +4,29 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'file',
-  'path',
-  'json',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    file,
+    json,
+    path,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  file: file.API
+  json: json.API
+  path: path.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  pass
+
+
+def RunSteps(api: DEPS):
   src = api.path.start_dir / 'some file'
   data = 'Here is some text data'
 
@@ -34,5 +49,6 @@ def RunSteps(api):
   tree.register_link(src2, root / 'yet' / 'another' / 'symlink')
   tree.create_links('create a tree of symlinks')
 
-def GenTests(api):
+
+def GenTests(api: TEST_DEPS):
   yield api.test('basic')

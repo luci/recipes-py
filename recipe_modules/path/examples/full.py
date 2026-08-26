@@ -6,19 +6,36 @@ from __future__ import annotations
 
 from recipe_engine import recipe_api
 
-DEPS = [
-  'json',
-  'path',
-  'platform',
-  'properties',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    json,
+    path,
+    platform,
+    properties,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  json: json.API
+  path: path.API
+  platform: platform.API
+  properties: properties.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  platform: platform.TEST_API
 
 from builtins import range, zip
 
 
 @recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED')
-def RunSteps(api):
+def RunSteps(api: DEPS):
   api.step('step1', ['/bin/echo', str(api.path.tmp_base_dir / 'foo')])
 
   # module.resource(...) demo.
@@ -242,7 +259,7 @@ def RunSteps(api):
   ]
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   for platform in ('linux', 'win'):
     yield api.test(
         platform,

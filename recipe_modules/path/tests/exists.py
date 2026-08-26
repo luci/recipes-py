@@ -7,14 +7,28 @@ from __future__ import annotations
 from recipe_engine import recipe_api
 from recipe_engine.post_process import DropExpectation
 
-DEPS = [
-    'recipe_engine/path',
-    'recipe_engine/raw_io',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    path,
+    raw_io,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  path: path.API
+  raw_io: raw_io.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  path: path.TEST_API
 
 
 @recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED')
-def RunSteps(api):
+def RunSteps(api: DEPS):
   assert not api.path.exists(api.path.start_dir / 'does not exist')
   assert not api.path.isfile(api.path.start_dir / 'does not exist')
   assert not api.path.isdir(api.path.start_dir / 'does not exist')
@@ -38,7 +52,7 @@ def RunSteps(api):
   assert api.path.exists(api.path.checkout_dir / 'somefile')
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'basic',
       api.path.files_exist(

@@ -8,20 +8,36 @@ from recipe_engine import post_process
 
 from PB.go.chromium.org.luci.common.proto.findings import findings as findings_pb
 
-DEPS = [
-    'buildbucket',
-    'findings',
-    'properties',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    buildbucket,
+    findings,
+    properties,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  buildbucket: buildbucket.API
+  findings: findings.API
+  properties: properties.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  buildbucket: buildbucket.TEST_API
+  properties: properties.TEST_API
 
 PROPERTIES = findings_pb.Findings
 
 
-def RunSteps(api, props):
+def RunSteps(api: DEPS, props):
   api.findings.upload_findings(props.findings)
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   gerrit_change_ref = findings_pb.Location.GerritChangeReference(
       host='chromium-review.googlesource.com',
       project='infra',

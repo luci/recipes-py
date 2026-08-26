@@ -5,15 +5,32 @@
 
 from __future__ import annotations
 
-DEPS = [
-    'luci_analysis',
-    'recipe_engine/assertions',
-    'recipe_engine/json',
-    'recipe_engine/step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    json,
+    luci_analysis,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  json: json.API
+  luci_analysis: luci_analysis.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  json: json.TEST_API
+  luci_analysis: luci_analysis.TEST_API
+
+
+def RunSteps(api: DEPS):
   with api.step.nest('nest_parent') as presentation:
     bug = 'chromium/123'
     rules = api.luci_analysis.lookup_bug(bug)
@@ -23,7 +40,7 @@ def RunSteps(api):
 from recipe_engine import post_process
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'base',
       api.luci_analysis.lookup_bug([

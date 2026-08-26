@@ -4,13 +4,31 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'json',
-  'path',
-  'properties',
-  'raw_io',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    json,
+    path,
+    properties,
+    raw_io,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  json: json.API
+  path: path.API
+  properties: properties.API
+  raw_io: raw_io.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  json: json.TEST_API
+  properties: properties.TEST_API
 
 import textwrap
 
@@ -21,7 +39,7 @@ from recipe_engine import engine_types, recipe_api
 FULLWIDTH_Z = u'\ufeff\uff5a'
 
 @recipe_api.ignore_warnings('recipe_engine/JSON_READ_DEPRECATED')
-def RunSteps(api):
+def RunSteps(api: DEPS):
   step_result = api.step('echo1', ['echo', '[1, 2, 3]'],
       stdout=api.json.output())
   assert step_result.stdout == [1, 2, 3], step_result.stdout
@@ -116,7 +134,7 @@ def RunSteps(api):
   assert api.json.dumps(foobar_struct) == '{"foo": "bar"}'
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield (
     api.test('basic')
     + api.properties(

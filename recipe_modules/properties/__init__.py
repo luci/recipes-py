@@ -4,9 +4,14 @@
 
 from __future__ import annotations
 
-DEPS = [
-    'recipe_engine/warning',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from RECIPE_MODULES.recipe_engine import warning
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  warning: warning.API
 
 from .api import PropertiesApi as API
 from .test_api import PropertiesTestApi as TEST_API

@@ -6,14 +6,29 @@ from __future__ import annotations
 
 from PB.go.chromium.org.luci.analysis.proto.v1.clusters import DistinctClusterFailure
 
-DEPS = [
-    'luci_analysis',
-    'recipe_engine/assertions',
-    'recipe_engine/step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    luci_analysis,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  luci_analysis: luci_analysis.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  luci_analysis: luci_analysis.TEST_API
+
+
+def RunSteps(api: DEPS):
   parent = 'projects/chromium/clusters/rules/00000000000000000000ffffffffffff'
   api.assertions.assertEqual(
       api.luci_analysis.rule_name_to_cluster_name(
@@ -25,7 +40,7 @@ def RunSteps(api):
     api.assertions.assertGreaterEqual(len(failures), 2)
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'base',
       api.luci_analysis.query_cluster_failures(

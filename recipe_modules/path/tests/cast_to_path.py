@@ -7,13 +7,28 @@ from __future__ import annotations
 from recipe_engine.post_process import DropExpectation
 from recipe_engine.config_types import Path, ResolvedBasePath
 
-DEPS = [
-    'path',
-    'platform',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    path,
+    platform,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  path: path.API
+  platform: platform.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  path: path.TEST_API
+  platform: platform.TEST_API
+
+
+def RunSteps(api: DEPS):
   if api.platform.is_win:
     arbitrary = api.path.cast_to_path(r'c:\some\random/path')
     assert arbitrary.base == ResolvedBasePath(r'c:'), f'"{arbitrary.base!r}"'
@@ -51,7 +66,7 @@ def RunSteps(api):
     assert api.path.isdir(r'/legit/dir/etc')
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'win',
       api.platform.name('win'),

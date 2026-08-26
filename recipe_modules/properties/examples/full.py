@@ -12,16 +12,32 @@ from recipe_engine import post_process
 from PB.recipe_modules.recipe_engine.properties.examples.full import InputProps
 from PB.recipe_modules.recipe_engine.properties.examples.full import EnvProps
 
-DEPS = [
-  'json',
-  'properties',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    json,
+    properties,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  json: json.API
+  properties: properties.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  properties: properties.TEST_API
 
 PROPERTIES = InputProps
 ENV_PROPERTIES = EnvProps
 
-def RunSteps(api, props, env_props):
+
+def RunSteps(api: DEPS, props, env_props):
   api.step('echo props', ['echo'] + [repr(props)])
   api.step('echo env_props', ['echo'] + [repr(env_props)])
 
@@ -36,7 +52,7 @@ def RunSteps(api, props, env_props):
     api.step('echo %s' % k, ['echo', repr(api.properties[k])])
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield (
     api.test('basic')
     + api.properties(

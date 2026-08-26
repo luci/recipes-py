@@ -11,12 +11,27 @@ import string
 BACKWARDS = ''.join(reversed(string.ascii_lowercase))
 
 
-DEPS = [
-  'json',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    json,
+    step,
+)
 
-def RunSteps(api):
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  json: json.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  pass
+
+
+def RunSteps(api: DEPS):
   d = {}
   for i, letter in enumerate(BACKWARDS):
     d[letter] = i
@@ -24,7 +39,8 @@ def RunSteps(api):
   api.step('sorted', ['echo', api.json.input(d)])
   api.step('unsorted', ['echo', api.json.input(d, sort_keys=False)])
 
-def GenTests(api):
+
+def GenTests(api: TEST_DEPS):
   # We assert here that 'sorted' is in alphabetical order and 'unsorted' is in
   # reverse order. If python is randomizing dictionary order (which it does not
   # after python 3.7), then this test should catch it.

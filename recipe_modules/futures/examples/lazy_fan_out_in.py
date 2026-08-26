@@ -4,13 +4,27 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'futures',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    futures,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  futures: futures.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  pass
+
+
+def RunSteps(api: DEPS):
   futures = []
   for i in range(10):
     def _runner(i):
@@ -26,5 +40,5 @@ def RunSteps(api):
     api.step('Sleeper %d complete' % helper.result(), cmd=None)
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test('basic')

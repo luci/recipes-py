@@ -9,24 +9,41 @@ from recipe_engine import post_process
 from PB.go.chromium.org.luci.common.proto.findings import findings as findings_pb
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 
-DEPS = [
-    'assertions',
-    'buildbucket',
-    'findings',
-    'properties',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    buildbucket,
+    findings,
+    properties,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  buildbucket: buildbucket.API
+  findings: findings.API
+  properties: properties.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  buildbucket: buildbucket.TEST_API
+  properties: properties.TEST_API
 
 PROPERTIES = findings_pb.Location
 
 
-def RunSteps(api, expected_loc):
+def RunSteps(api: DEPS, expected_loc):
   location = findings_pb.Location()
   api.findings.populate_source_from_current_build(location)
   if expected_loc:
     api.assertions.assertEqual(location, expected_loc)
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield (api.test('basic') + api.buildbucket.try_build(gerrit_changes=[
       common_pb2.GerritChange(
           host='example-review.googlesource.com',

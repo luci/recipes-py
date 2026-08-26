@@ -4,12 +4,27 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'led',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    led,
+    step,
+)
 
-def RunSteps(api):
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  led: led.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  led: led.TEST_API
+
+
+def RunSteps(api: DEPS):
   try:
     api.led('get-builder', 'fake/bucket:no-exist')
     assert False, 'get-builder found a build'  # pragma: no cover
@@ -29,7 +44,7 @@ def RunSteps(api):
     pass
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'find nothing',
       api.led.mock_get_builder(None, 'fake', 'bucket', 'no-exist'),

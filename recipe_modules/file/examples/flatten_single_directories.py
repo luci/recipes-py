@@ -4,13 +4,27 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'file',
-  'path',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    file,
+    path,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  file: file.API
+  path: path.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  pass
+
+
+def RunSteps(api: DEPS):
   base = api.path.start_dir / 'dir'
   long_dir = base / 'which_has' / 'some' / 'singular' / 'subdirs'
 
@@ -31,5 +45,5 @@ def RunSteps(api):
     assert api.path.exists(path), path
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test('basic')

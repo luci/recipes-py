@@ -9,13 +9,27 @@ from recipe_engine import post_process
 from PB.go.chromium.org.luci.analysis.proto.v1 import common as common_pb2
 from PB.go.chromium.org.luci.analysis.proto.v1 import test_history
 
-DEPS = [
-    'luci_analysis',
-    'recipe_engine/step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    luci_analysis,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  luci_analysis: luci_analysis.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  luci_analysis: luci_analysis.TEST_API
+
+
+def RunSteps(api: DEPS):
   with api.step.nest('nest_parent'):
     test_id = 'ninja://gpu:suite_1/test_one'
     next_page_token = None
@@ -27,7 +41,7 @@ def RunSteps(api):
         exit_loop = True
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   res = test_history.QueryVariantsResponse(
       variants=[
           test_history.QueryVariantsResponse.VariantInfo(
