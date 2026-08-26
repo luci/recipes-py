@@ -8,14 +8,29 @@ import json
 
 from recipe_engine.post_process import DropExpectation
 
-DEPS = [
-    'assertions',
-    'swarming',
-    'path',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    path,
+    swarming,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  path: path.API
+  swarming: swarming.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  pass
+
+
+def RunSteps(api: DEPS):
   script_path = api.path.join(api.path.dirname(__file__))
   collect_path = api.path.join(script_path, "example_collect_output.json")
   request_path = api.path.join(script_path, "example_request_show_output.json")
@@ -49,5 +64,5 @@ def RunSteps(api):
     api.assertions.assertFalse(result.success)
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield (api.test('aio') + api.post_process(DropExpectation))

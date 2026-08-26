@@ -11,15 +11,32 @@ from recipe_engine import post_process
 
 from PB.tricium.data import Data
 
-DEPS = [
-    'buildbucket',
-    'file',
-    'path',
-    'tricium',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    buildbucket,
+    file,
+    path,
+    tricium,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  buildbucket: buildbucket.API
+  file: file.API
+  path: path.API
+  tricium: tricium.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  buildbucket: buildbucket.TEST_API
+  file: file.TEST_API
+
+
+def RunSteps(api: DEPS):
   checkout_base = api.path.cleanup_dir / 'checkout'
   api.file.write_text('one', checkout_base / 'one.txt', 'one')
   api.file.write_text('two', checkout_base / 'foo' / 'two.txt', 'two')
@@ -38,7 +55,7 @@ def RunSteps(api):
       analyzers, checkout_base, ['one.py', 'foo/two.py', 'image.png'], commit_message='msg')
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
 
   def results_json(num_comments):
     results = Data.Results()

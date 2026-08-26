@@ -17,18 +17,39 @@ from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import step as step_pb2
 
-DEPS = [
-  'assertions',
-  'context',
-  'json',
-  'path',
-  'properties',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    context,
+    json,
+    path,
+    properties,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  context: context.API
+  json: json.API
+  path: path.API
+  properties: properties.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  path: path.TEST_API
+  properties: properties.TEST_API
+  step: step.TEST_API
 
 PROPERTIES = properties_pb2.SubBuildInputProps
 
-def RunSteps(api, props):
+
+def RunSteps(api: DEPS, props):
   output_path = None
   if props.HasField('output_path'):
     output_path = (
@@ -61,7 +82,7 @@ def RunSteps(api, props):
     api.assertions.assertEqual(ret.step.sub_build, props.expected_sub_build)
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'basic',
       api.properties(properties_pb2.SubBuildInputProps(

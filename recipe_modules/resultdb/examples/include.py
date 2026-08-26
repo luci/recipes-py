@@ -10,13 +10,28 @@ from recipe_engine.post_process import (DropExpectation,
 from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
 from PB.go.chromium.org.luci.resultdb.proto.v1 import invocation as invocation_pb2
 
-DEPS = [
-  'context',
-  'resultdb',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    context,
+    resultdb,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  context: context.API
+  resultdb: resultdb.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  context: context.TEST_API
+  resultdb: resultdb.TEST_API
+
+
+def RunSteps(api: DEPS):
   inv_bundle = api.resultdb.query(
     ['deadbeef'],
     step_name='rdb query',
@@ -27,7 +42,7 @@ def RunSteps(api):
   api.resultdb.exclude_invocations(invocation_ids, step_name='rdb exclude')
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   rdb_luci_context = sections_pb2.ResultDB(
       current_invocation=sections_pb2.ResultDBInvocation(
           name='invocations/build:8945511751514863184',

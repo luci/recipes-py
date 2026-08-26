@@ -10,12 +10,40 @@ import difflib
 
 from recipe_engine.post_process import DropExpectation
 
-DEPS = ['cipd', 'json', 'path', 'properties', 'step', 'swarming', 'buildbucket']
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    buildbucket,
+    cipd,
+    json,
+    path,
+    properties,
+    step,
+    swarming,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  buildbucket: buildbucket.API
+  cipd: cipd.API
+  json: json.API
+  path: path.API
+  properties: properties.API
+  step: step.API
+  swarming: swarming.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  json: json.TEST_API
+  swarming: swarming.TEST_API
 
 EXECUTION_TIMEOUT_SECS = 3600
 
 
-def RunSteps(api):
+def RunSteps(api: DEPS):
   api.swarming.ensure_client()
 
   # Create a new Swarming task request.
@@ -208,7 +236,7 @@ def RunSteps(api):
       server='http://other-swarming.appspot.com')
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   # For coverage
   api.swarming.example_task_request_jsonish()
 

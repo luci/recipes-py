@@ -13,13 +13,29 @@ from google.protobuf import json_format
 from PB.go.chromium.org.luci.scheduler.api.scheduler.v1 import (
     triggers as triggers_pb2)
 
-DEPS = [
-  'json',
-  'scheduler',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    json as json_rm,
+    scheduler,
+    step,
+)
 
-def RunSteps(api):
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  json: json_rm.API
+  scheduler: scheduler.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  scheduler: scheduler.TEST_API
+
+
+def RunSteps(api: DEPS):
   pres = api.step(name='triggers', cmd=None).presentation
   pres.logs['triggers'] = api.json.dumps(
       [json_format.MessageToDict(t) for t in api.scheduler.triggers],
@@ -31,7 +47,7 @@ def RunSteps(api):
     pres.logs['first_repo'] = [api.scheduler.triggers[0].gitiles.repo]
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield (
     api.test('unset')
   )

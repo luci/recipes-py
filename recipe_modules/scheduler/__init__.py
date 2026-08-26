@@ -13,14 +13,26 @@ from PB.recipe_modules.recipe_engine.scheduler import (
     properties as properties_pb,
 )
 
-DEPS = [
-  'buildbucket',
-  'json',
-  'platform',
-  'raw_io',
-  'step',
-  'time',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from RECIPE_MODULES.recipe_engine import (
+    buildbucket,
+    json,
+    platform,
+    raw_io,
+    step,
+    time,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  buildbucket: buildbucket.API
+  json: json.API
+  platform: platform.API
+  raw_io: raw_io.API
+  step: step.API
+  time: time.API
 
 PROPERTIES = properties_pb.InputProperties
 

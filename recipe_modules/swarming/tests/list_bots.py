@@ -7,13 +7,27 @@ from __future__ import annotations
 from recipe_engine import post_process
 from RECIPE_MODULES.recipe_engine.swarming.api import LIST_BOTS_MANDATORY_FIELDS
 
-DEPS = [
-    'assertions',
-    'swarming',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    swarming,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  swarming: swarming.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  pass
+
+
+def RunSteps(api: DEPS):
   # list_bots from test_api returns 4 bots which is dead, quarantined,
   # in_maintenance, and alive respectively.
   bots = api.swarming.list_bots(
@@ -40,7 +54,7 @@ def RunSteps(api):
   api.assertions.assertIsNotNone(bot_alive.state)
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'basic',
       api.post_process(post_process.StepCommandContains, 'List Bots',

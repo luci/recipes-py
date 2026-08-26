@@ -11,13 +11,31 @@ from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
 from PB.go.chromium.org.luci.resultdb.proto.v1 import test_exoneration as test_exoneration_pb2
 from PB.go.chromium.org.luci.resultdb.proto.v1 import test_result as test_result_pb2
 
-DEPS = [
-    'context',
-    'json',
-    'properties',
-    'resultdb',
-    'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    context,
+    json,
+    properties,
+    resultdb,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  context: context.API
+  json: json.API
+  properties: properties.API
+  resultdb: resultdb.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  context: context.TEST_API
+  properties: properties.TEST_API
 
 test_exonerations = [
     test_exoneration_pb2.TestExoneration(
@@ -39,7 +57,7 @@ test_exonerations = [
 ]
 
 
-def RunSteps(api):
+def RunSteps(api: DEPS):
   api.resultdb._BATCH_SIZE = api.properties.get('batch_size', 500)
   api.resultdb.exonerate(
       test_exonerations=api.properties.get('test_exonerations',
@@ -47,7 +65,7 @@ def RunSteps(api):
       step_name='exonerate without patch failures')
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   rdb_luci_context = sections_pb2.ResultDB(
       current_invocation=sections_pb2.ResultDBInvocation(
           name='invocations/build:8945511751514863184',

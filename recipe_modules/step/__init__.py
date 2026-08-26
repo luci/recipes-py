@@ -8,13 +8,24 @@ from PB.recipe_modules.recipe_engine.step import properties as properties_pb
 
 PROPERTIES = properties_pb.InputProperties
 
-DEPS = [
-    "context",
-    "path",
-    "platform",
-    "proto",
-    "warning",
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from RECIPE_MODULES.recipe_engine import (
+    context,
+    path,
+    platform,
+    proto,
+    warning,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  context: context.API
+  path: path.API
+  platform: platform.API
+  proto: proto.API
+  warning: warning.API
 
 from .api import StepApi as API
 from .test_api import StepTestApi as TEST_API

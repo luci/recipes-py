@@ -9,12 +9,23 @@ from recipe_engine.post_process import DropExpectation
 from PB.go.chromium.org.luci.resultdb.proto.v1 import artifact
 from PB.go.chromium.org.luci.resultdb.proto.v1 import recorder
 
-DEPS = [
-    'resultdb',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import resultdb
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  resultdb: resultdb.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  resultdb: resultdb.TEST_API
+
+
+def RunSteps(api: DEPS):
   api.resultdb.upload_invocation_artifacts({
       'a': {
           'content_type': 'text/plain',
@@ -31,7 +42,7 @@ def RunSteps(api):
   })
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'basic',
       api.resultdb.upload_invocation_artifacts(

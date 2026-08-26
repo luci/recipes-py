@@ -15,14 +15,29 @@ from PB.go.chromium.org.luci.resultdb.proto.v1 import invocation as invocation_p
 from PB.go.chromium.org.luci.resultdb.proto.v1 import test_exoneration as test_exoneration_pb2
 from PB.go.chromium.org.luci.resultdb.proto.v1 import test_result as test_result_pb2
 
-DEPS = [
-  'buildbucket',
-  'resultdb',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    buildbucket,
+    resultdb,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  buildbucket: buildbucket.API
+  resultdb: resultdb.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  resultdb: resultdb.TEST_API
+
+
+def RunSteps(api: DEPS):
   inv_bundle = api.resultdb.query(
       inv_ids=api.resultdb.invocation_ids(
           ['invocations/chromium-swarm.appspot.com/deadbeef']),
@@ -38,7 +53,7 @@ def RunSteps(api):
         inv_bundle, pretty=True)
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   inv_bundle = {
       'task-chromium-swarm.appspot.com-deadbeef':
           api.resultdb.Invocation(

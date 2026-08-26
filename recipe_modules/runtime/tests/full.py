@@ -8,10 +8,24 @@ import json
 
 from recipe_engine import post_process, recipe_api, recipe_test_api
 
-DEPS = [
-  'runtime',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    runtime,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  runtime: runtime.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  runtime: runtime.TEST_API
 
 
 def RunSteps(api: recipe_api.RecipeScriptApi):

@@ -17,13 +17,32 @@ from recipe_engine.post_process import (
 )
 from RECIPE_MODULES.recipe_engine.time.api import exponential_retry
 
-DEPS = [
-    'assertions',
-    'runtime',
-    'step',
-    'time',
-    'properties',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    properties,
+    runtime,
+    step,
+    time,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  properties: properties.API
+  runtime: runtime.API
+  step: step.API
+  time: time.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  properties: properties.TEST_API
+  runtime: runtime.TEST_API
+  time: time.TEST_API
 
 
 class TestClass:
@@ -43,7 +62,7 @@ def helper_fn_that_needs_retries(api):
   raise Exception()
 
 
-def RunSteps(api):
+def RunSteps(api: DEPS):
   now = api.time.time()
   api.time.sleep(5, with_step=True)
   api.step('echo', ['echo', str(now)])
@@ -144,7 +163,7 @@ def RunSteps(api):
       api.step('foo', ['echo', '"hello"'])
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test('defaults')
 
   yield api.test(

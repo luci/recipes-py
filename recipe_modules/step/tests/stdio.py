@@ -4,13 +4,27 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'raw_io',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    raw_io,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  raw_io: raw_io.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  raw_io: raw_io.TEST_API
+
+
+def RunSteps(api: DEPS):
   # Read command's stdout and stderr.
   step_result = api.step('echo', ['echo', 'Hello World'],
       stdout=api.raw_io.output_text(),
@@ -39,7 +53,7 @@ def RunSteps(api):
     api.step.empty('test mock', step_text=step_result.stdout)
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'basic',
       api.post_check(lambda check, steps: check('mocked stdout') not in steps),

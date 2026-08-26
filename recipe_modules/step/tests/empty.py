@@ -15,12 +15,23 @@ from recipe_engine.post_process import (
     StepTextEquals
 )
 
-DEPS = [
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import step
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  pass
+
+
+def RunSteps(api: DEPS):
   api.step.empty('hello', step_text='stuff', log_text='other\nstuff')
 
   api.step.empty('multi hello', log_text=['multi', 'line'])
@@ -42,7 +53,8 @@ def RunSteps(api):
 
   api.step.empty('quiet fail', status=api.step.FAILURE, raise_on_failure=False)
 
-def GenTests(api):
+
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'basic',
       api.post_process(StepSuccess, 'hello'),

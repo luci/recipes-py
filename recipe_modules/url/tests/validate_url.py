@@ -6,18 +6,33 @@ from __future__ import annotations
 
 from recipe_engine import post_process
 
-DEPS = [
-  'properties',
-  'step',
-  'url',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    properties,
+    step,
+    url,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  properties: properties.API
+  step: step.API
+  url: url.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  properties: properties.TEST_API
+
+
+def RunSteps(api: DEPS):
   api.url.validate_url(api.properties['url_to_validate'])
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield (api.test('basic') +
       api.properties(url_to_validate='https://example.com'))
 

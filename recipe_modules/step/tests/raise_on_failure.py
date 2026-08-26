@@ -7,10 +7,24 @@ from __future__ import annotations
 from PB.recipe_modules.recipe_engine.step.tests import raise_on_failure as raise_on_failure_pb
 from recipe_engine import recipe_test_api, post_process
 
-DEPS = [
-    'properties',
-    'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    properties,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  properties: properties.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  properties: properties.TEST_API
 
 INLINE_PROPERTIES_PROTO = """
 message InputProperties {
@@ -21,7 +35,8 @@ message InputProperties {
 
 PROPERTIES = raise_on_failure_pb.InputProperties
 
-def RunSteps(api, props: raise_on_failure_pb.InputProperties):
+
+def RunSteps(api: DEPS, props: raise_on_failure_pb.InputProperties):
   def failure_step_test_data():
     test_data = recipe_test_api.StepTestData()
     test_data.retcode = 1
@@ -43,7 +58,8 @@ def RunSteps(api, props: raise_on_failure_pb.InputProperties):
 
   api.step.raise_on_failure(result, status_override=status)
 
-def GenTests(api):
+
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'basic',
       api.post_process(post_process.MustRun, 'in-between step'),

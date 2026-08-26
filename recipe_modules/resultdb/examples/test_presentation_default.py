@@ -4,12 +4,25 @@
 
 from __future__ import annotations
 
-DEPS = [
-    'resultdb',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import resultdb
 
-def RunSteps(api):
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  resultdb: resultdb.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  pass
+
+
+def RunSteps(api: DEPS):
   api.resultdb.config_test_presentation()
 
-def GenTests(api):
+
+def GenTests(api: TEST_DEPS):
   yield api.test('basic')

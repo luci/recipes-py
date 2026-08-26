@@ -4,15 +4,31 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'context',
-  'path',
-  'step',
-  'properties',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    context,
+    path,
+    properties,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  context: context.API
+  path: path.API
+  properties: properties.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  properties: properties.TEST_API
+
+
+def RunSteps(api: DEPS):
   with api.context(env={'FOO': 'bar'}):
     api.step('test step (no env)', ['echo', 'hi'])
 
@@ -24,11 +40,10 @@ def RunSteps(api):
     api.step('test step (env, $PATH)', ['echo', 'hi'])
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test('basic')
   yield api.test('with_value') + api.properties(**{
     '$recipe_engine/step': {
       'prefix_path': ['foo', 'bar'],
     }
   })
-

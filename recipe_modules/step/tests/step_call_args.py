@@ -6,12 +6,23 @@ from __future__ import annotations
 
 from recipe_engine import post_process
 
-DEPS = [
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import step
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  pass
+
+
+def RunSteps(api: DEPS):
   try:
     api.step('bad cmd', 'I\'m a str cmd')
   except ValueError as e:
@@ -29,7 +40,7 @@ def RunSteps(api):
       'cost must be a None or ResourceCost , got "I\'m a str cost"'), e
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield (
     api.test('basic') +
     api.post_process(post_process.DropExpectation)

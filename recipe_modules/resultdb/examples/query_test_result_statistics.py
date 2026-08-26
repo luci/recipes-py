@@ -9,17 +9,32 @@ from recipe_engine.post_process import DropExpectation
 from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
 from PB.go.chromium.org.luci.resultdb.proto.v1 import resultdb
 
-DEPS = [
-    'context',
-    'resultdb',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    context,
+    resultdb as resultdb_rm,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  context: context.API
+  resultdb: resultdb_rm.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  context: context.TEST_API
+  resultdb: resultdb_rm.TEST_API
+
+
+def RunSteps(api: DEPS):
   api.resultdb.query_test_result_statistics()
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'basic',
       api.context.luci_context(

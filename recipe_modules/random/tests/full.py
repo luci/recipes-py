@@ -4,13 +4,27 @@
 
 from __future__ import annotations
 
-DEPS = [
-  "random",
-  "step",
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    random,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  random: random.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  random: random.TEST_API
+
+
+def RunSteps(api: DEPS):
   my_list = list(range(10))
   api.random.shuffle(my_list)
   api.step('echo list', ['echo', ', '.join(map(str, my_list))])
@@ -19,7 +33,7 @@ def RunSteps(api):
   api.step('echo randrange', ['foo'] + list(map(str, my_randrange)))
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test("basic")
 
   yield api.test("reseed") + api.random.seed(4321)

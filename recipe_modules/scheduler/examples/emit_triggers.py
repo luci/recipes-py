@@ -6,16 +6,35 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'buildbucket',
-  'json',
-  'runtime',
-  'scheduler',
-  'time',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    buildbucket,
+    json,
+    runtime,
+    scheduler,
+    time,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  buildbucket: buildbucket.API
+  json: json.API
+  runtime: runtime.API
+  scheduler: scheduler.API
+  time: time.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  buildbucket: buildbucket.TEST_API
+  json: json.TEST_API
+  runtime: runtime.TEST_API
+
+
+def RunSteps(api: DEPS):
   if api.runtime.is_experimental:
     api.scheduler.set_host('https://luci-scheduler-dev.appspot.com')
   api.scheduler.emit_trigger(
@@ -55,7 +74,7 @@ def RunSteps(api):
   )
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield (
     api.test('basic')
     + api.runtime(is_experimental=True)

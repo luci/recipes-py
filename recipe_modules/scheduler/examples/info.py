@@ -6,12 +6,27 @@
 
 from __future__ import annotations
 
-DEPS = [
-  'scheduler',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    scheduler,
+    step,
+)
 
-def RunSteps(api):
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  scheduler: scheduler.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  scheduler: scheduler.TEST_API
+
+
+def RunSteps(api: DEPS):
   step_res = api.step(name='host', cmd=None)
   step_res.presentation.logs['info'] = [
       api.scheduler.host,
@@ -19,7 +34,8 @@ def RunSteps(api):
       '%s' % api.scheduler.invocation_id
   ]
 
-def GenTests(api):
+
+def GenTests(api: TEST_DEPS):
   yield (
     api.test('unset')
   )

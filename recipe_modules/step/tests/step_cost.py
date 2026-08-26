@@ -6,12 +6,23 @@ from __future__ import annotations
 
 from recipe_engine.engine_types import ResourceCost
 
-DEPS = [
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import step
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  pass
+
+
+def RunSteps(api: DEPS):
   with api.step.nest('parent step'):
     pass
 
@@ -27,7 +38,8 @@ def RunSteps(api):
            cost=api.step.ResourceCost(
                cpu=api.step.MAX_CPU*2, memory=api.step.MAX_MEMORY*2))
 
-def GenTests(api):
+
+def GenTests(api: TEST_DEPS):
   yield (
     api.test('basic')
     + api.post_check(lambda check, steps: check(

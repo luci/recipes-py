@@ -12,10 +12,24 @@ from PB.go.chromium.org.luci.resultdb.proto.v1 import common as common_pb
 from PB.go.chromium.org.luci.resultdb.proto.v1 import instruction as instruction_pb
 from recipe_engine.post_process import DropExpectation
 
-DEPS = [
-    'resultdb',
-    'properties',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    properties,
+    resultdb,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  properties: properties.API
+  resultdb: resultdb.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  properties: properties.TEST_API
 
 INLINE_PROPERTIES_PROTO = """
 message InputProperties {
@@ -41,7 +55,7 @@ message InputProperties {
 PROPERTIES = update_invocation_pb.InputProperties
 
 
-def RunSteps(api, props: update_invocation_pb.InputProperties):
+def RunSteps(api: DEPS, props: update_invocation_pb.InputProperties):
   gitiles_commit = common_pb.GitilesCommit()
   json_format.ParseDict(
       json_format.MessageToDict(props.gitiles_commit),
@@ -111,7 +125,7 @@ def RunSteps(api, props: update_invocation_pb.InputProperties):
           ],))
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'basic',
       api.properties(

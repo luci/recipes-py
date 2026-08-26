@@ -6,13 +6,31 @@ from __future__ import annotations
 
 from PB.recipe_modules.recipe_engine.service_account.examples import full as full_pb
 
-DEPS = [
-  'platform',
-  'properties',
-  'raw_io',
-  'service_account',
-  'path',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    path,
+    platform,
+    properties,
+    raw_io,
+    service_account,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  path: path.API
+  platform: platform.API
+  properties: properties.API
+  raw_io: raw_io.API
+  service_account: service_account.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  platform: platform.TEST_API
+  properties: properties.TEST_API
 
 INLINE_PROPERTIES_PROTO = """
 message InputProperties {
@@ -24,7 +42,7 @@ message InputProperties {
 PROPERTIES = full_pb.InputProperties
 
 
-def RunSteps(api, props: full_pb.InputProperties):
+def RunSteps(api: DEPS, props: full_pb.InputProperties):
   if props.key_path:
     account = api.service_account.from_credentials_json(props.key_path)
     assert account.key_path == props.key_path
@@ -34,7 +52,7 @@ def RunSteps(api, props: full_pb.InputProperties):
   account.get_id_token("http://www.example.com")
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   def props(key_path='', scopes=None):
     return api.properties(full_pb.InputProperties(
         key_path=key_path,

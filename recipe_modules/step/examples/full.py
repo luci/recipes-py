@@ -7,14 +7,32 @@ from __future__ import annotations
 from PB.recipe_modules.recipe_engine.step.examples import full as full_pb
 from recipe_engine import post_process
 
-DEPS = [
-    'buildbucket',
-    'context',
-    'json',
-    'path',
-    'properties',
-    'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    buildbucket,
+    context,
+    json,
+    path,
+    properties,
+    step,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  buildbucket: buildbucket.API
+  context: context.API
+  json: json.API
+  path: path.API
+  properties: properties.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  properties: properties.TEST_API
 
 INLINE_PROPERTIES_PROTO = """
 message InputProperties {
@@ -28,7 +46,7 @@ message InputProperties {
 PROPERTIES = full_pb.InputProperties
 
 
-def RunSteps(api, props: full_pb.InputProperties):
+def RunSteps(api: DEPS, props: full_pb.InputProperties):
   if props.timeout:
     # Timeout causes the recipe engine to raise an exception if your step takes
     # longer to run than you allow. Units are seconds.
@@ -143,7 +161,7 @@ def RunSteps(api, props: full_pb.InputProperties):
     result.json = "hi"
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'basic',
       api.step_data('anything is cool', retcode=3),

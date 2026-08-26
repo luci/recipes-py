@@ -3571,7 +3571,7 @@ Example:
 Access a member of `random.Random`.
 ### *recipe_modules* / [raw\_io](/recipe_modules/raw_io)
 
-[DEPS](/recipe_modules/raw_io/__init__.py#7): [path](#recipe_modules-path)
+[DEPS](/recipe_modules/raw_io/__init__.py#13): [path](#recipe_modules-path)
 
 
 Provides objects for reading and writing raw data to and from steps.
@@ -3675,7 +3675,7 @@ Args:
      log when the step has a non-SUCCESS status.
 ### *recipe_modules* / [resultdb](/recipe_modules/resultdb)
 
-[DEPS](/recipe_modules/resultdb/__init__.py#7): [context](#recipe_modules-context), [futures](#recipe_modules-futures), [json](#recipe_modules-json), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time), [uuid](#recipe_modules-uuid)
+[DEPS](/recipe_modules/resultdb/__init__.py#21): [context](#recipe_modules-context), [futures](#recipe_modules-futures), [json](#recipe_modules-json), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time), [uuid](#recipe_modules-uuid)
 
 
 API for interacting with the ResultDB service.
@@ -4088,7 +4088,7 @@ Examples:
   * Appending a 'non-production' tag to external RPCs
 ### *recipe_modules* / [scheduler](/recipe_modules/scheduler)
 
-[DEPS](/recipe_modules/scheduler/__init__.py#16): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/scheduler/__init__.py#29): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
 
 API for interacting with the LUCI Scheduler service.
@@ -4159,7 +4159,7 @@ Returns a list of triggers that triggered the current build.
 A trigger is an instance of triggers_pb2.Trigger.
 ### *recipe_modules* / [service\_account](/recipe_modules/service_account)
 
-[DEPS](/recipe_modules/service_account/__init__.py#7): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/service_account/__init__.py#18): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
 API for getting OAuth2 access tokens for LUCI tasks or private keys.
@@ -4190,7 +4190,7 @@ Args:
   key_path: (str|Path) object pointing to a service account JSON key.
 ### *recipe_modules* / [step](/recipe_modules/step)
 
-[DEPS](/recipe_modules/step/__init__.py#11): [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [proto](#recipe_modules-proto), [warning](#recipe_modules-warning)
+[DEPS](/recipe_modules/step/__init__.py#23): [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [proto](#recipe_modules-proto), [warning](#recipe_modules-warning)
 
 
 Step is the primary API for running steps (external programs, etc.)
@@ -4584,7 +4584,7 @@ Raises `InfraFailure` if the sub-build reports INFRA_FAILURE or CANCELED
 status.
 ### *recipe_modules* / [swarming](/recipe_modules/swarming)
 
-[DEPS](/recipe_modules/swarming/__init__.py#9): [buildbucket](#recipe_modules-buildbucket), [cas](#recipe_modules-cas), [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/swarming/__init__.py#25): [buildbucket](#recipe_modules-buildbucket), [cas](#recipe_modules-cas), [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
 #### **class [SwarmingApi](/recipe_modules/swarming/api.py#1247)([RecipeApi](/recipe_engine/recipe_api.py#439)):**
@@ -4725,7 +4725,7 @@ Returns:
   A list of TaskRequestMetadata objects.
 ### *recipe_modules* / [time](/recipe_modules/time)
 
-[DEPS](/recipe_modules/time/__init__.py#7): [context](#recipe_modules-context), [random](#recipe_modules-random), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/time/__init__.py#17): [context](#recipe_modules-context), [random](#recipe_modules-random), [step](#recipe_modules-step)
 
 
 Allows mockable access to the current time.
@@ -4850,7 +4850,7 @@ deadline will not be updated, making this a no-op. For example, if
 Returns current UTC time as a datetime.datetime.
 ### *recipe_modules* / [tricium](/recipe_modules/tricium)
 
-[DEPS](/recipe_modules/tricium/__init__.py#7): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [findings](#recipe_modules-findings), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/tricium/__init__.py#25): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [findings](#recipe_modules-findings), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
 
 API for Tricium analyzers to use.
@@ -4915,7 +4915,7 @@ Raise ValueError on the first detected problem.
 Emit the results accumulated by `add_comment` and `run_legacy`.
 ### *recipe_modules* / [url](/recipe_modules/url)
 
-[DEPS](/recipe_modules/url/__init__.py#7): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/url/__init__.py#19): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
 Methods for interacting with HTTP(s) URLs.
@@ -6091,340 +6091,340 @@ Test to cover legacy aspects of PathTestApi.
 &mdash; **def [RunSteps](/recipe_modules/proto/tests/placeholders.py#31)(api: DEPS):**
 ### *recipes* / [random:tests/full](/recipe_modules/random/tests/full.py)
 
-[DEPS](/recipe_modules/random/tests/full.py#7): [random](#recipe_modules-random), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/random/tests/full.py#17): [random](#recipe_modules-random), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/random/tests/full.py#13)(api):**
+&mdash; **def [RunSteps](/recipe_modules/random/tests/full.py#27)(api: DEPS):**
 ### *recipes* / [raw\_io:examples/full](/recipe_modules/raw_io/examples/full.py)
 
-[DEPS](/recipe_modules/raw_io/examples/full.py#8): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/raw_io/examples/full.py#21): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/raw_io/examples/full.py#17)(api):**
+&mdash; **def [RunSteps](/recipe_modules/raw_io/examples/full.py#36)(api: DEPS):**
 ### *recipes* / [raw\_io:tests/output\_mismatch](/recipe_modules/raw_io/tests/output_mismatch.py)
 
-[DEPS](/recipe_modules/raw_io/tests/output_mismatch.py#10): [assertions](#recipe_modules-assertions), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/raw_io/tests/output_mismatch.py#21): [assertions](#recipe_modules-assertions), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/raw_io/tests/output_mismatch.py#17)(api):**
+&mdash; **def [RunSteps](/recipe_modules/raw_io/tests/output_mismatch.py#32)(api: DEPS):**
 ### *recipes* / [resultdb:examples/exonerate](/recipe_modules/resultdb/examples/exonerate.py)
 
-[DEPS](/recipe_modules/resultdb/examples/exonerate.py#14): [context](#recipe_modules-context), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/resultdb/examples/exonerate.py#27): [context](#recipe_modules-context), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/exonerate.py#42)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/exonerate.py#60)(api: DEPS):**
 ### *recipes* / [resultdb:examples/get\_included\_invocations](/recipe_modules/resultdb/examples/get_included_invocations.py)
 
-[DEPS](/recipe_modules/resultdb/examples/get_included_invocations.py#9): [assertions](#recipe_modules-assertions), [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/get_included_invocations.py#19): [assertions](#recipe_modules-assertions), [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/get_included_invocations.py#15)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/get_included_invocations.py#29)(api: DEPS):**
 ### *recipes* / [resultdb:examples/get\_invocation\_instructions](/recipe_modules/resultdb/examples/get_invocation_instructions.py)
 
-[DEPS](/recipe_modules/resultdb/examples/get_invocation_instructions.py#12): [assertions](#recipe_modules-assertions), [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/get_invocation_instructions.py#22): [assertions](#recipe_modules-assertions), [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/get_invocation_instructions.py#18)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/get_invocation_instructions.py#32)(api: DEPS):**
 ### *recipes* / [resultdb:examples/include](/recipe_modules/resultdb/examples/include.py)
 
-[DEPS](/recipe_modules/resultdb/examples/include.py#13): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/include.py#23): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/include.py#19)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/include.py#34)(api: DEPS):**
 ### *recipes* / [resultdb:examples/query](/recipe_modules/resultdb/examples/query.py)
 
-[DEPS](/recipe_modules/resultdb/examples/query.py#18): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/resultdb/examples/query.py#29): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query.py#25)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query.py#40)(api: DEPS):**
 ### *recipes* / [resultdb:examples/query\_new\_test\_variants](/recipe_modules/resultdb/examples/query_new_test_variants.py)
 
-[DEPS](/recipe_modules/resultdb/examples/query_new_test_variants.py#11): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/query_new_test_variants.py#21): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_new_test_variants.py#26)(api, props: query_new_test_variants_pb.InputProperties):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_new_test_variants.py#41)(api: DEPS, props: query_new_test_variants_pb.InputProperties):**
 ### *recipes* / [resultdb:examples/query\_test\_result\_statistics](/recipe_modules/resultdb/examples/query_test_result_statistics.py)
 
-[DEPS](/recipe_modules/resultdb/examples/query_test_result_statistics.py#12): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/query_test_result_statistics.py#22): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_test_result_statistics.py#18)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_test_result_statistics.py#33)(api: DEPS):**
 ### *recipes* / [resultdb:examples/query\_test\_results](/recipe_modules/resultdb/examples/query_test_results.py)
 
-[DEPS](/recipe_modules/resultdb/examples/query_test_results.py#11): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/query_test_results.py#21): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_test_results.py#25)(api, props: query_test_results_pb.InputProperties):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_test_results.py#41)(api: DEPS, props: query_test_results_pb.InputProperties):**
 ### *recipes* / [resultdb:examples/query\_test\_variants](/recipe_modules/resultdb/examples/query_test_variants.py)
 
-[DEPS](/recipe_modules/resultdb/examples/query_test_variants.py#11): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/query_test_variants.py#21): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_test_variants.py#27)(api, props: query_test_variants_pb.InputProperties):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_test_variants.py#42)(api: DEPS, props: query_test_variants_pb.InputProperties):**
 ### *recipes* / [resultdb:examples/resultsink](/recipe_modules/resultdb/examples/resultsink.py)
 
-[DEPS](/recipe_modules/resultdb/examples/resultsink.py#10): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/resultdb/examples/resultsink.py#21): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/resultsink.py#17)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/resultsink.py#32)(api: DEPS):**
 ### *recipes* / [resultdb:examples/test\_presentation](/recipe_modules/resultdb/examples/test_presentation.py)
 
-[DEPS](/recipe_modules/resultdb/examples/test_presentation.py#7): [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/test_presentation.py#14): [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/test_presentation.py#11)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/test_presentation.py#23)(api: DEPS):**
 ### *recipes* / [resultdb:examples/test\_presentation\_default](/recipe_modules/resultdb/examples/test_presentation_default.py)
 
-[DEPS](/recipe_modules/resultdb/examples/test_presentation_default.py#7): [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/test_presentation_default.py#14): [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/test_presentation_default.py#11)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/test_presentation_default.py#23)(api: DEPS):**
 ### *recipes* / [resultdb:examples/update\_invocation](/recipe_modules/resultdb/examples/update_invocation.py)
 
-[DEPS](/recipe_modules/resultdb/examples/update_invocation.py#15): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/update_invocation.py#25): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/update_invocation.py#44)(api, props: update_invocation_pb.InputProperties):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/update_invocation.py#58)(api: DEPS, props: update_invocation_pb.InputProperties):**
 ### *recipes* / [resultdb:examples/upload\_invocation\_artifacts](/recipe_modules/resultdb/examples/upload_invocation_artifacts.py)
 
-[DEPS](/recipe_modules/resultdb/examples/upload_invocation_artifacts.py#12): [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/upload_invocation_artifacts.py#19): [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/upload_invocation_artifacts.py#17)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/upload_invocation_artifacts.py#28)(api: DEPS):**
 ### *recipes* / [runtime:tests/full](/recipe_modules/runtime/tests/full.py)
 
-[DEPS](/recipe_modules/runtime/tests/full.py#11): [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/runtime/tests/full.py#21): [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/runtime/tests/full.py#17)(api: recipe_api.RecipeScriptApi):**
+&mdash; **def [RunSteps](/recipe_modules/runtime/tests/full.py#31)(api: recipe_api.RecipeScriptApi):**
 ### *recipes* / [scheduler:examples/emit\_triggers](/recipe_modules/scheduler/examples/emit_triggers.py)
 
-[DEPS](/recipe_modules/scheduler/examples/emit_triggers.py#9): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [runtime](#recipe_modules-runtime), [scheduler](#recipe_modules-scheduler), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/scheduler/examples/emit_triggers.py#22): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [runtime](#recipe_modules-runtime), [scheduler](#recipe_modules-scheduler), [time](#recipe_modules-time)
 
 
 This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
 
-&mdash; **def [RunSteps](/recipe_modules/scheduler/examples/emit_triggers.py#18)(api):**
+&mdash; **def [RunSteps](/recipe_modules/scheduler/examples/emit_triggers.py#37)(api: DEPS):**
 ### *recipes* / [scheduler:examples/info](/recipe_modules/scheduler/examples/info.py)
 
-[DEPS](/recipe_modules/scheduler/examples/info.py#9): [scheduler](#recipe_modules-scheduler), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/scheduler/examples/info.py#19): [scheduler](#recipe_modules-scheduler), [step](#recipe_modules-step)
 
 
 This file is a recipe demonstrating reading/mocking scheduler host.
 
-&mdash; **def [RunSteps](/recipe_modules/scheduler/examples/info.py#14)(api):**
+&mdash; **def [RunSteps](/recipe_modules/scheduler/examples/info.py#29)(api: DEPS):**
 ### *recipes* / [scheduler:examples/triggers](/recipe_modules/scheduler/examples/triggers.py)
 
-[DEPS](/recipe_modules/scheduler/examples/triggers.py#16): [json](#recipe_modules-json), [scheduler](#recipe_modules-scheduler), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/scheduler/examples/triggers.py#27): [json](#recipe_modules-json), [scheduler](#recipe_modules-scheduler), [step](#recipe_modules-step)
 
 
 This file is a recipe demonstrating reading triggers of the current build.
 
-&mdash; **def [RunSteps](/recipe_modules/scheduler/examples/triggers.py#22)(api):**
+&mdash; **def [RunSteps](/recipe_modules/scheduler/examples/triggers.py#38)(api: DEPS):**
 ### *recipes* / [service\_account:examples/full](/recipe_modules/service_account/examples/full.py)
 
-[DEPS](/recipe_modules/service_account/examples/full.py#9): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [service\_account](#recipe_modules-service_account)
+[DEPS](/recipe_modules/service_account/examples/full.py#22): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [service\_account](#recipe_modules-service_account)
 
 
-&mdash; **def [RunSteps](/recipe_modules/service_account/examples/full.py#27)(api, props: full_pb.InputProperties):**
+&mdash; **def [RunSteps](/recipe_modules/service_account/examples/full.py#45)(api: DEPS, props: full_pb.InputProperties):**
 ### *recipes* / [step:examples/full](/recipe_modules/step/examples/full.py)
 
-[DEPS](/recipe_modules/step/examples/full.py#10): [buildbucket](#recipe_modules-buildbucket), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/examples/full.py#24): [buildbucket](#recipe_modules-buildbucket), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/examples/full.py#31)(api, props: full_pb.InputProperties):**
+&mdash; **def [RunSteps](/recipe_modules/step/examples/full.py#49)(api: DEPS, props: full_pb.InputProperties):**
 ### *recipes* / [step:tests/active\_result](/recipe_modules/step/tests/active_result.py)
 
-[DEPS](/recipe_modules/step/tests/active_result.py#7): [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/active_result.py#14): [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/active_result.py#12)(api):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/active_result.py#23)(api: DEPS):**
 ### *recipes* / [step:tests/drop\_expectation](/recipe_modules/step/tests/drop_expectation.py)
 
-[DEPS](/recipe_modules/step/tests/drop_expectation.py#12): [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/drop_expectation.py#19): [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/drop_expectation.py#17)(api):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/drop_expectation.py#28)(api: DEPS):**
 ### *recipes* / [step:tests/empty](/recipe_modules/step/tests/empty.py)
 
-[DEPS](/recipe_modules/step/tests/empty.py#18): [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/empty.py#25): [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/empty.py#23)(api):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/empty.py#34)(api: DEPS):**
 ### *recipes* / [step:tests/inject\_paths](/recipe_modules/step/tests/inject_paths.py)
 
-[DEPS](/recipe_modules/step/tests/inject_paths.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/inject_paths.py#19): [context](#recipe_modules-context), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/inject_paths.py#15)(api):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/inject_paths.py#31)(api: DEPS):**
 ### *recipes* / [step:tests/nested](/recipe_modules/step/tests/nested.py)
 
-[DEPS](/recipe_modules/step/tests/nested.py#12): [context](#recipe_modules-context), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/nested.py#22): [context](#recipe_modules-context), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/nested.py#18)(api):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/nested.py#32)(api: DEPS):**
 ### *recipes* / [step:tests/raise\_on\_failure](/recipe_modules/step/tests/raise_on_failure.py)
 
-[DEPS](/recipe_modules/step/tests/raise_on_failure.py#10): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/raise_on_failure.py#20): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/raise_on_failure.py#24)(api, props: raise_on_failure_pb.InputProperties):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/raise_on_failure.py#39)(api: DEPS, props: raise_on_failure_pb.InputProperties):**
 ### *recipes* / [step:tests/stdio](/recipe_modules/step/tests/stdio.py)
 
-[DEPS](/recipe_modules/step/tests/stdio.py#7): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/stdio.py#17): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/stdio.py#13)(api):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/stdio.py#27)(api: DEPS):**
 ### *recipes* / [step:tests/step\_call\_args](/recipe_modules/step/tests/step_call_args.py)
 
-[DEPS](/recipe_modules/step/tests/step_call_args.py#9): [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/step_call_args.py#16): [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/step_call_args.py#14)(api):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/step_call_args.py#25)(api: DEPS):**
 ### *recipes* / [step:tests/step\_cost](/recipe_modules/step/tests/step_cost.py)
 
-[DEPS](/recipe_modules/step/tests/step_cost.py#9): [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/step_cost.py#16): [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/step_cost.py#14)(api):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/step_cost.py#25)(api: DEPS):**
 ### *recipes* / [step:tests/sub\_build](/recipe_modules/step/tests/sub_build.py)
 
-[DEPS](/recipe_modules/step/tests/sub_build.py#20): [assertions](#recipe_modules-assertions), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/sub_build.py#34): [assertions](#recipe_modules-assertions), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/sub_build.py#31)(api, props):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/sub_build.py#52)(api: DEPS, props):**
 ### *recipes* / [step:tests/timeout](/recipe_modules/step/tests/timeout.py)
 
-[DEPS](/recipe_modules/step/tests/timeout.py#9): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/timeout.py#19): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/timeout.py#23)(api, props: timeout_pb.InputProperties):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/timeout.py#37)(api: DEPS, props: timeout_pb.InputProperties):**
 ### *recipes* / [swarming:examples/full](/recipe_modules/swarming/examples/full.py)
 
-[DEPS](/recipe_modules/swarming/examples/full.py#13): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
+[DEPS](/recipe_modules/swarming/examples/full.py#28): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
 
 
-&mdash; **def [RunSteps](/recipe_modules/swarming/examples/full.py#18)(api):**
+&mdash; **def [RunSteps](/recipe_modules/swarming/examples/full.py#46)(api: DEPS):**
 ### *recipes* / [swarming:examples/this\_task](/recipe_modules/swarming/examples/this_task.py)
 
-[DEPS](/recipe_modules/swarming/examples/this_task.py#7): [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
+[DEPS](/recipe_modules/swarming/examples/this_task.py#17): [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
 
 
-&mdash; **def [RunSteps](/recipe_modules/swarming/examples/this_task.py#13)(api):**
+&mdash; **def [RunSteps](/recipe_modules/swarming/examples/this_task.py#27)(api: DEPS):**
 ### *recipes* / [swarming:tests/collect\_errors](/recipe_modules/swarming/tests/collect_errors.py)
 
-[DEPS](/recipe_modules/swarming/tests/collect_errors.py#9): [assertions](#recipe_modules-assertions), [path](#recipe_modules-path), [swarming](#recipe_modules-swarming)
+[DEPS](/recipe_modules/swarming/tests/collect_errors.py#20): [assertions](#recipe_modules-assertions), [path](#recipe_modules-path), [swarming](#recipe_modules-swarming)
 
 
-&mdash; **def [RunSteps](/recipe_modules/swarming/tests/collect_errors.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/swarming/tests/collect_errors.py#31)(api: DEPS):**
 ### *recipes* / [swarming:tests/copy](/recipe_modules/swarming/tests/copy.py)
 
-[DEPS](/recipe_modules/swarming/tests/copy.py#9): [assertions](#recipe_modules-assertions), [swarming](#recipe_modules-swarming)
+[DEPS](/recipe_modules/swarming/tests/copy.py#19): [assertions](#recipe_modules-assertions), [swarming](#recipe_modules-swarming)
 
 
-&mdash; **def [RunSteps](/recipe_modules/swarming/tests/copy.py#15)(api):**
+&mdash; **def [RunSteps](/recipe_modules/swarming/tests/copy.py#29)(api: DEPS):**
 ### *recipes* / [swarming:tests/list\_bots](/recipe_modules/swarming/tests/list_bots.py)
 
-[DEPS](/recipe_modules/swarming/tests/list_bots.py#10): [assertions](#recipe_modules-assertions), [swarming](#recipe_modules-swarming)
+[DEPS](/recipe_modules/swarming/tests/list_bots.py#20): [assertions](#recipe_modules-assertions), [swarming](#recipe_modules-swarming)
 
 
-&mdash; **def [RunSteps](/recipe_modules/swarming/tests/list_bots.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/swarming/tests/list_bots.py#30)(api: DEPS):**
 ### *recipes* / [swarming:tests/list\_tasks](/recipe_modules/swarming/tests/list_tasks.py)
 
-[DEPS](/recipe_modules/swarming/tests/list_tasks.py#9): [assertions](#recipe_modules-assertions), [swarming](#recipe_modules-swarming), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/swarming/tests/list_tasks.py#20): [assertions](#recipe_modules-assertions), [swarming](#recipe_modules-swarming), [time](#recipe_modules-time)
 
 
-&mdash; **def [RunSteps](/recipe_modules/swarming/tests/list_tasks.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/swarming/tests/list_tasks.py#31)(api: DEPS):**
 ### *recipes* / [swarming:tests/realms](/recipe_modules/swarming/tests/realms.py)
 
-[DEPS](/recipe_modules/swarming/tests/realms.py#9): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [context](#recipe_modules-context), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
+[DEPS](/recipe_modules/swarming/tests/realms.py#22): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [context](#recipe_modules-context), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
 
 
-&mdash; **def [RunSteps](/recipe_modules/swarming/tests/realms.py#18)(api):**
+&mdash; **def [RunSteps](/recipe_modules/swarming/tests/realms.py#35)(api: DEPS):**
 ### *recipes* / [swarming:tests/task\_request\_from\_jsonish](/recipe_modules/swarming/tests/task_request_from_jsonish.py)
 
-[DEPS](/recipe_modules/swarming/tests/task_request_from_jsonish.py#9): [assertions](#recipe_modules-assertions), [swarming](#recipe_modules-swarming)
+[DEPS](/recipe_modules/swarming/tests/task_request_from_jsonish.py#19): [assertions](#recipe_modules-assertions), [swarming](#recipe_modules-swarming)
 
 
-&mdash; **def [RunSteps](/recipe_modules/swarming/tests/task_request_from_jsonish.py#15)(api):**
+&mdash; **def [RunSteps](/recipe_modules/swarming/tests/task_request_from_jsonish.py#29)(api: DEPS):**
 ### *recipes* / [swarming:tests/task\_result\_from\_jsonish](/recipe_modules/swarming/tests/task_result_from_jsonish.py)
 
-[DEPS](/recipe_modules/swarming/tests/task_result_from_jsonish.py#11): [assertions](#recipe_modules-assertions), [path](#recipe_modules-path), [swarming](#recipe_modules-swarming)
+[DEPS](/recipe_modules/swarming/tests/task_result_from_jsonish.py#22): [assertions](#recipe_modules-assertions), [path](#recipe_modules-path), [swarming](#recipe_modules-swarming)
 
 
-&mdash; **def [RunSteps](/recipe_modules/swarming/tests/task_result_from_jsonish.py#18)(api):**
+&mdash; **def [RunSteps](/recipe_modules/swarming/tests/task_result_from_jsonish.py#33)(api: DEPS):**
 ### *recipes* / [time:examples/full](/recipe_modules/time/examples/full.py)
 
-[DEPS](/recipe_modules/time/examples/full.py#20): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/time/examples/full.py#33): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
 
-&mdash; **def [RunSteps](/recipe_modules/time/examples/full.py#46)(api):**
+&mdash; **def [RunSteps](/recipe_modules/time/examples/full.py#65)(api: DEPS):**
 
-&emsp; **@exponential_retry(5, datetime.timedelta(seconds=1))**<br>&mdash; **def [helper\_fn\_that\_needs\_retries](/recipe_modules/time/examples/full.py#40)(api):**
+&emsp; **@exponential_retry(5, datetime.timedelta(seconds=1))**<br>&mdash; **def [helper\_fn\_that\_needs\_retries](/recipe_modules/time/examples/full.py#59)(api):**
 ### *recipes* / [time:examples/jitter](/recipe_modules/time/examples/jitter.py)
 
-[DEPS](/recipe_modules/time/examples/jitter.py#10): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/time/examples/jitter.py#22): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
 
-&mdash; **def [RunSteps](/recipe_modules/time/examples/jitter.py#27)(api, properties):**
+&mdash; **def [RunSteps](/recipe_modules/time/examples/jitter.py#43)(api: DEPS, properties):**
 ### *recipes* / [tricium:examples/add\_comment](/recipe_modules/tricium/examples/add_comment.py)
 
-[DEPS](/recipe_modules/tricium/examples/add_comment.py#13): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [tricium](#recipe_modules-tricium)
+[DEPS](/recipe_modules/tricium/examples/add_comment.py#25): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [tricium](#recipe_modules-tricium)
 
 
-&mdash; **def [CreateExpectedFinding](/recipe_modules/tricium/examples/add_comment.py#71)(api, input_comment):**
+&mdash; **def [CreateExpectedFinding](/recipe_modules/tricium/examples/add_comment.py#93)(api, input_comment):**
 
-&mdash; **def [RunSteps](/recipe_modules/tricium/examples/add_comment.py#119)(api, props: add_comment_pb.InputProperties):**
+&mdash; **def [RunSteps](/recipe_modules/tricium/examples/add_comment.py#141)(api: DEPS, props: add_comment_pb.InputProperties):**
 ### *recipes* / [tricium:examples/wrapper](/recipe_modules/tricium/examples/wrapper.py)
 
-[DEPS](/recipe_modules/tricium/examples/wrapper.py#14): [buildbucket](#recipe_modules-buildbucket), [file](#recipe_modules-file), [path](#recipe_modules-path), [tricium](#recipe_modules-tricium)
+[DEPS](/recipe_modules/tricium/examples/wrapper.py#26): [buildbucket](#recipe_modules-buildbucket), [file](#recipe_modules-file), [path](#recipe_modules-path), [tricium](#recipe_modules-tricium)
 
 
 An example of a recipe wrapping legacy analyzers.
 
-&mdash; **def [RunSteps](/recipe_modules/tricium/examples/wrapper.py#22)(api):**
+&mdash; **def [RunSteps](/recipe_modules/tricium/examples/wrapper.py#39)(api: DEPS):**
 ### *recipes* / [tricium:tests/add\_comment\_validation](/recipe_modules/tricium/tests/add_comment_validation.py)
 
-[DEPS](/recipe_modules/tricium/tests/add_comment_validation.py#10): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
+[DEPS](/recipe_modules/tricium/tests/add_comment_validation.py#21): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
 
 
-&mdash; **def [RunSteps](/recipe_modules/tricium/tests/add_comment_validation.py#47)(api, props: add_comment_validation_pb.InputProperties):**
+&mdash; **def [RunSteps](/recipe_modules/tricium/tests/add_comment_validation.py#68)(api: DEPS, props: add_comment_validation_pb.InputProperties):**
 ### *recipes* / [tricium:tests/enforce\_comments\_num\_limit](/recipe_modules/tricium/tests/enforce_comments_num_limit.py)
 
-[DEPS](/recipe_modules/tricium/tests/enforce_comments_num_limit.py#12): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [tricium](#recipe_modules-tricium)
+[DEPS](/recipe_modules/tricium/tests/enforce_comments_num_limit.py#25): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [tricium](#recipe_modules-tricium)
 
 
-&mdash; **def [RunSteps](/recipe_modules/tricium/tests/enforce_comments_num_limit.py#23)(api, props):**
+&mdash; **def [RunSteps](/recipe_modules/tricium/tests/enforce_comments_num_limit.py#41)(api: DEPS, props):**
 ### *recipes* / [url:examples/full](/recipe_modules/url/examples/full.py)
 
-[DEPS](/recipe_modules/url/examples/full.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step), [url](#recipe_modules-url)
+[DEPS](/recipe_modules/url/examples/full.py#19): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step), [url](#recipe_modules-url)
 
 
-&mdash; **def [RunSteps](/recipe_modules/url/examples/full.py#30)(api):**
+&mdash; **def [RunSteps](/recipe_modules/url/examples/full.py#46)(api: DEPS):**
 ### *recipes* / [url:tests/join](/recipe_modules/url/tests/join.py)
 
-[DEPS](/recipe_modules/url/tests/join.py#7): [step](#recipe_modules-step), [url](#recipe_modules-url)
+[DEPS](/recipe_modules/url/tests/join.py#17): [step](#recipe_modules-step), [url](#recipe_modules-url)
 
 
-&mdash; **def [RunSteps](/recipe_modules/url/tests/join.py#13)(api):**
+&mdash; **def [RunSteps](/recipe_modules/url/tests/join.py#27)(api: DEPS):**
 ### *recipes* / [url:tests/validate\_url](/recipe_modules/url/tests/validate_url.py)
 
-[DEPS](/recipe_modules/url/tests/validate_url.py#9): [properties](#recipe_modules-properties), [step](#recipe_modules-step), [url](#recipe_modules-url)
+[DEPS](/recipe_modules/url/tests/validate_url.py#20): [properties](#recipe_modules-properties), [step](#recipe_modules-step), [url](#recipe_modules-url)
 
 
-&mdash; **def [RunSteps](/recipe_modules/url/tests/validate_url.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/url/tests/validate_url.py#31)(api: DEPS):**
 ### *recipes* / [uuid:examples/full](/recipe_modules/uuid/examples/full.py)
 
-[DEPS](/recipe_modules/uuid/examples/full.py#7): [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
+[DEPS](/recipe_modules/uuid/examples/full.py#17): [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
 
 
-&mdash; **def [RunSteps](/recipe_modules/uuid/examples/full.py#13)(api):**
+&mdash; **def [RunSteps](/recipe_modules/uuid/examples/full.py#27)(api: DEPS):**
 ### *recipes* / [version:examples/full](/recipe_modules/version/examples/full.py)
 
-[DEPS](/recipe_modules/version/examples/full.py#7): [version](#recipe_modules-version)
+[DEPS](/recipe_modules/version/examples/full.py#14): [version](#recipe_modules-version)
 
 
-&mdash; **def [RunSteps](/recipe_modules/version/examples/full.py#12)(api):**
+&mdash; **def [RunSteps](/recipe_modules/version/examples/full.py#23)(api: DEPS):**
 ### *recipes* / [warning:tests/fakes](/recipe_modules/warning/tests/fakes.py)
 
 

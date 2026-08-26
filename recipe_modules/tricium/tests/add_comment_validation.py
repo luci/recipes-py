@@ -7,7 +7,27 @@ from __future__ import annotations
 from PB.recipe_modules.recipe_engine.tricium.tests import add_comment_validation as add_comment_validation_pb
 from recipe_engine import post_process
 
-DEPS = ['buildbucket', 'tricium', 'properties']
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    buildbucket,
+    properties,
+    tricium,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  buildbucket: buildbucket.API
+  properties: properties.API
+  tricium: tricium.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  buildbucket: buildbucket.TEST_API
+  properties: properties.TEST_API
 
 INLINE_PROPERTIES_PROTO = """
 message InputProperties {
@@ -44,7 +64,8 @@ _OK_CASES = {
     'several entire lines': dict(start_line=3, end_line=5),
 }
 
-def RunSteps(api, props: add_comment_validation_pb.InputProperties):
+
+def RunSteps(api: DEPS, props: add_comment_validation_pb.InputProperties):
   # Set valid default.
   kwargs = dict(
       category='test',
@@ -64,7 +85,7 @@ def RunSteps(api, props: add_comment_validation_pb.InputProperties):
   assert api.tricium._findings
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   for name in _BAD_CASES:
     yield api.test(
         name,

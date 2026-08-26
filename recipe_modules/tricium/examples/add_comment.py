@@ -10,7 +10,29 @@ from PB.recipe_modules.recipe_engine.tricium.examples import add_comment as add_
 from PB.go.chromium.org.luci.common.proto.findings import findings as findings_pb
 from recipe_engine import post_process
 
-DEPS = ['buildbucket', 'proto', 'properties', 'tricium']
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    buildbucket,
+    properties,
+    proto,
+    tricium,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  buildbucket: buildbucket.API
+  properties: properties.API
+  proto: proto.API
+  tricium: tricium.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  buildbucket: buildbucket.TEST_API
+  properties: properties.TEST_API
 
 INLINE_PROPERTIES_PROTO = """
 message InputProperties {
@@ -116,7 +138,7 @@ def CreateExpectedFinding(api, input_comment):
   return expected
 
 
-def RunSteps(api, props: add_comment_pb.InputProperties):
+def RunSteps(api: DEPS, props: add_comment_pb.InputProperties):
   filename = 'path/to/file'
   if props.trigger_type_error:
     COMMENT_2['start_line'] = str(COMMENT_2['start_line'])
@@ -143,7 +165,7 @@ def RunSteps(api, props: add_comment_pb.InputProperties):
   api.tricium.write_comments()
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield api.test('basic', api.buildbucket.try_build(project='chrome'))
   yield (api.test('type_error', api.buildbucket.try_build(project='chrome')) +
          api.properties(add_comment_pb.InputProperties(trigger_type_error=True)) +

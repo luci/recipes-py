@@ -6,16 +6,33 @@ from __future__ import annotations
 
 from recipe_engine.post_process import DropExpectation
 
-DEPS = [
-  'assertions',
-  'buildbucket',
-  'context',
-  'step',
-  'swarming',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    buildbucket,
+    context,
+    step,
+    swarming,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  buildbucket: buildbucket.API
+  context: context.API
+  step: step.API
+  swarming: swarming.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  buildbucket: buildbucket.TEST_API
+
+
+def RunSteps(api: DEPS):
   def basic_request():
     request = api.swarming.task_request()
     return request.with_slice(0, request[0].
@@ -35,7 +52,7 @@ def RunSteps(api):
     api.assertions.assertEqual('proj:buck', res['realm'])
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield (
       api.test('basic') +
       api.buildbucket.ci_build(project='proj', bucket='buck') +

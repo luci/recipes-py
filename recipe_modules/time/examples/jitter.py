@@ -7,12 +7,28 @@ from recipe_engine import post_process
 
 from PB.recipe_modules.recipe_engine.time.examples import jitter as jitter_pb2
 
-DEPS = [
-  'assertions',
-  'properties',
-  'step',
-  'time',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    assertions,
+    properties,
+    step,
+    time,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  assertions: assertions.API
+  properties: properties.API
+  step: step.API
+  time: time.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  properties: properties.TEST_API
 
 INLINE_PROPERTIES_PROTO = """
 message JitterProps {
@@ -24,7 +40,7 @@ message JitterProps {
 PROPERTIES = jitter_pb2.JitterProps
 
 
-def RunSteps(api, properties):
+def RunSteps(api: DEPS, properties):
   random_func = lambda: properties.random_output
   jittered_time = api.time._jitter(100, .10, random_func)
   api.assertions.assertEqual(
@@ -33,7 +49,8 @@ def RunSteps(api, properties):
     round(jittered_time)
   )
 
-def GenTests(api):
+
+def GenTests(api: TEST_DEPS):
   yield api.test(
       'low-end',
       api.properties(

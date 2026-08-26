@@ -9,13 +9,27 @@ import datetime
 from recipe_engine import recipe_api
 from recipe_engine.post_process import StepSuccess, StepFailure, StepException, StepCanceled
 
-DEPS = [
-  'context',
-  'step',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    context,
+    step,
+)
 
 
-def RunSteps(api):
+@dataclass
+class DEPS(RecipeScriptApi):
+  context: context.API
+  step: step.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  pass
+
+
+def RunSteps(api: DEPS):
   # Nest all steps below this.
   with api.step.nest('complicated thing'):
     with api.step.nest('first part'):
@@ -107,7 +121,7 @@ def RunSteps(api):
     assert "we expected an exception here, but there was none"
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
   yield (
     api.test('basic')
     + api.post_process(StepException, 'inherit status')

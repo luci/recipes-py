@@ -4,12 +4,28 @@
 
 from __future__ import annotations
 
-DEPS = [
-    'context',
-    'path',
-    'step',
-    'url',
-]
+from dataclasses import dataclass
+from recipe_engine.recipe_api import RecipeScriptApi
+from recipe_engine.recipe_test_api import RecipeTestApi
+from RECIPE_MODULES.recipe_engine import (
+    context,
+    path,
+    step,
+    url,
+)
+
+
+@dataclass
+class DEPS(RecipeScriptApi):
+  context: context.API
+  path: path.API
+  step: step.API
+  url: url.API
+
+
+@dataclass
+class TEST_DEPS(RecipeTestApi):
+  url: url.TEST_API
 
 # NOTE: These examples *probably work*. They're not run as part of regular
 # production testing, but they do access live resources that are available
@@ -27,7 +43,7 @@ TEST_BAD_CERTS = [
 ]
 
 
-def RunSteps(api):
+def RunSteps(api: DEPS):
   assert api.url.quote(' foo') == '%20foo'
   assert api.url.unquote('%20foo') == ' foo'
   assert api.url.urlencode({'foo': 'bar'}) == 'foo=bar'
@@ -116,7 +132,7 @@ def RunSteps(api):
       raises(test_bad_cert, api.step.StepFailure)
 
 
-def GenTests(api):
+def GenTests(api: TEST_DEPS):
 
   def name(prefix, url):
     return '%s.GET %s' % (prefix, url)
