@@ -1,0 +1,78 @@
+[
+  {
+    "cmd": [],
+    "name": "concurrent writes"
+  },
+  {
+    "cmd": [],
+    "name": "concurrent writes.write check 0",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@request@reason {@@@",
+      "@@@STEP_LOG_LINE@request@  message: \"written by step \\'write check 0\\'\"@@@",
+      "@@@STEP_LOG_LINE@request@}@@@",
+      "@@@STEP_LOG_LINE@request@checks {@@@",
+      "@@@STEP_LOG_LINE@request@  identifier {@@@",
+      "@@@STEP_LOG_LINE@request@    id: \"concurrent writes_0\"@@@",
+      "@@@STEP_LOG_LINE@request@  }@@@",
+      "@@@STEP_LOG_LINE@request@  kind: CHECK_KIND_BUILD@@@",
+      "@@@STEP_LOG_LINE@request@}@@@",
+      "@@@STEP_LOG_END@request@@@",
+      "@@@STEP_LOG_LINE@response@written_version {@@@",
+      "@@@STEP_LOG_LINE@response@  ts {@@@",
+      "@@@STEP_LOG_LINE@response@    seconds: 1@@@",
+      "@@@STEP_LOG_LINE@response@  }@@@",
+      "@@@STEP_LOG_LINE@response@}@@@",
+      "@@@STEP_LOG_END@response@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "concurrent writes.write check 1",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@request@reason {@@@",
+      "@@@STEP_LOG_LINE@request@  message: \"written by step \\'write check 1\\'\"@@@",
+      "@@@STEP_LOG_LINE@request@}@@@",
+      "@@@STEP_LOG_LINE@request@checks {@@@",
+      "@@@STEP_LOG_LINE@request@  identifier {@@@",
+      "@@@STEP_LOG_LINE@request@    id: \"concurrent writes_1\"@@@",
+      "@@@STEP_LOG_LINE@request@  }@@@",
+      "@@@STEP_LOG_LINE@request@  kind: CHECK_KIND_BUILD@@@",
+      "@@@STEP_LOG_LINE@request@}@@@",
+      "@@@STEP_LOG_END@request@@@",
+      "@@@STEP_LOG_LINE@response@written_version {@@@",
+      "@@@STEP_LOG_LINE@response@  ts {@@@",
+      "@@@STEP_LOG_LINE@response@    seconds: 2@@@",
+      "@@@STEP_LOG_LINE@response@  }@@@",
+      "@@@STEP_LOG_LINE@response@}@@@",
+      "@@@STEP_LOG_END@response@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "concurrent writes.write check 2",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@request@reason {@@@",
+      "@@@STEP_LOG_LINE@request@  message: \"written by step \\'write check 2\\'\"@@@",
+      "@@@STEP_LOG_LINE@request@}@@@",
+      "@@@STEP_LOG_LINE@request@checks {@@@",
+      "@@@STEP_LOG_LINE@request@  identifier {@@@",
+      "@@@STEP_LOG_LINE@request@    id: \"concurrent writes_2\"@@@",
+      "@@@STEP_LOG_LINE@request@  }@@@",
+      "@@@STEP_LOG_LINE@request@  kind: CHECK_KIND_BUILD@@@",
+      "@@@STEP_LOG_LINE@request@}@@@",
+      "@@@STEP_LOG_END@request@@@",
+      "@@@STEP_LOG_LINE@response@written_version {@@@",
+      "@@@STEP_LOG_LINE@response@  ts {@@@",
+      "@@@STEP_LOG_LINE@response@    seconds: 3@@@",
+      "@@@STEP_LOG_LINE@response@  }@@@",
+      "@@@STEP_LOG_LINE@response@}@@@",
+      "@@@STEP_LOG_END@response@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]

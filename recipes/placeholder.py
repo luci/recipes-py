@@ -13,13 +13,14 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 
-from RECIPE_MODULES.recipe_engine import (buildbucket, properties, step,
-                                          swarming, time)
+from RECIPE_MODULES.recipe_engine import (buildbucket, futures, properties,
+                                          step, swarming, time)
 
 
 @dataclass
 class DEPS(RecipeScriptApi):
   buildbucket: buildbucket.API
+  futures: futures.API
   properties: properties.API
   step: step.API
   swarming: swarming.API
@@ -35,10 +36,9 @@ from google.protobuf import json_format
 from google.protobuf.struct_pb2 import Struct
 
 from PB.recipe_engine import result as result_pb2
-from PB.recipes.recipe_engine.placeholder import (InputProps, Step, FakeStep,
-                                                  CollectChildren, ChildBuild,
-                                                  Buildbucket, LifeTime,
-                                                  TurboCIWrite, TurboCIQuery)
+from PB.recipes.recipe_engine.placeholder import (
+    InputProps, Step, FakeStep, CollectChildren, ChildBuild, Buildbucket,
+    LifeTime, TurboCIWrite as TurboCIWriteType,TurboCIQuery, TurboCIWrites)
 from PB.go.chromium.org.luci.buildbucket.proto.builder_common import BuilderID
 from PB.go.chromium.org.luci.buildbucket.proto.common import Status
 
@@ -87,6 +87,8 @@ def RunSteps(api: DEPS, properties):
         TurboCIWrite(step.name, step.turboci_write)
       case 'turboci_query':
         TurboCIQuery(step.name, step.turboci_query)
+      case 'turboci_writes':
+        TurboCIWrites(step.name, step.turboci_writes)
       case _:  # pragma: no cover
         assert False, 'unreachable'
 
@@ -148,7 +150,7 @@ def RunSteps(api: DEPS, properties):
         raise api.step.InfraFailure('no build to collect for %s' % child_id)
     api.buildbucket.collect_builds(build_ids_to_collect, step_name=step_name)
 
-  def TurboCIWrite(step_name: str, req: TurboCIWrite):
+  def TurboCIWrite(step_name: str, req: TurboCIWriteType):
     reason = req.reason
     if not reason.message:
       reason.CopyFrom(turboci.reason(f'written by step {step_name!r}'))
@@ -163,6 +165,20 @@ def RunSteps(api: DEPS, properties):
         pres.status = api.step.EXCEPTION
         pres.step_text = f'turboci.write_nodes failed'
         pres.logs['exception'] = f'{type(ex).__name__}: {ex}'
+
+  def TurboCIWrites(step_name: str, req: TurboCIWrites):
+    count = req.count or 1
+    def _write_check(i: int):
+      write_req = TurboCIWriteType(
+          check_writes=[
+              turboci.check(f'{step_name}_{i}', kind='CHECK_KIND_BUILD'),
+          ],
+      )
+      TurboCIWrite(f'write check {i}', write_req)
+    with api.step.nest(step_name):
+      futs = [api.futures.spawn(_write_check, i) for i in range(count)]
+      for f in futs:
+        f.result()
 
   def TurboCIQuery(step_name: str, req: TurboCIQuery):
     workplan_id = None
@@ -560,4 +576,18 @@ def GenTests(api: TEST_DEPS):
       api.post_process(post_process.LogContains, 'query it', 'exception',
                        ['NotImplementedError']),
       api.post_process(post_process.DropExpectation),
+  )
+
+  yield api.test(
+      'turboci_writes',
+      api.properties(
+          InputProps(
+              steps=[
+                  Step(
+                      name='concurrent writes',
+                      turboci_writes=TurboCIWrites(count=3),
+                  )
+              ],
+              status=Status.SUCCESS,
+          )),
   )

@@ -51,6 +51,13 @@ message TurboCIWrite {
   repeated turboci.graph.orchestrator.v1.WriteNodesRequest.CheckWrite check_writes = 2;
 }
 
+message TurboCIWrites {
+  // Number of concurrent steps to make the WriteNodes call to Turbo CI.
+  //
+  // Each step will write a new check.
+  int32 count = 1;
+}
+
 message TurboCIQuery {
   // ID of the workplan to query.
   // If unset, will use the current WorkPlan ID of the build for the query.
@@ -139,6 +146,7 @@ message Step {
     CollectChildren collect_children = 4;
     TurboCIWrite turboci_write = 5;
     TurboCIQuery turboci_query = 6;
+    TurboCIWrites turboci_writes = 7;
   }
 }
 
