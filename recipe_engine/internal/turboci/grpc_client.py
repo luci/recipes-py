@@ -8,10 +8,16 @@ from __future__ import annotations
 from gevent.threadpool import ThreadPool
 import json
 import logging
+import os
 import random
 import threading
 import time
 import urllib.request
+
+# Disable gRPC C-core pthread_atfork handlers to prevent child process crashes
+# (epoll EBADF SIGABRT) during subprocess.Popen (fork+exec).
+os.environ.setdefault("GRPC_ENABLE_FORK_SUPPORT", "0")
+
 
 import grpc
 from google.protobuf import json_format as jsonpb
