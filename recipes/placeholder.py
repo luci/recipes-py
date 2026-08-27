@@ -171,9 +171,12 @@ def RunSteps(api: DEPS, properties):
     def _write_check(i: int):
       write_req = TurboCIWriteType(
           check_writes=[
-              turboci.check(f'{step_name}_{i}', kind='CHECK_KIND_BUILD'),
-          ],
-      )
+              turboci.check(
+                  f'{step_name}_{i}',
+                  kind='CHECK_KIND_BUILD',
+                  realm='$from_container',
+              ),
+          ],)
       TurboCIWrite(f'write check {i}', write_req)
     with api.step.nest(step_name):
       futs = [api.futures.spawn(_write_check, i) for i in range(count)]
