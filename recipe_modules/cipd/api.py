@@ -978,6 +978,43 @@ class CIPDApi(recipe_api.RecipeApi):
     )
     return [self.Pin(**pin) for pin in step_result.json.output['result'] or []]
 
+  def resolve(
+      self,
+      package: str,
+      version: str,
+      test_data_instance_id: str | None = None,
+  ) -> list[Pin]:
+    """Returns concrete package instance ID(s) given a version.
+
+    Args:
+      * package - The name of the cipd package or package prefix.
+      * version - The package version to resolve.
+      * test_data_instance_id - Default instance ID for this step when in
+        test mode.
+
+    Returns a list of CIPDApi.Pin instances.
+    """
+    check_type('package', package, basestring)
+    check_type('version', version, basestring)
+    check_type('test_data_instance_id', test_data_instance_id,
+               (type(None), basestring))
+
+    cmd: list[str | Path | util.Placeholder] = [
+        'resolve',
+        package,
+        '-version',
+        version,
+    ]
+
+    step_result = self._run(
+        'cipd resolve %s' % package,
+        cmd,
+        step_test_data=lambda: self.test_api.example_resolve(
+            package, test_data_instance_id or version))
+    result = step_result.json.output.get('result') or {}
+    return [self.Pin(**p['pin']) for p in result.get('', []) if p.get('pin')]
+
+
   def describe(self,
                package_name: str,
                version: str,

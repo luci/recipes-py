@@ -85,6 +85,8 @@ def RunSteps(api: DEPS, props: full_pb.InputProperties):
   # Some packages don't require credentials to be installed or queried.
   api.cipd.ensure(cipd_root, ensure_file)
   api.cipd.ensure_file_resolve(ensure_file)
+  pins = api.cipd.resolve(package_name, version='latest')
+  assert pins[0].instance_id
   with api.cipd.cache_dir(api.path.mkdtemp()):
     result = api.cipd.search(package_name,
                              tag='git_revision:40-chars-long-hash')

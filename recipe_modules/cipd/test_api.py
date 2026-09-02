@@ -91,6 +91,14 @@ class CIPDTestApi(recipe_test_api.RecipeTestApi):
         'pin': self.make_pin(package_name, version)
     }]})
 
+  def example_resolve(self, package_name, version=None):
+    return self._resultify({
+        '': [{
+            'package': package_name,
+            'pin': self.make_pin(package_name, version),
+        }]
+    })
+
   def example_search(self, package_name, instances=None):
     if instances is None:
       # Return one instance by default.

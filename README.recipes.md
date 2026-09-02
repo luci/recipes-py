@@ -1263,7 +1263,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [describe](/recipe_modules/cipd/api.py#981)(self, package_name: str, version: str, test_data_refs: (Sequence[str] | None)=None, test_data_tags: (Sequence[str] | None)=None):**
+&mdash; **def [describe](/recipe_modules/cipd/api.py#1018)(self, package_name: str, version: str, test_data_refs: (Sequence[str] | None)=None, test_data_tags: (Sequence[str] | None)=None):**
 
 Returns information about a package instance given its version:
 who uploaded the instance and when and a list of attached tags.
@@ -1297,7 +1297,7 @@ ensure file.
 Args:
   * ensure_file - Ensure file to resolve.
 
-&mdash; **def [ensure\_tool](/recipe_modules/cipd/api.py#1113)(self, package: str, version: str, executable_path: (str | None)=None):**
+&mdash; **def [ensure\_tool](/recipe_modules/cipd/api.py#1150)(self, package: str, version: str, executable_path: (str | None)=None):**
 
 Downloads an executable from CIPD.
 
@@ -1324,7 +1324,7 @@ block on a single ensure step.
 
 &emsp; **@property**<br>&mdash; **def [executable](/recipe_modules/cipd/api.py#353)(self):**
 
-&mdash; **def [instances](/recipe_modules/cipd/api.py#1016)(self, package_name: str, limit: (int | None)=None):**
+&mdash; **def [instances](/recipe_modules/cipd/api.py#1053)(self, package_name: str, limit: (int | None)=None):**
 
 Lists instances of a package, most recently uploaded first.
 
@@ -1337,7 +1337,7 @@ Returns the list of CIPDApi.Instance instance.
 
 &mdash; **def [make\_link](/recipe_modules/cipd/api.py#680)(self, package: str, version: (str | None)=None):**
 
-&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#1089)(self, root: Path, package_file: Path):**
+&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#1126)(self, root: Path, package_file: Path):**
 
 Deploys the specified package to root.
 
@@ -1351,7 +1351,7 @@ Args:
 
 Returns a Pin for the deployed package.
 
-&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#1055)(self, destination: Path, package_name: str, version: str):**
+&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#1092)(self, destination: Path, package_name: str, version: str):**
 
 Downloads the specified package to destination.
 
@@ -1367,7 +1367,7 @@ Args:
 
 Returns a Pin for the downloaded package.
 
-&emsp; **@property**<br>&mdash; **def [platform](/recipe_modules/cipd/api.py#1189)(self):**
+&emsp; **@property**<br>&mdash; **def [platform](/recipe_modules/cipd/api.py#1226)(self):**
 
 Returns the CIPD platform string, equivalent to '${platform}'.
 
@@ -1389,6 +1389,18 @@ Args:
 
 Returns:
   The CIPDApi.Pin instance.
+
+&mdash; **def [resolve](/recipe_modules/cipd/api.py#981)(self, package: str, version: str, test_data_instance_id: (str | None)=None):**
+
+Returns concrete package instance ID(s) given a version.
+
+Args:
+  * package - The name of the cipd package or package prefix.
+  * version - The package version to resolve.
+  * test_data_instance_id - Default instance ID for this step when in
+    test mode.
+
+Returns a list of CIPDApi.Pin instances.
 
 &mdash; **def [search](/recipe_modules/cipd/api.py#944)(self, package_name: str, tag: str, test_instances: ((list[str] | int) | None)=None):**
 
