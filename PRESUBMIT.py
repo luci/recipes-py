@@ -40,35 +40,40 @@ def CheckPatchFormatted(input_api, output_api):
       input_api, output_api, check_clang_format=False)
 
 
-def CheckVPythonSpec(input_api, output_api):
-  """Validates that modified vpython specs match their companion uv.lock files."""
-
-  def vpython_spec_filter(f):
-    base = input_api.os_path.basename(f.LocalPath())
-    return (base.endswith('vpython.toml') or
-            base.endswith('vpython.toml.uv.lock') or base.endswith(
-                ('.vpython', '.vpython3')))
-
-  return input_api.RunTests(
-      input_api.canned_checks.CheckVPythonSpec(
-          input_api, output_api, file_filter=vpython_spec_filter))
+def CheckDevVpythonMatches(input_api, output_api):
+  affected_files = input_api.AffectedTestableFiles(
+      lambda f: f.LocalPath().endswith('.vpython'))
+  results = []
+  if affected_files:
+    root = input_api.PresubmitLocalPath()
+    vpy3 = input_api.ReadFile(input_api.os_path.join(root, '.vpython3'))
+    for debugger in ('vscode', 'pycharm'):
+      devvpy3 = input_api.ReadFile(
+          input_api.os_path.join(root, f'./.{debugger}.vpython3'))
+      if not devvpy3.startswith(vpy3):
+        results.append(
+            output_api.PresubmitError(
+                f'.{debugger}.vpython3 does not have the contents of .vpython3 as a prefix.'
+            ))
+  return results
 
 
 def CheckIntegrationTests(input_api, output_api):
   results = []
   # Explicitly run these independently because they update files on disk and are
-  # called implicitly with the other tests. Updating the protos, etc. of
-  # recipes.py is not locked.
+  # called implicitly with the other tests. The vpython check is nominally
+  # locked with a file lock, but updating the protos, etc. of recipes.py is not.
   recipes_py = input_api.os_path.join(
       input_api.PresubmitLocalPath(), 'recipes.py')
-  run_first = [
+  run_first = (
+    input_api.canned_checks.CheckVPythonSpec(input_api, output_api) + [
       input_api.Command(
           'Compile recipe protos',
           ['python3', recipes_py, 'fetch'],
           {},
           output_api.PresubmitError,
       ),
-  ]
+    ])
 
   for cmd in run_first:
     result = input_api.thread_pool.CallCommand(cmd)

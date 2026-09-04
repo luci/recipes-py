@@ -1,10 +1,8 @@
-/recipes.py                recipes
-/recipe_engine/**          recipes
-/turboci/**                recipes
-/**/unittests/**          -recipes
-vpython.toml               recipes
-vpython.toml.uv.lock       recipes
+/recipes.py         recipes
+/recipe_engine/**   recipes
+/turboci/**         recipes
+/**/unittests/**   -recipes
+.vpython3           recipes
 
 # We include these in order to allow easier debugging of recipe bundles.
-*.vpython.toml             recipes
-*.vpython.toml.uv.lock     recipes
+.*.vpython3         recipes

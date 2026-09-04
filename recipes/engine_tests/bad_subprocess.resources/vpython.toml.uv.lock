@@ -1,6 +1,0 @@
-pypiwin32==219 ; (platform_machine == 'AMD64' and sys_platform == 'win32') or (platform_machine == 'x86' and sys_platform == 'win32') or (platform_machine == 'x86_64' and sys_platform == 'win32') \
-    --hash=sha256:1b1b858bdf0fbf68714c473bc844370878870a05ea46d8a11489a2e674b31779 \
-    --hash=sha256:5618522ad9c2b229d8a9a1c5175d135a397bf70d6db1d352adf0131aa5321258 \
-    --hash=sha256:5618522ad9c2b229d8a9a1c5175d135a397bf70d6db1d352adf0131aa5321258 \
-    --hash=sha256:fbe640e946e2fcd983048e2c40bee28eba884a9e0178fb1cf03e1d365abd8e3f \
-    --hash=sha256:fbe640e946e2fcd983048e2c40bee28eba884a9e0178fb1cf03e1d365abd8e3f
