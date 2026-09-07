@@ -242,11 +242,31 @@ class AnalyzeSmokeTest(test_env.RecipeEngineUnitTest):
 
   def testGitAttrs(self):
     exit_code, outdata = self._run({
-      'files': ['.vpython3'],  # vpython is included via .gitattributes
-      'recipes': [
-        'engine_tests/unicode',
-        'engine_tests/allowlist_steps',
-      ],
+        'files': ['.vpython3'],  # .vpython3 is included via .gitattributes
+        'recipes': [
+            'engine_tests/unicode',
+            'engine_tests/allowlist_steps',
+        ],
+    })
+    self.assertDictEqual(
+        outdata, {
+            'error':
+                '',
+            'invalidRecipes': [],
+            'recipes': [
+                'engine_tests/unicode',
+                'engine_tests/allowlist_steps',
+            ],
+        })
+    self.assertEqual(exit_code, 0)
+
+  def testGitAttrsToml(self):
+    exit_code, outdata = self._run({
+        'files': ['vpython.toml'],  # included via .gitattributes
+        'recipes': [
+            'engine_tests/unicode',
+            'engine_tests/allowlist_steps',
+        ],
     })
     self.assertDictEqual(
         outdata, {
