@@ -150,13 +150,16 @@ def RunSteps(api: DEPS, properties):
         raise api.step.InfraFailure('no build to collect for %s' % child_id)
     api.buildbucket.collect_builds(build_ids_to_collect, step_name=step_name)
 
-  def TurboCIWrite(step_name: str, req: TurboCIWriteType):
+  def TurboCIWrite(step_name: str, req: TurboCIWriteType, nest: bool = True):
     reason = req.reason
     if not reason.message:
       reason.CopyFrom(turboci.reason(f'written by step {step_name!r}'))
+    rawReq = WriteNodesRequest(reason=reason, checks=req.check_writes)
+    if not nest:
+      turboci.get_client().WriteNodes(rawReq)
+      return
     with api.step.nest(step_name) as pres:
       try:
-        rawReq = WriteNodesRequest(reason=reason, checks=req.check_writes)
         pres.logs['request'] = str(rawReq)
 
         rawRsp = turboci.get_client().WriteNodes(rawReq)
@@ -177,7 +180,10 @@ def RunSteps(api: DEPS, properties):
                   realm='$from_container',
               ),
           ],)
-      TurboCIWrite(f'write check {i}', write_req)
+      TurboCIWrite(f'write check {i}', write_req, nest=False)
+      api.step(f'subproc {i}', ['vpython3', '-c', f'import time; print("step {i}"); time.sleep(1)'])
+      TurboCIWrite(f'update check {i}', write_req, nest=False)
+
     with api.step.nest(step_name):
       futs = [api.futures.spawn(_write_check, i) for i in range(count)]
       for f in futs:

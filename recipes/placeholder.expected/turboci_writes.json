@@ -4,75 +4,36 @@
     "name": "concurrent writes"
   },
   {
-    "cmd": [],
-    "name": "concurrent writes.write check 0",
+    "cmd": [
+      "vpython3",
+      "-c",
+      "import time; print(\"step 0\"); time.sleep(1)"
+    ],
+    "name": "concurrent writes.subproc 0",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_LOG_LINE@request@reason {@@@",
-      "@@@STEP_LOG_LINE@request@  message: \"written by step \\'write check 0\\'\"@@@",
-      "@@@STEP_LOG_LINE@request@}@@@",
-      "@@@STEP_LOG_LINE@request@checks {@@@",
-      "@@@STEP_LOG_LINE@request@  identifier {@@@",
-      "@@@STEP_LOG_LINE@request@    id: \"concurrent writes_0\"@@@",
-      "@@@STEP_LOG_LINE@request@  }@@@",
-      "@@@STEP_LOG_LINE@request@  realm: \"$from_container\"@@@",
-      "@@@STEP_LOG_LINE@request@  kind: CHECK_KIND_BUILD@@@",
-      "@@@STEP_LOG_LINE@request@}@@@",
-      "@@@STEP_LOG_END@request@@@",
-      "@@@STEP_LOG_LINE@response@written_version {@@@",
-      "@@@STEP_LOG_LINE@response@  ts {@@@",
-      "@@@STEP_LOG_LINE@response@    seconds: 1@@@",
-      "@@@STEP_LOG_LINE@response@  }@@@",
-      "@@@STEP_LOG_LINE@response@}@@@",
-      "@@@STEP_LOG_END@response@@@"
+      "@@@STEP_NEST_LEVEL@1@@@"
     ]
   },
   {
-    "cmd": [],
-    "name": "concurrent writes.write check 1",
+    "cmd": [
+      "vpython3",
+      "-c",
+      "import time; print(\"step 1\"); time.sleep(1)"
+    ],
+    "name": "concurrent writes.subproc 1",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_LOG_LINE@request@reason {@@@",
-      "@@@STEP_LOG_LINE@request@  message: \"written by step \\'write check 1\\'\"@@@",
-      "@@@STEP_LOG_LINE@request@}@@@",
-      "@@@STEP_LOG_LINE@request@checks {@@@",
-      "@@@STEP_LOG_LINE@request@  identifier {@@@",
-      "@@@STEP_LOG_LINE@request@    id: \"concurrent writes_1\"@@@",
-      "@@@STEP_LOG_LINE@request@  }@@@",
-      "@@@STEP_LOG_LINE@request@  realm: \"$from_container\"@@@",
-      "@@@STEP_LOG_LINE@request@  kind: CHECK_KIND_BUILD@@@",
-      "@@@STEP_LOG_LINE@request@}@@@",
-      "@@@STEP_LOG_END@request@@@",
-      "@@@STEP_LOG_LINE@response@written_version {@@@",
-      "@@@STEP_LOG_LINE@response@  ts {@@@",
-      "@@@STEP_LOG_LINE@response@    seconds: 2@@@",
-      "@@@STEP_LOG_LINE@response@  }@@@",
-      "@@@STEP_LOG_LINE@response@}@@@",
-      "@@@STEP_LOG_END@response@@@"
+      "@@@STEP_NEST_LEVEL@1@@@"
     ]
   },
   {
-    "cmd": [],
-    "name": "concurrent writes.write check 2",
+    "cmd": [
+      "vpython3",
+      "-c",
+      "import time; print(\"step 2\"); time.sleep(1)"
+    ],
+    "name": "concurrent writes.subproc 2",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_LOG_LINE@request@reason {@@@",
-      "@@@STEP_LOG_LINE@request@  message: \"written by step \\'write check 2\\'\"@@@",
-      "@@@STEP_LOG_LINE@request@}@@@",
-      "@@@STEP_LOG_LINE@request@checks {@@@",
-      "@@@STEP_LOG_LINE@request@  identifier {@@@",
-      "@@@STEP_LOG_LINE@request@    id: \"concurrent writes_2\"@@@",
-      "@@@STEP_LOG_LINE@request@  }@@@",
-      "@@@STEP_LOG_LINE@request@  realm: \"$from_container\"@@@",
-      "@@@STEP_LOG_LINE@request@  kind: CHECK_KIND_BUILD@@@",
-      "@@@STEP_LOG_LINE@request@}@@@",
-      "@@@STEP_LOG_END@request@@@",
-      "@@@STEP_LOG_LINE@response@written_version {@@@",
-      "@@@STEP_LOG_LINE@response@  ts {@@@",
-      "@@@STEP_LOG_LINE@response@    seconds: 3@@@",
-      "@@@STEP_LOG_LINE@response@  }@@@",
-      "@@@STEP_LOG_LINE@response@}@@@",
-      "@@@STEP_LOG_END@response@@@"
+      "@@@STEP_NEST_LEVEL@1@@@"
     ]
   },
   {
