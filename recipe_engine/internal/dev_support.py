@@ -51,9 +51,9 @@ def ensure_venv(deps: recipe_deps.RecipeDeps):
   """Ensures that the .recipe_deps/_venvs/$env symlink is generated.
 
   $env is calculated as:
-    * vscode  - .vscode.vpython3
-    * pycharm - .pycharm.vpython3
-    * normal  - .vpython3
+    * vscode  - vscode.vpython.toml
+    * pycharm - pycharm.vpython.toml
+    * normal  - vpython.toml
 
   No-op on windows.
   """

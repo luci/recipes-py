@@ -943,7 +943,7 @@ See Also: Debugger Configuration
 NOTE: Windows platforms may require additional permissions (e.g. Developer Mode
 or SeCreateSymbolicLinkPrivilege).
 
-Recipes use pinned virtual environments described in the `.*.vpython3` files
+Recipes use pinned virtual environments described in the `*.vpython.toml` files
 in this repo. These files are interpreted by `vpython3`, which transforms them
 into a VirtualEnv, using a pinned version of python, and pinned versions of all
 dependencies (e.g. google.protobuf, gevent, etc.).
@@ -968,10 +968,10 @@ You can configure pyright (e.g. in pyproject.toml) to set `.recipe_deps` as
     venvPath = ".recipe_deps/_venv"
     venv = "normal"
 
-NOTE: Any time the recipe_engine's .vpython3 files change, the values of these
+NOTE: Any time the recipe_engine's vpython.toml files change, the values of these
 symlinks will be regenerated. Depending on the IDE this may mean that the IDE
 will need to be restarted, in case it's cacheing an old value of the symlink.
-The .vpython3 files change fairly infrequently, however.
+The vpython.toml files change fairly infrequently, however.
 
 ## Debugging
 
@@ -1035,8 +1035,8 @@ Under the hood, `vscode` uses the `debugpy` library, and `pycharm` uses
 can also integrate using the RECIPE_DEBUGGER environment variable (I have
 personally gotten `vscode` to work using `nvim-dap` in NeoVim).
 
-The versions of these libraries are pinned in the `.vscode.vpython3` and
-`.pycharm.vpython3` files, respectively.
+The versions of these libraries are pinned in the `vscode.vpython.toml` and
+`pycharm.vpython.toml` files, respectively.
 
 ## Detecting memory leaks with Pympler
 
