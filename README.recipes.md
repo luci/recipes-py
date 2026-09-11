@@ -122,6 +122,7 @@
   * [engine_tests/expect_exceptions](#recipes-engine_tests_expect_exceptions) &mdash; Tests that tests with multiple exceptions are handled correctly.
   * [engine_tests/failure_results](#recipes-engine_tests_failure_results) &mdash; Tests that run_steps is handling recipe failures correctly.
   * [engine_tests/functools_partial](#recipes-engine_tests_functools_partial) &mdash; Engine shouldn't explode when step_test_data gets functools.
+  * [engine_tests/grpc_fork_support](#recipes-engine_tests_grpc_fork_support) &mdash; Asserts that gRPC fork support is disabled in the recipe engine.
   * [engine_tests/incorrect_recipe_result](#recipes-engine_tests_incorrect_recipe_result) &mdash; Tests that engine.
   * [engine_tests/long_sleep](#recipes-engine_tests_long_sleep) &mdash; Simple recipe which sleeps in a subprocess forever to facilitate early termination tests.
   * [engine_tests/missing_start_dir](#recipes-engine_tests_missing_start_dir) &mdash; Tests that deleting the current working directory doesn't immediately fail.
@@ -5584,6 +5585,29 @@ http://src.chromium.org/viewvc/chrome?revision=298072&view=revision
 When this recipe is run (by run_test.py), the _print_step code is exercised.
 
 &mdash; **def [RunSteps](/recipes/engine_tests/functools_partial.py#34)(api: DEPS):**
+### *recipes* / [engine\_tests/grpc\_fork\_support](/recipes/engine_tests/grpc_fork_support.py)
+
+
+Asserts that gRPC fork support is disabled in the recipe engine.
+
+The recipe engine spawns a subprocess (fork()+exec with close_fds=True) for
+every step. On Linux the grpcio wheel is compiled with fork support enabled by
+default (GRPC_ENABLE_FORK_SUPPORT_DEFAULT=true), so gRPC C-core registers
+pthread_atfork handlers. If a fork() happens while other threads are calling
+into gRPC, the prefork handler skips (logging "Other threads are currently
+calling into gRPC, skipping fork() handlers"), so the postfork child never
+resets the polling engine; when the child then closes inherited fds before
+exec, epoll_wait() hits EBADF and aborts the child with SIGABRT (exit -6).
+
+recipe_engine/main.py sets GRPC_ENABLE_FORK_SUPPORT=0 before anything imports
+grpc, which makes C-core latch fork support as disabled (no atfork handlers).
+
+This recipe reads the value via ENV_PROPERTIES and fails if it is not "0". It is
+run for real (through main.py) by RunSmokeTest.test_grpc_fork_support in
+unittests/run_test.py, which is what actually guards the main.py fix. See
+b/537839459.
+
+&mdash; **def [RunSteps](/recipes/engine_tests/grpc_fork_support.py#50)(api: DEPS, env_properties):**
 ### *recipes* / [engine\_tests/incorrect\_recipe\_result](/recipes/engine_tests/incorrect_recipe_result.py)
 
 [DEPS](/recipes/engine_tests/incorrect_recipe_result.py#25): [json](#recipe_modules-json), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

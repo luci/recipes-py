@@ -14,6 +14,14 @@ import errno
 import os
 import time
 
+# Disable gRPC fork handlers before any module imports grpc. The recipe engine
+# uses gevent and spawns child processes via subprocess.Popen (fork+exec); if
+# gRPC C-core initializes with fork support enabled (the default on Linux), its
+# pthread_atfork handlers spawn Epoll1Poller background threads inside forked
+# child processes that crash with EBADF (SIGABRT, exit code -6) when Popen
+# closes inherited file descriptors.
+os.environ.setdefault('GRPC_ENABLE_FORK_SUPPORT', '0')
+
 # Hack 1; crbug.com/980535
 #
 # On OS X there seems to be an issue with subprocess's use of its error

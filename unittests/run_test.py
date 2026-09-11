@@ -161,6 +161,16 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
         env[k] = v
     self._test_recipe(recipe_name, env=env)
 
+  def test_grpc_fork_support(self):
+    # recipe_engine/main.py must disable gRPC fork support by setting
+    # GRPC_ENABLE_FORK_SUPPORT=0 before importing grpc, so the subprocess
+    # (fork+exec) that the engine runs for every step does not crash. Run
+    # the real recipe through main.py with the variable removed from the
+    # environment to verify that main.py sets it. See b/537839459.
+    env = os.environ.copy()
+    env.pop('GRPC_ENABLE_FORK_SUPPORT', None)
+    self._test_recipe('engine_tests/grpc_fork_support', env=env)
+
   def test_bad_subprocess(self):
     now = time.time()
     self._test_recipe('engine_tests/bad_subprocess')
