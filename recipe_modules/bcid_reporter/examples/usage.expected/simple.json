@@ -30,6 +30,18 @@
   },
   {
     "cmd": [
+      "echo",
+      "hello"
+    ],
+    "env_prefixes": {
+      "PATH": [
+        "[START_DIR]/reporter"
+      ]
+    },
+    "name": "echo"
+  },
+  {
+    "cmd": [
       "[START_DIR]/reporter/snoopy_broker",
       "-report-stage",
       "-stage",

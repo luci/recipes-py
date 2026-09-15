@@ -11,6 +11,7 @@ from RECIPE_MODULES.recipe_engine import (
     bcid_reporter,
     cipd,
     path,
+    step,
 )
 
 
@@ -19,6 +20,7 @@ class DEPS(RecipeScriptApi):
   bcid_reporter: bcid_reporter.API
   cipd: cipd.API
   path: path.API
+  step: step.API
 
 
 @dataclass
@@ -27,6 +29,9 @@ class TEST_DEPS(RecipeTestApi):
 
 
 def RunSteps(api: DEPS):
+  with api.bcid_reporter.path_env():
+    api.step('echo', ['echo', 'hello'])
+
   # Report task stage.
   api.bcid_reporter.report_stage("start")
   # Report another stage; the module shouldn't install broker again.

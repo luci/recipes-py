@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from RECIPE_MODULES.recipe_engine import (
     cipd,
+    context,
     file,
     path,
     properties,
@@ -19,6 +20,7 @@ from RECIPE_MODULES.recipe_engine import (
 @dataclass
 class DEPS(RecipeScriptApi):
   cipd: cipd.API
+  context: context.API
   file: file.API
   path: path.API
   properties: properties.API

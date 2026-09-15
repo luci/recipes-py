@@ -374,21 +374,21 @@ def GenTests(api):
 ```
 ### *recipe_modules* / [bcid\_reporter](/recipe_modules/bcid_reporter)
 
-[DEPS](/recipe_modules/bcid_reporter/__init__.py#20): [cipd](#recipe_modules-cipd), [file](#recipe_modules-file), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/bcid_reporter/__init__.py#21): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
 
-#### **class [BcidReporterApi](/recipe_modules/bcid_reporter/api.py#25)([RecipeApi](/recipe_engine/recipe_api.py#439)):**
+#### **class [BcidReporterApi](/recipe_modules/bcid_reporter/api.py#26)([RecipeApi](/recipe_engine/recipe_api.py#439)):**
 
 API for interacting with Provenance server using the broker tool.
 
-&emsp; **@property**<br>&mdash; **def [bcid\_reporter\_path](/recipe_modules/bcid_reporter/api.py#37)(self):**
+&emsp; **@property**<br>&mdash; **def [bcid\_reporter\_path](/recipe_modules/bcid_reporter/api.py#38)(self):**
 
 Returns the path to the broker binary.
 
 When the property is accessed the first time, the latest stable, released
 broker will be installed using cipd.
 
-&mdash; **def [create\_from\_pkg](/recipe_modules/bcid_reporter/api.py#234)(self, pkg_def, refs=None, tags=None, metadata=None, compression_level=None, verification_timeout=None):**
+&mdash; **def [create\_from\_pkg](/recipe_modules/bcid_reporter/api.py#243)(self, pkg_def, refs=None, tags=None, metadata=None, compression_level=None, verification_timeout=None):**
 
 Builds and uploads a package based on a PackageDefinition object and
 reports cipd digest to local provenance server.
@@ -408,7 +408,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [create\_from\_yaml](/recipe_modules/bcid_reporter/api.py#184)(self, pkg_def, refs=None, tags=None, metadata=None, pkg_vars=None, compression_level=None, verification_timeout=None):**
+&mdash; **def [create\_from\_yaml](/recipe_modules/bcid_reporter/api.py#193)(self, pkg_def, refs=None, tags=None, metadata=None, pkg_vars=None, compression_level=None, verification_timeout=None):**
 
 Builds and uploads a package based on on-disk YAML package definition
 file and reports cipd digest to local provenance server.
@@ -430,7 +430,11 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&emsp; **@retry()**<br>&mdash; **def [report\_cipd](/recipe_modules/bcid_reporter/api.py#86)(self, digest, pkg, iid, attestation, server_url=None):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [path\_env](/recipe_modules/bcid_reporter/api.py#54)(self):**
+
+Ensures snoopy_broker is installed and adds its directory to PATH.
+
+&emsp; **@retry()**<br>&mdash; **def [report\_cipd](/recipe_modules/bcid_reporter/api.py#95)(self, digest, pkg, iid, attestation, server_url=None):**
 
 Reports cipd digest to local provenance server.
 
@@ -445,7 +449,7 @@ Args:
   * server_url (Optional[str]) - URL for the local provenance server, the
     broker tool will use default if not specified.
 
-&emsp; **@retry()**<br>&mdash; **def [report\_gcs](/recipe_modules/bcid_reporter/api.py#119)(self, digest, guri, server_url=None):**
+&emsp; **@retry()**<br>&mdash; **def [report\_gcs](/recipe_modules/bcid_reporter/api.py#128)(self, digest, guri, server_url=None):**
 
 Reports gcs digest to local provenance server.
 
@@ -459,7 +463,7 @@ Args:
   * server_url (Optional[str]) - URL for the local provenance server, the
     broker tool will use default if not specified.
 
-&emsp; **@retry()**<br>&mdash; **def [report\_sbom](/recipe_modules/bcid_reporter/api.py#147)(self, digest, guri, sbom_subjects=None, server_url=None):**
+&emsp; **@retry()**<br>&mdash; **def [report\_sbom](/recipe_modules/bcid_reporter/api.py#156)(self, digest, guri, sbom_subjects=None, server_url=None):**
 
 Reports SBOM gcs digest to local provenance server.
 
@@ -476,7 +480,7 @@ Args:
   * server_url (Optional[str]) - URL for the local provenance server, the
     broker tool will use default if not specified.
 
-&emsp; **@retry(raise_on_failure=False)**<br>&mdash; **def [report\_stage](/recipe_modules/bcid_reporter/api.py#53)(self, stage, server_url=None):**
+&emsp; **@retry(raise_on_failure=False)**<br>&mdash; **def [report\_stage](/recipe_modules/bcid_reporter/api.py#62)(self, stage, server_url=None):**
 
 Reports task stage to local provenance server. This is best-effort and
 won't abort the execution on errors.
@@ -5146,10 +5150,10 @@ same repo as the issue() call.
 &mdash; **def [RunSteps](/recipe_modules/assertions/tests/max_diff.py#31)(api: DEPS):**
 ### *recipes* / [bcid\_reporter:examples/usage](/recipe_modules/bcid_reporter/examples/usage.py)
 
-[DEPS](/recipe_modules/bcid_reporter/examples/usage.py#18): [bcid\_reporter](#recipe_modules-bcid_reporter), [cipd](#recipe_modules-cipd), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/bcid_reporter/examples/usage.py#19): [bcid\_reporter](#recipe_modules-bcid_reporter), [cipd](#recipe_modules-cipd), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/bcid_reporter/examples/usage.py#29)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/bcid_reporter/examples/usage.py#31)(api: DEPS):**
 ### *recipes* / [bcid\_reporter:tests/retry](/recipe_modules/bcid_reporter/tests/retry.py)
 
 [DEPS](/recipe_modules/bcid_reporter/tests/retry.py#18): [bcid\_reporter](#recipe_modules-bcid_reporter), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io)

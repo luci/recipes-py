@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import datetime
 import os
 
@@ -49,6 +50,14 @@ class BcidReporterApi(recipe_api.RecipeApi):
       self.m.cipd.ensure(reporter_dir, ensure_file)
       self._broker_bin = reporter_dir / 'snoopy_broker'
     return self._broker_bin
+
+  @contextlib.contextmanager
+  def path_env(self):
+    """Ensures snoopy_broker is installed and adds its directory to PATH."""
+    with self.m.context(
+        env_prefixes={'PATH': [self.bcid_reporter_path.parent]}
+    ):
+      yield
 
   @retry(raise_on_failure=False)
   def report_stage(self, stage, server_url=None):
