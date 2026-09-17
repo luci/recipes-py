@@ -1,10 +1,32 @@
 [
   {
+    "cmd": [],
+    "name": "install infra/tools/security/provenance_broker"
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0o777",
+      "[START_DIR]/cipd_tool/infra/tools/security/provenance_broker/51a637c315c2d1b87221d38f05d587075a436c84631497b39d5e55c1317bfe1a"
+    ],
+    "infra_step": true,
+    "name": "install infra/tools/security/provenance_broker.ensure package directory",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
     "cmd": [
       "cipd",
       "ensure",
       "-root",
-      "[START_DIR]/reporter",
+      "[START_DIR]/cipd_tool/infra/tools/security/provenance_broker/51a637c315c2d1b87221d38f05d587075a436c84631497b39d5e55c1317bfe1a",
       "-ensure-file",
       "infra/tools/security/provenance_broker/${platform} git_revision:ca2431ca47b3f9ee4af25e48ff0c48b508a3382b",
       "-max-threads",
@@ -13,8 +35,9 @@
       "/path/to/tmp/json"
     ],
     "infra_step": true,
-    "name": "ensure_installed",
+    "name": "install infra/tools/security/provenance_broker.ensure_installed",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
@@ -35,14 +58,14 @@
     ],
     "env_prefixes": {
       "PATH": [
-        "[START_DIR]/reporter"
+        "[START_DIR]/cipd_tool/infra/tools/security/provenance_broker/51a637c315c2d1b87221d38f05d587075a436c84631497b39d5e55c1317bfe1a"
       ]
     },
     "name": "echo"
   },
   {
     "cmd": [
-      "[START_DIR]/reporter/snoopy_broker",
+      "[START_DIR]/cipd_tool/infra/tools/security/provenance_broker/51a637c315c2d1b87221d38f05d587075a436c84631497b39d5e55c1317bfe1a/snoopy_broker",
       "-report-stage",
       "-stage",
       "start",
@@ -55,7 +78,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/reporter/snoopy_broker",
+      "[START_DIR]/cipd_tool/infra/tools/security/provenance_broker/51a637c315c2d1b87221d38f05d587075a436c84631497b39d5e55c1317bfe1a/snoopy_broker",
       "-report-stage",
       "-stage",
       "fetch",
@@ -66,7 +89,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/reporter/snoopy_broker",
+      "[START_DIR]/cipd_tool/infra/tools/security/provenance_broker/51a637c315c2d1b87221d38f05d587075a436c84631497b39d5e55c1317bfe1a/snoopy_broker",
       "-report-cipd",
       "-digest",
       "deadbeef",
@@ -83,7 +106,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/reporter/snoopy_broker",
+      "[START_DIR]/cipd_tool/infra/tools/security/provenance_broker/51a637c315c2d1b87221d38f05d587075a436c84631497b39d5e55c1317bfe1a/snoopy_broker",
       "-report-gcs",
       "-digest",
       "deadbeef",
@@ -96,7 +119,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/reporter/snoopy_broker",
+      "[START_DIR]/cipd_tool/infra/tools/security/provenance_broker/51a637c315c2d1b87221d38f05d587075a436c84631497b39d5e55c1317bfe1a/snoopy_broker",
       "-report-gcs",
       "-digest",
       "deadbeef",
@@ -113,7 +136,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/reporter/snoopy_broker",
+      "[START_DIR]/cipd_tool/infra/tools/security/provenance_broker/51a637c315c2d1b87221d38f05d587075a436c84631497b39d5e55c1317bfe1a/snoopy_broker",
       "-report-gcs",
       "-digest",
       "deadbeef",
@@ -173,7 +196,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/reporter/snoopy_broker",
+      "[START_DIR]/cipd_tool/infra/tools/security/provenance_broker/51a637c315c2d1b87221d38f05d587075a436c84631497b39d5e55c1317bfe1a/snoopy_broker",
       "-report-cipd",
       "-digest",
       "deadbeef",
@@ -262,7 +285,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/reporter/snoopy_broker",
+      "[START_DIR]/cipd_tool/infra/tools/security/provenance_broker/51a637c315c2d1b87221d38f05d587075a436c84631497b39d5e55c1317bfe1a/snoopy_broker",
       "-report-cipd",
       "-digest",
       "deadbeef",

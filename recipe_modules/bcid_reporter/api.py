@@ -28,7 +28,6 @@ class BcidReporterApi(recipe_api.RecipeApi):
 
   def __init__(self, **kwargs):
     super().__init__(**kwargs)
-    self._broker_bin = None
 
     if self._test_data.enabled:
       self._pid = self._test_data.get('pid', 12345)
@@ -42,14 +41,11 @@ class BcidReporterApi(recipe_api.RecipeApi):
     When the property is accessed the first time, the latest stable, released
     broker will be installed using cipd.
     """
-    if self._broker_bin is None:
-      reporter_dir = self.m.path.start_dir / 'reporter'
-      ensure_file = self.m.cipd.EnsureFile().add_package(
-          'infra/tools/security/provenance_broker/${platform}',
-          _LATEST_STABLE_VERSION)
-      self.m.cipd.ensure(reporter_dir, ensure_file)
-      self._broker_bin = reporter_dir / 'snoopy_broker'
-    return self._broker_bin
+    return self.m.cipd.ensure_tool(
+        'infra/tools/security/provenance_broker/${platform}',
+        _LATEST_STABLE_VERSION,
+        executable_path='snoopy_broker',
+    )
 
   @contextlib.contextmanager
   def path_env(self):
