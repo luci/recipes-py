@@ -49,11 +49,24 @@ class BcidReporterApi(recipe_api.RecipeApi):
 
   @contextlib.contextmanager
   def path_env(self):
-    """Ensures snoopy_broker is installed and adds its directory to PATH."""
+    """Ensures snoopy_broker is installed and adds its directory to PATH.
+
+    It also brackets the wrapped block with task stage reports. Subprocesses
+    that report artifacts themselves (by calling `snoopy_broker` found in PATH)
+    rely on the task being started, and the provenance server needs to be told
+    when the stage is over.
+
+    Reports the "start" stage when entering the context and the
+    "upload-complete" stage when leaving it, even if the wrapped block raised.
+    """
     with self.m.context(
         env_prefixes={'PATH': [self.bcid_reporter_path.parent]}
     ):
-      yield
+      self.report_stage('start')
+      try:
+        yield
+      finally:
+        self.report_stage('upload-complete')
 
   @retry(raise_on_failure=False)
   def report_stage(self, stage, server_url=None):

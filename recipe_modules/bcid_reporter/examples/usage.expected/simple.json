@@ -53,6 +53,24 @@
   },
   {
     "cmd": [
+      "[START_DIR]/cipd_tool/infra/tools/security/provenance_broker/51a637c315c2d1b87221d38f05d587075a436c84631497b39d5e55c1317bfe1a/snoopy_broker",
+      "-report-stage",
+      "-stage",
+      "start",
+      "-recipe",
+      "bcid_reporter:examples/usage",
+      "-pid",
+      "54321"
+    ],
+    "env_prefixes": {
+      "PATH": [
+        "[START_DIR]/cipd_tool/infra/tools/security/provenance_broker/51a637c315c2d1b87221d38f05d587075a436c84631497b39d5e55c1317bfe1a"
+      ]
+    },
+    "name": "snoop: report_stage"
+  },
+  {
+    "cmd": [
       "echo",
       "hello"
     ],
@@ -68,13 +86,27 @@
       "[START_DIR]/cipd_tool/infra/tools/security/provenance_broker/51a637c315c2d1b87221d38f05d587075a436c84631497b39d5e55c1317bfe1a/snoopy_broker",
       "-report-stage",
       "-stage",
+      "upload-complete"
+    ],
+    "env_prefixes": {
+      "PATH": [
+        "[START_DIR]/cipd_tool/infra/tools/security/provenance_broker/51a637c315c2d1b87221d38f05d587075a436c84631497b39d5e55c1317bfe1a"
+      ]
+    },
+    "name": "snoop: report_stage (2)"
+  },
+  {
+    "cmd": [
+      "[START_DIR]/cipd_tool/infra/tools/security/provenance_broker/51a637c315c2d1b87221d38f05d587075a436c84631497b39d5e55c1317bfe1a/snoopy_broker",
+      "-report-stage",
+      "-stage",
       "start",
       "-recipe",
       "bcid_reporter:examples/usage",
       "-pid",
       "54321"
     ],
-    "name": "snoop: report_stage"
+    "name": "snoop: report_stage (3)"
   },
   {
     "cmd": [
@@ -85,7 +117,7 @@
       "-backend-url",
       "http://test.local"
     ],
-    "name": "snoop: report_stage (2)"
+    "name": "snoop: report_stage (4)"
   },
   {
     "cmd": [

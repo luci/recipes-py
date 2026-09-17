@@ -29,6 +29,7 @@ class TEST_DEPS(RecipeTestApi):
 
 
 def RunSteps(api: DEPS):
+  # Reports "start" stage on enter and "upload-complete" stage on exit.
   with api.bcid_reporter.path_env():
     api.step('echo', ['echo', 'hello'])
 
