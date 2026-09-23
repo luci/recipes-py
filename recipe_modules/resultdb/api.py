@@ -9,6 +9,9 @@ https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 """
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+from typing import Any
+
 from google.protobuf import field_mask_pb2
 from google.protobuf import json_format
 from google.protobuf import timestamp_pb2
@@ -504,8 +507,9 @@ class ResultDBAPI(recipe_api.RecipeApi):
       self,
       invocation: str,
       baseline: str,
-      step_name: str = None,
-      step_test_data: dict = None) -> resultdb.QueryNewTestVariantsResponse():
+      step_name: str | None = None,
+      step_test_data: Mapping[str, Any] | None = None,
+  ) -> resultdb.QueryNewTestVariantsResponse:
     """Query ResultDB for new tests.
 
     Makes a QueryNewTestVariants rpc.
@@ -858,7 +862,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
     ret += ['--'] + list(cmd)
     return ret
 
-  def unwrap(self, cmd: list[str]) -> list[str]:
+  def unwrap(self, cmd: Sequence[str]) -> list[str]:
     """Reverses the wrap command
 
     If the command is wrapped with the rdb command and delimiter this will

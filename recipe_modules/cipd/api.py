@@ -90,7 +90,7 @@ class PackageDefinition:
     # we know that root has the same base and some prefix of path
     return '/'.join(path.pieces[len(self.package_root.pieces):])
 
-  def add_dir(self, dir_path: Path, exclusions: list[str] | None = None):
+  def add_dir(self, dir_path: Path, exclusions: Sequence[str] | None = None):
     """Recursively add a directory to the package.
 
     Args:
@@ -434,7 +434,7 @@ class CIPDApi(recipe_api.RecipeApi):
       self,
       pkg_def: Path,
       output_package: Path,
-      pkg_vars: dict[str, str] = None,
+      pkg_vars: Mapping[str, str] | None = None,
       compression_level: CompressionLevel | None = None,
   ) -> Pin:
     """Builds a package based on on-disk YAML package definition file.
@@ -851,7 +851,7 @@ class CIPDApi(recipe_api.RecipeApi):
       self,
       package_name: str,
       version: str,
-      tags: dict[str, str],
+      tags: Mapping[str, str],
   ) -> Pin:
     """Tags package of a specific version.
 
@@ -883,7 +883,7 @@ class CIPDApi(recipe_api.RecipeApi):
       self,
       package_name: str,
       version: str,
-      metadata: list[Metadata],
+      metadata: Sequence[Metadata],
   ) -> Pin:
     """Attaches metadata to a package instance.
 
@@ -914,7 +914,7 @@ class CIPDApi(recipe_api.RecipeApi):
       self,
       package_name: str,
       version: str,
-      refs: list[str],
+      refs: Sequence[str],
   ) -> Pin:
     """Moves a ref to point to a given version.
 
@@ -945,7 +945,7 @@ class CIPDApi(recipe_api.RecipeApi):
       self,
       package_name: str,
       tag: str,
-      test_instances: list[str] | int | None = None,
+      test_instances: Sequence[str] | int | None = None,
   ) -> list[Pin]:
     """Searches for package instances by tag, optionally constrained by package
     name.

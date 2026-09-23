@@ -346,7 +346,7 @@ def query_nodes(
 def read_checks(*idents: identifier.Check | str,
                 collect: Query.CollectChecks | None = None,
                 types: Sequence[str | Message | type[Message]] = (),
-                client: TurboCIClient | None = None) -> Sequence[Check]:
+                client: TurboCIClient | None = None) -> list[Check]:
   """Convenience function for reading one or more checks by ID.
 
   This just does a query_nodes for the ids specified by `idents`, and then
@@ -366,7 +366,7 @@ def read_checks(*idents: identifier.Check | str,
           collect,
           node_set=wrapped,
       ), types=types, client=client).workplans[0].checks
-  return checks
+  return list(checks)
 
 
 MsgT = TypeVar('MsgT', bound=Message)

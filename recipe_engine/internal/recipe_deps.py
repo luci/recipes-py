@@ -155,7 +155,7 @@ class RecipeDeps:
     }
 
   @classmethod
-  def create(cls, main_repo_path: str, overrides: dict[str, str],
+  def create(cls, main_repo_path: str, overrides: Mapping[str, str],
              proto_override: str | None,
              minimal_protoc: bool = False) -> RecipeDeps:
     """Creates a RecipeDeps.
@@ -1063,7 +1063,7 @@ _BASE_API_FIELDS: frozenset[str] = frozenset(
 def parse_deps_spec(
     repo_name: str,
     deps_spec: Sequence[str] | Mapping[str, str] | object,
-    globalns: dict[str, Any] | None = None,
+    globalns: Mapping[str, Any] | None = None,
     *,
     source: str,
 ) -> dict[str, tuple[str, str]]:
@@ -1130,7 +1130,7 @@ def parse_deps_spec(
 def _parse_deps_class(
     deps_spec: object,
     source: str,
-    globalns: dict[str, Any] | None = None,
+    globalns: Mapping[str, Any] | None = None,
 ) -> dict[str, tuple[str, str]]:
   """Validates that a DEPS or TEST_DEPS class has no custom methods and returns deps."""
   for name, member in deps_spec.__dict__.items():
@@ -1178,7 +1178,7 @@ def _collect_import_warnings(
 
 
 def _instantiate_test_api(module: RecipeModule,
-                          resolved_deps: dict[str, RecipeTestApi | None]) -> RecipeTestApi:
+                          resolved_deps: Mapping[str, RecipeTestApi | None]) -> RecipeTestApi:
   """Instantiates the RecipeTestApi class from the given imported recipe module.
 
   Args:
@@ -1203,7 +1203,7 @@ def _instantiate_test_api(module: RecipeModule,
 def _instantiate_api(engine: RecipeEngine, test_data: RecipeTestData,
                      fqname: str, module: RecipeModule,
                      test_api: RecipeTestApi,
-                     resolved_deps: dict[str, RecipeApi | None]) -> RecipeApi:
+                     resolved_deps: Mapping[str, RecipeApi | None]) -> RecipeApi:
   """Instantiates the RecipeApi subclass from the given imported recipe
   module.
 
@@ -1299,7 +1299,7 @@ def _instantiate_api(engine: RecipeEngine, test_data: RecipeTestData,
   return inst
 
 
-def _resolve(recipe_deps: RecipeDeps, deps_spec: dict[str, tuple[str, str]],
+def _resolve(recipe_deps: RecipeDeps, deps_spec: Mapping[str, tuple[str, str]],
              variant: str, engine: RecipeEngine | None,
              test_data: RecipeTestData | None) -> dict[str, RecipeApi | RecipeTestApi | None]:
   """Resolves a deps_spec to a map of {local_name: api instance}

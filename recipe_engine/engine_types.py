@@ -454,7 +454,7 @@ class StepPresentation:
     self._was_cancelled = val
 
   @property
-  def step_text(self) -> str | collections.abc.Sequence[str] | None:
+  def step_text(self) -> str | list[str] | None:
     return self._step_text
 
   @step_text.setter
@@ -469,7 +469,7 @@ class StepPresentation:
     self._step_text = val
 
   @property
-  def step_summary_text(self) -> str | collections.abc.Sequence[str] | None:
+  def step_summary_text(self) -> str | list[str] | None:
     return self._step_summary_text
 
   @step_summary_text.setter
@@ -509,10 +509,12 @@ class StepPresentation:
     return copy.deepcopy(self._tags)
 
   @properties.setter
-  def properties(self, val: dict[str, Any]) -> None:  # pylint: disable=E0202
+  def properties(
+      self, val: collections.abc.Mapping[str, Any]
+  ) -> None:  # pylint: disable=E0202
     assert not self._finalized, 'Changing finalized step %r' % self._name
-    assert isinstance(val, dict)
-    self._properties = val
+    assert isinstance(val, collections.abc.Mapping)
+    self._properties = dict(val)
 
   def finalize(self, step_stream: Any) -> None:
     self._finalized = True

@@ -131,7 +131,7 @@ class PostProcessUnitTest(test_env.RecipeEngineUnitTest):
     self.assertEqual(len(failures), num_fails)
     return failures
 
-  def assertHas(self, failure: list[str], *text: str) -> None:
+  def assertHas(self, failure: Outcome.Results.Lines, *text: str) -> None:
     """Assert that the given failure contains all the given strings.
 
     Args:

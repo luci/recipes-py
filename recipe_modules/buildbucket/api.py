@@ -278,12 +278,13 @@ class BuildbucketApi(recipe_api.RecipeApi):
         gitiles_commit)
 
   @staticmethod
-  def tags(**tags: list[str] | str) -> list[common_pb2.StringPair]:
+  def tags(**tags: Sequence[str] | str) -> list[common_pb2.StringPair]:
     """Alias for tags in util.py. See doc there."""
     return util.tags(**tags)
 
-  def add_tags_to_current_build(self,
-                                tags: list[common_pb2.StringPair]) -> None:
+  def add_tags_to_current_build(
+      self, tags: Sequence[common_pb2.StringPair]
+  ) -> None:
     """Adds arbitrary tags during the runtime of a build.
 
     Args:

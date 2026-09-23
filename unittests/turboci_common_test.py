@@ -5,7 +5,8 @@
 
 from __future__ import annotations
 
-from typing import cast
+from collections.abc import Mapping
+from typing import Any, cast
 
 from unittest.mock import MagicMock
 
@@ -38,7 +39,7 @@ from recipe_engine.turboci import (write_nodes, reason, check, dep_group,
 from turboci.utils import value
 
 
-def _mkStruct(d: dict) -> Struct:
+def _mkStruct(d: Mapping[str, Any]) -> Struct:
   return cast(Struct, parse(Struct, d))
 
 

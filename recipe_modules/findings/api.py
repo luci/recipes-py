@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 import gzip
 import os
 import struct
@@ -27,7 +28,7 @@ class FindingsAPI(recipe_api.RecipeApi):
 
   def upload_findings(
       self,
-      findings: list[findings_pb.Finding],
+      findings: Sequence[findings_pb.Finding],
       step_name: str | None = None,
   ) -> None:
     """Uploads code findings to ResultDB.

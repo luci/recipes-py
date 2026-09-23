@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import collections
+from collections.abc import Mapping
 import datetime
 import logging
 import os
@@ -387,7 +388,7 @@ def _collect_global_warnings_result(outcome_msg):
 
 
 def _print_warnings(
-    warning_result: dict[str, PerWarningResult],
+    warning_result: Mapping[str, PerWarningResult],
     recipe_deps: RecipeDeps,
     err_warnings: set[str]) -> bool:
   """Prints the warnings in warning_result.
@@ -510,7 +511,7 @@ SOFT_MAX_DURATIONS = 8
 HARD_MAX_DURATIONS = 12
 
 
-def _print_durations(duration_result: dict[str, datetime.timedelta],
+def _print_durations(duration_result: Mapping[str, datetime.timedelta],
                      full: bool):
   durations = list(duration_result.items())
   durations.sort(key=lambda x: (x[1], x[0]))

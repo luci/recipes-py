@@ -19,6 +19,7 @@ can just write to without worrying.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 import json
 import logging
 import tempfile
@@ -123,7 +124,7 @@ class StreamEngine:
                       name_tokens,
                       allow_subannotations,
                       merge_step=False,
-                      merge_output_properties_to: None | list[str] = None):
+                      merge_output_properties_to: Sequence[str] | None = None):
     """Creates a new StepStream in this engine.
 
     The step will be considered started at the moment this method is called.

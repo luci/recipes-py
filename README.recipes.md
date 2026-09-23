@@ -259,7 +259,7 @@
 [DEPS](/recipe_modules/archive/__init__.py#18): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [step](#recipe_modules-step)
 
 
-#### **class [ArchiveApi](/recipe_modules/archive/api.py#11)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [ArchiveApi](/recipe_modules/archive/api.py#11)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 Provides steps to manipulate archive files (tar, zip, etc.).
 
@@ -325,7 +325,7 @@ Returns:
 ### *recipe_modules* / [assertions](/recipe_modules/assertions)
 
 
-#### **class [AssertionsApi](/recipe_modules/assertions/api.py#56)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [AssertionsApi](/recipe_modules/assertions/api.py#56)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 Provides access to the assertion methods of the python unittest module.
 
@@ -377,7 +377,7 @@ def GenTests(api):
 [DEPS](/recipe_modules/bcid_reporter/__init__.py#21): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
 
-#### **class [BcidReporterApi](/recipe_modules/bcid_reporter/api.py#26)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [BcidReporterApi](/recipe_modules/bcid_reporter/api.py#26)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 API for interacting with Provenance server using the broker tool.
 
@@ -512,7 +512,7 @@ API for interacting with Software Verifier.
 To successfully authenticate to this API, you must have the
 https://www.googleapis.com/auth/bcid_verify OAuth scope.
 
-#### **class [BcidVerifierApi](/recipe_modules/bcid_verifier/api.py#22)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [BcidVerifierApi](/recipe_modules/bcid_verifier/api.py#22)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 API for interacting with Software Verifier
 
@@ -560,11 +560,11 @@ API for interacting with the buildbucket service.
 Requires `buildbucket` command in `$PATH`:
 https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 
-#### **class [BuildbucketApi](/recipe_modules/buildbucket/api.py#43)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [BuildbucketApi](/recipe_modules/buildbucket/api.py#43)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 A module for interacting with buildbucket.
 
-&mdash; **def [add\_tags\_to\_current\_build](/recipe_modules/buildbucket/api.py#285)(self, tags: list[common_pb2.StringPair]):**
+&mdash; **def [add\_tags\_to\_current\_build](/recipe_modules/buildbucket/api.py#285)(self, tags: Sequence[common_pb2.StringPair]):**
 
 Adds arbitrary tags during the runtime of a build.
 
@@ -572,32 +572,32 @@ Args:
 * tags: tags to add. May contain duplicates. Empty tag values won't remove
   existing tags with matching keys, since tags can only be added.
 
-&emsp; **@property**<br>&mdash; **def [backend\_hostname](/recipe_modules/buildbucket/api.py#1272)(self):**
+&emsp; **@property**<br>&mdash; **def [backend\_hostname](/recipe_modules/buildbucket/api.py#1273)(self):**
 
 Returns the backend hostname for the build.
 If it is legacy swarming build then the swarming hostname will be returned.
 
-&emsp; **@property**<br>&mdash; **def [backend\_task\_dimensions](/recipe_modules/buildbucket/api.py#1281)(self):**
+&emsp; **@property**<br>&mdash; **def [backend\_task\_dimensions](/recipe_modules/buildbucket/api.py#1282)(self):**
 
 Returns the task dimensions used by the task for the build.
     
 
-&mdash; **def [backend\_task\_dimensions\_from\_build](/recipe_modules/buildbucket/api.py#1287)(self, build: (build_pb2.Build | None)=None):**
+&mdash; **def [backend\_task\_dimensions\_from\_build](/recipe_modules/buildbucket/api.py#1288)(self, build: (build_pb2.Build | None)=None):**
 
 Returns the task dimensions for the provided build.
 If no build is provided, then self.build will be used.
 
-&emsp; **@property**<br>&mdash; **def [backend\_task\_id](/recipe_modules/buildbucket/api.py#1300)(self):**
+&emsp; **@property**<br>&mdash; **def [backend\_task\_id](/recipe_modules/buildbucket/api.py#1301)(self):**
 
 Returns the task id of the task for the build.
     
 
-&mdash; **def [backend\_task\_id\_from\_build](/recipe_modules/buildbucket/api.py#1306)(self, build: (build_pb2.Build | None)=None):**
+&mdash; **def [backend\_task\_id\_from\_build](/recipe_modules/buildbucket/api.py#1307)(self, build: (build_pb2.Build | None)=None):**
 
 Returns the task id of the task for the provided build.
 If no build is provided, then self.build will be used.
 
-&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#1254)(self):**
+&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#1255)(self):**
 
 Returns bucket name in v1 format.
 
@@ -624,7 +624,7 @@ If the current build is not a buildbucket build, returned `build.id` is 0.
 
 Returns url to a build. Defaults to current build.
 
-&emsp; **@property**<br>&mdash; **def [builder\_cache\_path](/recipe_modules/buildbucket/api.py#312)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_cache\_path](/recipe_modules/buildbucket/api.py#313)(self):**
 
 Path to the builder cache directory.
 
@@ -652,7 +652,7 @@ set. This can happen in tests that don't properly mock build proto.
 
 Returns url to a builder. Defaults to current builder.
 
-&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#909)(self, build_id: (int | str), reason: (str | None)=None, step_name: (str | None)=None):**
+&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#910)(self, build_id: (int | str), reason: (str | None)=None, step_name: (str | None)=None):**
 
 Cancel the build associated with the provided build ID.
 
@@ -665,7 +665,7 @@ Returns:
   None if build is successfully canceled. Otherwise, an InfraFailure will
   be raised
 
-&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#1044)(self, build_id: str, \*\*kwargs: Any):**
+&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#1045)(self, build_id: str, \*\*kwargs: Any):**
 
 Shorthand for `collect_builds` below, but for a single build only.
 
@@ -676,7 +676,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto).
   for the ended build.
 
-&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#1058)(self, build_ids: Sequence[(int | str)], interval: (int | None)=None, timeout: (int | None)=None, step_name: (str | None)=None, raise_if_unsuccessful: bool=False, url_title_fn: (UrlTitleFunction | None)=None, mirror_status: bool=False, fields: Set[str]=DEFAULT_FIELDS, cost: (engine_types.ResourceCost | None)=None, eager: bool=False):**
+&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#1059)(self, build_ids: Sequence[(int | str)], interval: (int | None)=None, timeout: (int | None)=None, step_name: (str | None)=None, raise_if_unsuccessful: bool=False, url_title_fn: (UrlTitleFunction | None)=None, mirror_status: bool=False, fields: Set[str]=DEFAULT_FIELDS, cost: (engine_types.ResourceCost | None)=None, eager: bool=False):**
 
 Waits for a set of builds to end and returns their details.
 
@@ -703,7 +703,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto)
   for all specified builds.
 
-&mdash; **def [get](/recipe_modules/buildbucket/api.py#1015)(self, build_id: (int | str), url_title_fn: (UrlTitleFunction | None)=None, step_name: (str | None)=None, fields: Set[str]=DEFAULT_FIELDS, test_data: (build_pb2.Build | None)=None):**
+&mdash; **def [get](/recipe_modules/buildbucket/api.py#1016)(self, build_id: (int | str), url_title_fn: (UrlTitleFunction | None)=None, step_name: (str | None)=None, fields: Set[str]=DEFAULT_FIELDS, test_data: (build_pb2.Build | None)=None):**
 
 Gets a build.
 
@@ -718,7 +718,7 @@ Args:
 Returns:
   A build_pb2.Build.
 
-&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#951)(self, build_ids: Sequence[(int | str)], url_title_fn: (UrlTitleFunction | None)=None, step_name: (str | None)=None, fields: Set[str]=DEFAULT_FIELDS, test_data: (Sequence[build_pb2.Build] | None)=None):**
+&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#952)(self, build_ids: Sequence[(int | str)], url_title_fn: (UrlTitleFunction | None)=None, step_name: (str | None)=None, fields: Set[str]=DEFAULT_FIELDS, test_data: (Sequence[build_pb2.Build] | None)=None):**
 
 Gets multiple builds.
 
@@ -742,7 +742,7 @@ For value format, see
 
 Never returns None, but sub-fields may be empty.
 
-&mdash; **def [hide\_current\_build\_in\_gerrit](/recipe_modules/buildbucket/api.py#306)(self):**
+&mdash; **def [hide\_current\_build\_in\_gerrit](/recipe_modules/buildbucket/api.py#307)(self):**
 
 Hides the build in UI
 
@@ -753,7 +753,7 @@ Hides the build in UI
 Returns True if the build is critical. Build defaults to the current one.
     
 
-&mdash; **def [list\_builders](/recipe_modules/buildbucket/api.py#715)(self, project: str, bucket: str, step_name: (str | None)=None):**
+&mdash; **def [list\_builders](/recipe_modules/buildbucket/api.py#716)(self, project: str, bucket: str, step_name: (str | None)=None):**
 
 Lists configured builders in a bucket.
 
@@ -765,7 +765,7 @@ Returns:
   A list of builder names, excluding the project and bucket
   (e.g. 'betty-pi-arc-release-main').
 
-&mdash; **def [run](/recipe_modules/buildbucket/api.py#334)(self, schedule_build_requests: Sequence[builds_service_pb2.ScheduleBuildRequest], collect_interval: (int | None)=None, timeout: (int | None)=None, url_title_fn: (UrlTitleFunction | None)=None, step_name: (str | None)=None, raise_if_unsuccessful: bool=False, eager: bool=False):**
+&mdash; **def [run](/recipe_modules/buildbucket/api.py#335)(self, schedule_build_requests: Sequence[builds_service_pb2.ScheduleBuildRequest], collect_interval: (int | None)=None, timeout: (int | None)=None, url_title_fn: (UrlTitleFunction | None)=None, step_name: (str | None)=None, raise_if_unsuccessful: bool=False, eager: bool=False):**
 
 Runs builds and returns results.
 
@@ -777,7 +777,7 @@ Returns:
   [Builds](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto)
   in the same order as schedule_build_requests.
 
-&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#588)(self, schedule_build_requests: Sequence[builds_service_pb2.ScheduleBuildRequest], url_title_fn: (UrlTitleFunction | None)=None, step_name: (str | None)=None, include_sub_invs: bool=True):**
+&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#589)(self, schedule_build_requests: Sequence[builds_service_pb2.ScheduleBuildRequest], url_title_fn: (UrlTitleFunction | None)=None, step_name: (str | None)=None, include_sub_invs: bool=True):**
 
 Schedules a batch of builds.
 
@@ -808,7 +808,7 @@ Returns:
 Raises:
   `InfraFailure` if any of the requests fail.
 
-&mdash; **def [schedule\_request](/recipe_modules/buildbucket/api.py#370)(self, builder: str, project: (str | Inherit)=INHERIT, bucket: (str | Inherit)=INHERIT, properties: Mapping[(str, Any)]=None, experimental: ((bool | common_pb2.Trinary) | Inherit)=INHERIT, experiments: (Mapping[(str, bool)] | None)=None, gitiles_commit: (common_pb2.GitilesCommit | Inherit)=INHERIT, gerrit_changes: (Sequence[common_pb2.GerritChange] | Inherit)=INHERIT, tags: (Sequence[common_pb2.StringPair] | None)=None, inherit_buildsets: bool=True, swarming_parent_run_id: (str | None)=None, dimensions: (Sequence[common_pb2.RequestedDimension] | None)=None, priority: ((int | None) | Inherit)=INHERIT, critical: ((bool | common_pb2.Trinary) | Inherit)=INHERIT, exe_cipd_version: ((str | Inherit) | None)=None, fields: Set[str]=DEFAULT_FIELDS, can_outlive_parent: (bool | None)=None, as_shadow_if_parent_is_led: bool=False, led_inherit_parent: bool=False):**
+&mdash; **def [schedule\_request](/recipe_modules/buildbucket/api.py#371)(self, builder: str, project: (str | Inherit)=INHERIT, bucket: (str | Inherit)=INHERIT, properties: Mapping[(str, Any)]=None, experimental: ((bool | common_pb2.Trinary) | Inherit)=INHERIT, experiments: (Mapping[(str, bool)] | None)=None, gitiles_commit: (common_pb2.GitilesCommit | Inherit)=INHERIT, gerrit_changes: (Sequence[common_pb2.GerritChange] | Inherit)=INHERIT, tags: (Sequence[common_pb2.StringPair] | None)=None, inherit_buildsets: bool=True, swarming_parent_run_id: (str | None)=None, dimensions: (Sequence[common_pb2.RequestedDimension] | None)=None, priority: ((int | None) | Inherit)=INHERIT, critical: ((bool | common_pb2.Trinary) | Inherit)=INHERIT, exe_cipd_version: ((str | Inherit) | None)=None, fields: Set[str]=DEFAULT_FIELDS, can_outlive_parent: (bool | None)=None, as_shadow_if_parent_is_led: bool=False, led_inherit_parent: bool=False):**
 
 Creates a new `ScheduleBuildRequest` message with reasonable defaults.
 
@@ -896,7 +896,7 @@ Args:
   agent_input and exe from its parent led build. It only takes effect if
   the parent is a led build and `as_shadow_if_parent_is_led` is True.
 
-&mdash; **def [search](/recipe_modules/buildbucket/api.py#742)(self, predicate: builds_service_pb2.BuildPredicate, limit: (int | None)=None, url_title_fn: (UrlTitleFunction | None)=None, report_build: bool=True, step_name: (str | None)=None, fields: Set[str]=DEFAULT_FIELDS, timeout: (int | None)=None, test_data: (Callable[([], Sequence[build_pb2.Build])] | None)=None):**
+&mdash; **def [search](/recipe_modules/buildbucket/api.py#743)(self, predicate: builds_service_pb2.BuildPredicate, limit: (int | None)=None, url_title_fn: (UrlTitleFunction | None)=None, report_build: bool=True, step_name: (str | None)=None, fields: Set[str]=DEFAULT_FIELDS, timeout: (int | None)=None, test_data: (Callable[([], Sequence[build_pb2.Build])] | None)=None):**
 
 Searches builds with one predicate.
 
@@ -916,7 +916,7 @@ batch response as a whole and take advantage of the proto recipe for direct
 encoding/decoding. And the limit could be used as the page_size in
 SearchBuildsRequest.
 
-&mdash; **def [search\_with\_multiple\_predicates](/recipe_modules/buildbucket/api.py#815)(self, predicate: Sequence[builds_service_pb2.BuildPredicate], limit: (int | None)=None, url_title_fn: (UrlTitleFunction | None)=None, report_build: bool=True, step_name: (str | None)=None, fields: Set[str]=DEFAULT_FIELDS, timeout: (int | None)=None, test_data: (Callable[([], Sequence[build_pb2.Build])] | None)=None):**
+&mdash; **def [search\_with\_multiple\_predicates](/recipe_modules/buildbucket/api.py#816)(self, predicate: Sequence[builds_service_pb2.BuildPredicate], limit: (int | None)=None, url_title_fn: (UrlTitleFunction | None)=None, report_build: bool=True, step_name: (str | None)=None, fields: Set[str]=DEFAULT_FIELDS, timeout: (int | None)=None, test_data: (Callable[([], Sequence[build_pb2.Build])] | None)=None):**
 
 Searches for builds with multiple predicates.
 
@@ -972,34 +972,34 @@ Args:
 
 Can be called at most once per build.
 
-&emsp; **@property**<br>&mdash; **def [shadowed\_bucket](/recipe_modules/buildbucket/api.py#1396)(self):**
+&emsp; **@property**<br>&mdash; **def [shadowed\_bucket](/recipe_modules/buildbucket/api.py#1397)(self):**
 
-&emsp; **@property**<br>&mdash; **def [swarming\_bot\_dimensions](/recipe_modules/buildbucket/api.py#1319)(self):**
+&emsp; **@property**<br>&mdash; **def [swarming\_bot\_dimensions](/recipe_modules/buildbucket/api.py#1320)(self):**
 
 Returns the swarming bot dimensions for the build.
     
 
-&mdash; **def [swarming\_bot\_dimensions\_from\_build](/recipe_modules/buildbucket/api.py#1325)(self, build: (build_pb2.Build | None)=None):**
+&mdash; **def [swarming\_bot\_dimensions\_from\_build](/recipe_modules/buildbucket/api.py#1326)(self, build: (build_pb2.Build | None)=None):**
 
 Returns the swarming bot dimensions for the provided build.
 If no build is provided, then self.build will be used.
 
-&emsp; **@property**<br>&mdash; **def [swarming\_parent\_run\_id](/recipe_modules/buildbucket/api.py#1348)(self):**
+&emsp; **@property**<br>&mdash; **def [swarming\_parent\_run\_id](/recipe_modules/buildbucket/api.py#1349)(self):**
 
 Returns the parent_run_id (swarming specific) used in the task.
     
 
-&emsp; **@property**<br>&mdash; **def [swarming\_priority](/recipe_modules/buildbucket/api.py#1367)(self):**
+&emsp; **@property**<br>&mdash; **def [swarming\_priority](/recipe_modules/buildbucket/api.py#1368)(self):**
 
 Returns the priority (swarming specific) of the task.
     
 
-&emsp; **@property**<br>&mdash; **def [swarming\_task\_service\_account](/recipe_modules/buildbucket/api.py#1381)(self):**
+&emsp; **@property**<br>&mdash; **def [swarming\_task\_service\_account](/recipe_modules/buildbucket/api.py#1382)(self):**
 
 Returns the swarming specific service account used in the task.
     
 
-&emsp; **@staticmethod**<br>&mdash; **def [tags](/recipe_modules/buildbucket/api.py#280)(\*\*tags: (list[str] | str)):**
+&emsp; **@staticmethod**<br>&mdash; **def [tags](/recipe_modules/buildbucket/api.py#280)(\*\*tags: (Sequence[str] | str)):**
 
 Alias for tags in util.py. See doc there.
 
@@ -1026,7 +1026,7 @@ Set the buildbucket host while in context, then reverts it.
 
 API for interacting with cas client.
 
-#### **class [CasApi](/recipe_modules/cas/api.py#14)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [CasApi](/recipe_modules/cas/api.py#14)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 A module for interacting with cas client.
 
@@ -1084,7 +1084,7 @@ This module has input properties which contains a list of CAS inputs to
 download. These can easily be download to disk with the 'download_caches'
 method, and subsequently used by a recipe in whatever relevant manner.
 
-#### **class [CasInputApi](/recipe_modules/cas_input/api.py#22)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [CasInputApi](/recipe_modules/cas_input/api.py#22)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 A module for downloading CAS inputs to a recipe.
 
@@ -1122,7 +1122,7 @@ subject to change in the future. Please reach out to the LUCI team first if you
 want to use this recipe module; file a ticket at:
 https://bugs.chromium.org/p/chromium/issues/entry?components=Infra%3ELUCI%3EBuildService%3EPresubmit%3ECV
 
-#### **class [ChangeVerifierApi](/recipe_modules/change_verifier/api.py#39)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [ChangeVerifierApi](/recipe_modules/change_verifier/api.py#39)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 This module provides recipe API of LUCI Change Verifier.
 
@@ -1156,7 +1156,7 @@ API for interacting with CIPD.
 Depends on 'cipd' binary available in PATH:
 https://godoc.org/go.chromium.org/luci/cipd/client/cmd/cipd
 
-#### **class [CIPDApi](/recipe_modules/cipd/api.py#270)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [CIPDApi](/recipe_modules/cipd/api.py#270)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 CIPDApi provides basic support for CIPD.
 
@@ -1212,7 +1212,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#433)(self, pkg_def: Path, output_package: Path, pkg_vars: dict[(str, str)]=None, compression_level: (CompressionLevel | None)=None):**
+&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#433)(self, pkg_def: Path, output_package: Path, pkg_vars: (Mapping[(str, str)] | None)=None, compression_level: (CompressionLevel | None)=None):**
 
 Builds a package based on on-disk YAML package definition file.
 
@@ -1415,7 +1415,7 @@ Args:
 
 Returns a list of CIPDApi.Pin instances.
 
-&mdash; **def [search](/recipe_modules/cipd/api.py#944)(self, package_name: str, tag: str, test_instances: ((list[str] | int) | None)=None):**
+&mdash; **def [search](/recipe_modules/cipd/api.py#944)(self, package_name: str, tag: str, test_instances: ((Sequence[str] | int) | None)=None):**
 
 Searches for package instances by tag, optionally constrained by package
 name.
@@ -1431,7 +1431,7 @@ Args:
 
 Returns the list of CIPDApi.Pin instances.
 
-&mdash; **def [set\_metadata](/recipe_modules/cipd/api.py#882)(self, package_name: str, version: str, metadata: list[Metadata]):**
+&mdash; **def [set\_metadata](/recipe_modules/cipd/api.py#882)(self, package_name: str, version: str, metadata: Sequence[Metadata]):**
 
 Attaches metadata to a package instance.
 
@@ -1442,7 +1442,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#913)(self, package_name: str, version: str, refs: list[str]):**
+&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#913)(self, package_name: str, version: str, refs: Sequence[str]):**
 
 Moves a ref to point to a given version.
 
@@ -1453,7 +1453,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#850)(self, package_name: str, version: str, tags: dict[(str, str)]):**
+&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#850)(self, package_name: str, version: str, tags: Mapping[(str, str)]):**
 
 Tags package of a specific version.
 
@@ -1467,7 +1467,7 @@ Returns the CIPDApi.Pin instance.
 ### *recipe_modules* / [commit\_position](/recipe_modules/commit_position)
 
 
-#### **class [CommitPositionApi](/recipe_modules/commit_position/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [CommitPositionApi](/recipe_modules/commit_position/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 Recipe module providing commit position parsing and formatting.
 
@@ -1506,7 +1506,7 @@ with api.context(cwd=api.path.start_dir / 'subdir'):
   api.step("cat subdir/foo", ['cat', './foo'])
 ```
 
-#### **class [ContextApi](/recipe_modules/context/api.py#80)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [ContextApi](/recipe_modules/context/api.py#80)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 &emsp; **@contextlib.contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/context/api.py#112)(self, cwd: (config_types.Path | None)=None, env_prefixes: (Mapping[(str, Sequence[str])] | None)=None, env_suffixes: (Mapping[(str, Sequence[str])] | None)=None, env: (Mapping[(str, str)] | None)=None, infra_steps: (bool | None)=None, luciexe: (sections_pb2.LUCIExe | None)=None, realm: str=None, deadline: (sections_pb2.Deadline | None)=None):**
 
@@ -1642,7 +1642,7 @@ Returns None if resultdb is not defined.
 
 Wrapper for CV API.
 
-#### **class [CQApi](/recipe_modules/cq/api.py#20)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [CQApi](/recipe_modules/cq/api.py#20)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 This module is a thin wrapper of the cv module.
 
@@ -1656,7 +1656,7 @@ Apply non-default value cq module properties to the cv module.
 
 Recipe API for LUCI CV, the pre-commit testing system.
 
-#### **class [CVApi](/recipe_modules/cv/api.py#20)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [CVApi](/recipe_modules/cv/api.py#20)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 This module provides recipe API of LUCI CV, a pre-commit testing system.
 
@@ -1825,7 +1825,7 @@ Returns recorded Buildbucket build IDs as a list of integers.
 
 Runs a function but defers the result until a later time.
 
-#### **class [DeferApi](/recipe_modules/defer/api.py#107)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [DeferApi](/recipe_modules/defer/api.py#107)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 Runs a function but defers the result until a later time.
 
@@ -1887,9 +1887,9 @@ with api.defer.context() as defer:
 
 File manipulation (read/write/delete/glob) methods.
 
-#### **class [FileApi](/recipe_modules/file/api.py#96)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [FileApi](/recipe_modules/file/api.py#97)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
-&mdash; **def [chmod](/recipe_modules/file/api.py#220)(self, name: str, path: (config_types.Path | str), mode: str, recursive: bool=False):**
+&mdash; **def [chmod](/recipe_modules/file/api.py#221)(self, name: str, path: (config_types.Path | str), mode: str, recursive: bool=False):**
 
 Set the access mode for a file or directory.
 
@@ -1901,7 +1901,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [compute\_hash](/recipe_modules/file/api.py#301)(self, name: str, paths: Sequence[(config_types.Path | str)], base_path: (config_types.Path | str), test_data: str=''):**
+&mdash; **def [compute\_hash](/recipe_modules/file/api.py#302)(self, name: str, paths: Sequence[(config_types.Path | str)], base_path: (config_types.Path | str), test_data: str=''):**
 
 Computes hash of contents of a directory/file.
 
@@ -1939,7 +1939,7 @@ Returns:
 Raises:
   file.Error and ValueError if passed paths input is not str or Path.
 
-&mdash; **def [copy](/recipe_modules/file/api.py#153)(self, name: str, source: ((config_types.Path | str) | recipe_api.Placeholder), dest: ((config_types.Path | str) | recipe_api.Placeholder)):**
+&mdash; **def [copy](/recipe_modules/file/api.py#154)(self, name: str, source: ((config_types.Path | str) | recipe_api.Placeholder), dest: ((config_types.Path | str) | recipe_api.Placeholder)):**
 
 Copies a file (including mode bits) from source to destination on the
 local filesystem.
@@ -1955,7 +1955,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [copytree](/recipe_modules/file/api.py#179)(self, name: str, source: (config_types.Path | str), dest: (config_types.Path | str), symlinks: bool=False, hardlink: bool=False, allow_override: bool=False):**
+&mdash; **def [copytree](/recipe_modules/file/api.py#180)(self, name: str, source: (config_types.Path | str), dest: (config_types.Path | str), symlinks: bool=False, hardlink: bool=False, allow_override: bool=False):**
 
 Recursively copies a directory tree.
 
@@ -1976,7 +1976,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#713)(self, name: str, dest: (config_types.Path | str), mode: int=511):**
+&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#714)(self, name: str, dest: (config_types.Path | str), mode: int=511):**
 
 Ensures that `dest` exists and is a directory.
 
@@ -1989,7 +1989,7 @@ Args:
 
 Raises: file.Error if the path exists but is not a directory.
 
-&mdash; **def [file\_hash](/recipe_modules/file/api.py#268)(self, file_path: (config_types.Path | str), test_data: str=''):**
+&mdash; **def [file\_hash](/recipe_modules/file/api.py#269)(self, file_path: (config_types.Path | str), test_data: str=''):**
 
 Computes hash of contents of a single file.
 
@@ -2005,7 +2005,7 @@ Returns:
 Raises:
   file.Error and ValueError if passed paths input is not str or Path.
 
-&mdash; **def [filesizes](/recipe_modules/file/api.py#735)(self, name: str, files: Sequence[(config_types.Path | str)], test_data: (Sequence[int] | None)=None):**
+&mdash; **def [filesizes](/recipe_modules/file/api.py#736)(self, name: str, files: Sequence[(config_types.Path | str)], test_data: (Sequence[int] | None)=None):**
 
 Returns list of filesizes for the given files.
 
@@ -2016,7 +2016,7 @@ Args:
 
 Returns size of each file in bytes.
 
-&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#909)(self, name: str, path: (config_types.Path | str)):**
+&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#910)(self, name: str, path: (config_types.Path | str)):**
 
 Flattens singular directories, starting at path.
 
@@ -2045,7 +2045,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [glob\_paths](/recipe_modules/file/api.py#586)(self, name: str, source: (config_types.Path | str), pattern: str, include_hidden: bool=False, test_data: Sequence[str]=()):**
+&mdash; **def [glob\_paths](/recipe_modules/file/api.py#587)(self, name: str, source: (config_types.Path | str), pattern: str, include_hidden: bool=False, test_data: Sequence[str]=()):**
 
 Performs glob expansion on `pattern`.
 
@@ -2075,7 +2075,7 @@ Returns all paths found.
 
 Raises: file.Error.
 
-&mdash; **def [is\_executable](/recipe_modules/file/api.py#632)(self, name: str, path: (config_types.Path | str), test_data: bool=True):**
+&mdash; **def [is\_executable](/recipe_modules/file/api.py#633)(self, name: str, path: (config_types.Path | str), test_data: bool=True):**
 
 Checks if a file is executable.
 
@@ -2086,7 +2086,7 @@ Args:
 
 Returns: True if the file is executable, False otherwise.
 
-&mdash; **def [listdir](/recipe_modules/file/api.py#674)(self, name: str, source: (config_types.Path | str), recursive: bool=False, test_data: Sequence[str]=(), include_log: bool=True):**
+&mdash; **def [listdir](/recipe_modules/file/api.py#675)(self, name: str, source: (config_types.Path | str), recursive: bool=False, test_data: Sequence[str]=(), include_log: bool=True):**
 
 Lists all files inside a directory.
 
@@ -2108,7 +2108,7 @@ Returns list of entries
 
 Raises: file.Error.
 
-&mdash; **def [move](/recipe_modules/file/api.py#244)(self, name: str, source: (config_types.Path | str), dest: (config_types.Path | str)):**
+&mdash; **def [move](/recipe_modules/file/api.py#245)(self, name: str, source: (config_types.Path | str), dest: (config_types.Path | str)):**
 
 Moves a file or directory.
 
@@ -2121,7 +2121,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [read\_json](/recipe_modules/file/api.py#458)(self, name: str, source: (config_types.Path | str), test_data: Any='', include_log: bool=True):**
+&mdash; **def [read\_json](/recipe_modules/file/api.py#459)(self, name: str, source: (config_types.Path | str), test_data: Any='', include_log: bool=True):**
 
 Reads a file as UTF-8 encoded json.
 
@@ -2136,7 +2136,7 @@ Returns: The content of the file.
 
 Raise file.Error
 
-&mdash; **def [read\_proto](/recipe_modules/file/api.py#510)(self, name: str, source: (config_types.Path | str), msg_class: type[ProtoMessage], codec: ProtoCodec, test_proto: Any=None, include_log: bool=True, decoding_kwargs: (dict | None)=None):**
+&mdash; **def [read\_proto](/recipe_modules/file/api.py#511)(self, name: str, source: (config_types.Path | str), msg_class: type[ProtoMessage], codec: ProtoCodec, test_proto: Any=None, include_log: bool=True, decoding_kwargs: (Mapping[(str, Any)] | None)=None):**
 
 Reads a file into a proto message.
 
@@ -2151,7 +2151,7 @@ Args:
   * decoding_kwargs: Passed directly to the chosen encoder. See proto
     module for details.
 
-&mdash; **def [read\_raw](/recipe_modules/file/api.py#358)(self, name: str, source: (config_types.Path | str), test_data: bytes=''):**
+&mdash; **def [read\_raw](/recipe_modules/file/api.py#359)(self, name: str, source: (config_types.Path | str), test_data: bytes=''):**
 
 Reads a file as raw data.
 
@@ -2165,7 +2165,7 @@ Returns: The unencoded (binary) contents of the file.
 
 Raises: file.Error
 
-&mdash; **def [read\_text](/recipe_modules/file/api.py#403)(self, name: str, source: (config_types.Path | str), test_data: str='', include_log: bool=True):**
+&mdash; **def [read\_text](/recipe_modules/file/api.py#404)(self, name: str, source: (config_types.Path | str), test_data: str='', include_log: bool=True):**
 
 Reads a file as UTF-8 encoded text.
 
@@ -2180,7 +2180,7 @@ Returns: The content of the file.
 
 Raises: file.Error
 
-&mdash; **def [remove](/recipe_modules/file/api.py#654)(self, name: str, source: (config_types.Path | str)):**
+&mdash; **def [remove](/recipe_modules/file/api.py#655)(self, name: str, source: (config_types.Path | str)):**
 
 Removes a file.
 
@@ -2192,7 +2192,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmcontents](/recipe_modules/file/api.py#785)(self, name: str, source: (config_types.Path | str)):**
+&mdash; **def [rmcontents](/recipe_modules/file/api.py#786)(self, name: str, source: (config_types.Path | str)):**
 
 Similar to rmtree, but removes only contents not the directory.
 
@@ -2207,7 +2207,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmglob](/recipe_modules/file/api.py#808)(self, name: str, source: (config_types.Path | str), pattern: str, recursive: bool=True, include_hidden: bool=True):**
+&mdash; **def [rmglob](/recipe_modules/file/api.py#809)(self, name: str, source: (config_types.Path | str), pattern: str, recursive: bool=True, include_hidden: bool=True):**
 
 Removes all entries in `source` matching the glob `pattern`.
 
@@ -2236,7 +2236,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmtree](/recipe_modules/file/api.py#763)(self, name: str, source: (config_types.Path | str)):**
+&mdash; **def [rmtree](/recipe_modules/file/api.py#764)(self, name: str, source: (config_types.Path | str)):**
 
 Recursively removes a directory.
 
@@ -2250,7 +2250,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [symlink](/recipe_modules/file/api.py#860)(self, name: str, source: ((config_types.Path | str) | recipe_api.Placeholder), linkname: ((config_types.Path | str) | recipe_api.Placeholder)):**
+&mdash; **def [symlink](/recipe_modules/file/api.py#861)(self, name: str, source: ((config_types.Path | str) | recipe_api.Placeholder), linkname: ((config_types.Path | str) | recipe_api.Placeholder)):**
 
 Creates a symlink on the local filesystem.
 
@@ -2263,14 +2263,14 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#883)(self, root: (config_types.Path | str)):**
+&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#884)(self, root: (config_types.Path | str)):**
 
 Creates a SymlinkTree, given a root directory.
 
 Args:
   * root: root of a tree of symlinks.
 
-&mdash; **def [truncate](/recipe_modules/file/api.py#891)(self, name: str, path: (config_types.Path | str), size_mb: int=100):**
+&mdash; **def [truncate](/recipe_modules/file/api.py#892)(self, name: str, path: (config_types.Path | str), size_mb: int=100):**
 
 Creates an empty file with path and size_mb on the local filesystem.
 
@@ -2281,7 +2281,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [write\_json](/recipe_modules/file/api.py#483)(self, name: str, dest: (config_types.Path | str), data: Any, indent: ((int | str) | None)=None, include_log: bool=True, sort_keys: bool=True):**
+&mdash; **def [write\_json](/recipe_modules/file/api.py#484)(self, name: str, dest: (config_types.Path | str), data: Any, indent: ((int | str) | None)=None, include_log: bool=True, sort_keys: bool=True):**
 
 Write the given json serializable `data` to `dest`.
 
@@ -2296,7 +2296,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [write\_proto](/recipe_modules/file/api.py#552)(self, name: str, dest: (config_types.Path | str), proto_msg: google.protobuf.message, codec: ProtoCodec, include_log: bool=True, encoding_kwargs: (dict | None)=None):**
+&mdash; **def [write\_proto](/recipe_modules/file/api.py#553)(self, name: str, dest: (config_types.Path | str), proto_msg: google.protobuf.message, codec: ProtoCodec, include_log: bool=True, encoding_kwargs: (Mapping[(str, Any)] | None)=None):**
 
 Writes the given proto message to `dest`.
 
@@ -2309,7 +2309,7 @@ Args:
   * encoding_kwargs: Passed directly to the chosen encoder. See proto
     module for details.
 
-&mdash; **def [write\_raw](/recipe_modules/file/api.py#383)(self, name: str, dest: (config_types.Path | str), data: bytes):**
+&mdash; **def [write\_raw](/recipe_modules/file/api.py#384)(self, name: str, dest: (config_types.Path | str), data: bytes):**
 
 Write the given `data` to `dest`.
 
@@ -2320,7 +2320,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [write\_text](/recipe_modules/file/api.py#433)(self, name: str, dest: (config_types.Path | str), text_data: str, include_log: bool=True):**
+&mdash; **def [write\_text](/recipe_modules/file/api.py#434)(self, name: str, dest: (config_types.Path | str), text_data: str, include_log: bool=True):**
 
 Write the given UTF-8 encoded `text_data` to `dest`.
 
@@ -2336,9 +2336,9 @@ Raises: file.Error.
 [DEPS](/recipe_modules/findings/__init__.py#19): [buildbucket](#recipe_modules-buildbucket), [proto](#recipe_modules-proto), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
 
 
-#### **class [FindingsAPI](/recipe_modules/findings/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [FindingsAPI](/recipe_modules/findings/api.py#18)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
-&mdash; **def [populate\_source\_from\_current\_build](/recipe_modules/findings/api.py#151)(self, location: findings_pb.Location):**
+&mdash; **def [populate\_source\_from\_current\_build](/recipe_modules/findings/api.py#152)(self, location: findings_pb.Location):**
 
 Set the location source based on the input of the current build.
 
@@ -2346,7 +2346,7 @@ This can be used for finding.location or replacement.location. Currently,
 only works for build with exactly one Gerrit change. Raise ValueError
 otherwise.
 
-&mdash; **def [upload\_findings](/recipe_modules/findings/api.py#28)(self, findings: list[findings_pb.Finding], step_name: (str | None)=None):**
+&mdash; **def [upload\_findings](/recipe_modules/findings/api.py#29)(self, findings: Sequence[findings_pb.Finding], step_name: (str | None)=None):**
 
 Uploads code findings to ResultDB.
 
@@ -2362,7 +2362,7 @@ Args:
 
 Implements in-recipe concurrency via green threads.
 
-#### **class [FuturesApi](/recipe_modules/futures/api.py#168)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [FuturesApi](/recipe_modules/futures/api.py#168)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 Provides access to the Recipe concurrency primitives.
 
@@ -2541,7 +2541,7 @@ Returns the list of done Futures, in the order in which they were done.
 
 A simple method for running steps generated by an external script.
 
-#### **class [GeneratorScriptApi](/recipe_modules/generator_script/api.py#14)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [GeneratorScriptApi](/recipe_modules/generator_script/api.py#14)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 &mdash; **def [\_\_call\_\_](/recipe_modules/generator_script/api.py#73)(self, path_to_script, \*args, checkout_dir=None, \*\*_):**
 
@@ -2586,7 +2586,7 @@ corresponds to one step, and contains the following keys:
 [DEPS](/recipe_modules/golang/__init__.py#18): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform)
 
 
-#### **class [GolangApi](/recipe_modules/golang/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [GolangApi](/recipe_modules/golang/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 &emsp; **@contextlib.contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/golang/api.py#17)(self, version, path=None, cache=None):**
 
@@ -2624,7 +2624,7 @@ Args:
 
 Methods for producing and consuming JSON.
 
-#### **class [JsonApi](/recipe_modules/json/api.py#132)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [JsonApi](/recipe_modules/json/api.py#132)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 &emsp; **@staticmethod**<br>&mdash; **def [dumps](/recipe_modules/json/api.py#133)(\*args, \*\*kwargs):**
 
@@ -2682,7 +2682,7 @@ Returns a step that reads a JSON file.
 
 An interface to call the led tool.
 
-#### **class [LedApi](/recipe_modules/led/api.py#23)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [LedApi](/recipe_modules/led/api.py#25)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 Interface to the led tool.
 
@@ -2698,19 +2698,19 @@ The main interface this module provides is a direct call to the led binary:
 
 See the led binary for full documentation of commands.
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/led/api.py#216)(self, \*cmd: str):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/led/api.py#218)(self, \*cmd: str):**
 
 Runs led with the given arguments. Wraps result in a `LedResult`.
 
-&emsp; **@property**<br>&mdash; **def [cipd\_input](/recipe_modules/led/api.py#199)(self):**
+&emsp; **@property**<br>&mdash; **def [cipd\_input](/recipe_modules/led/api.py#201)(self):**
 
 The versioned CIPD package containing the recipes code being run.
 
 If set, it will be an `InputProperties.CIPDInput` protobuf; otherwise None.
 
-&mdash; **def [initialize](/recipe_modules/led/api.py#155)(self):**
+&mdash; **def [initialize](/recipe_modules/led/api.py#157)(self):**
 
-&mdash; **def [inject\_input\_recipes](/recipe_modules/led/api.py#221)(self, led_result: LedResult):**
+&mdash; **def [inject\_input\_recipes](/recipe_modules/led/api.py#223)(self, led_result: LedResult):**
 
 Sets the version of recipes used by led to correspond to the version
 currently being used.
@@ -2722,36 +2722,36 @@ Args:
   * led_result: The `LedResult` whose job.Definition will be passed into the
     edit command.
 
-&emsp; **@property**<br>&mdash; **def [launched\_by\_led](/recipe_modules/led/api.py#176)(self):**
+&emsp; **@property**<br>&mdash; **def [launched\_by\_led](/recipe_modules/led/api.py#178)(self):**
 
 Whether the current build is a led job.
 
-&emsp; **@property**<br>&mdash; **def [led\_build](/recipe_modules/led/api.py#171)(self):**
+&emsp; **@property**<br>&mdash; **def [led\_build](/recipe_modules/led/api.py#173)(self):**
 
 Whether the current build is a led job as a real Buildbucket build.
 
-&emsp; **@property**<br>&mdash; **def [rbe\_cas\_input](/recipe_modules/led/api.py#190)(self):**
+&emsp; **@property**<br>&mdash; **def [rbe\_cas\_input](/recipe_modules/led/api.py#192)(self):**
 
 The location of the rbe-cas containing the recipes code being run.
 
 If set, it will be a `swarming.v1.CASReference` protobuf;
 otherwise, None.
 
-&emsp; **@property**<br>&mdash; **def [run\_id](/recipe_modules/led/api.py#181)(self):**
+&emsp; **@property**<br>&mdash; **def [run\_id](/recipe_modules/led/api.py#183)(self):**
 
 A unique string identifier for this led job, if it's a raw swarming task.
 
 If the current build is *not* a led job as raw swarming task, value will be
 an empty string.
 
-&emsp; **@property**<br>&mdash; **def [shadowed\_bucket](/recipe_modules/led/api.py#207)(self):**
+&emsp; **@property**<br>&mdash; **def [shadowed\_bucket](/recipe_modules/led/api.py#209)(self):**
 
 The bucket of the original build/builder the led build replicates from.
 
 If set, it will be an `InputProperties.ShadowedBucket` protobuf;
 otherwise None.
 
-&mdash; **def [trigger\_builder](/recipe_modules/led/api.py#234)(self, project_name: str, bucket_name: str, builder_name: str, properties: dict, use_payload: bool=False):**
+&mdash; **def [trigger\_builder](/recipe_modules/led/api.py#236)(self, project_name: str, bucket_name: str, builder_name: str, properties: Mapping[(str, Any)], use_payload: bool=False):**
 
 Trigger a builder using led.
 
@@ -2780,7 +2780,7 @@ will appear as the child steps of the launched cmd/step in the current running
 build (using the Merge Step feature from luciexe protocol). This is the
 replacement for allow_subannotation feature in the legacy annotate mode.
 
-#### **class [LegacyAnnotationApi](/recipe_modules/legacy_annotation/api.py#25)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [LegacyAnnotationApi](/recipe_modules/legacy_annotation/api.py#25)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 &mdash; **def [\_\_call\_\_](/recipe_modules/legacy_annotation/api.py#29)(self, name, cmd, timeout=None, step_test_data=None, cost=_ResourceCost(), legacy_global_namespace=False):**
 
@@ -2803,7 +2803,7 @@ This API is for calling LUCI Analysis RPCs for various aggregated info about
 test results.
 See go/luci-analysis for more info.
 
-#### **class [LuciAnalysisApi](/recipe_modules/luci_analysis/api.py#32)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [LuciAnalysisApi](/recipe_modules/luci_analysis/api.py#32)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 &mdash; **def [lookup\_bug](/recipe_modules/luci_analysis/api.py#265)(self, bug_id, system='monorail'):**
 
@@ -2932,7 +2932,7 @@ Returns:
 [DEPS](/recipe_modules/luci_config/__init__.py#19): [buildbucket](#recipe_modules-buildbucket), [file](#recipe_modules-file), [proto](#recipe_modules-proto), [step](#recipe_modules-step), [url](#recipe_modules-url)
 
 
-#### **class [LuciConfigApi](/recipe_modules/luci_config/api.py#20)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [LuciConfigApi](/recipe_modules/luci_config/api.py#20)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 Module for polling and parsing luci config files via the luci-config API.
 
@@ -3002,7 +3002,7 @@ Args:
 
 API for specifying Milo behavior.
 
-#### **class [MiloApi](/recipe_modules/milo/api.py#19)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [MiloApi](/recipe_modules/milo/api.py#19)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 A module for interacting with Milo.
 
@@ -3035,7 +3035,7 @@ Args:
 [DEPS](/recipe_modules/nodejs/__init__.py#18): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform)
 
 
-#### **class [NodeJSApi](/recipe_modules/nodejs/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [NodeJSApi](/recipe_modules/nodejs/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 &emsp; **@contextlib.contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/nodejs/api.py#17)(self, version, path=None, cache=None):**
 
@@ -3096,7 +3096,7 @@ collection of anchor points. The built-in anchor points are:
     should avoid 'checkout', and instead just explicitly pass paths around. This
     path may be removed in the future.
 
-#### **class [PathApi](/recipe_modules/path/api.py#330)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [PathApi](/recipe_modules/path/api.py#330)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 &emsp; **@recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED')**<br>&mdash; **def [\_\_contains\_\_](/recipe_modules/path/api.py#579)(self, pathname: NamedBasePathsType):**
 
@@ -3403,7 +3403,7 @@ be removed in the future (or converted to an alias of 'cleanup').
 
 Mockable system platform identity functions.
 
-#### **class [PlatformApi](/recipe_modules/platform/api.py#26)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [PlatformApi](/recipe_modules/platform/api.py#26)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 Provides host-platform-detection properties.
 
@@ -3482,7 +3482,7 @@ values provided to the recipe engine at the beginning of execution. There is
 intentionally no API to write property values (lest they become a kind of
 random-access global variable).
 
-#### **class [PropertiesApi](/recipe_modules/properties/api.py#29)([RecipeApi](/recipe_engine/recipe_api.py#441), collections.abc.Mapping):**
+#### **class [PropertiesApi](/recipe_modules/properties/api.py#29)([RecipeApi](/recipe_engine/recipe_api.py#442), collections.abc.Mapping):**
 
 PropertiesApi implements all the standard Mapping functions, so you
 can use it like a read-only dict.
@@ -3498,7 +3498,7 @@ Returns a read-write copy of all of the properties.
 Methods for producing and consuming protobuf data to/from steps and the
 filesystem.
 
-#### **class [ProtoApi](/recipe_modules/proto/api.py#92)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [ProtoApi](/recipe_modules/proto/api.py#92)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 &emsp; **@staticmethod**<br>&mdash; **def [decode](/recipe_modules/proto/api.py#179)(data, msg_class, codec: Codec, \*\*decoding_kwargs):**
 
@@ -3589,7 +3589,7 @@ Example:
       api.random.shuffle(my_list)
       # my_list is now random!
 
-#### **class [RandomApi](/recipe_modules/random/api.py#32)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [RandomApi](/recipe_modules/random/api.py#32)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 &mdash; **def [\_\_getattr\_\_](/recipe_modules/random/api.py#44)(self, name):**
 
@@ -3601,7 +3601,7 @@ Access a member of `random.Random`.
 
 Provides objects for reading and writing raw data to and from steps.
 
-#### **class [RawIOApi](/recipe_modules/raw_io/api.py#307)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [RawIOApi](/recipe_modules/raw_io/api.py#307)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 &emsp; **@[returns\_placeholder](/recipe_engine/util.py#165)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#308)(data, suffix='', name=None):**
 
@@ -3708,13 +3708,13 @@ API for interacting with the ResultDB service.
 Requires `rdb` command in `$PATH`:
 https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 
-#### **class [ResultDBAPI](/recipe_modules/resultdb/api.py#30)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [ResultDBAPI](/recipe_modules/resultdb/api.py#33)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 A module for interacting with ResultDB.
 
-&mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#52)(self):**
+&mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#55)(self):**
 
-&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#875)(self, column_keys=(), grouping_keys=('status',)):**
+&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#879)(self, column_keys=(), grouping_keys=('status',)):**
 
 Specifies how the test results should be rendered.
 
@@ -3736,15 +3736,15 @@ Args:
     Caveat: test variants with only expected results are not affected by
     this setting and are always in their own group.
 
-&emsp; **@property**<br>&mdash; **def [current\_invocation](/recipe_modules/resultdb/api.py#44)(self):**
+&emsp; **@property**<br>&mdash; **def [current\_invocation](/recipe_modules/resultdb/api.py#47)(self):**
 
-&emsp; **@property**<br>&mdash; **def [enabled](/recipe_modules/resultdb/api.py#48)(self):**
+&emsp; **@property**<br>&mdash; **def [enabled](/recipe_modules/resultdb/api.py#51)(self):**
 
-&mdash; **def [exclude\_invocations](/recipe_modules/resultdb/api.py#63)(self, invocations, step_name=None):**
+&mdash; **def [exclude\_invocations](/recipe_modules/resultdb/api.py#66)(self, invocations, step_name=None):**
 
 Shortcut for resultdb.update_included_invocations().
 
-&mdash; **def [exonerate](/recipe_modules/resultdb/api.py#154)(self, test_exonerations, step_name=None):**
+&mdash; **def [exonerate](/recipe_modules/resultdb/api.py#157)(self, test_exonerations, step_name=None):**
 
 Exonerates test variants in the current invocation.
 
@@ -3752,7 +3752,7 @@ Args:
   test_exonerations (list): A list of test_result_pb2.TestExoneration.
   step_name (str): name of the step.
 
-&mdash; **def [get\_included\_invocations](/recipe_modules/resultdb/api.py#104)(self, inv_name=None, step_name=None):**
+&mdash; **def [get\_included\_invocations](/recipe_modules/resultdb/api.py#107)(self, inv_name=None, step_name=None):**
 
 Returns names of included invocations of the input invocation.
 
@@ -3764,7 +3764,7 @@ Args:
 Returns:
   A list of invocation name strs.
 
-&mdash; **def [get\_invocation\_instructions](/recipe_modules/resultdb/api.py#129)(self, inv_name=None, step_name=None):**
+&mdash; **def [get\_invocation\_instructions](/recipe_modules/resultdb/api.py#132)(self, inv_name=None, step_name=None):**
 
 Returns instructions from the input invocation.
 
@@ -3776,11 +3776,11 @@ Args:
 Returns:
   instruction_pb2.Instructions of the invocation requested.
 
-&mdash; **def [include\_invocations](/recipe_modules/resultdb/api.py#58)(self, invocations, step_name=None):**
+&mdash; **def [include\_invocations](/recipe_modules/resultdb/api.py#61)(self, invocations, step_name=None):**
 
 Shortcut for resultdb.update_included_invocations().
 
-&mdash; **def [invocation\_ids](/recipe_modules/resultdb/api.py#196)(self, inv_names):**
+&mdash; **def [invocation\_ids](/recipe_modules/resultdb/api.py#199)(self, inv_names):**
 
 Returns invocation IDs by parsing invocation names.
 
@@ -3790,7 +3790,7 @@ Args:
 Returns:
   A list of invocation_ids.
 
-&mdash; **def [query](/recipe_modules/resultdb/api.py#211)(self, inv_ids, variants_with_unexpected_results=False, merge=False, limit=None, step_name=None, tr_fields=None, test_invocations=None, test_regex=None):**
+&mdash; **def [query](/recipe_modules/resultdb/api.py#214)(self, inv_ids, variants_with_unexpected_results=False, merge=False, limit=None, step_name=None, tr_fields=None, test_invocations=None, test_regex=None):**
 
 Returns test results in the invocations.
 
@@ -3830,7 +3830,7 @@ Args:
 Returns:
   A dict {invocation_id: api.Invocation}.
 
-&mdash; **def [query\_new\_test\_variants](/recipe_modules/resultdb/api.py#503)(self, invocation: str, baseline: str, step_name: str=None, step_test_data: dict=None):**
+&mdash; **def [query\_new\_test\_variants](/recipe_modules/resultdb/api.py#506)(self, invocation: str, baseline: str, step_name: (str | None)=None, step_test_data: (Mapping[(str, Any)] | None)=None):**
 
 Query ResultDB for new tests.
 
@@ -3845,7 +3845,7 @@ Returns:
  A QueryNewTestVariantsResponse proto message with is_baseline_ready and
  new_test_variants.
 
-&mdash; **def [query\_test\_result\_statistics](/recipe_modules/resultdb/api.py#291)(self, invocations=None, step_name=None):**
+&mdash; **def [query\_test\_result\_statistics](/recipe_modules/resultdb/api.py#294)(self, invocations=None, step_name=None):**
 
 Retrieve stats of test results for the given invocations.
 
@@ -3861,7 +3861,7 @@ Returns:
   A QueryTestResultStatisticsResponse proto message with statistics for the
   queried invocations.
 
-&mdash; **def [query\_test\_results](/recipe_modules/resultdb/api.py#378)(self, invocations, test_id_regexp=None, variant_predicate=None, field_mask_paths=None, page_size=100, page_token=None, step_name=None):**
+&mdash; **def [query\_test\_results](/recipe_modules/resultdb/api.py#381)(self, invocations, test_id_regexp=None, variant_predicate=None, field_mask_paths=None, page_size=100, page_token=None, step_name=None):**
 
 Retrieve test results from an invocation, recursively.
 
@@ -3894,7 +3894,7 @@ Returns:
   For value format, see [`QueryTestResultsResponse` message]
   (https://bit.ly/3dsChbo)
 
-&mdash; **def [query\_test\_variants](/recipe_modules/resultdb/api.py#440)(self, invocations, test_variant_status=None, field_mask_paths=None, page_size=100, page_token=None, step_name=None):**
+&mdash; **def [query\_test\_variants](/recipe_modules/resultdb/api.py#443)(self, invocations, test_variant_status=None, field_mask_paths=None, page_size=100, page_token=None, step_name=None):**
 
 Retrieve test variants from an invocation, recursively.
 
@@ -3928,7 +3928,7 @@ Returns:
   For value format, see [`QueryTestVariantsResponse` message]
   (http://shortn/_hv3edsXidO)
 
-&mdash; **def [unwrap](/recipe_modules/resultdb/api.py#861)(self, cmd: list[str]):**
+&mdash; **def [unwrap](/recipe_modules/resultdb/api.py#865)(self, cmd: Sequence[str]):**
 
 Reverses the wrap command
 
@@ -3938,7 +3938,7 @@ return the unwrapped command.
 Args:
   cmd (list of strings): the command line to attempt to unwrap
 
-&mdash; **def [update\_included\_invocations](/recipe_modules/resultdb/api.py#68)(self, add_invocations=None, remove_invocations=None, step_name=None):**
+&mdash; **def [update\_included\_invocations](/recipe_modules/resultdb/api.py#71)(self, add_invocations=None, remove_invocations=None, step_name=None):**
 
 Add and/or remove included invocations to/from the current invocation.
 
@@ -3951,7 +3951,7 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
-&mdash; **def [update\_invocation](/recipe_modules/resultdb/api.py#541)(self, parent_inv='', step_name=None, source_spec=None, is_source_spec_final=None, baseline_id=None, instructions=None, raise_on_failure=True):**
+&mdash; **def [update\_invocation](/recipe_modules/resultdb/api.py#545)(self, parent_inv='', step_name=None, source_spec=None, is_source_spec_final=None, baseline_id=None, instructions=None, raise_on_failure=True):**
 
 Makes a call to the UpdateInvocation API to update the invocation
 
@@ -3972,7 +3972,7 @@ Args:
   raise_on_failure (bool): If set, and `status` is not SUCCESS, raise
     the appropriate exception.
 
-&mdash; **def [upload\_invocation\_artifacts](/recipe_modules/resultdb/api.py#324)(self, artifacts, parent_inv=None, step_name=None):**
+&mdash; **def [upload\_invocation\_artifacts](/recipe_modules/resultdb/api.py#327)(self, artifacts, parent_inv=None, step_name=None):**
 
 Create artifacts with the given content type and contents or gcs_uri.
 
@@ -3992,7 +3992,7 @@ Returns:
   A BatchCreateArtifactsResponse proto message listing the artifacts that
   were created.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#664)(self, cmd, module_name='', module_scheme='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file='', inherit_sources=False, sources='', sources_file='', baseline_id='', inv_extended_properties_dir='', previous_test_id_prefix=None, test_id_prefix='', shorten_ids=False):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#668)(self, cmd, module_name='', module_scheme='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file='', inherit_sources=False, sources='', sources_file='', baseline_id='', inv_extended_properties_dir='', previous_test_id_prefix=None, test_id_prefix='', shorten_ids=False):**
 
 Wraps the command with ResultSink.
 
@@ -4072,7 +4072,7 @@ Args:
 ### *recipe_modules* / [runtime](/recipe_modules/runtime)
 
 
-#### **class [RuntimeApi](/recipe_modules/runtime/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [RuntimeApi](/recipe_modules/runtime/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 This module assists in experimenting with production recipes.
 
@@ -4125,7 +4125,7 @@ Documentation for scheduler API is in
 RPCExplorer available at
   https://luci-scheduler.appspot.com/rpcexplorer/services/scheduler.Scheduler
 
-#### **class [SchedulerApi](/recipe_modules/scheduler/api.py#29)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [SchedulerApi](/recipe_modules/scheduler/api.py#29)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 A module for interacting with LUCI Scheduler service.
 
@@ -4194,7 +4194,7 @@ https://godoc.org/go.chromium.org/luci/auth/client/cmd/luci-auth).
 
 Depends on luci-auth to be in PATH.
 
-#### **class [ServiceAccountApi](/recipe_modules/service_account/api.py#18)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [ServiceAccountApi](/recipe_modules/service_account/api.py#18)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 &mdash; **def [default](/recipe_modules/service_account/api.py#74)(self):**
 
@@ -4220,9 +4220,9 @@ Args:
 
 Step is the primary API for running steps (external programs, etc.)
 
-#### **class [StepApi](/recipe_modules/step/api.py#33)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [StepApi](/recipe_modules/step/api.py#34)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
-&emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#152)(self):**
+&emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#153)(self):**
 
 InfraFailure is a subclass of StepFailure, and will translate to a purple
 build.
@@ -4230,15 +4230,15 @@ build.
 This exception is raised from steps which are marked as `infra_step`s when
 they fail.
 
-&emsp; **@property**<br>&mdash; **def [MAX\_CPU](/recipe_modules/step/api.py#124)(self):**
+&emsp; **@property**<br>&mdash; **def [MAX\_CPU](/recipe_modules/step/api.py#125)(self):**
 
 Returns the maximum number of millicores this system has.
 
-&emsp; **@property**<br>&mdash; **def [MAX\_MEMORY](/recipe_modules/step/api.py#129)(self):**
+&emsp; **@property**<br>&mdash; **def [MAX\_MEMORY](/recipe_modules/step/api.py#130)(self):**
 
 Returns the maximum amount of memory on the system in MB.
 
-&mdash; **def [ResourceCost](/recipe_modules/step/api.py#57)(self, cpu=500, memory=50, disk=0, net=0):**
+&mdash; **def [ResourceCost](/recipe_modules/step/api.py#58)(self, cpu=500, memory=50, disk=0, net=0):**
 
 A structure defining the resources that a given step may need.
 
@@ -4297,7 +4297,7 @@ Returns:
   that passing `None` to api.step for the cost kwarg is equivalent to
   `ResourceCost(0, 0, 0, 0)`.
 
-&emsp; **@property**<br>&mdash; **def [StepFailure](/recipe_modules/step/api.py#134)(self):**
+&emsp; **@property**<br>&mdash; **def [StepFailure](/recipe_modules/step/api.py#135)(self):**
 
 This is the base Exception class for all step failures.
 
@@ -4307,12 +4307,12 @@ Usage:
   * `raise api.StepFailure("some reason")`
   * `except api.StepFailure:`
 
-&emsp; **@property**<br>&mdash; **def [StepWarning](/recipe_modules/step/api.py#146)(self):**
+&emsp; **@property**<br>&mdash; **def [StepWarning](/recipe_modules/step/api.py#147)(self):**
 
 StepWarning is a subclass of StepFailure, and will translate to a yellow
 build.
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#637)(self, name: str, cmd: (list[(((int | str) | Placeholder) | Path)] | None), ok_ret: ((Sequence[int] | Literal['any']) | Literal['all'])=(0,), infra_step: bool=False, raise_on_failure: bool=True, wrapper: Sequence[(((int | str) | Placeholder) | Path)]=(), timeout: ((int | timedelta) | None)=None, stdout: (Placeholder | None)=None, stderr: (Placeholder | None)=None, stdin: (Placeholder | None)=None, step_test_data: (Callable[([], StepTestData)] | None)=None, cost: _ResourceCost=_ResourceCost()):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#640)(self, name: str, cmd: (Sequence[(((int | str) | Placeholder) | Path)] | None), ok_ret: ((Sequence[int] | Literal['any']) | Literal['all'])=(0,), infra_step: bool=False, raise_on_failure: bool=True, wrapper: Sequence[(((int | str) | Placeholder) | Path)]=(), timeout: ((int | timedelta) | None)=None, stdout: (Placeholder | None)=None, stderr: (Placeholder | None)=None, stdin: (Placeholder | None)=None, step_test_data: (Callable[([], StepTestData)] | None)=None, cost: _ResourceCost=_ResourceCost()):**
 
 Runs a step (subprocess).
 
@@ -4371,7 +4371,7 @@ Args:
 
 Returns a `step_data.StepData` for the running step.
 
-&emsp; **@property**<br>&mdash; **def [active\_result](/recipe_modules/step/api.py#162)(self):**
+&emsp; **@property**<br>&mdash; **def [active\_result](/recipe_modules/step/api.py#163)(self):**
 
 The currently active (open) result from the last step that was run. This
 is a `step_data.StepData` object.
@@ -4402,7 +4402,7 @@ finally:
     api.step.active_result.presentation.step_text = new_step_text
 ```
 
-&mdash; **def [close\_non\_nest\_step](/recipe_modules/step/api.py#195)(self):**
+&mdash; **def [close\_non\_nest\_step](/recipe_modules/step/api.py#196)(self):**
 
 Call this to explicitly terminate the currently open non-nest step.
 
@@ -4411,7 +4411,7 @@ context (if any).
 
 No-op if there's no currently active non-nest step.
 
-&mdash; **def [empty](/recipe_modules/step/api.py#305)(self, name, status='SUCCESS', step_text=None, log_text=None, log_name='stdout', raise_on_failure=True):**
+&mdash; **def [empty](/recipe_modules/step/api.py#306)(self, name, status='SUCCESS', step_text=None, log_text=None, log_name='stdout', raise_on_failure=True):**
 
 Runs an "empty" step (one without any command).
 
@@ -4433,7 +4433,7 @@ Args:
 
 Returns step_data.StepData.
 
-&mdash; **def [funcall](/recipe_modules/step/api.py#752)(self, name, func, \*args, \*\*kwargs):**
+&mdash; **def [funcall](/recipe_modules/step/api.py#755)(self, name, func, \*args, \*\*kwargs):**
 
 Call a function and store the results and exception in a step.
 
@@ -4441,7 +4441,7 @@ Sample usage:
 
 >>> api.step.funcall(None, some_function, 4, json=True)
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [nest](/recipe_modules/step/api.py#205)(self, name, status='worst'):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [nest](/recipe_modules/step/api.py#206)(self, name, status='worst'):**
 
 Nest allows you to nest steps hierarchically on the build UI.
 
@@ -4503,7 +4503,7 @@ Args:
 Yields a StepPresentation for this dummy step, which you may update as you
 please.
 
-&mdash; **def [raise\_on\_failure](/recipe_modules/step/api.py#457)(self, result, status_override=None):**
+&mdash; **def [raise\_on\_failure](/recipe_modules/step/api.py#458)(self, result, status_override=None):**
 
 Raise an appropriate exception if a step is not successful.
 
@@ -4525,7 +4525,7 @@ Raises:
   * StepWarning if the step's status is WARNING
   * InfraFailure if the step's status is EXCEPTION or CANCELED
 
-&mdash; **def [sub\_build](/recipe_modules/step/api.py#496)(self, name: str, cmd: (((int | str) | Placeholder) | Path), build: build_pb2.Build, raise_on_failure: bool=True, output_path: ((str | Path) | None)=None, legacy_global_namespace=False, merge_output_properties_to: (None | list[str])=None, timeout=None, step_test_data=None, cost=_ResourceCost()):**
+&mdash; **def [sub\_build](/recipe_modules/step/api.py#497)(self, name: str, cmd: Sequence[(((int | str) | Placeholder) | Path)], build: build_pb2.Build, raise_on_failure: bool=True, output_path: ((str | Path) | None)=None, legacy_global_namespace=False, merge_output_properties_to: (Sequence[str] | None)=None, timeout=None, step_test_data=None, cost=_ResourceCost()):**
 
 Launch a sub-build by invoking a LUCI executable. All steps in the
 sub-build will appear as child steps of this step (Merge Step).
@@ -4612,7 +4612,7 @@ status.
 [DEPS](/recipe_modules/swarming/__init__.py#25): [buildbucket](#recipe_modules-buildbucket), [cas](#recipe_modules-cas), [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
-#### **class [SwarmingApi](/recipe_modules/swarming/api.py#1247)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [SwarmingApi](/recipe_modules/swarming/api.py#1247)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 API for interacting with swarming.
 
@@ -4755,7 +4755,7 @@ Returns:
 
 Allows mockable access to the current time.
 
-#### **class [TimeApi](/recipe_modules/time/api.py#111)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [TimeApi](/recipe_modules/time/api.py#111)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 &mdash; **def [exponential\_retry](/recipe_modules/time/api.py#147)(self, retries: int, delay: datetime.timedelta, condition: Callable[([Exception], bool)]=None, raise_on_failure: bool=True):**
 
@@ -4886,7 +4886,7 @@ analyzer recipes, including:
   * Recipes that accumulate comments one by one.
   * Recipes that wrap other tools and parse their output.
 
-#### **class [TriciumApi](/recipe_modules/tricium/api.py#30)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [TriciumApi](/recipe_modules/tricium/api.py#30)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 TriciumApi provides basic support for Tricium.
 
@@ -4945,7 +4945,7 @@ Emit the results accumulated by `add_comment` and `run_legacy`.
 
 Methods for interacting with HTTP(s) URLs.
 
-#### **class [UrlApi](/recipe_modules/url/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [UrlApi](/recipe_modules/url/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 &mdash; **def [get\_file](/recipe_modules/url/api.py#133)(self, url, path, step_name=None, headers=None, transient_retry=True, strip_prefix=None):**
 
@@ -5069,7 +5069,7 @@ Raises:
 
 Allows test-repeatable access to a random UUID.
 
-#### **class [UuidApi](/recipe_modules/uuid/api.py#13)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [UuidApi](/recipe_modules/uuid/api.py#13)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 &mdash; **def [random](/recipe_modules/uuid/api.py#22)(self):**
 
@@ -5079,7 +5079,7 @@ Returns a random UUID string.
 
 Thin API for parsing semver strings into comparable object.
 
-#### **class [VersionApi](/recipe_modules/version/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [VersionApi](/recipe_modules/version/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 &emsp; **@staticmethod**<br>&mdash; **def [parse](/recipe_modules/version/api.py#17)(version):**
 
@@ -5098,7 +5098,7 @@ behavior).
 
 Allows recipe modules to issue warnings in simulation test.
 
-#### **class [WarningApi](/recipe_modules/warning/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#441)):**
+#### **class [WarningApi](/recipe_modules/warning/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 &mdash; **def [issue](/recipe_modules/warning/api.py#13)(self, name):**
 

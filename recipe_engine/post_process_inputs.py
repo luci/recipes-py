@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import re
 
-from collections.abc import Iterable, Sequence
-from typing import Any, Callable
+from collections.abc import Callable, Iterable, Mapping, Sequence
+from typing import Any
 
 import attr
 from past.builtins import basestring
@@ -274,7 +274,7 @@ class Step:
   _raw_annotations: list[str] = attr.ib(default=[])
 
   @classmethod
-  def from_step_dict(cls, step_dict: dict[str, Any]) -> Step:
+  def from_step_dict(cls, step_dict: Mapping[str, Any]) -> Step:
     """Create a `Step` from a step dictionary.
 
     Args:

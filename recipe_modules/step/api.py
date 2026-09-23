@@ -7,10 +7,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 import contextlib
 from datetime import timedelta
 import sys
-from typing import Callable, Literal, Sequence
+from typing import Literal
 
 from builtins import int
 from past.builtins import basestring
@@ -493,17 +494,19 @@ class StepApi(recipe_api.RecipeApi):
   # current build's output properties.
   RootOutputProperties = [""]
 
-  def sub_build(self,
-                name: str,
-                cmd: int | str | Placeholder | Path,
-                build: build_pb2.Build,
-                raise_on_failure: bool = True,
-                output_path: str | Path | None = None,
-                legacy_global_namespace=False,
-                merge_output_properties_to: None | list[str] = None,
-                timeout=None,
-                step_test_data=None,
-                cost=_ResourceCost()):
+  def sub_build(
+      self,
+      name: str,
+      cmd: Sequence[int | str | Placeholder | Path],
+      build: build_pb2.Build,
+      raise_on_failure: bool = True,
+      output_path: str | Path | None = None,
+      legacy_global_namespace=False,
+      merge_output_properties_to: Sequence[str] | None = None,
+      timeout=None,
+      step_test_data=None,
+      cost=_ResourceCost(),
+  ):
     """Launch a sub-build by invoking a LUCI executable. All steps in the
     sub-build will appear as child steps of this step (Merge Step).
 
@@ -636,7 +639,7 @@ class StepApi(recipe_api.RecipeApi):
 
   def __call__(self,
                name: str,
-               cmd: list[int | str | Placeholder | Path] | None,
+               cmd: Sequence[int | str | Placeholder | Path] | None,
                ok_ret: Sequence[int] | Literal['any'] | Literal['all'] = (0,),
                infra_step: bool = False,
                raise_on_failure: bool = True,

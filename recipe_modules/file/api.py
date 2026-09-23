@@ -6,10 +6,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Mapping, Sequence
 import fnmatch
 import hashlib
 import os
-from typing import Any, Callable, Literal, Sequence, TypeVar
+from typing import Any, Literal, TypeVar
 
 import google.protobuf
 from recipe_engine import config_types, recipe_api, recipe_test_api, step_data
@@ -515,7 +516,7 @@ class FileApi(recipe_api.RecipeApi):
       codec: ProtoCodec,
       test_proto: Any = None,
       include_log: bool = True,
-      decoding_kwargs: dict | None = None,
+      decoding_kwargs: Mapping[str, Any] | None = None,
   ) -> ProtoMessage:
     """Reads a file into a proto message.
 
@@ -556,7 +557,7 @@ class FileApi(recipe_api.RecipeApi):
       proto_msg: google.protobuf.message,
       codec: ProtoCodec,
       include_log: bool = True,
-      encoding_kwargs: dict | None = None,
+      encoding_kwargs: Mapping[str, Any] | None = None,
   ) -> step_data.StepData:
     """Writes the given proto message to `dest`.
 

@@ -191,7 +191,7 @@ class DeferApi(recipe_api.RecipeApi):
       self,
       results: Sequence[DeferredResult],
       step_name: str | None = None,
-  ) -> Sequence[Any]:
+  ) -> list[Any]:
     """Raise any exceptions in the given list of DeferredResults.
 
     If there are no exceptions, do nothing. If there are one or more exceptions,

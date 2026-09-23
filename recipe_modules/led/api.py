@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+from typing import Any
 from urllib.parse import urlparse
 
 import attr
@@ -236,7 +238,7 @@ class LedApi(recipe_api.RecipeApi):
       project_name: str,
       bucket_name: str,
       builder_name: str,
-      properties: dict,
+      properties: Mapping[str, Any],
       use_payload: bool = False,
   ) -> None:
     """Trigger a builder using led.
@@ -278,7 +280,7 @@ class LedApi(recipe_api.RecipeApi):
         result = led_job.then('launch').launch_result
         builder_presentation.links['build'] = result.build_url
 
-  def _get_mock(self, cmd: list[str]) -> recipe_test_api.StepTestData:
+  def _get_mock(self, cmd: Sequence[str]) -> recipe_test_api.StepTestData:
     """Returns a StepTestData for the given command."""
     job_def = None
 

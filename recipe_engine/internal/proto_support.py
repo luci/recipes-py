@@ -17,7 +17,7 @@ import shutil
 import sys
 import tempfile
 
-from typing import Callable
+from collections.abc import Callable, Sequence
 from io import StringIO
 from pathlib import Path
 
@@ -534,7 +534,7 @@ def _try_rename(src: str, dest: str) -> None:
 
 
 def _rel_to_abs_replacer(
-    proto_files: list[tuple[str, str]],
+    proto_files: Sequence[tuple[str, str]],
 ) -> Callable[[str], str]:
   """Returns a function which will replace directories relative to the
   destination `PB` directory (at the beginning of a line) with their original
@@ -569,7 +569,7 @@ def _rel_to_abs_replacer(
 
 def _collect_protos(
     argfile_fd: int,
-    proto_files: list[tuple[str, str]],
+    proto_files: Sequence[tuple[str, str]],
     dest: str,
 ) -> None:
   """Copies all proto_files into dest.
@@ -598,7 +598,7 @@ def _collect_protos(
     os.close(argfile_fd)  # for windows
 
 
-def _compile_protos(proto_files: list[tuple[str, str]], proto_tree: str,
+def _compile_protos(proto_files: Sequence[tuple[str, str]], proto_tree: str,
                     protoc: str, argfile: str, dest: str) -> None:
   """Runs protoc over the collected protos, renames them and rewrites their
   imports to make them import from `PB`.
@@ -648,7 +648,7 @@ def _compile_protos(proto_files: list[tuple[str, str]], proto_tree: str,
 
 
 def _install_protos(proto_package_path: str, dgst: str,
-                    proto_files: list[tuple[str, str]]) -> None:
+                    proto_files: Sequence[tuple[str, str]]) -> None:
   """Installs protos to `{proto_package_path}/PB`.
 
   Args:
