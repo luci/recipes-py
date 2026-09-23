@@ -8,6 +8,8 @@ As a side-effect this also refreshes the following:
   * All .recipe_deps/_dev entries (python3 symlink, typings directory)
 """
 
+from __future__ import annotations
+
 
 def add_arguments(parser):
   # fetch action is implied by recipes.py

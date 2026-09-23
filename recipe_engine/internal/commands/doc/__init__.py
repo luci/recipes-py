@@ -9,6 +9,8 @@ This can output as a protobuf of various forms (JSON, Text or binary), using the
 Markdown (either on stdout or written to the repo).
 """
 
+from __future__ import annotations
+
 def add_arguments(parser):
   parser.add_argument(
       'recipe', nargs='?', help='Restrict documentation to this recipe')

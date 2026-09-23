@@ -4,6 +4,8 @@
 
 '''Run a recipe locally.'''
 
+from __future__ import annotations
+
 # TODO(iannucci): add a real docstring
 
 import argparse

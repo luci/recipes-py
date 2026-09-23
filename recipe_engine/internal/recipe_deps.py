@@ -1144,7 +1144,7 @@ def _parse_deps_class(
           " custom methods will not be available at runtime.")
 
   deps = {}
-  hints = typing.get_type_hints(deps_spec, globalns=globalns)
+  hints = typing.get_type_hints(deps_spec, localns=globalns)
   for field_name, ann in hints.items():
     if field_name in _BASE_API_FIELDS:  # Don't process base class type hints.
       continue

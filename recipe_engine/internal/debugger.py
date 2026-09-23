@@ -3,6 +3,8 @@
 # that can be found in the LICENSE file.
 """Provides utility functions for the engine to enable remote python debuggers."""
 
+from __future__ import annotations
+
 import os
 import sys
 import pdb

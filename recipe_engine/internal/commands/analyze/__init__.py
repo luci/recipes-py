@@ -10,6 +10,8 @@ This takes in analyze.proto's Input message as JSONPB, and returns an Output
 message in JSONPB.
 """
 
+from __future__ import annotations
+
 import sys
 import argparse
 

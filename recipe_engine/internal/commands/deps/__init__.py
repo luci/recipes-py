@@ -26,6 +26,8 @@ the computed effective status (i.e. minimum supported version among all of
 its transitive dependencies).
 """
 
+from __future__ import annotations
+
 def add_arguments(parser):
   parser.add_argument(
       '--include-test-recipes',

@@ -45,6 +45,8 @@ That would include all .py files, but exclude all _test.py files. See the page
 For more information on how gitattributes work.
 """
 
+from __future__ import annotations
+
 import os
 
 

@@ -9,6 +9,8 @@ Prints changelist to stdout, extra info to stderr.
 Exits 1 if no roll is found.
 """
 
+from __future__ import annotations
+
 import sys
 
 from .autoroll.cmd import write_global_files_to_main_repo

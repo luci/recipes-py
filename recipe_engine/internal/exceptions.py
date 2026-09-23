@@ -4,6 +4,8 @@
 
 """Defines all explicitly raised exception types for the recipe engine."""
 
+from __future__ import annotations
+
 
 class RecipeUsageError(Exception):
   """Base exception class for all errors raised due to some misuse of the

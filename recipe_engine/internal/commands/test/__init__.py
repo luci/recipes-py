@@ -5,6 +5,8 @@
 
 '''Generate or check expectations by simulation.'''
 
+from __future__ import annotations
+
 # TODO(iannucci): Add a real docstring.
 
 import argparse

@@ -3,6 +3,8 @@
 # found in the LICENSE file.
 """Helpers for iterating through the ValueRefs of TurboCI messages."""
 
+from __future__ import annotations
+
 import typing
 
 from PB.turboci.graph.orchestrator.v1 import check as check_pb2

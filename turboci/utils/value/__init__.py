@@ -3,6 +3,8 @@
 # found in the LICENSE file.
 """Helpers for manipulating TurboCI Value{Write,Ref,Data} protos."""
 
+from __future__ import annotations
+
 from google.protobuf import message as _message
 
 # Re-export all symbols from sub-modules.

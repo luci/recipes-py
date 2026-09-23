@@ -17,6 +17,8 @@ Stream is a virtual well-behaved stream (associated with an Engine) which you
 can just write to without worrying.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import tempfile

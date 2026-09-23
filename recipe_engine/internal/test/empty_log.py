@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from __future__ import annotations
+
 
 class _EmptyLog(str):
   """A special string object equal to the empty string that can be used to

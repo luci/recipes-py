@@ -8,6 +8,8 @@ This allows the command-line parsing to be protobuf-free so that the recipe
 engine can present a unified protobuf implementation.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import os

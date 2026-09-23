@@ -14,6 +14,8 @@ This synthesizes properties from the Build message:
   * $recipe_engine/path['cache_dir'] = $LUCI_CONTEXT['luciexe']['cachedir']
 '''
 
+from __future__ import annotations
+
 import argparse
 import logging
 import os

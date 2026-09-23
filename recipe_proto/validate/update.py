@@ -5,6 +5,8 @@
 
 """Automatically updates the .proto files in this directory."""
 
+from __future__ import annotations
+
 import base64
 import json
 import os

@@ -4,6 +4,8 @@
 
 """This module contains miscellaneous test-related internal functions."""
 
+from __future__ import annotations
+
 
 def filesystem_safe(name):
   """Returns a filesystem safe version of a test name.

@@ -3,6 +3,8 @@
 # found in the LICENSE file.
 """Helpers for matching ValueRefs and ValueWrites."""
 
+from __future__ import annotations
+
 from PB.turboci.graph.orchestrator.v1 import value_ref as value_ref_pb2
 from PB.turboci.graph.orchestrator.v1 import value_write as value_write_pb2
 from turboci.utils.value import digest

@@ -7,6 +7,8 @@
 TODO(yiwzhang): Delete the module after recipe engine is fully on luciexe mode
 """
 
+from __future__ import annotations
+
 from PB.recipe_engine import result as result_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 

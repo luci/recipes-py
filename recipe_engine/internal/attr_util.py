@@ -4,6 +4,8 @@
 
 """Helpers for using the `attr` library."""
 
+from __future__ import annotations
+
 
 def attr_type(type_, subname=''):
   """An `attr.s` validator for asserting the type of a value.

@@ -5,6 +5,8 @@
 
 """Automatically updates the client libraries sourced from luci-py."""
 
+from __future__ import annotations
+
 import json
 import os
 import tarfile

@@ -9,6 +9,8 @@ This is not necessarily used for all proto files in this directory;
 but should update those listed in SUB_PATHS.
 """
 
+from __future__ import annotations
+
 import json
 import os
 import tarfile

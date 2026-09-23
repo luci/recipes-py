@@ -13,6 +13,8 @@ by having multiple threads call 'write' at the same time).
 
 See ../LUCI_CONTEXT.md for details on the LUCI_CONTEXT concept/protocol."""
 
+from __future__ import annotations
+
 import contextlib
 import copy
 import json

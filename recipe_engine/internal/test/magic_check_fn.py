@@ -6,6 +6,8 @@
 conditions inside tests, but with much more debugging information, including
 a smart selection of local variables mentioned inside of the call to check."""
 
+from __future__ import annotations
+
 from typing import cast
 from past.builtins import basestring
 

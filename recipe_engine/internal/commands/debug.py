@@ -17,6 +17,8 @@ other editors which are compatible with these remote debugging protocols).
 See `doc/user_guide.md` for more information on how to set these up.
 '''
 
+from __future__ import annotations
+
 import ast
 import bdb
 import sys

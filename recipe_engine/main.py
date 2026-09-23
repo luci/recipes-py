@@ -9,6 +9,8 @@ This tool operates on the nearest ancestor directory containing an
 infra/config/recipes.cfg.
 """
 
+from __future__ import annotations
+
 import sys
 import errno
 import os

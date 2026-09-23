@@ -4,6 +4,8 @@
 
 """Roll dependencies of a recipe repo forward."""
 
+from __future__ import annotations
+
 # TODO(iannucci): Add a real docstring.
 
 import argparse

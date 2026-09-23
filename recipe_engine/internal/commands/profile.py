@@ -16,6 +16,8 @@ However, you can also configure it to do a couple additional things:
       with flameprof or other tools.
 '''
 
+from __future__ import annotations
+
 import bdb
 import cProfile
 import sys

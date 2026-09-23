@@ -68,6 +68,8 @@ configurations. See the documentation on config_item_context and the BaseConfig
 derivatives for more info.
 """
 
+from __future__ import annotations
+
 from builtins import object
 from past.builtins import basestring
 

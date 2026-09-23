@@ -10,6 +10,8 @@ individual recipe_modules can do them consistently.
 
 """
 
+from __future__ import annotations
+
 from typing import Any, Mapping, Sequence, TypeVar
 
 T = TypeVar('T')

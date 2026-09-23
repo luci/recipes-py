@@ -32,6 +32,8 @@ There are some subtleties here like:
     * ... except with reload() which jacks up everything.
 """
 
+from __future__ import annotations
+
 
 import imp
 import importlib

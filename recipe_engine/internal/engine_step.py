@@ -8,6 +8,8 @@ RecipeEngine.
 # TODO(iannucci): Simplify this.
 """
 
+from __future__ import annotations
+
 from builtins import int
 from past.builtins import basestring
 

@@ -5,6 +5,8 @@
 """Support methods to help read+write protobuf messages from a pipe (aka pair of
 file descriptors)."""
 
+from __future__ import annotations
+
 import struct
 
 

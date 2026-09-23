@@ -7,6 +7,8 @@ Prints JSON conforming to the schema of the recipes_cfg.DepRepoSpecs
 protobuf.
 """
 
+from __future__ import annotations
+
 
 def add_arguments(parser):
 

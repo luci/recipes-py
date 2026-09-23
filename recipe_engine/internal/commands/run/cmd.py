@@ -4,6 +4,8 @@
 
 """Entry point for running recipes for real (not in testing mode)."""
 
+from __future__ import annotations
+
 from io import open
 
 import logging

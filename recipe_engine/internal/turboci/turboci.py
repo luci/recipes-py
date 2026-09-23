@@ -3,6 +3,8 @@
 # that can be found in the LICENSE file.
 """Real client to the TurboCI Orchestrator service."""
 
+from __future__ import annotations
+
 import logging
 import sys
 

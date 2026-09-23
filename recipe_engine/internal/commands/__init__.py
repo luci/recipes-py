@@ -8,6 +8,8 @@ See implementation_details.md for the expectations of the modules in this
 directory.
 """
 
+from __future__ import annotations
+
 import argparse
 import errno
 import logging

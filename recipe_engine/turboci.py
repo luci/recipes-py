@@ -22,6 +22,8 @@ Usage:
       )
 """
 
+from __future__ import annotations
+
 import typing
 
 from google.protobuf.message import Message

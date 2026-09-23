@@ -3,6 +3,8 @@
 # found in the LICENSE file.
 """Helpers for manipulating and validating TurboCI identifiers."""
 
+from __future__ import annotations
+
 # go/keep-sorted start
 from turboci.utils.ids.create import *
 from turboci.utils.ids.mutate import *

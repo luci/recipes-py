@@ -9,6 +9,8 @@ data model in recipe engine as they provide natural hashing ability for fast
 deduplication.
 """
 
+from __future__ import annotations
+
 import os
 import inspect
 

@@ -6,6 +6,8 @@
 a single step (subprocess), usually via the `recipe_engine/step` recipe module.
 """
 
+from __future__ import annotations
+
 from past.builtins import basestring
 
 import attr

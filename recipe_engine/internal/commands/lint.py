@@ -10,6 +10,8 @@ which otherwise directly interact with the OS (since all recipe code must run
 correctly for all platforms under simulation).
 """
 
+from __future__ import annotations
+
 # TODO(luqui): Implement lint for recipe modules also.
 
 import re
