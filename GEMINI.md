@@ -113,8 +113,8 @@ Don't hide type annotation imports under `if typing.TYPE_CHECKING:`. Exception
 for imports that begin with `RECIPE_MODULES` and the corresponding module is not
 included in DEPS.
 
-Make sure any `if TYPE_CHECKING:` lines that do exist have a
-`# pragma: no cover` comment.
+Make sure any `if TYPE_CHECKING:` lines that do exist in `recipes/` or
+`recipe_modules/` have a `# pragma: no cover` comment.
 
 Only create `TypeVar` variables just before they're used.
 
