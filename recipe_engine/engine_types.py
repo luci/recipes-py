@@ -13,7 +13,6 @@ from typing import (
     Any,
     Callable,
     ClassVar,
-    FrozenSet,
     Iterable,
     Iterator,
     Literal,
@@ -381,7 +380,7 @@ class StepPresentation:
   _RAW_STATUSES: tuple[str | None, ...] = (None, 'SUCCESS', 'WARNING', 'FAILURE',
                                            'EXCEPTION', 'CANCELED')
   Status = Literal[*_RAW_STATUSES]
-  STATUSES: FrozenSet[str] = frozenset(
+  STATUSES: frozenset[str] = frozenset(
       status for status in _RAW_STATUSES if status)
   STATUS_TO_BADNESS: ClassVar[FrozenDict[str | None, int]]
 

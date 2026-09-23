@@ -12,10 +12,7 @@ from typing import (
     Generic,
     Iterable,
     Iterator,
-    List,
-    Optional,
     overload,
-    Type,
     TypeVar,
 )
 
@@ -88,7 +85,7 @@ class Future(Generic[T]):
     """
     return self._meta
 
-  def result(self, timeout: Optional[float] = None) -> T:
+  def result(self, timeout: float | None = None) -> T:
     """Blocks until this Future is done, then returns its value, or raises
     its exception.
 
@@ -121,8 +118,9 @@ class Future(Generic[T]):
     """
     self._greenlet.kill()
 
-  def exception(self,
-                timeout: Optional[float] = None) -> Optional[BaseException]:
+  def exception(
+      self, timeout: float | None = None
+  ) -> BaseException | None:
     """Blocks until this Future is done, then returns (not raises) this
     Future's exception (or None if there was no exception).
 
@@ -143,7 +141,7 @@ class _IWaitWrapper(Iterator[Future[Any]]):
   __slots__ = ('_waiter', '_greenlets_to_futures')
 
   def __init__(self, futures: Iterable[Future[Any]],
-               timeout: Optional[float], count: Optional[int]):
+               timeout: float | None, count: int | None):
     # pylint: disable=protected-access
     self._greenlets_to_futures = {fut._greenlet: fut for fut in futures}
     self._waiter = gevent.iwait(
@@ -173,8 +171,8 @@ class FuturesApi(RecipeApi):
     super().__init__(*args, **kwargs)
     self._future_id = 0
 
-  Timeout: Type[Timeout] = Timeout
-  Future: Type[Future[Any]] = Future
+  Timeout: type[Timeout] = Timeout
+  Future: type[Future[Any]] = Future
 
   def make_bounded_semaphore(self,
                              value: int = 1) -> gevent.lock.BoundedSemaphore:
@@ -240,8 +238,8 @@ class FuturesApi(RecipeApi):
       self,
       func: Callable[..., T],
       *args: Any,
-      __name: Optional[str] = None,
-      __meta: Optional[Any] = None,
+      __name: str | None = None,
+      __meta: Any = None,
       **kwargs: Any,
   ) -> Future[T]:
     ...  # pragma: no cover
@@ -306,8 +304,8 @@ class FuturesApi(RecipeApi):
       self,
       func: Callable[..., T],
       *args: Any,
-      __name: Optional[str] = None,
-      __meta: Optional[Any] = None,
+      __name: str | None = None,
+      __meta: Any = None,
       **kwargs: Any,
   ) -> Future[T]:
     ...  # pragma: no cover
@@ -347,8 +345,8 @@ class FuturesApi(RecipeApi):
 
   @staticmethod
   def wait(futures: Iterable[Future[Any]],
-           timeout: Optional[float] = None,
-           count: Optional[int] = None) -> List[Future[Any]]:
+           timeout: float | None = None,
+           count: int | None = None) -> list[Future[Any]]:
     """Blocks until `count` `futures` are done (or timeout occurs) then
     returns the list of done futures.
 
@@ -369,8 +367,8 @@ class FuturesApi(RecipeApi):
   @staticmethod
   def iwait(
       futures: Iterable[Future[Any]],
-      timeout: Optional[float] = None,
-      count: Optional[int] = None
+      timeout: float | None = None,
+      count: int | None = None
   ) -> Iterator[Future[Any]]:
     """Iteratively yield up to `count` Futures as they become done.
 

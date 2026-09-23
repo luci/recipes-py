@@ -47,7 +47,7 @@ import typing
 
 from collections.abc import Mapping, Sequence, Iterator
 from functools import cached_property
-from typing import Type, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from future.utils import raise_
 
