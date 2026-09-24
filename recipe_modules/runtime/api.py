@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from typing import Any
+from PB.recipe_modules.recipe_engine.runtime import properties as properties_pb
+
 from recipe_engine import recipe_api
 
 from recipe_engine.internal.global_shutdown import GLOBAL_SHUTDOWN
@@ -15,12 +18,14 @@ class RuntimeApi(recipe_api.RecipeApi):
   For example, when migrating builders from Buildbot to pure LUCI stack.
   """
 
-  def __init__(self, properties, **kwargs):
+  def __init__(
+      self, properties: properties_pb.InputProperties, **kwargs: Any
+  ) -> None:
     super().__init__(**kwargs)
     self._properties = properties
 
   @property
-  def is_experimental(self):
+  def is_experimental(self) -> bool:
     """True if this recipe is currently running in experimental mode.
 
     Typical usage is to modify steps which produce external side-effects so that
@@ -33,7 +38,7 @@ class RuntimeApi(recipe_api.RecipeApi):
     return self._properties.is_experimental
 
   @property
-  def in_global_shutdown(self):
+  def in_global_shutdown(self) -> bool:
     """True iff this recipe is currently in the 'grace_period' specified by
     `LUCI_CONTEXT['deadline']`.
 

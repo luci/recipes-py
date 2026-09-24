@@ -9,7 +9,9 @@ from recipe_engine import recipe_test_api
 
 class RuntimeTestApi(recipe_test_api.RecipeTestApi):
 
-  def __call__(self, is_experimental=False):
+  def __call__(
+      self, is_experimental: bool = False
+  ) -> recipe_test_api.TestData:
     """Simulate runtime state of a build."""
     assert isinstance(is_experimental, bool), '%r (%s)' % (
         is_experimental, type(is_experimental))
@@ -21,7 +23,9 @@ class RuntimeTestApi(recipe_test_api.RecipeTestApi):
     }
     return ret
 
-  def global_shutdown_on_step(self, step_name, event='after'):
+  def global_shutdown_on_step(
+      self, step_name: str, event: str = 'after'
+  ) -> recipe_test_api.TestData:
     """Simulates an incoming SIGTERM/Ctrl-Break to the recipe execution.
 
     When the test is 'canceled', it behaves as if the real recipe received

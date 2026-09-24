@@ -4072,13 +4072,13 @@ Args:
 ### *recipe_modules* / [runtime](/recipe_modules/runtime)
 
 
-#### **class [RuntimeApi](/recipe_modules/runtime/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [RuntimeApi](/recipe_modules/runtime/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 This module assists in experimenting with production recipes.
 
 For example, when migrating builders from Buildbot to pure LUCI stack.
 
-&emsp; **@property**<br>&mdash; **def [in\_global\_shutdown](/recipe_modules/runtime/api.py#35)(self):**
+&emsp; **@property**<br>&mdash; **def [in\_global\_shutdown](/recipe_modules/runtime/api.py#40)(self):**
 
 True iff this recipe is currently in the 'grace_period' specified by
 `LUCI_CONTEXT['deadline']`.
@@ -4101,7 +4101,7 @@ time out, and this could be used anywhere to skip 'cleanup' behavior in
 
 https://chromium.googlesource.com/infra/luci/luci-py/+/HEAD/client/LUCI_CONTEXT.md
 
-&emsp; **@property**<br>&mdash; **def [is\_experimental](/recipe_modules/runtime/api.py#22)(self):**
+&emsp; **@property**<br>&mdash; **def [is\_experimental](/recipe_modules/runtime/api.py#27)(self):**
 
 True if this recipe is currently running in experimental mode.
 
@@ -6241,10 +6241,10 @@ Test to cover legacy aspects of PathTestApi.
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/upload_invocation_artifacts.py#28)(api: DEPS):**
 ### *recipes* / [runtime:tests/full](/recipe_modules/runtime/tests/full.py)
 
-[DEPS](/recipe_modules/runtime/tests/full.py#21): [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/runtime/tests/full.py#23): [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/runtime/tests/full.py#31)(api: recipe_api.RecipeScriptApi):**
+&mdash; **def [RunSteps](/recipe_modules/runtime/tests/full.py#33)(api: DEPS):**
 ### *recipes* / [scheduler:examples/emit\_triggers](/recipe_modules/scheduler/examples/emit_triggers.py)
 
 [DEPS](/recipe_modules/scheduler/examples/emit_triggers.py#22): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [runtime](#recipe_modules-runtime), [scheduler](#recipe_modules-scheduler), [time](#recipe_modules-time)

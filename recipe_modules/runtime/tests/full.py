@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+
 import json
 
 from recipe_engine import post_process, recipe_api, recipe_test_api
@@ -28,7 +30,7 @@ class TEST_DEPS(RecipeTestApi):
   runtime: runtime.TEST_API
 
 
-def RunSteps(api: recipe_api.RecipeScriptApi):
+def RunSteps(api: DEPS) -> None:
   api.step('show properties', [])
   api.step.active_result.presentation.logs['result'] = [
     'is_experimental: %r' % (api.runtime.is_experimental,),
@@ -43,9 +45,7 @@ def RunSteps(api: recipe_api.RecipeScriptApi):
   api.step.empty('should_skip')  # Should be skipped
 
 
-def GenTests(
-    api: recipe_test_api.RecipeTestApi
-) -> Iterator[recipe_test_api.TestData]:
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'basic',
       api.runtime(is_experimental=False),
