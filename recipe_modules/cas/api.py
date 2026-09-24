@@ -6,6 +6,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterator, Sequence
+from typing import Any
+from PB.recipe_modules.recipe_engine.cas import properties as properties_pb
+from recipe_engine import config_types, recipe_test_api, step_data, util
+
+from RECIPE_MODULES.recipe_engine import cas
+
 import contextlib
 
 from recipe_engine import recipe_api
@@ -14,7 +21,11 @@ from recipe_engine import recipe_api
 class CasApi(recipe_api.RecipeApi):
   """A module for interacting with cas client."""
 
-  def __init__(self, env_properties, **kwargs):
+  m: cas.DEPS
+
+  def __init__(
+      self, env_properties: properties_pb.EnvProperties, **kwargs: Any
+  ) -> None:
     super().__init__(**kwargs)
 
     self._instance = None
@@ -22,7 +33,7 @@ class CasApi(recipe_api.RecipeApi):
     self._env_properties = env_properties
 
   @property
-  def instance(self):
+  def instance(self) -> str:
     if self._instance:
       return self._instance
 
@@ -37,7 +48,7 @@ class CasApi(recipe_api.RecipeApi):
     return self._instance
 
   @contextlib.contextmanager
-  def with_instance(self, instance):
+  def with_instance(self, instance: str) -> Iterator[None]:
     """Sets the CAS instance while in context, then reverts it."""
     previous_instance = self._instance
     try:
@@ -47,7 +58,7 @@ class CasApi(recipe_api.RecipeApi):
       self._instance = previous_instance
 
   @property
-  def _version(self):
+  def _version(self) -> str:
     if self.m.runtime.is_experimental:
       return 'latest'
 
@@ -60,7 +71,13 @@ class CasApi(recipe_api.RecipeApi):
 
     return self._cached_version
 
-  def _run(self, name, cmd, step_test_data=None, **kwargs):
+  def _run(
+      self,
+      name: str,
+      cmd: Sequence[str | config_types.Path | util.Placeholder],
+      step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
+      **kwargs: Any,
+  ) -> step_data.StepData:
     """Returns a cas command step.
 
     Args:
@@ -78,7 +95,12 @@ class CasApi(recipe_api.RecipeApi):
         step_test_data=step_test_data,
         **kwargs)
 
-  def download(self, step_name, digest, output_dir):
+  def download(
+      self,
+      step_name: str,
+      digest: str,
+      output_dir: config_types.Path,
+  ) -> step_data.StepData:
     """Downloads a directory tree from a cas server.
 
     Args:
@@ -98,7 +120,7 @@ class CasApi(recipe_api.RecipeApi):
     ]
     return self._run(step_name, cmd)
 
-  def viewer_url(self, digest):
+  def viewer_url(self, digest: str) -> str:
     """Return URL of cas viewer."""
 
     viewer_host = 'cas-viewer-dev.appspot.com'
@@ -107,7 +129,14 @@ class CasApi(recipe_api.RecipeApi):
     return 'https://{0}/{1}/blobs/{2}/tree'.format(
       viewer_host, self.instance, digest)
 
-  def archive(self, step_name, root, *paths, log_level='info', **kwargs):
+  def archive(
+      self,
+      step_name: str,
+      root: str | config_types.Path,
+      *paths: str | config_types.Path,
+      log_level: str = 'info',
+      **kwargs: Any,
+  ) -> str:
     """Archives given paths to a cas server.
 
     Args:
