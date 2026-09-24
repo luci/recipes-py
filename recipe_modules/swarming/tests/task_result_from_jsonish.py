@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 import json
 
 from recipe_engine.post_process import DropExpectation
@@ -30,7 +33,7 @@ class TEST_DEPS(RecipeTestApi):
   pass
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   script_path = api.path.join(api.path.dirname(__file__))
   collect_path = api.path.join(script_path, "example_collect_output.json")
   request_path = api.path.join(script_path, "example_request_show_output.json")
@@ -64,5 +67,5 @@ def RunSteps(api: DEPS):
     api.assertions.assertFalse(result.success)
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (api.test('aio') + api.post_process(DropExpectation))

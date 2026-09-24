@@ -4,6 +4,12 @@
 # that can be found in the LICENSE file.
 
 from __future__ import annotations
+from collections.abc import Callable, Iterator, Mapping, Sequence
+from typing import Any
+from recipe_engine import recipe_test_api, step_data
+from PB.recipe_modules.recipe_engine.swarming import properties as properties_pb
+
+from RECIPE_MODULES.recipe_engine import swarming
 
 import base64
 import collections
@@ -87,7 +93,7 @@ class TaskRequest:
 
   ResultDBCfg = collections.namedtuple('ResultDBCfg', ['enable'])
 
-  def __init__(self, api):
+  def __init__(self, api: Any) -> None:
     self._api = api
     self._name = ''
     self._priority = 200
@@ -98,7 +104,7 @@ class TaskRequest:
     self._realm = api.context.realm
     self._resultdb = self.ResultDBCfg(enable=False)
 
-  def _copy(self):
+  def _copy(self) -> TaskRequest:
     # * api cannot be deepcopied
     # * Naive deepcopy(TaskSlice) won't work, we have to use _copy() to do the
     #   deep copy.
@@ -115,15 +121,15 @@ class TaskRequest:
     self._slices = slices
     return ret
 
-  def __getitem__(self, idx):
+  def __getitem__(self, idx: int) -> TaskRequest.TaskSlice:
     """Returns task slice of the given index."""
     return self._slices[idx]
 
-  def __len__(self):
+  def __len__(self) -> int:
     """Returns the number of task slices comprising the request."""
     return len(self._slices)
 
-  def add_slice(self, slice_obj):
+  def add_slice(self, slice_obj: TaskRequest.TaskSlice) -> TaskRequest:
     """Returns the request with the given slice appended.
 
     Args:
@@ -133,7 +139,9 @@ class TaskRequest:
     ret._slices.append(slice_obj)
     return ret
 
-  def with_slice(self, idx, slice_obj):
+  def with_slice(
+      self, idx: int, slice_obj: TaskRequest.TaskSlice
+  ) -> TaskRequest:
     """Returns the request with the given slice set at the given index.
 
     Args:
@@ -147,11 +155,11 @@ class TaskRequest:
     return ret
 
   @property
-  def name(self):
+  def name(self) -> str:
     """Returns the name of the task."""
     return self._name
 
-  def with_name(self, name):
+  def with_name(self, name: str) -> TaskRequest:
     """Returns the request with the given name set.
 
     Args:
@@ -163,7 +171,7 @@ class TaskRequest:
     return ret
 
   @property
-  def priority(self):
+  def priority(self) -> int:
     """Returns the priority of the task.
 
     Priority is a numerical priority between 0 and 255 where a higher number
@@ -174,7 +182,7 @@ class TaskRequest:
     """
     return self._priority
 
-  def with_priority(self, priority):
+  def with_priority(self, priority: int) -> TaskRequest:
     """Returns the request with the given priority set.
 
     Args:
@@ -186,11 +194,11 @@ class TaskRequest:
     return ret
 
   @property
-  def realm(self):
+  def realm(self) -> str | None:
     """Returns the realm of the task."""
     return self._realm
 
-  def with_realm(self, realm):
+  def with_realm(self, realm: str) -> TaskRequest:
     """Returns the request with the given realm."""
     assert isinstance(realm, basestring)
     ret = self._copy()
@@ -198,11 +206,11 @@ class TaskRequest:
     return ret
 
   @property
-  def resultdb(self):
+  def resultdb(self) -> TaskRequest.ResultDBCfg:
     """Returns the ResultDB integration config of the task."""
     return self._resultdb
 
-  def with_resultdb(self):
+  def with_resultdb(self) -> TaskRequest:
     """Enables the ResultDB integration in the task.
 
     Requires the task request to be associated with some LUCI realm.
@@ -212,11 +220,11 @@ class TaskRequest:
     return ret
 
   @property
-  def service_account(self):
+  def service_account(self) -> str:
     """Returns the service account with which the task will run."""
     return self._service_account
 
-  def with_service_account(self, account):
+  def with_service_account(self, account: str) -> TaskRequest:
     """Returns the request with the given service account attached.
 
     Args:
@@ -228,14 +236,14 @@ class TaskRequest:
     return ret
 
   @property
-  def user(self):
+  def user(self) -> str | None:
     """Returns the requester of the task.
 
     User that requested this task, if applicable.
     """
     return self._user
 
-  def with_user(self, user):
+  def with_user(self, user: str) -> TaskRequest:
     """Returns the slice with the given user.
 
     Args:
@@ -247,11 +255,11 @@ class TaskRequest:
     return ret
 
   @property
-  def tags(self):
+  def tags(self) -> list[str] | None:
     """Returns the tags associated with the task."""
     return self._tags
 
-  def with_tags(self, tags):
+  def with_tags(self, tags: Mapping[str, Sequence[str]]) -> TaskRequest:
     """Returns the request with the given tags attached.
 
     Args:
@@ -269,7 +277,7 @@ class TaskRequest:
     ret._tags = sorted(tags_list)
     return ret
 
-  def _from_jsonish(self, d):
+  def _from_jsonish(self, d: Mapping[str, Any]) -> TaskRequest:
     """Constructs a task request from a JSON-serializable dict."""
     # All fields from luci-go set `omitempty`, so the keys might not exist
     # in the JSON when retrieved from luci-go client.
@@ -296,7 +304,7 @@ class TaskRequest:
     ]
     return ret
 
-  def to_jsonish(self):
+  def to_jsonish(self) -> dict[str, Any]:
     """Renders the task request as a JSON-serializable dict.
 
     The format follows the schema given by the NewTaskRequest class found here:
@@ -345,7 +353,7 @@ class TaskRequest:
     )
     """
 
-    def __init__(self, api):
+    def __init__(self, api: Any) -> None:
       self._cipd_ensure_file = api.cipd.EnsureFile()
       self._command = []
       self._relative_cwd = ""
@@ -368,7 +376,7 @@ class TaskRequest:
 
       self._api = api
 
-    def _copy(self):
+    def _copy(self) -> TaskRequest.TaskSlice:
       # api cannot be deepcopied
       api = self._api
       self._api = None
@@ -380,11 +388,11 @@ class TaskRequest:
       return ret
 
     @property
-    def command(self):
+    def command(self) -> list[str]:
       """Returns the command (list(str)) the task will run."""
       return self._command[:]
 
-    def with_command(self, cmd):
+    def with_command(self, cmd: Sequence[str]) -> TaskRequest.TaskSlice:
       """Returns the slice with the given command set.
 
       Args:
@@ -397,11 +405,13 @@ class TaskRequest:
       return ret
 
     @property
-    def relative_cwd(self):
+    def relative_cwd(self) -> str:
       "The working directory relative to the task root where `command` runs."
       return self._relative_cwd
 
-    def with_relative_cwd(self, relative_cwd):
+    def with_relative_cwd(
+        self, relative_cwd: str
+    ) -> TaskRequest.TaskSlice:
       """Returns the slice with the given relative_cwd set.
 
       Args:
@@ -414,7 +424,7 @@ class TaskRequest:
       return ret
 
     @property
-    def cas_input_root(self):
+    def cas_input_root(self) -> str:
       """Returns the digest of an uploaded directory tree on the default cas
       server.
 
@@ -422,7 +432,7 @@ class TaskRequest:
       """
       return self._cas_input_root
 
-    def with_cas_input_root(self, digest):
+    def with_cas_input_root(self, digest: str) -> TaskRequest.TaskSlice:
       """Returns the slice with the given cas digest.
 
       Args:
@@ -436,13 +446,15 @@ class TaskRequest:
       return ret
 
     @property
-    def dimensions(self):
+    def dimensions(self) -> dict[str, str]:
       """Returns the dimensions (dict[str]str) on which to filter swarming
       bots.
       """
       return copy.deepcopy(self._dimensions)
 
-    def with_dimensions(self, **kwargs):
+    def with_dimensions(
+        self, **kwargs: str | None
+    ) -> TaskRequest.TaskSlice:
       """Returns the slice with the given dimensions set.
 
       A key with a value of None will be interpreted as a directive to unset the
@@ -473,13 +485,15 @@ class TaskRequest:
       return ret
 
     @property
-    def cipd_ensure_file(self):
+    def cipd_ensure_file(self) -> Any:
       """Returns the CIPD ensure file (api.cipd.EnsureFile) of packages to
       install.
       """
       return copy.deepcopy(self._cipd_ensure_file)
 
-    def with_cipd_ensure_file(self, ensure_file):
+    def with_cipd_ensure_file(
+        self, ensure_file: Any
+    ) -> TaskRequest.TaskSlice:
       """Returns the slice with the given CIPD packages set.
 
       Args:
@@ -492,11 +506,13 @@ class TaskRequest:
       return ret
 
     @property
-    def outputs(self):
+    def outputs(self) -> list[str]:
       """Returns the list of files to be isolated on task exit."""
       return copy.copy(self._outputs)
 
-    def with_outputs(self, outputs):
+    def with_outputs(
+        self, outputs: Sequence[str]
+    ) -> TaskRequest.TaskSlice:
       """Returns the slice with given outputs set.
 
       Args:
@@ -511,11 +527,13 @@ class TaskRequest:
       return ret
 
     @property
-    def env_vars(self):
+    def env_vars(self) -> dict[str, str]:
       """Returns the mapping (dict) of an environment variable to its value."""
       return copy.deepcopy(self._env_vars)
 
-    def with_env_vars(self, **kwargs):
+    def with_env_vars(
+        self, **kwargs: str | None
+    ) -> TaskRequest.TaskSlice:
       """Returns the slice with the given environment variables set.
 
       A key with a value of None will be interpreted as a directive to unset the
@@ -541,12 +559,14 @@ class TaskRequest:
       return ret
 
     @property
-    def env_prefixes(self):
+    def env_prefixes(self) -> dict[str, list[str]]:
       """Returns a mapping (dict) of an environment variable to the list of
       paths to be prepended."""
       return copy.deepcopy(self._env_prefixes)
 
-    def with_env_prefixes(self, **kwargs):
+    def with_env_prefixes(
+        self, **kwargs: Sequence[str] | None
+    ) -> TaskRequest.TaskSlice:
       """Returns the slice with the given environment prefixes set.
 
       The given paths are interpreted as relative to the Swarming root dir.
@@ -581,11 +601,11 @@ class TaskRequest:
       return ret
 
     @property
-    def expiration_secs(self):
+    def expiration_secs(self) -> int:
       """Returns the seconds before this task expires."""
       return self._expiration_secs
 
-    def with_expiration_secs(self, secs):
+    def with_expiration_secs(self, secs: int) -> TaskRequest.TaskSlice:
       """Returns the slice with the given expiration timeout set.
 
       Args:
@@ -597,11 +617,11 @@ class TaskRequest:
       return ret
 
     @property
-    def wait_for_capacity(self):
+    def wait_for_capacity(self) -> bool:
       """Returns whether this task should wait for capacity."""
       return self._wait_for_capacity
 
-    def with_wait_for_capacity(self, b):
+    def with_wait_for_capacity(self, b: bool) -> TaskRequest.TaskSlice:
       """Returns the slice with wait_for_capacity set to |b|.
 
       Args:
@@ -613,11 +633,11 @@ class TaskRequest:
       return ret
 
     @property
-    def io_timeout_secs(self):
+    def io_timeout_secs(self) -> int:
       """Returns the seconds for which the task may be silent (no i/o)."""
       return self._io_timeout_secs
 
-    def with_io_timeout_secs(self, secs):
+    def with_io_timeout_secs(self, secs: int) -> TaskRequest.TaskSlice:
       """Returns the slice with the given i/o timeout set.
 
       Args:
@@ -629,11 +649,13 @@ class TaskRequest:
       return ret
 
     @property
-    def execution_timeout_secs(self):
+    def execution_timeout_secs(self) -> int:
       """Returns the seconds before Swarming should kill the task."""
       return self._execution_timeout_secs
 
-    def with_execution_timeout_secs(self, secs):
+    def with_execution_timeout_secs(
+        self, secs: int
+    ) -> TaskRequest.TaskSlice:
       """Returns the slice with the given hard timeout set.
 
       Args:
@@ -645,7 +667,7 @@ class TaskRequest:
       return ret
 
     @property
-    def grace_period_secs(self):
+    def grace_period_secs(self) -> int:
       """Returns the grace period for the slice.
 
       When a Swarming task is killed, the grace period is the amount of time
@@ -654,7 +676,7 @@ class TaskRequest:
       """
       return self._grace_period_secs
 
-    def with_grace_period_secs(self, secs):
+    def with_grace_period_secs(self, secs: int) -> TaskRequest.TaskSlice:
       """Returns the slice with the given grace period set.
 
       Args:
@@ -666,7 +688,7 @@ class TaskRequest:
       return ret
 
     @property
-    def idempotent(self):
+    def idempotent(self) -> bool:
       """Returns whether the task is idempotent.
 
       A task is idempotent if for another task is executed with identical
@@ -675,7 +697,9 @@ class TaskRequest:
       """
       return self._idempotent
 
-    def with_idempotent(self, idempotent):
+    def with_idempotent(
+        self, idempotent: bool
+    ) -> TaskRequest.TaskSlice:
       """Returns the slice with the given idempotency set.
 
       Args:
@@ -687,7 +711,7 @@ class TaskRequest:
       return ret
 
     @property
-    def secret_bytes(self):
+    def secret_bytes(self) -> bytes:
       """Returns the data to be passed as secret bytes.
 
       Secret bytes are base64-encoded data that may be securely passed to the
@@ -695,7 +719,7 @@ class TaskRequest:
       """
       return self._secret_bytes
 
-    def with_secret_bytes(self, data):
+    def with_secret_bytes(self, data: bytes) -> TaskRequest.TaskSlice:
       """Returns the slice with the given data set as secret bytes.
 
       Args:
@@ -707,11 +731,13 @@ class TaskRequest:
       return ret
 
     @property
-    def containment_type(self):
+    def containment_type(self) -> str:
       """Returns whether the task process is contained."""
       return self._containment_type
 
-    def with_containment_type(self, containment_type):
+    def with_containment_type(
+        self, containment_type: str
+    ) -> TaskRequest.TaskSlice:
       """Returns the slice with the given containment_type set.
 
       Args:
@@ -723,11 +749,13 @@ class TaskRequest:
       return ret
 
     @property
-    def named_caches(self):
+    def named_caches(self) -> dict[str, str]:
       """Returns the named caches used by this slice."""
       return self._named_caches
 
-    def with_named_caches(self, named_caches):
+    def with_named_caches(
+        self, named_caches: Mapping[str, str]
+    ) -> TaskRequest.TaskSlice:
       """Returns the slice with the given named caches added.
 
       Args:
@@ -739,7 +767,7 @@ class TaskRequest:
       ret._named_caches.update(named_caches)
       return ret
 
-    def _from_jsonish(self, d):
+    def _from_jsonish(self, d: Mapping[str, Any]) -> TaskRequest.TaskSlice:
       # All fields from luci-go set `omitempty`, so the keys might not exist
       # in the JSON when retrieved from the luci-go client.
       # See https://chromium.googlesource.com/infra/luci/luci-go/+/refs/heads/main/common/api/swarming/swarming/v1/swarming-gen.go
@@ -747,7 +775,9 @@ class TaskRequest:
       p = d.get('properties', {})
       containment = p.get('containment', {})
 
-      def kv_list_to_dict(kv_list):
+      def kv_list_to_dict(
+          kv_list: Sequence[Mapping[str, Any]],
+      ) -> dict[str, Any]:
         ret = {}
         for kv in kv_list:
           ret[kv['key']] = kv.get('value', None)
@@ -786,7 +816,7 @@ class TaskRequest:
         ret = ret.with_wait_for_capacity(d['wait_for_capacity'])
       return ret.with_expiration_secs(int(d.get('expiration_secs', 0)))
 
-    def to_jsonish(self):
+    def to_jsonish(self) -> dict[str, Any]:
       r"""Renders the task request as a JSON-serializable dict.
 
       The format follows the schema given by the TaskSlice class found here:
@@ -861,27 +891,29 @@ class TaskRequest:
 class TaskRequestMetadata:
   """Metadata of a requested task."""
 
-  def __init__(self, swarming_server, task_json):
+  def __init__(
+      self, swarming_server: str, task_json: Mapping[str, Any]
+  ) -> None:
     self._task_json = task_json
     self._swarming_server = swarming_server
 
   @property
-  def name(self):
+  def name(self) -> str:
     """Returns the name of the associated task."""
     return self._task_json['request']['name']
 
   @property
-  def id(self):
+  def id(self) -> str:
     """Returns the ID of the associated task."""
     return self._task_json['task_id']
 
   @property
-  def task_ui_link(self):
+  def task_ui_link(self) -> str:
     """Returns the URL of the associated task in the Swarming UI."""
     return '%s/task?id=%s' % (self._swarming_server, self.id)
 
   @property
-  def invocation(self):
+  def invocation(self) -> str | None:
     """Returns the invocation name of the associated task."""
     return self._task_json.get('task_result', {}).get('resultdb_info',
                                                       {}).get('invocation')
@@ -893,30 +925,37 @@ class TaskResult:
   class CasOutputs:
     """The cas outputs of a task."""
 
-    def __init__(self, digest, instance):
+    def __init__(self, digest: str, instance: str) -> None:
       self._digest = digest
       self._instance = instance
 
     @property
-    def digest(self):
+    def digest(self) -> str:
       """The digest of the CAS outputs (str)."""
       return self._digest
 
     @property
-    def instance(self):
+    def instance(self) -> str:
       """The CAS instance where the outputs live (str)."""
       return self._instance
 
     @property
-    def url(self):
+    def url(self) -> str:
       """The URL of the associated CAS UI page."""
       return 'https://cas-viewer.appspot.com/{0}/blobs/{1}/tree'.format(
           self.instance,
           self.digest,
       )
 
-  def __init__(self, api, task_slice, id, raw_results, output_dir=None,
-               text_output_file=None):
+  def __init__(
+      self,
+      api: Any,
+      task_slice: TaskRequest.TaskSlice | None,
+      id: str,
+      raw_results: Mapping[str, Any],
+      output_dir: config_types.Path | None = None,
+      text_output_file: config_types.Path | None = None,
+  ) -> None:
     """
     Args:
       api (recipe_api.RecipeApi): A recipe API.
@@ -960,7 +999,9 @@ class TaskResult:
 
       self._duration = results.get('duration', 0)
 
-      def parse_datetime(datetime_str):
+      def parse_datetime(
+        datetime_str: str | None,
+    ) -> datetime.datetime | None:
         try:
           return datetime.datetime.fromisoformat(datetime_str)
         except (TypeError, ValueError):  # pragma: no cover
@@ -988,7 +1029,7 @@ class TaskResult:
         }
 
   @property
-  def finalized(self):
+  def finalized(self) -> bool:
     """True if state is not PENDING or RUNNING."""
     return self._state not in [
         TaskState.PENDING,
@@ -996,22 +1037,22 @@ class TaskResult:
     ]
 
   @property
-  def name(self):
+  def name(self) -> str | None:
     """The name (str) of the task."""
     return self._name
 
   @property
-  def id(self):
+  def id(self) -> str:
     """The ID (str) of the task."""
     return self._id
 
   @property
-  def raw(self):
+  def raw(self) -> dict[str, Any]:
     """The jsonish dict that was passed into the constructor as raw_results."""
     return copy.deepcopy(self._raw_results)
 
   @property
-  def state(self):
+  def state(self) -> TaskState | None:
     """The final state (TaskState|None) of the task.
 
     Returns None if there was a client-side, RPC-level error in determining the
@@ -1020,7 +1061,7 @@ class TaskResult:
     return self._state
 
   @property
-  def success(self):
+  def success(self) -> bool | None:
     """Returns whether the task completed successfully (bool|None).
 
     If None, then the task is in an unknown state due to a client-side,
@@ -1029,7 +1070,7 @@ class TaskResult:
     return self._success
 
   @property
-  def duration_secs(self):
+  def duration_secs(self) -> float | None:
     """Returns the duration of the task, in seconds.
 
     Returns None if an error occurred.
@@ -1037,7 +1078,7 @@ class TaskResult:
     return self._duration
 
   @property
-  def created_ts(self):
+  def created_ts(self) -> datetime.datetime | None:
     """Returns a datetime corresponding to when the task was created.
 
     Returns None if an error occurred.
@@ -1045,7 +1086,7 @@ class TaskResult:
     return self._created_ts
 
   @property
-  def started_ts(self):
+  def started_ts(self) -> datetime.datetime | None:
     """Returns a datetime corresponding to when the task started.
 
     Returns None if an error occurred.
@@ -1053,7 +1094,7 @@ class TaskResult:
     return self._started_ts
 
   @property
-  def completed_ts(self):
+  def completed_ts(self) -> datetime.datetime | None:
     """Returns a datetime corresponding to when the task finished.
 
     Returns None if an error occurred.
@@ -1061,7 +1102,7 @@ class TaskResult:
     return self._completed_ts
 
   @property
-  def tags(self):
+  def tags(self) -> list[str] | None:
     """Returns a list of colon-separated tags.
 
     Returns None if an error occurred.
@@ -1069,12 +1110,12 @@ class TaskResult:
     return self._tags
 
   @property
-  def output(self):
+  def output(self) -> str | None:
     """The output (str) streamed from the task."""
     return self._output
 
   @property
-  def _trimmed_output(self):
+  def _trimmed_output(self) -> str:
     """Returns a limited output for use in exception."""
     if self._output is None:
       return 'None'
@@ -1092,7 +1133,7 @@ class TaskResult:
     return '(…)' + out
 
   @property
-  def output_dir(self):
+  def output_dir(self) -> config_types.Path | None:
     """The absolute directory (Path|None) that the task's outputs were
     downloaded to.
 
@@ -1101,7 +1142,7 @@ class TaskResult:
     return self._output_dir
 
   @property
-  def outputs(self):
+  def outputs(self) -> dict[str, config_types.Path]:
     """A map (dict[str]Path) of the files, relative to absolute paths, output
     from the task.
 
@@ -1115,12 +1156,12 @@ class TaskResult:
     return self._outputs
 
   @property
-  def cas_outputs(self):
+  def cas_outputs(self) -> TaskResult.CasOutputs | None:
     """Returns the cas output refs (CasOutputs|None) of the task."""
     return self._cas_outputs
 
   @property
-  def text_output_file(self):
+  def text_output_file(self) -> config_types.Path | None:
     """A Path or None where the task's text output is stored.
 
     If None, the task's text output is not being stored into a file. See
@@ -1129,11 +1170,11 @@ class TaskResult:
     return self._text_output_file
 
   @property
-  def bot_id(self):
+  def bot_id(self) -> str | None:
     """The ID (str) of the bot that executed the task."""
     return self._bot_id
 
-  def analyze(self):
+  def analyze(self) -> None:
     """Raises a step failure if the task was unsuccessful."""
     if self.state is None:
       raise recipe_api.InfraFailure(
@@ -1185,7 +1226,9 @@ class TaskResult:
 class BotMetadata:
   """Metadata of a bot."""
 
-  def __init__(self, swarming_server, bot_id, bot_json):
+  def __init__(
+      self, swarming_server: str, bot_id: str, bot_json: Mapping[str, Any]
+  ) -> None:
     self._bot_id = bot_id
     self._bot_json = bot_json
     self._swarming_server = swarming_server
@@ -1199,42 +1242,42 @@ class BotMetadata:
       self._state = json.loads(bot_json['state'])
 
   @property
-  def bot_id(self):
+  def bot_id(self) -> str:
     """The id of the bot (str)."""
     return self._bot_id
 
   @property
-  def bot_ui_link(self):
+  def bot_ui_link(self) -> str:
     """Returns the URL of the associated bot in the Swarming UI."""
     return '%s/bot?id=%s' % (self._swarming_server, self.bot_id)
 
   @property
-  def is_dead(self):
+  def is_dead(self) -> bool:
     """True if the bot is dead (bool)."""
     return self._bot_json.get('is_dead', False)
 
   @property
-  def quarantined(self):
+  def quarantined(self) -> bool:
     """True if the bot is quarantined (bool)."""
     return self._bot_json.get('quarantined', False)
 
   @property
-  def maintenance_msg(self):
+  def maintenance_msg(self) -> str | None:
     """The maintenance message for the bot (None|str)."""
     return self._bot_json.get('maintenance_msg')
 
   @property
-  def in_maintenance(self):
+  def in_maintenance(self) -> bool:
     """True if the bot is in maintenance mode (bool)."""
     return bool(self.maintenance_msg)
 
   @property
-  def dimensions(self):
+  def dimensions(self) -> dict[str, list[str]] | None:
     """The dimensions of the bot (None|Dict[str, List[str]])."""
     return self._dimensions
 
   @property
-  def state(self):
+  def state(self) -> dict[str, Any] | None:
     """The state of the bot (None|Dict[str, Object]).
 
     The state contains detailed properties of the bot, e.g. disk spaces, env,
@@ -1253,10 +1296,17 @@ class SwarmingApi(recipe_api.RecipeApi):
   This module will deploy the client to [CACHE]/swarming_client/; users should
   add this path to the named cache for their builder.
   """
+
+  m: swarming.DEPS
   TaskState = TaskState
   TaskResult = TaskResult
 
-  def __init__(self, env_properties, *args, **kwargs):
+  def __init__(
+      self,
+      env_properties: properties_pb.EnvProperties,
+      *args: Any,
+      **kwargs: Any,
+  ) -> None:
     super().__init__(*args, **kwargs)
     self._server = env_properties.SWARMING_SERVER
     self._env_properties = env_properties
@@ -1264,21 +1314,21 @@ class SwarmingApi(recipe_api.RecipeApi):
     self._task_requests = {}
 
   @property
-  def bot_id(self):
+  def bot_id(self) -> str:
     """Swarming bot ID executing this task."""
     return self._env_properties.SWARMING_BOT_ID
 
   @property
-  def task_id(self):
+  def task_id(self) -> str:
     """This task's Swarming ID."""
     return self._env_properties.SWARMING_TASK_ID
 
   @property
-  def current_server(self):
+  def current_server(self) -> str:
     """Swarming server executing this task."""
     return self._env_properties.SWARMING_SERVER
 
-  def initialize(self):
+  def initialize(self) -> None:
     if self._test_data.enabled:
       if not self._env_properties.SWARMING_SERVER:
         self._server = 'https://example.swarmingserver.appspot.com'
@@ -1290,20 +1340,26 @@ class SwarmingApi(recipe_api.RecipeApi):
               self._env_properties.SWARMING_BOT_ID or 'fake-bot-id')
 
   @property
-  def _version(self):
+  def _version(self) -> str:
     if self._test_data.enabled:
       return 'swarming_module_pin'
     return DEFAULT_CIPD_VERSION  # pragma: no cover
 
   @property
-  def _client(self):
+  def _client(self) -> config_types.Path:
     return self.m.cipd.ensure_tool('infra/tools/luci/swarming/${platform}',
                                    self._version)
 
-  def ensure_client(self):
+  def ensure_client(self) -> None:
     self._client
 
-  def _run(self, name, cmd, step_test_data=None, **kwargs):
+  def _run(
+      self,
+      name: str,
+      cmd: Sequence[str | config_types.Path | recipe_api.Placeholder],
+      step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
+      **kwargs: Any,
+  ) -> step_data.StepData:
     """Return an swarming command step.
 
     Args:
@@ -1317,7 +1373,7 @@ class SwarmingApi(recipe_api.RecipeApi):
         **kwargs)
 
   @contextlib.contextmanager
-  def on_path(self):
+  def on_path(self) -> Iterator[None]:
     """This context manager ensures the go swarming client is available on
     $PATH.
 
@@ -1330,7 +1386,7 @@ class SwarmingApi(recipe_api.RecipeApi):
     with self.m.context(env_prefixes={'PATH': [client_dir]}):
       yield
 
-  def task_request(self):
+  def task_request(self) -> TaskRequest:
     """Creates a new TaskRequest object.
 
     See documentation for TaskRequest/TaskSlice to see how to build this up
@@ -1341,7 +1397,9 @@ class SwarmingApi(recipe_api.RecipeApi):
     """
     return TaskRequest(self.m)
 
-  def task_request_from_jsonish(self, json_d):
+  def task_request_from_jsonish(
+      self, json_d: Mapping[str, Any]
+  ) -> TaskRequest:
     """Creates a new TaskRequest object from a JSON-serializable dict.
 
     The input argument should match the schema as the output of
@@ -1349,7 +1407,13 @@ class SwarmingApi(recipe_api.RecipeApi):
     """
     return TaskRequest(self.m)._from_jsonish(json_d)
 
-  def trigger(self, step_name, requests, verbose=False, server=None):
+  def trigger(
+      self,
+      step_name: str,
+      requests: Sequence[TaskRequest],
+      verbose: bool = False,
+      server: str | None = None,
+  ) -> list[TaskRequestMetadata]:
     """Triggers a set of Swarming tasks.
 
     Args:
@@ -1406,8 +1470,18 @@ class SwarmingApi(recipe_api.RecipeApi):
 
     return metadata_objs
 
-  def collect(self, name, tasks, output_dir=None, task_output_stdout='json',
-              timeout=None, eager=False, verbose=False):
+  def collect(
+      self,
+      name: str,
+      tasks: Sequence[str | TaskRequestMetadata],
+      output_dir: config_types.Path | None = None,
+      task_output_stdout: (
+          str | config_types.Path | Sequence[str | config_types.Path]
+      ) = 'json',
+      timeout: str | None = None,
+      eager: bool = False,
+      verbose: bool = False,
+  ) -> list[TaskResult]:
     """Waits on a set of Swarming tasks.
 
     Args:
@@ -1512,7 +1586,9 @@ class SwarmingApi(recipe_api.RecipeApi):
 
     return parsed_results
 
-  def show_request(self, name, task):
+  def show_request(
+      self, name: str, task: str | TaskRequestMetadata
+  ) -> TaskRequest:
     """Retrieve the TaskRequest for a Swarming task.
 
     Args:
@@ -1549,7 +1625,12 @@ class SwarmingApi(recipe_api.RecipeApi):
 
     return self.task_request_from_jsonish(json_result)
 
-  def list_bots(self, step_name, dimensions=None, fields=None):
+  def list_bots(
+      self,
+      step_name: str,
+      dimensions: Mapping[str, str] | None = None,
+      fields: Sequence[str] | None = None,
+  ) -> list[BotMetadata]:
     """List bots matching the given options.
 
     Args:
@@ -1599,7 +1680,13 @@ class SwarmingApi(recipe_api.RecipeApi):
 
     return metadata_objs
 
-  def list_tasks(self, step_name, start=None, tags=None, server=None):
+  def list_tasks(
+      self,
+      step_name: str,
+      start: float | None = None,
+      tags: Sequence[str] | None = None,
+      server: str | None = None,
+  ) -> list[dict[str, Any]]:
     """List tasks matching the given options.
 
     Args:

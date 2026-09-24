@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
@@ -24,12 +27,12 @@ class TEST_DEPS(RecipeTestApi):
   swarming: swarming.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   logs = api.step(cmd=None, name='task_info').presentation.logs
   logs['bot_id'] = [api.swarming.bot_id]
   logs['task_id'] = [api.swarming.task_id]
   logs['swarming_server'] = [api.swarming.current_server]
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('simulated') + api.swarming.properties()

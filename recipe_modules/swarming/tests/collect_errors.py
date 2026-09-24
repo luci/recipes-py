@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine.post_process import DropExpectation
 
 from dataclasses import dataclass
@@ -28,7 +31,7 @@ class TEST_DEPS(RecipeTestApi):
   pass
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   output_dir = api.path.mkdtemp('swarming')
   text_dir = api.path.mkdtemp('swarming')
 
@@ -39,5 +42,5 @@ def RunSteps(api: DEPS):
                          task_output_stdout=[output_dir, text_dir])
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (api.test('basic') + api.post_process(DropExpectation))

@@ -4612,7 +4612,7 @@ status.
 [DEPS](/recipe_modules/swarming/__init__.py#25): [buildbucket](#recipe_modules-buildbucket), [cas](#recipe_modules-cas), [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
-#### **class [SwarmingApi](/recipe_modules/swarming/api.py#1247)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [SwarmingApi](/recipe_modules/swarming/api.py#1290)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 API for interacting with swarming.
 
@@ -4622,11 +4622,11 @@ http://go.chromium.org/luci/client/cmd/swarming.
 This module will deploy the client to [CACHE]/swarming_client/; users should
 add this path to the named cache for their builder.
 
-&emsp; **@property**<br>&mdash; **def [bot\_id](/recipe_modules/swarming/api.py#1266)(self):**
+&emsp; **@property**<br>&mdash; **def [bot\_id](/recipe_modules/swarming/api.py#1316)(self):**
 
 Swarming bot ID executing this task.
 
-&mdash; **def [collect](/recipe_modules/swarming/api.py#1409)(self, name, tasks, output_dir=None, task_output_stdout='json', timeout=None, eager=False, verbose=False):**
+&mdash; **def [collect](/recipe_modules/swarming/api.py#1473)(self, name: str, tasks: Sequence[(str | TaskRequestMetadata)], output_dir: (config_types.Path | None)=None, task_output_stdout: ((str | config_types.Path) | Sequence[(str | config_types.Path)])='json', timeout: (str | None)=None, eager: bool=False, verbose: bool=False):**
 
 Waits on a set of Swarming tasks.
 
@@ -4652,15 +4652,15 @@ Args:
 Returns:
   A list of TaskResult objects.
 
-&emsp; **@property**<br>&mdash; **def [current\_server](/recipe_modules/swarming/api.py#1276)(self):**
+&emsp; **@property**<br>&mdash; **def [current\_server](/recipe_modules/swarming/api.py#1326)(self):**
 
 Swarming server executing this task.
 
-&mdash; **def [ensure\_client](/recipe_modules/swarming/api.py#1303)(self):**
+&mdash; **def [ensure\_client](/recipe_modules/swarming/api.py#1353)(self):**
 
-&mdash; **def [initialize](/recipe_modules/swarming/api.py#1281)(self):**
+&mdash; **def [initialize](/recipe_modules/swarming/api.py#1331)(self):**
 
-&mdash; **def [list\_bots](/recipe_modules/swarming/api.py#1552)(self, step_name, dimensions=None, fields=None):**
+&mdash; **def [list\_bots](/recipe_modules/swarming/api.py#1628)(self, step_name: str, dimensions: (Mapping[(str, str)] | None)=None, fields: (Sequence[str] | None)=None):**
 
 List bots matching the given options.
 
@@ -4674,7 +4674,7 @@ Args:
 Returns:
   A list of BotMetadata objects.
 
-&mdash; **def [list\_tasks](/recipe_modules/swarming/api.py#1602)(self, step_name, start=None, tags=None, server=None):**
+&mdash; **def [list\_tasks](/recipe_modules/swarming/api.py#1683)(self, step_name: str, start: (float | None)=None, tags: (Sequence[str] | None)=None, server: (str | None)=None):**
 
 List tasks matching the given options.
 
@@ -4690,7 +4690,7 @@ Args:
 Returns:
   Json listing the resulting tasks.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#1319)(self):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#1375)(self):**
 
 This context manager ensures the go swarming client is available on
 $PATH.
@@ -4700,7 +4700,7 @@ Example:
     with api.swarming.on_path():
       # do your steps which require the swarming binary on path
 
-&mdash; **def [show\_request](/recipe_modules/swarming/api.py#1515)(self, name, task):**
+&mdash; **def [show\_request](/recipe_modules/swarming/api.py#1589)(self, name: str, task: (str | TaskRequestMetadata)):**
 
 Retrieve the TaskRequest for a Swarming task.
 
@@ -4712,11 +4712,11 @@ Args:
 Returns:
   TaskRequest objects.
 
-&emsp; **@property**<br>&mdash; **def [task\_id](/recipe_modules/swarming/api.py#1271)(self):**
+&emsp; **@property**<br>&mdash; **def [task\_id](/recipe_modules/swarming/api.py#1321)(self):**
 
 This task's Swarming ID.
 
-&mdash; **def [task\_request](/recipe_modules/swarming/api.py#1333)(self):**
+&mdash; **def [task\_request](/recipe_modules/swarming/api.py#1389)(self):**
 
 Creates a new TaskRequest object.
 
@@ -4726,14 +4726,14 @@ into a full task.
 Once your TaskRequest is complete, you can pass it to `trigger` in order to
 have it start running on the swarming server.
 
-&mdash; **def [task\_request\_from\_jsonish](/recipe_modules/swarming/api.py#1344)(self, json_d):**
+&mdash; **def [task\_request\_from\_jsonish](/recipe_modules/swarming/api.py#1400)(self, json_d: Mapping[(str, Any)]):**
 
 Creates a new TaskRequest object from a JSON-serializable dict.
 
 The input argument should match the schema as the output of
 TaskRequest.to_jsonish().
 
-&mdash; **def [trigger](/recipe_modules/swarming/api.py#1352)(self, step_name, requests, verbose=False, server=None):**
+&mdash; **def [trigger](/recipe_modules/swarming/api.py#1410)(self, step_name: str, requests: Sequence[TaskRequest], verbose: bool=False, server: (str | None)=None):**
 
 Triggers a set of Swarming tasks.
 
@@ -6349,58 +6349,58 @@ This file is a recipe demonstrating reading triggers of the current build.
 &mdash; **def [RunSteps](/recipe_modules/step/tests/timeout.py#37)(api: DEPS, props: timeout_pb.InputProperties):**
 ### *recipes* / [swarming:examples/full](/recipe_modules/swarming/examples/full.py)
 
-[DEPS](/recipe_modules/swarming/examples/full.py#28): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
+[DEPS](/recipe_modules/swarming/examples/full.py#31): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
 
 
-&mdash; **def [RunSteps](/recipe_modules/swarming/examples/full.py#46)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/swarming/examples/full.py#49)(api: DEPS):**
 ### *recipes* / [swarming:examples/this\_task](/recipe_modules/swarming/examples/this_task.py)
 
-[DEPS](/recipe_modules/swarming/examples/this_task.py#17): [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
+[DEPS](/recipe_modules/swarming/examples/this_task.py#20): [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
 
 
-&mdash; **def [RunSteps](/recipe_modules/swarming/examples/this_task.py#27)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/swarming/examples/this_task.py#30)(api: DEPS):**
 ### *recipes* / [swarming:tests/collect\_errors](/recipe_modules/swarming/tests/collect_errors.py)
 
-[DEPS](/recipe_modules/swarming/tests/collect_errors.py#20): [assertions](#recipe_modules-assertions), [path](#recipe_modules-path), [swarming](#recipe_modules-swarming)
+[DEPS](/recipe_modules/swarming/tests/collect_errors.py#23): [assertions](#recipe_modules-assertions), [path](#recipe_modules-path), [swarming](#recipe_modules-swarming)
 
 
-&mdash; **def [RunSteps](/recipe_modules/swarming/tests/collect_errors.py#31)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/swarming/tests/collect_errors.py#34)(api: DEPS):**
 ### *recipes* / [swarming:tests/copy](/recipe_modules/swarming/tests/copy.py)
 
-[DEPS](/recipe_modules/swarming/tests/copy.py#19): [assertions](#recipe_modules-assertions), [swarming](#recipe_modules-swarming)
+[DEPS](/recipe_modules/swarming/tests/copy.py#23): [assertions](#recipe_modules-assertions), [swarming](#recipe_modules-swarming)
 
 
-&mdash; **def [RunSteps](/recipe_modules/swarming/tests/copy.py#29)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/swarming/tests/copy.py#33)(api: DEPS):**
 ### *recipes* / [swarming:tests/list\_bots](/recipe_modules/swarming/tests/list_bots.py)
 
-[DEPS](/recipe_modules/swarming/tests/list_bots.py#20): [assertions](#recipe_modules-assertions), [swarming](#recipe_modules-swarming)
+[DEPS](/recipe_modules/swarming/tests/list_bots.py#23): [assertions](#recipe_modules-assertions), [swarming](#recipe_modules-swarming)
 
 
-&mdash; **def [RunSteps](/recipe_modules/swarming/tests/list_bots.py#30)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/swarming/tests/list_bots.py#33)(api: DEPS):**
 ### *recipes* / [swarming:tests/list\_tasks](/recipe_modules/swarming/tests/list_tasks.py)
 
-[DEPS](/recipe_modules/swarming/tests/list_tasks.py#20): [assertions](#recipe_modules-assertions), [swarming](#recipe_modules-swarming), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/swarming/tests/list_tasks.py#23): [assertions](#recipe_modules-assertions), [swarming](#recipe_modules-swarming), [time](#recipe_modules-time)
 
 
-&mdash; **def [RunSteps](/recipe_modules/swarming/tests/list_tasks.py#31)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/swarming/tests/list_tasks.py#34)(api: DEPS):**
 ### *recipes* / [swarming:tests/realms](/recipe_modules/swarming/tests/realms.py)
 
-[DEPS](/recipe_modules/swarming/tests/realms.py#22): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [context](#recipe_modules-context), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
+[DEPS](/recipe_modules/swarming/tests/realms.py#26): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [context](#recipe_modules-context), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
 
 
-&mdash; **def [RunSteps](/recipe_modules/swarming/tests/realms.py#35)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/swarming/tests/realms.py#39)(api: DEPS):**
 ### *recipes* / [swarming:tests/task\_request\_from\_jsonish](/recipe_modules/swarming/tests/task_request_from_jsonish.py)
 
-[DEPS](/recipe_modules/swarming/tests/task_request_from_jsonish.py#19): [assertions](#recipe_modules-assertions), [swarming](#recipe_modules-swarming)
+[DEPS](/recipe_modules/swarming/tests/task_request_from_jsonish.py#22): [assertions](#recipe_modules-assertions), [swarming](#recipe_modules-swarming)
 
 
-&mdash; **def [RunSteps](/recipe_modules/swarming/tests/task_request_from_jsonish.py#29)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/swarming/tests/task_request_from_jsonish.py#32)(api: DEPS):**
 ### *recipes* / [swarming:tests/task\_result\_from\_jsonish](/recipe_modules/swarming/tests/task_result_from_jsonish.py)
 
-[DEPS](/recipe_modules/swarming/tests/task_result_from_jsonish.py#22): [assertions](#recipe_modules-assertions), [path](#recipe_modules-path), [swarming](#recipe_modules-swarming)
+[DEPS](/recipe_modules/swarming/tests/task_result_from_jsonish.py#25): [assertions](#recipe_modules-assertions), [path](#recipe_modules-path), [swarming](#recipe_modules-swarming)
 
 
-&mdash; **def [RunSteps](/recipe_modules/swarming/tests/task_result_from_jsonish.py#33)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/swarming/tests/task_result_from_jsonish.py#36)(api: DEPS):**
 ### *recipes* / [time:examples/full](/recipe_modules/time/examples/full.py)
 
 [DEPS](/recipe_modules/time/examples/full.py#33): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [time](#recipe_modules-time)

@@ -4,6 +4,9 @@
 
 
 from __future__ import annotations
+from collections.abc import Callable, Mapping, Sequence
+from typing import Any
+from recipe_engine import post_process_inputs
 
 import json
 
@@ -17,12 +20,18 @@ from .state import TaskState
 class SwarmingTestApi(recipe_test_api.RecipeTestApi):
   TaskState = TaskState
 
-  def __init__(self, *args, **kwargs):
+  def __init__(self, *args: Any, **kwargs: Any) -> None:
     super().__init__(*args, **kwargs)
     self._task_id_count = 0
     self._saved_task_for_show_request = None
 
-  def check_triggered_request(self, check, step_odict, step, *checkers):
+  def check_triggered_request(
+      self,
+      check: Callable[..., bool],
+      step_odict: Mapping[str, post_process_inputs.Step],
+      step: str,
+      *checkers: Callable[[Callable[..., bool], TaskRequest], Any],
+  ) -> None:
     """Check the input request of a swarming trigger call.
 
     Args:
@@ -45,7 +54,7 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
       for c in checkers:
         c(check, req)
 
-  def example_task_request_jsonish(self):
+  def example_task_request_jsonish(self) -> dict[str, Any]:
     """Returns a dict that can be parsed by task_request_from_jsonish()."""
     return {
         'name': 'QEMU',
@@ -95,12 +104,21 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
         },
     }
 
-  def properties(self, task_id='fake-task-id', bot_id='fake-bot-id'):
+  def properties(
+      self,
+      task_id: str = 'fake-task-id',
+      bot_id: str = 'fake-bot-id',
+  ) -> recipe_test_api.TestData:
     return self.m.properties.environ(
         properties.EnvProperties(
             SWARMING_TASK_ID=task_id, SWARMING_BOT_ID=bot_id))
 
-  def trigger(self, task_names, initial_id=None, resultdb=True):
+  def trigger(
+      self,
+      task_names: Sequence[str],
+      initial_id: int | None = None,
+      resultdb: bool | Sequence[bool] = True,
+  ) -> recipe_test_api.StepTestData:
     """Generates step test data intended to mock api.swarming.trigger()
 
     Args:
@@ -136,14 +154,16 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
     return self.m.json.output(trigger_output)
 
   @staticmethod
-  def task_result(id,
-                  name,
-                  state=TaskState.COMPLETED,
-                  duration=62.35,
-                  failure=False,
-                  output='hello world!',
-                  outputs=(),
-                  bot_id='vm-123'):
+  def task_result(
+      id: str,
+      name: str,
+      state: TaskState | None = TaskState.COMPLETED,
+      duration: float = 62.35,
+      failure: bool = False,
+      output: str | None = 'hello world!',
+      outputs: Sequence[str] = (),
+      bot_id: str = 'vm-123',
+  ) -> dict[str, Any]:
     """
     Returns the raw results of a Swarming task.
 
@@ -203,7 +223,9 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
 
     return raw_results
 
-  def collect(self, task_results):
+  def collect(
+      self, task_results: Sequence[Mapping[str, Any]]
+  ) -> recipe_test_api.StepTestData:
     """Generates test step data for the swarming API collect method.
 
     Args:
@@ -219,10 +241,12 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
     }
     return self.m.json.output(id_to_result)
 
-  def set_task_for_show_request(self, task):
+  def set_task_for_show_request(
+      self, task: TaskRequest | Mapping[str, Any] | None
+  ) -> None:
     self._saved_task_for_show_request = task
 
-  def show_request(self):
+  def show_request(self) -> recipe_test_api.StepTestData:
     """Return saved TaskRequest jsonish data for the Swarming API show-request
     method.
 
@@ -235,13 +259,15 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
       task = task.to_jsonish()
     return self.m.json.output_stream(task)
 
-  def generate_bot_json(self,
-                        bot_id,
-                        is_dead=False,
-                        quarantined=False,
-                        maintenance_msg=None,
-                        dimensions=None,
-                        state=None):
+  def generate_bot_json(
+      self,
+      bot_id: str,
+      is_dead: bool = False,
+      quarantined: bool = False,
+      maintenance_msg: str | None = None,
+      dimensions: Mapping[str, Any] | None = None,
+      state: Mapping[str, Any] | None = None,
+  ) -> dict[str, Any]:
     bot = {'bot_id': bot_id}
     if is_dead:
       bot['is_dead'] = True
@@ -258,7 +284,9 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
       bot['state'] = self.m.json.dumps(state)
     return bot
 
-  def list_bots(self, dimensions=None):
+  def list_bots(
+      self, dimensions: Mapping[str, Any] | None = None
+  ) -> recipe_test_api.StepTestData:
     """Generates step test data intended to mock api.swarming.list_bots()
 
     Args:

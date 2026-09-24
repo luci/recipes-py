@@ -3,6 +3,10 @@
 # that can be found in the LICENSE file.
 
 from __future__ import annotations
+from RECIPE_MODULES.recipe_engine.swarming import api as swarming_api
+
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
 
 from recipe_engine.post_process import DropExpectation
 
@@ -32,8 +36,8 @@ class TEST_DEPS(RecipeTestApi):
   buildbucket: buildbucket.TEST_API
 
 
-def RunSteps(api: DEPS):
-  def basic_request():
+def RunSteps(api: DEPS) -> None:
+  def basic_request() -> swarming_api.TaskRequest:
     request = api.swarming.task_request()
     return request.with_slice(0, request[0].
         with_command(['echo', 'hi']).
@@ -52,7 +56,7 @@ def RunSteps(api: DEPS):
     api.assertions.assertEqual('proj:buck', res['realm'])
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (
       api.test('basic') +
       api.buildbucket.ci_build(project='proj', bucket='buck') +

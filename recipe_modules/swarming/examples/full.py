@@ -6,6 +6,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 import difflib
 
 from recipe_engine.post_process import DropExpectation
@@ -43,7 +46,7 @@ class TEST_DEPS(RecipeTestApi):
 EXECUTION_TIMEOUT_SECS = 3600
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   api.swarming.ensure_client()
 
   # Create a new Swarming task request.
@@ -236,7 +239,7 @@ def RunSteps(api: DEPS):
       server='http://other-swarming.appspot.com')
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   # For coverage
   api.swarming.example_task_request_jsonish()
 
