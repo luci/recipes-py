@@ -6,12 +6,13 @@
 
 from __future__ import annotations
 
+from typing import Any
 import uuid
 
 from recipe_engine import recipe_api
 
 class UuidApi(recipe_api.RecipeApi):
-  def __init__(self, **kwargs):
+  def __init__(self, **kwargs: Any) -> None:
     super().__init__(**kwargs)
     self._fake_time: int | None = None
     self._fake_step: int | None = None

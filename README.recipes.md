@@ -5069,9 +5069,9 @@ Raises:
 
 Allows test-repeatable access to a random UUID.
 
-#### **class [UuidApi](/recipe_modules/uuid/api.py#13)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [UuidApi](/recipe_modules/uuid/api.py#14)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
-&mdash; **def [random](/recipe_modules/uuid/api.py#22)(self):**
+&mdash; **def [random](/recipe_modules/uuid/api.py#23)(self):**
 
 Returns a random UUID string.
 ### *recipe_modules* / [version](/recipe_modules/version)
@@ -6463,10 +6463,10 @@ An example of a recipe wrapping legacy analyzers.
 &mdash; **def [RunSteps](/recipe_modules/url/tests/validate_url.py#31)(api: DEPS):**
 ### *recipes* / [uuid:examples/full](/recipe_modules/uuid/examples/full.py)
 
-[DEPS](/recipe_modules/uuid/examples/full.py#17): [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
+[DEPS](/recipe_modules/uuid/examples/full.py#20): [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
 
 
-&mdash; **def [RunSteps](/recipe_modules/uuid/examples/full.py#27)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/uuid/examples/full.py#30)(api: DEPS):**
 ### *recipes* / [version:examples/full](/recipe_modules/version/examples/full.py)
 
 [DEPS](/recipe_modules/version/examples/full.py#17): [version](#recipe_modules-version)
