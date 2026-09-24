@@ -5081,7 +5081,7 @@ Thin API for parsing semver strings into comparable object.
 
 #### **class [VersionApi](/recipe_modules/version/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
-&emsp; **@staticmethod**<br>&mdash; **def [parse](/recipe_modules/version/api.py#17)(version):**
+&emsp; **@staticmethod**<br>&mdash; **def [parse](/recipe_modules/version/api.py#17)(version: str):**
 
 Parse implements PEP 440 parsing for semvers.
 
@@ -6469,10 +6469,10 @@ An example of a recipe wrapping legacy analyzers.
 &mdash; **def [RunSteps](/recipe_modules/uuid/examples/full.py#27)(api: DEPS):**
 ### *recipes* / [version:examples/full](/recipe_modules/version/examples/full.py)
 
-[DEPS](/recipe_modules/version/examples/full.py#14): [version](#recipe_modules-version)
+[DEPS](/recipe_modules/version/examples/full.py#17): [version](#recipe_modules-version)
 
 
-&mdash; **def [RunSteps](/recipe_modules/version/examples/full.py#23)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/version/examples/full.py#26)(api: DEPS):**
 ### *recipes* / [warning:tests/fakes](/recipe_modules/warning/tests/fakes.py)
 
 
