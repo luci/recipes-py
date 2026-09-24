@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
@@ -19,7 +22,7 @@ class DEPS(RecipeScriptApi):
   step: step.API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   expected = ('refs/heads/main', 12345)
   actual = api.commit_position.parse('refs/heads/main@{#12345}')
   assert actual == expected, (actual, expected)
@@ -35,5 +38,5 @@ def RunSteps(api: DEPS):
   assert actual == expected, (actual, expected)
 
 
-def GenTests(api: RecipeTestApi):
+def GenTests(api: RecipeTestApi) -> Iterator[recipe_test_api.TestData]:
   yield api.test('basic')

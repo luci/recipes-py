@@ -1471,13 +1471,13 @@ Returns the CIPDApi.Pin instance.
 
 Recipe module providing commit position parsing and formatting.
 
-&emsp; **@classmethod**<br>&mdash; **def [format](/recipe_modules/commit_position/api.py#28)(cls, ref, revision_number):**
+&emsp; **@classmethod**<br>&mdash; **def [format](/recipe_modules/commit_position/api.py#28)(cls, ref: str, revision_number: int):**
 
 Returns a commit position string.
 
 ref must start with 'refs/'.
 
-&emsp; **@classmethod**<br>&mdash; **def [parse](/recipe_modules/commit_position/api.py#18)(cls, value):**
+&emsp; **@classmethod**<br>&mdash; **def [parse](/recipe_modules/commit_position/api.py#18)(cls, value: str):**
 
 Returns (ref, revision_number) tuple.
 ### *recipe_modules* / [context](/recipe_modules/context)
@@ -5304,10 +5304,10 @@ Generates response Runs for a test.
 &mdash; **def [RunSteps](/recipe_modules/cipd/tests/platform.py#33)(api: DEPS):**
 ### *recipes* / [commit\_position:examples/full](/recipe_modules/commit_position/examples/full.py)
 
-[DEPS](/recipe_modules/commit_position/examples/full.py#17): [commit\_position](#recipe_modules-commit_position), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/commit_position/examples/full.py#20): [commit\_position](#recipe_modules-commit_position), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/commit_position/examples/full.py#22)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/commit_position/examples/full.py#25)(api: DEPS):**
 ### *recipes* / [context:examples/full](/recipe_modules/context/examples/full.py)
 
 [DEPS](/recipe_modules/context/examples/full.py#24): [context](#recipe_modules-context), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time)

@@ -16,7 +16,7 @@ class CommitPositionApi(recipe_api.RecipeApi):
       r'(?P<ref>refs/[^@]+)@{#(?P<revision>\d+)}')
 
   @classmethod
-  def parse(cls, value):
+  def parse(cls, value: str) -> tuple[str, int]:
     """Returns (ref, revision_number) tuple."""
     match = cls.RE_COMMIT_POSITION.match(value)
     if not match:
@@ -26,7 +26,7 @@ class CommitPositionApi(recipe_api.RecipeApi):
     return match.group('ref'), int(match.group('revision'))
 
   @classmethod
-  def format(cls, ref, revision_number):
+  def format(cls, ref: str, revision_number: int) -> str:
     """Returns a commit position string.
 
     ref must start with 'refs/'.
