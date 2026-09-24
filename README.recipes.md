@@ -3035,9 +3035,9 @@ Args:
 [DEPS](/recipe_modules/nodejs/__init__.py#18): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform)
 
 
-#### **class [NodeJSApi](/recipe_modules/nodejs/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [NodeJSApi](/recipe_modules/nodejs/api.py#18)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/nodejs/api.py#17)(self, version, path=None, cache=None):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/nodejs/api.py#25)(self, version: str, path: (config_types.Path | None)=None, cache: (config_types.Path | None)=None):**
 
 Installs a Node.js toolchain and activates it in the environment.
 
@@ -6065,10 +6065,10 @@ Tests for query_variants.
 &mdash; **def [RunSteps](/recipe_modules/milo/examples/full.py#29)(api: DEPS):**
 ### *recipes* / [nodejs:examples/full](/recipe_modules/nodejs/examples/full.py)
 
-[DEPS](/recipe_modules/nodejs/examples/full.py#18): [nodejs](#recipe_modules-nodejs), [platform](#recipe_modules-platform), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/nodejs/examples/full.py#21): [nodejs](#recipe_modules-nodejs), [platform](#recipe_modules-platform), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/nodejs/examples/full.py#29)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/nodejs/examples/full.py#32)(api: DEPS):**
 ### *recipes* / [path:examples/full](/recipe_modules/path/examples/full.py)
 
 [DEPS](/recipe_modules/path/examples/full.py#22): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

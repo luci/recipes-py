@@ -4,18 +4,31 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from typing import Any
+from recipe_engine import config_types
+
+from RECIPE_MODULES.recipe_engine import nodejs
+
 import contextlib
 
 from recipe_engine import recipe_api
 
 
 class NodeJSApi(recipe_api.RecipeApi):
-  def __init__(self, **kwargs):
+  m: nodejs.DEPS
+
+  def __init__(self, **kwargs: Any) -> None:
     super().__init__(**kwargs)
     self._installed = {}  # {Path: installed nodejs version there}
 
   @contextlib.contextmanager
-  def __call__(self, version, path=None, cache=None):
+  def __call__(
+      self,
+      version: str,
+      path: config_types.Path | None = None,
+      cache: config_types.Path | None = None,
+  ) -> Iterator[None]:
     """Installs a Node.js toolchain and activates it in the environment.
 
     Installs it under the given `path`, defaulting to `[CACHE]/nodejs`. Various
@@ -49,7 +62,12 @@ class NodeJSApi(recipe_api.RecipeApi):
     with self.m.context(env=env, env_prefixes=env_pfx):
       yield
 
-  def _ensure_installed(self, version, path, cache):
+  def _ensure_installed(
+      self,
+      version: str,
+      path: config_types.Path,
+      cache: config_types.Path,
+  ) -> tuple[dict[str, Any], dict[str, list[Any]]]:
     if self._installed.get(path) != version:
       pkgs = self.m.cipd.EnsureFile()
       pkgs.add_package(
@@ -80,7 +98,7 @@ class NodeJSApi(recipe_api.RecipeApi):
     return env, env_prefixes
 
 
-def _3pp_version(version):
+def _3pp_version(version: str) -> str:
   """Returns 3pp CIPD package version given the nodejs version.
 
   This is just a look up table. Everything <=v17 is "version:v2@". Everything
