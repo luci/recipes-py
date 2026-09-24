@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from PB.recipe_modules.recipe_engine.file.examples.read_write_proto import SomeMessage
 
 from dataclasses import dataclass
@@ -28,7 +31,7 @@ class TEST_DEPS(RecipeTestApi):
   file: file.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   msg = SomeMessage(fields=['abc', 'def'])
 
   dest = api.path.start_dir / 'message.textproto'
@@ -51,7 +54,7 @@ def RunSteps(api: DEPS):
       'TEXTPB')
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('basic')
   read_proto_data = api.file.read_proto(SomeMessage(fields=['abc', 'def']))
   yield (api.test('override_step_data')

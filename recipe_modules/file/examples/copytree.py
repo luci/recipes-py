@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from PB.recipe_modules.recipe_engine.file.examples.copytree import Properties
 
 from dataclasses import dataclass
@@ -30,7 +33,7 @@ class TEST_DEPS(RecipeTestApi):
 PROPERTIES = Properties
 
 
-def RunSteps(api: DEPS, properties):
+def RunSteps(api: DEPS, properties: Properties) -> None:
   file_names = ['a', 'aa', 'b', 'bb', 'c', 'cc']
 
   test_base_dir = api.path.mkdtemp()
@@ -83,7 +86,7 @@ def RunSteps(api: DEPS, properties):
   assert api.path.exists(dest2), dest2
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('basic', api.properties(Properties(hardlink=False)))
   yield api.test('hardlink', api.properties(Properties(hardlink=True)))
   yield api.test('symlinks', api.properties(Properties(symlinks=True)))

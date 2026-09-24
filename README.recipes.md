@@ -1887,9 +1887,9 @@ with api.defer.context() as defer:
 
 File manipulation (read/write/delete/glob) methods.
 
-#### **class [FileApi](/recipe_modules/file/api.py#97)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [FileApi](/recipe_modules/file/api.py#99)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
-&mdash; **def [chmod](/recipe_modules/file/api.py#221)(self, name: str, path: (config_types.Path | str), mode: str, recursive: bool=False):**
+&mdash; **def [chmod](/recipe_modules/file/api.py#225)(self, name: str, path: (config_types.Path | str), mode: str, recursive: bool=False):**
 
 Set the access mode for a file or directory.
 
@@ -1901,7 +1901,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [compute\_hash](/recipe_modules/file/api.py#302)(self, name: str, paths: Sequence[(config_types.Path | str)], base_path: (config_types.Path | str), test_data: str=''):**
+&mdash; **def [compute\_hash](/recipe_modules/file/api.py#306)(self, name: str, paths: Sequence[(config_types.Path | str)], base_path: (config_types.Path | str), test_data: str=''):**
 
 Computes hash of contents of a directory/file.
 
@@ -1939,7 +1939,7 @@ Returns:
 Raises:
   file.Error and ValueError if passed paths input is not str or Path.
 
-&mdash; **def [copy](/recipe_modules/file/api.py#154)(self, name: str, source: ((config_types.Path | str) | recipe_api.Placeholder), dest: ((config_types.Path | str) | recipe_api.Placeholder)):**
+&mdash; **def [copy](/recipe_modules/file/api.py#158)(self, name: str, source: ((config_types.Path | str) | recipe_api.Placeholder), dest: ((config_types.Path | str) | recipe_api.Placeholder)):**
 
 Copies a file (including mode bits) from source to destination on the
 local filesystem.
@@ -1955,7 +1955,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [copytree](/recipe_modules/file/api.py#180)(self, name: str, source: (config_types.Path | str), dest: (config_types.Path | str), symlinks: bool=False, hardlink: bool=False, allow_override: bool=False):**
+&mdash; **def [copytree](/recipe_modules/file/api.py#184)(self, name: str, source: (config_types.Path | str), dest: (config_types.Path | str), symlinks: bool=False, hardlink: bool=False, allow_override: bool=False):**
 
 Recursively copies a directory tree.
 
@@ -1976,7 +1976,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#714)(self, name: str, dest: (config_types.Path | str), mode: int=511):**
+&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#718)(self, name: str, dest: (config_types.Path | str), mode: int=511):**
 
 Ensures that `dest` exists and is a directory.
 
@@ -1989,7 +1989,7 @@ Args:
 
 Raises: file.Error if the path exists but is not a directory.
 
-&mdash; **def [file\_hash](/recipe_modules/file/api.py#269)(self, file_path: (config_types.Path | str), test_data: str=''):**
+&mdash; **def [file\_hash](/recipe_modules/file/api.py#273)(self, file_path: (config_types.Path | str), test_data: str=''):**
 
 Computes hash of contents of a single file.
 
@@ -2005,7 +2005,7 @@ Returns:
 Raises:
   file.Error and ValueError if passed paths input is not str or Path.
 
-&mdash; **def [filesizes](/recipe_modules/file/api.py#736)(self, name: str, files: Sequence[(config_types.Path | str)], test_data: (Sequence[int] | None)=None):**
+&mdash; **def [filesizes](/recipe_modules/file/api.py#740)(self, name: str, files: Sequence[(config_types.Path | str)], test_data: (Sequence[int] | None)=None):**
 
 Returns list of filesizes for the given files.
 
@@ -2016,7 +2016,7 @@ Args:
 
 Returns size of each file in bytes.
 
-&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#910)(self, name: str, path: (config_types.Path | str)):**
+&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#914)(self, name: str, path: (config_types.Path | str)):**
 
 Flattens singular directories, starting at path.
 
@@ -2045,7 +2045,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [glob\_paths](/recipe_modules/file/api.py#587)(self, name: str, source: (config_types.Path | str), pattern: str, include_hidden: bool=False, test_data: Sequence[str]=()):**
+&mdash; **def [glob\_paths](/recipe_modules/file/api.py#591)(self, name: str, source: (config_types.Path | str), pattern: str, include_hidden: bool=False, test_data: Sequence[str]=()):**
 
 Performs glob expansion on `pattern`.
 
@@ -2075,7 +2075,7 @@ Returns all paths found.
 
 Raises: file.Error.
 
-&mdash; **def [is\_executable](/recipe_modules/file/api.py#633)(self, name: str, path: (config_types.Path | str), test_data: bool=True):**
+&mdash; **def [is\_executable](/recipe_modules/file/api.py#637)(self, name: str, path: (config_types.Path | str), test_data: bool=True):**
 
 Checks if a file is executable.
 
@@ -2086,7 +2086,7 @@ Args:
 
 Returns: True if the file is executable, False otherwise.
 
-&mdash; **def [listdir](/recipe_modules/file/api.py#675)(self, name: str, source: (config_types.Path | str), recursive: bool=False, test_data: Sequence[str]=(), include_log: bool=True):**
+&mdash; **def [listdir](/recipe_modules/file/api.py#679)(self, name: str, source: (config_types.Path | str), recursive: bool=False, test_data: Sequence[str]=(), include_log: bool=True):**
 
 Lists all files inside a directory.
 
@@ -2108,7 +2108,7 @@ Returns list of entries
 
 Raises: file.Error.
 
-&mdash; **def [move](/recipe_modules/file/api.py#245)(self, name: str, source: (config_types.Path | str), dest: (config_types.Path | str)):**
+&mdash; **def [move](/recipe_modules/file/api.py#249)(self, name: str, source: (config_types.Path | str), dest: (config_types.Path | str)):**
 
 Moves a file or directory.
 
@@ -2121,7 +2121,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [read\_json](/recipe_modules/file/api.py#459)(self, name: str, source: (config_types.Path | str), test_data: Any='', include_log: bool=True):**
+&mdash; **def [read\_json](/recipe_modules/file/api.py#463)(self, name: str, source: (config_types.Path | str), test_data: Any='', include_log: bool=True):**
 
 Reads a file as UTF-8 encoded json.
 
@@ -2136,7 +2136,7 @@ Returns: The content of the file.
 
 Raise file.Error
 
-&mdash; **def [read\_proto](/recipe_modules/file/api.py#511)(self, name: str, source: (config_types.Path | str), msg_class: type[ProtoMessage], codec: ProtoCodec, test_proto: Any=None, include_log: bool=True, decoding_kwargs: (Mapping[(str, Any)] | None)=None):**
+&mdash; **def [read\_proto](/recipe_modules/file/api.py#515)(self, name: str, source: (config_types.Path | str), msg_class: type[ProtoMessage], codec: ProtoCodec, test_proto: Any=None, include_log: bool=True, decoding_kwargs: (Mapping[(str, Any)] | None)=None):**
 
 Reads a file into a proto message.
 
@@ -2151,7 +2151,7 @@ Args:
   * decoding_kwargs: Passed directly to the chosen encoder. See proto
     module for details.
 
-&mdash; **def [read\_raw](/recipe_modules/file/api.py#359)(self, name: str, source: (config_types.Path | str), test_data: bytes=''):**
+&mdash; **def [read\_raw](/recipe_modules/file/api.py#363)(self, name: str, source: (config_types.Path | str), test_data: bytes=''):**
 
 Reads a file as raw data.
 
@@ -2165,7 +2165,7 @@ Returns: The unencoded (binary) contents of the file.
 
 Raises: file.Error
 
-&mdash; **def [read\_text](/recipe_modules/file/api.py#404)(self, name: str, source: (config_types.Path | str), test_data: str='', include_log: bool=True):**
+&mdash; **def [read\_text](/recipe_modules/file/api.py#408)(self, name: str, source: (config_types.Path | str), test_data: str='', include_log: bool=True):**
 
 Reads a file as UTF-8 encoded text.
 
@@ -2180,7 +2180,7 @@ Returns: The content of the file.
 
 Raises: file.Error
 
-&mdash; **def [remove](/recipe_modules/file/api.py#655)(self, name: str, source: (config_types.Path | str)):**
+&mdash; **def [remove](/recipe_modules/file/api.py#659)(self, name: str, source: (config_types.Path | str)):**
 
 Removes a file.
 
@@ -2192,7 +2192,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmcontents](/recipe_modules/file/api.py#786)(self, name: str, source: (config_types.Path | str)):**
+&mdash; **def [rmcontents](/recipe_modules/file/api.py#790)(self, name: str, source: (config_types.Path | str)):**
 
 Similar to rmtree, but removes only contents not the directory.
 
@@ -2207,7 +2207,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmglob](/recipe_modules/file/api.py#809)(self, name: str, source: (config_types.Path | str), pattern: str, recursive: bool=True, include_hidden: bool=True):**
+&mdash; **def [rmglob](/recipe_modules/file/api.py#813)(self, name: str, source: (config_types.Path | str), pattern: str, recursive: bool=True, include_hidden: bool=True):**
 
 Removes all entries in `source` matching the glob `pattern`.
 
@@ -2236,7 +2236,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmtree](/recipe_modules/file/api.py#764)(self, name: str, source: (config_types.Path | str)):**
+&mdash; **def [rmtree](/recipe_modules/file/api.py#768)(self, name: str, source: (config_types.Path | str)):**
 
 Recursively removes a directory.
 
@@ -2250,7 +2250,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [symlink](/recipe_modules/file/api.py#861)(self, name: str, source: ((config_types.Path | str) | recipe_api.Placeholder), linkname: ((config_types.Path | str) | recipe_api.Placeholder)):**
+&mdash; **def [symlink](/recipe_modules/file/api.py#865)(self, name: str, source: ((config_types.Path | str) | recipe_api.Placeholder), linkname: ((config_types.Path | str) | recipe_api.Placeholder)):**
 
 Creates a symlink on the local filesystem.
 
@@ -2263,14 +2263,14 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#884)(self, root: (config_types.Path | str)):**
+&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#888)(self, root: (config_types.Path | str)):**
 
 Creates a SymlinkTree, given a root directory.
 
 Args:
   * root: root of a tree of symlinks.
 
-&mdash; **def [truncate](/recipe_modules/file/api.py#892)(self, name: str, path: (config_types.Path | str), size_mb: int=100):**
+&mdash; **def [truncate](/recipe_modules/file/api.py#896)(self, name: str, path: (config_types.Path | str), size_mb: int=100):**
 
 Creates an empty file with path and size_mb on the local filesystem.
 
@@ -2281,7 +2281,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [write\_json](/recipe_modules/file/api.py#484)(self, name: str, dest: (config_types.Path | str), data: Any, indent: ((int | str) | None)=None, include_log: bool=True, sort_keys: bool=True):**
+&mdash; **def [write\_json](/recipe_modules/file/api.py#488)(self, name: str, dest: (config_types.Path | str), data: Any, indent: ((int | str) | None)=None, include_log: bool=True, sort_keys: bool=True):**
 
 Write the given json serializable `data` to `dest`.
 
@@ -2296,7 +2296,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [write\_proto](/recipe_modules/file/api.py#553)(self, name: str, dest: (config_types.Path | str), proto_msg: google.protobuf.message, codec: ProtoCodec, include_log: bool=True, encoding_kwargs: (Mapping[(str, Any)] | None)=None):**
+&mdash; **def [write\_proto](/recipe_modules/file/api.py#557)(self, name: str, dest: (config_types.Path | str), proto_msg: google.protobuf.message, codec: ProtoCodec, include_log: bool=True, encoding_kwargs: (Mapping[(str, Any)] | None)=None):**
 
 Writes the given proto message to `dest`.
 
@@ -2309,7 +2309,7 @@ Args:
   * encoding_kwargs: Passed directly to the chosen encoder. See proto
     module for details.
 
-&mdash; **def [write\_raw](/recipe_modules/file/api.py#384)(self, name: str, dest: (config_types.Path | str), data: bytes):**
+&mdash; **def [write\_raw](/recipe_modules/file/api.py#388)(self, name: str, dest: (config_types.Path | str), data: bytes):**
 
 Write the given `data` to `dest`.
 
@@ -2320,7 +2320,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [write\_text](/recipe_modules/file/api.py#434)(self, name: str, dest: (config_types.Path | str), text_data: str, include_log: bool=True):**
+&mdash; **def [write\_text](/recipe_modules/file/api.py#438)(self, name: str, dest: (config_types.Path | str), text_data: str, include_log: bool=True):**
 
 Write the given UTF-8 encoded `text_data` to `dest`.
 
@@ -5739,94 +5739,94 @@ Tests that step presentation properties can be ordered.
 &mdash; **def [RunSteps](/recipes/engine_tests/unicode.py#28)(api: DEPS):**
 ### *recipes* / [file:examples/chmod](/recipe_modules/file/examples/chmod.py)
 
-[DEPS](/recipe_modules/file/examples/chmod.py#17): [file](#recipe_modules-file), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/file/examples/chmod.py#20): [file](#recipe_modules-file), [path](#recipe_modules-path)
 
 
-&mdash; **def [RunSteps](/recipe_modules/file/examples/chmod.py#27)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/file/examples/chmod.py#30)(api: DEPS):**
 ### *recipes* / [file:examples/compute\_hash](/recipe_modules/file/examples/compute_hash.py)
 
-[DEPS](/recipe_modules/file/examples/compute_hash.py#18): [assertions](#recipe_modules-assertions), [file](#recipe_modules-file), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/file/examples/compute_hash.py#21): [assertions](#recipe_modules-assertions), [file](#recipe_modules-file), [path](#recipe_modules-path)
 
 
-&mdash; **def [RunSteps](/recipe_modules/file/examples/compute_hash.py#29)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/file/examples/compute_hash.py#32)(api: DEPS):**
 ### *recipes* / [file:examples/copy](/recipe_modules/file/examples/copy.py)
 
-[DEPS](/recipe_modules/file/examples/copy.py#18): [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/file/examples/copy.py#21): [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path)
 
 
-&mdash; **def [RunSteps](/recipe_modules/file/examples/copy.py#29)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/file/examples/copy.py#32)(api: DEPS):**
 ### *recipes* / [file:examples/copytree](/recipe_modules/file/examples/copytree.py)
 
-[DEPS](/recipe_modules/file/examples/copytree.py#20): [file](#recipe_modules-file), [path](#recipe_modules-path), [properties](#recipe_modules-properties)
+[DEPS](/recipe_modules/file/examples/copytree.py#23): [file](#recipe_modules-file), [path](#recipe_modules-path), [properties](#recipe_modules-properties)
 
 
-&mdash; **def [RunSteps](/recipe_modules/file/examples/copytree.py#33)(api: DEPS, properties):**
+&mdash; **def [RunSteps](/recipe_modules/file/examples/copytree.py#36)(api: DEPS, properties: Properties):**
 ### *recipes* / [file:examples/error](/recipe_modules/file/examples/error.py)
 
-[DEPS](/recipe_modules/file/examples/error.py#17): [file](#recipe_modules-file), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/file/examples/error.py#20): [file](#recipe_modules-file), [path](#recipe_modules-path)
 
 
-&mdash; **def [RunSteps](/recipe_modules/file/examples/error.py#27)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/file/examples/error.py#30)(api: DEPS):**
 ### *recipes* / [file:examples/file\_hash](/recipe_modules/file/examples/file_hash.py)
 
-[DEPS](/recipe_modules/file/examples/file_hash.py#18): [assertions](#recipe_modules-assertions), [file](#recipe_modules-file), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/file/examples/file_hash.py#21): [assertions](#recipe_modules-assertions), [file](#recipe_modules-file), [path](#recipe_modules-path)
 
 
-&mdash; **def [RunSteps](/recipe_modules/file/examples/file_hash.py#29)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/file/examples/file_hash.py#32)(api: DEPS):**
 ### *recipes* / [file:examples/flatten\_single\_directories](/recipe_modules/file/examples/flatten_single_directories.py)
 
-[DEPS](/recipe_modules/file/examples/flatten_single_directories.py#17): [file](#recipe_modules-file), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/file/examples/flatten_single_directories.py#20): [file](#recipe_modules-file), [path](#recipe_modules-path)
 
 
-&mdash; **def [RunSteps](/recipe_modules/file/examples/flatten_single_directories.py#27)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/file/examples/flatten_single_directories.py#30)(api: DEPS):**
 ### *recipes* / [file:examples/glob](/recipe_modules/file/examples/glob.py)
 
-[DEPS](/recipe_modules/file/examples/glob.py#18): [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/file/examples/glob.py#21): [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path)
 
 
-&mdash; **def [RunSteps](/recipe_modules/file/examples/glob.py#29)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/file/examples/glob.py#32)(api: DEPS):**
 ### *recipes* / [file:examples/handle\_json\_file](/recipe_modules/file/examples/handle_json_file.py)
 
-[DEPS](/recipe_modules/file/examples/handle_json_file.py#17): [file](#recipe_modules-file), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/file/examples/handle_json_file.py#20): [file](#recipe_modules-file), [path](#recipe_modules-path)
 
 
-&mdash; **def [RunSteps](/recipe_modules/file/examples/handle_json_file.py#27)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/file/examples/handle_json_file.py#30)(api: DEPS):**
 ### *recipes* / [file:examples/is\_executable](/recipe_modules/file/examples/is_executable.py)
 
-[DEPS](/recipe_modules/file/examples/is_executable.py#17): [file](#recipe_modules-file), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/file/examples/is_executable.py#20): [file](#recipe_modules-file), [path](#recipe_modules-path)
 
 
-&mdash; **def [RunSteps](/recipe_modules/file/examples/is_executable.py#27)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/file/examples/is_executable.py#30)(api: DEPS):**
 ### *recipes* / [file:examples/listdir](/recipe_modules/file/examples/listdir.py)
 
-[DEPS](/recipe_modules/file/examples/listdir.py#17): [file](#recipe_modules-file), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/file/examples/listdir.py#20): [file](#recipe_modules-file), [path](#recipe_modules-path)
 
 
-&mdash; **def [RunSteps](/recipe_modules/file/examples/listdir.py#27)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/file/examples/listdir.py#30)(api: DEPS):**
 ### *recipes* / [file:examples/raw\_copy](/recipe_modules/file/examples/raw_copy.py)
 
-[DEPS](/recipe_modules/file/examples/raw_copy.py#18): [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/file/examples/raw_copy.py#21): [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path)
 
 
-&mdash; **def [RunSteps](/recipe_modules/file/examples/raw_copy.py#29)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/file/examples/raw_copy.py#32)(api: DEPS):**
 ### *recipes* / [file:examples/read\_write\_proto](/recipe_modules/file/examples/read_write_proto.py)
 
-[DEPS](/recipe_modules/file/examples/read_write_proto.py#20): [file](#recipe_modules-file), [path](#recipe_modules-path), [proto](#recipe_modules-proto)
+[DEPS](/recipe_modules/file/examples/read_write_proto.py#23): [file](#recipe_modules-file), [path](#recipe_modules-path), [proto](#recipe_modules-proto)
 
 
-&mdash; **def [RunSteps](/recipe_modules/file/examples/read_write_proto.py#31)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/file/examples/read_write_proto.py#34)(api: DEPS):**
 ### *recipes* / [file:examples/symlink](/recipe_modules/file/examples/symlink.py)
 
-[DEPS](/recipe_modules/file/examples/symlink.py#18): [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/file/examples/symlink.py#21): [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path)
 
 
-&mdash; **def [RunSteps](/recipe_modules/file/examples/symlink.py#29)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/file/examples/symlink.py#32)(api: DEPS):**
 ### *recipes* / [file:examples/truncate](/recipe_modules/file/examples/truncate.py)
 
-[DEPS](/recipe_modules/file/examples/truncate.py#17): [file](#recipe_modules-file), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/file/examples/truncate.py#20): [file](#recipe_modules-file), [path](#recipe_modules-path)
 
 
-&mdash; **def [RunSteps](/recipe_modules/file/examples/truncate.py#27)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/file/examples/truncate.py#30)(api: DEPS):**
 ### *recipes* / [findings:tests/infer\_source](/recipe_modules/findings/tests/infer_source.py)
 
 [DEPS](/recipe_modules/findings/tests/infer_source.py#24): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [findings](#recipe_modules-findings), [properties](#recipe_modules-properties)

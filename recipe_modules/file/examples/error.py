@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
@@ -24,7 +27,7 @@ class TEST_DEPS(RecipeTestApi):
   file: file.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   try:
     api.file.read_text(
       'does not exist', api.path.start_dir / 'not_there')
@@ -33,7 +36,7 @@ def RunSteps(api: DEPS):
     assert e.errno_name == 'ENOENT'
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (
     api.test('basic')
     + api.step_data('does not exist', api.file.errno('ENOENT'))

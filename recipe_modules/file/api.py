@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+from RECIPE_MODULES.recipe_engine import file
+
 from collections.abc import Callable, Mapping, Sequence
 import fnmatch
 import hashlib
@@ -23,7 +25,7 @@ class SymlinkTree:
       self,
       root: config_types.Path,
       api: recipe_api.RecipeApi,
-      symlink_resource,
+      symlink_resource: config_types.Path | str,
   ) -> None:
     """See FileApi.symlink_tree for the public constructor."""
     assert root and isinstance(root, config_types.Path)
@@ -95,6 +97,8 @@ class SymlinkTree:
 
 
 class FileApi(recipe_api.RecipeApi):
+
+  m: file.DEPS
 
   ProtoCodec = proto_api.Codec
 
@@ -851,7 +855,7 @@ class FileApi(recipe_api.RecipeApi):
 
     src = str(source)
 
-    def filt(p):
+    def filt(p: str) -> bool:
       assert p.startswith(src), (src, p)
       return fnmatch.fnmatch(p[len(src) + 1:].split(os.path.sep)[0], pattern)
 
