@@ -4,6 +4,11 @@
 
 from __future__ import annotations
 
+from recipe_engine import config_types
+
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine import recipe_api
 
 from dataclasses import dataclass
@@ -35,7 +40,7 @@ from builtins import range, zip
 
 
 @recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED')
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   api.step('step1', ['/bin/echo', str(api.path.tmp_base_dir / 'foo')])
 
   # module.resource(...) demo.
@@ -191,7 +196,7 @@ def RunSteps(api: DEPS):
   assert api.path.exists(copy20)
 
   # Convert strings to Paths.
-  def _mk_paths():
+  def _mk_paths() -> list[config_types.Path]:
     return [
         api.path.start_dir / 'some' / 'thing',
         api.path.start_dir,
@@ -259,7 +264,7 @@ def RunSteps(api: DEPS):
   ]
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   for platform in ('linux', 'win'):
     yield api.test(
         platform,

@@ -26,13 +26,14 @@ class UnvalidatedPath:
 
 class PathTestApi(recipe_test_api.RecipeTestApi):
 
-  def exists(self, *paths: Path):
+  def exists(self, *paths: Path | UnvalidatedPath) -> recipe_test_api.TestData:
     """This is an alias for `files_exist`."""
     return self.files_exist(*paths)
 
   @recipe_test_api.mod_test_data
   @staticmethod
-  def files_exist(*paths: Path | UnvalidatedPath):
+  def files_exist(
+      *paths: Path | UnvalidatedPath,) -> list[Path | UnvalidatedPath]:
     """This mocks the path module to believe that the given `paths` exist as
     FILES prior to the start of the recipe.
 
@@ -47,7 +48,8 @@ class PathTestApi(recipe_test_api.RecipeTestApi):
 
   @recipe_test_api.mod_test_data
   @staticmethod
-  def dirs_exist(*paths: Path | UnvalidatedPath):
+  def dirs_exist(
+      *paths: Path | UnvalidatedPath,) -> list[Path | UnvalidatedPath]:
     """This mocks the path module to believe that the given `paths` exist as
     DIRECTORIES prior to the start of the recipe.
 

@@ -32,6 +32,8 @@ collection of anchor points. The built-in anchor points are:
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import collections
 import enum
 import ntpath
@@ -40,12 +42,15 @@ import posixpath
 import re
 import tempfile
 
-from typing import Any, Callable, Literal
+from typing import Any, Literal, TYPE_CHECKING
 
 from recipe_engine import config_types, recipe_api, recipe_test_api, util
 
 from PB.recipe_modules.recipe_engine.path import properties as properties_pb
 from . import test_api
+
+if TYPE_CHECKING:  # pragma: no cover
+  from RECIPE_MODULES.recipe_engine import path
 
 
 class FileType(enum.Enum):
@@ -63,7 +68,7 @@ NamedBasePathsType = CheckoutPathNameType | Literal[
 ]
 
 
-def _cast_to_path_impl(path_mod, strpath: str) -> config_types.Path:
+def _cast_to_path_impl(path_mod: Any, strpath: str) -> config_types.Path:
   """This is the core implementation of 'cast_to_path'.
 
   This exists outside of PathApi, because it's also used to rationalize
@@ -120,8 +125,11 @@ class path_set:
 
   # BUG(crbug.com/40890779): Expand this to be a full fakey filesystem,
   # including file contents and file types. Coordinate with the `file` module.
-  def __init__(self, path_mod: fake_path,
-               test_data: recipe_test_api.ModuleTestData):
+  def __init__(
+      self,
+      path_mod: fake_path,
+      test_data: recipe_test_api.ModuleTestData,
+  ) -> None:
 
     # path_set is only ever used in the testing paths, so we know _path_mod is
     # always a fake_path.
@@ -192,7 +200,7 @@ class path_set:
     # (both have the prefix "/a/b", but "/a/bcdef" is not contained in "/a/b")
     return path[len(root)] == self._path_mod.sep
 
-  def add(self, path: str | config_types.Path, kind: FileType):
+  def add(self, path: str | config_types.Path, kind: FileType) -> None:
     """Marks the existence of `path`.
 
     This also implicitly marks all parent directories of `path` to also exist
@@ -255,8 +263,11 @@ class fake_path:
   the platform which is currently running.
   """
 
-  def __init__(self, is_windows: bool,
-               test_data: recipe_test_api.ModuleTestData):
+  def __init__(
+      self,
+      is_windows: bool,
+      test_data: recipe_test_api.ModuleTestData,
+  ) -> None:
     self._pth = ntpath if is_windows else posixpath
     self._mock_path_exists = path_set(self, test_data)
 
@@ -328,6 +339,8 @@ class fake_path:
 
 
 class PathApi(recipe_api.RecipeApi):
+  m: path.DEPS
+
   _paths_client: recipe_api.PathsClient | recipe_api.UnresolvedRequirement = recipe_api.RequireClient(
       'paths')
 
@@ -351,7 +364,8 @@ class PathApi(recipe_api.RecipeApi):
       'tmp_base',
   ])
 
-  def __init__(self, path_properties: properties_pb.InputProperties, **kwargs):
+  def __init__(self, path_properties: properties_pb.InputProperties,
+               **kwargs: Any) -> None:
     super().__init__(**kwargs)
 
     self._start_dir: str
@@ -427,7 +441,7 @@ class PathApi(recipe_api.RecipeApi):
       self.mock_add_directory(self.start_dir)
       self.mock_add_directory(self.tmp_base_dir)
 
-  def initialize(self):
+  def initialize(self) -> None:
     """This is called by the recipe engine immediately after __init__(), but
     with `self._paths_client` initialized.
     """
@@ -731,11 +745,11 @@ class PathApi(recipe_api.RecipeApi):
     """Equivalent to os.pathsep."""
     return self._path_mod.pathsep
 
-  def abspath(self, path: config_types.Path | str):
+  def abspath(self, path: config_types.Path | str) -> str:
     """Equivalent to os.abspath."""
     return self._path_mod.abspath(str(path))
 
-  def basename(self, path: config_types.Path | str):
+  def basename(self, path: config_types.Path | str) -> str:
     """Equivalent to os.path.basename."""
     return self._path_mod.basename(str(path))
 
@@ -758,7 +772,11 @@ class PathApi(recipe_api.RecipeApi):
     # string.
     return self._path_mod.dirname(str(path))
 
-  def join(self, path, *paths):
+  def join(
+      self,
+      path: config_types.Path | str,
+      *paths: config_types.Path | str,
+  ) -> str:
     """Equivalent to os.path.join.
 
     Note that Path objects returned from this module (e.g.
@@ -773,7 +791,9 @@ class PathApi(recipe_api.RecipeApi):
     """
     return self._path_mod.join(str(path), *[str(p) for p in paths])
 
-  def split(self, path):
+  def split(
+      self,
+      path: config_types.Path | str) -> tuple[config_types.Path | str, str]:
     """For "foo/bar/baz", return ("foo/bar", "baz").
 
     This corresponds to os.path.split().
@@ -818,11 +838,12 @@ class PathApi(recipe_api.RecipeApi):
     # return tuple as strings.
     return (name, ext)
 
-  def realpath(self, path: config_types.Path | str):
+  def realpath(self, path: config_types.Path | str) -> str:
     """Equivalent to os.path.realpath."""
     return self._path_mod.realpath(str(path))
 
-  def relpath(self, path, start):
+  def relpath(self, path: config_types.Path | str,
+              start: config_types.Path | str) -> str:
     """Roughly equivalent to os.path.relpath.
 
     Unlike os.path.relpath, `start` is _required_. If you want the 'current
@@ -830,7 +851,7 @@ class PathApi(recipe_api.RecipeApi):
     """
     return self._path_mod.relpath(str(path), str(start))
 
-  def normpath(self, path):
+  def normpath(self, path: config_types.Path | str) -> str:
     """Equivalent to os.path.normpath."""
     return self._path_mod.normpath(str(path))
 

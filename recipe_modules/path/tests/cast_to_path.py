@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine.post_process import DropExpectation
 from recipe_engine.config_types import Path, ResolvedBasePath
 
@@ -28,7 +31,7 @@ class TEST_DEPS(RecipeTestApi):
   platform: platform.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   if api.platform.is_win:
     arbitrary = api.path.cast_to_path(r'c:\some\random/path')
     assert arbitrary.base == ResolvedBasePath(r'c:'), f'"{arbitrary.base!r}"'
@@ -66,7 +69,7 @@ def RunSteps(api: DEPS):
     assert api.path.isdir(r'/legit/dir/etc')
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'win',
       api.platform.name('win'),

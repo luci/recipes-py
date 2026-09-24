@@ -4,6 +4,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any
+
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine import config_types, post_process, recipe_api
 
 from dataclasses import dataclass
@@ -28,9 +34,14 @@ class TEST_DEPS(RecipeTestApi):
   pass
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
 
-  def assert_raises(exc_type, func, *args, **kwargs):
+  def assert_raises(
+      exc_type: type[Exception],
+      func: Callable[..., Any],
+      *args: Any,
+      **kwargs: Any,
+  ) -> None:
     try:
       func(*args, **kwargs)
     except exc_type:
@@ -78,5 +89,5 @@ def RunSteps(api: DEPS):
   testexpandvars('BAR', 'bar', '[START_DIR]/foo/$BAR', foo / '$BAR')
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('expand', api.post_process(post_process.DropExpectation))

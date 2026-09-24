@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine import recipe_api
 from recipe_engine.post_process import DropExpectation
 
@@ -24,7 +27,7 @@ class TEST_DEPS(RecipeTestApi):
 
 
 @recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED')
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   try:
     api.path.checkout_dir = 'hello'
     assert False, 'able to assign string to path?'  # pragma: no cover
@@ -53,5 +56,5 @@ def RunSteps(api: DEPS):
     assert 'can only be set once' in str(ex), str(ex)
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('basic', api.post_process(DropExpectation))
