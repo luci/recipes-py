@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine import post_process
 
 from dataclasses import dataclass
@@ -23,7 +26,7 @@ class DEPS(RecipeScriptApi):
   raw_io: raw_io.API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   api.bcid_reporter.report_stage("start")
   api.bcid_reporter.report_cipd("deadbeef", "example/cipd/package", "fakeiid",
                                 api.path.start_dir / 'attestation.jsonl')
@@ -32,7 +35,7 @@ def RunSteps(api: DEPS):
                                 "gs://bucket/path/to/binary.spdx.jsonl")
 
 
-def GenTests(api: RecipeTestApi):
+def GenTests(api: RecipeTestApi) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'report_step_failure',
       api.override_step_data('snoop: report_stage', retcode=1),

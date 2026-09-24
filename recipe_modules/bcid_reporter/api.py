@@ -4,6 +4,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator, Mapping, Sequence
+from typing import Any
+from recipe_engine import config_types
+from RECIPE_MODULES.recipe_engine.cipd import api as cipd_api
+
+from RECIPE_MODULES.recipe_engine import bcid_reporter
+
 import contextlib
 import datetime
 import os
@@ -18,7 +25,7 @@ _LATEST_STABLE_VERSION = 'git_revision:ca2431ca47b3f9ee4af25e48ff0c48b508a3382b'
 
 # Spike is failing intermittently due to issues calling the swarming API, this
 # retry can decorate each report method.
-def retry(raise_on_failure=True):
+def retry(raise_on_failure: bool = True) -> exponential_retry:
   return exponential_retry(
       3, datetime.timedelta(seconds=5), raise_on_failure=raise_on_failure)
 
@@ -26,7 +33,9 @@ def retry(raise_on_failure=True):
 class BcidReporterApi(recipe_api.RecipeApi):
   """API for interacting with Provenance server using the broker tool."""
 
-  def __init__(self, **kwargs):
+  m: bcid_reporter.DEPS
+
+  def __init__(self, **kwargs: Any) -> None:
     super().__init__(**kwargs)
 
     if self._test_data.enabled:
@@ -35,7 +44,7 @@ class BcidReporterApi(recipe_api.RecipeApi):
       self._pid = os.getpid()
 
   @property
-  def bcid_reporter_path(self):
+  def bcid_reporter_path(self) -> config_types.Path:
     """Returns the path to the broker binary.
 
     When the property is accessed the first time, the latest stable, released
@@ -48,7 +57,7 @@ class BcidReporterApi(recipe_api.RecipeApi):
     )
 
   @contextlib.contextmanager
-  def path_env(self):
+  def path_env(self) -> Iterator[None]:
     """Ensures snoopy_broker is installed and adds its directory to PATH.
 
     It also brackets the wrapped block with task stage reports. Subprocesses
@@ -69,7 +78,9 @@ class BcidReporterApi(recipe_api.RecipeApi):
         self.report_stage('upload-complete')
 
   @retry(raise_on_failure=False)
-  def report_stage(self, stage, server_url=None):
+  def report_stage(
+      self, stage: str, server_url: str | None = None
+  ) -> None:
     """Reports task stage to local provenance server. This is best-effort and
     won't abort the execution on errors.
 
@@ -102,7 +113,14 @@ class BcidReporterApi(recipe_api.RecipeApi):
     self.m.step('snoop: report_stage', args)
 
   @retry()
-  def report_cipd(self, digest, pkg, iid, attestation, server_url=None):
+  def report_cipd(
+      self,
+      digest: str,
+      pkg: str,
+      iid: str,
+      attestation: config_types.Path | str,
+      server_url: str | None = None,
+  ) -> None:
     """Reports cipd digest to local provenance server.
 
     This is used to report produced artifacts hash and metadata to provenance,
@@ -135,7 +153,9 @@ class BcidReporterApi(recipe_api.RecipeApi):
     self.m.step('snoop: report_cipd', args)
 
   @retry()
-  def report_gcs(self, digest, guri, server_url=None):
+  def report_gcs(
+      self, digest: str, guri: str, server_url: str | None = None
+  ) -> None:
     """Reports gcs digest to local provenance server.
 
     This is used to report produced artifacts hash and metadata to provenance,
@@ -163,7 +183,13 @@ class BcidReporterApi(recipe_api.RecipeApi):
     self.m.step('snoop: report_gcs', args)
 
   @retry()
-  def report_sbom(self, digest, guri, sbom_subjects=None, server_url=None):
+  def report_sbom(
+      self,
+      digest: str,
+      guri: str,
+      sbom_subjects: list[str] | str | None = None,
+      server_url: str | None = None,
+  ) -> None:
     """Reports SBOM gcs digest to local provenance server.
 
     This is used to report the SBOM metadata to provenance, along with
@@ -201,14 +227,14 @@ class BcidReporterApi(recipe_api.RecipeApi):
 
   def create_from_yaml(
       self,
-      pkg_def,
-      refs=None,
-      tags=None,
-      metadata=None,
-      pkg_vars=None,
-      compression_level=None,
-      verification_timeout=None,
-  ):
+      pkg_def: config_types.Path,
+      refs: Sequence[str] | None = None,
+      tags: Mapping[str, str] | None = None,
+      metadata: Sequence[cipd_api.CIPDApi.Metadata] | None = None,
+      pkg_vars: Mapping[str, str] | None = None,
+      compression_level: cipd_api.CIPDApi.CompressionLevel | None = None,
+      verification_timeout: str | None = None,
+  ) -> cipd_api.CIPDApi.Pin:
     """Builds and uploads a package based on on-disk YAML package definition
     file and reports cipd digest to local provenance server.
 
@@ -251,13 +277,13 @@ class BcidReporterApi(recipe_api.RecipeApi):
 
   def create_from_pkg(
       self,
-      pkg_def,
-      refs=None,
-      tags=None,
-      metadata=None,
-      compression_level=None,
-      verification_timeout=None,
-  ):
+      pkg_def: cipd_api.CIPDApi.PackageDefinition,
+      refs: Sequence[str] | None = None,
+      tags: Mapping[str, str] | None = None,
+      metadata: Sequence[cipd_api.CIPDApi.Metadata] | None = None,
+      compression_level: cipd_api.CIPDApi.CompressionLevel | None = None,
+      verification_timeout: str | None = None,
+  ) -> cipd_api.CIPDApi.Pin:
     """Builds and uploads a package based on a PackageDefinition object and
     reports cipd digest to local provenance server.
 
