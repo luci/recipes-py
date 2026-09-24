@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from typing import Any, Literal
+from .api import Codec
+
 from google.protobuf import message
 
 from recipe_engine import recipe_test_api
@@ -13,20 +16,29 @@ from .api import ProtoApi
 
 class ProtoTestApi(recipe_test_api.RecipeTestApi):
   @staticmethod
-  def encode(proto_msg, codec, **encoding_kwargs): # pragma: no cover
+  def encode(
+      proto_msg: message.Message, codec: Codec, **encoding_kwargs: Any
+  ) -> str | bytes:  # pragma: no cover
     """Same as `ProtoApi.encode`"""
     return ProtoApi.encode(proto_msg, codec, **encoding_kwargs)
 
   @staticmethod
-  def decode(data, msg_class, codec, **decoding_kwargs): # pragma: no cover
+  def decode(
+      data: str | bytes,
+      msg_class: type[message.Message],
+      codec: Codec,
+      **decoding_kwargs: Any,
+  ) -> message.Message:  # pragma: no cover
     """Same as `ProtoApi.decode`"""
     return ProtoApi.decode(data, msg_class, codec, **decoding_kwargs)
 
   @recipe_test_api.placeholder_step_data
   @staticmethod
-  def output(proto_msg,
-             retcode: int | None = None,
-             name: str | None = None):
+  def output(
+      proto_msg: message.Message,
+      retcode: int | None = None,
+      name: str | None = None,
+  ) -> tuple[message.Message, int | None, str | None]:
     """Supplies placeholder data for a proto.output.
 
     Args:
@@ -39,7 +51,13 @@ class ProtoTestApi(recipe_test_api.RecipeTestApi):
       raise ValueError("expected proto Message, got: %r" % (type(proto_msg),))
     return proto_msg, retcode, name
 
-  def output_stream(self, proto_msg, stream='stdout', retcode=None, name=None):
+  def output_stream(
+      self,
+      proto_msg: message.Message,
+      stream: Literal['stdout', 'stderr'] = 'stdout',
+      retcode: int | None = None,
+      name: str | None = None,
+  ) -> recipe_test_api.StepTestData:
     """Supplies placeholder data for a step using proto.output for stdout
     or stderr.
 
@@ -56,7 +74,9 @@ class ProtoTestApi(recipe_test_api.RecipeTestApi):
 
   @recipe_test_api.placeholder_step_data('output')
   @staticmethod
-  def backing_file_missing(retcode=None, name=None):
+  def backing_file_missing(
+      retcode: int | None = None, name: str | None = None
+  ) -> tuple[None, int | None, str | None]:
     """Simulates a missing backing file.
 
     Only valid if the corresponding placeholder has `leak_to` specified.
@@ -67,7 +87,9 @@ class ProtoTestApi(recipe_test_api.RecipeTestApi):
 
   @recipe_test_api.placeholder_step_data('output')
   @staticmethod
-  def invalid_contents(retcode=None, name=None):
+  def invalid_contents(
+      retcode: int | None = None, name: str | None = None
+  ) -> tuple[str, int | None, str | None]:
     """Simulates a file with invalid contents."""
     # Passing None as the data of a placeholder causes the placeholder to
     # behave during testing as if its backing file was missing.

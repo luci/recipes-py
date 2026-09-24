@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from typing import Any
+from google.protobuf import message
+
 from google.protobuf import text_format, json_format
 from past.builtins import basestring
 
@@ -43,7 +46,7 @@ ALL_ENCODINGS = (BINARY, JSONPB, TEXTPB)
 ENC_MAP = {str(enc): enc for enc in ALL_ENCODINGS}
 
 
-def resolve(codec):
+def resolve(codec: Any) -> Any:
   """Resolves a codec to JSONPB, BINARY or TEXTPB.
 
   `codec` may be a string of the codec name, or the codec itself.
@@ -58,7 +61,9 @@ def resolve(codec):
   return codec
 
 
-def do_enc(codec, proto_msg, **extra_args):
+def do_enc(
+    codec: Any, proto_msg: message.Message, **extra_args: Any
+) -> str | bytes:
   """Does a proto encoding operation.
 
   Args:
@@ -75,7 +80,12 @@ def do_enc(codec, proto_msg, **extra_args):
   extras.update(extra_args)
   return codec.enc(proto_msg, **extras)
 
-def do_dec(data, msg_class, codec, **extra_args):
+def do_dec(
+    data: str | bytes,
+    msg_class: type[message.Message],
+    codec: Any,
+    **extra_args: Any,
+) -> message.Message:
   """Does a proto decoding operation.
 
   Args:

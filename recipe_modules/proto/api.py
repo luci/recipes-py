@@ -7,6 +7,12 @@ filesystem."""
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from typing import Any, Literal
+from recipe_engine import config_types, engine_types, recipe_test_api
+
+from RECIPE_MODULES.recipe_engine import proto
+
 from typing import Literal
 
 from google.protobuf import message
@@ -17,8 +23,16 @@ from recipe_engine import util as recipe_util
 from . import proto_codec
 
 class ProtoOutputPlaceholder(recipe_util.OutputPlaceholder):
-  def __init__(self, api, msg_class, codec, add_json_log, name,
-               leak_to, decoding_kwargs):
+  def __init__(
+      self,
+      api: ProtoApi,
+      msg_class: type[message.Message],
+      codec: Any,
+      add_json_log: bool | Literal['on_failure'],
+      name: str | None,
+      leak_to: config_types.Path | None,
+      decoding_kwargs: Mapping[str, Any],
+  ) -> None:
     if codec is proto_codec.BINARY:
       self.raw = api.m.raw_io.output(codec.ext, leak_to=leak_to)
     else:
@@ -30,13 +44,17 @@ class ProtoOutputPlaceholder(recipe_util.OutputPlaceholder):
     super().__init__(name=name)
 
   @property
-  def backing_file(self):
+  def backing_file(self) -> str:
     return self.raw.backing_file
 
-  def render(self, test):
+  def render(self, test: recipe_test_api.PlaceholderTestData) -> list[str]:
     return self.raw.render(test)
 
-  def result(self, presentation, test):
+  def result(
+      self,
+      presentation: engine_types.StepPresentation,
+      test: recipe_test_api.PlaceholderTestData,
+  ) -> message.Message | None:
     # This is a bit silly, but we only have the codec information here, and
     # we don't want the user to redundantly provide it in the test.
     if test.enabled and isinstance(test.data, message.Message):
@@ -91,12 +109,19 @@ Codec = Literal[BINARY, JSONPB, TEXTPB]
 
 class ProtoApi(recipe_api.RecipeApi):
 
+  m: proto.DEPS
+
   BINARY = BINARY
   JSONPB = JSONPB
   TEXTPB = TEXTPB
 
   @recipe_util.returns_placeholder
-  def input(self, proto_msg, codec: Codec, **encoding_kwargs):
+  def input(
+      self,
+      proto_msg: message.Message,
+      codec: Codec,
+      **encoding_kwargs: Any,
+  ) -> recipe_util.InputPlaceholder:
     """A placeholder which will expand to a file path containing the encoded
     `proto_msg`.
 
@@ -127,13 +152,15 @@ class ProtoApi(recipe_api.RecipeApi):
     return self.m.raw_io.input_text(encoded, suffix=suffix)
 
   @recipe_util.returns_placeholder
-  def output(self,
-             msg_class,
-             codec: Codec,
-             add_json_log=True,
-             name=None,
-             leak_to=None,
-             **decoding_kwargs):
+  def output(
+      self,
+      msg_class: type[message.Message],
+      codec: Codec,
+      add_json_log: bool | Literal['on_failure'] = True,
+      name: str | None = None,
+      leak_to: config_types.Path | None = None,
+      **decoding_kwargs: Any,
+  ) -> ProtoOutputPlaceholder:
     """A placeholder which expands to a file path and then reads an encoded
     proto back from that location when the step finishes.
 
@@ -162,7 +189,9 @@ class ProtoApi(recipe_api.RecipeApi):
         self, msg_class, codec, add_json_log, name, leak_to, decoding_kwargs)
 
   @staticmethod
-  def encode(proto_msg, codec: Codec, **encoding_kwargs):
+  def encode(
+      proto_msg: message.Message, codec: Codec, **encoding_kwargs: Any
+  ) -> str | bytes:
     """Encodes a proto message to a string.
 
     Args:
@@ -177,7 +206,12 @@ class ProtoApi(recipe_api.RecipeApi):
     return proto_codec.do_enc(codec, proto_msg, **encoding_kwargs)
 
   @staticmethod
-  def decode(data, msg_class, codec: Codec, **decoding_kwargs):
+  def decode(
+      data: str | bytes,
+      msg_class: type[message.Message],
+      codec: Codec,
+      **decoding_kwargs: Any,
+  ) -> message.Message:
     """Decodes a proto message from a string.
 
     Args:

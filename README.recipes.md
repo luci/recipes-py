@@ -3498,9 +3498,9 @@ Returns a read-write copy of all of the properties.
 Methods for producing and consuming protobuf data to/from steps and the
 filesystem.
 
-#### **class [ProtoApi](/recipe_modules/proto/api.py#92)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [ProtoApi](/recipe_modules/proto/api.py#110)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
-&emsp; **@staticmethod**<br>&mdash; **def [decode](/recipe_modules/proto/api.py#179)(data, msg_class, codec: Codec, \*\*decoding_kwargs):**
+&emsp; **@staticmethod**<br>&mdash; **def [decode](/recipe_modules/proto/api.py#208)(data: (str | bytes), msg_class: type[message.Message], codec: Codec, \*\*decoding_kwargs: Any):**
 
 Decodes a proto message from a string.
 
@@ -3512,7 +3512,7 @@ Args:
 
 Returns the decoded proto object.
 
-&emsp; **@staticmethod**<br>&mdash; **def [encode](/recipe_modules/proto/api.py#164)(proto_msg, codec: Codec, \*\*encoding_kwargs):**
+&emsp; **@staticmethod**<br>&mdash; **def [encode](/recipe_modules/proto/api.py#191)(proto_msg: message.Message, codec: Codec, \*\*encoding_kwargs: Any):**
 
 Encodes a proto message to a string.
 
@@ -3523,7 +3523,7 @@ Args:
 
 Returns the encoded proto message.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#165)**<br>&mdash; **def [input](/recipe_modules/proto/api.py#98)(self, proto_msg, codec: Codec, \*\*encoding_kwargs):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#165)**<br>&mdash; **def [input](/recipe_modules/proto/api.py#118)(self, proto_msg: message.Message, codec: Codec, \*\*encoding_kwargs: Any):**
 
 A placeholder which will expand to a file path containing the encoded
 `proto_msg`.
@@ -3547,7 +3547,7 @@ Args:
 
 Returns an InputPlaceholder.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#165)**<br>&mdash; **def [output](/recipe_modules/proto/api.py#129)(self, msg_class, codec: Codec, add_json_log=True, name=None, leak_to=None, \*\*decoding_kwargs):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#165)**<br>&mdash; **def [output](/recipe_modules/proto/api.py#154)(self, msg_class: type[message.Message], codec: Codec, add_json_log: (bool | Literal['on_failure'])=True, name: (str | None)=None, leak_to: (config_types.Path | None)=None, \*\*decoding_kwargs: Any):**
 
 A placeholder which expands to a file path and then reads an encoded
 proto back from that location when the step finishes.
@@ -6127,16 +6127,16 @@ Test to cover legacy aspects of PathTestApi.
 &mdash; **def [RunSteps](/recipe_modules/properties/examples/full.py#40)(api: DEPS, props, env_props):**
 ### *recipes* / [proto:tests/encode\_decode](/recipe_modules/proto/tests/encode_decode.py)
 
-[DEPS](/recipe_modules/proto/tests/encode_decode.py#19): [assertions](#recipe_modules-assertions), [path](#recipe_modules-path), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/proto/tests/encode_decode.py#22): [assertions](#recipe_modules-assertions), [path](#recipe_modules-path), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/proto/tests/encode_decode.py#33)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/proto/tests/encode_decode.py#36)(api: DEPS):**
 ### *recipes* / [proto:tests/placeholders](/recipe_modules/proto/tests/placeholders.py)
 
-[DEPS](/recipe_modules/proto/tests/placeholders.py#18): [path](#recipe_modules-path), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/proto/tests/placeholders.py#21): [path](#recipe_modules-path), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/proto/tests/placeholders.py#31)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/proto/tests/placeholders.py#34)(api: DEPS):**
 ### *recipes* / [random:tests/full](/recipe_modules/random/tests/full.py)
 
 [DEPS](/recipe_modules/random/tests/full.py#17): [random](#recipe_modules-random), [step](#recipe_modules-step)
