@@ -13,6 +13,11 @@ replacement for allow_subannotation feature in the legacy annotate mode.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
+from recipe_engine import config_types, recipe_test_api, step_data
+
+from RECIPE_MODULES.recipe_engine import legacy_annotation
+
 from google.protobuf import json_format as jsonpb
 
 from recipe_engine import recipe_api
@@ -23,12 +28,20 @@ from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 
 
 class LegacyAnnotationApi(recipe_api.RecipeApi):
+  m: legacy_annotation.DEPS
+
   concurrency_client = recipe_api.RequireClient('concurrency')
   step_client = recipe_api.RequireClient('step')
 
-  def __call__(self, name, cmd,
-               timeout=None, step_test_data=None, cost=_ResourceCost(),
-               legacy_global_namespace=False):
+  def __call__(
+      self,
+      name: str,
+      cmd: Sequence[str | config_types.Path | Placeholder],
+      timeout: int | float | None = None,
+      step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
+      cost: _ResourceCost | None = _ResourceCost(),
+      legacy_global_namespace: bool = False,
+  ) -> step_data.StepData:
     """Runs cmd that is emitting legacy @@@annotation@@@.
 
     Currently, it will run the command as sub_build if running in luciexe
@@ -65,7 +78,7 @@ class LegacyAnnotationApi(recipe_api.RecipeApi):
 
     run_annotations_luciexe = self.m.cipd.ensure_tool(
       'infra/tools/run_annotations/${platform}', 'latest')
-    cmd = [run_annotations_luciexe, '--'] + cmd
+    cmd = [run_annotations_luciexe, '--'] + list(cmd)
     if step_test_data:
       _step_test_data = step_test_data
       step_test_data = lambda: self.test_api.success_step + _step_test_data()

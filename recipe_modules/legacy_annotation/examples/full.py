@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
@@ -33,14 +36,14 @@ from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import step as step_pb2
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   api.legacy_annotation('run annotation script',
     cmd=['python', '-u', api.resource('anno.py')],
     step_test_data=lambda: api.legacy_annotation.test_api.success_step,
   )
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   sub_build = build_pb2.Build(id=1, status=common_pb2.SUCCESS)
   sub_build.steps.add().CopyFrom(
     step_pb2.Step(name='Hi Sub Annotation', status=common_pb2.SUCCESS),

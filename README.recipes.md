@@ -2780,9 +2780,9 @@ will appear as the child steps of the launched cmd/step in the current running
 build (using the Merge Step feature from luciexe protocol). This is the
 replacement for allow_subannotation feature in the legacy annotate mode.
 
-#### **class [LegacyAnnotationApi](/recipe_modules/legacy_annotation/api.py#25)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [LegacyAnnotationApi](/recipe_modules/legacy_annotation/api.py#30)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/legacy_annotation/api.py#29)(self, name, cmd, timeout=None, step_test_data=None, cost=_ResourceCost(), legacy_global_namespace=False):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/legacy_annotation/api.py#36)(self, name: str, cmd: Sequence[((str | config_types.Path) | Placeholder)], timeout: ((int | float) | None)=None, step_test_data: (Callable[([], recipe_test_api.StepTestData)] | None)=None, cost: (_ResourceCost | None)=_ResourceCost(), legacy_global_namespace: bool=False):**
 
 Runs cmd that is emitting legacy @@@annotation@@@.
 
@@ -5983,10 +5983,10 @@ Test to assert that sort_keys=False preserves insertion order.
 &mdash; **def [RunSteps](/recipe_modules/led/tests/trigger_build_with_payload.py#32)(api: DEPS):**
 ### *recipes* / [legacy\_annotation:examples/full](/recipe_modules/legacy_annotation/examples/full.py)
 
-[DEPS](/recipe_modules/legacy_annotation/examples/full.py#18): [legacy\_annotation](#recipe_modules-legacy_annotation), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/legacy_annotation/examples/full.py#21): [legacy\_annotation](#recipe_modules-legacy_annotation), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/legacy_annotation/examples/full.py#36)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/legacy_annotation/examples/full.py#39)(api: DEPS):**
 ### *recipes* / [luci\_analysis:tests/query\_failure\_rate\_test](/recipe_modules/luci_analysis/tests/query_failure_rate_test.py)
 
 [DEPS](/recipe_modules/luci_analysis/tests/query_failure_rate_test.py#24): [assertions](#recipe_modules-assertions), [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io)
