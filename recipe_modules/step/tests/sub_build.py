@@ -3,6 +3,11 @@
 # that can be found in the LICENSE file.
 
 from __future__ import annotations
+from collections.abc import Callable, Mapping
+from recipe_engine import post_process_inputs
+
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
 
 from recipe_engine import post_process
 from recipe_engine.config_types import Path
@@ -49,7 +54,7 @@ class TEST_DEPS(RecipeTestApi):
 PROPERTIES = properties_pb2.SubBuildInputProps
 
 
-def RunSteps(api: DEPS, props):
+def RunSteps(api: DEPS, props: properties_pb2.SubBuildInputProps) -> None:
   output_path = None
   if props.HasField('output_path'):
     output_path = (
@@ -82,7 +87,7 @@ def RunSteps(api: DEPS, props):
     api.assertions.assertEqual(ret.step.sub_build, props.expected_sub_build)
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'basic',
       api.properties(properties_pb2.SubBuildInputProps(
@@ -271,7 +276,10 @@ def GenTests(api: TEST_DEPS):
   # NOTE: When re-enabling, remove `nocover` comments in step/test_api.py.
   if False:  # pragma: no cover
 
-    def check_luciexe_initial_build(check, steps):
+    def check_luciexe_initial_build(
+        check: Callable[..., bool],
+        steps: Mapping[str, post_process_inputs.Step],
+    ) -> None:
       import sys
       if sys.version_info.major == 2:
         initial_build = build_pb2.Build()

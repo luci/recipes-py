@@ -4220,9 +4220,9 @@ Args:
 
 Step is the primary API for running steps (external programs, etc.)
 
-#### **class [StepApi](/recipe_modules/step/api.py#34)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [StepApi](/recipe_modules/step/api.py#38)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
-&emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#153)(self):**
+&emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#167)(self):**
 
 InfraFailure is a subclass of StepFailure, and will translate to a purple
 build.
@@ -4230,15 +4230,15 @@ build.
 This exception is raised from steps which are marked as `infra_step`s when
 they fail.
 
-&emsp; **@property**<br>&mdash; **def [MAX\_CPU](/recipe_modules/step/api.py#125)(self):**
+&emsp; **@property**<br>&mdash; **def [MAX\_CPU](/recipe_modules/step/api.py#139)(self):**
 
 Returns the maximum number of millicores this system has.
 
-&emsp; **@property**<br>&mdash; **def [MAX\_MEMORY](/recipe_modules/step/api.py#130)(self):**
+&emsp; **@property**<br>&mdash; **def [MAX\_MEMORY](/recipe_modules/step/api.py#144)(self):**
 
 Returns the maximum amount of memory on the system in MB.
 
-&mdash; **def [ResourceCost](/recipe_modules/step/api.py#58)(self, cpu=500, memory=50, disk=0, net=0):**
+&mdash; **def [ResourceCost](/recipe_modules/step/api.py#66)(self, cpu: int=500, memory: int=50, disk: int=0, net: int=0):**
 
 A structure defining the resources that a given step may need.
 
@@ -4297,7 +4297,7 @@ Returns:
   that passing `None` to api.step for the cost kwarg is equivalent to
   `ResourceCost(0, 0, 0, 0)`.
 
-&emsp; **@property**<br>&mdash; **def [StepFailure](/recipe_modules/step/api.py#135)(self):**
+&emsp; **@property**<br>&mdash; **def [StepFailure](/recipe_modules/step/api.py#149)(self):**
 
 This is the base Exception class for all step failures.
 
@@ -4307,12 +4307,12 @@ Usage:
   * `raise api.StepFailure("some reason")`
   * `except api.StepFailure:`
 
-&emsp; **@property**<br>&mdash; **def [StepWarning](/recipe_modules/step/api.py#147)(self):**
+&emsp; **@property**<br>&mdash; **def [StepWarning](/recipe_modules/step/api.py#161)(self):**
 
 StepWarning is a subclass of StepFailure, and will translate to a yellow
 build.
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#640)(self, name: str, cmd: (Sequence[(((int | str) | Placeholder) | Path)] | None), ok_ret: ((Sequence[int] | Literal['any']) | Literal['all'])=(0,), infra_step: bool=False, raise_on_failure: bool=True, wrapper: Sequence[(((int | str) | Placeholder) | Path)]=(), timeout: ((int | timedelta) | None)=None, stdout: (Placeholder | None)=None, stderr: (Placeholder | None)=None, stdin: (Placeholder | None)=None, step_test_data: (Callable[([], StepTestData)] | None)=None, cost: _ResourceCost=_ResourceCost()):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#674)(self, name: str, cmd: (Sequence[(((int | str) | Placeholder) | Path)] | None), ok_ret: ((Sequence[int] | Literal['any']) | Literal['all'])=(0,), infra_step: bool=False, raise_on_failure: bool=True, wrapper: Sequence[(((int | str) | Placeholder) | Path)]=(), timeout: ((int | timedelta) | None)=None, stdout: (Placeholder | None)=None, stderr: (Placeholder | None)=None, stdin: (Placeholder | None)=None, step_test_data: (Callable[([], StepTestData)] | None)=None, cost: _ResourceCost=_ResourceCost()):**
 
 Runs a step (subprocess).
 
@@ -4371,7 +4371,7 @@ Args:
 
 Returns a `step_data.StepData` for the running step.
 
-&emsp; **@property**<br>&mdash; **def [active\_result](/recipe_modules/step/api.py#163)(self):**
+&emsp; **@property**<br>&mdash; **def [active\_result](/recipe_modules/step/api.py#177)(self):**
 
 The currently active (open) result from the last step that was run. This
 is a `step_data.StepData` object.
@@ -4402,7 +4402,7 @@ finally:
     api.step.active_result.presentation.step_text = new_step_text
 ```
 
-&mdash; **def [close\_non\_nest\_step](/recipe_modules/step/api.py#196)(self):**
+&mdash; **def [close\_non\_nest\_step](/recipe_modules/step/api.py#210)(self):**
 
 Call this to explicitly terminate the currently open non-nest step.
 
@@ -4411,7 +4411,7 @@ context (if any).
 
 No-op if there's no currently active non-nest step.
 
-&mdash; **def [empty](/recipe_modules/step/api.py#306)(self, name, status='SUCCESS', step_text=None, log_text=None, log_name='stdout', raise_on_failure=True):**
+&mdash; **def [empty](/recipe_modules/step/api.py#322)(self, name: str, status: str='SUCCESS', step_text: (str | None)=None, log_text: ((str | Sequence[str]) | None)=None, log_name: str='stdout', raise_on_failure: bool=True):**
 
 Runs an "empty" step (one without any command).
 
@@ -4433,7 +4433,7 @@ Args:
 
 Returns step_data.StepData.
 
-&mdash; **def [funcall](/recipe_modules/step/api.py#755)(self, name, func, \*args, \*\*kwargs):**
+&mdash; **def [funcall](/recipe_modules/step/api.py#791)(self, name: (str | None), func: Callable[(..., _T)], \*args: Any, \*\*kwargs: Any):**
 
 Call a function and store the results and exception in a step.
 
@@ -4441,7 +4441,7 @@ Sample usage:
 
 >>> api.step.funcall(None, some_function, 4, json=True)
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [nest](/recipe_modules/step/api.py#206)(self, name, status='worst'):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [nest](/recipe_modules/step/api.py#220)(self, name: str, status: Literal[('worst', 'last')]='worst'):**
 
 Nest allows you to nest steps hierarchically on the build UI.
 
@@ -4503,7 +4503,7 @@ Args:
 Yields a StepPresentation for this dummy step, which you may update as you
 please.
 
-&mdash; **def [raise\_on\_failure](/recipe_modules/step/api.py#458)(self, result, status_override=None):**
+&mdash; **def [raise\_on\_failure](/recipe_modules/step/api.py#488)(self, result: step_data.StepData, status_override: (str | None)=None):**
 
 Raise an appropriate exception if a step is not successful.
 
@@ -4525,7 +4525,7 @@ Raises:
   * StepWarning if the step's status is WARNING
   * InfraFailure if the step's status is EXCEPTION or CANCELED
 
-&mdash; **def [sub\_build](/recipe_modules/step/api.py#497)(self, name: str, cmd: Sequence[(((int | str) | Placeholder) | Path)], build: build_pb2.Build, raise_on_failure: bool=True, output_path: ((str | Path) | None)=None, legacy_global_namespace=False, merge_output_properties_to: (Sequence[str] | None)=None, timeout=None, step_test_data=None, cost=_ResourceCost()):**
+&mdash; **def [sub\_build](/recipe_modules/step/api.py#531)(self, name: str, cmd: Sequence[(((int | str) | Placeholder) | Path)], build: build_pb2.Build, raise_on_failure: bool=True, output_path: ((str | Path) | None)=None, legacy_global_namespace: bool=False, merge_output_properties_to: (Sequence[str] | None)=None, timeout: (((int | float) | timedelta) | None)=None, step_test_data: (Callable[([], StepTestData)] | None)=None, cost: (_ResourceCost | None)=_ResourceCost()):**
 
 Launch a sub-build by invoking a LUCI executable. All steps in the
 sub-build will appear as child steps of this step (Merge Step).
@@ -6277,76 +6277,76 @@ This file is a recipe demonstrating reading triggers of the current build.
 &mdash; **def [RunSteps](/recipe_modules/service_account/examples/full.py#45)(api: DEPS, props: full_pb.InputProperties):**
 ### *recipes* / [step:examples/full](/recipe_modules/step/examples/full.py)
 
-[DEPS](/recipe_modules/step/examples/full.py#24): [buildbucket](#recipe_modules-buildbucket), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/examples/full.py#27): [buildbucket](#recipe_modules-buildbucket), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/examples/full.py#49)(api: DEPS, props: full_pb.InputProperties):**
+&mdash; **def [RunSteps](/recipe_modules/step/examples/full.py#52)(api: DEPS, props: full_pb.InputProperties):**
 ### *recipes* / [step:tests/active\_result](/recipe_modules/step/tests/active_result.py)
 
-[DEPS](/recipe_modules/step/tests/active_result.py#14): [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/active_result.py#17): [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/active_result.py#23)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/active_result.py#26)(api: DEPS):**
 ### *recipes* / [step:tests/drop\_expectation](/recipe_modules/step/tests/drop_expectation.py)
 
-[DEPS](/recipe_modules/step/tests/drop_expectation.py#19): [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/drop_expectation.py#22): [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/drop_expectation.py#28)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/drop_expectation.py#31)(api: DEPS):**
 ### *recipes* / [step:tests/empty](/recipe_modules/step/tests/empty.py)
 
-[DEPS](/recipe_modules/step/tests/empty.py#25): [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/empty.py#28): [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/empty.py#34)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/empty.py#37)(api: DEPS):**
 ### *recipes* / [step:tests/inject\_paths](/recipe_modules/step/tests/inject_paths.py)
 
-[DEPS](/recipe_modules/step/tests/inject_paths.py#19): [context](#recipe_modules-context), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/inject_paths.py#22): [context](#recipe_modules-context), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/inject_paths.py#31)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/inject_paths.py#34)(api: DEPS):**
 ### *recipes* / [step:tests/nested](/recipe_modules/step/tests/nested.py)
 
-[DEPS](/recipe_modules/step/tests/nested.py#22): [context](#recipe_modules-context), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/nested.py#25): [context](#recipe_modules-context), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/nested.py#32)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/nested.py#35)(api: DEPS):**
 ### *recipes* / [step:tests/raise\_on\_failure](/recipe_modules/step/tests/raise_on_failure.py)
 
-[DEPS](/recipe_modules/step/tests/raise_on_failure.py#20): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/raise_on_failure.py#22): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/raise_on_failure.py#39)(api: DEPS, props: raise_on_failure_pb.InputProperties):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/raise_on_failure.py#41)(api: DEPS, props: raise_on_failure_pb.InputProperties):**
 ### *recipes* / [step:tests/stdio](/recipe_modules/step/tests/stdio.py)
 
-[DEPS](/recipe_modules/step/tests/stdio.py#17): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/stdio.py#20): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/stdio.py#27)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/stdio.py#30)(api: DEPS):**
 ### *recipes* / [step:tests/step\_call\_args](/recipe_modules/step/tests/step_call_args.py)
 
-[DEPS](/recipe_modules/step/tests/step_call_args.py#16): [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/step_call_args.py#19): [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/step_call_args.py#25)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/step_call_args.py#28)(api: DEPS):**
 ### *recipes* / [step:tests/step\_cost](/recipe_modules/step/tests/step_cost.py)
 
-[DEPS](/recipe_modules/step/tests/step_cost.py#16): [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/step_cost.py#19): [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/step_cost.py#25)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/step_cost.py#28)(api: DEPS):**
 ### *recipes* / [step:tests/sub\_build](/recipe_modules/step/tests/sub_build.py)
 
-[DEPS](/recipe_modules/step/tests/sub_build.py#34): [assertions](#recipe_modules-assertions), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/sub_build.py#39): [assertions](#recipe_modules-assertions), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/sub_build.py#52)(api: DEPS, props):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/sub_build.py#57)(api: DEPS, props: properties_pb2.SubBuildInputProps):**
 ### *recipes* / [step:tests/timeout](/recipe_modules/step/tests/timeout.py)
 
-[DEPS](/recipe_modules/step/tests/timeout.py#19): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/timeout.py#22): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/timeout.py#37)(api: DEPS, props: timeout_pb.InputProperties):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/timeout.py#40)(api: DEPS, props: timeout_pb.InputProperties):**
 ### *recipes* / [swarming:examples/full](/recipe_modules/swarming/examples/full.py)
 
 [DEPS](/recipe_modules/swarming/examples/full.py#31): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)

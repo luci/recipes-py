@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from PB.recipe_modules.recipe_engine.step.tests import timeout as timeout_pb
 
 from dataclasses import dataclass
@@ -34,7 +37,7 @@ message InputProperties {
 PROPERTIES = timeout_pb.InputProperties
 
 
-def RunSteps(api: DEPS, props: timeout_pb.InputProperties):
+def RunSteps(api: DEPS, props: timeout_pb.InputProperties) -> None:
   # Timeout causes the recipe engine to raise an exception if your step takes
   # longer to run than you allow. Units are seconds.
   try:
@@ -52,7 +55,7 @@ def RunSteps(api: DEPS, props: timeout_pb.InputProperties):
     api.step('caught timeout (failure)', [])
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (
       api.test('timeout') +
       api.properties(timeout_pb.InputProperties(timeout=1)) +

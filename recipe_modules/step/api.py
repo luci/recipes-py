@@ -6,6 +6,10 @@
 
 
 from __future__ import annotations
+from collections.abc import Callable, Iterator, Mapping, Sequence
+from typing import Any, Literal, TypeVar
+
+from RECIPE_MODULES.recipe_engine import step
 
 from collections.abc import Callable, Sequence
 import contextlib
@@ -32,9 +36,13 @@ from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 
 
 class StepApi(recipe_api.RecipeApi):
+  m: step.DEPS
+
   step_client = recipe_api.RequireClient('step')
 
-  def __init__(self, step_properties: properties_pb.InputProperties, **kwargs):
+  def __init__(
+      self, step_properties: properties_pb.InputProperties, **kwargs: Any
+  ) -> None:
     super().__init__(**kwargs)
     self._prefix_path = list(step_properties.prefix_path)
 
@@ -55,7 +63,13 @@ class StepApi(recipe_api.RecipeApi):
     '.textpb': 'TEXTPB',
   }
 
-  def ResourceCost(self, cpu=500, memory=50, disk=0, net=0):
+  def ResourceCost(
+      self,
+      cpu: int = 500,
+      memory: int = 50,
+      disk: int = 0,
+      net: int = 0,
+  ) -> _ResourceCost:
     """A structure defining the resources that a given step may need.
 
     The four resources are:
@@ -123,17 +137,17 @@ class StepApi(recipe_api.RecipeApi):
   CPU_CORE = 1000
 
   @property
-  def MAX_CPU(self):
+  def MAX_CPU(self) -> int:
     """Returns the maximum number of millicores this system has."""
     return self.m.platform.cpu_count * self.CPU_CORE
 
   @property
-  def MAX_MEMORY(self):
+  def MAX_MEMORY(self) -> int:
     """Returns the maximum amount of memory on the system in MB."""
     return self.m.platform.total_memory
 
   @property
-  def StepFailure(self):
+  def StepFailure(self) -> type[recipe_api.StepFailure]:
     """This is the base Exception class for all step failures.
 
     It can be manually raised from recipe code to cause the build to turn red.
@@ -145,13 +159,13 @@ class StepApi(recipe_api.RecipeApi):
     return recipe_api.StepFailure
 
   @property
-  def StepWarning(self):
+  def StepWarning(self) -> type[recipe_api.StepWarning]:
     """StepWarning is a subclass of StepFailure, and will translate to a yellow
     build."""
     return recipe_api.StepWarning
 
   @property
-  def InfraFailure(self):
+  def InfraFailure(self) -> type[recipe_api.InfraFailure]:
     """InfraFailure is a subclass of StepFailure, and will translate to a purple
     build.
 
@@ -161,7 +175,7 @@ class StepApi(recipe_api.RecipeApi):
     return recipe_api.InfraFailure
 
   @property
-  def active_result(self):
+  def active_result(self) -> step_data.StepData:
     """The currently active (open) result from the last step that was run. This
     is a `step_data.StepData` object.
 
@@ -193,7 +207,7 @@ class StepApi(recipe_api.RecipeApi):
     """
     return self.step_client.previous_step_result()
 
-  def close_non_nest_step(self):
+  def close_non_nest_step(self) -> None:
     """Call this to explicitly terminate the currently open non-nest step.
 
     After calling this, api.step.active_step will return the current nest step
@@ -204,7 +218,9 @@ class StepApi(recipe_api.RecipeApi):
     return self.step_client.close_non_parent_step()
 
   @contextlib.contextmanager
-  def nest(self, name, status='worst'):
+  def nest(
+      self, name: str, status: Literal['worst', 'last'] = 'worst'
+  ) -> Iterator[StepPresentation]:
     """Nest allows you to nest steps hierarchically on the build UI.
 
     This generates a dummy step with the provided name in the current namespace.
@@ -303,13 +319,15 @@ class StepApi(recipe_api.RecipeApi):
             pres.status = self.SUCCESS
 
   # pylint: disable=too-many-arguments
-  def empty(self,
-            name,
-            status="SUCCESS",
-            step_text=None,
-            log_text=None,
-            log_name='stdout',
-            raise_on_failure=True):
+  def empty(
+      self,
+      name: str,
+      status: str = 'SUCCESS',
+      step_text: str | None = None,
+      log_text: str | Sequence[str] | None = None,
+      log_name: str = 'stdout',
+      raise_on_failure: bool = True,
+  ) -> step_data.StepData:
     """Runs an "empty" step (one without any command).
 
     This can be useful to insert a status step/message in the UI, or summarize
@@ -344,7 +362,9 @@ class StepApi(recipe_api.RecipeApi):
     return ret
 
   @staticmethod
-  def _validate_cmd_list(cmd):
+  def _validate_cmd_list(
+      cmd: Sequence[int | str | Placeholder | Path],
+  ) -> None:
     """Validates cmd is a list and all args in the list have valid types."""
     if not isinstance(cmd, list):
       raise ValueError('cmd must be a list, got %r' % (cmd,))
@@ -354,19 +374,19 @@ class StepApi(recipe_api.RecipeApi):
                          'cmd is %r' % (type(arg), cmd))
 
   @staticmethod
-  def _normalize_cost(cost):
+  def _normalize_cost(cost: _ResourceCost | None) -> _ResourceCost:
     if not isinstance(cost, (type(None), _ResourceCost)):
       raise ValueError('cost must be a None or ResourceCost , got %r' % (cost,))
     return cost or _ResourceCost.zero()
 
-  def _normalize_cwd(self, cwd):
+  def _normalize_cwd(self, cwd: Path | str | None) -> str | None:
     if cwd and cwd == self.m.path.start_dir:
       cwd = None
     elif cwd is not None:
       cwd = str(cwd)
     return cwd
 
-  def _to_env_affix(self, affix):
+  def _to_env_affix(self, affix: Mapping[str, Sequence[Any]]) -> Any:
     """Returns a `engine_step.EnvAffix` object constructed from input affix (
     i.e. env_prefixes or env_suffixes; see meanings in `context` module) and
     path separator from `path` module.
@@ -377,7 +397,9 @@ class StepApi(recipe_api.RecipeApi):
     )
 
   @returns_placeholder('sub_build')
-  def _sub_build_output(self, output_path):
+  def _sub_build_output(
+      self, output_path: str | Path | None
+  ) -> Placeholder:
     """Give an output path, returns a build proto output placeholder. The
     encoding format is dictated by the extension of the path.
 
@@ -413,7 +435,9 @@ class StepApi(recipe_api.RecipeApi):
                               leak_to=output_path,
                               add_json_log=True)
 
-  def _make_initial_build(self, input_build):
+  def _make_initial_build(
+      self, input_build: build_pb2.Build
+  ) -> build_pb2.Build:
     build = build_pb2.Build()
     build.CopyFrom(input_build)
     build.status = common_pb2.STARTED
@@ -430,8 +454,12 @@ class StepApi(recipe_api.RecipeApi):
       build.ClearField(f)
     return build
 
-  def _raise_on_disallowed_statuses(self, result, allowed_statuses,
-                                    status_override=None):
+  def _raise_on_disallowed_statuses(
+      self,
+      result: step_data.StepData,
+      allowed_statuses: Sequence[str],
+      status_override: str | None = None,
+  ) -> step_data.StepData:
     status = status_override or result.presentation.status
     if status in allowed_statuses:
       return result
@@ -445,7 +473,9 @@ class StepApi(recipe_api.RecipeApi):
     }[status]
 
     # This inline function is tested in the runtime module tests.
-    def cancelled_build_wrapper(name, result):  # pragma: no cover
+    def cancelled_build_wrapper(
+        name: str, result: step_data.StepData
+    ) -> None:  # pragma: no cover
       raise recipe_api.CancelledBuild(f"Step('{name}')")
 
     if GLOBAL_SHUTDOWN.ready():
@@ -455,7 +485,11 @@ class StepApi(recipe_api.RecipeApi):
     # TODO(iannucci): Use '|' instead of '.'
     raise exc('.'.join(result.name_tokens), result)
 
-  def raise_on_failure(self, result, status_override=None):
+  def raise_on_failure(
+      self,
+      result: step_data.StepData,
+      status_override: str | None = None,
+  ) -> step_data.StepData:
     """Raise an appropriate exception if a step is not successful.
 
     Arguments:
@@ -479,7 +513,7 @@ class StepApi(recipe_api.RecipeApi):
     return self._raise_on_disallowed_statuses(
         result, [self.SUCCESS], status_override=status_override)
 
-  def _run_or_raise_step(self, step_config):
+  def _run_or_raise_step(self, step_config: Any) -> step_data.StepData:
     ret: step_data.StepData = self.step_client.run_step(step_config)
     allowed_statuses = [self.SUCCESS]
     if not step_config.raise_on_failure:
@@ -501,12 +535,12 @@ class StepApi(recipe_api.RecipeApi):
       build: build_pb2.Build,
       raise_on_failure: bool = True,
       output_path: str | Path | None = None,
-      legacy_global_namespace=False,
+      legacy_global_namespace: bool = False,
       merge_output_properties_to: Sequence[str] | None = None,
-      timeout=None,
-      step_test_data=None,
-      cost=_ResourceCost(),
-  ):
+      timeout: int | float | timedelta | None = None,
+      step_test_data: Callable[[], StepTestData] | None = None,
+      cost: _ResourceCost | None = _ResourceCost(),
+  ) -> step_data.StepData:
     """Launch a sub-build by invoking a LUCI executable. All steps in the
     sub-build will appear as child steps of this step (Merge Step).
 
@@ -752,7 +786,15 @@ class StepApi(recipe_api.RecipeApi):
             step_test_data=step_test_data,
         ))
 
-  def funcall(self, name, func, *args, **kwargs):
+  _T = TypeVar('_T')
+
+  def funcall(
+      self,
+      name: str | None,
+      func: Callable[..., _T],
+      *args: Any,
+      **kwargs: Any,
+  ) -> _T:
     """Call a function and store the results and exception in a step.
 
     Sample usage:

@@ -7,6 +7,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine import post_process
 
 from dataclasses import dataclass
@@ -25,7 +28,7 @@ class TEST_DEPS(RecipeTestApi):
   pass
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   with api.step.nest('abc'):
     api.step.empty('def')
   with api.step.nest('abcdef'):
@@ -33,7 +36,7 @@ def RunSteps(api: DEPS):
   api.step.empty('abc.de.f')
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'one-arg',
       api.post_process(post_process.MustRun, 'abc'),

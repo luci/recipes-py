@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 import datetime
 
 from recipe_engine import recipe_api
@@ -29,7 +32,7 @@ class TEST_DEPS(RecipeTestApi):
   pass
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   # Nest all steps below this.
   with api.step.nest('complicated thing'):
     with api.step.nest('first part'):
@@ -110,7 +113,7 @@ def RunSteps(api: DEPS):
   out = api.step.funcall("five", (lambda: 5))
   assert out == 5, f'out must be 5 not {out}'
 
-  def fail():
+  def fail() -> None:
     raise ValueError("failed exception")
 
   try:
@@ -121,7 +124,7 @@ def RunSteps(api: DEPS):
     assert "we expected an exception here, but there was none"
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (
     api.test('basic')
     + api.post_process(StepException, 'inherit status')

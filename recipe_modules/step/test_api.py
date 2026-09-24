@@ -12,7 +12,9 @@ class StepTestApi(recipe_test_api.RecipeTestApi):
 
   @recipe_test_api.placeholder_step_data
   @staticmethod
-  def sub_build(build):
+  def sub_build(
+      build: build_pb2.Build | None,
+  ) -> tuple[build_pb2.Build | None, None, None]:
     """Returns the output placeholder for a launched sub build/luciexe.
 
     If input build is None, it simulates the behavior that the launched luciexe
@@ -28,7 +30,7 @@ class StepTestApi(recipe_test_api.RecipeTestApi):
 
   @recipe_test_api.mod_test_data
   @staticmethod
-  def initial_build_create_time(seconds):  # pragma: no cover
+  def initial_build_create_time(seconds: int) -> int:  # pragma: no cover
     """Sets the create time of the initial build for luciexe."""
     # TODO: See tests/sub_build.clear_fields_of_input_build which would cover
     # this, but is disabled in python3.
@@ -36,7 +38,7 @@ class StepTestApi(recipe_test_api.RecipeTestApi):
 
   @recipe_test_api.mod_test_data
   @staticmethod
-  def initial_build_start_time(seconds):  # pragma: no cover
+  def initial_build_start_time(seconds: int) -> int:  # pragma: no cover
     """Sets the create time of the initial build for luciexe."""
     # TODO: See tests/sub_build.clear_fields_of_input_build which would cover
     # this, but is disabled in python3.

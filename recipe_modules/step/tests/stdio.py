@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
@@ -24,7 +27,7 @@ class TEST_DEPS(RecipeTestApi):
   raw_io: raw_io.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   # Read command's stdout and stderr.
   step_result = api.step('echo', ['echo', 'Hello World'],
       stdout=api.raw_io.output_text(),
@@ -53,7 +56,7 @@ def RunSteps(api: DEPS):
     api.step.empty('test mock', step_text=step_result.stdout)
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'basic',
       api.post_check(lambda check, steps: check('mocked stdout') not in steps),

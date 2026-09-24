@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from PB.recipe_modules.recipe_engine.step.examples import full as full_pb
 from recipe_engine import post_process
 
@@ -46,7 +49,7 @@ message InputProperties {
 PROPERTIES = full_pb.InputProperties
 
 
-def RunSteps(api: DEPS, props: full_pb.InputProperties):
+def RunSteps(api: DEPS, props: full_pb.InputProperties) -> None:
   if props.timeout:
     # Timeout causes the recipe engine to raise an exception if your step takes
     # longer to run than you allow. Units are seconds.
@@ -161,7 +164,7 @@ def RunSteps(api: DEPS, props: full_pb.InputProperties):
     result.json = "hi"
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'basic',
       api.step_data('anything is cool', retcode=3),
