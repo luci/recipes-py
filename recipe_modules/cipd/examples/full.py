@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from collections.abc import Mapping, Sequence
 from typing import Literal
 
@@ -69,7 +72,7 @@ message InputProperties {
 PROPERTIES = full_pb.InputProperties
 
 
-def RunSteps(api: DEPS, props: full_pb.InputProperties):
+def RunSteps(api: DEPS, props: full_pb.InputProperties) -> None:
   package_name = 'public/package/${platform}'
   package_instance_id = '7f751b2237df2fdf3c1405be00590fefffbaea2d'
   ensure_file = api.cipd.EnsureFile()
@@ -223,7 +226,7 @@ def RunSteps(api: DEPS, props: full_pb.InputProperties):
   api.step('run some_exe', [exe, '-opt'])
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   def properties(
       use_pkg: bool = False,
       pkg_files: Sequence[str] = (),

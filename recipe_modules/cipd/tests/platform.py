@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine import post_process
 from recipe_engine.config import List, Single, ConfigList, ConfigGroup
 from recipe_engine.recipe_api import Property
@@ -30,12 +33,14 @@ class TEST_DEPS(RecipeTestApi):
   platform: platform.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   api.step.empty(f'platform {api.cipd.platform}')
 
 
-def GenTests(api: TEST_DEPS):
-  def test(cipd_platform, os, bits, arch='intel'):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
+  def test(
+      cipd_platform: str, os: str, bits: int, arch: str = 'intel'
+  ) -> recipe_test_api.TestData:
     return api.test(
         cipd_platform,
         api.platform(os, bits, arch),

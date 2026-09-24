@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import Iterator
+from collections.abc import Iterator
 
 from recipe_engine import post_process, recipe_api, recipe_test_api
 
@@ -25,7 +25,7 @@ class DEPS(RecipeScriptApi):
   path: path.API
 
 
-def RunSteps(api: recipe_api.RecipeScriptApi) -> None:
+def RunSteps(api: DEPS) -> None:
   ef_default = api.cipd.EnsureFile()
   api.assertions.assertEqual(
       ef_default.paranoid_mode,
@@ -70,7 +70,7 @@ def RunSteps(api: recipe_api.RecipeScriptApi) -> None:
   api.cipd.ensure_file_resolve(ef_integrity)
 
 
-def GenTests(api: RecipeTestApi,) -> Iterator[recipe_test_api.TestData]:
+def GenTests(api: RecipeTestApi) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
     'basic',
     api.post_process(post_process.DropExpectation),

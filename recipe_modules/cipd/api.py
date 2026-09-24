@@ -10,6 +10,10 @@ https://godoc.org/go.chromium.org/luci/cipd/client/cmd/cipd
 
 from __future__ import annotations
 
+from typing import Any
+
+from RECIPE_MODULES.recipe_engine import cipd
+
 from collections import defaultdict, namedtuple
 from collections.abc import Mapping, Sequence
 import contextlib
@@ -43,12 +47,14 @@ class ParanoidMode(enum.StrEnum):
 class PackageDefinition:
   DIR = namedtuple('DIR', ['path', 'exclusions'])
 
-  def __init__(self,
-               package_name: str,
-               package_root: Path,
-               install_mode: InstallMode | None = None,
-               preserve_mtime: bool = False,
-               preserve_writable: bool = False):
+  def __init__(
+      self,
+      package_name: str,
+      package_root: Path,
+      install_mode: InstallMode | None = None,
+      preserve_mtime: bool = False,
+      preserve_writable: bool = False,
+  ) -> None:
     """Build a new PackageDefinition.
 
     Args:
@@ -90,7 +96,9 @@ class PackageDefinition:
     # we know that root has the same base and some prefix of path
     return '/'.join(path.pieces[len(self.package_root.pieces):])
 
-  def add_dir(self, dir_path: Path, exclusions: Sequence[str] | None = None):
+  def add_dir(
+      self, dir_path: Path, exclusions: Sequence[str] | None = None
+  ) -> None:
     """Recursively add a directory to the package.
 
     Args:
@@ -173,7 +181,7 @@ class PackageDefinition:
 class EnsureFile:
   Package = namedtuple('Package', ['name', 'version'])
 
-  def __init__(self):
+  def __init__(self) -> None:
     self.packages: dict[Path, list[Package]] = defaultdict(list)
     self.paranoid_mode = None
 
@@ -217,7 +225,7 @@ class Metadata:
       value: str | None = None,
       value_from_file: Path | None = None,
       content_type: str | None = None,
-  ):
+  ) -> None:
     """Constructs a metadata entry to attach to a package instance.
 
     Each entry has a key (doesn't have to be unique), a value (supplied either
@@ -277,6 +285,8 @@ class CIPDApi(recipe_api.RecipeApi):
     * max_threads (int) - Number of worker threads for extracting packages.
       If 0, uses CPU count.
   """
+
+  m: cipd.DEPS
   PackageDefinition = PackageDefinition
   EnsureFile = EnsureFile
   Metadata = Metadata
@@ -326,11 +336,11 @@ class CIPDApi(recipe_api.RecipeApi):
 
   class Error(recipe_api.InfraFailure):
 
-    def __init__(self, step_name, message):
+    def __init__(self, step_name: str, message: str) -> None:
       reason = 'CIPD(%r) failed with: %s' % (step_name, message)
       super().__init__(reason)
 
-  def __init__(self, **kwargs):
+  def __init__(self, **kwargs: Any) -> None:
     super().__init__(**kwargs)
     self.max_threads = 0  # 0 means use system CPU count.
     # A mapping from (package, version) to Future for packages installed
@@ -406,9 +416,9 @@ class CIPDApi(recipe_api.RecipeApi):
   def _build(
       self,
       pkg_name: str,
-      pkg_def_file_or_placeholder,
-      output_package: str,
-      pkg_vars=None,
+      pkg_def_file_or_placeholder: Path | util.Placeholder,
+      output_package: Path | str,
+      pkg_vars: Mapping[str, str] | None = None,
       compression_level: CompressionLevel | None = None,
   ) -> Pin:
     cmd: list[str | Path | util.Placeholder] = [
@@ -1192,7 +1202,7 @@ class CIPDApi(recipe_api.RecipeApi):
     if cache_key not in self._installed_tool_package_futures:
       name = 'install %s' % ('/'.join(package_parts),)
 
-      def _install_package_thread():
+      def _install_package_thread() -> None:
         with self.m.step.nest(name):
           with self.m.context(infra_steps=True):
             self.m.file.ensure_directory('ensure package directory',
