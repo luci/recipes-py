@@ -4,6 +4,9 @@
 """Tests for query_failure_rate."""
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine import post_process
 
 from google.protobuf import timestamp_pb2
@@ -36,7 +39,7 @@ class TEST_DEPS(RecipeTestApi):
   luci_analysis: luci_analysis.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   with api.step.nest('nest_parent'):
     test_id = 'ninja://gpu:suite_1/test_one'
     next_page_token = None
@@ -60,7 +63,7 @@ def RunSteps(api: DEPS):
         exit_loop = True
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   res = test_history.QueryTestHistoryResponse(
       verdicts=[
           test_verdict.TestVerdict(

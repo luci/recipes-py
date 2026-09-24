@@ -5,6 +5,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
@@ -30,7 +33,7 @@ class TEST_DEPS(RecipeTestApi):
   luci_analysis: luci_analysis.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   with api.step.nest('nest_parent') as presentation:
     bug = 'chromium/123'
     rules = api.luci_analysis.lookup_bug(bug)
@@ -40,7 +43,7 @@ def RunSteps(api: DEPS):
 from recipe_engine import post_process
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'base',
       api.luci_analysis.lookup_bug([

@@ -2803,9 +2803,9 @@ This API is for calling LUCI Analysis RPCs for various aggregated info about
 test results.
 See go/luci-analysis for more info.
 
-#### **class [LuciAnalysisApi](/recipe_modules/luci_analysis/api.py#32)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [LuciAnalysisApi](/recipe_modules/luci_analysis/api.py#42)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
-&mdash; **def [lookup\_bug](/recipe_modules/luci_analysis/api.py#265)(self, bug_id, system='monorail'):**
+&mdash; **def [lookup\_bug](/recipe_modules/luci_analysis/api.py#297)(self, bug_id: str, system: str='monorail'):**
 
 Looks up the rule associated with a given bug.
 
@@ -2821,7 +2821,7 @@ Args:
 Returns:
   list of rules (str), Format: projects/{project}/rules/{rule_id}
 
-&mdash; **def [query\_cluster\_failures](/recipe_modules/luci_analysis/api.py#300)(self, cluster_name):**
+&mdash; **def [query\_cluster\_failures](/recipe_modules/luci_analysis/api.py#332)(self, cluster_name: str):**
 
 Queries examples of failures in the given cluster.
 
@@ -2837,7 +2837,7 @@ Returns:
   For value format, see [`DistinctClusterFailure` message]
   (https://bit.ly/DistinctClusterFailure)
 
-&mdash; **def [query\_failure\_rate](/recipe_modules/luci_analysis/api.py#86)(self, test_and_variant_list, project='chromium'):**
+&mdash; **def [query\_failure\_rate](/recipe_modules/luci_analysis/api.py#106)(self, test_and_variant_list: Sequence[Mapping[(str, str)]], project: str='chromium'):**
 
 Queries LUCI Analysis for failure rates
 
@@ -2848,7 +2848,7 @@ Args:
 Returns:
   List of TestVariantFailureRateAnalysis protos
 
-&mdash; **def [query\_stability](/recipe_modules/luci_analysis/api.py#119)(self, test_variant_position_list, project='chromium'):**
+&mdash; **def [query\_stability](/recipe_modules/luci_analysis/api.py#143)(self, test_variant_position_list: Sequence[Mapping[(str, Any)]], project: str='chromium'):**
 
 Queries LUCI Analysis for test stability.
 
@@ -2861,7 +2861,7 @@ Returns:
 Raises:
   StepFailure if query is invalid or service returns unexpected responses.
 
-&mdash; **def [query\_test\_history](/recipe_modules/luci_analysis/api.py#155)(self, test_id, project='chromium', sub_realm=None, variant_predicate=None, partition_time_range=None, submitted_filter=None, page_size=1000, page_token=None):**
+&mdash; **def [query\_test\_history](/recipe_modules/luci_analysis/api.py#183)(self, test_id: str, project: str='chromium', sub_realm: (str | None)=None, variant_predicate: (predicate_pb.VariantPredicate | None)=None, partition_time_range: (common_pb.TimeRange | None)=None, submitted_filter: ((common_pb.SubmittedFilter | int) | None)=None, page_size: int=1000, page_token: (str | None)=None):**
 
 A wrapper method to use `luci.analysis.v1.TestHistory` `Query` API.
 
@@ -2892,7 +2892,7 @@ Args:
 Returns:
   (list of parsed luci.analysis.v1.TestVerdict objects, next page token)
 
-&mdash; **def [query\_variants](/recipe_modules/luci_analysis/api.py#216)(self, test_id, project='chromium', sub_realm=None, variant_predicate=None, page_size=1000, page_token=None):**
+&mdash; **def [query\_variants](/recipe_modules/luci_analysis/api.py#246)(self, test_id: str, project: str='chromium', sub_realm: (str | None)=None, variant_predicate: (predicate_pb.VariantPredicate | None)=None, page_size: int=1000, page_token: (str | None)=None):**
 
 A wrapper method to use `luci.analysis.v1.TestHistory` `QueryVariants`
 API.
@@ -2919,7 +2919,7 @@ Returns:
   (list of VariantInfo { variant_hash: str, variant: { def: dict } },
    next page token)
 
-&mdash; **def [rule\_name\_to\_cluster\_name](/recipe_modules/luci_analysis/api.py#289)(self, rule):**
+&mdash; **def [rule\_name\_to\_cluster\_name](/recipe_modules/luci_analysis/api.py#321)(self, rule: str):**
 
 Convert the resource name for a rule to its corresponding cluster.
 Args:
@@ -5989,68 +5989,68 @@ Test to assert that sort_keys=False preserves insertion order.
 &mdash; **def [RunSteps](/recipe_modules/legacy_annotation/examples/full.py#39)(api: DEPS):**
 ### *recipes* / [luci\_analysis:tests/query\_failure\_rate\_test](/recipe_modules/luci_analysis/tests/query_failure_rate_test.py)
 
-[DEPS](/recipe_modules/luci_analysis/tests/query_failure_rate_test.py#24): [assertions](#recipe_modules-assertions), [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io)
+[DEPS](/recipe_modules/luci_analysis/tests/query_failure_rate_test.py#27): [assertions](#recipe_modules-assertions), [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io)
 
 
 Tests for query_failure_rate.
 
-&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/query_failure_rate_test.py#53)(api: DEPS, props: query_failure_rate_test_pb.InputProperties):**
+&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/query_failure_rate_test.py#56)(api: DEPS, props: query_failure_rate_test_pb.InputProperties):**
 ### *recipes* / [luci\_analysis:tests/query\_stability\_test](/recipe_modules/luci_analysis/tests/query_stability_test.py)
 
-[DEPS](/recipe_modules/luci_analysis/tests/query_stability_test.py#26): [assertions](#recipe_modules-assertions), [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io)
+[DEPS](/recipe_modules/luci_analysis/tests/query_stability_test.py#29): [assertions](#recipe_modules-assertions), [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io)
 
 
 Tests for query_stability.
 
-&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/query_stability_test.py#80)(api: DEPS, props: query_stability_test_pb.InputProperties):**
+&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/query_stability_test.py#83)(api: DEPS, props: query_stability_test_pb.InputProperties):**
 ### *recipes* / [luci\_analysis:tests/test\_generate\_analysis](/recipe_modules/luci_analysis/tests/test_generate_analysis.py)
 
-[DEPS](/recipe_modules/luci_analysis/tests/test_generate_analysis.py#21): [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/luci_analysis/tests/test_generate_analysis.py#24): [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
 Tests for generate_analysis.
 
-&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/test_generate_analysis.py#35)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/test_generate_analysis.py#38)(api: DEPS):**
 ### *recipes* / [luci\_analysis:tests/test\_generate\_stability\_response](/recipe_modules/luci_analysis/tests/test_generate_stability_response.py)
 
-[DEPS](/recipe_modules/luci_analysis/tests/test_generate_stability_response.py#21): [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/luci_analysis/tests/test_generate_stability_response.py#24): [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
 Tests for generate_stability_response.
 
-&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/test_generate_stability_response.py#35)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/test_generate_stability_response.py#38)(api: DEPS):**
 ### *recipes* / [luci\_analysis:tests/test\_history\_query](/recipe_modules/luci_analysis/tests/test_history_query.py)
 
-[DEPS](/recipe_modules/luci_analysis/tests/test_history_query.py#27): [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/luci_analysis/tests/test_history_query.py#30): [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
 Tests for query_failure_rate.
 
-&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/test_history_query.py#39)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/test_history_query.py#42)(api: DEPS):**
 ### *recipes* / [luci\_analysis:tests/test\_lookup\_bug](/recipe_modules/luci_analysis/tests/test_lookup_bug.py)
 
-[DEPS](/recipe_modules/luci_analysis/tests/test_lookup_bug.py#20): [assertions](#recipe_modules-assertions), [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/luci_analysis/tests/test_lookup_bug.py#23): [assertions](#recipe_modules-assertions), [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [step](#recipe_modules-step)
 
 
 Tests for lookup_bug.
 
-&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/test_lookup_bug.py#33)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/test_lookup_bug.py#36)(api: DEPS):**
 ### *recipes* / [luci\_analysis:tests/test\_query\_cluster\_failures](/recipe_modules/luci_analysis/tests/test_query_cluster_failures.py)
 
-[DEPS](/recipe_modules/luci_analysis/tests/test_query_cluster_failures.py#20): [assertions](#recipe_modules-assertions), [luci\_analysis](#recipe_modules-luci_analysis), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/luci_analysis/tests/test_query_cluster_failures.py#23): [assertions](#recipe_modules-assertions), [luci\_analysis](#recipe_modules-luci_analysis), [step](#recipe_modules-step)
 
 
 Tests for query_cluster_failres.
 
-&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/test_query_cluster_failures.py#31)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/test_query_cluster_failures.py#34)(api: DEPS):**
 ### *recipes* / [luci\_analysis:tests/test\_query\_variants](/recipe_modules/luci_analysis/tests/test_query_variants.py)
 
-[DEPS](/recipe_modules/luci_analysis/tests/test_query_variants.py#22): [luci\_analysis](#recipe_modules-luci_analysis), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/luci_analysis/tests/test_query_variants.py#25): [luci\_analysis](#recipe_modules-luci_analysis), [step](#recipe_modules-step)
 
 
 Tests for query_variants.
 
-&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/test_query_variants.py#32)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/test_query_variants.py#35)(api: DEPS):**
 ### *recipes* / [luci\_config:tests/full](/recipe_modules/luci_config/tests/full.py)
 
 [DEPS](/recipe_modules/luci_config/tests/full.py#24): [buildbucket](#recipe_modules-buildbucket), [luci\_config](#recipe_modules-luci_config), [path](#recipe_modules-path)

@@ -5,6 +5,9 @@
 """Tests for query_failure_rate."""
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from PB.recipe_modules.recipe_engine.luci_analysis.tests import query_failure_rate_test as query_failure_rate_test_pb
 from recipe_engine import post_process
 
@@ -50,7 +53,10 @@ message InputProperties {
 PROPERTIES = query_failure_rate_test_pb.InputProperties
 
 
-def RunSteps(api: DEPS, props: query_failure_rate_test_pb.InputProperties):
+def RunSteps(
+    api: DEPS,
+    props: query_failure_rate_test_pb.InputProperties,
+) -> None:
   input_list = [
       {'testId': i.test_id, 'variantHash': i.variant_hash}
       for i in props.input_list
@@ -58,7 +64,7 @@ def RunSteps(api: DEPS, props: query_failure_rate_test_pb.InputProperties):
   api.luci_analysis.query_failure_rate(input_list)
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   query_failure_rate_results = [
       api.luci_analysis.generate_analysis(
           test_id='ninja://gpu:suite_1/test_one',

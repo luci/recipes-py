@@ -10,6 +10,16 @@ See go/luci-analysis for more info.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Mapping, Sequence
+from typing import Any
+from recipe_engine import recipe_test_api
+from PB.go.chromium.org.luci.analysis.proto.v1 import clusters as clusters_pb
+from PB.go.chromium.org.luci.analysis.proto.v1 import common as common_pb
+from PB.go.chromium.org.luci.analysis.proto.v1 import predicate as predicate_pb
+from PB.go.chromium.org.luci.analysis.proto.v1 import test_verdict as test_verdict_pb
+
+from RECIPE_MODULES.recipe_engine import luci_analysis
+
 import re
 import attr
 
@@ -31,7 +41,15 @@ CLUSTER_STEP_NAME = 'cluster failing test results with luci analysis'
 
 class LuciAnalysisApi(recipe_api.RecipeApi):
 
-  def _run(self, step_name, rpc_endpoint, request_input, step_test_data=None):
+  m: luci_analysis.DEPS
+
+  def _run(
+      self,
+      step_name: str,
+      rpc_endpoint: str,
+      request_input: Mapping[str, Any],
+      step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
+  ) -> Any:
     args = [
         'prpc',
         'call',
@@ -49,7 +67,9 @@ class LuciAnalysisApi(recipe_api.RecipeApi):
         request_input, indent=2)
     return result.stdout
 
-  def _query_failure_rate_step_test_data(self, test_ids):
+  def _query_failure_rate_step_test_data(
+      self, test_ids: Sequence[str]
+  ) -> recipe_test_api.StepTestData:
     analysis_by_test_id = self._test_data.get('query_failure_rate_results', {})
     intervals = [{
         "endTime": "2022-12-01T18:49:23.160302198Z",
@@ -73,7 +93,7 @@ class LuciAnalysisApi(recipe_api.RecipeApi):
         "startTime": "2022-11-24T18:49:23.160302198Z"
     }]
 
-    def _create_individual_test_variant(test_id):
+    def _create_individual_test_variant(test_id: str) -> dict[str, Any]:
       if test_id not in analysis_by_test_id:
         return self.test_api.generate_analysis(test_id=test_id)
       return analysis_by_test_id[test_id]
@@ -83,7 +103,11 @@ class LuciAnalysisApi(recipe_api.RecipeApi):
         'testVariants': [_create_individual_test_variant(t) for t in test_ids],
     })
 
-  def query_failure_rate(self, test_and_variant_list, project='chromium'):
+  def query_failure_rate(
+      self,
+      test_and_variant_list: Sequence[Mapping[str, str]],
+      project: str = 'chromium',
+  ) -> list[TestVariantFailureRateAnalysis] | dict[Any, Any]:
     """Queries LUCI Analysis for failure rates
 
     Args:
@@ -116,7 +140,11 @@ class LuciAnalysisApi(recipe_api.RecipeApi):
           for d in failure_analysis_dicts
       ]
 
-  def query_stability(self, test_variant_position_list, project='chromium'):
+  def query_stability(
+      self,
+      test_variant_position_list: Sequence[Mapping[str, Any]],
+      project: str = 'chromium',
+  ) -> tuple[list[TestVariantStabilityAnalysis], TestStabilityCriteria]:
     """Queries LUCI Analysis for test stability.
 
     Args:
@@ -152,15 +180,17 @@ class LuciAnalysisApi(recipe_api.RecipeApi):
           TestStabilityCriteria(),
           ignore_unknown_fields=True)
 
-  def query_test_history(self,
-                         test_id,
-                         project='chromium',
-                         sub_realm=None,
-                         variant_predicate=None,
-                         partition_time_range=None,
-                         submitted_filter=None,
-                         page_size=1000,
-                         page_token=None):
+  def query_test_history(
+      self,
+      test_id: str,
+      project: str = 'chromium',
+      sub_realm: str | None = None,
+      variant_predicate: predicate_pb.VariantPredicate | None = None,
+      partition_time_range: common_pb.TimeRange | None = None,
+      submitted_filter: common_pb.SubmittedFilter | int | None = None,
+      page_size: int = 1000,
+      page_token: str | None = None,
+  ) -> tuple[Sequence[test_verdict_pb.TestVerdict], str]:
     """A wrapper method to use `luci.analysis.v1.TestHistory` `Query` API.
 
     Args:
@@ -213,13 +243,15 @@ class LuciAnalysisApi(recipe_api.RecipeApi):
         response_json, QueryTestHistoryResponse(), ignore_unknown_fields=True)
     return response.verdicts, response.next_page_token
 
-  def query_variants(self,
-                     test_id,
-                     project='chromium',
-                     sub_realm=None,
-                     variant_predicate=None,
-                     page_size=1000,
-                     page_token=None):
+  def query_variants(
+      self,
+      test_id: str,
+      project: str = 'chromium',
+      sub_realm: str | None = None,
+      variant_predicate: predicate_pb.VariantPredicate | None = None,
+      page_size: int = 1000,
+      page_token: str | None = None,
+  ) -> tuple[Sequence[QueryVariantsResponse.VariantInfo], str]:
     """A wrapper method to use `luci.analysis.v1.TestHistory` `QueryVariants`
     API.
 
@@ -262,7 +294,7 @@ class LuciAnalysisApi(recipe_api.RecipeApi):
         response_json, QueryVariantsResponse(), ignore_unknown_fields=True)
     return response.variants, response.next_page_token
 
-  def lookup_bug(self, bug_id, system='monorail'):
+  def lookup_bug(self, bug_id: str, system: str = 'monorail') -> list[str]:
     """Looks up the rule associated with a given bug.
 
     This is a wrapper of `luci.analysis.v1.Rules` `LookupBug` API.
@@ -286,7 +318,7 @@ class LuciAnalysisApi(recipe_api.RecipeApi):
         step_test_data=lambda: self.m.json.test_api.output_stream({}))
     return response_json.get('rules', [])
 
-  def rule_name_to_cluster_name(self, rule):
+  def rule_name_to_cluster_name(self, rule: str) -> str:
     """Convert the resource name for a rule to its corresponding cluster.
     Args:
       rule (str): Format: projects/{project}/rules/{rule_id}
@@ -297,7 +329,9 @@ class LuciAnalysisApi(recipe_api.RecipeApi):
     return re.sub(r'projects/(\w+)/rules/(\w+)',
                   'projects/\\1/clusters/rules/\\2', rule)
 
-  def query_cluster_failures(self, cluster_name):
+  def query_cluster_failures(
+      self, cluster_name: str
+  ) -> Sequence[clusters_pb.DistinctClusterFailure]:
     """Queries examples of failures in the given cluster.
 
     This is a wrapper of `luci.analysis.v1.Clusters` `QueryClusterFailures` API.

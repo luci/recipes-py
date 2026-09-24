@@ -4,6 +4,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+from typing import Any
+from PB.go.chromium.org.luci.analysis.proto.v1 import clusters as clusters_pb
+from PB.go.chromium.org.luci.analysis.proto.v1 import test_history as test_history_pb
+
 from google.protobuf import json_format
 from google.protobuf import timestamp_pb2
 from google.protobuf.message import Message
@@ -13,7 +18,9 @@ from recipe_engine import recipe_test_api
 
 class LuciAnalysisTestApi(recipe_test_api.RecipeTestApi):
 
-  def construct_recent_verdicts(self, expected_count, unexpected_count):
+  def construct_recent_verdicts(
+      self, expected_count: int, unexpected_count: int
+  ) -> list[dict[str, Any]]:
     verdicts = []
     for i in range(expected_count):
       verdicts.append({
@@ -27,7 +34,9 @@ class LuciAnalysisTestApi(recipe_test_api.RecipeTestApi):
       })
     return verdicts
 
-  def construct_flaky_verdict_examples(self, example_times):
+  def construct_flaky_verdict_examples(
+      self, example_times: Sequence[int] | None
+  ) -> list[dict[str, str]]:
     verdict_examples = []
     if example_times:
       for example_time in example_times:
@@ -37,12 +46,14 @@ class LuciAnalysisTestApi(recipe_test_api.RecipeTestApi):
         })
     return verdict_examples
 
-  def generate_analysis(self,
-                        test_id,
-                        expected_count=10,
-                        unexpected_count=0,
-                        flaky_verdict_counts=(0, 0),
-                        examples_times=None):
+  def generate_analysis(
+      self,
+      test_id: str,
+      expected_count: int = 10,
+      unexpected_count: int = 0,
+      flaky_verdict_counts: Sequence[int] = (0, 0),
+      examples_times: Sequence[int] | None = None,
+  ) -> dict[str, Any]:
     interval_stats = [{
         'intervalAge': i + 1,
         'totalRunExpectedVerdicts': 300,
@@ -68,7 +79,9 @@ class LuciAnalysisTestApi(recipe_test_api.RecipeTestApi):
 
   @recipe_test_api.mod_test_data
   @staticmethod
-  def query_failure_rate_results(analysis_list):
+  def query_failure_rate_results(
+      analysis_list: Sequence[Mapping[str, Any]],
+  ) -> dict[str, Mapping[str, Any]]:
     """Returns a test_id -> analysis dict to be used by the luci_analysis module
 
     analysis_list: List of analysis dicts created from generate_analysis()
@@ -79,12 +92,12 @@ class LuciAnalysisTestApi(recipe_test_api.RecipeTestApi):
 
   def generate_stability_analysis(
       self,
-      test_id,
-      failure_rate_is_met=False,
-      flake_rate_is_met=False,
-      run_flaky_verdicts_1wd=0,
-      run_flaky_verdicts_12h=0,
-  ):
+      test_id: str,
+      failure_rate_is_met: bool = False,
+      flake_rate_is_met: bool = False,
+      run_flaky_verdicts_1wd: int = 0,
+      run_flaky_verdicts_12h: int = 0,
+  ) -> dict[str, Any]:
     analysis = self.query_stability_example_analysis()
     analysis['testId'] = test_id
     analysis['failureRate']['isMet'] = failure_rate_is_met
@@ -94,7 +107,9 @@ class LuciAnalysisTestApi(recipe_test_api.RecipeTestApi):
 
     return analysis
 
-  def generate_stability_response(self, stability_list):
+  def generate_stability_response(
+      self, stability_list: Sequence[Mapping[str, Any]]
+  ) -> dict[str, Any]:
     """Returns a fake luci.analysis.v1.TestVariants.QueryStabilityResponse
 
     stability_list: List of stability dicts created from
@@ -117,11 +132,13 @@ class LuciAnalysisTestApi(recipe_test_api.RecipeTestApi):
         }
     }
 
-  def query_test_history(self,
-                         response,
-                         test_id,
-                         parent_step_name=None,
-                         step_iteration=1):
+  def query_test_history(
+      self,
+      response: test_history_pb.QueryTestHistoryResponse,
+      test_id: str,
+      parent_step_name: str | None = None,
+      step_iteration: int = 1,
+  ) -> recipe_test_api.TestData:
     """Emulates query_test_history() return value.
     Args:
       response: (luci.analysis.v1.test_history.QueryTestHistoryResponse) the
@@ -145,11 +162,13 @@ class LuciAnalysisTestApi(recipe_test_api.RecipeTestApi):
         step_name,
         self.m.json.output_stream(json_format.MessageToDict(response)))
 
-  def query_variants(self,
-                     response,
-                     test_id,
-                     parent_step_name=None,
-                     step_iteration=1):
+  def query_variants(
+      self,
+      response: test_history_pb.QueryVariantsResponse,
+      test_id: str,
+      parent_step_name: str | None = None,
+      step_iteration: int = 1,
+  ) -> recipe_test_api.TestData:
     """Emulates query_variants() return value.
     Args:
       response (luci.analysis.v1.test_history.QueryVariantsResponse): the
@@ -173,12 +192,14 @@ class LuciAnalysisTestApi(recipe_test_api.RecipeTestApi):
         step_name,
         self.m.json.output_stream(json_format.MessageToDict(response)))
 
-  def lookup_bug(self,
-                 rules,
-                 bug_id,
-                 system='monorail',
-                 parent_step_name=None,
-                 step_iteration=1):
+  def lookup_bug(
+      self,
+      rules: Sequence[str],
+      bug_id: str,
+      system: str = 'monorail',
+      parent_step_name: str | None = None,
+      step_iteration: int = 1,
+  ) -> recipe_test_api.TestData:
     """Emulates lookup_bug() return value.
     Args:
       rules (list of rules): Format: projects/{project}/rules/{rule_id}
@@ -200,11 +221,15 @@ class LuciAnalysisTestApi(recipe_test_api.RecipeTestApi):
     return self.step_data(step_name,
                           self.m.json.output_stream({'rules': rules}))
 
-  def query_cluster_failures(self,
-                             failures,
-                             cluster_name,
-                             parent_step_name=None,
-                             step_iteration=1):
+  def query_cluster_failures(
+      self,
+      failures: Sequence[
+          clusters_pb.DistinctClusterFailure | Mapping[str, Any]
+      ],
+      cluster_name: str,
+      parent_step_name: str | None = None,
+      step_iteration: int = 1,
+  ) -> recipe_test_api.TestData:
     """Emulates query_cluster_failures() return value.
     Args:
       failures (list of DistinctClusterFailure): https://bit.ly/DistinctClusterFailure
@@ -230,7 +255,7 @@ class LuciAnalysisTestApi(recipe_test_api.RecipeTestApi):
         }))
 
   @staticmethod
-  def query_stability_example_input():
+  def query_stability_example_input() -> list[dict[str, Any]]:
     return [{
         "testId": "tast.lockscreen.CloseLid.fieldtrial_testing_config_on",
         "variant": {
@@ -257,7 +282,7 @@ class LuciAnalysisTestApi(recipe_test_api.RecipeTestApi):
     }]
 
   @staticmethod
-  def query_stability_example_analysis():
+  def query_stability_example_analysis() -> dict[str, Any]:
     return {
         "testId": "tast.lockscreen.CloseLid.fieldtrial_testing_config_on",
         "variant": {
@@ -311,7 +336,7 @@ class LuciAnalysisTestApi(recipe_test_api.RecipeTestApi):
     }
 
   @staticmethod
-  def query_stability_example_output():
+  def query_stability_example_output() -> dict[str, Any]:
     return {
         "testVariants": [
             LuciAnalysisTestApi.query_stability_example_analysis()

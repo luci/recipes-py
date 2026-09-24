@@ -5,6 +5,9 @@
 """Tests for query_stability."""
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from google.protobuf import json_format
 
 from PB.recipe_modules.recipe_engine.luci_analysis.tests import query_stability_test as query_stability_test_pb
@@ -77,7 +80,7 @@ message InputProperties {
 PROPERTIES = query_stability_test_pb.InputProperties
 
 
-def RunSteps(api: DEPS, props: query_stability_test_pb.InputProperties):
+def RunSteps(api: DEPS, props: query_stability_test_pb.InputProperties) -> None:
   input_list = [
       json_format.MessageToDict(i, preserving_proto_field_name=False)
       for i in props.input_list
@@ -87,7 +90,7 @@ def RunSteps(api: DEPS, props: query_stability_test_pb.InputProperties):
   api.assertions.assertIsNotNone(criteria)
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   input_list_dicts = api.luci_analysis.query_stability_example_input()
   input_list = [
       json_format.ParseDict(
