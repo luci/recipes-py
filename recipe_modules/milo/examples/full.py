@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 
 from dataclasses import dataclass
@@ -26,7 +29,7 @@ class TEST_DEPS(RecipeTestApi):
   pass
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   api.milo.current_results_url
   api.buildbucket.host = api.buildbucket.HOST_DEV
   api.milo.current_results_url
@@ -47,5 +50,5 @@ def RunSteps(api: DEPS):
   ])
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('basic')

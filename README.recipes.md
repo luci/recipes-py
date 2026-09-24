@@ -3002,23 +3002,23 @@ Args:
 
 API for specifying Milo behavior.
 
-#### **class [MiloApi](/recipe_modules/milo/api.py#19)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [MiloApi](/recipe_modules/milo/api.py#25)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 A module for interacting with Milo.
 
-&emsp; **@property**<br>&mdash; **def [current\_results\_url](/recipe_modules/milo/api.py#35)(self):**
+&emsp; **@property**<br>&mdash; **def [current\_results\_url](/recipe_modules/milo/api.py#43)(self):**
 
 Returns a Milo URL to view the current invocation's results.
 
 eg: https://luci-milo.appspot.com/ui/inv/some-inv-name
 
-&emsp; **@property**<br>&mdash; **def [host](/recipe_modules/milo/api.py#25)(self):**
+&emsp; **@property**<br>&mdash; **def [host](/recipe_modules/milo/api.py#33)(self):**
 
 Hostname of Milo instance corresponding to the current build.
 
 Defaults to the prod instance, but will try to detect when using dev.
 
-&mdash; **def [show\_blamelist\_for](/recipe_modules/milo/api.py#44)(self, gitiles_commits):**
+&mdash; **def [show\_blamelist\_for](/recipe_modules/milo/api.py#52)(self, gitiles_commits: Sequence[(common_pb2.GitilesCommit | Mapping[(str, Any)])]):**
 
 Specifies which commits and repos Milo should show a blamelist for.
 
@@ -6059,10 +6059,10 @@ Tests for query_variants.
 &mdash; **def [RunSteps](/recipe_modules/luci_config/tests/full.py#33)(api: DEPS):**
 ### *recipes* / [milo:examples/full](/recipe_modules/milo/examples/full.py)
 
-[DEPS](/recipe_modules/milo/examples/full.py#19): [buildbucket](#recipe_modules-buildbucket), [milo](#recipe_modules-milo)
+[DEPS](/recipe_modules/milo/examples/full.py#22): [buildbucket](#recipe_modules-buildbucket), [milo](#recipe_modules-milo)
 
 
-&mdash; **def [RunSteps](/recipe_modules/milo/examples/full.py#29)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/milo/examples/full.py#32)(api: DEPS):**
 ### *recipes* / [nodejs:examples/full](/recipe_modules/nodejs/examples/full.py)
 
 [DEPS](/recipe_modules/nodejs/examples/full.py#21): [nodejs](#recipe_modules-nodejs), [platform](#recipe_modules-platform), [step](#recipe_modules-step)

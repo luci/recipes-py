@@ -6,9 +6,15 @@
 
 from __future__ import annotations
 
+from RECIPE_MODULES.recipe_engine import milo
+
 import re
 
+from collections.abc import Mapping, Sequence
+from typing import Any, TypeVar
 from google import protobuf
+
+_MsgT = TypeVar('_MsgT', bound=protobuf.message.Message)
 from google.protobuf import json_format
 
 from recipe_engine import recipe_api
@@ -19,11 +25,13 @@ from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 class MiloApi(recipe_api.RecipeApi):
   """A module for interacting with Milo."""
 
+  m: milo.DEPS
+
   HOST_PROD = 'https://ci.chromium.org'
   HOST_DEV = 'https://luci-milo-dev.appspot.com'
 
   @property
-  def host(self):
+  def host(self) -> str:
     """Hostname of Milo instance corresponding to the current build.
 
     Defaults to the prod instance, but will try to detect when using dev.
@@ -33,7 +41,7 @@ class MiloApi(recipe_api.RecipeApi):
     return self.HOST_PROD
 
   @property
-  def current_results_url(self):
+  def current_results_url(self) -> str:
     """Returns a Milo URL to view the current invocation's results.
 
     eg: https://luci-milo.appspot.com/ui/inv/some-inv-name
@@ -41,7 +49,10 @@ class MiloApi(recipe_api.RecipeApi):
     inv_name = self.m.resultdb.current_invocation.removeprefix('invocations/')
     return f'{self.host}/ui/inv/{inv_name}'
 
-  def show_blamelist_for(self, gitiles_commits):
+  def show_blamelist_for(
+      self,
+      gitiles_commits: Sequence[common_pb2.GitilesCommit | Mapping[str, Any]],
+  ) -> None:
     """Specifies which commits and repos Milo should show a blamelist for.
 
     If not set, Milo will only show a blamelist for the main repo in which this
@@ -78,7 +89,7 @@ class MiloApi(recipe_api.RecipeApi):
     res.presentation.properties[prop_name] = [
         json_format.MessageToDict(c) for c in gitiles_commits]
 
-def _as_msg(value, typ):
+def _as_msg(value: _MsgT | Mapping[str, Any], typ: type[_MsgT]) -> _MsgT:
   """Converts a dict to the specified proto type if necessary.
 
   Allows functions to accept either proto messages or dicts of the same
