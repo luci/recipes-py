@@ -2932,20 +2932,20 @@ Returns:
 [DEPS](/recipe_modules/luci_config/__init__.py#19): [buildbucket](#recipe_modules-buildbucket), [file](#recipe_modules-file), [proto](#recipe_modules-proto), [step](#recipe_modules-step), [url](#recipe_modules-url)
 
 
-#### **class [LuciConfigApi](/recipe_modules/luci_config/api.py#20)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [LuciConfigApi](/recipe_modules/luci_config/api.py#24)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 Module for polling and parsing luci config files via the luci-config API.
 
 Depends on `prpc` binary being available in $PATH:
     https://godoc.org/go.chromium.org/luci/grpc/cmd/prpc
 
-&mdash; **def [buildbucket](/recipe_modules/luci_config/api.py#166)(self, \*\*kwargs):**
+&mdash; **def [buildbucket](/recipe_modules/luci_config/api.py#172)(self, \*\*kwargs: Any):**
 
-&mdash; **def [clear\_cache](/recipe_modules/luci_config/api.py#31)(self):**
+&mdash; **def [clear\_cache](/recipe_modules/luci_config/api.py#37)(self):**
 
-&mdash; **def [commit\_queue](/recipe_modules/luci_config/api.py#170)(self, config_name: (str | None)=None, \*\*kwargs):**
+&mdash; **def [commit\_queue](/recipe_modules/luci_config/api.py#176)(self, config_name: (str | None)=None, \*\*kwargs: Any):**
 
-&mdash; **def [fetch\_config](/recipe_modules/luci_config/api.py#87)(self, config_name: str, message_type: MessageType, project: (str | None)=None, local_dir: (config_types.Path | None)=None, allow_unknown_fields: bool=False, allow_cache: bool=True):**
+&mdash; **def [fetch\_config](/recipe_modules/luci_config/api.py#93)(self, config_name: str, message_type: MessageType, project: (str | None)=None, local_dir: (config_types.Path | None)=None, allow_unknown_fields: bool=False, allow_cache: bool=True):**
 
 Fetch and parse config file from the luci-config API as a proto.
 
@@ -2972,7 +2972,7 @@ Args:
     allow_cache: Allow retrieving from a cache if we've already retrieved
         this config before.
 
-&mdash; **def [fetch\_config\_raw](/recipe_modules/luci_config/api.py#34)(self, config_name: str, project: (str | None)=None, local_dir: (config_types.Path | None)=None, allow_cache: bool=True):**
+&mdash; **def [fetch\_config\_raw](/recipe_modules/luci_config/api.py#40)(self, config_name: str, project: (str | None)=None, local_dir: (config_types.Path | None)=None, allow_cache: bool=True):**
 
 Fetch and parse config file from the luci-config API as a proto.
 
@@ -2992,9 +2992,9 @@ Args:
     allow_cache: Allow retrieving from a cache if we've already retrieved
         this config before.
 
-&mdash; **def [milo](/recipe_modules/luci_config/api.py#178)(self, \*\*kwargs):**
+&mdash; **def [milo](/recipe_modules/luci_config/api.py#184)(self, \*\*kwargs: Any):**
 
-&mdash; **def [scheduler](/recipe_modules/luci_config/api.py#181)(self, \*\*kwargs):**
+&mdash; **def [scheduler](/recipe_modules/luci_config/api.py#187)(self, \*\*kwargs: Any):**
 ### *recipe_modules* / [milo](/recipe_modules/milo)
 
 [DEPS](/recipe_modules/milo/__init__.py#23): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [resultdb](#recipe_modules-resultdb), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
@@ -6053,10 +6053,10 @@ Tests for query_variants.
 &mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/test_query_variants.py#32)(api: DEPS):**
 ### *recipes* / [luci\_config:tests/full](/recipe_modules/luci_config/tests/full.py)
 
-[DEPS](/recipe_modules/luci_config/tests/full.py#21): [buildbucket](#recipe_modules-buildbucket), [luci\_config](#recipe_modules-luci_config), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/luci_config/tests/full.py#24): [buildbucket](#recipe_modules-buildbucket), [luci\_config](#recipe_modules-luci_config), [path](#recipe_modules-path)
 
 
-&mdash; **def [RunSteps](/recipe_modules/luci_config/tests/full.py#33)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/luci_config/tests/full.py#36)(api: DEPS):**
 ### *recipes* / [milo:examples/full](/recipe_modules/milo/examples/full.py)
 
 [DEPS](/recipe_modules/milo/examples/full.py#22): [buildbucket](#recipe_modules-buildbucket), [milo](#recipe_modules-milo)

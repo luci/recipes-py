@@ -4,6 +4,10 @@
 
 from __future__ import annotations
 
+from typing import Any
+
+from RECIPE_MODULES.recipe_engine import luci_config
+
 import base64
 from typing import TypeVar
 
@@ -24,11 +28,13 @@ class LuciConfigApi(recipe_api.RecipeApi):
       https://godoc.org/go.chromium.org/luci/grpc/cmd/prpc
   """
 
-  def __init__(self, *args, **kwargs):
+  m: luci_config.DEPS
+
+  def __init__(self, *args: Any, **kwargs: Any) -> None:
     super().__init__(*args, **kwargs)
     self._config_cache = {}
 
-  def clear_cache(self):
+  def clear_cache(self) -> None:
     self._config_cache = {}
 
   def fetch_config_raw(
@@ -163,21 +169,21 @@ class LuciConfigApi(recipe_api.RecipeApi):
       raise Exception(f"Unexpected content type for {config_name}: "
                       f"{resp.WhichOneof('content')}")
 
-  def buildbucket(self, **kwargs) -> bb_pb2.BuildbucketCfg:
+  def buildbucket(self, **kwargs: Any) -> bb_pb2.BuildbucketCfg:
     return self.fetch_config("cr-buildbucket.cfg", bb_pb2.BuildbucketCfg,
                              **kwargs)
 
   def commit_queue(self, config_name: str | None = None,
-                   **kwargs) -> cv_config_pb2.Config:
+                   **kwargs: Any) -> cv_config_pb2.Config:
     # Support loading a CQ config file with a non-default name to support
     # projects that don't want a dedicated CQ instance but for which we
     # still want to know which tryjobs exist.
     config_name = config_name or "commit-queue.cfg"
     return self.fetch_config(config_name, cv_config_pb2.Config, **kwargs)
 
-  def milo(self, **kwargs) -> milo_pb2.Project:
+  def milo(self, **kwargs: Any) -> milo_pb2.Project:
     return self.fetch_config("luci-milo.cfg", milo_pb2.Project, **kwargs)
 
-  def scheduler(self, **kwargs) -> scheduler_pb2.ProjectConfig:
+  def scheduler(self, **kwargs: Any) -> scheduler_pb2.ProjectConfig:
     return self.fetch_config("luci-scheduler.cfg", scheduler_pb2.ProjectConfig,
                              **kwargs)

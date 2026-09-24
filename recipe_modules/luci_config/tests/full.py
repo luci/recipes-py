@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from PB.go.chromium.org.luci.cv.api.config.v2 import config as cv_config_pb2
 from PB.go.chromium.org.luci.milo.proto.projectconfig import project as milo_pb2
 
@@ -30,7 +33,7 @@ class TEST_DEPS(RecipeTestApi):
   luci_config: luci_config.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   assert api.luci_config.commit_queue(local_dir=api.path.start_dir)
   assert api.luci_config.buildbucket()
   assert api.luci_config.milo()
@@ -42,7 +45,7 @@ def RunSteps(api: DEPS):
   assert api.luci_config.milo()
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       "basic",
       api.buildbucket.try_build(project="project"),
