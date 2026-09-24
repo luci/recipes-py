@@ -1506,9 +1506,9 @@ with api.context(cwd=api.path.start_dir / 'subdir'):
   api.step("cat subdir/foo", ['cat', './foo'])
 ```
 
-#### **class [ContextApi](/recipe_modules/context/api.py#80)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [ContextApi](/recipe_modules/context/api.py#86)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/context/api.py#112)(self, cwd: (config_types.Path | None)=None, env_prefixes: (Mapping[(str, Sequence[str])] | None)=None, env_suffixes: (Mapping[(str, Sequence[str])] | None)=None, env: (Mapping[(str, str)] | None)=None, infra_steps: (bool | None)=None, luciexe: (sections_pb2.LUCIExe | None)=None, realm: str=None, deadline: (sections_pb2.Deadline | None)=None):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/context/api.py#120)(self, cwd: (config_types.Path | None)=None, env_prefixes: (Mapping[(str, Sequence[(str | Path)])] | None)=None, env_suffixes: (Mapping[(str, Sequence[(str | Path)])] | None)=None, env: (Mapping[(str, (str | None))] | None)=None, infra_steps: (bool | None)=None, luciexe: (sections_pb2.LUCIExe | None)=None, realm: (str | None)=None, deadline: (sections_pb2.Deadline | None)=None):**
 
 Allows adjustment of multiple context values in a single call.
 
@@ -1558,7 +1558,7 @@ as the last path component if it is not empty.
 
 Look at the examples in "examples/" for examples of context module usage.
 
-&emsp; **@property**<br>&mdash; **def [cwd](/recipe_modules/context/api.py#263)(self):**
+&emsp; **@property**<br>&mdash; **def [cwd](/recipe_modules/context/api.py#279)(self):**
 
 Returns the current working directory that steps will run in.
 
@@ -1566,13 +1566,13 @@ Returns the current working directory that steps will run in.
 equivalent to api.path.start_dir, though only occurs if no cwd has been
 set (e.g. in the outermost context of RunSteps).
 
-&emsp; **@property**<br>&mdash; **def [deadline](/recipe_modules/context/api.py#356)(self):**
+&emsp; **@property**<br>&mdash; **def [deadline](/recipe_modules/context/api.py#372)(self):**
 
 Returns the current value (sections_pb2.Deadline) of deadline section in
 the current LUCI_CONTEXT. Returns `{grace_period: 30}` if deadline is not
 defined, per LUCI_CONTEXT spec.
 
-&emsp; **@property**<br>&mdash; **def [env](/recipe_modules/context/api.py#273)(self):**
+&emsp; **@property**<br>&mdash; **def [env](/recipe_modules/context/api.py#289)(self):**
 
 Returns modifications to the environment.
 
@@ -1583,7 +1583,7 @@ https://chromium.googlesource.com/infra/luci/recipes-py/+/refs/heads/main/doc/us
 **Returns (dict)** - The env-key -> value mapping of current environment
   modifications.
 
-&emsp; **@property**<br>&mdash; **def [env\_prefixes](/recipe_modules/context/api.py#288)(self):**
+&emsp; **@property**<br>&mdash; **def [env\_prefixes](/recipe_modules/context/api.py#304)(self):**
 
 Returns Path prefix modifications to the environment.
 
@@ -1593,7 +1593,7 @@ prefixes registered with the environment.
 **Returns (dict)** - The env-key -> value(Path) mapping of current
 environment prefix modifications.
 
-&emsp; **@property**<br>&mdash; **def [env\_suffixes](/recipe_modules/context/api.py#302)(self):**
+&emsp; **@property**<br>&mdash; **def [env\_suffixes](/recipe_modules/context/api.py#318)(self):**
 
 Returns Path suffix modifications to the environment.
 
@@ -1603,34 +1603,34 @@ suffixes registered with the environment.
 **Returns (dict)** - The env-key -> value(Path) mapping of current
 environment suffix modifications.
 
-&emsp; **@property**<br>&mdash; **def [infra\_step](/recipe_modules/context/api.py#316)(self):**
+&emsp; **@property**<br>&mdash; **def [infra\_step](/recipe_modules/context/api.py#332)(self):**
 
 Returns the current value of the infra_step setting.
 
 **Returns (bool)** - True iff steps are currently considered infra steps.
 
-&mdash; **def [initialize](/recipe_modules/context/api.py#90)(self):**
+&mdash; **def [initialize](/recipe_modules/context/api.py#98)(self):**
 
-&emsp; **@property**<br>&mdash; **def [luci\_context](/recipe_modules/context/api.py#324)(self):**
+&emsp; **@property**<br>&mdash; **def [luci\_context](/recipe_modules/context/api.py#340)(self):**
 
 Returns the currently tracked LUCI_CONTEXT sections as a dict of proto
 messages.
 
 Only contains `luciexe`, `realm`, 'resultdb' and `deadline`.
 
-&emsp; **@property**<br>&mdash; **def [luciexe](/recipe_modules/context/api.py#336)(self):**
+&emsp; **@property**<br>&mdash; **def [luciexe](/recipe_modules/context/api.py#352)(self):**
 
 Returns the current value (sections_pb2.LUCIExe) of luciexe section in
 the current LUCI_CONTEXT. Returns None if luciexe is not defined.
 
-&emsp; **@property**<br>&mdash; **def [realm](/recipe_modules/context/api.py#346)(self):**
+&emsp; **@property**<br>&mdash; **def [realm](/recipe_modules/context/api.py#362)(self):**
 
 Returns the LUCI realm of the current context.
 
 May return None if the task is not running in the realm-aware mode. This is
 a transitional period. Eventually all tasks will be associated with realms.
 
-&emsp; **@property**<br>&mdash; **def [resultdb\_invocation\_name](/recipe_modules/context/api.py#367)(self):**
+&emsp; **@property**<br>&mdash; **def [resultdb\_invocation\_name](/recipe_modules/context/api.py#383)(self):**
 
 Returns the ResultDB invocation name of the current context.
 
@@ -5310,40 +5310,40 @@ Generates response Runs for a test.
 &mdash; **def [RunSteps](/recipe_modules/commit_position/examples/full.py#25)(api: DEPS):**
 ### *recipes* / [context:examples/full](/recipe_modules/context/examples/full.py)
 
-[DEPS](/recipe_modules/context/examples/full.py#24): [context](#recipe_modules-context), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/context/examples/full.py#27): [context](#recipe_modules-context), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
 
-&mdash; **def [RunSteps](/recipe_modules/context/examples/full.py#32)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/context/examples/full.py#35)(api: DEPS):**
 ### *recipes* / [context:tests/cwd](/recipe_modules/context/tests/cwd.py)
 
-[DEPS](/recipe_modules/context/tests/cwd.py#18): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/context/tests/cwd.py#21): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/context/tests/cwd.py#24)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/context/tests/cwd.py#27)(api: DEPS):**
 ### *recipes* / [context:tests/env](/recipe_modules/context/tests/env.py)
 
-[DEPS](/recipe_modules/context/tests/env.py#19): [context](#recipe_modules-context), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/context/tests/env.py#22): [context](#recipe_modules-context), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/context/tests/env.py#32)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/context/tests/env.py#35)(api: DEPS):**
 ### *recipes* / [context:tests/greenlet](/recipe_modules/context/tests/greenlet.py)
 
-[DEPS](/recipe_modules/context/tests/greenlet.py#18): [context](#recipe_modules-context), [futures](#recipe_modules-futures), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/context/tests/greenlet.py#21): [context](#recipe_modules-context), [futures](#recipe_modules-futures), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/context/tests/greenlet.py#24)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/context/tests/greenlet.py#27)(api: DEPS):**
 ### *recipes* / [context:tests/infra\_step](/recipe_modules/context/tests/infra_step.py)
 
-[DEPS](/recipe_modules/context/tests/infra_step.py#18): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/context/tests/infra_step.py#21): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/context/tests/infra_step.py#24)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/context/tests/infra_step.py#27)(api: DEPS):**
 ### *recipes* / [context:tests/luci\_context](/recipe_modules/context/tests/luci_context.py)
 
-[DEPS](/recipe_modules/context/tests/luci_context.py#21): [assertions](#recipe_modules-assertions), [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/context/tests/luci_context.py#26): [assertions](#recipe_modules-assertions), [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/context/tests/luci_context.py#33)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/context/tests/luci_context.py#38)(api: DEPS):**
 ### *recipes* / [cq:examples/ordered\_cls](/recipe_modules/cq/examples/ordered_cls.py)
 
 [DEPS](/recipe_modules/cq/examples/ordered_cls.py#25): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
@@ -29,7 +32,7 @@ class DEPS(RecipeScriptApi):
 _KEY = 'RECIPE_ENGINE_CONTEXT_TEST'
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   api.step('no env', ['echo', 'hello'])
 
   with api.context(env={'SOMETHING': '1'}):
@@ -42,7 +45,7 @@ def RunSteps(api: DEPS):
   # pass. However, when run through "run" or via "unittests/run_test.py", this
   # will process the real output environment variables and assert that they
   # match expectations.
-  def expect_step(name, exp):
+  def expect_step(name: str, exp: str) -> None:
     result = api.step(
         name,
         ['bash', '-c', 'echo -n $'+_KEY],
@@ -105,5 +108,5 @@ def RunSteps(api: DEPS):
       expect_step('env with empty value', str(shirt))
 
 
-def GenTests(api: RecipeTestApi):
+def GenTests(api: RecipeTestApi) -> Iterator[recipe_test_api.TestData]:
   yield api.test('basic')

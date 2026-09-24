@@ -4,6 +4,11 @@
 
 from __future__ import annotations
 
+from google.protobuf import message
+
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
 
 from dataclasses import dataclass
@@ -30,8 +35,10 @@ class TEST_DEPS(RecipeTestApi):
   context: context.TEST_API
 
 
-def RunSteps(api: DEPS):
-  def assert_msg_equal(expected, actual):
+def RunSteps(api: DEPS) -> None:
+  def assert_msg_equal(
+      expected: message.Message, actual: message.Message
+  ) -> None:
     api.assertions.assertEqual(
       expected.SerializeToString(deterministic=True),
       actual.SerializeToString(deterministic=True)
@@ -62,7 +69,7 @@ def RunSteps(api: DEPS):
                    api.context.luciexe)
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (
     api.test('basic')
     + api.context.luci_context(

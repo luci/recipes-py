@@ -28,6 +28,12 @@ with api.context(cwd=api.path.start_dir / 'subdir'):
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterator, Mapping, Sequence
+from typing import Any
+from google.protobuf import message
+
+from RECIPE_MODULES.recipe_engine import context
+
 import collections
 from collections.abc import Mapping
 import contextlib
@@ -42,7 +48,7 @@ from recipe_engine.engine_types import PerGreenletState, freeze
 
 from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
 
-def check_type(name, var, expect):
+def check_type(name: str, var: Any, expect: type) -> None:
   if not isinstance(var, expect):  # pragma: no cover
     raise TypeError('%s is not %s: %r (%s)' % (
       name, expect.__name__, var, type(var).__name__))
@@ -58,7 +64,7 @@ class State(PerGreenletState):
   infra_steps: bool = False
   luci_context = freeze({})
 
-  def _get_setter_on_spawn(self):
+  def _get_setter_on_spawn(self) -> Callable[[], None]:
     old_cwd = self.cwd
     old_env_prefixes = self.env_prefixes
     old_env_suffixes = self.env_suffixes
@@ -66,7 +72,7 @@ class State(PerGreenletState):
     old_infra_steps = self.infra_steps
     old_luci_context = self.luci_context
 
-    def _inner():
+    def _inner() -> None:
       self.cwd = old_cwd
       self.env_prefixes = old_env_prefixes
       self.env_suffixes = old_env_suffixes
@@ -78,10 +84,12 @@ class State(PerGreenletState):
 
 
 class ContextApi(recipe_api.RecipeApi):
+  m: context.DEPS
+
   _lucictx_client = recipe_api.RequireClient('lucictx')
 
   # TODO(iannucci): move implementation of these data directly into this class.
-  def __init__(self, **kwargs):
+  def __init__(self, **kwargs: Any) -> None:
     super().__init__(**kwargs)
 
     self._state = State()
@@ -113,14 +121,14 @@ class ContextApi(recipe_api.RecipeApi):
   def __call__(
       self,
       cwd: config_types.Path | None = None,
-      env_prefixes: Mapping[str, Sequence[str]] | None = None,
-      env_suffixes: Mapping[str, Sequence[str]] | None = None,
-      env: Mapping[str, str] | None = None,
+      env_prefixes: Mapping[str, Sequence[str | Path]] | None = None,
+      env_suffixes: Mapping[str, Sequence[str | Path]] | None = None,
+      env: Mapping[str, str | None] | None = None,
       infra_steps: bool | None = None,
       luciexe: sections_pb2.LUCIExe | None = None,
-      realm: str = None,
+      realm: str | None = None,
       deadline: sections_pb2.Deadline | None = None,
-  ):
+  ) -> Iterator[None]:
     """Allows adjustment of multiple context values in a single call.
 
     Args:
@@ -172,14 +180,18 @@ class ContextApi(recipe_api.RecipeApi):
     # Mapping of state member to value to assign on exit of this function.
     deferred_assignments = {}
 
-    def _push(state_member: str, new: Any):
+    def _push(state_member: str, new: Any) -> None:
       deferred_assignments[state_member] = _get_current(state_member)
       setattr(self._state, state_member, new)
 
-    def _get_current(state_member: str):
+    def _get_current(state_member: str) -> Any:
       return getattr(self._state, state_member)
 
-    def _add_to_context(state_member: str, to_add, adder_func):
+    def _add_to_context(
+        state_member: str,
+        to_add: Mapping[str, Any] | None,
+        adder_func: Callable[[str, Any, dict[str, Any]], None],
+    ) -> None:
       if to_add is not None and to_add:
         check_type(state_member, to_add, dict)
         new = dict(_get_current(state_member))
@@ -187,15 +199,19 @@ class ContextApi(recipe_api.RecipeApi):
           adder_func(key, val, new)
         _push(state_member, new)
 
-    def _as_env_prefixes(key, val, new):
+    def _as_env_prefixes(
+        key: str, val: Sequence[str | Path], new: dict[str, Any]
+    ) -> None:
       if val:
         new[key] = tuple(val) + new.get(key, ())
 
-    def _as_env_suffixes(key, val, new):
+    def _as_env_suffixes(
+        key: str, val: Sequence[str | Path], new: dict[str, Any]
+    ) -> None:
       if val:
         new[key] = new.get(key, ()) + tuple(val)
 
-    def _as_env(key, val, new):
+    def _as_env(key: str, val: Any, new: dict[str, Any]) -> None:
       if val is not None:
         val = str(val)
         try:
@@ -214,7 +230,7 @@ class ContextApi(recipe_api.RecipeApi):
                             'only %%(ENVVAR)s allowed: %r') % (val,))
       new[key] = val
 
-    def _override(key, val, new):
+    def _override(key: str, val: Any, new: dict[str, Any]) -> None:
       new[key] = val
 
     try:
@@ -322,7 +338,7 @@ class ContextApi(recipe_api.RecipeApi):
     return self._state.infra_steps
 
   @property
-  def luci_context(self):
+  def luci_context(self) -> dict[str, message.Message | None]:
     """Returns the currently tracked LUCI_CONTEXT sections as a dict of proto
     messages.
 

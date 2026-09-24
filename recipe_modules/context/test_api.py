@@ -10,7 +10,9 @@ from google.protobuf import json_format as jsonpb
 from recipe_engine import recipe_test_api
 
 class ContextTestApi(recipe_test_api.RecipeTestApi):
-  def luci_context(self, **section_pb_values):
+  def luci_context(
+      self, **section_pb_values: message.Message
+  ) -> recipe_test_api.TestData:
     """Sets the LUCI_CONTEXT for this test case.
 
     Args:
@@ -27,6 +29,6 @@ class ContextTestApi(recipe_test_api.RecipeTestApi):
     return ret
 
   @property
-  def realm(self):
+  def realm(self) -> None:
     """Placeholder for realm property."""
     return None

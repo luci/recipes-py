@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine import recipe_api, config
 
 from PB.go.chromium.org.luci.lucictx.sections import Deadline
@@ -29,7 +32,7 @@ class DEPS(RecipeScriptApi):
   time: time.API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   api.step('default step', ['bash', '-c', 'echo default!'])
 
   noop_context = {}
@@ -97,5 +100,5 @@ def RunSteps(api: DEPS):
         pass
 
 
-def GenTests(api: RecipeTestApi):
+def GenTests(api: RecipeTestApi) -> Iterator[recipe_test_api.TestData]:
   yield api.test('basic')
