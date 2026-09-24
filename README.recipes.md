@@ -1084,11 +1084,11 @@ This module has input properties which contains a list of CAS inputs to
 download. These can easily be download to disk with the 'download_caches'
 method, and subsequently used by a recipe in whatever relevant manner.
 
-#### **class [CasInputApi](/recipe_modules/cas_input/api.py#22)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [CasInputApi](/recipe_modules/cas_input/api.py#29)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 A module for downloading CAS inputs to a recipe.
 
-&mdash; **def [download\_caches](/recipe_modules/cas_input/api.py#34)(self, output_dir, caches=None):**
+&mdash; **def [download\_caches](/recipe_modules/cas_input/api.py#43)(self, output_dir: config_types.Path, caches: (Sequence[properties_pb.CasCache] | None)=None):**
 
 Downloads RBE-CAS caches and puts them in a given directory.
 
@@ -1102,7 +1102,7 @@ Args:
 Returns:
   The output directory as a Path object which contains all the cache data.
 
-&emsp; **@property**<br>&mdash; **def [input\_caches](/recipe_modules/cas_input/api.py#30)(self):**
+&emsp; **@property**<br>&mdash; **def [input\_caches](/recipe_modules/cas_input/api.py#39)(self):**
 ### *recipe_modules* / [change\_verifier](/recipe_modules/change_verifier)
 
 [DEPS](/recipe_modules/change_verifier/__init__.py#21): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [cv](#recipe_modules-cv), [luci\_config](#recipe_modules-luci_config), [proto](#recipe_modules-proto), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
@@ -5264,10 +5264,10 @@ This recipe tests the buildbucket.set_output_gitiles_commit function.
 &mdash; **def [RunSteps](/recipe_modules/cas/examples/full.py#38)(api: DEPS):**
 ### *recipes* / [cas\_input:examples/full](/recipe_modules/cas_input/examples/full.py)
 
-[DEPS](/recipe_modules/cas_input/examples/full.py#18): [cas\_input](#recipe_modules-cas_input), [path](#recipe_modules-path), [properties](#recipe_modules-properties)
+[DEPS](/recipe_modules/cas_input/examples/full.py#21): [cas\_input](#recipe_modules-cas_input), [path](#recipe_modules-path), [properties](#recipe_modules-properties)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cas_input/examples/full.py#33)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/cas_input/examples/full.py#36)(api: DEPS):**
 ### *recipes* / [change\_verifier:tests/match\_config](/recipe_modules/change_verifier/tests/match_config.py)
 
 [DEPS](/recipe_modules/change_verifier/tests/match_config.py#20): [buildbucket](#recipe_modules-buildbucket), [change\_verifier](#recipe_modules-change_verifier), [step](#recipe_modules-step)

@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
@@ -30,7 +33,7 @@ from PB.recipe_modules.recipe_engine.cas_input.properties import InputProperties
 from recipe_engine.post_process import StepSuccess, StepCommandContains, DropExpectation
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   if dd := api.properties.get('download_dir'):
     download_dir = api.path.abs_to_path(dd)
   else:
@@ -38,9 +41,12 @@ def RunSteps(api: DEPS):
   api.cas_input.download_caches(download_dir)
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
 
-  def cas_props(input_properties, download_dir=None):
+  def cas_props(
+      input_properties: CasInputProperties,
+      download_dir: str | None = None,
+  ) -> recipe_test_api.TestData:
     props = {
         '$recipe_engine/cas_input': input_properties,
     }
