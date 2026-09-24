@@ -3,6 +3,7 @@
 # that can be found in the LICENSE file.
 
 from __future__ import annotations
+from collections.abc import Sequence
 
 import datetime
 import re
@@ -16,7 +17,7 @@ from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 EPOCH = datetime.datetime.utcfromtimestamp(0)
 
 
-def parse_http_host_and_path(url):
+def parse_http_host_and_path(url: str) -> tuple[str | None, str | None]:
   parsed = urlparse(url)
   if not parsed.scheme:
     parsed = urlparse('https://' + url)
@@ -28,7 +29,7 @@ def parse_http_host_and_path(url):
   return None, None
 
 
-def parse_gitiles_repo_url(repo_url):
+def parse_gitiles_repo_url(repo_url: str) -> tuple[str, str]:
   host, project = parse_http_host_and_path(repo_url)
   if not (host and project and '+' not in project.split('/')):
     raise ValueError('invalid repo_url %s' % (repo_url,))
@@ -40,11 +41,11 @@ def parse_gitiles_repo_url(repo_url):
   return host, project
 
 
-def is_sha1_hex(sha1):
+def is_sha1_hex(sha1: str | None) -> bool | re.Match[str] | None:
   return sha1 and re.match('^[0-9a-f]{40}$', sha1)
 
 
-def tags(**tags) -> list[common_pb2.StringPair]:
+def tags(**tags: Sequence[str] | str) -> list[common_pb2.StringPair]:
   """Helper method to generate a list of StringPair messages.
 
   This method is useful to prepare tags argument for ci/try_build above and

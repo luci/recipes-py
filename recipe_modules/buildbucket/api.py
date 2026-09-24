@@ -9,6 +9,10 @@ https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 """
 
 from __future__ import annotations
+from typing import TypeVar
+from PB.go.chromium.org.luci.buildbucket.proto import builder_common as builder_common_pb
+
+from RECIPE_MODULES.recipe_engine import buildbucket
 
 from collections.abc import Mapping, Sequence, Set
 import contextlib
@@ -43,6 +47,8 @@ class Inherit(enum.Enum):
 class BuildbucketApi(recipe_api.RecipeApi):
   """A module for interacting with buildbucket."""
 
+  m: buildbucket.DEPS
+
   INHERIT = Inherit.INHERIT
 
   HOST_PROD = 'cr-buildbucket.appspot.com'
@@ -66,8 +72,13 @@ class BuildbucketApi(recipe_api.RecipeApi):
       'infra',
   })
 
-  def __init__(self, props: properties.InputProperties,
-               glob_props: properties.LegacyInputProperties, *args, **kwargs):
+  def __init__(
+      self,
+      props: properties.InputProperties,
+      glob_props: properties.LegacyInputProperties,
+      *args: Any,
+      **kwargs: Any,
+  ) -> None:
     super().__init__(*args, **kwargs)
     self._service_account_key = None
     self._host = props.build.infra.buildbucket.hostname or self.HOST_PROD
@@ -323,8 +334,9 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   # RPCs.
 
-  def _make_field_mask(self, paths: Set[str] = DEFAULT_FIELDS,
-                       path_prefix: str = ''):
+  def _make_field_mask(
+      self, paths: Set[str] = DEFAULT_FIELDS, path_prefix: str = ''
+  ) -> field_mask_pb2.FieldMask:
     """Returns a FieldMask message to use in requests."""
     paths = set(paths)
     if 'id' not in paths:
@@ -477,22 +489,31 @@ class BuildbucketApi(recipe_api.RecipeApi):
       the parent is a led build and `as_shadow_if_parent_is_led` is True.
     """
 
-    def as_msg(value, typ):
+    _M = TypeVar('_M', bound=protobuf.message.Message)
+
+    def as_msg(value: Mapping[str, Any] | _M, typ: type[_M]) -> _M:
       assert isinstance(value, (dict, protobuf.message.Message)), type(value)
       if isinstance(value, dict):
         value = typ(**value)
       return value
 
-    def copy_msg(src, dest):
+    def copy_msg(
+        src: Mapping[str, Any] | protobuf.message.Message,
+        dest: protobuf.message.Message,
+    ) -> None:
       dest.CopyFrom(as_msg(src, type(dest)))
 
-    def as_trinary(value):
+    def as_trinary(
+        value: bool | common_pb2.Trinary,
+    ) -> common_pb2.Trinary:
       assert isinstance(value, (bool, int))
       if isinstance(value, bool):
         value = common_pb2.YES if value else common_pb2.NO
       return value
 
-    def if_inherit(value, parent_value):
+    _T = TypeVar('_T')
+
+    def if_inherit(value: _T | Inherit, parent_value: _T) -> _T:
       if value is self.INHERIT:
         return parent_value
       return value
@@ -1409,8 +1430,13 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
 
 def _legacy_input_gerrit_changes(
-    dest_repeated,
-    patch_storage, patch_gerrit_url, patch_project, patch_issue, patch_set):
+    dest_repeated: Any,
+    patch_storage: str,
+    patch_gerrit_url: str,
+    patch_project: str,
+    patch_issue: int | str,
+    patch_set: int | str,
+) -> None:
   if patch_storage == 'gerrit' and patch_project:
     host, path = util.parse_http_host_and_path(patch_gerrit_url)
     if host and (not path or path == '/'):
@@ -1429,14 +1455,20 @@ def _legacy_input_gerrit_changes(
           return
 
 
-def _legacy_input_gitiles_commit(dest, revision, branch):
+def _legacy_input_gitiles_commit(
+    dest: common_pb2.GitilesCommit, revision: str, branch: str
+) -> None:
   if util.is_sha1_hex(revision):
     dest.id = revision
   if branch:
     dest.ref = 'refs/heads/%s' % branch
 
 
-def _legacy_builder_id(mastername, buildername, builder_id):
+def _legacy_builder_id(
+    mastername: str,
+    buildername: str,
+    builder_id: builder_common_pb.BuilderID,
+) -> None:
   if mastername:
     builder_id.bucket = 'master.%s' % mastername
   builder_id.builder = buildername or ''

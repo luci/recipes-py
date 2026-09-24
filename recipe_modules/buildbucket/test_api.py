@@ -3,6 +3,8 @@
 # that can be found in the LICENSE file.
 
 from __future__ import annotations
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 import datetime
 import json
@@ -27,7 +29,9 @@ from . import util
 
 
 class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
-  def build(self, build_message):
+  def build(
+      self, build_message: build_pb2.Build
+  ) -> recipe_test_api.TestData:
     """Emulates a buildbucket build.
 
     build_message is a buildbucket.build_pb2.Build.
@@ -55,12 +59,16 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     })
     return ret
 
-  def _default_git_repo(self, project):  # pragma: no cover
+  def _default_git_repo(self, project: str) -> str:  # pragma: no cover
     if 'internal' in project:
       return 'https://chrome-internal.googlesource.com/' + project
     return 'https://chromium.googlesource.com/' + project
 
-  def _set_time(self, dest, input_time: datetime.datetime | int) -> None:
+  def _set_time(
+      self,
+      dest: timestamp_pb2.Timestamp,
+      input_time: datetime.datetime | int | None,
+  ) -> None:
     if not input_time:
       return
 
@@ -72,26 +80,27 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
 
   def ci_build_message(
       self,
-      project='project',
-      bucket='ci',  # shortname.
-      builder='builder',
-      git_repo=None,
-      git_ref='refs/heads/main',
-      revision='2d72510e447ab60a9728aeea2362d8be2cbd7789',
-      build_number=0,
-      build_id=8945511751514863184,
-      priority=30,
-      tags=None,
-      status=None,
-      experiments=(),
-      exe=None,
-      execution_timeout=None,
-      start_time=None,
-      on_backend=False,
-      backend_target="swarming://chromium-swarm",
-      ancestor_ids=None,
-      summary_markdown=None,
-      created_by='user:luci-scheduler@appspot.gserviceaccount.com'):
+      project: str = 'project',
+      bucket: str = 'ci',
+      builder: str = 'builder',
+      git_repo: str | None = None,
+      git_ref: str = 'refs/heads/main',
+      revision: str = '2d72510e447ab60a9728aeea2362d8be2cbd7789',
+      build_number: int = 0,
+      build_id: int = 8945511751514863184,
+      priority: int = 30,
+      tags: Sequence[common_pb2.StringPair] | None = None,
+      status: str | None = None,
+      experiments: Sequence[str] = (),
+      exe: common_pb2.Executable | None = None,
+      execution_timeout: int | None = None,
+      start_time: datetime.datetime | int | None = None,
+      on_backend: bool = False,
+      backend_target: str = 'swarming://chromium-swarm',
+      ancestor_ids: Sequence[int] | None = None,
+      summary_markdown: str | None = None,
+      created_by: str = 'user:luci-scheduler@appspot.gserviceaccount.com',
+  ) -> build_pb2.Build:
     """Returns a typical buildbucket CI build scheduled by luci-scheduler."""
     git_repo = git_repo or self._default_git_repo(project)
     gitiles_host, gitiles_project = util.parse_gitiles_repo_url(git_repo)
@@ -152,7 +161,9 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
 
     return build
 
-  def ci_build(self, *args, **kwargs):
+  def ci_build(
+      self, *args: Any, **kwargs: Any
+  ) -> recipe_test_api.TestData:
     """Returns a typical buildbucket CI build scheduled by luci-scheduler.
 
     A shortcut for api.buildbucket.build(api.buildbucket.ci_build_message()).
@@ -165,31 +176,32 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
 
   def try_build_message(
       self,
-      project='project',
-      bucket='try',  # shortname.
-      builder='builder',
-      gerrit_changes=None,
-      git_repo=None,
-      git_ref='refs/heads/main',
-      change_number=123456,
-      patch_set=7,
-      revision=None,
-      build_number=0,
-      build_id=8945511751514863184,
-      critical='UNSET',  # other accepted values are ['YES', 'NO']
-      priority=30,
-      created_by=None,
-      tags=None,
-      status=None,
-      experiments=(),
-      exe=None,
-      execution_timeout=None,
-      start_time=None,
-      properties=None,
-      on_backend=False,
-      backend_target="swarming://chromium-swarm",
-      ancestor_ids=None,
-      summary_markdown=None):
+      project: str = 'project',
+      bucket: str = 'try',
+      builder: str = 'builder',
+      gerrit_changes: Sequence[common_pb2.GerritChange] | None = None,
+      git_repo: str | None = None,
+      git_ref: str = 'refs/heads/main',
+      change_number: int = 123456,
+      patch_set: int = 7,
+      revision: str | None = None,
+      build_number: int = 0,
+      build_id: int = 8945511751514863184,
+      critical: str = 'UNSET',
+      priority: int = 30,
+      created_by: str | None = None,
+      tags: Sequence[common_pb2.StringPair] | None = None,
+      status: str | None = None,
+      experiments: Sequence[str] = (),
+      exe: common_pb2.Executable | None = None,
+      execution_timeout: int | None = None,
+      start_time: datetime.datetime | int | None = None,
+      properties: struct_pb2.Struct | None = None,
+      on_backend: bool = False,
+      backend_target: str = 'swarming://chromium-swarm',
+      ancestor_ids: Sequence[int] | None = None,
+      summary_markdown: str | None = None,
+  ) -> build_pb2.Build:
     """Emulate typical buildbucket try build scheduled by CQ.
 
     Usage:
@@ -283,7 +295,9 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
 
     return build
 
-  def try_build(self, *args, **kwargs):
+  def try_build(
+      self, *args: Any, **kwargs: Any
+  ) -> recipe_test_api.TestData:
     """Emulates a typical buildbucket try build scheduled by CQ.
 
     Shortcut for api.buildbucket.build(api.buildbucket.try_build_message()).
@@ -297,17 +311,18 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
 
   def generic_build(
       self,
-      project='project',
-      bucket='cron',  # shortname.
-      builder='builder',
-      build_number=0,
-      build_id=8945511751514863184,
-      priority=30,
-      tags=None,
-      experiments=(),
-      execution_timeout=None,
-      start_time=None,
-      created_by='user:user@example.com'):
+      project: str = 'project',
+      bucket: str = 'cron',
+      builder: str = 'builder',
+      build_number: int = 0,
+      build_id: int = 8945511751514863184,
+      priority: int = 30,
+      tags: Sequence[common_pb2.StringPair] | None = None,
+      experiments: Sequence[str] = (),
+      execution_timeout: int | None = None,
+      start_time: datetime.datetime | int | None = None,
+      created_by: str = 'user:user@example.com',
+  ) -> recipe_test_api.TestData:
     """Emulates a generic build w/o input GitilesCommit or GerritChanges."""
     build = build_pb2.Build(
         id=build_id,
@@ -337,17 +352,17 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
 
   def backend_build_message(
       self,
-      project='project',
-      bucket='try',
-      builder='builder-backend',
-      build_id=8945511751514863184,
-      tags=None,
-      status=None,
-      task=None,
-      task_dimensions=None,
-      backend_hostname=None,
-      backend_config=None,
-  ):
+      project: str = 'project',
+      bucket: str = 'try',
+      builder: str = 'builder-backend',
+      build_id: int = 8945511751514863184,
+      tags: Sequence[common_pb2.StringPair] | None = None,
+      status: int | str | None = None,
+      task: task_pb2.Task | None = None,
+      task_dimensions: Sequence[common_pb2.RequestedDimension] | None = None,
+      backend_hostname: str | None = None,
+      backend_config: struct_pb2.Struct | None = None,
+  ) -> recipe_test_api.TestData:
     """Emulates a typical buildbucket backend build.
       Usage:
 
@@ -371,17 +386,17 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
 
   def backend_build(
       self,
-      project='project',
-      bucket='try',
-      builder='builder-backend',
-      build_id=8945511751514863184,
-      tags=None,
-      status=None,
-      task=None,
-      task_dimensions=None,
-      backend_hostname=None,
-      backend_config=None,
-  ):
+      project: str = 'project',
+      bucket: str = 'try',
+      builder: str = 'builder-backend',
+      build_id: int = 8945511751514863184,
+      tags: Sequence[common_pb2.StringPair] | None = None,
+      status: int | str | None = None,
+      task: task_pb2.Task | None = None,
+      task_dimensions: Sequence[common_pb2.RequestedDimension] | None = None,
+      backend_hostname: str | None = None,
+      backend_config: struct_pb2.Struct | None = None,
+  ) -> build_pb2.Build:
     return build_pb2.Build(
         id=build_id,
         tags=tags,
@@ -405,20 +420,20 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
 
   def raw_swarming_build_message(
       self,
-      project='project',
-      bucket='try',
-      builder='builder-backend',
-      build_id=8945511751514863184,
-      tags=None,
-      status=None,
-      priority=None,
-      task_dimensions=None,
-      hostname=None,
-      bot_dimensions=None,
-      task_id=None,
-      parent_run_id=None,
-      task_service_account=None,
-  ):
+      project: str = 'project',
+      bucket: str = 'try',
+      builder: str = 'builder-backend',
+      build_id: int = 8945511751514863184,
+      tags: Sequence[common_pb2.StringPair] | None = None,
+      status: int | str | None = None,
+      priority: int | None = None,
+      task_dimensions: Sequence[common_pb2.RequestedDimension] | None = None,
+      hostname: str | None = None,
+      bot_dimensions: Sequence[common_pb2.StringPair] | None = None,
+      task_id: str | None = None,
+      parent_run_id: str | None = None,
+      task_service_account: str | None = None,
+  ) -> recipe_test_api.TestData:
     return self.build(
         self.raw_swarming_build(project, bucket, builder, build_id, tags,
                                 status, priority, task_dimensions, hostname,
@@ -427,20 +442,20 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
 
   def raw_swarming_build(
       self,
-      project='project',
-      bucket='try',
-      builder='builder-backend',
-      build_id=8945511751514863184,
-      tags=None,
-      status=None,
-      priority=None,
-      task_dimensions=None,
-      hostname=None,
-      bot_dimensions=None,
-      task_id=None,
-      parent_run_id=None,
-      task_service_account=None,
-  ):
+      project: str = 'project',
+      bucket: str = 'try',
+      builder: str = 'builder-backend',
+      build_id: int = 8945511751514863184,
+      tags: Sequence[common_pb2.StringPair] | None = None,
+      status: int | str | None = None,
+      priority: int | None = None,
+      task_dimensions: Sequence[common_pb2.RequestedDimension] | None = None,
+      hostname: str | None = None,
+      bot_dimensions: Sequence[common_pb2.StringPair] | None = None,
+      task_id: str | None = None,
+      parent_run_id: str | None = None,
+      task_service_account: str | None = None,
+  ) -> build_pb2.Build:
     return build_pb2.Build(
         id=build_id,
         tags=tags,
@@ -465,11 +480,13 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         ),
     )
 
-  def update_backend_config(self,
-                            build,
-                            priority=None,
-                            parent_run_id=None,
-                            service_account=None):
+  def update_backend_config(
+      self,
+      build: build_pb2.Build,
+      priority: int | None = None,
+      parent_run_id: str | None = None,
+      service_account: str | None = None,
+  ) -> build_pb2.Build:
     """Util function to update build.infra.backend.config"""
     assert isinstance(build, build_pb2.Build), build
     assert build.infra.backend.config is not None
@@ -483,13 +500,17 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     build.infra.backend.config.update(updated)
     return build
 
-  def update_backend_priority(self, build, priority):
+  def update_backend_priority(
+      self, build: build_pb2.Build, priority: int
+  ) -> build_pb2.Build:
     if build.infra.HasField('swarming'):
       build.infra.swarming.priority = priority
       return build
     return self.update_backend_config(build, priority=priority)
 
-  def update_backend_parent_run_id(self, build, parent_run_id):
+  def update_backend_parent_run_id(
+      self, build: build_pb2.Build, parent_run_id: str
+  ) -> build_pb2.Build:
     for tag in build.tags:
       if tag.key == 'parent_task_id':
         tag.value = parent_run_id
@@ -498,20 +519,28 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       return build
     return self.update_backend_config(build, parent_run_id=parent_run_id)
 
-  def update_backend_service_account(self, build, service_account):
+  def update_backend_service_account(
+      self, build: build_pb2.Build, service_account: str
+  ) -> build_pb2.Build:
     if build.infra.HasField('swarming'):
       build.infra.swarming.task_service_account = service_account
       return build
     return self.update_backend_config(build, service_account=service_account)
 
-  def tags(self, **tags):
+  def tags(
+      self, **tags: Sequence[str] | str
+  ) -> list[common_pb2.StringPair]:
     """Alias for tags in util.py. See doc there."""
     return util.tags(**tags)
 
-  def dict_to_struct(self, d):
+  def dict_to_struct(self, d: Mapping[str, Any]) -> struct_pb2.Struct:
     return json_format.Parse(json.dumps(d), struct_pb2.Struct())
 
-  def extend_swarming_bot_dimensions(self, build, new_dims):
+  def extend_swarming_bot_dimensions(
+      self,
+      build: build_pb2.Build,
+      new_dims: dict[str, Sequence[str] | str],
+  ) -> build_pb2.Build:
     """Extends swarming dimensions of a build.
     build: build_pb2.Build. The build to be modified.
     newDims: Dict. The dimensions to add.
@@ -541,7 +570,12 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     build.infra.backend.task.details.update({"bot_dimensions": updated_dims})
     return build
 
-  def exe(self, cipd_pkg, cipd_ver=None, cmd=None):
+  def exe(
+      self,
+      cipd_pkg: str,
+      cipd_ver: str | None = None,
+      cmd: Sequence[str] | None = None,
+  ) -> common_pb2.Executable:
     """Emulates a build executable."""
     return common_pb2.Executable(
       cipd_package=cipd_pkg,
@@ -549,21 +583,37 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       cmd=cmd,
     )
 
-  def simulated_collect_output(self, builds, step_name=None):
+  def simulated_collect_output(
+      self,
+      builds: Sequence[build_pb2.Build],
+      step_name: str | None = None,
+  ) -> recipe_test_api.TestData:
     """Simulates a buildbucket.collect call."""
     step_name = step_name or 'buildbucket.collect'
     return self.simulated_get_multi(builds, step_name='%s.get' % step_name)
 
-  def simulated_schedule_output(self, batch_response, step_name=None):
+  def simulated_schedule_output(
+      self,
+      batch_response: builds_service_pb2.BatchResponse,
+      step_name: str | None = None,
+  ) -> recipe_test_api.TestData:
     """Simulates a buildbucket.schedule call."""
     return self._simulated_batch_response(
       batch_response, step_name or 'buildbucket.schedule')
 
-  def simulated_batch_search_output(self, batch_response, step_name=None):
+  def simulated_batch_search_output(
+      self,
+      batch_response: builds_service_pb2.BatchResponse,
+      step_name: str | None = None,
+  ) -> recipe_test_api.TestData:
     return self._simulated_batch_response(batch_response, step_name or
                                           'buildbucket.search')
 
-  def simulated_search_results(self, builds, step_name=None):
+  def simulated_search_results(
+      self,
+      builds: Sequence[build_pb2.Build],
+      step_name: str | None = None,
+  ) -> recipe_test_api.TestData:
     """Simulates a buildbucket.search call with one predicate.
 
     Note: if use this to simulate a buildbucket.search call with multiple predicates,
@@ -578,7 +628,9 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         builds_service_pb2.BatchResponse(
             responses=[dict(search_builds=dict(builds=builds))]), step_name)
 
-  def simulated_search_result_data(self, builds):
+  def simulated_search_result_data(
+      self, builds: Sequence[build_pb2.Build]
+  ) -> recipe_test_api.StepTestData:
     """Simulates buildbucket.search results."""
     assert isinstance(builds, Sequence), builds
     for b in builds:
@@ -589,7 +641,11 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     ]
     return self.m.raw_io.stream_output_text("\n".join(lines))
 
-  def simulated_multi_predicates_search_results(self, builds, step_name=None):
+  def simulated_multi_predicates_search_results(
+      self,
+      builds: Sequence[build_pb2.Build],
+      step_name: str | None = None,
+  ) -> recipe_test_api.TestData:
     """Simulates a buildbucket.search call with multiple predicates."""
     assert isinstance(builds, list), builds
     for b in builds:
@@ -598,7 +654,9 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
 
     return self.step_data(step_name, self.simulated_search_result_data(builds))
 
-  def simulated_list_builders(self, builders, step_name=None):
+  def simulated_list_builders(
+      self, builders: Sequence[str], step_name: str | None = None
+  ) -> recipe_test_api.TestData:
     """Simulates a buildbucket.builders call."""
     assert isinstance(builders, list), builders
     assert all(isinstance(b, str) for b in builders), builders
@@ -607,13 +665,19 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     output = "\n".join(builders)
     return self.step_data(step_name, self.m.raw_io.stream_output_text(output))
 
-  def simulated_get(self, build, step_name=None):
+  def simulated_get(
+      self, build: build_pb2.Build, step_name: str | None = None
+  ) -> recipe_test_api.TestData:
     """Simulates a buildbucket.get call."""
     return self._simulated_batch_response(
         builds_service_pb2.BatchResponse(responses=[dict(get_build=build)]),
         step_name or 'buildbucket.get')
 
-  def simulated_get_multi(self, builds, step_name=None):
+  def simulated_get_multi(
+      self,
+      builds: Sequence[build_pb2.Build],
+      step_name: str | None = None,
+  ) -> recipe_test_api.TestData:
     """Simulates a buildbucket.get_multi call."""
     return self._simulated_batch_response(
         builds_service_pb2.BatchResponse(
@@ -621,12 +685,20 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         ),
         step_name or 'buildbucket.get_multi')
 
-  def simulated_cancel_output(self, batch_response, step_name=None):
+  def simulated_cancel_output(
+      self,
+      batch_response: builds_service_pb2.BatchResponse,
+      step_name: str | None = None,
+  ) -> recipe_test_api.TestData:
     """Simulates a buildbucket.cancel call"""
     return self._simulated_batch_response(
       batch_response, step_name or 'buildbucket.cancel')
 
-  def _simulated_batch_response(self, batch_response, step_name):
+  def _simulated_batch_response(
+      self,
+      batch_response: builds_service_pb2.BatchResponse,
+      step_name: str,
+  ) -> recipe_test_api.TestData:
     """Simulate that the given step will write the provided batch response into
     step data. The return code will be 1 for step data if the responses contain
     error. Otherwise, 0

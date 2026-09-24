@@ -3,6 +3,11 @@
 # that can be found in the LICENSE file.
 
 from __future__ import annotations
+from collections.abc import Mapping
+from typing import Any
+
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
 
 from google.protobuf import json_format
 from google.protobuf import struct_pb2
@@ -43,7 +48,7 @@ class TEST_DEPS(RecipeTestApi):
   runtime: runtime.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   # Convert from FrozenDict
   req_body = engine_types.thaw(api.properties.get('request_kwargs'))
   tags = api.properties.get('tags')
@@ -71,14 +76,16 @@ def RunSteps(api: DEPS):
   api.buildbucket.run([], step_name='run nothing')
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
 
-  def test(test_name,
-           response=None,
-           tags=None,
-           shadowed_bucket=None,
-           on_backend=False,
-           **req):
+  def test(
+      test_name: str,
+      response: Any = None,
+      tags: Mapping[str, Any] | None = None,
+      shadowed_bucket: str | None = None,
+      on_backend: bool = False,
+      **req: Any,
+  ) -> recipe_test_api.TestData:
     req.setdefault('builder', 'linux')
     if shadowed_bucket:
       props_dict = {

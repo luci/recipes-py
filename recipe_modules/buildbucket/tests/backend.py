@@ -3,6 +3,10 @@
 # that can be found in the LICENSE file.
 
 from __future__ import annotations
+from collections.abc import Sequence
+
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
 
 from recipe_engine import post_process
 
@@ -35,7 +39,7 @@ class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   api.assertions.assertEqual(api.buildbucket.backend_hostname, 'foo')
   api.assertions.assertEqual(
     api.buildbucket.backend_task_dimensions[0],
@@ -74,12 +78,14 @@ def RunSteps(api: DEPS):
                                "abc123@email.com")
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
 
-  def _setup_backend_build(update_backend_config=False,
-                           use_default_bot_dims=True,
-                           bot_dims={},
-                           tags=None):
+  def _setup_backend_build(
+      update_backend_config: bool = False,
+      use_default_bot_dims: bool = True,
+      bot_dims: dict[str, Sequence[str] | str] = {},
+      tags: Sequence[common_pb2.StringPair] | None = None,
+  ) -> recipe_test_api.TestData:
     task_details_dict = {}
     if use_default_bot_dims:
       task_details_dict = {
@@ -118,7 +124,9 @@ def GenTests(api: TEST_DEPS):
 
     return api.buildbucket.build(b)
 
-  def _setup_raw_swarming_build(update_swarming_config=False):
+  def _setup_raw_swarming_build(
+      update_swarming_config: bool = False,
+  ) -> recipe_test_api.TestData:
     b = api.buildbucket.raw_swarming_build(
         project='my-proj',
         builder='win',

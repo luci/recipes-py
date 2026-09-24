@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine import post_process
 
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
@@ -22,12 +25,12 @@ class DEPS(RecipeScriptApi):
 BBID = 881234567890
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   bld = api.buildbucket.get(
       BBID,
       test_data=build_pb2.Build(id=BBID, builder_info={'description': 'foo'}))
   assert bld.builder_info.description == 'foo', repr(bld)
 
 
-def GenTests(api: RecipeTestApi):
+def GenTests(api: RecipeTestApi) -> Iterator[recipe_test_api.TestData]:
   yield api.test('basic') + api.post_process(post_process.DropExpectation)

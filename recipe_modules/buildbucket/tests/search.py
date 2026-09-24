@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from google.protobuf import json_format
 
 from PB.go.chromium.org.luci.buildbucket.proto import (
@@ -54,7 +57,7 @@ message SearchInputProps {
 PROPERTIES = search_pb2.SearchInputProps
 
 
-def RunSteps(api: DEPS, props):
+def RunSteps(api: DEPS, props: search_pb2.SearchInputProps) -> None:
   limit = api.properties.get('limit')
 
   test_data = None
@@ -92,9 +95,9 @@ def RunSteps(api: DEPS, props):
     ]
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
 
-  def build():
+  def build() -> recipe_test_api.TestData:
     return api.buildbucket.try_build(
         project='chromium',
         builder='Builder',
@@ -107,7 +110,11 @@ def GenTests(api: TEST_DEPS):
       build(),
   )
 
-  def build_status(id, status=common_pb2.SUCCESS, builder='chromium/try/test'):
+  def build_status(
+      id: int,
+      status: common_pb2.Status = common_pb2.SUCCESS,
+      builder: str = 'chromium/try/test',
+  ) -> build_pb2.Build:
     project, bucket, builder = builder.split('/')
     return build_pb2.Build(
         id=id,

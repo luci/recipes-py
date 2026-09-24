@@ -6,6 +6,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 
 from dataclasses import dataclass
@@ -29,7 +32,7 @@ class DEPS(RecipeScriptApi):
   step: step.API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   api.buildbucket.set_output_gitiles_commit(
     common_pb2.GitilesCommit(
         host='chromium.googlesource.com',
@@ -41,5 +44,5 @@ def RunSteps(api: DEPS):
   )
 
 
-def GenTests(api: RecipeTestApi):
+def GenTests(api: RecipeTestApi) -> Iterator[recipe_test_api.TestData]:
   yield api.test('basic')

@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from google.protobuf import struct_pb2
 
 from recipe_engine import post_process
@@ -32,7 +35,7 @@ class TEST_DEPS(RecipeTestApi):
   buildbucket: buildbucket.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   api.assertions.assertEqual(api.buildbucket.swarming_bot_dimensions, None)
   api.assertions.assertEqual(api.buildbucket.swarming_parent_run_id, None)
   api.assertions.assertEqual(api.buildbucket.swarming_priority, None)
@@ -40,7 +43,7 @@ def RunSteps(api: DEPS):
     api.buildbucket.swarming_task_service_account, None)
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   task_details = struct_pb2.Struct(
       fields={
           "bot_dimensions": struct_pb2.Value(

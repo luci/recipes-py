@@ -3,6 +3,10 @@
 # that can be found in the LICENSE file.
 
 from __future__ import annotations
+from typing import Any
+
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
 
 import datetime
 
@@ -41,7 +45,7 @@ class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   text = text_format.MessageToString(api.buildbucket.build)
   api.step('build', ['echo'] + text.splitlines())
   api.step('hostname', ['echo', api.buildbucket.host])
@@ -73,9 +77,9 @@ def RunSteps(api: DEPS):
       api.buildbucket.builder_full_name
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
 
-  def case(name, **properties):
+  def case(name: str, **properties: Any) -> recipe_test_api.TestData:
     return api.test(name) + api.properties(**properties)
 
   yield case('empty')
