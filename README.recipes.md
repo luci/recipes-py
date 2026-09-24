@@ -4945,9 +4945,9 @@ Emit the results accumulated by `add_comment` and `run_legacy`.
 
 Methods for interacting with HTTP(s) URLs.
 
-#### **class [UrlApi](/recipe_modules/url/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [UrlApi](/recipe_modules/url/api.py#22)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
-&mdash; **def [get\_file](/recipe_modules/url/api.py#133)(self, url, path, step_name=None, headers=None, transient_retry=True, strip_prefix=None):**
+&mdash; **def [get\_file](/recipe_modules/url/api.py#146)(self, url: str, path: (config_types.Path | str), step_name: (str | None)=None, headers: (Mapping[(str, str)] | None)=None, transient_retry: (bool | int)=True, strip_prefix: (str | None)=None):**
 
 GET data at given URL and writes it to file.
 
@@ -4972,7 +4972,7 @@ Raises:
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [get\_json](/recipe_modules/url/api.py#241)(self, url, step_name=None, headers=None, transient_retry=True, strip_prefix=None, log=False, default_test_data=None):**
+&mdash; **def [get\_json](/recipe_modules/url/api.py#260)(self, url: str, step_name: (str | None)=None, headers: (Mapping[(str, str)] | None)=None, transient_retry: (bool | int)=True, strip_prefix: (str | None)=None, log: bool=False, default_test_data: Any=None):**
 
 GET data at given URL and writes it to file.
 
@@ -4998,7 +4998,7 @@ Raises:
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [get\_raw](/recipe_modules/url/api.py#206)(self, url, step_name=None, headers=None, transient_retry=True, default_test_data=None):**
+&mdash; **def [get\_raw](/recipe_modules/url/api.py#223)(self, url: str, step_name: (str | None)=None, headers: (Mapping[(str, str)] | None)=None, transient_retry: (bool | int)=True, default_test_data: (bytes | None)=None):**
 
 GET data at given URL and writes it to file.
 
@@ -5020,7 +5020,7 @@ Raises:
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [get\_text](/recipe_modules/url/api.py#172)(self, url, step_name=None, headers=None, transient_retry=True, default_test_data=None):**
+&mdash; **def [get\_text](/recipe_modules/url/api.py#187)(self, url: str, step_name: (str | None)=None, headers: (Mapping[(str, str)] | None)=None, transient_retry: (bool | int)=True, default_test_data: (str | None)=None):**
 
 GET data at given URL and writes it to file.
 
@@ -5042,7 +5042,7 @@ Raises:
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [join](/recipe_modules/url/api.py#96)(self, \*parts):**
+&mdash; **def [join](/recipe_modules/url/api.py#109)(self, \*parts: str):**
 
 Constructs a URL path from composite parts.
 
@@ -5051,7 +5051,7 @@ Args:
       will be stripped from intermediate strings to ensure that they join
       together. Trailing slashes will not be stripped from the last part.
 
-&mdash; **def [validate\_url](/recipe_modules/url/api.py#112)(self, v):**
+&mdash; **def [validate\_url](/recipe_modules/url/api.py#125)(self, v: str):**
 
 Validates that "v" is a valid URL.
 
@@ -6445,22 +6445,22 @@ An example of a recipe wrapping legacy analyzers.
 &mdash; **def [RunSteps](/recipe_modules/tricium/tests/enforce_comments_num_limit.py#41)(api: DEPS, props):**
 ### *recipes* / [url:examples/full](/recipe_modules/url/examples/full.py)
 
-[DEPS](/recipe_modules/url/examples/full.py#19): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step), [url](#recipe_modules-url)
+[DEPS](/recipe_modules/url/examples/full.py#24): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step), [url](#recipe_modules-url)
 
 
-&mdash; **def [RunSteps](/recipe_modules/url/examples/full.py#46)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/url/examples/full.py#51)(api: DEPS):**
 ### *recipes* / [url:tests/join](/recipe_modules/url/tests/join.py)
 
-[DEPS](/recipe_modules/url/tests/join.py#17): [step](#recipe_modules-step), [url](#recipe_modules-url)
+[DEPS](/recipe_modules/url/tests/join.py#20): [step](#recipe_modules-step), [url](#recipe_modules-url)
 
 
-&mdash; **def [RunSteps](/recipe_modules/url/tests/join.py#27)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/url/tests/join.py#30)(api: DEPS):**
 ### *recipes* / [url:tests/validate\_url](/recipe_modules/url/tests/validate_url.py)
 
-[DEPS](/recipe_modules/url/tests/validate_url.py#20): [properties](#recipe_modules-properties), [step](#recipe_modules-step), [url](#recipe_modules-url)
+[DEPS](/recipe_modules/url/tests/validate_url.py#23): [properties](#recipe_modules-properties), [step](#recipe_modules-step), [url](#recipe_modules-url)
 
 
-&mdash; **def [RunSteps](/recipe_modules/url/tests/validate_url.py#31)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/url/tests/validate_url.py#34)(api: DEPS):**
 ### *recipes* / [uuid:examples/full](/recipe_modules/uuid/examples/full.py)
 
 [DEPS](/recipe_modules/uuid/examples/full.py#20): [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)

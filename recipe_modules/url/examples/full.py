@@ -3,6 +3,11 @@
 # that can be found in the LICENSE file.
 
 from __future__ import annotations
+from collections.abc import Callable
+from typing import Any, TypeVar
+
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
 
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
@@ -43,7 +48,7 @@ TEST_BAD_CERTS = [
 ]
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   assert api.url.quote(' foo') == '%20foo'
   assert api.url.unquote('%20foo') == ' foo'
   assert api.url.urlencode({'foo': 'bar'}) == 'foo=bar'
@@ -95,7 +100,9 @@ def RunSteps(api: DEPS):
 
   with api.step.nest('errors'):
     # Check error conditions.
-    def raises(fn, exc):
+    _E = TypeVar('_E', bound=Exception)
+
+    def raises(fn: Callable[[], Any], exc: type[_E]) -> _E:
       raised = None
       try:
         fn()
@@ -104,13 +111,13 @@ def RunSteps(api: DEPS):
       assert raised, 'Did not raise [%s]' % (exc,)
       return raised
 
-    def test_error():
+    def test_error() -> None:
       api.url.get_text(TEST_ERROR_URL, step_name='error', transient_retry=4)
 
     exc = raises(test_error, api.url.HTTPError)
     assert exc.response.error_body == '500 Internal Server Error'
 
-    def test_infra_error():
+    def test_infra_error() -> None:
       with api.context(infra_steps=True):
         api.url.get_text(
             TEST_ERROR_URL, step_name='infra error', transient_retry=False)
@@ -118,7 +125,7 @@ def RunSteps(api: DEPS):
     exc = raises(test_infra_error, api.url.InfraHTTPError)
     assert exc.response.error_body == '500 Internal Server Error'
 
-    def test_auth_over_http():
+    def test_auth_over_http() -> None:
       api.url.get_text(
           'http://foo/bar/text/error', headers={'Authorization': 'SECRET'})
 
@@ -126,15 +133,15 @@ def RunSteps(api: DEPS):
 
     for bad_cert in TEST_BAD_CERTS:
 
-      def test_bad_cert():
+      def test_bad_cert() -> None:
         api.url.get_text(bad_cert)
 
       raises(test_bad_cert, api.step.StepFailure)
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
 
-  def name(prefix, url):
+  def name(prefix: str, url: str) -> str:
     return '%s.GET %s' % (prefix, url)
 
   test = (

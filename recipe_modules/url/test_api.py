@@ -3,6 +3,8 @@
 # that can be found in the LICENSE file.
 
 from __future__ import annotations
+from collections.abc import Callable
+from typing import Any
 
 import http.client
 
@@ -10,7 +12,14 @@ from recipe_engine import recipe_test_api
 
 class UrlTestApi(recipe_test_api.RecipeTestApi): # pragma: no cover
 
-  def _response(self, step_name, data, size, status_code=200, error_body=None):
+  def _response(
+      self,
+      step_name: str,
+      data: recipe_test_api.StepTestData | None,
+      size: int,
+      status_code: int = 200,
+      error_body: str | None = None,
+  ) -> recipe_test_api.TestData:
     step_data = [
         self.m.json.output({
           'status_code': status_code,
@@ -23,7 +32,9 @@ class UrlTestApi(recipe_test_api.RecipeTestApi): # pragma: no cover
       step_data.append(data)
     return self.step_data(step_name, *step_data)
 
-  def error(self, step_name, status_code, body=None):
+  def error(
+      self, step_name: str, status_code: int, body: str | None = None
+  ) -> recipe_test_api.TestData:
     body = body or 'HTTP Error (%d)' % (status_code,)
     return self._response(
         step_name=step_name,
@@ -32,25 +43,31 @@ class UrlTestApi(recipe_test_api.RecipeTestApi): # pragma: no cover
         status_code=status_code,
         error_body=body)
 
-  def text(self, step_name, v):
+  def text(self, step_name: str, v: str) -> recipe_test_api.TestData:
     return self._response(
         step_name=step_name,
         data=self.m.raw_io.output_text(v, name='output'),
         size=len(v))
 
-  def raw(self, step_name, v):
+  def raw(self, step_name: str, v: bytes) -> recipe_test_api.TestData:
     return self._response(
         step_name=step_name,
         data=self.m.raw_io.output(v, name='output'),
         size=len(v))
 
-  def json(self, step_name, obj):
+  def json(self, step_name: str, obj: Any) -> recipe_test_api.TestData:
     return self._response(
         step_name=step_name,
         data=self.m.json.output(obj, name='output'),
         size=len(self.m.json.dumps(obj)))
 
-  def _get_step_test_data(self, status_cls, is_json, is_bytes, test_data):
+  def _get_step_test_data(
+      self,
+      status_cls: type[Any],
+      is_json: bool | str,
+      is_bytes: bool,
+      test_data: Any,
+  ) -> Callable[[], recipe_test_api.StepTestData] | None:
     if test_data is None:
       return None
 

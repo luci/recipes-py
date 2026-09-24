@@ -5,6 +5,11 @@
 """Methods for interacting with HTTP(s) URLs."""
 
 from __future__ import annotations
+from collections.abc import Mapping
+from typing import Any
+from recipe_engine import config_types
+
+from RECIPE_MODULES.recipe_engine import url
 
 from builtins import int
 from urllib.parse import urlparse, urlencode, quote, unquote
@@ -15,6 +20,8 @@ from recipe_engine import recipe_api
 
 
 class UrlApi(recipe_api.RecipeApi):
+  m: url.DEPS
+
   quote = staticmethod(quote)
   unquote = staticmethod(unquote)
   urlencode = staticmethod(urlencode)
@@ -24,13 +31,13 @@ class UrlApi(recipe_api.RecipeApi):
 
   class HTTPError(recipe_api.StepFailure):
 
-    def __init__(self, msg, response):
+    def __init__(self, msg: str, response: UrlApi.Response) -> None:
       super().__init__(msg)
       self.response = response
 
   class InfraHTTPError(recipe_api.InfraFailure):
 
-    def __init__(self, msg, response):
+    def __init__(self, msg: str, response: UrlApi.Response) -> None:
       super().__init__(msg)
       self.response = response
 
@@ -41,24 +48,30 @@ class UrlApi(recipe_api.RecipeApi):
   class Response:
     """Response is an HTTP response object."""
 
-    def __init__(self, method, output, status, infra_step):
+    def __init__(
+        self,
+        method: str,
+        output: Any,
+        status: UrlApi._PyCurlStatus,
+        infra_step: bool | None,
+    ) -> None:
       self._method = method
       self._status = status
       self._output = output
       self._infra_step = infra_step
 
     @property
-    def method(self):
+    def method(self) -> str:
       """Returns (str): The HTTP method, currently always GET."""
       return self._method
 
     @property
-    def status_code(self):
+    def status_code(self) -> int:
       """Returns (int): The HTTP status code."""
       return self._status.status_code
 
     @property
-    def output(self):
+    def output(self) -> Any:
       """
       Returns:
         If JSON, the unmarshalled JSON response object.
@@ -70,7 +83,7 @@ class UrlApi(recipe_api.RecipeApi):
       return self._output
 
     @property
-    def error_body(self):
+    def error_body(self) -> str | None:
       """Returns the HTTP body when an error was encountered.
 
       Returns (str or None): The error body, or None if not an error.
@@ -78,11 +91,11 @@ class UrlApi(recipe_api.RecipeApi):
       return self._status.error_body
 
     @property
-    def size(self):
+    def size(self) -> int:
       """Returns (int): The number of bytes in the HTTP response."""
       return self._status.size
 
-    def raise_on_error(self):
+    def raise_on_error(self) -> None:
       """Raises an exception if the HTTP operation was not successful.
 
       Raises:
@@ -93,7 +106,7 @@ class UrlApi(recipe_api.RecipeApi):
         cls = UrlApi.InfraHTTPError if self._infra_step else UrlApi.HTTPError
         raise cls('HTTP status (%d)' % (self.status_code,), self)
 
-  def join(self, *parts):
+  def join(self, *parts: str) -> str:
     """Constructs a URL path from composite parts.
 
     Args:
@@ -109,7 +122,7 @@ class UrlApi(recipe_api.RecipeApi):
       parts[-1] = parts[-1].lstrip('/')
     return '/'.join(parts)
 
-  def validate_url(self, v):
+  def validate_url(self, v: str) -> bool:
     """Validates that "v" is a valid URL.
 
     A valid URL has a scheme and netloc, and must begin with HTTP or HTTPS.
@@ -130,13 +143,15 @@ class UrlApi(recipe_api.RecipeApi):
       raise ValueError('URL must specify a network location ({!r})'.format(v))
     return u.scheme.lower() == 'https'
 
-  def get_file(self,
-               url,
-               path,
-               step_name=None,
-               headers=None,
-               transient_retry=True,
-               strip_prefix=None):
+  def get_file(
+      self,
+      url: str,
+      path: config_types.Path | str,
+      step_name: str | None = None,
+      headers: Mapping[str, str] | None = None,
+      transient_retry: bool | int = True,
+      strip_prefix: str | None = None,
+  ) -> UrlApi.Response:
     """GET data at given URL and writes it to file.
 
     Args:
@@ -169,12 +184,14 @@ class UrlApi(recipe_api.RecipeApi):
         strip_prefix=strip_prefix,
         default_test_data='')
 
-  def get_text(self,
-               url,
-               step_name=None,
-               headers=None,
-               transient_retry=True,
-               default_test_data=None):
+  def get_text(
+      self,
+      url: str,
+      step_name: str | None = None,
+      headers: Mapping[str, str] | None = None,
+      transient_retry: bool | int = True,
+      default_test_data: str | None = None,
+  ) -> UrlApi.Response:
     """GET data at given URL and writes it to file.
 
     Args:
@@ -203,12 +220,14 @@ class UrlApi(recipe_api.RecipeApi):
         transient_retry=transient_retry,
         default_test_data=default_test_data)
 
-  def get_raw(self,
-              url,
-              step_name=None,
-              headers=None,
-              transient_retry=True,
-              default_test_data=None):
+  def get_raw(
+      self,
+      url: str,
+      step_name: str | None = None,
+      headers: Mapping[str, str] | None = None,
+      transient_retry: bool | int = True,
+      default_test_data: bytes | None = None,
+  ) -> UrlApi.Response:
     """GET data at given URL and writes it to file.
 
     Args:
@@ -238,14 +257,16 @@ class UrlApi(recipe_api.RecipeApi):
         default_test_data=default_test_data,
         as_bytes=True)
 
-  def get_json(self,
-               url,
-               step_name=None,
-               headers=None,
-               transient_retry=True,
-               strip_prefix=None,
-               log=False,
-               default_test_data=None):
+  def get_json(
+      self,
+      url: str,
+      step_name: str | None = None,
+      headers: Mapping[str, str] | None = None,
+      transient_retry: bool | int = True,
+      strip_prefix: str | None = None,
+      log: bool = False,
+      default_test_data: Any = None,
+  ) -> UrlApi.Response:
     """GET data at given URL and writes it to file.
 
     Args:
@@ -279,16 +300,18 @@ class UrlApi(recipe_api.RecipeApi):
         as_json='log' if log else True,
         default_test_data=default_test_data)
 
-  def _get_step(self,
-                url,
-                step_name,
-                headers,
-                transient_retry,
-                path=None,
-                strip_prefix=None,
-                as_json=False,
-                as_bytes=False,
-                default_test_data=None):
+  def _get_step(
+      self,
+      url: str,
+      step_name: str | None,
+      headers: Mapping[str, str] | None,
+      transient_retry: bool | int,
+      path: config_types.Path | str | None = None,
+      strip_prefix: str | None = None,
+      as_json: bool | str = False,
+      as_bytes: bool = False,
+      default_test_data: Any = None,
+  ) -> UrlApi.Response:
 
     step_name = step_name or 'GET %s' % url
     is_secure = self.validate_url(url)
