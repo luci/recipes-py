@@ -25,12 +25,15 @@ Example:
 
 from __future__ import annotations
 
+from typing import Any
+from PB.recipe_modules.recipe_engine.random import properties as properties_pb
+
 import random
 
 from recipe_engine import recipe_api
 
 class RandomApi(recipe_api.RecipeApi):
-  def __init__(self, props, **kwargs):
+  def __init__(self, props: properties_pb.InputProperties, **kwargs: Any) -> None:
     super().__init__(**kwargs)
 
     seed: int | None = None
@@ -41,6 +44,6 @@ class RandomApi(recipe_api.RecipeApi):
 
     self._random = random.Random(seed)
 
-  def __getattr__(self, name):
+  def __getattr__(self, name: str) -> Any:
     """Access a member of `random.Random`."""
     return getattr(self._random, name)

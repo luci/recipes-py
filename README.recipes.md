@@ -3589,9 +3589,9 @@ Example:
       api.random.shuffle(my_list)
       # my_list is now random!
 
-#### **class [RandomApi](/recipe_modules/random/api.py#32)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [RandomApi](/recipe_modules/random/api.py#35)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
-&mdash; **def [\_\_getattr\_\_](/recipe_modules/random/api.py#44)(self, name):**
+&mdash; **def [\_\_getattr\_\_](/recipe_modules/random/api.py#47)(self, name: str):**
 
 Access a member of `random.Random`.
 ### *recipe_modules* / [raw\_io](/recipe_modules/raw_io)
@@ -6139,10 +6139,10 @@ Test to cover legacy aspects of PathTestApi.
 &mdash; **def [RunSteps](/recipe_modules/proto/tests/placeholders.py#34)(api: DEPS):**
 ### *recipes* / [random:tests/full](/recipe_modules/random/tests/full.py)
 
-[DEPS](/recipe_modules/random/tests/full.py#17): [random](#recipe_modules-random), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/random/tests/full.py#20): [random](#recipe_modules-random), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/random/tests/full.py#27)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/random/tests/full.py#30)(api: DEPS):**
 ### *recipes* / [raw\_io:examples/full](/recipe_modules/raw_io/examples/full.py)
 
 [DEPS](/recipe_modules/raw_io/examples/full.py#21): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
