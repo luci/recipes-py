@@ -3,6 +3,12 @@
 # that can be found in the LICENSE file.
 
 from __future__ import annotations
+from collections.abc import Callable, Mapping
+from typing import Any
+from recipe_engine import post_process_inputs
+
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
 
 from recipe_engine import post_process
 
@@ -38,7 +44,7 @@ class TEST_DEPS(RecipeTestApi):
   json: json.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   properties = {'foo': 'bar'}
   properties.update(api.cv.props_for_child_build)
   req = api.buildbucket.schedule_request(
@@ -49,23 +55,39 @@ def RunSteps(api: DEPS):
   api.cv.record_triggered_builds(*child_builds)
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
 
-  def check_has_bb_tag(check, steps, key, value):
+  def check_has_bb_tag(
+      check: Callable[..., bool],
+      steps: Mapping[str, post_process_inputs.Step],
+      key: str,
+      value: str,
+  ) -> None:
     req = api.json.loads(steps['buildbucket.schedule'].logs['request'])
     tags = req['requests'][0]['scheduleBuild'].get('tags', [])
     check({'key': key, 'value': value} in tags)
 
-  def extract_cq_props(steps):
+  def extract_cq_props(
+      steps: Mapping[str, post_process_inputs.Step],
+  ) -> dict[str, Any]:
     req = api.json.loads(steps['buildbucket.schedule'].logs['request'])
     return req['requests'][0]['scheduleBuild'].get('properties', {}).get(
         '$recipe_engine/cq', {})
 
-  def check_set_to(check, steps, key, value):
+  def check_set_to(
+      check: Callable[..., bool],
+      steps: Mapping[str, post_process_inputs.Step],
+      key: str,
+      value: Any,
+  ) -> None:
     props = extract_cq_props(steps)
     check(props[key] == value)
 
-  def check_unset(check, steps, key):
+  def check_unset(
+      check: Callable[..., bool],
+      steps: Mapping[str, post_process_inputs.Step],
+      key: str,
+  ) -> None:
     props = extract_cq_props(steps)
     check(key not in props)
 

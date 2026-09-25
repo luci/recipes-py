@@ -5,6 +5,13 @@
 
 
 from __future__ import annotations
+from collections.abc import Sequence
+from typing import Any
+from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb
+from PB.go.chromium.org.luci.buildbucket.proto import common as bb_common_pb
+from recipe_engine import step_data
+
+from RECIPE_MODULES.recipe_engine import cv
 
 import re
 
@@ -20,6 +27,8 @@ CONFIG_FILE = 'commit-queue.cfg'
 class CVApi(recipe_api.RecipeApi):
   """This module provides recipe API of LUCI CV, a pre-commit testing system."""
 
+  m: cv.DEPS
+
   # Common Run modes.
   NEW_PATCHSET_RUN = 'NEW_PATCHSET_RUN'
   DRY_RUN = 'DRY_RUN'
@@ -33,13 +42,13 @@ class CVApi(recipe_api.RecipeApi):
 
   CQInactive = CVInactive
 
-  def __init__(self, input_props, **kwargs):
+  def __init__(self, input_props: cq_pb2.Input, **kwargs: Any) -> None:
     super().__init__(**kwargs)
     self._input = input_props
     self._active = False
     self._output = cq_pb2.Output()
 
-  def initialize(self):
+  def initialize(self) -> None:
     if self._input.active or (
         # legacy style
         'dry_run' in self.m.properties.get('$recipe_engine/cq', {})):
@@ -50,12 +59,12 @@ class CVApi(recipe_api.RecipeApi):
           self.DRY_RUN if self._input.dry_run else self.FULL_RUN)
 
   @property
-  def active(self):
+  def active(self) -> bool:
     """Returns whether CQ is active for this build."""
     return self._active
 
   @property
-  def run_mode(self):
+  def run_mode(self) -> str:
     """Returns the mode(str) of the CQ Run that triggers this build.
 
     Raises:
@@ -65,7 +74,7 @@ class CVApi(recipe_api.RecipeApi):
     return self._input.run_mode
 
   @property
-  def experimental(self):
+  def experimental(self) -> bool:
     """Returns whether this build is triggered for a CQ experimental builder.
 
     See `Builder.experiment_percentage` doc in [CQ
@@ -78,7 +87,7 @@ class CVApi(recipe_api.RecipeApi):
     return self._input.experimental
 
   @property
-  def top_level(self):
+  def top_level(self) -> bool:
     """Returns whether CQ triggered this build directly.
 
     Can be spoofed. *DO NOT USE FOR SECURITY CHECKS.*
@@ -90,7 +99,7 @@ class CVApi(recipe_api.RecipeApi):
     return self._input.top_level
 
   @property
-  def ordered_gerrit_changes(self):
+  def ordered_gerrit_changes(self) -> Sequence[bb_common_pb.GerritChange]:
     """Returns list[bb_common_pb2.GerritChange] in order in which CLs should be
     applied or submitted.
 
@@ -104,7 +113,7 @@ class CVApi(recipe_api.RecipeApi):
     return self.m.buildbucket.build.input.gerrit_changes
 
   @property
-  def props_for_child_build(self):
+  def props_for_child_build(self) -> dict[str, Any]:
     """Returns properties dict meant to be passed to child builds.
 
     These will preserve the CQ context of the current build in the
@@ -138,7 +147,7 @@ class CVApi(recipe_api.RecipeApi):
     }
 
   @property
-  def attempt_key(self):
+  def attempt_key(self) -> str:
     """Returns a string that is unique for a CV attempt.
 
     The same `attempt_key` will be used for all builds within an
@@ -150,7 +159,7 @@ class CVApi(recipe_api.RecipeApi):
     return self._extract_unique_cq_tag('attempt_key')
 
   @property
-  def cl_group_key(self):
+  def cl_group_key(self) -> str:
     """Returns a string that is unique for a current set of Gerrit change
     patchsets (or, equivalently, buildsets).
 
@@ -163,7 +172,7 @@ class CVApi(recipe_api.RecipeApi):
     return self._extract_unique_cq_tag('cl_group_key')
 
   @property
-  def equivalent_cl_group_key(self):
+  def equivalent_cl_group_key(self) -> str:
     """Returns a string that is unique for a given set of Gerrit changes
     disregarding trivial patchset differences.
 
@@ -176,7 +185,7 @@ class CVApi(recipe_api.RecipeApi):
     return self._extract_unique_cq_tag('equivalent_cl_group_key')
 
   @property
-  def cl_owners(self):
+  def cl_owners(self) -> list[str]:
     """Returns string(s) of the owner's email addresses used for the patchset.
 
     Usually CLs only have one owner, but more than one is possible so a list
@@ -194,11 +203,11 @@ class CVApi(recipe_api.RecipeApi):
     return cl_owner_strings
 
   @property
-  def triggered_build_ids(self):
+  def triggered_build_ids(self) -> list[int]:
     """Returns recorded Buildbucket build IDs as a list of integers."""
     return [bid for bid in self._output.triggered_build_ids]
 
-  def record_triggered_builds(self, *builds):
+  def record_triggered_builds(self, *builds: build_pb.Build) -> None:
     """Adds IDs of given Buildbucket builds to the list of triggered build IDs.
 
     Must be called after some step.
@@ -214,7 +223,7 @@ class CVApi(recipe_api.RecipeApi):
     """
     return self.record_triggered_build_ids(*[b.id for b in builds])
 
-  def record_triggered_build_ids(self, *build_ids):
+  def record_triggered_build_ids(self, *build_ids: int | str) -> None:
     """Adds the given Buildbucket build IDs to the list of triggered build IDs.
 
     Must be called after some step.
@@ -231,10 +240,10 @@ class CVApi(recipe_api.RecipeApi):
         ],)
 
   @property
-  def do_not_retry_build(self):
+  def do_not_retry_build(self) -> bool:
     return self._output.retry == cq_pb2.Output.OUTPUT_RETRY_DENIED
 
-  def set_do_not_retry_build(self):
+  def set_do_not_retry_build(self) -> None:
     """Instruct CQ to not retry this build.
 
     This mechanism is used to reduce duration of CQ attempt and save testing
@@ -249,10 +258,10 @@ class CVApi(recipe_api.RecipeApi):
     )
 
   @property
-  def allowed_reuse_modes(self):
+  def allowed_reuse_modes(self) -> list[str]:
     return [m for m in self._output.reusability.mode_allowlist]
 
-  def allow_reuse_for(self, *modes):
+  def allow_reuse_for(self, *modes: str) -> None:
     """Instructs CQ that this build can be reused in a future Run if
     and only if its mode is in the provided modes.
 
@@ -271,7 +280,7 @@ class CVApi(recipe_api.RecipeApi):
     self._write_output_props()
 
   @property
-  def owner_is_googler(self):
+  def owner_is_googler(self) -> bool:
     """Returns whether the Run/Attempt owner is a Googler.
 
     DO NOT USE: this is a temporary workaround for crbug.com/1259887 that is
@@ -286,7 +295,7 @@ class CVApi(recipe_api.RecipeApi):
       raise ValueError('owner_is_googler can only be called for chrome project')
     return self._input.owner_is_googler
 
-  def _extract_unique_cq_tag(self, suffix):
+  def _extract_unique_cq_tag(self, suffix: str) -> str:
     key = 'cq_' + suffix
     self._enforce_active()
     for t in self.m.buildbucket.build.tags:
@@ -294,7 +303,11 @@ class CVApi(recipe_api.RecipeApi):
         return t.value
     raise ValueError('Can\'t find tag with key %r' % key)  # pragma: nocover
 
-  def _write_output_props(self, cur_step=None, **addition_props):
+  def _write_output_props(
+      self,
+      cur_step: step_data.StepData | None = None,
+      **addition_props: Any,
+  ) -> None:
     # TODO(iannucci): add API to set properties regardless of the current step.
     if not cur_step:
       cur_step = self.m.step.active_result
@@ -306,6 +319,6 @@ class CVApi(recipe_api.RecipeApi):
     for k, v in addition_props.items():
       cur_step.presentation.properties[k] = v
 
-  def _enforce_active(self):
+  def _enforce_active(self) -> None:
     if not self._active:
       raise self.CQInactive()

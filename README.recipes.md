@@ -1656,24 +1656,24 @@ Apply non-default value cq module properties to the cv module.
 
 Recipe API for LUCI CV, the pre-commit testing system.
 
-#### **class [CVApi](/recipe_modules/cv/api.py#20)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [CVApi](/recipe_modules/cv/api.py#27)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 This module provides recipe API of LUCI CV, a pre-commit testing system.
 
-&emsp; **@property**<br>&mdash; **def [active](/recipe_modules/cv/api.py#52)(self):**
+&emsp; **@property**<br>&mdash; **def [active](/recipe_modules/cv/api.py#61)(self):**
 
 Returns whether CQ is active for this build.
 
-&mdash; **def [allow\_reuse\_for](/recipe_modules/cv/api.py#255)(self, \*modes):**
+&mdash; **def [allow\_reuse\_for](/recipe_modules/cv/api.py#264)(self, \*modes: str):**
 
 Instructs CQ that this build can be reused in a future Run if
 and only if its mode is in the provided modes.
 
 Overwrites all previously set values.
 
-&emsp; **@property**<br>&mdash; **def [allowed\_reuse\_modes](/recipe_modules/cv/api.py#251)(self):**
+&emsp; **@property**<br>&mdash; **def [allowed\_reuse\_modes](/recipe_modules/cv/api.py#260)(self):**
 
-&emsp; **@property**<br>&mdash; **def [attempt\_key](/recipe_modules/cv/api.py#140)(self):**
+&emsp; **@property**<br>&mdash; **def [attempt\_key](/recipe_modules/cv/api.py#149)(self):**
 
 Returns a string that is unique for a CV attempt.
 
@@ -1683,7 +1683,7 @@ attempt.
 Raises:
   CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [cl\_group\_key](/recipe_modules/cv/api.py#152)(self):**
+&emsp; **@property**<br>&mdash; **def [cl\_group\_key](/recipe_modules/cv/api.py#161)(self):**
 
 Returns a string that is unique for a current set of Gerrit change
 patchsets (or, equivalently, buildsets).
@@ -1694,7 +1694,7 @@ same set of changes at a different time.
 Raises:
   CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [cl\_owners](/recipe_modules/cv/api.py#178)(self):**
+&emsp; **@property**<br>&mdash; **def [cl\_owners](/recipe_modules/cv/api.py#187)(self):**
 
 Returns string(s) of the owner's email addresses used for the patchset.
 
@@ -1704,9 +1704,9 @@ will be returned.
 Raises:
   CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [do\_not\_retry\_build](/recipe_modules/cv/api.py#233)(self):**
+&emsp; **@property**<br>&mdash; **def [do\_not\_retry\_build](/recipe_modules/cv/api.py#242)(self):**
 
-&emsp; **@property**<br>&mdash; **def [equivalent\_cl\_group\_key](/recipe_modules/cv/api.py#165)(self):**
+&emsp; **@property**<br>&mdash; **def [equivalent\_cl\_group\_key](/recipe_modules/cv/api.py#174)(self):**
 
 Returns a string that is unique for a given set of Gerrit changes
 disregarding trivial patchset differences.
@@ -1717,7 +1717,7 @@ cl_group_key will change but the equivalent_cl_group_key will stay the same.
 Raises:
   CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [experimental](/recipe_modules/cv/api.py#67)(self):**
+&emsp; **@property**<br>&mdash; **def [experimental](/recipe_modules/cv/api.py#76)(self):**
 
 Returns whether this build is triggered for a CQ experimental builder.
 
@@ -1727,9 +1727,9 @@ config](https://chromium.googlesource.com/infra/luci/luci-go/+/main/cv/api/confi
 Raises:
   CQInactive if CQ is not active for this build.
 
-&mdash; **def [initialize](/recipe_modules/cv/api.py#42)(self):**
+&mdash; **def [initialize](/recipe_modules/cv/api.py#51)(self):**
 
-&emsp; **@property**<br>&mdash; **def [ordered\_gerrit\_changes](/recipe_modules/cv/api.py#92)(self):**
+&emsp; **@property**<br>&mdash; **def [ordered\_gerrit\_changes](/recipe_modules/cv/api.py#101)(self):**
 
 Returns list[bb_common_pb2.GerritChange] in order in which CLs should be
 applied or submitted.
@@ -1737,7 +1737,7 @@ applied or submitted.
 Raises:
   CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [owner\_is\_googler](/recipe_modules/cv/api.py#273)(self):**
+&emsp; **@property**<br>&mdash; **def [owner\_is\_googler](/recipe_modules/cv/api.py#282)(self):**
 
 Returns whether the Run/Attempt owner is a Googler.
 
@@ -1747,7 +1747,7 @@ Raises:
   CQInactive if CQ is not active for this build.
   ValueError if the builder is not in Chrome project.
 
-&emsp; **@property**<br>&mdash; **def [props\_for\_child\_build](/recipe_modules/cv/api.py#106)(self):**
+&emsp; **@property**<br>&mdash; **def [props\_for\_child\_build](/recipe_modules/cv/api.py#115)(self):**
 
 Returns properties dict meant to be passed to child builds.
 
@@ -1768,7 +1768,7 @@ api.cv.record_triggered_builds(*child_builds)
 The contents of returned dict should be treated as opaque blob,
 it may be changed without notice.
 
-&mdash; **def [record\_triggered\_build\_ids](/recipe_modules/cv/api.py#217)(self, \*build_ids):**
+&mdash; **def [record\_triggered\_build\_ids](/recipe_modules/cv/api.py#226)(self, \*build_ids: (int | str)):**
 
 Adds the given Buildbucket build IDs to the list of triggered build IDs.
 
@@ -1777,7 +1777,7 @@ Must be called after some step.
 Args:
   * build_ids (list of int or string): Buildbucket build IDs.
 
-&mdash; **def [record\_triggered\_builds](/recipe_modules/cv/api.py#201)(self, \*builds):**
+&mdash; **def [record\_triggered\_builds](/recipe_modules/cv/api.py#210)(self, \*builds: build_pb.Build):**
 
 Adds IDs of given Buildbucket builds to the list of triggered build IDs.
 
@@ -1792,21 +1792,21 @@ Args:
   * [`Build`](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto)
     objects, typically returned by `api.buildbucket.schedule`.
 
-&emsp; **@property**<br>&mdash; **def [run\_mode](/recipe_modules/cv/api.py#57)(self):**
+&emsp; **@property**<br>&mdash; **def [run\_mode](/recipe_modules/cv/api.py#66)(self):**
 
 Returns the mode(str) of the CQ Run that triggers this build.
 
 Raises:
   CQInactive if CQ is not active for this build.
 
-&mdash; **def [set\_do\_not\_retry\_build](/recipe_modules/cv/api.py#237)(self):**
+&mdash; **def [set\_do\_not\_retry\_build](/recipe_modules/cv/api.py#246)(self):**
 
 Instruct CQ to not retry this build.
 
 This mechanism is used to reduce duration of CQ attempt and save testing
 capacity if retrying will likely return an identical result.
 
-&emsp; **@property**<br>&mdash; **def [top\_level](/recipe_modules/cv/api.py#80)(self):**
+&emsp; **@property**<br>&mdash; **def [top\_level](/recipe_modules/cv/api.py#89)(self):**
 
 Returns whether CQ triggered this build directly.
 
@@ -1815,7 +1815,7 @@ Can be spoofed. *DO NOT USE FOR SECURITY CHECKS.*
 Raises:
   CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [triggered\_build\_ids](/recipe_modules/cv/api.py#196)(self):**
+&emsp; **@property**<br>&mdash; **def [triggered\_build\_ids](/recipe_modules/cv/api.py#205)(self):**
 
 Returns recorded Buildbucket build IDs as a list of integers.
 ### *recipe_modules* / [defer](/recipe_modules/defer)
@@ -5406,76 +5406,76 @@ Generates response Runs for a test.
 &emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/triggered_build_ids.py#30)(api: DEPS):**
 ### *recipes* / [cv:examples/ordered\_cls](/recipe_modules/cv/examples/ordered_cls.py)
 
-[DEPS](/recipe_modules/cv/examples/ordered_cls.py#25): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cv/examples/ordered_cls.py#28): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cv/examples/ordered_cls.py#40)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/cv/examples/ordered_cls.py#43)(api: DEPS):**
 ### *recipes* / [cv:examples/trigger\_child\_builds](/recipe_modules/cv/examples/trigger_child_builds.py)
 
-[DEPS](/recipe_modules/cv/examples/trigger_child_builds.py#25): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cv/examples/trigger_child_builds.py#31): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cv/examples/trigger_child_builds.py#41)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/cv/examples/trigger_child_builds.py#47)(api: DEPS):**
 ### *recipes* / [cv:tests/attempt\_key](/recipe_modules/cv/tests/attempt_key.py)
 
-[DEPS](/recipe_modules/cv/tests/attempt_key.py#19): [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv)
+[DEPS](/recipe_modules/cv/tests/attempt_key.py#22): [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cv/tests/attempt_key.py#30)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/cv/tests/attempt_key.py#33)(api: DEPS):**
 ### *recipes* / [cv:tests/cl\_group\_key](/recipe_modules/cv/tests/cl_group_key.py)
 
-[DEPS](/recipe_modules/cv/tests/cl_group_key.py#19): [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv)
+[DEPS](/recipe_modules/cv/tests/cl_group_key.py#22): [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cv/tests/cl_group_key.py#32)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/cv/tests/cl_group_key.py#35)(api: DEPS):**
 ### *recipes* / [cv:tests/cl\_owner](/recipe_modules/cv/tests/cl_owner.py)
 
-[DEPS](/recipe_modules/cv/tests/cl_owner.py#19): [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv)
+[DEPS](/recipe_modules/cv/tests/cl_owner.py#22): [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cv/tests/cl_owner.py#32)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/cv/tests/cl_owner.py#35)(api: DEPS):**
 ### *recipes* / [cv:tests/do\_not\_retry](/recipe_modules/cv/tests/do_not_retry.py)
 
-[DEPS](/recipe_modules/cv/tests/do_not_retry.py#18): [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cv/tests/do_not_retry.py#21): [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cv/tests/do_not_retry.py#27)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/cv/tests/do_not_retry.py#30)(api: DEPS):**
 ### *recipes* / [cv:tests/experimental](/recipe_modules/cv/tests/experimental.py)
 
-[DEPS](/recipe_modules/cv/tests/experimental.py#21): [assertions](#recipe_modules-assertions), [cv](#recipe_modules-cv), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cv/tests/experimental.py#24): [assertions](#recipe_modules-assertions), [cv](#recipe_modules-cv), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cv/tests/experimental.py#34)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/cv/tests/experimental.py#37)(api: DEPS):**
 ### *recipes* / [cv:tests/inactive](/recipe_modules/cv/tests/inactive.py)
 
-[DEPS](/recipe_modules/cv/tests/inactive.py#20): [assertions](#recipe_modules-assertions), [cv](#recipe_modules-cv), [properties](#recipe_modules-properties)
+[DEPS](/recipe_modules/cv/tests/inactive.py#23): [assertions](#recipe_modules-assertions), [cv](#recipe_modules-cv), [properties](#recipe_modules-properties)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cv/tests/inactive.py#31)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/cv/tests/inactive.py#34)(api: DEPS):**
 ### *recipes* / [cv:tests/mode\_of\_run](/recipe_modules/cv/tests/mode_of_run.py)
 
-[DEPS](/recipe_modules/cv/tests/mode_of_run.py#18): [cv](#recipe_modules-cv), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cv/tests/mode_of_run.py#21): [cv](#recipe_modules-cv), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cv/tests/mode_of_run.py#30)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/cv/tests/mode_of_run.py#33)(api: DEPS):**
 ### *recipes* / [cv:tests/owner\_is\_googler](/recipe_modules/cv/tests/owner_is_googler.py)
 
-[DEPS](/recipe_modules/cv/tests/owner_is_googler.py#21): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv), [properties](#recipe_modules-properties)
+[DEPS](/recipe_modules/cv/tests/owner_is_googler.py#24): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv), [properties](#recipe_modules-properties)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cv/tests/owner_is_googler.py#35)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/cv/tests/owner_is_googler.py#38)(api: DEPS):**
 ### *recipes* / [cv:tests/reuse](/recipe_modules/cv/tests/reuse.py)
 
-[DEPS](/recipe_modules/cv/tests/reuse.py#18): [assertions](#recipe_modules-assertions), [cv](#recipe_modules-cv), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cv/tests/reuse.py#21): [assertions](#recipe_modules-assertions), [cv](#recipe_modules-cv), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cv/tests/reuse.py#24)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/cv/tests/reuse.py#27)(api: DEPS):**
 ### *recipes* / [cv:tests/triggered\_build\_ids](/recipe_modules/cv/tests/triggered_build_ids.py)
 
-[DEPS](/recipe_modules/cv/tests/triggered_build_ids.py#20): [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cv/tests/triggered_build_ids.py#23): [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/cv/tests/triggered_build_ids.py#34)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/cv/tests/triggered_build_ids.py#37)(api: DEPS):**
 ### *recipes* / [defer:tests/collect](/recipe_modules/defer/tests/collect.py)
 
 [DEPS](/recipe_modules/defer/tests/collect.py#29): [context](#recipe_modules-context), [defer](#recipe_modules-defer), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

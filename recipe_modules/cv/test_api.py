@@ -18,11 +18,13 @@ class CVTestApi(recipe_test_api.RecipeTestApi):
   QUICK_DRY_RUN = 'QUICK_DRY_RUN'
   FULL_RUN = 'FULL_RUN'
 
-  def input_props(self,
-                  run_mode=None,
-                  top_level=True,
-                  experimental=False,
-                  owner_is_googler=False):
+  def input_props(
+      self,
+      run_mode: str | None = None,
+      top_level: bool = True,
+      experimental: bool = False,
+      owner_is_googler: bool = False,
+  ) -> cq_pb2.Input:
     """Simulate a build triggered by CV."""
     assert isinstance(run_mode, str), '%r (%s)' % (run_mode, type(run_mode))
     input_props = cq_pb2.Input(active=True, run_mode=run_mode)
@@ -41,7 +43,9 @@ class CVTestApi(recipe_test_api.RecipeTestApi):
 
     return input_props
 
-  def __call__(self, *args, **kwargs):
+  def __call__(
+      self, *args: Any, **kwargs: Any
+  ) -> recipe_test_api.TestData:
     return self.m.properties(
         **{f'$recipe_engine/cv': self.input_props(*args, **kwargs)})
 

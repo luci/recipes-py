@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine import post_process
 
 from dataclasses import dataclass
@@ -28,11 +31,11 @@ class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   api.assertions.assertFalse(api.cv.active)
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (api.test('no cq properties') +
          api.post_process(post_process.DropExpectation))
   yield (api.test('empty cq properties') +

@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine import post_process
 
 from dataclasses import dataclass
@@ -31,7 +34,7 @@ class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   if 'raises' in api.properties:
     with api.assertions.assertRaises(api.cv.CQInactive):
       api.cv.experimental
@@ -45,7 +48,7 @@ def RunSteps(api: DEPS):
                              in api.properties)
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (api.test('default') + api.cv(run_mode=api.cv.FULL_RUN) +
          api.properties(expected_top_level=True) +
          api.post_process(post_process.DropExpectation))

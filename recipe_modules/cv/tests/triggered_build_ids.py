@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from dataclasses import dataclass
 
 from recipe_engine import post_process
@@ -31,7 +34,7 @@ class TEST_DEPS(RecipeTestApi):
 from PB.go.chromium.org.luci.buildbucket.proto.build import Build
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   api.step('no builds actually triggered', cmd=[])
   api.cv.record_triggered_builds(*[])
   assert api.cv.triggered_build_ids == []
@@ -42,7 +45,7 @@ def RunSteps(api: DEPS):
   assert api.cv.triggered_build_ids == [1, 2, 22, 11]
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'example',
       api.cv.check_triggered_build_ids(1, 2, 22, 11),

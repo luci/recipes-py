@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
@@ -24,12 +27,12 @@ class DEPS(RecipeScriptApi):
 from PB.go.chromium.org.luci.buildbucket.proto.build import Build
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   assert not api.cv.do_not_retry_build
   api.cv.set_do_not_retry_build()
   assert api.cv.do_not_retry_build
   api.cv.set_do_not_retry_build()  # noop.
 
 
-def GenTests(api: RecipeTestApi):
+def GenTests(api: RecipeTestApi) -> Iterator[recipe_test_api.TestData]:
   yield api.test('example')

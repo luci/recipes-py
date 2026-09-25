@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine import post_process
 
 from dataclasses import dataclass
@@ -32,12 +35,12 @@ class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   api.assertions.assertEqual(api.cv.owner_is_googler,
                              api.properties['expected_owner_is_googler'])
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (api.test('default') + api.cv(run_mode=api.cv.FULL_RUN) +
          api.buildbucket.try_build(project='chrome') +
          api.properties(expected_owner_is_googler=False) +
