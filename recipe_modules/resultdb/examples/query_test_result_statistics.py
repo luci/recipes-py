@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine.post_process import DropExpectation
 
 from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
@@ -30,11 +33,11 @@ class TEST_DEPS(RecipeTestApi):
   resultdb: resultdb_rm.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   api.resultdb.query_test_result_statistics()
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'basic',
       api.context.luci_context(

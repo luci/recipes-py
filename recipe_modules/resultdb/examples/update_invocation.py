@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from google.protobuf import json_format
 
 from PB.recipe_modules.recipe_engine.resultdb.examples import update_invocation as update_invocation_pb
@@ -55,7 +58,7 @@ message InputProperties {
 PROPERTIES = update_invocation_pb.InputProperties
 
 
-def RunSteps(api: DEPS, props: update_invocation_pb.InputProperties):
+def RunSteps(api: DEPS, props: update_invocation_pb.InputProperties) -> None:
   gitiles_commit = common_pb.GitilesCommit()
   json_format.ParseDict(
       json_format.MessageToDict(props.gitiles_commit),
@@ -125,7 +128,7 @@ def RunSteps(api: DEPS, props: update_invocation_pb.InputProperties):
           ],))
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'basic',
       api.properties(

@@ -3708,13 +3708,13 @@ API for interacting with the ResultDB service.
 Requires `rdb` command in `$PATH`:
 https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 
-#### **class [ResultDBAPI](/recipe_modules/resultdb/api.py#33)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [ResultDBAPI](/recipe_modules/resultdb/api.py#41)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 A module for interacting with ResultDB.
 
-&mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#55)(self):**
+&mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#65)(self):**
 
-&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#879)(self, column_keys=(), grouping_keys=('status',)):**
+&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#926)(self, column_keys: Sequence[str]=(), grouping_keys: Sequence[str]=('status',)):**
 
 Specifies how the test results should be rendered.
 
@@ -3736,15 +3736,15 @@ Args:
     Caveat: test variants with only expected results are not affected by
     this setting and are always in their own group.
 
-&emsp; **@property**<br>&mdash; **def [current\_invocation](/recipe_modules/resultdb/api.py#47)(self):**
+&emsp; **@property**<br>&mdash; **def [current\_invocation](/recipe_modules/resultdb/api.py#57)(self):**
 
-&emsp; **@property**<br>&mdash; **def [enabled](/recipe_modules/resultdb/api.py#51)(self):**
+&emsp; **@property**<br>&mdash; **def [enabled](/recipe_modules/resultdb/api.py#61)(self):**
 
-&mdash; **def [exclude\_invocations](/recipe_modules/resultdb/api.py#66)(self, invocations, step_name=None):**
+&mdash; **def [exclude\_invocations](/recipe_modules/resultdb/api.py#78)(self, invocations: Sequence[str], step_name: (str | None)=None):**
 
 Shortcut for resultdb.update_included_invocations().
 
-&mdash; **def [exonerate](/recipe_modules/resultdb/api.py#157)(self, test_exonerations, step_name=None):**
+&mdash; **def [exonerate](/recipe_modules/resultdb/api.py#177)(self, test_exonerations: Sequence[test_exoneration_pb.TestExoneration], step_name: (str | None)=None):**
 
 Exonerates test variants in the current invocation.
 
@@ -3752,7 +3752,7 @@ Args:
   test_exonerations (list): A list of test_result_pb2.TestExoneration.
   step_name (str): name of the step.
 
-&mdash; **def [get\_included\_invocations](/recipe_modules/resultdb/api.py#107)(self, inv_name=None, step_name=None):**
+&mdash; **def [get\_included\_invocations](/recipe_modules/resultdb/api.py#123)(self, inv_name: (str | None)=None, step_name: (str | None)=None):**
 
 Returns names of included invocations of the input invocation.
 
@@ -3764,7 +3764,7 @@ Args:
 Returns:
   A list of invocation name strs.
 
-&mdash; **def [get\_invocation\_instructions](/recipe_modules/resultdb/api.py#132)(self, inv_name=None, step_name=None):**
+&mdash; **def [get\_invocation\_instructions](/recipe_modules/resultdb/api.py#150)(self, inv_name: (str | None)=None, step_name: (str | None)=None):**
 
 Returns instructions from the input invocation.
 
@@ -3776,11 +3776,11 @@ Args:
 Returns:
   instruction_pb2.Instructions of the invocation requested.
 
-&mdash; **def [include\_invocations](/recipe_modules/resultdb/api.py#61)(self, invocations, step_name=None):**
+&mdash; **def [include\_invocations](/recipe_modules/resultdb/api.py#71)(self, invocations: Sequence[str], step_name: (str | None)=None):**
 
 Shortcut for resultdb.update_included_invocations().
 
-&mdash; **def [invocation\_ids](/recipe_modules/resultdb/api.py#199)(self, inv_names):**
+&mdash; **def [invocation\_ids](/recipe_modules/resultdb/api.py#226)(self, inv_names: Sequence[str]):**
 
 Returns invocation IDs by parsing invocation names.
 
@@ -3790,7 +3790,7 @@ Args:
 Returns:
   A list of invocation_ids.
 
-&mdash; **def [query](/recipe_modules/resultdb/api.py#214)(self, inv_ids, variants_with_unexpected_results=False, merge=False, limit=None, step_name=None, tr_fields=None, test_invocations=None, test_regex=None):**
+&mdash; **def [query](/recipe_modules/resultdb/api.py#241)(self, inv_ids: Sequence[str], variants_with_unexpected_results: bool=False, merge: bool=False, limit: (int | None)=None, step_name: (str | None)=None, tr_fields: (Sequence[str] | None)=None, test_invocations: (Mapping[(str, common.Invocation)] | None)=None, test_regex: (str | None)=None):**
 
 Returns test results in the invocations.
 
@@ -3830,7 +3830,7 @@ Args:
 Returns:
   A dict {invocation_id: api.Invocation}.
 
-&mdash; **def [query\_new\_test\_variants](/recipe_modules/resultdb/api.py#506)(self, invocation: str, baseline: str, step_name: (str | None)=None, step_test_data: (Mapping[(str, Any)] | None)=None):**
+&mdash; **def [query\_new\_test\_variants](/recipe_modules/resultdb/api.py#547)(self, invocation: str, baseline: str, step_name: (str | None)=None, step_test_data: (Mapping[(str, Any)] | None)=None):**
 
 Query ResultDB for new tests.
 
@@ -3845,7 +3845,7 @@ Returns:
  A QueryNewTestVariantsResponse proto message with is_baseline_ready and
  new_test_variants.
 
-&mdash; **def [query\_test\_result\_statistics](/recipe_modules/resultdb/api.py#294)(self, invocations=None, step_name=None):**
+&mdash; **def [query\_test\_result\_statistics](/recipe_modules/resultdb/api.py#323)(self, invocations: (Sequence[str] | None)=None, step_name: (str | None)=None):**
 
 Retrieve stats of test results for the given invocations.
 
@@ -3861,7 +3861,7 @@ Returns:
   A QueryTestResultStatisticsResponse proto message with statistics for the
   queried invocations.
 
-&mdash; **def [query\_test\_results](/recipe_modules/resultdb/api.py#381)(self, invocations, test_id_regexp=None, variant_predicate=None, field_mask_paths=None, page_size=100, page_token=None, step_name=None):**
+&mdash; **def [query\_test\_results](/recipe_modules/resultdb/api.py#418)(self, invocations: Sequence[str], test_id_regexp: (str | None)=None, variant_predicate: (predicate.VariantPredicate | None)=None, field_mask_paths: (Sequence[str] | None)=None, page_size: int=100, page_token: (str | None)=None, step_name: (str | None)=None):**
 
 Retrieve test results from an invocation, recursively.
 
@@ -3894,7 +3894,7 @@ Returns:
   For value format, see [`QueryTestResultsResponse` message]
   (https://bit.ly/3dsChbo)
 
-&mdash; **def [query\_test\_variants](/recipe_modules/resultdb/api.py#443)(self, invocations, test_variant_status=None, field_mask_paths=None, page_size=100, page_token=None, step_name=None):**
+&mdash; **def [query\_test\_variants](/recipe_modules/resultdb/api.py#482)(self, invocations: Sequence[str], test_variant_status: (str | None)=None, field_mask_paths: (Sequence[str] | None)=None, page_size: int=100, page_token: (str | None)=None, step_name: (str | None)=None):**
 
 Retrieve test variants from an invocation, recursively.
 
@@ -3928,7 +3928,7 @@ Returns:
   For value format, see [`QueryTestVariantsResponse` message]
   (http://shortn/_hv3edsXidO)
 
-&mdash; **def [unwrap](/recipe_modules/resultdb/api.py#865)(self, cmd: Sequence[str]):**
+&mdash; **def [unwrap](/recipe_modules/resultdb/api.py#912)(self, cmd: Sequence[str]):**
 
 Reverses the wrap command
 
@@ -3938,7 +3938,7 @@ return the unwrapped command.
 Args:
   cmd (list of strings): the command line to attempt to unwrap
 
-&mdash; **def [update\_included\_invocations](/recipe_modules/resultdb/api.py#71)(self, add_invocations=None, remove_invocations=None, step_name=None):**
+&mdash; **def [update\_included\_invocations](/recipe_modules/resultdb/api.py#85)(self, add_invocations: (Sequence[str] | None)=None, remove_invocations: (Sequence[str] | None)=None, step_name: (str | None)=None):**
 
 Add and/or remove included invocations to/from the current invocation.
 
@@ -3951,7 +3951,7 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
-&mdash; **def [update\_invocation](/recipe_modules/resultdb/api.py#545)(self, parent_inv='', step_name=None, source_spec=None, is_source_spec_final=None, baseline_id=None, instructions=None, raise_on_failure=True):**
+&mdash; **def [update\_invocation](/recipe_modules/resultdb/api.py#586)(self, parent_inv: str='', step_name: (str | None)=None, source_spec: (invocation_pb2.SourceSpec | None)=None, is_source_spec_final: (bool | None)=None, baseline_id: (str | None)=None, instructions: (instruction_pb.Instructions | None)=None, raise_on_failure: bool=True):**
 
 Makes a call to the UpdateInvocation API to update the invocation
 
@@ -3972,7 +3972,7 @@ Args:
   raise_on_failure (bool): If set, and `status` is not SUCCESS, raise
     the appropriate exception.
 
-&mdash; **def [upload\_invocation\_artifacts](/recipe_modules/resultdb/api.py#327)(self, artifacts, parent_inv=None, step_name=None):**
+&mdash; **def [upload\_invocation\_artifacts](/recipe_modules/resultdb/api.py#360)(self, artifacts: Mapping[(str, Mapping[(str, (str | bytes))])], parent_inv: (str | None)=None, step_name: (str | None)=None):**
 
 Create artifacts with the given content type and contents or gcs_uri.
 
@@ -3992,7 +3992,7 @@ Returns:
   A BatchCreateArtifactsResponse proto message listing the artifacts that
   were created.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#668)(self, cmd, module_name='', module_scheme='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file='', inherit_sources=False, sources='', sources_file='', baseline_id='', inv_extended_properties_dir='', previous_test_id_prefix=None, test_id_prefix='', shorten_ids=False):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#715)(self, cmd: Sequence[((str | config_types.Path) | Placeholder)], module_name: str='', module_scheme: str='', base_variant: (Mapping[(str, str)] | None)=None, test_location_base: str='', base_tags: (Sequence[tuple[(str, str)]] | None)=None, coerce_negative_duration: bool=False, include: bool=False, realm: str='', location_tags_file: str='', require_build_inv: bool=True, exonerate_unexpected_pass: bool=False, inv_properties: str='', inv_properties_file: str='', inherit_sources: bool=False, sources: str='', sources_file: str='', baseline_id: str='', inv_extended_properties_dir: str='', previous_test_id_prefix: (str | None)=None, test_id_prefix: str='', shorten_ids: bool=False):**
 
 Wraps the command with ResultSink.
 
@@ -6157,88 +6157,88 @@ Test to cover legacy aspects of PathTestApi.
 &mdash; **def [RunSteps](/recipe_modules/raw_io/tests/output_mismatch.py#32)(api: DEPS):**
 ### *recipes* / [resultdb:examples/exonerate](/recipe_modules/resultdb/examples/exonerate.py)
 
-[DEPS](/recipe_modules/resultdb/examples/exonerate.py#27): [context](#recipe_modules-context), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/resultdb/examples/exonerate.py#30): [context](#recipe_modules-context), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/exonerate.py#60)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/exonerate.py#63)(api: DEPS):**
 ### *recipes* / [resultdb:examples/get\_included\_invocations](/recipe_modules/resultdb/examples/get_included_invocations.py)
 
-[DEPS](/recipe_modules/resultdb/examples/get_included_invocations.py#19): [assertions](#recipe_modules-assertions), [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/get_included_invocations.py#22): [assertions](#recipe_modules-assertions), [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/get_included_invocations.py#29)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/get_included_invocations.py#32)(api: DEPS):**
 ### *recipes* / [resultdb:examples/get\_invocation\_instructions](/recipe_modules/resultdb/examples/get_invocation_instructions.py)
 
-[DEPS](/recipe_modules/resultdb/examples/get_invocation_instructions.py#22): [assertions](#recipe_modules-assertions), [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/get_invocation_instructions.py#25): [assertions](#recipe_modules-assertions), [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/get_invocation_instructions.py#32)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/get_invocation_instructions.py#35)(api: DEPS):**
 ### *recipes* / [resultdb:examples/include](/recipe_modules/resultdb/examples/include.py)
 
-[DEPS](/recipe_modules/resultdb/examples/include.py#23): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/include.py#26): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/include.py#34)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/include.py#37)(api: DEPS):**
 ### *recipes* / [resultdb:examples/query](/recipe_modules/resultdb/examples/query.py)
 
-[DEPS](/recipe_modules/resultdb/examples/query.py#29): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/resultdb/examples/query.py#32): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query.py#40)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query.py#43)(api: DEPS):**
 ### *recipes* / [resultdb:examples/query\_new\_test\_variants](/recipe_modules/resultdb/examples/query_new_test_variants.py)
 
-[DEPS](/recipe_modules/resultdb/examples/query_new_test_variants.py#21): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/query_new_test_variants.py#24): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_new_test_variants.py#41)(api: DEPS, props: query_new_test_variants_pb.InputProperties):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_new_test_variants.py#44)(api: DEPS, props: query_new_test_variants_pb.InputProperties):**
 ### *recipes* / [resultdb:examples/query\_test\_result\_statistics](/recipe_modules/resultdb/examples/query_test_result_statistics.py)
 
-[DEPS](/recipe_modules/resultdb/examples/query_test_result_statistics.py#22): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/query_test_result_statistics.py#25): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_test_result_statistics.py#33)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_test_result_statistics.py#36)(api: DEPS):**
 ### *recipes* / [resultdb:examples/query\_test\_results](/recipe_modules/resultdb/examples/query_test_results.py)
 
-[DEPS](/recipe_modules/resultdb/examples/query_test_results.py#21): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/query_test_results.py#24): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_test_results.py#41)(api: DEPS, props: query_test_results_pb.InputProperties):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_test_results.py#44)(api: DEPS, props: query_test_results_pb.InputProperties):**
 ### *recipes* / [resultdb:examples/query\_test\_variants](/recipe_modules/resultdb/examples/query_test_variants.py)
 
-[DEPS](/recipe_modules/resultdb/examples/query_test_variants.py#21): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/query_test_variants.py#24): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_test_variants.py#42)(api: DEPS, props: query_test_variants_pb.InputProperties):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_test_variants.py#45)(api: DEPS, props: query_test_variants_pb.InputProperties):**
 ### *recipes* / [resultdb:examples/resultsink](/recipe_modules/resultdb/examples/resultsink.py)
 
-[DEPS](/recipe_modules/resultdb/examples/resultsink.py#21): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/resultdb/examples/resultsink.py#24): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/resultsink.py#32)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/resultsink.py#35)(api: DEPS):**
 ### *recipes* / [resultdb:examples/test\_presentation](/recipe_modules/resultdb/examples/test_presentation.py)
 
-[DEPS](/recipe_modules/resultdb/examples/test_presentation.py#14): [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/test_presentation.py#17): [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/test_presentation.py#23)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/test_presentation.py#26)(api: DEPS):**
 ### *recipes* / [resultdb:examples/test\_presentation\_default](/recipe_modules/resultdb/examples/test_presentation_default.py)
 
-[DEPS](/recipe_modules/resultdb/examples/test_presentation_default.py#14): [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/test_presentation_default.py#17): [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/test_presentation_default.py#23)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/test_presentation_default.py#26)(api: DEPS):**
 ### *recipes* / [resultdb:examples/update\_invocation](/recipe_modules/resultdb/examples/update_invocation.py)
 
-[DEPS](/recipe_modules/resultdb/examples/update_invocation.py#25): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/update_invocation.py#28): [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/update_invocation.py#58)(api: DEPS, props: update_invocation_pb.InputProperties):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/update_invocation.py#61)(api: DEPS, props: update_invocation_pb.InputProperties):**
 ### *recipes* / [resultdb:examples/upload\_invocation\_artifacts](/recipe_modules/resultdb/examples/upload_invocation_artifacts.py)
 
-[DEPS](/recipe_modules/resultdb/examples/upload_invocation_artifacts.py#19): [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/upload_invocation_artifacts.py#22): [resultdb](#recipe_modules-resultdb)
 
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/upload_invocation_artifacts.py#28)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/upload_invocation_artifacts.py#31)(api: DEPS):**
 ### *recipes* / [runtime:tests/full](/recipe_modules/runtime/tests/full.py)
 
 [DEPS](/recipe_modules/runtime/tests/full.py#23): [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)

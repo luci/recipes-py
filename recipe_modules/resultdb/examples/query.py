@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 import json
 
 from google.protobuf import json_format
@@ -37,7 +40,7 @@ class TEST_DEPS(RecipeTestApi):
   resultdb: resultdb.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   inv_bundle = api.resultdb.query(
       inv_ids=api.resultdb.invocation_ids(
           ['invocations/chromium-swarm.appspot.com/deadbeef']),
@@ -53,7 +56,7 @@ def RunSteps(api: DEPS):
         inv_bundle, pretty=True)
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   inv_bundle = {
       'task-chromium-swarm.appspot.com-deadbeef':
           api.resultdb.Invocation(

@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine.post_process import (DropExpectation, StepSuccess,
                                         DoesNotRun)
 
@@ -57,7 +60,7 @@ test_exonerations = [
 ]
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   api.resultdb._BATCH_SIZE = api.properties.get('batch_size', 500)
   api.resultdb.exonerate(
       test_exonerations=api.properties.get('test_exonerations',
@@ -65,7 +68,7 @@ def RunSteps(api: DEPS):
       step_name='exonerate without patch failures')
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   rdb_luci_context = sections_pb2.ResultDB(
       current_invocation=sections_pb2.ResultDBInvocation(
           name='invocations/build:8945511751514863184',

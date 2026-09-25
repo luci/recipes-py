@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 import json
 from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
 
@@ -29,7 +32,7 @@ class TEST_DEPS(RecipeTestApi):
   context: context.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   api.step('test', api.resultdb.wrap(['echo', 'suppose its a test']))
 
   api.step(
@@ -162,7 +165,7 @@ def RunSteps(api: DEPS):
            api.resultdb.unwrap(['not', 'wrapped']))
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'basic',
       api.context.luci_context(

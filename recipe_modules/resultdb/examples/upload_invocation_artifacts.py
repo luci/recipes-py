@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine.post_process import DropExpectation
 
 from PB.go.chromium.org.luci.resultdb.proto.v1 import artifact
@@ -25,7 +28,7 @@ class TEST_DEPS(RecipeTestApi):
   resultdb: resultdb.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   api.resultdb.upload_invocation_artifacts({
       'a': {
           'content_type': 'text/plain',
@@ -42,7 +45,7 @@ def RunSteps(api: DEPS):
   })
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'basic',
       api.resultdb.upload_invocation_artifacts(

@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine.post_process import DropExpectation
 
 from dataclasses import dataclass
@@ -26,7 +29,7 @@ class TEST_DEPS(RecipeTestApi):
   resultdb: resultdb.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   sub_invs = api.resultdb.get_included_invocations(
       inv_name='invocations/build-8831400474790691137')
   api.assertions.assertIn('inv1', sub_invs)
@@ -34,7 +37,7 @@ def RunSteps(api: DEPS):
   api.assertions.assertEqual(2, len(sub_invs))
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'basic',
       api.resultdb.get_included_invocations(['inv1', 'inv2']),

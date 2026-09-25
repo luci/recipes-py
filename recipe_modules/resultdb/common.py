@@ -4,6 +4,9 @@
 
 
 from __future__ import annotations
+from collections.abc import Mapping, Sequence
+from typing import Any, TypeVar
+from google.protobuf import message
 
 import json
 
@@ -30,7 +33,14 @@ class Invocation:
        'testExoneration'),
   )
 
-  def __init__(self, proto=None, test_results=None, test_exonerations=None):
+  def __init__(
+      self,
+      proto: invocation_pb2.Invocation | None = None,
+      test_results: Sequence[test_result_pb2.TestResult] | None = None,
+      test_exonerations: (
+          Sequence[test_exoneration_pb2.TestExoneration] | None
+      ) = None,
+  ) -> None:
     assert proto is None or isinstance(proto, invocation_pb2.Invocation), proto
     assert _all_of_type(test_results, test_result_pb2.TestResult), test_results
     assert _all_of_type(test_exonerations,
@@ -41,7 +51,9 @@ class Invocation:
     self.test_exonerations = test_exonerations or []
 
 
-def serialize(inv_bundle, pretty=False):
+def serialize(
+    inv_bundle: Mapping[str, Invocation], pretty: bool = False
+) -> str:
   """Serializes invocations to a string.
 
   The format corresponds to the format used by rdb-ls, unless pretty is True.
@@ -53,7 +65,7 @@ def serialize(inv_bundle, pretty=False):
   """
   lines = []
 
-  def add_line(inv_id, key, msg):
+  def add_line(inv_id: str, key: str, msg: message.Message) -> None:
     jsonish = {
       'invocationId': inv_id,
       key: json_format.MessageToDict(msg),
@@ -75,11 +87,13 @@ def serialize(inv_bundle, pretty=False):
   return '\n'.join(lines)
 
 
-def deserialize(data):
+def deserialize(data: str) -> dict[str, Invocation]:
   """Deserializes an invocation bundle. Opposite of serialize()."""
   ret = {}
 
-  def parse_msg(msg, body):
+  _M = TypeVar('_M', bound=message.Message)
+
+  def parse_msg(msg: _M, body: Mapping[str, Any]) -> _M:
     return json_format.ParseDict(
         body, msg,
         # Do not fail the build because recipe's proto copy is stale.
@@ -121,5 +135,7 @@ def deserialize(data):
   return ret
 
 
-def _all_of_type(lst, type):
+def _all_of_type(
+    lst: Sequence[Any] | None, type: type[Any]
+) -> bool:
   return not lst or all(isinstance(el, type) for el in lst)

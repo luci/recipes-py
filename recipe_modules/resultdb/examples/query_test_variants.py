@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from PB.recipe_modules.recipe_engine.resultdb.examples import query_test_variants as query_test_variants_pb
 from PB.go.chromium.org.luci.resultdb.proto.v1 import resultdb
 from recipe_engine.post_process import DropExpectation
@@ -39,7 +42,7 @@ message InputProperties {
 PROPERTIES = query_test_variants_pb.InputProperties
 
 
-def RunSteps(api: DEPS, props: query_test_variants_pb.InputProperties):
+def RunSteps(api: DEPS, props: query_test_variants_pb.InputProperties) -> None:
   api.resultdb.query_test_variants(
       [props.invocation],
       test_variant_status=props.test_variant_status,
@@ -48,7 +51,7 @@ def RunSteps(api: DEPS, props: query_test_variants_pb.InputProperties):
   )
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'basic',
       api.properties(

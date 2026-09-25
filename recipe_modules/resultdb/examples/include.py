@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine.post_process import (DropExpectation,
   DoesNotRunRE)
 
@@ -31,7 +34,7 @@ class TEST_DEPS(RecipeTestApi):
   resultdb: resultdb.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   inv_bundle = api.resultdb.query(
     ['deadbeef'],
     step_name='rdb query',
@@ -42,7 +45,7 @@ def RunSteps(api: DEPS):
   api.resultdb.exclude_invocations(invocation_ids, step_name='rdb exclude')
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   rdb_luci_context = sections_pb2.ResultDB(
       current_invocation=sections_pb2.ResultDBInvocation(
           name='invocations/build:8945511751514863184',
