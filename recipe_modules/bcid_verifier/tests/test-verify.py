@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine import post_process
 
 from dataclasses import dataclass
@@ -30,7 +33,7 @@ class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   api.bcid_verifier.verify_provenance(
       'bcid_policy://default',
       '/archive_dir/artifact',
@@ -38,7 +41,7 @@ def RunSteps(api: DEPS):
       log_only_mode=api.properties.get('log_only', False))
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'enforce-verify',
       api.post_check(

@@ -512,18 +512,18 @@ API for interacting with Software Verifier.
 To successfully authenticate to this API, you must have the
 https://www.googleapis.com/auth/bcid_verify OAuth scope.
 
-#### **class [BcidVerifierApi](/recipe_modules/bcid_verifier/api.py#22)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [BcidVerifierApi](/recipe_modules/bcid_verifier/api.py#25)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 API for interacting with Software Verifier
 
-&emsp; **@property**<br>&mdash; **def [bcid\_verifier\_path](/recipe_modules/bcid_verifier/api.py#29)(self):**
+&emsp; **@property**<br>&mdash; **def [bcid\_verifier\_path](/recipe_modules/bcid_verifier/api.py#34)(self):**
 
 Returns the path to the bcid_verifier binary.
 
 When the property is accessed the first time, the latest stable, released
 version of bcid_verifier will be installed using CIPD.
 
-&mdash; **def [verify\_provenance](/recipe_modules/bcid_verifier/api.py#39)(self, bcid_policy: str, artifact_path: str, attestation_path: str, log_only_mode: bool=False):**
+&mdash; **def [verify\_provenance](/recipe_modules/bcid_verifier/api.py#44)(self, bcid_policy: str, artifact_path: str, attestation_path: str, log_only_mode: bool=False):**
 
 Calls the BCID Software Verifier API to verify provenance for an
 artifact.
@@ -5170,10 +5170,10 @@ same repo as the issue() call.
 &mdash; **def [RunSteps](/recipe_modules/bcid_reporter/tests/retry.py#29)(api: DEPS):**
 ### *recipes* / [bcid\_verifier:tests/test-verify](/recipe_modules/bcid_verifier/tests/test-verify.py)
 
-[DEPS](/recipe_modules/bcid_verifier/tests/test-verify.py#21): [assertions](#recipe_modules-assertions), [bcid\_verifier](#recipe_modules-bcid_verifier), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/bcid_verifier/tests/test-verify.py#24): [assertions](#recipe_modules-assertions), [bcid\_verifier](#recipe_modules-bcid_verifier), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/bcid_verifier/tests/test-verify.py#33)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/bcid_verifier/tests/test-verify.py#36)(api: DEPS):**
 ### *recipes* / [buildbucket:examples/full](/recipe_modules/buildbucket/examples/full.py)
 
 [DEPS](/recipe_modules/buildbucket/examples/full.py#35): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)

@@ -9,7 +9,10 @@ https://www.googleapis.com/auth/bcid_verify OAuth scope.
 
 from __future__ import annotations
 
-from recipe_engine import recipe_api
+from RECIPE_MODULES.recipe_engine import bcid_verifier
+
+from typing import Any
+from recipe_engine import config_types, recipe_api
 
 # Usage of the bcid_verifier recipe_module will have significant downstream
 # impact and to avoid any production outage, we pin the latest known good build
@@ -22,12 +25,14 @@ VERIFY_FOR_LOGGING = "VERIFY_FOR_LOGGING"
 class BcidVerifierApi(recipe_api.RecipeApi):
   """API for interacting with Software Verifier"""
 
-  def __init__(self, **kwargs):
+  m: bcid_verifier.DEPS
+
+  def __init__(self, **kwargs: Any) -> None:
     super().__init__(**kwargs)
     self.verification_mode = VERIFY_FOR_ENFORCEMENT
 
   @property
-  def bcid_verifier_path(self):
+  def bcid_verifier_path(self) -> config_types.Path:
     """Returns the path to the bcid_verifier binary.
 
     When the property is accessed the first time, the latest stable, released
@@ -42,7 +47,7 @@ class BcidVerifierApi(recipe_api.RecipeApi):
       artifact_path: str,
       attestation_path: str,
       log_only_mode: bool = False,
-  ):
+  ) -> None:
     """
     Calls the BCID Software Verifier API to verify provenance for an
     artifact.
