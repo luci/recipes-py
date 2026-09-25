@@ -9,13 +9,13 @@ from recipe_engine import recipe_test_api
 class TimeTestApi(recipe_test_api.RecipeTestApi):
   @recipe_test_api.mod_test_data
   @staticmethod
-  def seed(now):
+  def seed(now: float) -> float:
     """Set the starting time for the clock in api.time."""
     return now
 
   @recipe_test_api.mod_test_data
   @staticmethod
-  def step(step):
+  def step(step: float) -> float:
     """Set the number of seconds the simulated clock will advance for each
     api.time.time() or api.time.utcnow() is called.
     """

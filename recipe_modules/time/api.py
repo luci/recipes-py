@@ -6,6 +6,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any, TypeVar
+from recipe_engine import step_data
+
+from RECIPE_MODULES.recipe_engine import time as time_mod
+
 import datetime
 import functools
 import time
@@ -24,12 +30,14 @@ class exponential_retry:
   See TimeApi.exponential_retry for full documentation.
   """
 
-  def __init__(self,
-               retries: int,
-               delay: datetime.timedelta,
-               condition: Callable[[Exception], bool] | None = None,
-               raise_on_failure: bool = True,
-               time_api: TimeApi = None):
+  def __init__(
+      self,
+      retries: int,
+      delay: datetime.timedelta,
+      condition: Callable[[Exception], bool] | None = None,
+      raise_on_failure: bool = True,
+      time_api: TimeApi | None = None,
+  ) -> None:
     """Creates a new exponential retry decorator.
 
     Args:
@@ -67,7 +75,7 @@ class exponential_retry:
   def __call__(self,
                f: Callable[[...], ReturnType]) -> Callable[[...], ReturnType]:
     @functools.wraps(f)
-    def wrapper(*args, **kwargs) -> ReturnType:
+    def wrapper(*args: Any, **kwargs: Any) -> ReturnType | None:
       time_api = self.time_api
       if time_api is None:
         try:
@@ -109,7 +117,9 @@ class exponential_retry:
 
 
 class TimeApi(recipe_api.RecipeApi):
-  def __init__(self, **kwargs):
+  m: time_mod.DEPS
+
+  def __init__(self, **kwargs: Any) -> None:
     super().__init__(**kwargs)
     self._fake_time: float | None = None
     self._fake_step: float | None = None
@@ -250,7 +260,9 @@ class TimeApi(recipe_api.RecipeApi):
       random_func = self.m.random.random
     return seconds * (1 + random_func() * (jitter_amount * 2) - jitter_amount)
 
-  def timeout(self, seconds: float | int | datetime.timedelta = None):
+  def timeout(
+      self, seconds: float | int | datetime.timedelta
+  ) -> contextlib.AbstractContextManager[None]:
     """Provides a context that times out after the given time.
 
     Usage:

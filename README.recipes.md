@@ -4755,9 +4755,9 @@ Returns:
 
 Allows mockable access to the current time.
 
-#### **class [TimeApi](/recipe_modules/time/api.py#111)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [TimeApi](/recipe_modules/time/api.py#119)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
-&mdash; **def [exponential\_retry](/recipe_modules/time/api.py#147)(self, retries: int, delay: datetime.timedelta, condition: Callable[([Exception], bool)]=None, raise_on_failure: bool=True):**
+&mdash; **def [exponential\_retry](/recipe_modules/time/api.py#157)(self, retries: int, delay: datetime.timedelta, condition: Callable[([Exception], bool)]=None, raise_on_failure: bool=True):**
 
 Adds exponential retry to a function.
 
@@ -4829,12 +4829,12 @@ def RunSteps(api):
   helper_funciton(api)
 ```
 
-&mdash; **def [ms\_since\_epoch](/recipe_modules/time/api.py#230)(self):**
+&mdash; **def [ms\_since\_epoch](/recipe_modules/time/api.py#240)(self):**
 
 Returns current timestamp as an int number of milliseconds since epoch.
     
 
-&mdash; **def [sleep](/recipe_modules/time/api.py#120)(self, secs: (float | int), with_step: (bool | None)=None, step_result: (step_data.StepData | None)=None):**
+&mdash; **def [sleep](/recipe_modules/time/api.py#130)(self, secs: (float | int), with_step: (bool | None)=None, step_result: (step_data.StepData | None)=None):**
 
 Suspend execution of |secs| (float) seconds, waiting for GLOBAL_SHUTDOWN.
   Does nothing in testing.
@@ -4850,11 +4850,11 @@ Args:
   * step_result - Result of running a step. Should be None if with_step is
     True or None.
 
-&mdash; **def [time](/recipe_modules/time/api.py#222)(self):**
+&mdash; **def [time](/recipe_modules/time/api.py#232)(self):**
 
 Returns current timestamp as a float number of seconds since epoch.
 
-&mdash; **def [timeout](/recipe_modules/time/api.py#253)(self, seconds: ((float | int) | datetime.timedelta)=None):**
+&mdash; **def [timeout](/recipe_modules/time/api.py#263)(self, seconds: ((float | int) | datetime.timedelta)):**
 
 Provides a context that times out after the given time.
 
@@ -4870,7 +4870,7 @@ deadline will not be updated, making this a no-op. For example, if
 `api.time.timeout(timedelta(minutes=10))` is used in a builder that has a
 5-minute execution timeout, it will not have any effect.
 
-&mdash; **def [utcnow](/recipe_modules/time/api.py#235)(self):**
+&mdash; **def [utcnow](/recipe_modules/time/api.py#245)(self):**
 
 Returns current UTC time as a datetime.datetime.
 ### *recipe_modules* / [tricium](/recipe_modules/tricium)
@@ -6403,18 +6403,18 @@ This file is a recipe demonstrating reading triggers of the current build.
 &mdash; **def [RunSteps](/recipe_modules/swarming/tests/task_result_from_jsonish.py#36)(api: DEPS):**
 ### *recipes* / [time:examples/full](/recipe_modules/time/examples/full.py)
 
-[DEPS](/recipe_modules/time/examples/full.py#33): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/time/examples/full.py#38): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
 
-&mdash; **def [RunSteps](/recipe_modules/time/examples/full.py#65)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/time/examples/full.py#70)(api: DEPS):**
 
-&emsp; **@exponential_retry(5, datetime.timedelta(seconds=1))**<br>&mdash; **def [helper\_fn\_that\_needs\_retries](/recipe_modules/time/examples/full.py#59)(api):**
+&emsp; **@exponential_retry(5, datetime.timedelta(seconds=1))**<br>&mdash; **def [helper\_fn\_that\_needs\_retries](/recipe_modules/time/examples/full.py#64)(api: Any):**
 ### *recipes* / [time:examples/jitter](/recipe_modules/time/examples/jitter.py)
 
-[DEPS](/recipe_modules/time/examples/jitter.py#22): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/time/examples/jitter.py#25): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
 
-&mdash; **def [RunSteps](/recipe_modules/time/examples/jitter.py#43)(api: DEPS, properties):**
+&mdash; **def [RunSteps](/recipe_modules/time/examples/jitter.py#46)(api: DEPS, properties: jitter_pb2.JitterProps):**
 ### *recipes* / [tricium:examples/add\_comment](/recipe_modules/tricium/examples/add_comment.py)
 
 [DEPS](/recipe_modules/tricium/examples/add_comment.py#31): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [tricium](#recipe_modules-tricium)

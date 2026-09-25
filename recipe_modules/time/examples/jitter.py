@@ -3,6 +3,9 @@
 # that can be found in the LICENSE file.
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine import post_process
 
 from PB.recipe_modules.recipe_engine.time.examples import jitter as jitter_pb2
@@ -40,7 +43,7 @@ message JitterProps {
 PROPERTIES = jitter_pb2.JitterProps
 
 
-def RunSteps(api: DEPS, properties):
+def RunSteps(api: DEPS, properties: jitter_pb2.JitterProps) -> None:
   random_func = lambda: properties.random_output
   jittered_time = api.time._jitter(100, .10, random_func)
   api.assertions.assertEqual(
@@ -50,7 +53,7 @@ def RunSteps(api: DEPS, properties):
   )
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'low-end',
       api.properties(

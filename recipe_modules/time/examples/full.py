@@ -4,6 +4,11 @@
 
 from __future__ import annotations
 
+from typing import Any
+
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 import datetime
 
 from recipe_engine import recipe_api
@@ -47,22 +52,22 @@ class TEST_DEPS(RecipeTestApi):
 
 class TestClass:
 
-  def __init__(self, api):
+  def __init__(self, api: DEPS) -> None:
     self.m = api
 
   @exponential_retry(5, datetime.timedelta(seconds=1))
-  def myFunction(self):
+  def myFunction(self) -> None:
     self.m.step("step inside class method", None)
     raise Exception()
 
 
 @exponential_retry(5, datetime.timedelta(seconds=1))
-def helper_fn_that_needs_retries(api):
+def helper_fn_that_needs_retries(api: Any) -> None:
   api.step("helper step", None)
   raise Exception()
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   now = api.time.time()
   api.time.sleep(5, with_step=True)
   api.step('echo', ['echo', str(now)])
@@ -72,7 +77,7 @@ def RunSteps(api: DEPS):
   if api.properties.get('use_exponential_retry_from_api'):
     # Delay doesn't matter since this is a test.
     @api.time.exponential_retry(5, datetime.timedelta(seconds=1))
-    def test_retries():
+    def test_retries() -> None:
       api.step('running', None)
       raise Exception()
 
@@ -85,7 +90,7 @@ def RunSteps(api: DEPS):
     # Delay doesn't matter since this is a test.
     @api.time.exponential_retry(
         5, datetime.timedelta(seconds=1), raise_on_failure=False)
-    def test_retries():
+    def test_retries() -> None:
       api.step('running', None)
       raise recipe_api.StepFailure('')
 
@@ -95,7 +100,7 @@ def RunSteps(api: DEPS):
     # Delay doesn't matter since this is a test.
     @api.time.exponential_retry(
         5, datetime.timedelta(seconds=1), raise_on_failure=False)
-    def test_retries():
+    def test_retries() -> None:
       api.step('running', None)
       raise recipe_api.StepWarning('')
 
@@ -105,7 +110,7 @@ def RunSteps(api: DEPS):
     # Delay doesn't matter since this is a test.
     @api.time.exponential_retry(
         5, datetime.timedelta(seconds=1), raise_on_failure=False)
-    def test_retries():
+    def test_retries() -> None:
       api.step('running', None)
       raise recipe_api.InfraFailure('')
 
@@ -115,7 +120,7 @@ def RunSteps(api: DEPS):
     # Delay doesn't matter since this is a test.
     @api.time.exponential_retry(
         5, datetime.timedelta(seconds=1), raise_on_failure=False)
-    def test_retries():
+    def test_retries() -> None:
       api.step('running', None)
       raise ValueError('other exception')
 
@@ -163,7 +168,7 @@ def RunSteps(api: DEPS):
       api.step('foo', ['echo', '"hello"'])
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('defaults')
 
   yield api.test(
