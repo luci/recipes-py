@@ -4886,27 +4886,27 @@ analyzer recipes, including:
   * Recipes that accumulate comments one by one.
   * Recipes that wrap other tools and parse their output.
 
-#### **class [TriciumApi](/recipe_modules/tricium/api.py#30)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [TriciumApi](/recipe_modules/tricium/api.py#36)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 TriciumApi provides basic support for Tricium.
 
-&mdash; **def [\_\_init\_\_](/recipe_modules/tricium/api.py#42)(self, \*\*kwargs):**
+&mdash; **def [\_\_init\_\_](/recipe_modules/tricium/api.py#50)(self, \*\*kwargs: Any):**
 
 Sets up the API.
 
 Initializes an empty list of comments for use with
 add_comment and write_comments.
 
-&mdash; **def [add\_comment](/recipe_modules/tricium/api.py#52)(self, category, message, path, start_line=0, end_line=0, start_char=0, end_char=0, suggestions=()):**
+&mdash; **def [add\_comment](/recipe_modules/tricium/api.py#60)(self, category: str, message: str, path: str, start_line: int=0, end_line: int=0, start_char: int=0, end_char: int=0, suggestions: Sequence[Mapping[(str, Any)]]=()):**
 
 Adds one comment to accumulate.
 
 For semantics of start_line, start_char, end_line, end_char, see Gerrit doc
 https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#comment-range
 
-&mdash; **def [is\_binary](/recipe_modules/tricium/api.py#281)(self, path):**
+&mdash; **def [is\_binary](/recipe_modules/tricium/api.py#297)(self, path: (config_types.Path | str)):**
 
-&mdash; **def [run\_legacy](/recipe_modules/tricium/api.py#207)(self, analyzers, input_base, affected_files, commit_message, emit=True):**
+&mdash; **def [run\_legacy](/recipe_modules/tricium/api.py#221)(self, analyzers: Sequence[legacy_analyzers.LegacyAnalyzer], input_base: config_types.Path, affected_files: Sequence[str], commit_message: str, emit: bool=True):**
 
 Runs legacy analyzers.
 
@@ -4929,13 +4929,13 @@ Args:
     analyzers (using `add_comment()` to store comments) and legacy
     analyzers.
 
-&emsp; **@staticmethod**<br>&mdash; **def [validate\_comment](/recipe_modules/tricium/api.py#133)(comment):**
+&emsp; **@staticmethod**<br>&mdash; **def [validate\_comment](/recipe_modules/tricium/api.py#141)(comment: Data.Comment):**
 
 Validates comment to comply with Tricium/Gerrit requirements.
 
 Raise ValueError on the first detected problem.
 
-&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#180)(self, upload_findings=True):**
+&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#192)(self, upload_findings: bool=True):**
 
 Emit the results accumulated by `add_comment` and `run_legacy`.
 ### *recipe_modules* / [url](/recipe_modules/url)
@@ -6417,32 +6417,32 @@ This file is a recipe demonstrating reading triggers of the current build.
 &mdash; **def [RunSteps](/recipe_modules/time/examples/jitter.py#43)(api: DEPS, properties):**
 ### *recipes* / [tricium:examples/add\_comment](/recipe_modules/tricium/examples/add_comment.py)
 
-[DEPS](/recipe_modules/tricium/examples/add_comment.py#25): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [tricium](#recipe_modules-tricium)
+[DEPS](/recipe_modules/tricium/examples/add_comment.py#31): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [tricium](#recipe_modules-tricium)
 
 
-&mdash; **def [CreateExpectedFinding](/recipe_modules/tricium/examples/add_comment.py#93)(api, input_comment):**
+&mdash; **def [CreateExpectedFinding](/recipe_modules/tricium/examples/add_comment.py#99)(api: DEPS, input_comment: Mapping[(str, Any)]):**
 
-&mdash; **def [RunSteps](/recipe_modules/tricium/examples/add_comment.py#141)(api: DEPS, props: add_comment_pb.InputProperties):**
+&mdash; **def [RunSteps](/recipe_modules/tricium/examples/add_comment.py#149)(api: DEPS, props: add_comment_pb.InputProperties):**
 ### *recipes* / [tricium:examples/wrapper](/recipe_modules/tricium/examples/wrapper.py)
 
-[DEPS](/recipe_modules/tricium/examples/wrapper.py#26): [buildbucket](#recipe_modules-buildbucket), [file](#recipe_modules-file), [path](#recipe_modules-path), [tricium](#recipe_modules-tricium)
+[DEPS](/recipe_modules/tricium/examples/wrapper.py#29): [buildbucket](#recipe_modules-buildbucket), [file](#recipe_modules-file), [path](#recipe_modules-path), [tricium](#recipe_modules-tricium)
 
 
 An example of a recipe wrapping legacy analyzers.
 
-&mdash; **def [RunSteps](/recipe_modules/tricium/examples/wrapper.py#39)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/tricium/examples/wrapper.py#42)(api: DEPS):**
 ### *recipes* / [tricium:tests/add\_comment\_validation](/recipe_modules/tricium/tests/add_comment_validation.py)
 
-[DEPS](/recipe_modules/tricium/tests/add_comment_validation.py#21): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
+[DEPS](/recipe_modules/tricium/tests/add_comment_validation.py#24): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
 
 
-&mdash; **def [RunSteps](/recipe_modules/tricium/tests/add_comment_validation.py#68)(api: DEPS, props: add_comment_validation_pb.InputProperties):**
+&mdash; **def [RunSteps](/recipe_modules/tricium/tests/add_comment_validation.py#71)(api: DEPS, props: add_comment_validation_pb.InputProperties):**
 ### *recipes* / [tricium:tests/enforce\_comments\_num\_limit](/recipe_modules/tricium/tests/enforce_comments_num_limit.py)
 
-[DEPS](/recipe_modules/tricium/tests/enforce_comments_num_limit.py#25): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [tricium](#recipe_modules-tricium)
+[DEPS](/recipe_modules/tricium/tests/enforce_comments_num_limit.py#28): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [tricium](#recipe_modules-tricium)
 
 
-&mdash; **def [RunSteps](/recipe_modules/tricium/tests/enforce_comments_num_limit.py#41)(api: DEPS, props):**
+&mdash; **def [RunSteps](/recipe_modules/tricium/tests/enforce_comments_num_limit.py#44)(api: DEPS, props: InputProps):**
 ### *recipes* / [url:examples/full](/recipe_modules/url/examples/full.py)
 
 [DEPS](/recipe_modules/url/examples/full.py#24): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step), [url](#recipe_modules-url)

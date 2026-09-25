@@ -4,6 +4,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from typing import Any
+
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 import json
 
 from PB.recipe_modules.recipe_engine.tricium.examples import add_comment as add_comment_pb
@@ -90,7 +96,9 @@ COMMENT_2 = {
 }
 
 
-def CreateExpectedFinding(api, input_comment):
+def CreateExpectedFinding(
+    api: DEPS, input_comment: Mapping[str, Any]
+) -> dict[str, Any]:
   cl = api.buildbucket.build.input.gerrit_changes[0]
   gerrit_ref = {
       'host': cl.host,
@@ -138,7 +146,7 @@ def CreateExpectedFinding(api, input_comment):
   return expected
 
 
-def RunSteps(api: DEPS, props: add_comment_pb.InputProperties):
+def RunSteps(api: DEPS, props: add_comment_pb.InputProperties) -> None:
   filename = 'path/to/file'
   if props.trigger_type_error:
     COMMENT_2['start_line'] = str(COMMENT_2['start_line'])
@@ -165,7 +173,7 @@ def RunSteps(api: DEPS, props: add_comment_pb.InputProperties):
   api.tricium.write_comments()
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('basic', api.buildbucket.try_build(project='chrome'))
   yield (api.test('type_error', api.buildbucket.try_build(project='chrome')) +
          api.properties(add_comment_pb.InputProperties(trigger_type_error=True)) +

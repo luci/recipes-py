@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from PB.recipe_modules.recipe_engine.tricium.tests import add_comment_validation as add_comment_validation_pb
 from recipe_engine import post_process
 
@@ -65,7 +68,10 @@ _OK_CASES = {
 }
 
 
-def RunSteps(api: DEPS, props: add_comment_validation_pb.InputProperties):
+def RunSteps(
+    api: DEPS,
+    props: add_comment_validation_pb.InputProperties,
+) -> None:
   # Set valid default.
   kwargs = dict(
       category='test',
@@ -85,7 +91,7 @@ def RunSteps(api: DEPS, props: add_comment_validation_pb.InputProperties):
   assert api.tricium._findings
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   for name in _BAD_CASES:
     yield api.test(
         name,

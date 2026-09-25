@@ -13,6 +13,12 @@ analyzer recipes, including:
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+from typing import Any
+from recipe_engine import config_types, step_data
+
+from RECIPE_MODULES.recipe_engine import tricium
+
 import fnmatch
 import gzip
 import os
@@ -30,6 +36,8 @@ BINARY_FILE_EXTENSIONS = ['.png']
 class TriciumApi(recipe_api.RecipeApi):
   """TriciumApi provides basic support for Tricium."""
 
+  m: tricium.DEPS
+
   # Expose pre-defined analyzers, as well the LegacyAnalyzer class.
   LegacyAnalyzer = legacy_analyzers.LegacyAnalyzer
   analyzers = legacy_analyzers.Analyzers
@@ -39,7 +47,7 @@ class TriciumApi(recipe_api.RecipeApi):
   # Any comments added after this threshold is reached will be dropped.
   _comments_num_limit = 1000
 
-  def __init__(self, **kwargs):
+  def __init__(self, **kwargs: Any) -> None:
     """Sets up the API.
 
     Initializes an empty list of comments for use with
@@ -51,15 +59,15 @@ class TriciumApi(recipe_api.RecipeApi):
 
   def add_comment(
       self,
-      category,
-      message,
-      path,
-      start_line=0,
-      end_line=0,
-      start_char=0,
-      end_char=0,
-      suggestions=(),
-  ):
+      category: str,
+      message: str,
+      path: str,
+      start_line: int = 0,
+      end_line: int = 0,
+      start_char: int = 0,
+      end_char: int = 0,
+      suggestions: Sequence[Mapping[str, Any]] = (),
+  ) -> None:
     """Adds one comment to accumulate.
 
     For semantics of start_line, start_char, end_line, end_char, see Gerrit doc
@@ -131,7 +139,7 @@ class TriciumApi(recipe_api.RecipeApi):
     self._add_comment(comment, finding)
 
   @staticmethod
-  def validate_comment(comment):
+  def validate_comment(comment: Data.Comment) -> None:
     """Validates comment to comply with Tricium/Gerrit requirements.
 
     Raise ValueError on the first detected problem.
@@ -170,14 +178,20 @@ class TriciumApi(recipe_api.RecipeApi):
       raise ValueError('path must be relative to the input directory, but '
                        'got absolute path %s' % (comment.path))
 
-  def _add_comment(self, comment, finding=None):
+  def _add_comment(
+      self,
+      comment: Data.Comment,
+      finding: findings_pb.Finding | None = None,
+  ) -> None:
     if comment not in self._comments:
       self._comments.append(comment)
 
     if finding and finding not in self._findings:
       self._findings.append(finding)
 
-  def write_comments(self, upload_findings=True):
+  def write_comments(
+      self, upload_findings: bool = True
+  ) -> step_data.StepData:
     """Emit the results accumulated by `add_comment` and `run_legacy`."""
     results = Data.Results()
     results.comments.extend(self._comments)
@@ -204,12 +218,14 @@ class TriciumApi(recipe_api.RecipeApi):
 
     return step
 
-  def run_legacy(self,
-                 analyzers,
-                 input_base,
-                 affected_files,
-                 commit_message,
-                 emit=True):
+  def run_legacy(
+      self,
+      analyzers: Sequence[legacy_analyzers.LegacyAnalyzer],
+      input_base: config_types.Path,
+      affected_files: Sequence[str],
+      commit_message: str,
+      emit: bool = True,
+  ) -> None:
     """Runs legacy analyzers.
 
     This function internally accumulates the comments from the analyzers it
@@ -278,11 +294,16 @@ class TriciumApi(recipe_api.RecipeApi):
     if emit:
       self.write_comments()
 
-  def is_binary(self, path):
+  def is_binary(self, path: config_types.Path | str) -> bool:
     _, ext = self.m.path.splitext(self.m.path.basename(path))
     return ext in BINARY_FILE_EXTENSIONS
 
-  def _write_files_data(self, affected_files, commit_message, base_dir):
+  def _write_files_data(
+      self,
+      affected_files: Sequence[str],
+      commit_message: str,
+      base_dir: config_types.Path,
+  ) -> None:
     """Writes a Files input message to a file.
 
     Args:
@@ -308,7 +329,7 @@ class TriciumApi(recipe_api.RecipeApi):
         # Tricium analyzers expect camelCase field names.
         encoding_kwargs={'preserving_proto_field_name': False})
 
-  def _read_results(self, base_dir):
+  def _read_results(self, base_dir: config_types.Path) -> Data.Results:
     """Reads a Tricium Results message from a file.
 
     Args:
@@ -324,7 +345,9 @@ class TriciumApi(recipe_api.RecipeApi):
         test_data='{"comments":[]}')
     return json_format.Parse(results_json, Data.Results())
 
-  def _ensure_data_dir(self, base_dir):
+  def _ensure_data_dir(
+      self, base_dir: config_types.Path
+  ) -> config_types.Path:
     """Creates the Tricium data directory if it doesn't exist.
 
     Simple Tricium analyzers assume that data is input/output from a
@@ -340,7 +363,11 @@ class TriciumApi(recipe_api.RecipeApi):
     self.m.file.ensure_directory('ensure tricium data dir', data_dir)
     return data_dir
 
-  def _fetch_legacy_analyzer(self, package_dir, analyzer):
+  def _fetch_legacy_analyzer(
+      self,
+      package_dir: config_types.Path,
+      analyzer: legacy_analyzers.LegacyAnalyzer,
+  ) -> None:
     """Fetches an analyzer package from CIPD.
 
     Args:
@@ -351,7 +378,13 @@ class TriciumApi(recipe_api.RecipeApi):
     ensure_file.add_package(analyzer.package, version=analyzer.version)
     self.m.cipd.ensure(package_dir, ensure_file)
 
-  def _run_legacy_analyzer(self, package_dir, analyzer, input_dir, output_dir):
+  def _run_legacy_analyzer(
+      self,
+      package_dir: config_types.Path,
+      analyzer: legacy_analyzers.LegacyAnalyzer,
+      input_dir: config_types.Path,
+      output_dir: config_types.Path,
+  ) -> Data.Results:
     """Runs a simple legacy analyzer executable and returns the results.
 
     Args:
@@ -374,7 +407,9 @@ class TriciumApi(recipe_api.RecipeApi):
     return self._read_results(output_dir)
 
 
-def _matches_path_filters(files, patterns):
+def _matches_path_filters(
+    files: Sequence[str], patterns: Sequence[str]
+) -> bool:
   if len(patterns) == 0:
     return True
   for p in patterns:

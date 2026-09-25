@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine import post_process
 
 from PB.tricium.data import Data
@@ -38,7 +41,7 @@ class TEST_DEPS(RecipeTestApi):
 PROPERTIES = InputProps
 
 
-def RunSteps(api: DEPS, props):
+def RunSteps(api: DEPS, props: InputProps) -> None:
   api.tricium._comments_num_limit = 5  # Reset the limit to 5 for testing.
   for i in range(10):
     api.tricium.add_comment('test', 'test message', 'path/to/file_%d' % i)
@@ -53,7 +56,7 @@ def RunSteps(api: DEPS, props):
   api.assertions.assertEqual(result, expected)
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (api.test('basic', api.buildbucket.try_build(project='chrome')) +
          api.properties(
              InputProps(

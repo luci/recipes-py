@@ -5,6 +5,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from google.protobuf import json_format
 
 from recipe_engine import post_process
@@ -36,7 +39,7 @@ class TEST_DEPS(RecipeTestApi):
   file: file.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   checkout_base = api.path.cleanup_dir / 'checkout'
   api.file.write_text('one', checkout_base / 'one.txt', 'one')
   api.file.write_text('two', checkout_base / 'foo' / 'two.txt', 'two')
@@ -55,9 +58,9 @@ def RunSteps(api: DEPS):
       analyzers, checkout_base, ['one.py', 'foo/two.py', 'image.png'], commit_message='msg')
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
 
-  def results_json(num_comments):
+  def results_json(num_comments: int) -> str:
     results = Data.Results()
     results.comments.extend([
         Data.Comment(category='X', message=str(i), path='x')

@@ -142,7 +142,7 @@ class Analyzers:
       executable='spacey')
 
   @classmethod
-  def by_name(cls):
+  def by_name(cls) -> dict[str, LegacyAnalyzer]:
     """Returns a dict mapping names to LegacyAnalyzers.
 
     This mapping may be used to map names to analyzers, for example if a recipe
