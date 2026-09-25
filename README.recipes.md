@@ -5100,7 +5100,7 @@ Allows recipe modules to issue warnings in simulation test.
 
 #### **class [WarningApi](/recipe_modules/warning/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
-&mdash; **def [issue](/recipe_modules/warning/api.py#13)(self, name):**
+&mdash; **def [issue](/recipe_modules/warning/api.py#13)(self, name: str):**
 
 Issues an execution warning.
 
@@ -6480,5 +6480,5 @@ This is a fake recipe to trick the simulation and make it believes that
 this module has tests. The actual test for this module is done via unit test
 because the `issue` method can only be used from recipe_modules, not recipes.
 
-&mdash; **def [RunSteps](/recipe_modules/warning/tests/fakes.py#14)(api):**
+&mdash; **def [RunSteps](/recipe_modules/warning/tests/fakes.py#18)(api: recipe_api.RecipeScriptApi):**
 

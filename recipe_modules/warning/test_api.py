@@ -10,7 +10,7 @@ from recipe_engine import recipe_api, recipe_test_api
 
 
 class WarningTestApi(recipe_test_api.RecipeTestApi):
-  def issue(self, name):  # pragma: no cover
+  def issue(self, name: str) -> None:  # pragma: no cover
     """Issues an execution warning.
 
     `name` MAY either be a fully qualified "repo_name/WARNING_NAME" or a short
