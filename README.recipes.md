@@ -2624,16 +2624,16 @@ Args:
 
 Methods for producing and consuming JSON.
 
-#### **class [JsonApi](/recipe_modules/json/api.py#132)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [JsonApi](/recipe_modules/json/api.py#147)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
-&emsp; **@staticmethod**<br>&mdash; **def [dumps](/recipe_modules/json/api.py#133)(\*args, \*\*kwargs):**
+&emsp; **@staticmethod**<br>&mdash; **def [dumps](/recipe_modules/json/api.py#150)(\*args: Any, \*\*kwargs: Any):**
 
 Works like `json.dumps`.
 
 By default this sorts dictionary keys (see discussion in `input()`), but you
 can pass sort_keys=False to override this behavior.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#165)**<br>&mdash; **def [input](/recipe_modules/json/api.py#160)(self, data, sort_keys=True):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#165)**<br>&mdash; **def [input](/recipe_modules/json/api.py#177)(self, data: Any, sort_keys: bool=True):**
 
 A placeholder which will expand to a file path containing <data>.
 
@@ -2643,11 +2643,11 @@ so this is no longer necessary for determinism, and in some cases (such as
 SPDX), the 'pretty' output is in non-alphabetical order. The default remains
 `True`, however, to avoid breaking all downstream tests.
 
-&mdash; **def [is\_serializable](/recipe_modules/json/api.py#152)(self, obj):**
+&mdash; **def [is\_serializable](/recipe_modules/json/api.py#169)(self, obj: Any):**
 
 Returns True if the object is JSON-serializable.
 
-&emsp; **@staticmethod**<br>&mdash; **def [loads](/recipe_modules/json/api.py#142)(data, \*\*kwargs):**
+&emsp; **@staticmethod**<br>&mdash; **def [loads](/recipe_modules/json/api.py#159)(data: (str | bytes), \*\*kwargs: Any):**
 
 Works like `json.loads`, but:
 * strips out unicode objects (replacing them with utf8-encoded str
@@ -2655,7 +2655,7 @@ Works like `json.loads`, but:
 * replaces 'int-like' floats with ints. These are floats whose magnitude
   is less than (2**53-1) and which don't have a decimal component.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#165)**<br>&mdash; **def [output](/recipe_modules/json/api.py#172)(self, add_json_log=True, name=None, leak_to=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#165)**<br>&mdash; **def [output](/recipe_modules/json/api.py#191)(self, add_json_log: (bool | Literal['on_failure'])=True, name: (str | None)=None, leak_to: ((config_types.Path | str) | None)=None):**
 
 A placeholder which will expand to '/tmp/file'.
 
@@ -2668,7 +2668,7 @@ Args:
     to a step link named `name`. If this is 'on_failure', only create this
     log when the step has a non-SUCCESS status.
 
-&mdash; **def [read](/recipe_modules/json/api.py#187)(self, name, path, add_json_log=True, output_name=None, \*\*kwargs):**
+&mdash; **def [read](/recipe_modules/json/api.py#211)(self, name: str, path: (config_types.Path | str), add_json_log: (bool | Literal['on_failure'])=True, output_name: (str | None)=None, \*\*kwargs: Any):**
 
 Returns a step that reads a JSON file.
 
@@ -5933,24 +5933,24 @@ This tests metadata features of the Future object.
 &mdash; **def [RunSteps](/recipe_modules/golang/examples/full.py#29)(api: DEPS):**
 ### *recipes* / [json:examples/full](/recipe_modules/json/examples/full.py)
 
-[DEPS](/recipe_modules/json/examples/full.py#20): [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/json/examples/full.py#23): [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/JSON_READ_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/json/examples/full.py#41)(api: DEPS):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/JSON_READ_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/json/examples/full.py#44)(api: DEPS):**
 ### *recipes* / [json:tests/add\_json\_log](/recipe_modules/json/tests/add_json_log.py)
 
-[DEPS](/recipe_modules/json/tests/add_json_log.py#17): [json](#recipe_modules-json), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/json/tests/add_json_log.py#20): [json](#recipe_modules-json), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/json/tests/add_json_log.py#27)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/json/tests/add_json_log.py#30)(api: DEPS):**
 ### *recipes* / [json:tests/unsorted](/recipe_modules/json/tests/unsorted.py)
 
-[DEPS](/recipe_modules/json/tests/unsorted.py#24): [json](#recipe_modules-json), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/json/tests/unsorted.py#29): [json](#recipe_modules-json), [step](#recipe_modules-step)
 
 
 Test to assert that sort_keys=False preserves insertion order.
 
-&mdash; **def [RunSteps](/recipe_modules/json/tests/unsorted.py#34)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/json/tests/unsorted.py#39)(api: DEPS):**
 ### *recipes* / [led:tests/full](/recipe_modules/led/tests/full.py)
 
 [DEPS](/recipe_modules/led/tests/full.py#35): [buildbucket](#recipe_modules-buildbucket), [led](#recipe_modules-led), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [step](#recipe_modules-step)

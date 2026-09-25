@@ -6,6 +6,11 @@
 
 from __future__ import annotations
 
+from typing import Any, Literal
+from recipe_engine import config_types, engine_types, recipe_test_api, step_data
+
+from RECIPE_MODULES.recipe_engine import json as json_mod
+
 import functools
 import contextlib
 import json
@@ -20,13 +25,13 @@ from recipe_engine import config_types
 
 
 @functools.wraps(json.dumps)
-def dumps(*args, **kwargs):
+def dumps(*args: Any, **kwargs: Any) -> str:
   kwargs.setdefault('sort_keys', True)
   kwargs.setdefault('default', _default_json_serializer)
   return json.dumps(*args, **kwargs)
 
 
-def _default_json_serializer(obj):
+def _default_json_serializer(obj: Any) -> Any:
   """Passed as the `default` arg to json.dumps().
 
   Ensures that commonly used types in recipes are JSON-serializable.
@@ -48,7 +53,7 @@ def _default_json_serializer(obj):
 
 
 @functools.wraps(json.loads)
-def loads(data, **kwargs):
+def loads(data: str | bytes, **kwargs: Any) -> Any:
   return recipe_util.fix_json_object(json.loads(data, **kwargs))
 
 
@@ -70,7 +75,13 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
 
   See the example recipe (./examples/full.py) for some more uses.
   """
-  def __init__(self, api, add_json_log, name=None, leak_to=None):
+  def __init__(
+      self,
+      api: JsonApi,
+      add_json_log: bool | Literal['on_failure'],
+      name: str | None = None,
+      leak_to: config_types.Path | str | None = None,
+  ) -> None:
     assert add_json_log in (True, False, 'on_failure'), (
         'add_json_log=%r' % add_json_log)
     self.raw = api.m.raw_io.output_text('.json', leak_to=leak_to)
@@ -78,13 +89,17 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
     super().__init__(name=name)
 
   @property
-  def backing_file(self):
+  def backing_file(self) -> str:
     return self.raw.backing_file
 
-  def render(self, test):
+  def render(self, test: recipe_test_api.PlaceholderTestData) -> list[str]:
     return self.raw.render(test)
 
-  def result(self, presentation, test):
+  def result(
+      self,
+      presentation: engine_types.StepPresentation,
+      test: recipe_test_api.PlaceholderTestData,
+  ) -> Any:
     # Save name before self.raw.result() deletes it.
     backing_file = self.backing_file
     raw_data = self.raw.result(presentation, test)
@@ -130,8 +145,10 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
 
 
 class JsonApi(recipe_api.RecipeApi):
+  m: json_mod.DEPS
+
   @staticmethod
-  def dumps(*args, **kwargs):
+  def dumps(*args: Any, **kwargs: Any) -> str:
     """Works like `json.dumps`.
 
     By default this sorts dictionary keys (see discussion in `input()`), but you
@@ -140,7 +157,7 @@ class JsonApi(recipe_api.RecipeApi):
     return dumps(*args, **kwargs)
 
   @staticmethod
-  def loads(data, **kwargs):
+  def loads(data: str | bytes, **kwargs: Any) -> Any:
     """Works like `json.loads`, but:
       * strips out unicode objects (replacing them with utf8-encoded str
         objects).
@@ -149,7 +166,7 @@ class JsonApi(recipe_api.RecipeApi):
     """
     return loads(data, **kwargs)
 
-  def is_serializable(self, obj):
+  def is_serializable(self, obj: Any) -> bool:
     """Returns True if the object is JSON-serializable."""
     try:
       self.dumps(obj)
@@ -158,7 +175,9 @@ class JsonApi(recipe_api.RecipeApi):
       return False
 
   @recipe_util.returns_placeholder
-  def input(self, data, sort_keys=True):
+  def input(
+      self, data: Any, sort_keys: bool = True
+  ) -> recipe_util.InputPlaceholder:
     """A placeholder which will expand to a file path containing <data>.
 
     By default this sorts dictionaries in `data` to make this output
@@ -170,7 +189,12 @@ class JsonApi(recipe_api.RecipeApi):
     return self.m.raw_io.input_text(self.dumps(data, sort_keys=sort_keys), '.json')
 
   @recipe_util.returns_placeholder
-  def output(self, add_json_log=True, name=None, leak_to=None):
+  def output(
+      self,
+      add_json_log: bool | Literal['on_failure'] = True,
+      name: str | None = None,
+      leak_to: config_types.Path | str | None = None,
+  ) -> JsonOutputPlaceholder:
     """A placeholder which will expand to '/tmp/file'.
 
     If leak_to is provided, it must be a Path object. This path will be used in
@@ -184,7 +208,14 @@ class JsonApi(recipe_api.RecipeApi):
     """
     return JsonOutputPlaceholder(self, add_json_log, name=name, leak_to=leak_to)
 
-  def read(self, name, path, add_json_log=True, output_name=None, **kwargs):
+  def read(
+      self,
+      name: str,
+      path: config_types.Path | str,
+      add_json_log: bool | Literal['on_failure'] = True,
+      output_name: str | None = None,
+      **kwargs: Any,
+  ) -> step_data.StepData:
     """Returns a step that reads a JSON file.
 
     DEPRECATED: Use file.read_json instead.
