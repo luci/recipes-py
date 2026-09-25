@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine import post_process, recipe_api
 
 from dataclasses import dataclass
@@ -29,11 +32,11 @@ class TEST_DEPS(RecipeTestApi):
 
 
 @recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   api.assertions.assertFalse(api.cq.active)
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (
     api.test('no cq properties')
     + api.post_process(post_process.DropExpectation)

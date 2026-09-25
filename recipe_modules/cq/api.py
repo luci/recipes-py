@@ -5,6 +5,11 @@
 
 from __future__ import annotations
 
+from typing import Any
+from PB.go.chromium.org.luci.cv.api.recipe.v1 import cq as cq_pb
+
+from RECIPE_MODULES.recipe_engine import cq
+
 from recipe_engine import recipe_api
 
 _INPUT_PROPERTY_KEYS = (
@@ -20,11 +25,15 @@ _INPUT_PROPERTY_KEYS = (
 class CQApi(recipe_api.RecipeApi):
   """This module is a thin wrapper of the cv module."""
 
-  def __init__(self, props, *args, **kwargs):
+  m: cq.DEPS
+
+  def __init__(
+      self, props: cq_pb.Input, *args: Any, **kwargs: Any
+  ) -> None:
     super().__init__(*args, **kwargs)
     self._input = props
 
-  def initialize(self):
+  def initialize(self) -> None:
     """Apply non-default value cq module properties to the cv module."""
     for name in _INPUT_PROPERTY_KEYS:
       value = getattr(self._input, name)
@@ -32,6 +41,6 @@ class CQApi(recipe_api.RecipeApi):
         setattr(self.m.cv._input, name, value)
     self.m.cv.initialize()
 
-  def __getattr__(self, name):
+  def __getattr__(self, name: str) -> Any:
     self.m.warning.issue('CQ_MODULE_DEPRECATED')
     return getattr(self.m.cv, name)

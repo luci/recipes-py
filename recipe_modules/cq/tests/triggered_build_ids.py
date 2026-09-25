@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from PB.go.chromium.org.luci.buildbucket.proto.build import Build
 from recipe_engine import recipe_api
 
@@ -25,7 +28,7 @@ class DEPS(RecipeScriptApi):
 
 
 @recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   api.step('no builds actually triggered', cmd=[])
   api.cq.record_triggered_builds(*[])
   assert api.cq.triggered_build_ids == []
@@ -36,5 +39,5 @@ def RunSteps(api: DEPS):
   assert api.cq.triggered_build_ids == [1, 2, 22, 11]
 
 
-def GenTests(api: RecipeTestApi):
+def GenTests(api: RecipeTestApi) -> Iterator[recipe_test_api.TestData]:
   yield api.test('example')

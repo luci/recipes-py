@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine import post_process, recipe_api
 
 from PB.go.chromium.org.luci.cv.api.recipe.v1 import cq as cq_pb2
@@ -38,7 +41,7 @@ class TEST_DEPS(RecipeTestApi):
 
 
 @recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   if 'raises' in api.properties:
     with api.assertions.assertRaises(api.cq.CQInactive):
       api.cq.ordered_gerrit_changes
@@ -49,7 +52,7 @@ def RunSteps(api: DEPS):
       api.properties['expected_cls'])
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (
     api.test('cq-run')
     + api.cq(run_mode=api.cq.FULL_RUN)

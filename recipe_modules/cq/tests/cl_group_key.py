@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine import post_process, recipe_api
 
 from dataclasses import dataclass
@@ -31,12 +34,12 @@ from PB.go.chromium.org.luci.buildbucket.proto.build import Build
 
 
 @recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   assert api.cq.cl_group_key == 'changes-on-trivial-rebase', api.cq.cl_group_key
   assert api.cq.equivalent_cl_group_key == 'sticky-on-trivial-rebase', api.cq.equivalent_cl_group_key
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('simple',
     api.cq(run_mode=api.cq.DRY_RUN),
     api.buildbucket.try_build(

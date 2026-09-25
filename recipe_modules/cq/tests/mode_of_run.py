@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine import recipe_api
 
 from dataclasses import dataclass
@@ -30,14 +33,14 @@ class TEST_DEPS(RecipeTestApi):
 
 
 @recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   api.step('show properties', [])
   api.step.active_result.presentation.logs['result'] = [
     'mode: %s' % (api.cq.run_mode,),
   ]
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('dry') + api.cq(run_mode=api.cq.DRY_RUN)
   yield api.test('quick-dry') + api.cq(run_mode=api.cq.QUICK_DRY_RUN)
   yield api.test('full') + api.cq(run_mode=api.cq.FULL_RUN)

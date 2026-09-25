@@ -1642,11 +1642,11 @@ Returns None if resultdb is not defined.
 
 Wrapper for CV API.
 
-#### **class [CQApi](/recipe_modules/cq/api.py#20)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [CQApi](/recipe_modules/cq/api.py#25)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 This module is a thin wrapper of the cv module.
 
-&mdash; **def [initialize](/recipe_modules/cq/api.py#27)(self):**
+&mdash; **def [initialize](/recipe_modules/cq/api.py#36)(self):**
 
 Apply non-default value cq module properties to the cv module.
 ### *recipe_modules* / [cv](/recipe_modules/cv)
@@ -5346,64 +5346,64 @@ Generates response Runs for a test.
 &mdash; **def [RunSteps](/recipe_modules/context/tests/luci_context.py#38)(api: DEPS):**
 ### *recipes* / [cq:examples/ordered\_cls](/recipe_modules/cq/examples/ordered_cls.py)
 
-[DEPS](/recipe_modules/cq/examples/ordered_cls.py#25): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cq/examples/ordered_cls.py#28): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/examples/ordered_cls.py#40)(api: DEPS):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/examples/ordered_cls.py#43)(api: DEPS):**
 ### *recipes* / [cq:examples/trigger\_child\_builds](/recipe_modules/cq/examples/trigger_child_builds.py)
 
-[DEPS](/recipe_modules/cq/examples/trigger_child_builds.py#25): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cq/examples/trigger_child_builds.py#32): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/examples/trigger_child_builds.py#41)(api: DEPS):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/examples/trigger_child_builds.py#48)(api: DEPS):**
 ### *recipes* / [cq:tests/cl\_group\_key](/recipe_modules/cq/tests/cl_group_key.py)
 
-[DEPS](/recipe_modules/cq/tests/cl_group_key.py#19): [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq)
+[DEPS](/recipe_modules/cq/tests/cl_group_key.py#22): [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq)
 
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/cl_group_key.py#33)(api: DEPS):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/cl_group_key.py#36)(api: DEPS):**
 ### *recipes* / [cq:tests/do\_not\_retry](/recipe_modules/cq/tests/do_not_retry.py)
 
-[DEPS](/recipe_modules/cq/tests/do_not_retry.py#20): [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cq/tests/do_not_retry.py#23): [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [step](#recipe_modules-step)
 
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/do_not_retry.py#29)(api: DEPS):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/do_not_retry.py#32)(api: DEPS):**
 ### *recipes* / [cq:tests/experimental](/recipe_modules/cq/tests/experimental.py)
 
-[DEPS](/recipe_modules/cq/tests/experimental.py#21): [assertions](#recipe_modules-assertions), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cq/tests/experimental.py#24): [assertions](#recipe_modules-assertions), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/experimental.py#34)(api: DEPS):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/experimental.py#37)(api: DEPS):**
 ### *recipes* / [cq:tests/inactive](/recipe_modules/cq/tests/inactive.py)
 
-[DEPS](/recipe_modules/cq/tests/inactive.py#20): [assertions](#recipe_modules-assertions), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties)
+[DEPS](/recipe_modules/cq/tests/inactive.py#23): [assertions](#recipe_modules-assertions), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties)
 
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/inactive.py#31)(api: DEPS):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/inactive.py#34)(api: DEPS):**
 ### *recipes* / [cq:tests/mode\_of\_run](/recipe_modules/cq/tests/mode_of_run.py)
 
-[DEPS](/recipe_modules/cq/tests/mode_of_run.py#20): [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cq/tests/mode_of_run.py#23): [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/mode_of_run.py#32)(api: DEPS):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/mode_of_run.py#35)(api: DEPS):**
 ### *recipes* / [cq:tests/owner\_is\_googler](/recipe_modules/cq/tests/owner_is_googler.py)
 
-[DEPS](/recipe_modules/cq/tests/owner_is_googler.py#21): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties)
+[DEPS](/recipe_modules/cq/tests/owner_is_googler.py#24): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties)
 
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/owner_is_googler.py#35)(api: DEPS):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/owner_is_googler.py#38)(api: DEPS):**
 ### *recipes* / [cq:tests/reuse](/recipe_modules/cq/tests/reuse.py)
 
-[DEPS](/recipe_modules/cq/tests/reuse.py#20): [assertions](#recipe_modules-assertions), [cq](#recipe_modules-cq), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cq/tests/reuse.py#23): [assertions](#recipe_modules-assertions), [cq](#recipe_modules-cq), [step](#recipe_modules-step)
 
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/reuse.py#26)(api: DEPS):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/reuse.py#29)(api: DEPS):**
 ### *recipes* / [cq:tests/triggered\_build\_ids](/recipe_modules/cq/tests/triggered_build_ids.py)
 
-[DEPS](/recipe_modules/cq/tests/triggered_build_ids.py#21): [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cq/tests/triggered_build_ids.py#24): [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [step](#recipe_modules-step)
 
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/triggered_build_ids.py#27)(api: DEPS):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/CQ_MODULE_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/cq/tests/triggered_build_ids.py#30)(api: DEPS):**
 ### *recipes* / [cv:examples/ordered\_cls](/recipe_modules/cv/examples/ordered_cls.py)
 
 [DEPS](/recipe_modules/cv/examples/ordered_cls.py#25): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cv](#recipe_modules-cv), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
