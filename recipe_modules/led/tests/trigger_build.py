@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from PB.recipe_modules.recipe_engine.led.properties import InputProperties
 
 from dataclasses import dataclass
@@ -28,14 +31,14 @@ class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   api.led.trigger_builder('chromium', 'ci', 'Foo Tester',
                           {'swarm_hashes': {
                               'bar': 'deadbeef'
                           }})
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   led_run_id = 'led/user_example.com/deadbeef'
   yield api.test(
       'trigger',

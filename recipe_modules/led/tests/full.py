@@ -4,6 +4,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+from typing import Any
+
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 import re
 
 from PB.go.chromium.org.luci.buildbucket.proto import common
@@ -51,7 +57,7 @@ message InputProperties {
 PROPERTIES = full_pb.InputProperties
 
 
-def RunSteps(api: DEPS, props: full_pb.InputProperties):
+def RunSteps(api: DEPS, props: full_pb.InputProperties) -> None:
   intermediate = api.led(*props.get_cmd)
   intermediate = intermediate.then(
       'edit-gerrit-cl', 'https://fake.url/c/project/123/+/456')
@@ -98,8 +104,10 @@ def RunSteps(api: DEPS, props: full_pb.InputProperties):
   api.step('print build id', ['echo', final_result.launch_result.build_id])
 
 
-def GenTests(api: TEST_DEPS):
-  def led_props(input_properties):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
+  def led_props(
+      input_properties: LedInputProperties,
+  ) -> recipe_test_api.TestData:
     return api.properties(**{'$recipe_engine/led': input_properties})
 
   yield (
@@ -129,25 +137,35 @@ def GenTests(api: TEST_DEPS):
       api.led.mock_get_build(mock_build, 123456789)
   )
 
-  def _apply_always(build, cmd, cwd):
+  def _apply_always(
+      build: job.Definition, cmd: Sequence[str], cwd: str
+  ) -> None:
     """Applies on every edit invocation."""
     build.buildbucket.name += " always"
 
-  def _apply_builder(build, cmd, cwd):
+  def _apply_builder(
+      build: job.Definition, cmd: Sequence[str], cwd: str
+  ) -> None:
     """Applies on every edit invocation targeting the builder."""
     build.buildbucket.name += " builder"
 
-  def _apply_never(build, cmd, cwd):
+  def _apply_never(
+      build: job.Definition, cmd: Sequence[str], cwd: str
+  ) -> None:
     assert False # pragma: no cover
 
-  def _apply_bogus_arg(build, cmd, cwd):
+  def _apply_bogus_arg(
+      build: job.Definition, cmd: Sequence[str], cwd: str
+  ) -> None:
     """Applies only on edit invocations with the -bogus arg."""
     vals = api.led.get_arg_values(cmd, 'bogus')
     assert len(vals) == 1
     assert 'bogus' in vals[0]
     build.buildbucket.name += " " + vals[0]
 
-  def _stop_application(build, cmd, cwd):
+  def _stop_application(
+      build: job.Definition, cmd: Sequence[str], cwd: str
+  ) -> Any:
     return api.led.StopApplyingMocks
 
   yield (

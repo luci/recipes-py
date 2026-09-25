@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
+from typing import Any
+
 import json
 import re
 import hashlib
@@ -22,7 +25,7 @@ from PB.go.chromium.org.luci.buildbucket.proto import common
 
 
 class LedTestApi(recipe_test_api.RecipeTestApi):
-  def __init__(self, *args, **kwargs):
+  def __init__(self, *args: Any, **kwargs: Any) -> None:
     super().__init__(*args, **kwargs)
 
     # The ModuleTestData system provided by the recipe engine essentially gives
@@ -37,12 +40,20 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
     # recipe_engine's limitations around ModuleTestData make this difficult.
     self._mock_edit_key = 0
 
-  def _singleton_mod_data(self, key, val):
+  def _singleton_mod_data(
+      self, key: str, val: Any
+  ) -> recipe_test_api.TestData:
     ret = recipe_test_api.TestData(None)
     ret.mod_data['led'][key] = val
     return ret
 
-  def mock_get_builder(self, job_def, project=None, bucket=None, builder=None):
+  def mock_get_builder(
+      self,
+      job_def: job.Definition | None,
+      project: str | None = None,
+      bucket: str | None = None,
+      builder: str | None = None,
+  ) -> recipe_test_api.TestData:
     """Mocks the initial job.Definition for the given `led get-builder` call.
 
     This can be used with increasing specificity; If project, bucket and builder
@@ -104,7 +115,9 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
 
     return self._singleton_mod_data(key, ret)
 
-  def mock_get_build(self, job_def, build_id=None):
+  def mock_get_build(
+      self, job_def: job.Definition | None, build_id: int | None = None
+  ) -> recipe_test_api.TestData:
     """Mocks the initial job.Definition for the given `led get-build` call.
 
     Args:
@@ -128,7 +141,9 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
     return self._singleton_mod_data(key, ret)
 
 
-  def mock_get_swarm(self, job_def, task_id=None):
+  def mock_get_swarm(
+      self, job_def: job.Definition | None, task_id: str | None = None
+  ) -> recipe_test_api.TestData:
     """Mocks the initial job.Definition for the given `led get-swarm` call.
 
     Args:
@@ -168,7 +183,12 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
     # Tok = Union[re.RegexObject, str]
     cmd_filter = attr.ib(default=None)  # Union[None, Tok, Sequence[Tok]]
 
-  def mock_edit(self, mutate_function, build_id=None, cmd_filter=None):
+  def mock_edit(
+      self,
+      mutate_function: Callable[[job.Definition, Sequence[str], str], Any],
+      build_id: str | None = None,
+      cmd_filter: Any = None,
+  ) -> recipe_test_api.TestData:
     """Mock allows you to provide a transformation function for led
     invocations.
 
@@ -233,7 +253,7 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
         key, LedTestApi._MockEditData(mutate_function, build_id, cmd_filter))
 
   @staticmethod
-  def _derive_build_ids(build):
+  def _derive_build_ids(build: job.Definition) -> set[str]:
     """Because users can set any fields on `build`, it may have multiple IDs."""
     ret = set()
 
@@ -253,7 +273,13 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
     return ret
 
   @classmethod
-  def _transform_build(cls, build, cmd, mock_edit_data, cwd):
+  def _transform_build(
+      cls,
+      build: job.Definition,
+      cmd: Sequence[str],
+      mock_edit_data: Sequence[_MockEditData],
+      cwd: str,
+  ) -> job.Definition:
     ret = job.Definition()
     ret.CopyFrom(build)
 
@@ -272,7 +298,7 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
     return ret
 
   @staticmethod
-  def get_arg_values(cmd, flag):
+  def get_arg_values(cmd: Sequence[str], flag: str) -> list[str | None]:
     """A cheapo way to return all the flag values in `cmd`.
 
     This will skip any subcommand and then look for the following variants:
@@ -329,12 +355,14 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
     return ret
 
   @classmethod
-  def standard_mock_functions(cls):
+  def standard_mock_functions(cls) -> list[_MockEditData]:
     """This returns several standard mock functions which are ALWAYS active
     for the led module in simulation mode (i.e. they are always applied
     automatically).
     """
-    def _apply_properties(build, cmd, _cwd):
+    def _apply_properties(
+        build: job.Definition, cmd: Sequence[str], _cwd: str
+    ) -> None:
       to_set = {}
       vals = [(val, False) for val in cls.get_arg_values(cmd, 'p')]
       vals.extend((val, True) for val in cls.get_arg_values(cmd, 'pa'))
@@ -358,7 +386,9 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
       for k, val in to_set.items():
         build.buildbucket.bbagent_args.build.input.properties[k] = val
 
-    def _edit_input_recipes(build, cmd, _cwd):
+    def _edit_input_recipes(
+        build: job.Definition, cmd: Sequence[str], _cwd: str
+    ) -> None:
       payloads = cls.get_arg_values(cmd, 'cas-ref')
       if payloads:
         payload = payloads[-1]
@@ -381,16 +411,22 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
       if rver:
         build.buildbucket.bbagent_args.build.exe.cipd_version = rver[-1]
 
-    def _edit_name(build, cmd, _cwd):
+    def _edit_name(
+        build: job.Definition, cmd: Sequence[str], _cwd: str
+    ) -> None:
       build.buildbucket.name = cls.get_arg_values(cmd, 'name')[-1]
 
-    def _edit_recipe_bundle(build, _cmd, cwd):
+    def _edit_recipe_bundle(
+        build: job.Definition, _cmd: Sequence[str], cwd: str
+    ) -> None:
       # We use the cwd path as a proxy for the recipes contained in that path.
       _set_cas_user_payload(
           build, hashlib.sha256(cwd.encode()).hexdigest(), 1337)
 
 
-    def _set_cas_user_payload(build, hash, size_bytes):
+    def _set_cas_user_payload(
+        build: job.Definition, hash: str, size_bytes: int
+    ) -> None:
       agent = build.buildbucket.bbagent_args.build.infra.buildbucket.agent
       agent.purposes['kitchen-checkout'] = (
           build_pb.BuildInfra.Buildbucket.Agent.PURPOSE_EXE_PAYLOAD)
@@ -398,7 +434,9 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
       agent.input.data['kitchen-checkout'].cas.digest.size_bytes = size_bytes
 
 
-    def _edit_gerrit_cl(build, cmd, _cwd):
+    def _edit_gerrit_cl(
+        build: job.Definition, cmd: Sequence[str], _cwd: str
+    ) -> None:
       # This mimics the implementation in `led`.
       #
       # Make sure your fake URLs look like:

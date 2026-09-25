@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+from RECIPE_MODULES.recipe_engine import led
+
 from collections.abc import Mapping, Sequence
 from typing import Any
 from urllib.parse import urlparse
@@ -38,6 +40,8 @@ class LedApi(recipe_api.RecipeApi):
   See the led binary for full documentation of commands.
   """
 
+  m: led.DEPS
+
   @attr.s(frozen=True, slots=True)
   class LedLaunchData:
     buildbucket_hostname: str = attr.ib()
@@ -52,7 +56,9 @@ class LedApi(recipe_api.RecipeApi):
   class LedResult:
     """Holds the result of a led operation. Can be chained using |then|."""
 
-    def __init__(self, result: LedLaunchData | job.Definition, module: LedApi):
+    def __init__(
+        self, result: LedLaunchData | job.Definition, module: LedApi
+    ) -> None:
       if isinstance(result, LedApi.LedLaunchData):
         self._launch_result = result
         self._result = result
@@ -139,7 +145,9 @@ class LedApi(recipe_api.RecipeApi):
       res = self._module._run_command(self._result, *cmd)
       return self.__class__(res, self._module)
 
-  def __init__(self, props: properties.InputProperties, **kwargs):
+  def __init__(
+      self, props: properties.InputProperties, **kwargs: Any
+  ) -> None:
     super().__init__(**kwargs)
     self._run_id = props.led_run_id
     self._shadowed_bucket = props.shadowed_bucket

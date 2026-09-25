@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
@@ -24,7 +27,7 @@ class TEST_DEPS(RecipeTestApi):
   led: led.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   try:
     api.led('get-builder', 'fake/bucket:no-exist')
     assert False, 'get-builder found a build'  # pragma: no cover
@@ -44,7 +47,7 @@ def RunSteps(api: DEPS):
     pass
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'find nothing',
       api.led.mock_get_builder(None, 'fake', 'bucket', 'no-exist'),

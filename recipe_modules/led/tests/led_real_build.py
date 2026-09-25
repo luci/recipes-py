@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from PB.recipe_modules.recipe_engine.led.properties import InputProperties as LedInputProperties
 from PB.recipe_modules.recipe_engine.led.tests import led_real_build as led_real_build_pb
 from recipe_engine import post_process
@@ -42,7 +45,7 @@ message InputProperties {
 PROPERTIES = led_real_build_pb.InputProperties
 
 
-def RunSteps(api: DEPS, props: led_real_build_pb.InputProperties):
+def RunSteps(api: DEPS, props: led_real_build_pb.InputProperties) -> None:
   intermediate = api.led(*props.get_cmd)
 
   if api.led.launched_by_led:
@@ -63,8 +66,10 @@ def RunSteps(api: DEPS, props: led_real_build_pb.InputProperties):
   final_result = intermediate.then('launch')
 
 
-def GenTests(api: TEST_DEPS):
-  def led_props(input_properties):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
+  def led_props(
+      input_properties: LedInputProperties,
+  ) -> recipe_test_api.TestData:
     return api.properties(**{'$recipe_engine/led': input_properties})
 
   yield (api.test('get-builder') +
