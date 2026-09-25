@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from PB.recipe_modules.recipe_engine.generator_script.examples import full as full_pb
 from recipe_engine.post_process import DropExpectation
 
@@ -43,13 +46,13 @@ message InputProperties {
 PROPERTIES = full_pb.InputProperties
 
 
-def RunSteps(api: DEPS, props: full_pb.InputProperties):
+def RunSteps(api: DEPS, props: full_pb.InputProperties) -> None:
   api.generator_script(
       path_to_script=props.script_name,
       checkout_dir=api.path.tmp_base_dir)
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'basic',
       api.properties(full_pb.InputProperties(script_name="bogus")),

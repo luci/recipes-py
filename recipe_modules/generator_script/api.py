@@ -6,12 +6,20 @@
 """
 from __future__ import annotations
 
+from collections.abc import Iterable
+from typing import Any
+from recipe_engine import config_types, step_data
+
+from RECIPE_MODULES.recipe_engine import generator_script
+
 from past.builtins import basestring
 
 from recipe_engine import recipe_api
 
 
 class GeneratorScriptApi(recipe_api.RecipeApi):
+  m: generator_script.DEPS
+
   ALLOWED_KEYS = frozenset([
     # supported by step module
     'name', 'cmd', 'env', 'cwd',
@@ -21,7 +29,7 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
   ])
 
   class UnknownKey(recipe_api.StepFailure):
-    def __init__(self, step_name, bad_keys):
+    def __init__(self, step_name: str, bad_keys: Iterable[str]) -> None:
       reason = 'Step(%r) generated step with bad keys %r' % (
         step_name, bad_keys)
       super().__init__(
@@ -29,23 +37,25 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
       self.bad_keys = frozenset(bad_keys)
 
   class MalformedStepList(recipe_api.StepFailure):
-    def __init__(self, step_name):
+    def __init__(self, step_name: str) -> None:
       super().__init__(
         'Step(%r) generated non-list JSON output' % (step_name,))
 
   class MalformedStep(recipe_api.StepFailure):
-    def __init__(self, step_name):
+    def __init__(self, step_name: str) -> None:
       super().__init__(
         'Step(%r) generated step without "name" or "cmd"' % (step_name,))
 
   class MalformedCmd(recipe_api.StepFailure):
-    def __init__(self, step_name):
+    def __init__(self, step_name: str) -> None:
       super().__init__(
         'Step(%r) generated step with "cmd" containing non-strings' % (
           step_name,))
 
   @classmethod
-  def _check_steps(cls, steps, generator_step_result):
+  def _check_steps(
+      cls, steps: Any, generator_step_result: step_data.StepData
+  ) -> None:
     if not isinstance(steps, list):
       # pylint: disable=nonstandard-exception
       generator_step_result.presentation.status = 'EXCEPTION'
@@ -70,7 +80,13 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
         raise cls.MalformedCmd(generator_step_result.name)
 
 
-  def __call__(self, path_to_script, *args, checkout_dir=None, **_):
+  def __call__(
+      self,
+      path_to_script: config_types.Path | str,
+      *args: Any,
+      checkout_dir: config_types.Path | None = None,
+      **_: Any,
+  ) -> None:
     """Run a script and generate the steps emitted by that script.
 
     The script will be invoked with --output-json /path/to/file.json. The script
