@@ -5,6 +5,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
@@ -33,7 +36,7 @@ class TEST_DEPS(RecipeTestApi):
   raw_io: raw_io.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   # Read command's stdout and stderr.
   step_result = api.step('echo', ['echo', 'Hello World'],
       stdout=api.raw_io.output_text(),
@@ -176,7 +179,7 @@ def RunSteps(api: DEPS):
   assert step_result.raw_io.output_text is None
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   # This test shows that you can override a specific placeholder, even with
   # default `step_test_data`. However, since this recipe is ACTUALLY run in
   # the presubmit, we need to do a trick with properties:
