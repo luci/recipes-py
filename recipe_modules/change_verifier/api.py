@@ -19,7 +19,13 @@ https://bugs.chromium.org/p/chromium/issues/entry?components=Infra%3ELUCI%3EBuil
 
 from __future__ import annotations
 
-from typing import Sequence
+from RECIPE_MODULES.recipe_engine import change_verifier
+
+from collections.abc import Sequence
+from typing import TypeVar
+from google.protobuf import message
+
+_MsgT = TypeVar('_MsgT', bound=message.Message)
 
 from google.protobuf import json_format
 
@@ -39,6 +45,8 @@ DEFAULT_CIPD_VERSION = 'git_revision:eb3279d25a7fb5b62e5492727891ce8babac98a8'
 class ChangeVerifierApi(recipe_api.RecipeApi):
   """This module provides recipe API of LUCI Change Verifier."""
 
+  m: change_verifier.DEPS
+
   PROD_HOST = 'luci-change-verifier.appspot.com'
   DEV_HOST = 'luci-change-verifier-dev.appspot.com'
 
@@ -52,7 +60,7 @@ class ChangeVerifierApi(recipe_api.RecipeApi):
       limit: int | None = None,
       step_name: str | None = None,
       dev: bool = False,
-  ):
+  ) -> list[run_pb.Run]:
     """Searches for Runs.
 
     Args:
@@ -116,13 +124,15 @@ class ChangeVerifierApi(recipe_api.RecipeApi):
 
     return runs[:limit]
 
-  def _rpc(self,
-           host: str,
-           service: str,
-           method: str,
-           input_message,
-           output_class,
-           step_name: str | None = None):
+  def _rpc(
+      self,
+      host: str,
+      service: str,
+      method: str,
+      input_message: message.Message,
+      output_class: type[_MsgT],
+      step_name: str | None = None,
+  ) -> _MsgT:
     """Makes a RPC to the Change Verifier service.
 
     TODO(qyearsley): prpc could be encapsulated in a separate module.

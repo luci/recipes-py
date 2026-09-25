@@ -1122,15 +1122,15 @@ subject to change in the future. Please reach out to the LUCI team first if you
 want to use this recipe module; file a ticket at:
 https://bugs.chromium.org/p/chromium/issues/entry?components=Infra%3ELUCI%3EBuildService%3EPresubmit%3ECV
 
-#### **class [ChangeVerifierApi](/recipe_modules/change_verifier/api.py#39)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [ChangeVerifierApi](/recipe_modules/change_verifier/api.py#45)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 This module provides recipe API of LUCI Change Verifier.
 
-&mdash; **def [match\_config](/recipe_modules/change_verifier/api.py#165)(self, host: str, change: int, project: (str | None)=None, config_name: str=cv_api.CONFIG_FILE):**
+&mdash; **def [match\_config](/recipe_modules/change_verifier/api.py#175)(self, host: str, change: int, project: (str | None)=None, config_name: str=cv_api.CONFIG_FILE):**
 
 Retrieve the applicable CV group for a given change.
 
-&mdash; **def [search\_runs](/recipe_modules/change_verifier/api.py#47)(self, project: str, cls: (((Sequence[(GerritChangeTuple | run_pb.GerritChange)] | GerritChangeTuple) | run_pb.GerritChange) | None)=None, limit: (int | None)=None, step_name: (str | None)=None, dev: bool=False):**
+&mdash; **def [search\_runs](/recipe_modules/change_verifier/api.py#55)(self, project: str, cls: (((Sequence[(GerritChangeTuple | run_pb.GerritChange)] | GerritChangeTuple) | run_pb.GerritChange) | None)=None, limit: (int | None)=None, step_name: (str | None)=None, dev: bool=False):**
 
 Searches for Runs.
 
@@ -5270,18 +5270,18 @@ This recipe tests the buildbucket.set_output_gitiles_commit function.
 &mdash; **def [RunSteps](/recipe_modules/cas_input/examples/full.py#36)(api: DEPS):**
 ### *recipes* / [change\_verifier:tests/match\_config](/recipe_modules/change_verifier/tests/match_config.py)
 
-[DEPS](/recipe_modules/change_verifier/tests/match_config.py#20): [buildbucket](#recipe_modules-buildbucket), [change\_verifier](#recipe_modules-change_verifier), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/change_verifier/tests/match_config.py#23): [buildbucket](#recipe_modules-buildbucket), [change\_verifier](#recipe_modules-change_verifier), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/change_verifier/tests/match_config.py#31)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/change_verifier/tests/match_config.py#34)(api: DEPS):**
 ### *recipes* / [change\_verifier:tests/search](/recipe_modules/change_verifier/tests/search.py)
 
-[DEPS](/recipe_modules/change_verifier/tests/search.py#20): [change\_verifier](#recipe_modules-change_verifier), [proto](#recipe_modules-proto)
+[DEPS](/recipe_modules/change_verifier/tests/search.py#23): [change\_verifier](#recipe_modules-change_verifier), [proto](#recipe_modules-proto)
 
 
-&mdash; **def [RunSteps](/recipe_modules/change_verifier/tests/search.py#30)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/change_verifier/tests/search.py#33)(api: DEPS):**
 
-&mdash; **def [make\_runs](/recipe_modules/change_verifier/tests/search.py#53)(count=1):**
+&mdash; **def [make\_runs](/recipe_modules/change_verifier/tests/search.py#56)(count: int=1):**
 
 Generates response Runs for a test.
 ### *recipes* / [cipd:examples/full](/recipe_modules/cipd/examples/full.py)

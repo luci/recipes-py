@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from PB.go.chromium.org.luci.cv.api.v0 import run as run_pb
 from PB.go.chromium.org.luci.cv.api.v0 import service_runs as service_runs_pb
 
@@ -27,7 +30,7 @@ class TEST_DEPS(RecipeTestApi):
   proto: proto.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   # Lookup Runs by CL.
   runs = api.change_verifier.search_runs(
       'prj', cls=('x-review.googlesource.com', 123), step_name='search1cl')
@@ -50,7 +53,7 @@ def RunSteps(api: DEPS):
   assert len(runs) == 50
 
 
-def make_runs(count=1):
+def make_runs(count: int = 1) -> list[run_pb.Run]:
   """Generates response Runs for a test."""
   runs = []
   for i in range(count):
@@ -58,7 +61,7 @@ def make_runs(count=1):
   return runs
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'basic',
       api.step_data('search1cl.request page 1',
