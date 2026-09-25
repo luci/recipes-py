@@ -11,6 +11,9 @@ handles for the step, instead of waiting for the step's cost to be available.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine.post_process import DropExpectation
 
 from PB.recipe_modules.recipe_engine.futures.examples.lottasteps import Input
@@ -41,7 +44,7 @@ class TEST_DEPS(RecipeTestApi):
 PROPERTIES = Input
 
 
-def RunSteps(api: DEPS, props):
+def RunSteps(api: DEPS, props: Input) -> RawResult:
   work = []
   for i in range(props.num_steps):
     work.append(api.futures.spawn_immediate(
@@ -55,7 +58,7 @@ def RunSteps(api: DEPS, props):
   )
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (
     api.test('basic')
     + api.properties(num_steps=10)

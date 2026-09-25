@@ -4,6 +4,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from typing import TYPE_CHECKING
+from recipe_engine import recipe_test_api
+
 from contextlib import contextmanager
 
 from dataclasses import dataclass
@@ -16,6 +20,9 @@ from RECIPE_MODULES.recipe_engine import (
     raw_io,
     step,
 )
+
+if TYPE_CHECKING:  # pragma: no cover
+  import gevent.queue
 
 
 @dataclass
@@ -35,7 +42,7 @@ class TEST_DEPS(RecipeTestApi):
 HELPER_TIMEOUT = object()
 
 
-def manage_helper(api, chn):
+def manage_helper(api: DEPS, chn: gevent.queue.Channel) -> None:
   with api.step.nest('helper'):
     pid_file = api.path.cleanup_dir / 'pid_file'
     helper_future = api.futures.spawn_immediate(
@@ -75,7 +82,7 @@ def manage_helper(api, chn):
 
 
 @contextmanager
-def run_helper(api):
+def run_helper(api: DEPS) -> Iterator[None]:
   """Runs the background helper.
 
   Yields control once helper is ready. Kills helper once leaving the context
@@ -101,14 +108,14 @@ def run_helper(api):
       management_channel.put(None)
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   with run_helper(api):
     api.step(
         'do something with live helper',
         ['python3', '-u', api.resource('do_something.py')])
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'basic',
       api.step_data('helper.wait for it', api.json.output({

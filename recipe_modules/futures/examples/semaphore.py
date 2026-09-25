@@ -4,6 +4,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from typing import TYPE_CHECKING
+from recipe_engine import recipe_test_api
+
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
@@ -11,6 +15,9 @@ from RECIPE_MODULES.recipe_engine import (
     futures,
     step,
 )
+
+if TYPE_CHECKING:  # pragma: no cover
+  import gevent.lock
 
 
 @dataclass
@@ -24,14 +31,15 @@ class TEST_DEPS(RecipeTestApi):
   pass
 
 
-def worker(api, sem, i, N):
+def worker(api: DEPS, sem: gevent.lock.BoundedSemaphore, i: int,
+           N: int) -> None:
   with api.step.nest('worker %d' % i):
     with sem:
       api.step('serialized work', ['python3', api.resource('sleep.py'), 5])
     api.step('parallel work', ['python3', api.resource('sleep.py'), 5*N])
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   futures = []
   sem = api.futures.make_bounded_semaphore()
   # total time should be (5s * N) * 2
@@ -43,5 +51,5 @@ def RunSteps(api: DEPS):
     api.step('Sleeper %d complete' % fut.meta, cmd=None)
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('basic')

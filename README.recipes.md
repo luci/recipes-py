@@ -2362,11 +2362,11 @@ Args:
 
 Implements in-recipe concurrency via green threads.
 
-#### **class [FuturesApi](/recipe_modules/futures/api.py#166)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [FuturesApi](/recipe_modules/futures/api.py#168)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 Provides access to the Recipe concurrency primitives.
 
-&emsp; **@staticmethod**<br>&mdash; **def [iwait](/recipe_modules/futures/api.py#367)(futures: Iterable[Future[Any]], timeout: (float | None)=None, count: (int | None)=None):**
+&emsp; **@staticmethod**<br>&mdash; **def [iwait](/recipe_modules/futures/api.py#373)(futures: Iterable[Future[Any]], timeout: (float | None)=None, count: (int | None)=None):**
 
 Iteratively yield up to `count` Futures as they become done.
 
@@ -2409,7 +2409,7 @@ Yields futures in the order in which they complete until we hit the
 timeout or count. May also be used with a context manager to avoid
 leaking resources if you don't plan on consuming the entire iterable.
 
-&mdash; **def [make\_bounded\_semaphore](/recipe_modules/futures/api.py#177)(self, value: int=1):**
+&mdash; **def [make\_bounded\_semaphore](/recipe_modules/futures/api.py#179)(self, value: int=1):**
 
 Returns a gevent.BoundedSemaphore with depth `value`.
 
@@ -2436,7 +2436,7 @@ could lead to difficult-to-debug deadlocks in your recipe.
 NOTE: This method will raise ValueError if used with @@@annotation@@@ mode.
 ***
 
-&mdash; **def [make\_channel](/recipe_modules/futures/api.py#205)(self):**
+&mdash; **def [make\_channel](/recipe_modules/futures/api.py#207)(self):**
 
 Returns a single-slot communication device for passing data and control
 between concurrent functions.
@@ -2460,7 +2460,7 @@ you carefully consider and avoid the possibility of introducing deadlocks.
 NOTE: This method will raise ValueError if used with @@@annotation@@@ mode.
 ***
 
-&emsp; **@escape_all_warnings**<br>&mdash; **def [spawn](/recipe_modules/futures/api.py#247)(self, func, \*args, \*\*kwargs):**
+&emsp; **@escape_all_warnings**<br>&mdash; **def [spawn](/recipe_modules/futures/api.py#249)(self, func: Callable[(..., T)], \*args: Any, \*\*kwargs: Any):**
 
 Prepares a Future to run `func(*args, **kwargs)` concurrently.
 
@@ -2498,7 +2498,7 @@ Kwargs:
 
 Returns a Future of `func`'s result.
 
-&emsp; **@escape_all_warnings**<br>&mdash; **def [spawn\_immediate](/recipe_modules/futures/api.py#313)(self, func, \*args, \*\*kwargs):**
+&emsp; **@escape_all_warnings**<br>&mdash; **def [spawn\_immediate](/recipe_modules/futures/api.py#316)(self, func: Callable[(..., T)], \*args: Any, \*\*kwargs: Any):**
 
 Returns a Future to the concurrently running `func(*args, **kwargs)`.
 
@@ -2518,7 +2518,7 @@ Kwargs:
 
 Returns a Future of `func`'s result.
 
-&emsp; **@staticmethod**<br>&mdash; **def [wait](/recipe_modules/futures/api.py#346)(futures: Iterable[Future[Any]], timeout: (float | None)=None, count: (int | None)=None):**
+&emsp; **@staticmethod**<br>&mdash; **def [wait](/recipe_modules/futures/api.py#350)(futures: Iterable[Future[Any]], timeout: (float | None)=None, count: (int | None)=None):**
 
 Blocks until `count` `futures` are done (or timeout occurs) then
 returns the list of done futures.
@@ -5841,14 +5841,14 @@ Tests that step presentation properties can be ordered.
 &mdash; **def [RunSteps](/recipe_modules/findings/tests/upload_findings.py#36)(api: DEPS, props):**
 ### *recipes* / [futures:examples/background\_helper](/recipe_modules/futures/examples/background_helper.py)
 
-[DEPS](/recipe_modules/futures/examples/background_helper.py#22): [futures](#recipe_modules-futures), [json](#recipe_modules-json), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/futures/examples/background_helper.py#29): [futures](#recipe_modules-futures), [json](#recipe_modules-json), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/futures/examples/background_helper.py#104)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/futures/examples/background_helper.py#111)(api: DEPS):**
 
-&mdash; **def [manage\_helper](/recipe_modules/futures/examples/background_helper.py#38)(api, chn):**
+&mdash; **def [manage\_helper](/recipe_modules/futures/examples/background_helper.py#45)(api: DEPS, chn: gevent.queue.Channel):**
 
-&emsp; **@contextmanager**<br>&mdash; **def [run\_helper](/recipe_modules/futures/examples/background_helper.py#77)(api):**
+&emsp; **@contextmanager**<br>&mdash; **def [run\_helper](/recipe_modules/futures/examples/background_helper.py#84)(api: DEPS):**
 
 Runs the background helper.
 
@@ -5859,35 +5859,35 @@ This is an example of what your recipe module code would look like. Note that
 we don't pass the channel to the 'user' code (i.e. RunSteps).
 ### *recipes* / [futures:examples/extreme\_namespaces](/recipe_modules/futures/examples/extreme_namespaces.py)
 
-[DEPS](/recipe_modules/futures/examples/extreme_namespaces.py#19): [context](#recipe_modules-context), [futures](#recipe_modules-futures), [path](#recipe_modules-path), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/futures/examples/extreme_namespaces.py#22): [context](#recipe_modules-context), [futures](#recipe_modules-futures), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
 
-&mdash; **def [Level1](/recipe_modules/futures/examples/extreme_namespaces.py#43)(api, i):**
+&mdash; **def [Level1](/recipe_modules/futures/examples/extreme_namespaces.py#46)(api: DEPS, i: int):**
 
-&mdash; **def [Level2](/recipe_modules/futures/examples/extreme_namespaces.py#31)(api, i):**
+&mdash; **def [Level2](/recipe_modules/futures/examples/extreme_namespaces.py#34)(api: DEPS, i: int):**
 
-&mdash; **def [RunSteps](/recipe_modules/futures/examples/extreme_namespaces.py#49)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/futures/examples/extreme_namespaces.py#52)(api: DEPS):**
 ### *recipes* / [futures:examples/fan\_out\_in](/recipe_modules/futures/examples/fan_out_in.py)
 
-[DEPS](/recipe_modules/futures/examples/fan_out_in.py#17): [futures](#recipe_modules-futures), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/futures/examples/fan_out_in.py#20): [futures](#recipe_modules-futures), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/futures/examples/fan_out_in.py#27)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/futures/examples/fan_out_in.py#30)(api: DEPS):**
 ### *recipes* / [futures:examples/lazy\_fan\_out\_in](/recipe_modules/futures/examples/lazy_fan_out_in.py)
 
-[DEPS](/recipe_modules/futures/examples/lazy_fan_out_in.py#17): [futures](#recipe_modules-futures), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/futures/examples/lazy_fan_out_in.py#20): [futures](#recipe_modules-futures), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/futures/examples/lazy_fan_out_in.py#27)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/futures/examples/lazy_fan_out_in.py#30)(api: DEPS):**
 ### *recipes* / [futures:examples/lazy\_fan\_out\_in\_early\_abort](/recipe_modules/futures/examples/lazy_fan_out_in_early_abort.py)
 
-[DEPS](/recipe_modules/futures/examples/lazy_fan_out_in_early_abort.py#17): [futures](#recipe_modules-futures), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/futures/examples/lazy_fan_out_in_early_abort.py#20): [futures](#recipe_modules-futures), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/futures/examples/lazy_fan_out_in_early_abort.py#27)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/futures/examples/lazy_fan_out_in_early_abort.py#30)(api: DEPS):**
 ### *recipes* / [futures:examples/lottasteps](/recipe_modules/futures/examples/lottasteps.py)
 
-[DEPS](/recipe_modules/futures/examples/lottasteps.py#31): [futures](#recipe_modules-futures), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/futures/examples/lottasteps.py#34): [futures](#recipe_modules-futures), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
 This tests the engine's ability to handle many simultaneously-started steps.
@@ -5896,29 +5896,29 @@ Prior to this, logdog butler and the recipe engine would run out of file
 handles, because every spawn_immediate would immediately generate all log
 handles for the step, instead of waiting for the step's cost to be available.
 
-&mdash; **def [RunSteps](/recipe_modules/futures/examples/lottasteps.py#44)(api: DEPS, props):**
+&mdash; **def [RunSteps](/recipe_modules/futures/examples/lottasteps.py#47)(api: DEPS, props: Input):**
 ### *recipes* / [futures:examples/metadata](/recipe_modules/futures/examples/metadata.py)
 
-[DEPS](/recipe_modules/futures/examples/metadata.py#19): [futures](#recipe_modules-futures), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/futures/examples/metadata.py#22): [futures](#recipe_modules-futures), [step](#recipe_modules-step)
 
 
 This tests metadata features of the Future object.
 
-&mdash; **def [RunSteps](/recipe_modules/futures/examples/metadata.py#29)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/futures/examples/metadata.py#32)(api: DEPS):**
 ### *recipes* / [futures:examples/result](/recipe_modules/futures/examples/result.py)
 
-[DEPS](/recipe_modules/futures/examples/result.py#17): [futures](#recipe_modules-futures), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/futures/examples/result.py#20): [futures](#recipe_modules-futures), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/futures/examples/result.py#27)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/futures/examples/result.py#30)(api: DEPS):**
 ### *recipes* / [futures:examples/semaphore](/recipe_modules/futures/examples/semaphore.py)
 
-[DEPS](/recipe_modules/futures/examples/semaphore.py#17): [futures](#recipe_modules-futures), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/futures/examples/semaphore.py#24): [futures](#recipe_modules-futures), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/futures/examples/semaphore.py#34)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/futures/examples/semaphore.py#42)(api: DEPS):**
 
-&mdash; **def [worker](/recipe_modules/futures/examples/semaphore.py#27)(api, sem, i, N):**
+&mdash; **def [worker](/recipe_modules/futures/examples/semaphore.py#34)(api: DEPS, sem: gevent.lock.BoundedSemaphore, i: int, N: int):**
 ### *recipes* / [generator\_script:examples/full](/recipe_modules/generator_script/examples/full.py)
 
 [DEPS](/recipe_modules/generator_script/examples/full.py#23): [generator\_script](#recipe_modules-generator_script), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

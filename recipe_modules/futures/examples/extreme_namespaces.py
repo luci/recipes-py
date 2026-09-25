@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
@@ -28,7 +31,7 @@ class TEST_DEPS(RecipeTestApi):
   pass
 
 
-def Level2(api, i):
+def Level2(api: DEPS, i: int) -> None:
   work = []
   with api.step.nest('Level2 [%d]' % i):
     with api.context(cwd=api.path.start_dir / 'deep'):
@@ -40,16 +43,16 @@ def Level2(api, i):
   api.futures.wait(work)
 
 
-def Level1(api, i):
+def Level1(api: DEPS, i: int) -> None:
   with api.step.nest('Level1 [%d]' % i):
     for j in range(4):
       api.futures.spawn(Level2, api, j)
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   for i in range(4):
     api.futures.spawn(Level1, api, i)
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('basic')

@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
@@ -24,7 +27,7 @@ class TEST_DEPS(RecipeTestApi):
   pass
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   futures = []
   for _ in range(10):
     futures.append(api.futures.spawn(
@@ -36,7 +39,7 @@ def RunSteps(api: DEPS):
   assert len(api.futures.wait(futures)) == 10, "All done"
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (
     api.test('basic')
     + api.post_check(lambda check, steps: check(

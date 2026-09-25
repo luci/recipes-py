@@ -6,12 +6,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable, Iterator
 from typing import (
     Any,
-    Callable,
     Generic,
-    Iterable,
-    Iterator,
     overload,
     TypeVar,
 )
@@ -140,8 +138,12 @@ class Future(Generic[T]):
 class _IWaitWrapper(Iterator[Future[Any]]):
   __slots__ = ('_waiter', '_greenlets_to_futures')
 
-  def __init__(self, futures: Iterable[Future[Any]],
-               timeout: float | None, count: int | None):
+  def __init__(
+      self,
+      futures: Iterable[Future[Any]],
+      timeout: float | None,
+      count: int | None,
+  ) -> None:
     # pylint: disable=protected-access
     self._greenlets_to_futures = {fut._greenlet: fut for fut in futures}
     self._waiter = gevent.iwait(
@@ -151,7 +153,7 @@ class _IWaitWrapper(Iterator[Future[Any]]):
     self._waiter.__enter__()
     return self
 
-  def __exit__(self, typ, value, tback):
+  def __exit__(self, typ: Any, value: Any, tback: Any) -> bool | None:
     return self._waiter.__exit__(typ, value, tback)
 
   def __iter__(self) -> Iterator[Future[Any]]:
@@ -167,7 +169,7 @@ class FuturesApi(RecipeApi):
   """Provides access to the Recipe concurrency primitives."""
   concurrency_client = RequireClient('concurrency')
 
-  def __init__(self, *args, **kwargs):
+  def __init__(self, *args: Any, **kwargs: Any) -> None:
     super().__init__(*args, **kwargs)
     self._future_id = 0
 
@@ -245,7 +247,8 @@ class FuturesApi(RecipeApi):
     ...  # pragma: no cover
 
   @escape_all_warnings
-  def spawn(self, func, *args, **kwargs):
+  def spawn(self, func: Callable[..., T], *args: Any,
+            **kwargs: Any) -> Future[T]:
     """Prepares a Future to run `func(*args, **kwargs)` concurrently.
 
     Any steps executed in `func` will only have manipulable StepPresentation
@@ -311,7 +314,8 @@ class FuturesApi(RecipeApi):
     ...  # pragma: no cover
 
   @escape_all_warnings
-  def spawn_immediate(self, func, *args, **kwargs):
+  def spawn_immediate(self, func: Callable[..., T], *args: Any,
+                      **kwargs: Any) -> Future[T]:
     """Returns a Future to the concurrently running `func(*args, **kwargs)`.
 
     This is like `spawn`, except that it IMMEDIATELY switches to the new
@@ -335,7 +339,7 @@ class FuturesApi(RecipeApi):
     chan = self.make_channel()
 
     @escape_all_warnings
-    def _immediate_runner():
+    def _immediate_runner() -> T:
       chan.get()
       return func(*args, **kwargs)
 
@@ -344,9 +348,11 @@ class FuturesApi(RecipeApi):
     return ret
 
   @staticmethod
-  def wait(futures: Iterable[Future[Any]],
-           timeout: float | None = None,
-           count: int | None = None) -> list[Future[Any]]:
+  def wait(
+      futures: Iterable[Future[Any]],
+      timeout: float | None = None,
+      count: int | None = None,
+  ) -> list[Future[Any]]:
     """Blocks until `count` `futures` are done (or timeout occurs) then
     returns the list of done futures.
 
@@ -368,7 +374,7 @@ class FuturesApi(RecipeApi):
   def iwait(
       futures: Iterable[Future[Any]],
       timeout: float | None = None,
-      count: int | None = None
+      count: int | None = None,
   ) -> Iterator[Future[Any]]:
     """Iteratively yield up to `count` Futures as they become done.
 
