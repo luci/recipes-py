@@ -325,7 +325,7 @@ Returns:
 ### *recipe_modules* / [assertions](/recipe_modules/assertions)
 
 
-#### **class [AssertionsApi](/recipe_modules/assertions/api.py#56)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [AssertionsApi](/recipe_modules/assertions/api.py#61)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 Provides access to the assertion methods of the python unittest module.
 
@@ -5122,40 +5122,40 @@ same repo as the issue() call.
 &mdash; **def [RunSteps](/recipe_modules/archive/examples/full.py#42)(api: DEPS):**
 ### *recipes* / [assertions:tests/assert-raises](/recipe_modules/assertions/tests/assert-raises.py)
 
-[DEPS](/recipe_modules/assertions/tests/assert-raises.py#20): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/assertions/tests/assert-raises.py#23): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/assertions/tests/assert-raises.py#34)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/assertions/tests/assert-raises.py#37)(api: DEPS):**
 ### *recipes* / [assertions:tests/assert\_count\_equal](/recipe_modules/assertions/tests/assert_count_equal.py)
 
-[DEPS](/recipe_modules/assertions/tests/assert_count_equal.py#16): [assertions](#recipe_modules-assertions)
+[DEPS](/recipe_modules/assertions/tests/assert_count_equal.py#19): [assertions](#recipe_modules-assertions)
 
 
-&mdash; **def [RunSteps](/recipe_modules/assertions/tests/assert_count_equal.py#20)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/assertions/tests/assert_count_equal.py#23)(api: DEPS):**
 ### *recipes* / [assertions:tests/assertions](/recipe_modules/assertions/tests/assertions.py)
 
-[DEPS](/recipe_modules/assertions/tests/assertions.py#20): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/assertions/tests/assertions.py#23): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/assertions/tests/assertions.py#31)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/assertions/tests/assertions.py#34)(api: DEPS):**
 ### *recipes* / [assertions:tests/attribute\_error](/recipe_modules/assertions/tests/attribute_error.py)
 
-[DEPS](/recipe_modules/assertions/tests/attribute_error.py#20): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/assertions/tests/attribute_error.py#23): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/assertions/tests/attribute_error.py#26)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/assertions/tests/attribute_error.py#29)(api: DEPS):**
 ### *recipes* / [assertions:tests/long\_message](/recipe_modules/assertions/tests/long_message.py)
 
-[DEPS](/recipe_modules/assertions/tests/long_message.py#19): [assertions](#recipe_modules-assertions), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/assertions/tests/long_message.py#22): [assertions](#recipe_modules-assertions), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/assertions/tests/long_message.py#24)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/assertions/tests/long_message.py#27)(api: DEPS):**
 ### *recipes* / [assertions:tests/max\_diff](/recipe_modules/assertions/tests/max_diff.py)
 
-[DEPS](/recipe_modules/assertions/tests/max_diff.py#20): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/assertions/tests/max_diff.py#23): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/assertions/tests/max_diff.py#31)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/assertions/tests/max_diff.py#34)(api: DEPS):**
 ### *recipes* / [bcid\_reporter:examples/usage](/recipe_modules/bcid_reporter/examples/usage.py)
 
 [DEPS](/recipe_modules/bcid_reporter/examples/usage.py#22): [bcid\_reporter](#recipe_modules-bcid_reporter), [cipd](#recipe_modules-cipd), [path](#recipe_modules-path), [step](#recipe_modules-step)

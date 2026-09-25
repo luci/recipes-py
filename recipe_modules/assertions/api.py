@@ -5,6 +5,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any
+
 import inspect
 import unittest
 
@@ -16,16 +19,18 @@ from recipe_engine import recipe_api
 unittest.case.DIFF_OMITTED = unittest.case.DIFF_OMITTED.replace(
     'self.maxDiff', 'assertions.maxDiff')
 
-def make_assertion(assertion_method, **test_case_attrs):
-  def assertion_wrapper(*args, **kwargs):
+def make_assertion(
+    assertion_method: str, **test_case_attrs: Any
+) -> Callable[..., Any]:
+  def assertion_wrapper(*args: Any, **kwargs: Any) -> Any:
     class Asserter(unittest.TestCase):
       # The __init__ method of TestCase requires the name of a method on the
       # class that is the test to run. We're not going to run a test, we just
       # want access to the assertion methods, so just put some method.
-      def __init__(self):
+      def __init__(self) -> None:
         super().__init__('__init__')
 
-      def _formatMessage(self, msg, standardMsg):
+      def _formatMessage(self, msg: str | None, standardMsg: str) -> str:
         if msg:
           # Extract the non-msg, non-self arguments to the assertion method to
           # be used in formatting custom messages e.g.
@@ -136,7 +141,7 @@ class AssertionsApi(recipe_api.RecipeApi):
       'fail',
   ]
 
-  def __init__(self, *args, **kwargs):
+  def __init__(self, *args: Any, **kwargs: Any) -> None:
     super().__init__(*args, **kwargs)
     if not self._test_data.enabled:  # pragma: no cover
       raise Exception('assertions module is only for use in tests')
@@ -148,7 +153,7 @@ class AssertionsApi(recipe_api.RecipeApi):
     self.longMessage = prototype.longMessage
     self.maxDiff = prototype.maxDiff
 
-  def __getattr__(self, attr):
+  def __getattr__(self, attr: str) -> Callable[..., Any]:
     if attr in self._TEST_CASE_PASSTHROUGH_ATTRS:
       return make_assertion(
           attr, longMessage=self.longMessage, maxDiff=self.maxDiff)

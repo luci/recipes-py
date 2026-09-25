@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine import post_process
 
 from dataclasses import dataclass
@@ -23,14 +26,14 @@ class DEPS(RecipeScriptApi):
   step: step.API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   try:
     api.assertions.assertEquals(0, 1)
   except AttributeError as e:
     api.step('AttributeError', [])
 
 
-def GenTests(api: RecipeTestApi):
+def GenTests(api: RecipeTestApi) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'basic',
       api.post_process(post_process.MustRun, 'AttributeError'),

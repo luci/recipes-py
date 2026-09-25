@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine import post_process
 
 from dataclasses import dataclass
@@ -28,7 +31,7 @@ class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   if 'maxDiff' in api.properties:
     api.assertions.maxDiff = api.properties['maxDiff']
   try:
@@ -47,7 +50,7 @@ def RunSteps(api: DEPS):
           'Expected diff not to be omitted. Exception message:\n' + str(e))
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'basic',
       api.properties(maxDiff=None),
