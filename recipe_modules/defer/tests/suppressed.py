@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import contextlib
-from typing import Generator
+from collections.abc import Iterator
 
 from PB.recipe_modules.recipe_engine.defer.tests import (
     properties as properties_pb2
@@ -44,10 +44,7 @@ class NormalFailure(Exception):
   pass
 
 
-def RunSteps(
-    api: recipe_api.RecipeApi,
-    props: properties_pb2.SuppressedInputProps,
-):
+def RunSteps(api: DEPS, props: properties_pb2.SuppressedInputProps) -> None:
 
   def fail() -> None:
     raise SuppressedFailure()
@@ -63,7 +60,7 @@ def RunSteps(
   api.step.empty('all steps succeeded')  # pragma: no cover
 
 
-def GenTests(api) -> Generator[recipe_test_api.TestData, None, None]:
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'not-suppressed',
       api.properties(properties_pb2.SuppressedInputProps(fail=False)),

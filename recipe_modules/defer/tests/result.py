@@ -4,7 +4,9 @@
 
 from __future__ import annotations
 
-from typing import Generator
+from typing import Any
+
+from collections.abc import Iterator
 
 from PB.recipe_modules.recipe_engine.defer.tests import (
     properties as properties_pb2
@@ -41,8 +43,8 @@ class ResultTestError(Exception):
   pass
 
 
-def RunSteps(api: DEPS, props):
-  def _fake_step():
+def RunSteps(api: DEPS, props: properties_pb2.ResultInputProps) -> None:
+  def _fake_step() -> int:
     with api.context(infra_steps=props.infra_steps):
       api.step('step', ['cmd'])
       if props.exception:
@@ -58,8 +60,15 @@ def RunSteps(api: DEPS, props):
     pres.step_summary_text = repr(deferred.result())
 
 
-def GenTests(api) -> Generator[recipe_test_api.TestData, None, None]:
-  def test(name, *args, status, step_name='result', retcode=0, **kwargs):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
+  def test(
+      name: str,
+      *args: recipe_test_api.TestData,
+      status: str,
+      step_name: str | None = 'result',
+      retcode: int = 0,
+      **kwargs: Any,
+  ) -> recipe_test_api.TestData:
     res = api.test(name, *args, status=status, **kwargs)
 
     if status in ('FAILURE', 'INFRA_FAILURE'):

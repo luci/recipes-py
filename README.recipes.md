@@ -1825,7 +1825,7 @@ Returns recorded Buildbucket build IDs as a list of integers.
 
 Runs a function but defers the result until a later time.
 
-#### **class [DeferApi](/recipe_modules/defer/api.py#107)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [DeferApi](/recipe_modules/defer/api.py#111)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 Runs a function but defers the result until a later time.
 
@@ -1846,7 +1846,7 @@ https://docs.python.org/3/tutorial/errors.html#raising-and-handling-multiple-unr
 If there are no failures, api.defer.collect() returns a Sequence of the
 return values of the functions passed into api.defer().
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/defer/api.py#173)(self, func: Callable[(..., T)], \*args, \*\*kwargs):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/defer/api.py#179)(self, func: Callable[(..., T)], \*args: Any, \*\*kwargs: Any):**
 
 Calls func(*args, **kwargs) but catches all exceptions.
 
@@ -1857,7 +1857,7 @@ contains that exception.
 The DeferredResult is expected to be passed into api.defer.collect(), but
 DeferredResult.result() does similar processing.
 
-&mdash; **def [collect](/recipe_modules/defer/api.py#190)(self, results: Sequence[DeferredResult], step_name: (str | None)=None):**
+&mdash; **def [collect](/recipe_modules/defer/api.py#196)(self, results: Sequence[DeferredResult], step_name: (str | None)=None):**
 
 Raise any exceptions in the given list of DeferredResults.
 
@@ -1869,7 +1869,7 @@ Args:
     step_name: Name for step including traceback logs if there are failures.
         If None, don't include a step with traceback logs.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [context](/recipe_modules/defer/api.py#131)(self, collect_step_name: (str | None)=None):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [context](/recipe_modules/defer/api.py#137)(self, collect_step_name: (str | None)=None):**
 
 Creates a context that tracks deferred calls.
 
@@ -5478,34 +5478,34 @@ Generates response Runs for a test.
 &mdash; **def [RunSteps](/recipe_modules/cv/tests/triggered_build_ids.py#34)(api: DEPS):**
 ### *recipes* / [defer:tests/collect](/recipe_modules/defer/tests/collect.py)
 
-[DEPS](/recipe_modules/defer/tests/collect.py#27): [context](#recipe_modules-context), [defer](#recipe_modules-defer), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/defer/tests/collect.py#29): [context](#recipe_modules-context), [defer](#recipe_modules-defer), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/defer/tests/collect.py#45)(api: DEPS, props):**
+&mdash; **def [RunSteps](/recipe_modules/defer/tests/collect.py#47)(api: DEPS, props: properties_pb2.CollectInputProps):**
 ### *recipes* / [defer:tests/context](/recipe_modules/defer/tests/context.py)
 
-[DEPS](/recipe_modules/defer/tests/context.py#27): [context](#recipe_modules-context), [defer](#recipe_modules-defer), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/defer/tests/context.py#29): [context](#recipe_modules-context), [defer](#recipe_modules-defer), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/defer/tests/context.py#45)(api: DEPS, props):**
+&mdash; **def [RunSteps](/recipe_modules/defer/tests/context.py#47)(api: DEPS, props: properties_pb2.ContextInputProps):**
 ### *recipes* / [defer:tests/non\_deferred](/recipe_modules/defer/tests/non_deferred.py)
 
 [DEPS](/recipe_modules/defer/tests/non_deferred.py#26): [context](#recipe_modules-context), [defer](#recipe_modules-defer), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/defer/tests/non_deferred.py#44)(api: DEPS, props):**
+&mdash; **def [RunSteps](/recipe_modules/defer/tests/non_deferred.py#44)(api: DEPS, props: properties_pb2.NonDeferredInputProps):**
 ### *recipes* / [defer:tests/result](/recipe_modules/defer/tests/result.py)
 
-[DEPS](/recipe_modules/defer/tests/result.py#26): [context](#recipe_modules-context), [defer](#recipe_modules-defer), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/defer/tests/result.py#28): [context](#recipe_modules-context), [defer](#recipe_modules-defer), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/defer/tests/result.py#44)(api: DEPS, props):**
+&mdash; **def [RunSteps](/recipe_modules/defer/tests/result.py#46)(api: DEPS, props: properties_pb2.ResultInputProps):**
 ### *recipes* / [defer:tests/suppressed](/recipe_modules/defer/tests/suppressed.py)
 
 [DEPS](/recipe_modules/defer/tests/suppressed.py#26): [defer](#recipe_modules-defer), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/defer/tests/suppressed.py#47)(api: recipe_api.RecipeApi, props: properties_pb2.SuppressedInputProps):**
+&mdash; **def [RunSteps](/recipe_modules/defer/tests/suppressed.py#47)(api: DEPS, props: properties_pb2.SuppressedInputProps):**
 ### *recipes* / [engine\_tests/allowlist\_steps](/recipes/engine_tests/allowlist_steps.py)
 
 [DEPS](/recipes/engine_tests/allowlist_steps.py#29): [context](#recipe_modules-context), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

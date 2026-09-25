@@ -4,8 +4,10 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import contextlib
-from typing import Generator
+from collections.abc import Iterator
 
 from PB.recipe_modules.recipe_engine.defer.tests import (
     properties as properties_pb2
@@ -42,9 +44,9 @@ class CollectTestError(Exception):
   pass
 
 
-def RunSteps(api: DEPS, props):
+def RunSteps(api: DEPS, props: properties_pb2.ContextInputProps) -> None:
 
-  def step(i):
+  def step(i: int) -> None:
     api.step(f'step {i}', ['cmd'])
     if props.exception:
       raise CollectTestError()
@@ -57,8 +59,15 @@ def RunSteps(api: DEPS, props):
   api.step.empty('all steps succeeded')
 
 
-def GenTests(api) -> Generator[recipe_test_api.TestData, None, None]:
-  def test(name, *args, status, exception=False, step_name='collect', **kwargs):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
+  def test(
+      name: str,
+      *args: recipe_test_api.TestData,
+      status: str,
+      exception: bool = False,
+      step_name: str | None = 'collect',
+      **kwargs: Any,
+  ) -> recipe_test_api.TestData:
     res = api.test(name, *args, status=status, **kwargs)
     res += api.properties(properties_pb2.CollectInputProps(step_name=step_name,
                                                            exception=exception))
@@ -79,7 +88,7 @@ def GenTests(api) -> Generator[recipe_test_api.TestData, None, None]:
 
     return res
 
-  def failure(n) -> step_data.StepData:
+  def failure(n: int) -> recipe_test_api.TestData:
     return api.step_data(f'step {n}', retcode=1)
 
 

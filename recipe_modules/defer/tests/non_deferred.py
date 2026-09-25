@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import contextlib
-from typing import Generator
+from collections.abc import Iterator
 
 from PB.recipe_modules.recipe_engine.defer.tests import (properties as
                                                          properties_pb2)
@@ -41,12 +41,12 @@ class CollectTestError(Exception):
   pass
 
 
-def RunSteps(api: DEPS, props):
+def RunSteps(api: DEPS, props: properties_pb2.NonDeferredInputProps) -> None:
 
-  def keyerror():
+  def keyerror() -> None:
     raise KeyError()
 
-  def valueerror():
+  def valueerror() -> None:
     raise ValueError()
 
   with api.defer.context(collect_step_name='collect') as defer:
@@ -56,7 +56,7 @@ def RunSteps(api: DEPS, props):
     raise OSError
 
 
-def GenTests(api) -> Generator[recipe_test_api.TestData, None, None]:
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'pass',
       api.properties(properties_pb2.NonDeferredInputProps(fail=False)),

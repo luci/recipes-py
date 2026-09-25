@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+from RECIPE_MODULES.recipe_engine import defer
+
 from collections.abc import Sequence
 import contextlib
 import dataclasses
@@ -51,14 +53,16 @@ class DeferredResult(Generic[T]):
 
 
 class DeferContext:
-  def __init__(self, api: recipe_api.RecipeApi, *args, **kwargs):
+  def __init__(
+      self, api: recipe_api.RecipeApi, *args: Any, **kwargs: Any
+  ) -> None:
     super().__init__(*args, **kwargs)
     self.api = api
     self.results: list[DeferredResult[T]] = []
     self.suppressed_results: list[DeferredResult[T]] = []
 
   def __call__(
-      self, callable: Callable[..., T], *args, **kwargs
+      self, callable: Callable[..., T], *args: Any, **kwargs: Any
   ) -> DeferredResult[T]:
     """Call callable(*args, **kwargs) and save the result."""
     result = self.api.defer(callable, *args, **kwargs)
@@ -125,6 +129,8 @@ class DeferApi(recipe_api.RecipeApi):
   return values of the functions passed into api.defer().
   """
 
+  m: defer.DEPS
+
   DeferContext = DeferContext
   DeferredResult = DeferredResult
 
@@ -171,7 +177,7 @@ class DeferApi(recipe_api.RecipeApi):
       ctx.collect(step_name=collect_step_name)
 
   def __call__(
-      self, func: Callable[..., T], *args, **kwargs
+      self, func: Callable[..., T], *args: Any, **kwargs: Any
   ) -> DeferredResult[T]:
     """Calls func(*args, **kwargs) but catches all exceptions.
 
