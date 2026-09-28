@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from urllib.parse import urlparse, urlunparse
 from past.builtins import basestring
 
@@ -15,7 +17,9 @@ from google.protobuf import json_format as jsonpb
 from recipe_engine import recipe_test_api
 
 class PropertiesTestApi(recipe_test_api.RecipeTestApi):
-  def __call__(self, *proto_msgs, **kwargs):
+  def __call__(
+      self, *proto_msgs: PBMessage, **kwargs: Any
+  ) -> recipe_test_api.TestData:
     """Sets property data for this test case.
 
     You may pass a list of protobuf messages to use; their JSONPB
@@ -44,7 +48,9 @@ class PropertiesTestApi(recipe_test_api.RecipeTestApi):
 
     return ret
 
-  def environ(self, *proto_msgs, **kwargs):
+  def environ(
+      self, *proto_msgs: PBMessage, **kwargs: Any
+  ) -> recipe_test_api.TestData:
     """Sets environment data for this test case."""
     ret = self.test(None)
 
@@ -70,7 +76,7 @@ class PropertiesTestApi(recipe_test_api.RecipeTestApi):
 
     return ret
 
-  def generic(self, **kwargs):
+  def generic(self, **kwargs: Any) -> recipe_test_api.TestData:
     """DEPRECATED. Use `api.buildbucket.generic_build` instead.
 
     Merge kwargs into a typical buildbot properties blob, and return the blob.
@@ -88,7 +94,7 @@ class PropertiesTestApi(recipe_test_api.RecipeTestApi):
     ret.properties.update(kwargs)
     return ret
 
-  def scheduled(self, **kwargs):
+  def scheduled(self, **kwargs: Any) -> recipe_test_api.TestData:
     """DEPRECATED. Use `api.buildbucket.ci_build` instead.
 
     Merge kwargs into a typical buildbot properties blob for a job fired off
@@ -96,7 +102,7 @@ class PropertiesTestApi(recipe_test_api.RecipeTestApi):
     """
     return self.git_scheduled(**kwargs)
 
-  def git_scheduled(self, **kwargs):
+  def git_scheduled(self, **kwargs: Any) -> recipe_test_api.TestData:
     """DEPRECATED. Use `api.buildbucket.ci_build` instead.
 
     Merge kwargs into a typical buildbot properties blob for a job fired off
@@ -111,7 +117,7 @@ class PropertiesTestApi(recipe_test_api.RecipeTestApi):
     ret.properties.update(kwargs)
     return ret
 
-  def tryserver(self, **kwargs):
+  def tryserver(self, **kwargs: Any) -> recipe_test_api.TestData:
     """DEPRECATED. Use `api.buildbucket.ci_build` instead.
 
     Simulates Buildbot tryserver build.

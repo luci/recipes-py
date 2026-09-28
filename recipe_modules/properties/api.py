@@ -20,6 +20,11 @@ random-access global variable).
 
 from __future__ import annotations
 
+from collections.abc import Iterator, Mapping
+from typing import Any
+
+from RECIPE_MODULES.recipe_engine import properties
+
 import collections.abc
 
 from recipe_engine import recipe_api
@@ -30,28 +35,30 @@ class PropertiesApi(recipe_api.RecipeApi, collections.abc.Mapping):
   """PropertiesApi implements all the standard Mapping functions, so you
   can use it like a read-only dict."""
 
+  m: properties.DEPS
+
   properties_client = recipe_api.RequireClient('properties')
 
-  def __init__(self, **kwargs):
+  def __init__(self, **kwargs: Any) -> None:
     super().__init__(**kwargs)
     self._frozen_properties = None
 
   @property
-  def _properties(self):
+  def _properties(self) -> Mapping[str, Any]:
     if self._frozen_properties is None:
       self._frozen_properties = freeze(
           self.properties_client.get_properties())
     return self._frozen_properties
 
-  def __getitem__(self, key):
+  def __getitem__(self, key: str) -> Any:
     return self._properties[key]
 
-  def __len__(self):
+  def __len__(self) -> int:
     return len(self._properties)
 
-  def __iter__(self):
+  def __iter__(self) -> Iterator[str]:
     return iter(self._properties)
 
-  def thaw(self):
+  def thaw(self) -> dict[str, Any]:
     """Returns a read-write copy of all of the properties."""
     return self.properties_client.get_properties()

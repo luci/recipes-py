@@ -3482,12 +3482,12 @@ values provided to the recipe engine at the beginning of execution. There is
 intentionally no API to write property values (lest they become a kind of
 random-access global variable).
 
-#### **class [PropertiesApi](/recipe_modules/properties/api.py#29)([RecipeApi](/recipe_engine/recipe_api.py#442), collections.abc.Mapping):**
+#### **class [PropertiesApi](/recipe_modules/properties/api.py#34)([RecipeApi](/recipe_engine/recipe_api.py#442), collections.abc.Mapping):**
 
 PropertiesApi implements all the standard Mapping functions, so you
 can use it like a read-only dict.
 
-&mdash; **def [thaw](/recipe_modules/properties/api.py#55)(self):**
+&mdash; **def [thaw](/recipe_modules/properties/api.py#62)(self):**
 
 Returns a read-write copy of all of the properties.
 ### *recipe_modules* / [proto](/recipe_modules/proto)
@@ -6121,10 +6121,10 @@ Test to cover legacy aspects of PathTestApi.
 &mdash; **def [RunSteps](/recipe_modules/platform/examples/full.py#27)(api: DEPS):**
 ### *recipes* / [properties:examples/full](/recipe_modules/properties/examples/full.py)
 
-[DEPS](/recipe_modules/properties/examples/full.py#26): [json](#recipe_modules-json), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/properties/examples/full.py#29): [json](#recipe_modules-json), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/properties/examples/full.py#40)(api: DEPS, props, env_props):**
+&mdash; **def [RunSteps](/recipe_modules/properties/examples/full.py#43)(api: DEPS, props: InputProps, env_props: EnvProps):**
 ### *recipes* / [proto:tests/encode\_decode](/recipe_modules/proto/tests/encode_decode.py)
 
 [DEPS](/recipe_modules/proto/tests/encode_decode.py#22): [assertions](#recipe_modules-assertions), [path](#recipe_modules-path), [proto](#recipe_modules-proto), [step](#recipe_modules-step)

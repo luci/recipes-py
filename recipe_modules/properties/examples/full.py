@@ -5,6 +5,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from google.protobuf import struct_pb2, json_format
 
 from recipe_engine import post_process
@@ -37,7 +40,7 @@ PROPERTIES = InputProps
 ENV_PROPERTIES = EnvProps
 
 
-def RunSteps(api: DEPS, props, env_props):
+def RunSteps(api: DEPS, props: InputProps, env_props: EnvProps) -> None:
   api.step('echo props', ['echo'] + [repr(props)])
   api.step('echo env_props', ['echo'] + [repr(env_props)])
 
@@ -52,7 +55,7 @@ def RunSteps(api: DEPS, props, env_props):
     api.step('echo %s' % k, ['echo', repr(api.properties[k])])
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (
     api.test('basic')
     + api.properties(
