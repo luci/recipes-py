@@ -2586,9 +2586,9 @@ corresponds to one step, and contains the following keys:
 [DEPS](/recipe_modules/golang/__init__.py#18): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform)
 
 
-#### **class [GolangApi](/recipe_modules/golang/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [GolangApi](/recipe_modules/golang/api.py#18)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/golang/api.py#17)(self, version, path=None, cache=None):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/golang/api.py#25)(self, version: str, path: (config_types.Path | None)=None, cache: (config_types.Path | None)=None):**
 
 Installs a Golang SDK and activates it in the environment.
 
@@ -5927,10 +5927,10 @@ This tests metadata features of the Future object.
 &mdash; **def [RunSteps](/recipe_modules/generator_script/examples/full.py#49)(api: DEPS, props: full_pb.InputProperties):**
 ### *recipes* / [golang:examples/full](/recipe_modules/golang/examples/full.py)
 
-[DEPS](/recipe_modules/golang/examples/full.py#18): [golang](#recipe_modules-golang), [platform](#recipe_modules-platform), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/golang/examples/full.py#21): [golang](#recipe_modules-golang), [platform](#recipe_modules-platform), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/golang/examples/full.py#29)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/golang/examples/full.py#32)(api: DEPS):**
 ### *recipes* / [json:examples/full](/recipe_modules/json/examples/full.py)
 
 [DEPS](/recipe_modules/json/examples/full.py#23): [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
