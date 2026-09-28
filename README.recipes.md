@@ -6115,10 +6115,10 @@ Test to cover legacy aspects of PathTestApi.
 &mdash; **def [RunSteps](/recipes/placeholder.py#57)(api: DEPS, properties):**
 ### *recipes* / [platform:examples/full](/recipe_modules/platform/examples/full.py)
 
-[DEPS](/recipe_modules/platform/examples/full.py#17): [platform](#recipe_modules-platform), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/platform/examples/full.py#20): [platform](#recipe_modules-platform), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/platform/examples/full.py#27)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/platform/examples/full.py#30)(api: DEPS):**
 ### *recipes* / [properties:examples/full](/recipe_modules/properties/examples/full.py)
 
 [DEPS](/recipe_modules/properties/examples/full.py#29): [json](#recipe_modules-json), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

@@ -9,7 +9,7 @@ from recipe_engine import recipe_test_api
 
 class PlatformTestApi(recipe_test_api.RecipeTestApi):
   @staticmethod
-  def name(name):
+  def name(name: str) -> recipe_test_api.TestData:
     """Set the platform 'name' for the current test.
 
     The only three values currently allowed are 'win', 'linux', and 'mac'.
@@ -29,7 +29,7 @@ class PlatformTestApi(recipe_test_api.RecipeTestApi):
 
   @recipe_test_api.mod_test_data
   @staticmethod
-  def bits(bits):
+  def bits(bits: int) -> int:
     """Set the bitness for the current test.
 
     The only two values currently allowed are 32 and 64.
@@ -39,7 +39,7 @@ class PlatformTestApi(recipe_test_api.RecipeTestApi):
 
   @recipe_test_api.mod_test_data
   @staticmethod
-  def arch(arch):
+  def arch(arch: str) -> str:
     """Set the architecture for the current test.
 
     The only two values currently allowed are 'linux' and 'arm'.
@@ -47,5 +47,7 @@ class PlatformTestApi(recipe_test_api.RecipeTestApi):
     assert arch in ('intel', 'arm'), 'unknown arch %r' % (arch,)
     return arch
 
-  def __call__(self, name, bits, arch='intel'):
+  def __call__(
+      self, name: str, bits: int, arch: str = 'intel'
+  ) -> recipe_test_api.TestData:
     return self.name(name) + self.bits(bits) + self.arch(arch)

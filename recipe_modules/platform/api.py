@@ -14,11 +14,11 @@ import psutil
 from recipe_engine import recipe_api
 
 
-def norm_bits(arch: str):
+def norm_bits(arch: str | int) -> int:
   return 64 if '64' in str(arch) else 32
 
 
-def get_arch():
+def get_arch() -> str:
   arch = platform.machine()
   return 'arm' if ('arm' in arch or 'aarch' in arch) else 'intel'
 
@@ -33,7 +33,7 @@ class PlatformApi(recipe_api.RecipeApi):
     * bits (int): Either 32 or 64.
   """
 
-  def initialize(self):
+  def initialize(self) -> None:
     self._name = PlatformApi.normalize_platform_name(sys.platform)
 
     self._arch = get_arch()

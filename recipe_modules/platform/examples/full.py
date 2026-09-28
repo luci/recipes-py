@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
@@ -24,7 +27,7 @@ class TEST_DEPS(RecipeTestApi):
   platform: platform.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   step_result = api.step('platform things', cmd=None)
   step_result.presentation.logs['name'] = [api.platform.name]
   step_result.presentation.logs['bits'] = [str(api.platform.bits)]
@@ -41,7 +44,7 @@ def RunSteps(api: DEPS):
     assert api.platform.is_linux
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('linux64') + api.platform('linux', 64)
   yield api.test('mac64') + api.platform('mac', 64)
   yield api.test('win32') + api.platform('win', 32)
