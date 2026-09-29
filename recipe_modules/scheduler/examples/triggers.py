@@ -6,6 +6,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 import json
 
 from google.protobuf import json_format
@@ -35,7 +38,7 @@ class TEST_DEPS(RecipeTestApi):
   scheduler: scheduler.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   pres = api.step(name='triggers', cmd=None).presentation
   pres.logs['triggers'] = api.json.dumps(
       [json_format.MessageToDict(t) for t in api.scheduler.triggers],
@@ -47,7 +50,7 @@ def RunSteps(api: DEPS):
     pres.logs['first_repo'] = [api.scheduler.triggers[0].gitiles.repo]
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (
     api.test('unset')
   )

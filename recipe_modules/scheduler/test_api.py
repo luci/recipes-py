@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from past.builtins import basestring
 
 from google.protobuf import json_format
@@ -15,7 +17,13 @@ from PB.go.chromium.org.luci.scheduler.api.scheduler.v1 import (
 
 
 class SchedulerTestApi(recipe_test_api.RecipeTestApi):
-  def __call__(self, hostname=None, job_id=None, invocation_id=None, triggers=None):
+  def __call__(
+      self,
+      hostname: str | None = None,
+      job_id: str | None = None,
+      invocation_id: int | None = None,
+      triggers: Sequence[triggers_pb2.Trigger] | None = None,
+  ) -> recipe_test_api.TestData:
     """Emulates scheduler module state.
 
     triggers must be None or a list of triggers_pb2.Trigger objects.

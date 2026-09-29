@@ -15,6 +15,12 @@ RPCExplorer available at
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable, Mapping
+from typing import Any, TYPE_CHECKING
+from recipe_engine import recipe_test_api
+from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb
+from PB.recipe_modules.recipe_engine.scheduler import properties as properties_pb
+
 import copy
 import uuid
 
@@ -25,11 +31,18 @@ from recipe_engine import recipe_api
 from PB.go.chromium.org.luci.scheduler.api.scheduler.v1 import (
     triggers as triggers_pb2)
 
+if TYPE_CHECKING:  # pragma: no cover
+  from RECIPE_MODULES.recipe_engine import findings
+
 
 class SchedulerApi(recipe_api.RecipeApi):
   """A module for interacting with LUCI Scheduler service."""
 
-  def __init__(self, props, **kwargs):
+  m: scheduler.DEPS
+
+  def __init__(
+      self, props: properties_pb.InputProperties, **kwargs: Any
+  ) -> None:
     super().__init__(**kwargs)
     self._host = props.hostname or 'luci-scheduler.appspot.com'
     self._job_id = props.job
@@ -47,11 +60,11 @@ class SchedulerApi(recipe_api.RecipeApi):
     return copy.copy(self._triggers)
 
   @property
-  def host(self):
+  def host(self) -> str:
     """Returns the backend hostname used by this module."""
     return self._host
 
-  def set_host(self, host):
+  def set_host(self, host: str) -> None:
     """Changes the backend hostname used by this module.
 
     Args:
@@ -60,7 +73,7 @@ class SchedulerApi(recipe_api.RecipeApi):
     self._host = host
 
   @property
-  def job_id(self):
+  def job_id(self) -> str | None:
     """Returns the job ID of the current build as "<project>/<job>".
 
     Returns None if the current build was not triggered by the scheduler.
@@ -68,7 +81,7 @@ class SchedulerApi(recipe_api.RecipeApi):
     return self._job_id if self._job_id else None
 
   @property
-  def invocation_id(self):
+  def invocation_id(self) -> int | None:
     """Returns the invocation ID of the current build as an int64 integer.
 
     Returns None if the current build was not triggered by the scheduler.
@@ -85,8 +98,14 @@ class SchedulerApi(recipe_api.RecipeApi):
       https://chromium.googlesource.com/infra/luci/luci-go/+/main/scheduler/api/scheduler/v1/triggers.proto
     """
     def __init__(
-        self, id=None, title=None, url=None,
-        properties=None, tags=None, inherit_tags=True):
+        self,
+        id: str | None = None,
+        title: str | None = None,
+        url: str | None = None,
+        properties: Mapping[str, Any] | None = None,
+        tags: Mapping[str, str | None] | None = None,
+        inherit_tags: bool = True,
+    ) -> None:
       self._id = id
       self._title = title
       self._url = url
@@ -94,7 +113,7 @@ class SchedulerApi(recipe_api.RecipeApi):
       self._tags = tags
       self._inherit_tags = inherit_tags
 
-    def _serialize(self, api_self):
+    def _serialize(self, api_self: SchedulerApi) -> dict[str, Any]:
       t = {}
       t['id'] = self._id or api_self._next_uuid()
       t['title'] = self._title or ('%s/%s' % (
@@ -121,7 +140,9 @@ class SchedulerApi(recipe_api.RecipeApi):
       t.update(self._serialize_payload(base))
       return t
 
-    def _tags_for_child_build(self, build): # pragma: no cover
+    def _tags_for_child_build(
+        self, build: build_pb.Build
+    ) -> dict[str, str]:  # pragma: no cover
       """A dict of tags (key -> value) derived from current (parent) build for a
       child build."""
       original_tags = {
@@ -153,10 +174,10 @@ class SchedulerApi(recipe_api.RecipeApi):
         new_tags['parent_buildername'] = str(build.builder.builder)
       return new_tags
 
-    def _cleanup_tags(self, tags):
+    def _cleanup_tags(self, tags: dict[str, str | None]) -> None:
       pass
 
-    def _serialize_payload(self, base):
+    def _serialize_payload(self, base: dict[str, Any]) -> dict[str, Any]:
       raise NotImplementedError()  # pragma: no cover
 
 
@@ -172,7 +193,7 @@ class SchedulerApi(recipe_api.RecipeApi):
       inherit_tags (bool): if true (default), auto-adds tags using
         `api.buildbucket.tags_for_child_build` api.
     """
-    def _serialize_payload(self, base):
+    def _serialize_payload(self, base: dict[str, Any]) -> dict[str, Any]:
       return {'buildbucket': base}
 
 
@@ -191,20 +212,22 @@ class SchedulerApi(recipe_api.RecipeApi):
       inherit_tags (bool): if true (default), auto-adds extra tags using
         `api.buildbucket.tags_for_child_build` api.
     """
-    def __init__(self, repo, ref, revision, **kwargs):
+    def __init__(
+        self, repo: str, ref: str, revision: str, **kwargs: Any
+    ) -> None:
       super().__init__(**kwargs)
       self._repo = repo
       self._ref = ref
       self._revision = revision
 
-    def _cleanup_tags(self, tags):
+    def _cleanup_tags(self, tags: dict[str, str | None]) -> None:
       # These tags are populated based on the triggered commit by Buildbucket.
       # They could have been inherited (with wrong values) from
       # _tags_for_child_build. Drop them.
       tags.pop('buildset', None)
       tags.pop('gitiles_ref', None)
 
-    def _serialize_payload(self, base):
+    def _serialize_payload(self, base: dict[str, Any]) -> dict[str, Any]:
       base.update({
         'repo': self._repo,
         'ref': self._ref,
@@ -213,7 +236,13 @@ class SchedulerApi(recipe_api.RecipeApi):
       return {'gitiles': base}
 
 
-  def emit_trigger(self, trigger, project, jobs, step_name=None):
+  def emit_trigger(
+      self,
+      trigger: Trigger,
+      project: str,
+      jobs: Iterable[str],
+      step_name: str | None = None,
+  ) -> None:
     """Emits trigger to one or more jobs of a given project.
 
     Args:
@@ -226,7 +255,11 @@ class SchedulerApi(recipe_api.RecipeApi):
     return self.emit_triggers([(trigger, project, jobs)], step_name=step_name)
 
   def emit_triggers(
-      self, trigger_project_jobs, timestamp_usec=None, step_name=None):
+      self,
+      trigger_project_jobs: Iterable[tuple[Trigger, str, Iterable[str]]],
+      timestamp_usec: int | None = None,
+      step_name: str | None = None,
+  ) -> None:
     """Emits a batch of triggers spanning one or more projects.
 
     Up to date documentation is at
@@ -259,7 +292,13 @@ class SchedulerApi(recipe_api.RecipeApi):
         'EmitTriggers', req, step_name=step_name,
         step_test_data=lambda: self.m.json.test_api.output_stream({}))
 
-  def _run(self, method, input_data, step_test_data=None, step_name=None):
+  def _run(
+      self,
+      method: str,
+      input_data: Mapping[str, Any],
+      step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
+      step_name: str | None = None,
+  ) -> Any:
     # TODO(tandrii): encapsulate running prpc command in a standalone module.
     step_name = step_name or ('luci-scheduler.' + method)
     args = ['prpc', 'call', '-format=json', self._host,
@@ -281,7 +320,7 @@ class SchedulerApi(recipe_api.RecipeApi):
 
     return step_result.stdout
 
-  def _next_uuid(self):
+  def _next_uuid(self) -> str:
     if self._test_data.enabled:
       self._fake_uuid_count += 1
       return '6a0a73b0-070b-492b-9135-9f26a2a' + '%05d' % (
