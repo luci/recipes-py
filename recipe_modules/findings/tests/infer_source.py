@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine import post_process
 
 from PB.go.chromium.org.luci.common.proto.findings import findings as findings_pb
@@ -36,14 +39,14 @@ class TEST_DEPS(RecipeTestApi):
 PROPERTIES = findings_pb.Location
 
 
-def RunSteps(api: DEPS, expected_loc):
+def RunSteps(api: DEPS, expected_loc: findings_pb.Location) -> None:
   location = findings_pb.Location()
   api.findings.populate_source_from_current_build(location)
   if expected_loc:
     api.assertions.assertEqual(location, expected_loc)
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (api.test('basic') + api.buildbucket.try_build(gerrit_changes=[
       common_pb2.GerritChange(
           host='example-review.googlesource.com',

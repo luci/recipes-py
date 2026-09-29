@@ -2336,9 +2336,9 @@ Raises: file.Error.
 [DEPS](/recipe_modules/findings/__init__.py#19): [buildbucket](#recipe_modules-buildbucket), [proto](#recipe_modules-proto), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
 
 
-#### **class [FindingsAPI](/recipe_modules/findings/api.py#18)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [FindingsAPI](/recipe_modules/findings/api.py#24)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
-&mdash; **def [populate\_source\_from\_current\_build](/recipe_modules/findings/api.py#152)(self, location: findings_pb.Location):**
+&mdash; **def [populate\_source\_from\_current\_build](/recipe_modules/findings/api.py#160)(self, location: findings_pb.Location):**
 
 Set the location source based on the input of the current build.
 
@@ -2346,7 +2346,7 @@ This can be used for finding.location or replacement.location. Currently,
 only works for build with exactly one Gerrit change. Raise ValueError
 otherwise.
 
-&mdash; **def [upload\_findings](/recipe_modules/findings/api.py#29)(self, findings: Sequence[findings_pb.Finding], step_name: (str | None)=None):**
+&mdash; **def [upload\_findings](/recipe_modules/findings/api.py#37)(self, findings: Sequence[findings_pb.Finding], step_name: (str | None)=None):**
 
 Uploads code findings to ResultDB.
 
@@ -5829,16 +5829,16 @@ Tests that step presentation properties can be ordered.
 &mdash; **def [RunSteps](/recipe_modules/file/examples/truncate.py#30)(api: DEPS):**
 ### *recipes* / [findings:tests/infer\_source](/recipe_modules/findings/tests/infer_source.py)
 
-[DEPS](/recipe_modules/findings/tests/infer_source.py#24): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [findings](#recipe_modules-findings), [properties](#recipe_modules-properties)
+[DEPS](/recipe_modules/findings/tests/infer_source.py#27): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [findings](#recipe_modules-findings), [properties](#recipe_modules-properties)
 
 
-&mdash; **def [RunSteps](/recipe_modules/findings/tests/infer_source.py#39)(api: DEPS, expected_loc):**
+&mdash; **def [RunSteps](/recipe_modules/findings/tests/infer_source.py#42)(api: DEPS, expected_loc: findings_pb.Location):**
 ### *recipes* / [findings:tests/upload\_findings](/recipe_modules/findings/tests/upload_findings.py)
 
-[DEPS](/recipe_modules/findings/tests/upload_findings.py#22): [buildbucket](#recipe_modules-buildbucket), [findings](#recipe_modules-findings), [properties](#recipe_modules-properties)
+[DEPS](/recipe_modules/findings/tests/upload_findings.py#25): [buildbucket](#recipe_modules-buildbucket), [findings](#recipe_modules-findings), [properties](#recipe_modules-properties)
 
 
-&mdash; **def [RunSteps](/recipe_modules/findings/tests/upload_findings.py#36)(api: DEPS, props):**
+&mdash; **def [RunSteps](/recipe_modules/findings/tests/upload_findings.py#39)(api: DEPS, props: findings_pb.Findings):**
 ### *recipes* / [futures:examples/background\_helper](/recipe_modules/futures/examples/background_helper.py)
 
 [DEPS](/recipe_modules/futures/examples/background_helper.py#29): [futures](#recipe_modules-futures), [json](#recipe_modules-json), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)

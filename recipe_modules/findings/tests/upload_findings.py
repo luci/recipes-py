@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine import post_process
 
 from PB.go.chromium.org.luci.common.proto.findings import findings as findings_pb
@@ -33,11 +36,11 @@ class TEST_DEPS(RecipeTestApi):
 PROPERTIES = findings_pb.Findings
 
 
-def RunSteps(api: DEPS, props):
+def RunSteps(api: DEPS, props: findings_pb.Findings) -> None:
   api.findings.upload_findings(props.findings)
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   gerrit_change_ref = findings_pb.Location.GerritChangeReference(
       host='chromium-review.googlesource.com',
       project='infra',

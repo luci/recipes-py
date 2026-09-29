@@ -4,20 +4,28 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from collections.abc import Sequence
 import gzip
 import os
 import struct
+from typing import TYPE_CHECKING
 
 from recipe_engine import recipe_api
 
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 from PB.go.chromium.org.luci.common.proto.findings import findings as findings_pb
 
+if TYPE_CHECKING:  # pragma: no cover
+  from RECIPE_MODULES.recipe_engine import findings
+
 
 class FindingsAPI(recipe_api.RecipeApi):
 
-  def __init__(self, **kwargs):
+  m: findings.DEPS
+
+  def __init__(self, **kwargs: Any) -> None:
     super().__init__(**kwargs)
     self._tagged_current_build = False
 
@@ -75,7 +83,7 @@ class FindingsAPI(recipe_api.RecipeApi):
               }
           },)
 
-  def _validate_finding(self, finding: findings_pb.Finding):
+  def _validate_finding(self, finding: findings_pb.Finding) -> None:
     # TODO: yiwzhang - use https://github.com/bufbuild/protovalidate to
     # validate once the python wheel is available.
     if not finding.category:
@@ -95,7 +103,7 @@ class FindingsAPI(recipe_api.RecipeApi):
       for replacement in fix.replacements:
         self._validate_location(replacement.location)
 
-  def _validate_location(self, loc: findings_pb.Location):
+  def _validate_location(self, loc: findings_pb.Location) -> None:
     if not loc.HasField('source'):
       raise ValueError('location MUST specify one source')
     if loc.gerrit_change_ref:
