@@ -36,7 +36,7 @@
     "cmd": [
       "prpc",
       "call",
-      "-format=json",
+      "-format=binary",
       "config.luci.app",
       "config.service.v2.Configs.GetConfig"
     ],
@@ -54,7 +54,7 @@
       }
     },
     "name": "fetch project cr-buildbucket.cfg.get",
-    "stdin": "{\n  \"config_set\": \"projects/project\",\n  \"path\": \"cr-buildbucket.cfg\"\n}",
+    "stdin": "\n\u0010projects/project\u0012\u0012cr-buildbucket.cfg",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@proto.output@{@@@",
@@ -71,7 +71,7 @@
     "cmd": [
       "prpc",
       "call",
-      "-format=json",
+      "-format=binary",
       "config.luci.app",
       "config.service.v2.Configs.GetConfig"
     ],
@@ -89,7 +89,7 @@
       }
     },
     "name": "fetch project luci-milo.cfg.get",
-    "stdin": "{\n  \"config_set\": \"projects/project\",\n  \"path\": \"luci-milo.cfg\"\n}",
+    "stdin": "\n\u0010projects/project\u0012\rluci-milo.cfg",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@proto.output@{@@@",
@@ -106,7 +106,7 @@
     "cmd": [
       "prpc",
       "call",
-      "-format=json",
+      "-format=binary",
       "config.luci.app",
       "config.service.v2.Configs.GetConfig"
     ],
@@ -124,7 +124,7 @@
       }
     },
     "name": "fetch project luci-scheduler.cfg.get",
-    "stdin": "{\n  \"config_set\": \"projects/project\",\n  \"path\": \"luci-scheduler.cfg\"\n}",
+    "stdin": "\n\u0010projects/project\u0012\u0012luci-scheduler.cfg",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@proto.output@{@@@",
@@ -170,7 +170,7 @@
     "cmd": [
       "prpc",
       "call",
-      "-format=json",
+      "-format=binary",
       "config.luci.app",
       "config.service.v2.Configs.GetConfig"
     ],
@@ -188,7 +188,7 @@
       }
     },
     "name": "fetch project luci-milo.cfg (2).get",
-    "stdin": "{\n  \"config_set\": \"projects/project\",\n  \"path\": \"luci-milo.cfg\"\n}",
+    "stdin": "\n\u0010projects/project\u0012\rluci-milo.cfg",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@proto.output@{@@@",

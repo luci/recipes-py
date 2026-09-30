@@ -147,12 +147,12 @@ class LuciConfigApi(recipe_api.RecipeApi):
         cmd=[
             "prpc",
             "call",
-            "-format=json",
+            "-format=binary",
             "config.luci.app",
             "config.service.v2.Configs.GetConfig",
         ],
-        stdin=self.m.proto.input(req, "JSONPB"),
-        stdout=self.m.proto.output(config_service_pb2.Config, "JSONPB"),
+        stdin=self.m.proto.input(req, "BINARY"),
+        stdout=self.m.proto.output(config_service_pb2.Config, "BINARY"),
         infra_step=True,
         step_test_data=lambda: self.m.proto.test_api.output_stream(
             config_service_pb2.Config(raw_content=b"")),
