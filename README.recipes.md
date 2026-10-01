@@ -259,11 +259,11 @@
 [DEPS](/recipe_modules/archive/__init__.py#18): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [step](#recipe_modules-step)
 
 
-#### **class [ArchiveApi](/recipe_modules/archive/api.py#11)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [ArchiveApi](/recipe_modules/archive/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
 Provides steps to manipulate archive files (tar, zip, etc.).
 
-&mdash; **def [extract](/recipe_modules/archive/api.py#45)(self, step_name: str, archive_file: (config_types.Path | str), output: (config_types.Path | str), mode: str='safe', include_files: Sequence[str]=(), archive_type: (str | None)=None):**
+&mdash; **def [extract](/recipe_modules/archive/api.py#53)(self, step_name: str, archive_file: (config_types.Path | str), output: (config_types.Path | str), mode: str='safe', include_files: Sequence[str]=(), archive_type: (str | None)=None):**
 
 Step to uncompress |archive_file| into |output| directory.
 
@@ -295,7 +295,7 @@ Args:
   * archive_type (str): archive_file's archive type ("zip" or "tar"). This
     allows overriding the default detected type (based on file extension).
 
-&mdash; **def [package](/recipe_modules/archive/api.py#16)(self, root: config_types.Path):**
+&mdash; **def [package](/recipe_modules/archive/api.py#24)(self, root: config_types.Path):**
 
 Returns Package object that can be used to compress a set of files.
 
@@ -5116,10 +5116,10 @@ same repo as the issue() call.
 
 ### *recipes* / [archive:examples/full](/recipe_modules/archive/examples/full.py)
 
-[DEPS](/recipe_modules/archive/examples/full.py#25): [archive](#recipe_modules-archive), [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/archive/examples/full.py#28): [archive](#recipe_modules-archive), [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 
-&mdash; **def [RunSteps](/recipe_modules/archive/examples/full.py#42)(api: DEPS):**
+&mdash; **def [RunSteps](/recipe_modules/archive/examples/full.py#45)(api: DEPS):**
 ### *recipes* / [assertions:tests/assert-raises](/recipe_modules/assertions/tests/assert-raises.py)
 
 [DEPS](/recipe_modules/assertions/tests/assert-raises.py#23): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

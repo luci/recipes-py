@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine.post_process import Filter
 
 from dataclasses import dataclass
@@ -39,7 +42,7 @@ class TEST_DEPS(RecipeTestApi):
   platform: platform.TEST_API
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   # Prepare directories.
   out = api.path.start_dir.joinpath('output')
   api.file.rmtree('cleanup', out)
@@ -102,7 +105,7 @@ def RunSteps(api: DEPS):
   api.step('listing output_sub', ['find', temp.joinpath('output_sub')])
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   # only really care about the archiving and extract steps
   keep = (Filter().
           include_re('archiving.*').

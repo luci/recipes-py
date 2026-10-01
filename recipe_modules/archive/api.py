@@ -4,12 +4,20 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
+from typing import TYPE_CHECKING
+
 from recipe_engine import recipe_api
 from recipe_engine import config_types
+
+if TYPE_CHECKING:  # pragma: no cover
+  from RECIPE_MODULES.recipe_engine import archive
 
 
 class ArchiveApi(recipe_api.RecipeApi):
   """Provides steps to manipulate archive files (tar, zip, etc.)."""
+
+  m: archive.DEPS
 
   ARCHIVE_TYPES = ('tar', 'tgz', 'tbz', 'zip', 'tzst')
 
@@ -42,13 +50,15 @@ class ArchiveApi(recipe_api.RecipeApi):
     """
     return Package(self._archive_impl, root)
 
-  def extract(self,
-              step_name: str,
-              archive_file: config_types.Path | str,
-              output: config_types.Path | str,
-              mode: str = 'safe',
-              include_files: Sequence[str] = (),
-              archive_type: str | None = None):
+  def extract(
+      self,
+      step_name: str,
+      archive_file: config_types.Path | str,
+      output: config_types.Path | str,
+      mode: str = 'safe',
+      include_files: Sequence[str] = (),
+      archive_type: str | None = None,
+  ) -> None:
     """Step to uncompress |archive_file| into |output| directory.
 
     Archive will be unpacked to |output| so that root of an archive is in
@@ -125,7 +135,14 @@ class ArchiveApi(recipe_api.RecipeApi):
       ex.archive_skipped_files = stat['names']
       raise ex
 
-  def _archive_impl(self, root, entries, step_name, output, archive_type):
+  def _archive_impl(
+      self,
+      root: config_types.Path,
+      entries: Sequence[dict[str, str]],
+      step_name: str,
+      output: config_types.Path,
+      archive_type: str | None,
+  ) -> None:
     assert entries, 'entries is empty!'
 
     if archive_type is None:
@@ -175,16 +192,29 @@ class Package:
   the entire root in the archive.
   """
 
-  def __init__(self, archive_callback, root):
+  def __init__(
+      self,
+      archive_callback: Callable[
+          [
+              config_types.Path,
+              Sequence[dict[str, str]],
+              str,
+              config_types.Path,
+              str | None,
+          ],
+          None,
+      ],
+      root: config_types.Path,
+  ) -> None:
     self._archive_callback = archive_callback
     self._root = root
     self._entries = []
 
   @property
-  def root(self):
+  def root(self) -> config_types.Path:
     return self._root
 
-  def with_file(self, path):
+  def with_file(self, path: config_types.Path) -> Package:
     """Stages single file to be added to the package.
 
     Args:
@@ -201,7 +231,7 @@ class Package:
     })
     return self
 
-  def with_dir(self, path):
+  def with_dir(self, path: config_types.Path) -> Package:
     """Stages a directory with all its content to be added to the package.
 
     Args:
@@ -218,7 +248,12 @@ class Package:
     })
     return self
 
-  def archive(self, step_name, output, archive_type=None):
+  def archive(
+      self,
+      step_name: str,
+      output: config_types.Path,
+      archive_type: str | None = None,
+  ) -> config_types.Path:
     """Archives all staged files to an archive file indicated by `output`.
 
     If no 'with_file' or 'with_dir' calls were made, this will zip the entire
