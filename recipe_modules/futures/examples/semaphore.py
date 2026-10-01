@@ -16,7 +16,7 @@ from RECIPE_MODULES.recipe_engine import (
     step,
 )
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
   import gevent.lock
 
 

@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import ast
 import collections
 from collections.abc import Mapping
 import datetime
@@ -21,12 +22,53 @@ from itertools import groupby
 
 import attr
 import coverage
+import coverage.parser
 
 from ...warn.cause import CallSite, ImportSite
 
 if TYPE_CHECKING:
   import PB.recipe_engine.internal.test.runner as runner_pb2
   from ...recipe_deps import RecipeDeps
+
+
+def _type_checking_import_lines(text: str) -> set[int]:
+  """Returns line numbers of imports inside global TYPE_CHECKING blocks."""
+  excluded: set[int] = set()
+  try:
+    tree = ast.parse(text)
+  except SyntaxError:
+    return excluded
+
+  for node in tree.body:
+    if not isinstance(node, ast.If):
+      continue
+    test = node.test
+    is_tc = (
+        isinstance(test, ast.Name) and test.id == 'TYPE_CHECKING'
+    ) or (
+        isinstance(test, ast.Attribute)
+        and isinstance(test.value, ast.Name)
+        and test.value.id == 'typing'
+        and test.attr == 'TYPE_CHECKING'
+    )
+    if is_tc:
+      for stmt in node.body:
+        if isinstance(stmt, (ast.Import, ast.ImportFrom)):
+          end_lineno = getattr(stmt, 'end_lineno', stmt.lineno) or stmt.lineno
+          excluded.update(range(stmt.lineno, end_lineno + 1))
+  return excluded
+
+
+_orig_raw_parse = coverage.parser.PythonParser._raw_parse
+
+
+def _custom_raw_parse(self: coverage.parser.PythonParser) -> None:
+  _orig_raw_parse(self)
+  if self.text:
+    self.raw_excluded.update(_type_checking_import_lines(self.text))
+
+
+coverage.parser.PythonParser._raw_parse = _custom_raw_parse
 
 
 @attr.s

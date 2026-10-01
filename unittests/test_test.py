@@ -266,6 +266,51 @@ class TestRun(Common):
         self._run_test('run', '--filter', 'foo.*').data,
         self._outcome_json(coverage=0))
 
+  def test_recipe_type_checking_imports_covered(self):
+    with self.main.write_recipe('foo') as recipe:
+      recipe.imports = [
+          'import typing',
+          'from typing import TYPE_CHECKING',
+          'if TYPE_CHECKING:',
+          '  import os',
+          '  from collections.abc import (',
+          '      Sequence,',
+          '  )',
+          'if typing.TYPE_CHECKING:',
+          '  import sys',
+      ]
+
+    self.assertDictEqual(
+        self._run_test('run').data,
+        self._outcome_json())
+
+  def test_recipe_type_checking_non_import_not_covered(self):
+    with self.main.write_recipe('foo') as recipe:
+      recipe.imports = [
+          'from typing import TYPE_CHECKING',
+          'if TYPE_CHECKING:',
+          '  import os',
+          '  a = 1',
+      ]
+
+    result = self._run_test('run', should_fail=True)
+    self.assertDictEqual(
+        result.data,
+        self._outcome_json(coverage=90.0))
+
+  def test_recipe_type_checking_non_global_not_covered(self):
+    with self.main.write_recipe('foo') as recipe:
+      recipe.imports = ['from typing import TYPE_CHECKING']
+      recipe.RunSteps.write('''
+        if TYPE_CHECKING:
+          import os
+      ''')
+
+    result = self._run_test('run', should_fail=True)
+    self.assertDictEqual(
+        result.data,
+        self._outcome_json(coverage=88.9))
+
   def test_check_failure(self):
     with self.main.write_recipe('foo') as recipe:
       recipe.imports = ['from recipe_engine import post_process']

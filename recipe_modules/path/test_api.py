@@ -11,7 +11,7 @@ from recipe_engine import recipe_test_api
 from recipe_engine.config_types import CheckoutBasePath, Path, ResolvedBasePath
 
 # Avoid circular import.
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
   from .api import NamedBasePathsType
 
 

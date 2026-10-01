@@ -49,7 +49,7 @@ from recipe_engine import config_types, recipe_api, recipe_test_api, util
 from PB.recipe_modules.recipe_engine.path import properties as properties_pb
 from . import test_api
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
   from RECIPE_MODULES.recipe_engine import path
 
 
