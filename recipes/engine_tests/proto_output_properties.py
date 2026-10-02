@@ -6,6 +6,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from PB.recipes.recipe_engine.engine_tests.proto_output_properties import (
   Output, Msg)
 
@@ -25,7 +28,7 @@ class TEST_DEPS(RecipeTestApi):
   pass
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   step_result = api.step('proto output properties', cmd=None)
   output = Output(
     str='foo',
@@ -38,5 +41,5 @@ def RunSteps(api: DEPS):
   step_result.presentation.properties['$mod/proto_out'] = output
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('basic')

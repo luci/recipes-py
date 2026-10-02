@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import signal
 import sys
 import os
@@ -17,7 +19,7 @@ install_hadler = '--no-handler' not in sys.argv
 
 
 if install_hadler:
-  def _handle(signum, _):
+  def _handle(signum: int, _: Any) -> None:
     if always_ignore:
       print("I GOT", signum)
     else:

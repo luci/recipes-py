@@ -12,6 +12,8 @@ When this recipe is run (by run_test.py), the _print_step code is exercised.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+
 import functools
 from recipe_engine import recipe_test_api
 
@@ -31,11 +33,11 @@ class TEST_DEPS(RecipeTestApi):
   pass
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   api.step('Here\'s a step brah', ['echo', 'steppity', 'doo', 'dah'],
            step_test_data=functools.partial(
               lambda x: recipe_test_api.StepTestData(), None))
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('basic')

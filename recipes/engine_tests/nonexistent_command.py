@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 
 from dataclasses import dataclass
@@ -22,7 +25,7 @@ class TEST_DEPS(RecipeTestApi):
   pass
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   try:
     api.step('normal step', ['missing_cmd0'])
   except:
@@ -40,7 +43,7 @@ def RunSteps(api: DEPS):
     assert False, 'step must fail due to cmd0 not found'
 
 
-def GenTests(_api):
+def GenTests(_api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   # step_runner for simulation test will always resolve cmd0 because its lack
   # of filesystem support. This test will be executed using prod step_runner
   # in //unittests/run_test.py.

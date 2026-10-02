@@ -6,6 +6,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine import post_process
 
 from dataclasses import dataclass
@@ -22,7 +25,7 @@ class DEPS(RecipeScriptApi):
 class TEST_DEPS(RecipeTestApi):
   pass
 
-def my_function(): # pragma: no cover
+def my_function() -> None:  # pragma: no cover
   exceptions = []
   for exc_type in (ValueError, TypeError):
     try:
@@ -34,11 +37,11 @@ def my_function(): # pragma: no cover
     raise ExceptionGroup('multiple exceptions', exceptions)
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   my_function()
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'basic',
       api.expect_exception('TypeError'),

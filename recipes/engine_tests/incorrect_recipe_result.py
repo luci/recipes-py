@@ -6,6 +6,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from PB.recipe_engine import result as result_pb2
 from PB.recipes.recipe_engine.engine_tests.incorrect_recipe_result import InputProps
 
@@ -35,14 +38,17 @@ class TEST_DEPS(RecipeTestApi):
 PROPERTIES = InputProps
 
 
-def RunSteps(api: DEPS, props):
+def RunSteps(
+    api: DEPS,
+    props: InputProps,
+) -> result_pb2.Result | dict[str, str]:
   if props.use_result_type:
     return result_pb2.Result()
 
   return {'summary': 'test'}
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'incorrect_object_returned',
       api.properties(InputProps(use_result_type=False)),

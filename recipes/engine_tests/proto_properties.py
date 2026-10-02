@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from PB.recipes.recipe_engine.engine_tests import proto_properties
 
 from dataclasses import dataclass
@@ -29,7 +32,11 @@ PROPERTIES = proto_properties.TestProperties
 ENV_PROPERTIES = proto_properties.EnvProperties
 
 
-def RunSteps(api: DEPS, properties, env_props):
+def RunSteps(
+    api: DEPS,
+    properties: proto_properties.TestProperties,
+    env_props: proto_properties.EnvProperties,
+) -> None:
   api.assertions.assertEqual(properties.an_int, 100)
   api.assertions.assertEqual(properties.some_string, 'hey there')
 
@@ -37,7 +44,7 @@ def RunSteps(api: DEPS, properties, env_props):
   api.assertions.assertEqual(env_props.INT_ENV, 9000)
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (
     api.test('full')
     + api.properties(

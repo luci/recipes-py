@@ -7,6 +7,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from typing import Any
+from recipe_engine import post_process_inputs
+from recipe_engine import recipe_test_api
+
 from PB.recipes.recipe_engine.engine_tests import (
     allowlist_steps as allowlist_steps_pb,
 )
@@ -45,7 +50,7 @@ message InputProperties {
 PROPERTIES = allowlist_steps_pb.InputProperties
 
 
-def RunSteps(api: DEPS, props: allowlist_steps_pb.InputProperties):
+def RunSteps(api: DEPS, props: allowlist_steps_pb.InputProperties) -> None:
   fakeit = not props.dontfakeit
   api.step('something unimportant', ['echo', 'sup doc'])
   with api.context(env={'FLEEM': 'VERY YES'}):
@@ -57,7 +62,7 @@ def RunSteps(api: DEPS, props: allowlist_steps_pb.InputProperties):
   step_result.presentation.properties['test_build_property'] = True
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('all_steps') + api.post_process(MustRun, 'fakestep')
 
   yield (api.test('single_step')
@@ -78,7 +83,10 @@ def GenTests(api: TEST_DEPS):
 
   yield api.test('result') + api.post_process(Filter('$result'))
 
-  def assert_stuff(check, results):
+  def assert_stuff(
+      check: post_process_inputs.Checker,
+      results: post_process_inputs.Stepodict,
+  ) -> dict[str, Any]:
     check('something important' in results)
     if check('another important' in results):
       check('INSANITY' in results['another important'].cmd)

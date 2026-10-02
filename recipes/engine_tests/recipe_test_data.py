@@ -6,6 +6,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from recipe_engine.post_process import DropExpectation
 
 from dataclasses import dataclass
@@ -24,7 +27,7 @@ class TEST_DEPS(RecipeTestApi):
   pass
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   target = 'production'
   if api._test_data.enabled:
     if 'target' in api._test_data:
@@ -32,7 +35,7 @@ def RunSteps(api: DEPS):
   api.step('echo', ['echo', target])
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'default',
       api.post_check(

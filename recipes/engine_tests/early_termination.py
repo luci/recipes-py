@@ -7,6 +7,9 @@ termination in different ways."""
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
@@ -37,7 +40,7 @@ from PB.recipes.recipe_engine.engine_tests import early_termination
 PROPERTIES = early_termination.InputProperties
 
 
-def RunSteps(api: DEPS, props):
+def RunSteps(api: DEPS, props: early_termination.InputProperties) -> None:
   work = []
 
   output_touchfile = props.output_touchfile
@@ -84,7 +87,7 @@ def RunSteps(api: DEPS, props):
           ],
           timeout=5))
 
-  def _pure_sleep():
+  def _pure_sleep() -> None:
     # This one is totally oblivious
     try:
       api.step('sleep', [
@@ -105,5 +108,5 @@ def RunSteps(api: DEPS, props):
     w.exception()  # mark exception as handled.
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('basic')

@@ -24,6 +24,9 @@ b/537839459.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from dataclasses import dataclass
 
 from recipe_engine.post_process import DropExpectation
@@ -47,7 +50,10 @@ class TEST_DEPS(RecipeTestApi):
   properties: properties.API
 
 
-def RunSteps(api: DEPS, env_properties):
+def RunSteps(
+    api: DEPS,
+    env_properties: grpc_fork_support.EnvProperties,
+) -> None:
   if env_properties.GRPC_ENABLE_FORK_SUPPORT != '0':
     raise StepFailure(
         'GRPC_ENABLE_FORK_SUPPORT is %r, expected "0". recipe_engine/main.py '
@@ -56,7 +62,7 @@ def RunSteps(api: DEPS, env_properties):
         % (env_properties.GRPC_ENABLE_FORK_SUPPORT,))
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'basic',
       api.properties.environ(

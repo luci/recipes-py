@@ -5,6 +5,10 @@
 """Tests that recipes can modify configuration options in various ways."""
 from __future__ import annotations
 
+from collections.abc import Iterator
+from typing import Any
+from recipe_engine import recipe_test_api
+
 from past.builtins import basestring
 
 # This code is typically located inside a module/config.py file, but we inline
@@ -12,7 +16,7 @@ from past.builtins import basestring
 from recipe_engine.config import (
     config_item_context, ConfigGroup, ConfigList, Dict, List, Single, Static)
 
-def BaseConfig(**_kwargs):
+def BaseConfig(**_kwargs: Any) -> ConfigGroup:
   return ConfigGroup(
     # Various config options to be exercised in tests.
     thedict    = Dict(value_type=tuple),
@@ -28,15 +32,15 @@ def BaseConfig(**_kwargs):
 config_ctx = config_item_context(BaseConfig)
 
 @config_ctx()
-def test1(c): # pragma: no cover
+def test1(c: ConfigGroup) -> None:  # pragma: no cover
   c.thedict['a'] = (1, 2)
 
 @config_ctx()
-def test2a(c): # pragma: no cover
+def test2a(c: ConfigGroup) -> None:  # pragma: no cover
   c.thelist.append('foo')
 
 @config_ctx(includes=['test2a'])
-def test2(c): # pragma: no cover
+def test2(c: ConfigGroup) -> None:  # pragma: no cover
   c.thestring = 'foobar'
 
 
@@ -60,12 +64,12 @@ class DEPS(RecipeScriptApi):
 class TEST_DEPS(RecipeTestApi):
   pass
 
-def DumpRecipeEngineTestConfig(api, config):
+def DumpRecipeEngineTestConfig(api: DEPS, config: ConfigGroup) -> None:
   api.step('config', cmd=None).presentation.logs['config'] = api.json.dumps(
       config.as_jsonish(), indent=2).splitlines()
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   config = test1()        # api.module.set_config('test1')
   config = test2(config)  # api.module.apply_config('test2')
 
@@ -90,5 +94,5 @@ def RunSteps(api: DEPS):
   DumpRecipeEngineTestConfig(api, config)
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('basic')

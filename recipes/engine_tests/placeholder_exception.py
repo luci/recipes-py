@@ -7,6 +7,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from typing import Any
+from recipe_engine import recipe_test_api
+
 from recipe_engine import post_process
 from recipe_engine.util import InputPlaceholder
 from recipe_engine.recipe_api import StepFailure
@@ -27,14 +31,14 @@ class TEST_DEPS(RecipeTestApi):
   pass
 
 class BadPlaceholder(InputPlaceholder):
-  def render(self, test):
+  def render(self, test: Any) -> list[str]:
     raise Exception("EXPLOSION")
 
-  def __repr__(self):
+  def __repr__(self) -> str:
     return '<BadPlaceholder>'
 
 
-def RunSteps(api: DEPS):
+def RunSteps(api: DEPS) -> None:
   api.step('innocent step', ['bash', '-c', "echo some step"])
 
   ph = BadPlaceholder('name')
@@ -44,7 +48,7 @@ def RunSteps(api: DEPS):
   raise ValueError('Never reached')   # pragma: no cover
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (
     api.test('basic') +
     api.expect_exception('Exception') +

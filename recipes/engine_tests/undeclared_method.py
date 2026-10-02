@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from PB.recipes.recipe_engine.engine_tests import (
     undeclared_method as undeclared_method_pb,
 )
@@ -43,7 +46,7 @@ message InputProperties {
 PROPERTIES = undeclared_method_pb.InputProperties
 
 
-def RunSteps(api: DEPS, props: undeclared_method_pb.InputProperties):
+def RunSteps(api: DEPS, props: undeclared_method_pb.InputProperties) -> None:
   if props.from_recipe:
     api.missing_module('baz')
   if props.attribute:
@@ -52,7 +55,7 @@ def RunSteps(api: DEPS, props: undeclared_method_pb.InputProperties):
     api.cipd.m.missing_module('baz')
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (
       api.test('from_recipe') +
       api.properties(from_recipe=True) +
