@@ -4194,9 +4194,9 @@ https://godoc.org/go.chromium.org/luci/auth/client/cmd/luci-auth).
 
 Depends on luci-auth to be in PATH.
 
-#### **class [ServiceAccountApi](/recipe_modules/service_account/api.py#18)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
+#### **class [ServiceAccountApi](/recipe_modules/service_account/api.py#25)([RecipeApi](/recipe_engine/recipe_api.py#442)):**
 
-&mdash; **def [default](/recipe_modules/service_account/api.py#74)(self):**
+&mdash; **def [default](/recipe_modules/service_account/api.py#90)(self):**
 
 Returns an account associated with the task.
 
@@ -4204,7 +4204,7 @@ On LUCI, this is default account exposed through LUCI_CONTEXT["local_auth"]
 protocol. When running locally this is an account the user logged in via
 "luci-auth login ..." command prior to running the recipe.
 
-&mdash; **def [from\_credentials\_json](/recipe_modules/service_account/api.py#83)(self, key_path):**
+&mdash; **def [from\_credentials\_json](/recipe_modules/service_account/api.py#99)(self, key_path: (config_types.Path | str)):**
 
 Returns a service account based on a JSON credentials file.
 
@@ -6271,10 +6271,10 @@ This file is a recipe demonstrating reading triggers of the current build.
 &mdash; **def [RunSteps](/recipe_modules/scheduler/examples/triggers.py#41)(api: DEPS):**
 ### *recipes* / [service\_account:examples/full](/recipe_modules/service_account/examples/full.py)
 
-[DEPS](/recipe_modules/service_account/examples/full.py#22): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [service\_account](#recipe_modules-service_account)
+[DEPS](/recipe_modules/service_account/examples/full.py#27): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [service\_account](#recipe_modules-service_account)
 
 
-&mdash; **def [RunSteps](/recipe_modules/service_account/examples/full.py#45)(api: DEPS, props: full_pb.InputProperties):**
+&mdash; **def [RunSteps](/recipe_modules/service_account/examples/full.py#50)(api: DEPS, props: full_pb.InputProperties):**
 ### *recipes* / [step:examples/full](/recipe_modules/step/examples/full.py)
 
 [DEPS](/recipe_modules/step/examples/full.py#27): [buildbucket](#recipe_modules-buildbucket), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

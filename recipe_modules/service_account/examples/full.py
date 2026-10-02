@@ -4,6 +4,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
+from collections.abc import Iterator
+from recipe_engine import recipe_test_api
+
 from PB.recipe_modules.recipe_engine.service_account.examples import full as full_pb
 
 from dataclasses import dataclass
@@ -42,7 +47,7 @@ message InputProperties {
 PROPERTIES = full_pb.InputProperties
 
 
-def RunSteps(api: DEPS, props: full_pb.InputProperties):
+def RunSteps(api: DEPS, props: full_pb.InputProperties) -> None:
   if props.key_path:
     account = api.service_account.from_credentials_json(props.key_path)
     assert account.key_path == props.key_path
@@ -52,8 +57,10 @@ def RunSteps(api: DEPS, props: full_pb.InputProperties):
   account.get_id_token("http://www.example.com")
 
 
-def GenTests(api: TEST_DEPS):
-  def props(key_path='', scopes=None):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
+  def props(
+      key_path: str = '', scopes: Sequence[str] | None = None
+  ) -> recipe_test_api.TestData:
     return api.properties(full_pb.InputProperties(
         key_path=key_path,
         scopes=scopes))
