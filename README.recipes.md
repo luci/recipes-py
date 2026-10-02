@@ -6109,10 +6109,10 @@ Test to cover legacy aspects of PathTestApi.
 &emsp; **@recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/path/tests/test_api_legacy.py#38)(api: DEPS):**
 ### *recipes* / [placeholder](/recipes/placeholder.py)
 
-[DEPS](/recipes/placeholder.py#21): [buildbucket](#recipe_modules-buildbucket), [futures](#recipe_modules-futures), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming), [time](#recipe_modules-time)
+[DEPS](/recipes/placeholder.py#27): [buildbucket](#recipe_modules-buildbucket), [futures](#recipe_modules-futures), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming), [time](#recipe_modules-time)
 
 
-&mdash; **def [RunSteps](/recipes/placeholder.py#57)(api: DEPS, properties):**
+&mdash; **def [RunSteps](/recipes/placeholder.py#63)(api: DEPS, properties: InputProps):**
 ### *recipes* / [platform:examples/full](/recipe_modules/platform/examples/full.py)
 
 [DEPS](/recipe_modules/platform/examples/full.py#20): [platform](#recipe_modules-platform), [step](#recipe_modules-step)

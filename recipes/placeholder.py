@@ -4,6 +4,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
+from recipe_engine import engine_types
+from recipe_engine import post_process_inputs
+from recipe_engine import recipe_test_api
+
 from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
 from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
 from PB.turboci.graph.orchestrator.v1.workplan import WorkPlan
@@ -54,8 +60,8 @@ from recipe_engine import turboci
 PROPERTIES = InputProps
 
 
-def RunSteps(api: DEPS, properties):
-  def handlePres(pres, step_pb):
+def RunSteps(api: DEPS, properties: InputProps) -> result_pb2.RawResult:
+  def handlePres(pres: engine_types.StepPresentation, step_pb: FakeStep) -> None:
     pres.step_text = step_pb.step_text
     for name, link in step_pb.links.items():
       pres.links[name] = link
@@ -72,7 +78,7 @@ def RunSteps(api: DEPS, properties):
 
     pres.properties = json_format.MessageToDict(step_pb.set_properties)
 
-  def processStep(step: Step):
+  def processStep(step: Step) -> None:
     match step.WhichOneof('type'):
       case 'fake_step':
         processFakeStep(step.name, step.fake_step)
@@ -92,7 +98,7 @@ def RunSteps(api: DEPS, properties):
       case _:  # pragma: no cover
         assert False, 'unreachable'
 
-  def processFakeStep(step_name: str, fake_step: FakeStep):
+  def processFakeStep(step_name: str, fake_step: FakeStep) -> None:
     if fake_step.children:
       with api.step.nest(step_name) as pres:
         handlePres(pres, fake_step)
@@ -110,7 +116,9 @@ def RunSteps(api: DEPS, properties):
         api.time.sleep(
             fake_step.duration_secs, with_step=False, step_result=result)
 
-  def scheduleChildBuild(step_name: str, child_build: ChildBuild):
+  def scheduleChildBuild(
+      step_name: str, child_build: ChildBuild
+  ) -> build_pb2.Build:
     assert child_build.buildbucket
     builder = child_build.buildbucket.builder
 
@@ -141,7 +149,7 @@ def RunSteps(api: DEPS, properties):
     )
     return api.buildbucket.schedule([req], step_name=step_name)[0]
 
-  def collectChild(step_name, collect_children):
+  def collectChild(step_name: str, collect_children: CollectChildren) -> None:
     build_ids_to_collect = []
     for child_id in collect_children.child_build_step_ids:
       if child_map.get(child_id):
@@ -150,7 +158,9 @@ def RunSteps(api: DEPS, properties):
         raise api.step.InfraFailure('no build to collect for %s' % child_id)
     api.buildbucket.collect_builds(build_ids_to_collect, step_name=step_name)
 
-  def TurboCIWrite(step_name: str, req: TurboCIWriteType, nest: bool = True):
+  def TurboCIWrite(
+      step_name: str, req: TurboCIWriteType, nest: bool = True
+  ) -> None:
     reason = req.reason
     if not reason.message:
       reason.CopyFrom(turboci.reason(f'written by step {step_name!r}'))
@@ -169,9 +179,9 @@ def RunSteps(api: DEPS, properties):
         pres.step_text = f'turboci.write_nodes failed'
         pres.logs['exception'] = f'{type(ex).__name__}: {ex}'
 
-  def TurboCIWrites(step_name: str, req: TurboCIWrites):
+  def TurboCIWrites(step_name: str, req: TurboCIWrites) -> None:
     count = req.count or 1
-    def _write_check(i: int):
+    def _write_check(i: int) -> None:
       write_req = TurboCIWriteType(
           check_writes=[
               turboci.check(
@@ -189,7 +199,7 @@ def RunSteps(api: DEPS, properties):
       for f in futs:
         f.result()
 
-  def TurboCIQuery(step_name: str, req: TurboCIQuery):
+  def TurboCIQuery(step_name: str, req: TurboCIQuery) -> None:
     workplan_id = None
     if req.workplan_id:
       workplan_id = turboci.to_id(req.workplan_id).work_plan
@@ -246,7 +256,7 @@ def RunSteps(api: DEPS, properties):
   return result_pb2.RawResult(status=properties.status)
 
 
-def GenTests(api: TEST_DEPS):
+def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
       'basic',
       api.properties(InputProps(status=Status.SUCCESS))
@@ -516,7 +526,9 @@ def GenTests(api: TEST_DEPS):
           state='CHECK_STATE_FINAL',
       ))
 
-  def _assert_workplan(assert_, workplan: WorkPlan):
+  def _assert_workplan(
+      assert_: post_process_inputs.Checker, workplan: WorkPlan
+  ) -> None:
     # TODO (b/483105203): get_check_by_short_id() is currently O(N), which readers
     # might not expect. Remove this comment when we optimize the function later.
     charlie = get_check_by_short_id(workplan, 'charlie')
@@ -544,7 +556,7 @@ def GenTests(api: TEST_DEPS):
       api.assert_workplan(_assert_workplan),
   )
 
-  def _mock_turboci_build():
+  def _mock_turboci_build() -> recipe_test_api.TestData:
     b = api.buildbucket.try_build_message(
         project='proj',
         builder='try-builder',
