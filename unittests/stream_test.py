@@ -5,17 +5,18 @@
 
 from __future__ import annotations
 
-from io import StringIO
+import io
 
 import test_env
 
-from recipe_engine.internal.stream.annotator import AnnotatorStreamEngine
-from recipe_engine.internal.stream.invariants import StreamEngineInvariants
-from recipe_engine.internal.stream.simulator import SimulationStreamEngine
+from recipe_engine.internal import stream as stream_mod
+from recipe_engine.internal.stream import annotator
+from recipe_engine.internal.stream import invariants
+from recipe_engine.internal.stream import simulator
 
 
 class StreamTest(test_env.RecipeEngineUnitTest):
-  def _example(self, engine):
+  def _example(self, engine: stream_mod.StreamEngine) -> None:
     foo = engine.new_step_stream(('foo',), False)
     foo.write_line('foo says hello to xyrself')
 
@@ -40,7 +41,7 @@ class StreamTest(test_env.RecipeEngineUnitTest):
     bar.set_step_tag(u'tag_key', u'tag_value')
     bar.close()
 
-  def _example_annotations(self):
+  def _example_annotations(self) -> str:
     return """@@@CURRENT_TIMESTAMP@123@@@
 @@@HONOR_ZERO_RETURN_CODE@@@
 @@@SEED_STEP@foo@@@
@@ -77,12 +78,12 @@ bar tries to kiss foo, but foo already left
 @@@CURRENT_TIMESTAMP@123@@@
 """
 
-  def fake_time(self):
+  def fake_time(self) -> float:
     return 123
 
-  def test_example(self):
-    stringio = StringIO()
-    engine = AnnotatorStreamEngine(
+  def test_example(self) -> None:
+    stringio = io.StringIO()
+    engine = annotator.AnnotatorStreamEngine(
         stringio, emit_timestamps=True, time_fn=self.fake_time)
     with engine:
       self._example(engine)
@@ -91,14 +92,14 @@ bar tries to kiss foo, but foo already left
         stringio.getvalue().splitlines(),
         self._example_annotations().splitlines())
 
-  def test_example_wellformed(self):
-    with StreamEngineInvariants() as engine:
+  def test_example_wellformed(self) -> None:
+    with invariants.StreamEngineInvariants() as engine:
       self._example(engine)
 
-  def test_product_with_invariants_on_example(self):
-    stringio = StringIO()
-    engine = StreamEngineInvariants.wrap(
-        AnnotatorStreamEngine(
+  def test_product_with_invariants_on_example(self) -> None:
+    stringio = io.StringIO()
+    engine = invariants.StreamEngineInvariants.wrap(
+        annotator.AnnotatorStreamEngine(
             stringio, emit_timestamps=True, time_fn=self.fake_time))
     with engine:
       self._example(engine)
@@ -107,45 +108,46 @@ bar tries to kiss foo, but foo already left
       self._example_annotations().splitlines(),
     )
 
-  def test_write_after_close(self):
-    with StreamEngineInvariants() as engine:
+  def test_write_after_close(self) -> None:
+    with invariants.StreamEngineInvariants() as engine:
       foo = engine.new_step_stream(('foo',), False)
       foo.close()
       with self.assertRaises(AssertionError):
         foo.write_line('no')
 
-  def test_log_still_open(self):
-    with StreamEngineInvariants() as engine:
+  def test_log_still_open(self) -> None:
+    with invariants.StreamEngineInvariants() as engine:
       foo = engine.new_step_stream(('foo',), False)
       log = foo.new_log_stream('log')
       with self.assertRaises(AssertionError):
         foo.close()
 
-  def test_no_write_multiple_lines(self):
-    with StreamEngineInvariants() as engine:
+  def test_no_write_multiple_lines(self) -> None:
+    with invariants.StreamEngineInvariants() as engine:
       foo = engine.new_step_stream(('foo',), False)
       with self.assertRaises(AssertionError):
         foo.write_line('one thing\nand another!')
 
-  def test_invalid_status(self):
-    with StreamEngineInvariants() as engine:
+  def test_invalid_status(self) -> None:
+    with invariants.StreamEngineInvariants() as engine:
       foo = engine.new_step_stream(('foo',), False)
       with self.assertRaises(AssertionError):
         foo.set_step_status('SINGLE', had_timeout=False)
 
-  def test_buildbot_status_constraint(self):
-    with StreamEngineInvariants() as engine:
+  def test_buildbot_status_constraint(self) -> None:
+    with invariants.StreamEngineInvariants() as engine:
       foo = engine.new_step_stream(('foo',), False)
       foo.set_step_status('FAILURE', had_timeout=False)
       with self.assertRaises(AssertionError):
         foo.set_step_status('SUCCESS', had_timeout=False)
 
-  def test_set_step_tags(self):
-    with SimulationStreamEngine() as engine:
+  def test_set_step_tags(self) -> None:
+    with simulator.SimulationStreamEngine() as engine:
       foo = engine.new_step_stream(('foo',), False)
       foo.set_step_tag("step_key", "step_value")
       with self.assertRaises(AssertionError):
         foo.set_step_tag("", "")
+
 
 if __name__ == '__main__':
   test_env.main()

@@ -20,20 +20,18 @@ can just write to without worrying.
 from __future__ import annotations
 
 from collections.abc import Sequence
-import json
-import logging
-import tempfile
-import time
+import types
+from typing import Any, Literal, Self
 
-from ..engine_step import StepConfig
+from PB.recipe_engine import result as result_pb
 
 
 class StreamEngine:
   class Stream:
-    def write_line(self, line):
+    def write_line(self, line: str) -> None:
       raise NotImplementedError()
 
-    def write_split(self, string):
+    def write_split(self, string: str) -> None:
       """Write a string (which may contain newlines) to the stream.  It will
       be terminated by a newline."""
       for actual_line in string.splitlines() or ['']: # preserve empty lines
@@ -45,60 +43,72 @@ class StreamEngine:
     # Otherwise don't implement this.
     # def fileno(self):
 
-    def close(self):
+    def close(self) -> None:
       raise NotImplementedError()
 
     # TODO(iannucci): make handle_exception unnecessary
-    def handle_exception(self, exc_type, exc_val, exc_tb):
+    def handle_exception(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> bool | None:
       pass
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
       return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> bool | None:
       ret = self.handle_exception(exc_type, exc_val, exc_tb)
       self.close()
       return ret
 
   class StepStream(Stream):
-    def new_log_stream(self, log_name):
+    def new_log_stream(self, log_name: str) -> StreamEngine.Stream:
       raise NotImplementedError()
 
-    def append_log(self, log):
+    def append_log(self, log: Any) -> None:
       """Appends an existing log stream (common_pb2.Log proto msg) directly to
       step logs.
       """
       raise NotImplementedError()
 
-    def add_step_text(self, text):
+    def add_step_text(self, text: str) -> None:
       raise NotImplementedError()
 
-    def add_step_summary_text(self, text):
+    def add_step_summary_text(self, text: str) -> None:
       raise NotImplementedError()
 
-    def add_step_link(self, name, url):
+    def add_step_link(self, name: str, url: str) -> None:
       raise NotImplementedError()
 
-    def reset_subannotation_state(self):
+    def reset_subannotation_state(self) -> None:
       pass
 
-    def set_step_status(self, status, had_timeout):
+    def set_step_status(self, status: str, had_timeout: bool) -> None:
       raise NotImplementedError()
 
-    def set_build_property(self, key, value):
+    def set_build_property(self, key: str, value: str) -> None:
       raise NotImplementedError()
 
-    def set_summary_markdown(self, text):
+    def set_summary_markdown(self, text: str) -> None:
       """Only on luciexe."""
       raise NotImplementedError()
 
-    def set_step_tag(self, key, value):
+    def set_step_tag(self, key: str, value: str) -> None:
       pass
 
-    def mark_running(self):
+    def mark_running(self) -> None:
       pass
 
-    def open_std_handles(self, stdout=False, stderr=False):
+    def open_std_handles(
+        self, stdout: bool = False, stderr: bool = False
+    ) -> dict[str, StreamEngine.Stream] | None:
       """Opens one or two standard handles.
 
       Returns:
@@ -111,20 +121,22 @@ class StreamEngine:
       return None
 
     @property
-    def env_vars(self):
+    def env_vars(self) -> dict[str, str]:
       """Returns a dict of environment variable overrides for this step."""
       return {}
 
     @property
-    def user_namespace(self):
+    def user_namespace(self) -> str | None:
       """Only on luciexe and needed when the step is a merge step"""
       return None
 
-  def new_step_stream(self,
-                      name_tokens,
-                      allow_subannotations,
-                      merge_step=False,
-                      merge_output_properties_to: Sequence[str] | None = None):
+  def new_step_stream(
+      self,
+      name_tokens: Sequence[str],
+      allow_subannotations: bool,
+      merge_step: bool | Literal['legacy'] = False,
+      merge_output_properties_to: Sequence[str] | None = None,
+  ) -> StepStream:
     """Creates a new StepStream in this engine.
 
     The step will be considered started at the moment this method is called.
@@ -148,35 +160,40 @@ class StreamEngine:
     """
     raise NotImplementedError()
 
-  def open(self):
+  def open(self) -> None:
     pass
 
-  def close(self):
+  def close(self) -> None:
     pass
 
   @property
-  def supports_concurrency(self):
+  def supports_concurrency(self) -> bool:
     """Return True iff this StreamEngine implementation supports concurrent
     step execution."""
     raise NotImplementedError()
 
-  def write_result(self, result):
+  def write_result(self, result: result_pb.RawResult) -> None:
     """Write recipe execution result (type: result_pb2.RawResult).
 
     Note: Only implemented in luciexe.
     """
     raise NotImplementedError()
 
-  def __enter__(self):
+  def __enter__(self) -> Self:
     self.open()
     return self
 
-  def __exit__(self, exc_type, exc_val, exc_tb):
+  def __exit__(
+      self,
+      exc_type: type[BaseException] | None,
+      exc_val: BaseException | None,
+      exc_tb: types.TracebackType | None,
+  ) -> bool:
     self.close()
     return True
 
 
-def encode_str(s):
+def encode_str(s: Any) -> str:
   """Tries to encode a string into a python str type.
 
   Currently buildbot only supports ascii. If we have an error decoding the
@@ -187,6 +204,6 @@ def encode_str(s):
   try:
     return str(s)
   except UnicodeEncodeError:
-    return s.encode('utf-8', 'replace')
+    return s.encode('utf-8', 'replace').decode('utf-8', 'replace')
   except UnicodeDecodeError:
     return s.decode('utf-8', 'replace')

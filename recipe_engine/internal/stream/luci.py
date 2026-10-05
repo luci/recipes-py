@@ -5,28 +5,28 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 import json
 import logging
-import traceback
+from typing import Any, Literal
 import zlib
 
 from google.protobuf import json_format as jsonpb
-from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
-from google.protobuf.struct_pb2 import Struct
+from google.protobuf import struct_pb2
+from google.protobuf.internal import containers
 
 import attr
 import gevent
 
-from PB.go.chromium.org.luci.buildbucket.proto.build import Build
-from PB.go.chromium.org.luci.buildbucket.proto.step import Step
-from PB.go.chromium.org.luci.buildbucket.proto import common
+from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb
+from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb
+from PB.go.chromium.org.luci.buildbucket.proto import step as step_pb
+from PB.recipe_engine import result as result_pb
 
-from ...recipe_api import InfraFailure, StepFailure
 from ...third_party import logdog
 
-from ..attr_util import attr_type
-
-from . import StreamEngine
+from .. import attr_util
+from .. import stream as stream_mod
 
 
 LOG = logging.getLogger(__name__)
@@ -34,22 +34,22 @@ LOG = logging.getLogger(__name__)
 
 @attr.s
 class LUCIStepMarkdownWriter:
-  _step_text = attr.ib(default='')
-  def add_step_text(self, text):
+  _step_text: str = attr.ib(default='')
+  def add_step_text(self, text: str) -> None:
     self._step_text += text
 
-  _step_summary_text = attr.ib(default='')
-  def add_step_summary_text(self, text):
+  _step_summary_text: str = attr.ib(default='')
+  def add_step_summary_text(self, text: str) -> None:
     self._step_summary_text += text
 
-  _step_links = attr.ib(factory=list)
-  def add_step_link(self, linkname, link):
+  _step_links: list[tuple[str, str]] = attr.ib(factory=list)
+  def add_step_link(self, linkname: str, link: str) -> None:
     self._step_links.append((linkname, link))
 
-  def render(self):
+  def render(self) -> str:
     escape_parens = lambda link: link.replace('(', r'\(').replace(')', r'\)')
 
-    paragraphs = []
+    paragraphs: list[str] = []
 
     if self._step_summary_text:
       paragraphs.append(self._step_summary_text)
@@ -67,16 +67,17 @@ class LUCIStepMarkdownWriter:
 
 
 @attr.s
-class LUCILogStream(StreamEngine.Stream):
+class LUCILogStream(stream_mod.StreamEngine.Stream):
   """Implementation of StreamEngine.Stream for luciexe mode.
 
   It's a very thin wrapper around a LogDog text stream."""
 
   # pylint: disable=protected-access
-  _stream = attr.ib(validator=attr_type(
-      (type(None), logdog.stream.StreamClient._BasicStream)))
+  _stream: logdog.stream.StreamClient._BasicStream | None = attr.ib(
+      validator=attr_util.attr_type(
+          (type(None), logdog.stream.StreamClient._BasicStream)))
 
-  def fileno(self):
+  def fileno(self) -> int:
     """Returns underlying logdog file descriptor.
 
     Used by subprocess.Popen when redirecting a subprocess output to this
@@ -84,11 +85,11 @@ class LUCILogStream(StreamEngine.Stream):
     """
     return self._stream.fileno()
 
-  def write_line(self, line):
+  def write_line(self, line: str) -> None:
     """Writes a single line to the underlying stream."""
     self._stream.write(line + '\n')
 
-  def close(self):
+  def close(self) -> None:
     """Closes the stream. No more writes allowed by the current process."""
     if self.closed:
       return
@@ -96,13 +97,13 @@ class LUCILogStream(StreamEngine.Stream):
     self._stream = None
 
   @property
-  def closed(self):
+  def closed(self) -> bool:
     """Returns True if the stream has been closed."""
     return self._stream is None
 
 
 @attr.s
-class LUCIStepStream(StreamEngine.StepStream):
+class LUCIStepStream(stream_mod.StreamEngine.StepStream):
   """Implementation of StreamEngine.StepStream for luciexe mode.
 
   Holds a stdout and stderr file (opened lazily), as well as a Step protobuf
@@ -116,11 +117,15 @@ class LUCIStepStream(StreamEngine.StepStream):
 
   Handles uniqification of all logdog stream names in this process.
   """
-  _step = attr.ib(validator=attr_type(Step))
-  _properties = attr.ib(validator=attr_type(Struct))
-  _build_tags = attr.ib(validator=attr_type(RepeatedCompositeFieldContainer))
-  _tags = attr.ib(validator=attr_type(RepeatedCompositeFieldContainer))
-  _output_gitiles_commit = attr.ib(validator=attr_type(common.GitilesCommit))
+  _step: step_pb.Step = attr.ib(validator=attr_util.attr_type(step_pb.Step))
+  _properties: struct_pb2.Struct = attr.ib(
+      validator=attr_util.attr_type(struct_pb2.Struct))
+  _build_tags: containers.RepeatedCompositeFieldContainer = attr.ib(
+      validator=attr_util.attr_type(containers.RepeatedCompositeFieldContainer))
+  _tags: containers.RepeatedCompositeFieldContainer = attr.ib(
+      validator=attr_util.attr_type(containers.RepeatedCompositeFieldContainer))
+  _output_gitiles_commit: common_pb.GitilesCommit = attr.ib(
+      validator=attr_util.attr_type(common_pb.GitilesCommit))
   # change_cb is a void function which causes the LUCIStreamEngine to emit the
   # current Build proto message. This must be called after any changes to:
   #   * self._step
@@ -129,10 +134,11 @@ class LUCIStepStream(StreamEngine.StepStream):
   # TODO(iannucci): change _change_cb to a context-manager for step, i.e.
   #   with self._step as pb:
   #      # tweak pb
-  _change_cb = attr.ib()
+  _change_cb: Callable[[], None] = attr.ib()
 
   # The Butler StreamClient. Used to generate logs for individual steps.
-  _bsc = attr.ib(validator=attr_type(logdog.stream.StreamClient))
+  _bsc: logdog.stream.StreamClient = attr.ib(
+      validator=attr_util.attr_type(logdog.stream.StreamClient))
 
   # If True, after initialization, allocate a log stream '$build.proto' that
   # points to the 'build.proto' stream of the luciexe this step launches and
@@ -143,9 +149,11 @@ class LUCIStepStream(StreamEngine.StepStream):
   # will be set to True.
   #
   # See: [luciexe recursive invocation](https://pkg.go.dev/go.chromium.org/luci/luciexe?tab=doc#hdr-Recursive_Invocation)
-  _merge_step = attr.ib(validator=attr.validators.in_((False, True, 'legacy')))
+  _merge_step: bool | Literal['legacy'] = attr.ib(
+      validator=attr.validators.in_((False, True, 'legacy')))
 
-  _merge_output_properties_to = attr.ib(validator=attr_type((list, type(None))))
+  _merge_output_properties_to: Sequence[str] | None = attr.ib(
+      validator=attr_util.attr_type((list, type(None))))
 
   # File-like objects for stdout/stderr (logdog streams).
   #
@@ -156,11 +164,12 @@ class LUCIStepStream(StreamEngine.StepStream):
   #
   # TODO(iannucci) Once logdog/resultdb supports viewing muxed streams again,
   # separate stdout and stderr into separate streams.
-  _std_handle = attr.ib(default=None)
-  _logging = attr.ib(default=None)
+  _std_handle: LUCILogStream | None = attr.ib(default=None)
+  _logging: LUCILogStream | None = attr.ib(default=None)
 
 
-  _back_compat_markdown = attr.ib(factory=LUCIStepMarkdownWriter)
+  _back_compat_markdown: LUCIStepMarkdownWriter = attr.ib(
+      factory=LUCIStepMarkdownWriter)
 
   # A global set of created logdog stream names for all steps. Used to
   # deduplicate log stream names, since the logdog stream name alphabet is
@@ -193,9 +202,9 @@ class LUCIStepStream(StreamEngine.StepStream):
   #   l___step_0/stderr   "🎉 step/stderr"
   #   l___step_1/stdout   "🍔 step/stdout"
   #   l___step_1/stderr   "🍔 step/stderr"
-  _CREATED_LOGS = set()
+  _CREATED_LOGS: set[str] = set()
 
-  def __attrs_post_init__(self):
+  def __attrs_post_init__(self) -> None:
     self._stream_namespace = '/'.join(
       logdog.streamname.normalize_segment(seg, 'l')
       for seg in self._step.name.split('|')
@@ -216,7 +225,7 @@ class LUCIStepStream(StreamEngine.StepStream):
             self._merge_output_properties_to)
       self._change_cb()
 
-  def new_log_stream(self, log_name):
+  def new_log_stream(self, log_name: str) -> LUCILogStream:
     """Add a new log with name `log_name` to this step.
 
     Will mangle `log_name` to produce a valid and non-conflicting logdog stream
@@ -236,7 +245,7 @@ class LUCIStepStream(StreamEngine.StepStream):
       LOG.exception('new_log_stream %r: %r', self._step.name, log_name)
       raise
 
-  def _new_log_stream(self, log_name):
+  def _new_log_stream(self, log_name: str) -> LUCILogStream:
     dedup_idx = 0
     base_flattened_name = '/'.join((
         self._stream_namespace,
@@ -258,42 +267,42 @@ class LUCIStepStream(StreamEngine.StepStream):
     self._change_cb()
     return LUCILogStream(log_stream)
 
-  def append_log(self, log):
+  def append_log(self, log: common_pb.Log) -> None:
     self._step.logs.add().CopyFrom(log)
     self._change_cb()
 
-  def mark_running(self):
-    if self._step.status == common.SCHEDULED:
+  def mark_running(self) -> None:
+    if self._step.status == common_pb.SCHEDULED:
       self._step.summary_markdown = ""
-      self._step.status = common.STARTED
+      self._step.status = common_pb.STARTED
       self._step.start_time.GetCurrentTime()
       self._change_cb()
 
-  def set_summary_markdown(self, text):
+  def set_summary_markdown(self, text: str) -> None:
     self._step.summary_markdown = text
     self._change_cb()
 
-  def add_step_text(self, text):
+  def add_step_text(self, text: str) -> None:
     self._back_compat_markdown.add_step_text(text)
 
-  def add_step_summary_text(self, text):
+  def add_step_summary_text(self, text: str) -> None:
     self._back_compat_markdown.add_step_summary_text(text)
 
-  def add_step_link(self, name, url):
+  def add_step_link(self, name: str, url: str) -> None:
     self._back_compat_markdown.add_step_link(name, url)
 
-  def set_step_status(self, status, had_timeout):
+  def set_step_status(self, status: str, had_timeout: bool) -> None:
     _ = had_timeout
     self._step.status = {
-      'SUCCESS': common.SUCCESS,
-      'FAILURE': common.FAILURE,
-      'WARNING': common.SUCCESS, # TODO(crbug.com/854099): support WARNING
-      'EXCEPTION': common.INFRA_FAILURE,
-      'CANCELED': common.CANCELED,
+      'SUCCESS': common_pb.SUCCESS,
+      'FAILURE': common_pb.FAILURE,
+      'WARNING': common_pb.SUCCESS, # TODO(crbug.com/854099): support WARNING
+      'EXCEPTION': common_pb.INFRA_FAILURE,
+      'CANCELED': common_pb.CANCELED,
     }[status]
     # TODO(iannucci): set timeout bit here
 
-  def set_build_property(self, key, value):
+  def set_build_property(self, key: str, value: str) -> None:
     # Intercept legacy properties; These were used late-stage in the
     # @@@annotator@@@ era in lieu of adding additional annotator commands.
     #
@@ -302,34 +311,36 @@ class LUCIStepStream(StreamEngine.StepStream):
     if key == '$recipe_engine/buildbucket/runtime-tags':
       for k, vals in json.loads(value).items():
         self._build_tags.extend(
-          [common.StringPair(key=k, value=v) for v in set(vals)
-          if common.StringPair(key=k, value=v) not in self._build_tags])
+          [common_pb.StringPair(key=k, value=v) for v in set(vals)
+          if common_pb.StringPair(key=k, value=v) not in self._build_tags])
     elif key == '$recipe_engine/buildbucket/output_gitiles_commit':
       self._output_gitiles_commit.CopyFrom(
-          jsonpb.Parse(value, common.GitilesCommit()))
+          jsonpb.Parse(value, common_pb.GitilesCommit()))
     else:
       self._properties[key] = json.loads(value)
 
     self._change_cb()
 
-  def set_step_tag(self, key, value):
+  def set_step_tag(self, key: str, value: str) -> None:
     self._tags.add(key=key, value=value)
     self._change_cb()
 
   @property
-  def logging(self):
+  def logging(self) -> LUCILogStream:
     """Returns an open text stream for this step's logging stream."""
     if not self._logging:
       self._logging = self._new_log_stream('logging')
     return self._logging
 
-  def open_std_handles(self, stdout=False, stderr=False):
+  def open_std_handles(
+      self, stdout: bool = False, stderr: bool = False
+  ) -> dict[str, stream_mod.StreamEngine.Stream]:
     if self._std_handle is not None:
       LOG.exception('open_std_handles called twice: %r', self._step.name)
       raise ValueError(
           'open_std_handles may only be called once: %r', self._step.name)
 
-    ret = {}
+    ret: dict[str, stream_mod.StreamEngine.Stream] = {}
     if not stdout and not stderr:
       return ret
 
@@ -345,24 +356,24 @@ class LUCIStepStream(StreamEngine.StepStream):
     return ret
 
   @property
-  def env_vars(self):
+  def env_vars(self) -> dict[str, str]:
     logdog_namespace = self.user_namespace
     if self._bsc.namespace:
       logdog_namespace = '/'.join((self._bsc.namespace, logdog_namespace))
     return {'LOGDOG_NAMESPACE': logdog_namespace}
 
   @property
-  def user_namespace(self):
+  def user_namespace(self) -> str:
     return '/'.join((self._stream_namespace, 'u'))
 
-  def write_line(self, line):
+  def write_line(self, line: str) -> None:
     """Differs from our @@@annotator@@@ brethren and puts logging data to
     an independent stream."""
     # TODO(iannucci): have step_runner log the step metadata as a protobuf
     # and/or put it in the Step proto message.
     return self.logging.write_line(line)
 
-  def close(self):
+  def close(self) -> None:
     # TODO(iannucci): close ALL log streams, not just stdout/stderr/logging
     # TODO(iannucci): this can actually double-close with subprocess runner...
     # clean all of this up once annotations are gone.
@@ -377,13 +388,13 @@ class LUCIStepStream(StreamEngine.StepStream):
     if self._step.end_time.ToDatetime() < self._step.start_time.ToDatetime():
       self._step.end_time.CopyFrom(self._step.start_time)
     self._step.summary_markdown = self._back_compat_markdown.render()
-    if self._step.status == common.STARTED:
-      self._step.status = common.SUCCESS
+    if self._step.status == common_pb.STARTED:
+      self._step.status = common_pb.SUCCESS
     self._change_cb()
 
 
 @attr.s
-class LUCIStreamEngine(StreamEngine):
+class LUCIStreamEngine(stream_mod.StreamEngine):
   """Implementation of StreamEngine for luciexe mode.
 
   Holds a LogDog datagram stream for Build messages and manages writes to this
@@ -393,25 +404,25 @@ class LUCIStreamEngine(StreamEngine):
   # This causes the 'build.proto' datagram stream to export as JSONPB instead of
   # Binary PB. Only used for debugging. `luciexe` protocol does not support
   # JSONPB.
-  _export_build_as_json = attr.ib(validator=attr_type(bool))
+  _export_build_as_json: bool = attr.ib(validator=attr_util.attr_type(bool))
 
   # The current Build message. This is mutated and then sent with the _send
   # function (seen as _change_cb in other classes in this file).
-  _build_proto = attr.ib(factory=lambda: Build(
-      status=common.STARTED,
-      output=dict(status=common.STARTED),
+  _build_proto: build_pb.Build = attr.ib(factory=lambda: build_pb.Build(
+      status=common_pb.STARTED,
+      output=dict(status=common_pb.STARTED),
   ))
 
   # The Butler StreamClient. Used to generate logs for individual steps.
-  _bsc = attr.ib(
-      validator=attr_type(logdog.stream.StreamClient),
+  _bsc: logdog.stream.StreamClient = attr.ib(
+      validator=attr_util.attr_type(logdog.stream.StreamClient),
       factory=lambda: logdog.bootstrap.ButlerBootstrap.probe().stream_client(),
   )
 
   # The Build message datagram stream.
-  _build_stream = attr.ib()
+  _build_stream: Any = attr.ib()
   @_build_stream.default
-  def _build_stream_default(self):
+  def _build_stream_default(self) -> Any:
     content_enc = 'jsonpb' if self._export_build_as_json else 'proto'
     content_type = 'application/luci+%s; message=buildbucket.v2.Build' % (
           content_enc,)
@@ -419,13 +430,13 @@ class LUCIStreamEngine(StreamEngine):
       content_type += '; encoding=zlib'
     return self._bsc.open_datagram('build.proto', content_type=content_type)
 
-  _send_event = attr.ib(default=gevent.event.Event())
-  _sender_die = attr.ib(default=False)
+  _send_event: gevent.event.Event = attr.ib(default=gevent.event.Event())
+  _sender_die: bool = attr.ib(default=False)
 
-  _sender = attr.ib()
+  _sender: gevent.Greenlet = attr.ib()
   @_sender.default
-  def _sender_default(self):
-    def _do_send():
+  def _sender_default(self) -> gevent.Greenlet:
+    def _do_send() -> None:
       self._build_stream.send(
           jsonpb.MessageToJson(self._build_proto,
                                preserving_proto_field_name=True).encode('utf-8')
@@ -433,7 +444,7 @@ class LUCIStreamEngine(StreamEngine):
           zlib.compress(self._build_proto.SerializeToString())
       )
 
-    def _send_fn():
+    def _send_fn() -> None:
       while not self._sender_die:
         # wait until SOMEONE wants to send something.
         self._send_event.wait()
@@ -456,25 +467,27 @@ class LUCIStreamEngine(StreamEngine):
 
     return gevent.spawn(_send_fn)
 
-  def _send(self):
+  def _send(self) -> None:
     self._send_event.set()
 
-  def new_step_stream(self,
-                      name_tokens,
-                      allow_subannotations,
-                      merge_step=False,
-                      merge_output_properties_to=None):
+  def new_step_stream(
+      self,
+      name_tokens: Sequence[str],
+      allow_subannotations: bool,
+      merge_step: bool | Literal['legacy'] = False,
+      merge_output_properties_to: Sequence[str] | None = None,
+  ) -> LUCIStepStream:
     assert not allow_subannotations, (
         'Subannotations not currently supported in build.proto mode')
-    step_pb = self._build_proto.steps.add(
+    step_pb_msg = self._build_proto.steps.add(
         name='|'.join(name_tokens),
-        status=common.SCHEDULED)
+        status=common_pb.SCHEDULED)
 
     ret = LUCIStepStream(
-        step_pb,
+        step_pb_msg,
         self._build_proto.output.properties,
         self._build_proto.tags,
-        step_pb.tags,
+        step_pb_msg.tags,
         self._build_proto.output.gitiles_commit,
         self._send,
         self._bsc,
@@ -483,24 +496,24 @@ class LUCIStreamEngine(StreamEngine):
     self._send()
     return ret
 
-  def close(self):
+  def close(self) -> None:
     self._sender_die = True
     self._send()
     self._sender.join()
     self._build_stream.close()
 
   @property
-  def supports_concurrency(self):
+  def supports_concurrency(self) -> bool:
     return True
 
-  def write_result(self, result):
+  def write_result(self, result: result_pb.RawResult) -> None:
     self._build_proto.status = result.status
     self._build_proto.summary_markdown = result.summary_markdown
     self._build_proto.output.status = result.status
     self._send()
 
   @property
-  def current_build_proto(self):
+  def current_build_proto(self) -> build_pb.Build:
     """Returns the current Build message.
 
     Note: Any update on the returned build before engine closes will be
@@ -509,9 +522,9 @@ class LUCIStreamEngine(StreamEngine):
     return self._build_proto
 
   @property
-  def was_successful(self):
+  def was_successful(self) -> bool:
     """Used by luciexe to set the recipe engine's returncode.
 
     This isn't strictly necessary, but it can be helpful for debugging.
     """
-    return self._build_proto.status == common.SUCCESS
+    return self._build_proto.status == common_pb.SUCCESS
