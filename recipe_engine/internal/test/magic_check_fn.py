@@ -8,31 +8,31 @@ a smart selection of local variables mentioned inside of the call to check."""
 
 from __future__ import annotations
 
-from typing import cast
-from past.builtins import basestring
-
 import ast
+import collections
+from collections.abc import Callable, Mapping, Sequence
 import copy
 import inspect
 import itertools
 import re
 import sys
-
-from collections import OrderedDict, deque, defaultdict, namedtuple
+from typing import Any, Self, cast
 
 import astunparse
 
-from PB.recipe_engine.internal.test.runner import Outcome
-from PB.turboci.graph.orchestrator.v1.query import Query
-from recipe_engine import turboci
-from recipe_engine.post_process_inputs import Step
-from recipe_engine.recipe_test_api import TestData
+from PB.recipe_engine.internal.test import runner as runner_pb
+from PB.turboci.graph.orchestrator.v1 import query as query_pb
 
-from ...engine_types import FrozenDict
+from ... import engine_types
+from ... import post_process_inputs
+from ... import recipe_test_api
+from ... import turboci
 
 
-class CheckFrame(namedtuple('CheckFrame', 'fname line function code varmap')):
-  def format(self, indent):
+class CheckFrame(
+    collections.namedtuple('CheckFrame', 'fname line function code varmap')
+):
+  def format(self, indent: int) -> list[str]:
     lines = [
       '%s%s:%s - %s()' % ((' '*indent), self.fname, self.line, self.function)
     ]
@@ -45,16 +45,33 @@ class CheckFrame(namedtuple('CheckFrame', 'fname line function code varmap')):
     return lines
 
 
-class Check(namedtuple('Check', (
-    'name ctx_filename ctx_lineno ctx_func ctx_args ctx_kwargs '
-    'frames passed'))):
+class Check(
+    collections.namedtuple(
+        'Check',
+        (
+            'name ctx_filename ctx_lineno ctx_func ctx_args ctx_kwargs '
+            'frames passed'
+        ),
+    )
+):
   # filename -> {lineno -> [statements]}
-  _PARSED_FILE_CACHE = defaultdict(lambda: defaultdict(list))
-  _LAMBDA_CACHE = defaultdict(lambda: defaultdict(list))
+  _PARSED_FILE_CACHE: dict[str, dict[int, list[ast.AST]]] = (
+      collections.defaultdict(lambda: collections.defaultdict(list))
+  )
+  _LAMBDA_CACHE: dict[str, dict[int, list[ast.Lambda]]] = (
+      collections.defaultdict(lambda: collections.defaultdict(list))
+  )
 
   @classmethod
-  def create(cls, name, hook_context, frames, passed, ignore_set,
-             additional_varmap=None):
+  def create(
+      cls,
+      name: str | None,
+      hook_context: recipe_test_api.PostprocessHookContext,
+      frames: Sequence[inspect.FrameInfo],
+      passed: bool,
+      ignore_set: set[int],
+      additional_varmap: Mapping[str, str] | None = None,
+  ) -> Self:
     try:
       keep_frames = [cls._process_frame(f, ignore_set, with_vars=False)
                      for f in frames[:-1]]
@@ -77,7 +94,7 @@ class Check(namedtuple('Check', (
     )
 
   @classmethod
-  def _get_name_of_callable(cls, c):
+  def _get_name_of_callable(cls, c: Callable[..., Any]) -> str:
     if inspect.ismethod(c):
       return c.__self__.__class__.__name__+'.'+c.__name__
     if inspect.isfunction(c):
@@ -97,13 +114,15 @@ class Check(namedtuple('Check', (
     return repr(c)
 
   @classmethod
-  def _get_statements_for_frame(cls, frame):
+  def _get_statements_for_frame(
+      cls, frame: inspect.FrameInfo
+  ) -> list[ast.AST]:
     raw_frame, filename, lineno, _, _, _ = frame
     cls._ensure_file_in_cache(filename, raw_frame)
     return cls._PARSED_FILE_CACHE[filename][lineno]
 
   @classmethod
-  def _ensure_file_in_cache(cls, filename, obj_with_code):
+  def _ensure_file_in_cache(cls, filename: str, obj_with_code: Any) -> None:
     """This parses the file containing frame, and then extracts all simple
     statements (i.e. those which do not contain other statements). It then
     returns the list of all statements (as AST nodes) which occur on the line
@@ -123,7 +142,9 @@ class Check(namedtuple('Check', (
       to_push = ['test', 'body', 'orelse', 'finalbody', 'excepthandler']
       lines, _ = inspect.findsource(obj_with_code)
       # Start with the entire parsed document (probably ast.Module).
-      queue = deque([ast.parse(''.join(lines), filename)])
+      queue: collections.deque[ast.AST] = collections.deque(
+          [ast.parse(''.join(lines), filename)]
+      )
       while queue:
         node = queue.pop()
         had_statements = False
@@ -145,7 +166,7 @@ class Check(namedtuple('Check', (
         if had_statements:
           continue
 
-        real_line = node.lineno
+        real_line = getattr(node, 'lineno')
         cls._PARSED_FILE_CACHE[filename][real_line].append(node)
 
         # If the expression contains any nested lambda definitions, then its
@@ -170,7 +191,13 @@ class Check(namedtuple('Check', (
             cls._PARSED_FILE_CACHE[filename][lambda_max_line].append(n)
 
   @classmethod
-  def _process_frame(cls, frame, ignore_set, with_vars, additional_varmap=None):
+  def _process_frame(
+      cls,
+      frame: inspect.FrameInfo,
+      ignore_set: set[int],
+      with_vars: bool,
+      additional_varmap: Mapping[str, str] | None = None,
+  ) -> CheckFrame:
     """This processes a stack frame into an expect_tests.CheckFrame, which
     includes file name, line number, function name (of the function containing
     the frame), the parsed statement at that line, and the relevant local
@@ -190,7 +217,7 @@ class Check(namedtuple('Check', (
       varmap = dict(additional_varmap or {})
 
       xfrmr = _checkTransformer(raw_frame.f_locals, raw_frame.f_globals)
-      xfrmd = xfrmr.visit(ast.Module(copy.deepcopy(nodes)))
+      xfrmd = xfrmr.visit(ast.Module(copy.deepcopy(nodes), []))
 
       for n in itertools.chain(ast.walk(xfrmd), xfrmr.extras):
         if isinstance(n, _resolved):
@@ -212,7 +239,7 @@ class Check(namedtuple('Check', (
       varmap
     )
 
-  def format(self):
+  def format(self) -> list[str]:
     '''Returns the lines which make up this check failure.
 
     Example:
@@ -253,7 +280,9 @@ class _resolved(ast.AST):
   Otherwise, attempting to execute operations present in the source may cause
   errors e.g. a dictionary value replaced with its keys because the values
   aren't relevant to the check failure."""
-  def __init__(self, representation, value, valid=True):
+  def __init__(
+      self, representation: str, value: Any, valid: bool = True
+  ) -> None:
     super().__init__()
     self.representation = representation
     self.value = value
@@ -283,18 +312,20 @@ class _checkTransformer(ast.NodeTransformer):
   printed for debugging usefulness, but didn't fit into the ast tree anywhere.
   """
 
-  def __init__(self, lvars, gvars):
+  def __init__(
+      self, lvars: Mapping[str, Any], gvars: Mapping[str, Any]
+  ) -> None:
     self.lvars = lvars
     self.gvars = gvars
-    self.extras = []
+    self.extras: list[_resolved] = []
 
   @staticmethod
-  def _is_valid_resolved(node) -> _resolved | None:
+  def _is_valid_resolved(node: ast.AST) -> _resolved | None:
     if isinstance(node, _resolved) and node.valid:
       return node
     return None
 
-  def visit_Compare(self, node: ast.Compare):
+  def visit_Compare(self, node: ast.Compare) -> ast.Compare:
     """Compare nodes occur for all sequences of comparison (`in`, gt, lt, etc.)
     operators. We only want to match `___ in instanceof(dict)` here, so we
     restrict this to Compare ops with a single operator which is `In` or
@@ -305,7 +336,7 @@ class _checkTransformer(ast.NodeTransformer):
     if len(node.ops) == 1 and isinstance(node.ops[0], (ast.In, ast.NotIn)):
       cmps = node.comparators
       if len(cmps) == 1 and (rslvd := self._is_valid_resolved(cmps[0])):
-        if isinstance(rslvd.value, (dict, OrderedDict)):
+        if isinstance(rslvd.value, (dict, collections.OrderedDict)):
           node = ast.Compare(
             node.left,
             node.ops,
@@ -315,7 +346,7 @@ class _checkTransformer(ast.NodeTransformer):
 
     return node
 
-  def visit_Attribute(self, node: ast.Attribute):
+  def visit_Attribute(self, node: ast.Attribute) -> ast.AST:
     """Attribute nodes occur for attribute access (e.g. foo.bar). We want to
     follow attribute access where possible to so that we can provide the value
     that resulted in a check failure.
@@ -328,7 +359,7 @@ class _checkTransformer(ast.NodeTransformer):
 
     return node
 
-  def visit_Subscript(self, node: ast.Subscript):
+  def visit_Subscript(self, node: ast.Subscript) -> ast.AST:
     """Subscript nodes are anything which is __[__]. We only want to match __[x]
     here so where the [x] is a regular Index expression (not an ellipsis or
     slice). We only handle cases where x is a constant, or a resolvable variable
@@ -339,7 +370,7 @@ class _checkTransformer(ast.NodeTransformer):
     if not node_value_resolved:
       return node
 
-    sliceVal = MISSING
+    sliceVal: Any = MISSING
     sliceRepr = ''
 
     if (rslvd := self._is_valid_resolved(node.slice)):
@@ -358,7 +389,9 @@ class _checkTransformer(ast.NodeTransformer):
             '%s[%s]' % (node_value_resolved.representation, sliceRepr),
             node_value_resolved.value[sliceVal])
       except KeyError:
-        if not isinstance(node_value_resolved.value, (dict, OrderedDict)):
+        if not isinstance(
+            node_value_resolved.value, (dict, collections.OrderedDict)
+        ):
           raise
         return _resolved(
             node_value_resolved.representation + ".keys()",
@@ -367,7 +400,7 @@ class _checkTransformer(ast.NodeTransformer):
 
     return node
 
-  def visit_Name(self, node):
+  def visit_Name(self, node: ast.Name) -> ast.AST:
     """Matches a single, simple identifier (e.g. variable).
 
     This will lookup the variable value from python constants (e.g. True),
@@ -384,7 +417,7 @@ class _checkTransformer(ast.NodeTransformer):
     return node
 
 
-def render_user_value(val):
+def render_user_value(val: Any) -> str:
   """Takes a subexpression user value, and attempts to render it in the most
   useful way possible.
 
@@ -399,7 +432,7 @@ def render_user_value(val):
   return repr(val)
 
 
-def render_re(regex):
+def render_re(regex: re.Pattern[Any]) -> str:
   """Renders a repr()-style value for a compiled regular expression."""
   actual_flags = []
   if regex.flags:
@@ -424,8 +457,12 @@ MISSING = object()
 
 
 class Checker:
-  def __init__(self, hook_context, *ignores):
-    self.failed_checks = []
+  def __init__(
+      self,
+      hook_context: recipe_test_api.PostprocessHookContext,
+      *ignores: Any,
+  ) -> None:
+    self.failed_checks: list[Check] = []
 
     # _ignore_set is the set of objects that we should never print as local
     # variables. We start this set off by including the actual Checker object,
@@ -434,7 +471,7 @@ class Checker:
 
     self._hook_context = hook_context
 
-  def _call_impl(self, hint, exp):
+  def _call_impl(self, hint: str | None, exp: Any) -> None:
     """This implements the bulk of what happens when you run `check(exp)`. It
     will crawl back up the stack and extract information about all of the frames
     which are relevant to the check, including file:lineno and the code
@@ -460,6 +497,7 @@ class Checker:
       frames = inspect.stack()[2:][::-1]
 
       try:
+        i = 0
         for i, f in enumerate(frames):
           # The first frame that has self in the local variables is the one
           # where the checker is created. We must use `is` for equality check
@@ -483,7 +521,7 @@ class Checker:
       # avoid reference cycle as suggested by inspect docs.
       del frames
 
-  def __call__(self, arg1, arg2=MISSING):
+  def __call__(self, arg1: Any, arg2: Any = MISSING) -> bool:
     if arg2 is not MISSING:
       hint = arg1
       exp = arg2
@@ -494,7 +532,7 @@ class Checker:
     return bool(exp)
 
 
-def VerifySubset(a, b):
+def VerifySubset(a: Any, b: Any) -> str | None:
   """Verify subset verifies that `a` is a subset of `b` where a and b are both
   JSON-ish types. They are also permitted to be OrderedDicts instead of
   dictionaries.
@@ -517,25 +555,28 @@ def VerifySubset(a, b):
     object['a']: 'thing' != 'prime'
   """
   if a is b:
-    return
+    return None
 
-  if isinstance(b, OrderedDict) and isinstance(a, dict):
+  if isinstance(b, collections.OrderedDict) and isinstance(a, dict):
     # 0 and 1-element dicts can stand in for OrderedDicts.
     if len(a) == 0:
-      return
+      return None
     elif len(a) == 1:
-      a = OrderedDict(a)
+      a = collections.OrderedDict(a)
 
   if type(a) != type(b):
     return ': type mismatch: %r v %r' % (type(a).__name__, type(b).__name__)
 
-  if isinstance(a, OrderedDict):
+  if isinstance(a, collections.OrderedDict):
     last_idx = 0
-    b_reverse_index = {k: (i, v) for i, (k, v) in enumerate(b.items())}
+    b_reverse_index: dict[Any, tuple[int, Any]] = {
+        k: (i, v) for i, (k, v) in enumerate(b.items())
+    }
     for k, v in a.items():
-      j, b_val = b_reverse_index.get(k, (MISSING, MISSING))
-      if j is MISSING:
+      item = b_reverse_index.get(k)
+      if item is None:
         return ': added key %r' % k
+      j, b_val = item
 
       if j < last_idx:
         return ': key %r is out of order' % k
@@ -546,7 +587,7 @@ def VerifySubset(a, b):
       if msg:
         return '[%r]%s' % (k, msg)
 
-  elif isinstance(a, (dict, FrozenDict)):
+  elif isinstance(a, (dict, engine_types.FrozenDict)):
     for k, v in a.items():
       b_val = b.get(k, MISSING)
       if b_val is MISSING:
@@ -561,7 +602,7 @@ def VerifySubset(a, b):
       return ': too long: %d v %d' % (len(a), len(b))
 
     if not (a or b):
-      return
+      return None
 
     bi = ai = 0
     while bi < len(b) - 1 and ai < len(a) - 1:
@@ -572,12 +613,14 @@ def VerifySubset(a, b):
     if ai != len(a) - 1:
       return ': added %d elements' % (len(a)-1-ai)
 
-  elif isinstance(a, (basestring, int, bool, type(None))):
+  elif isinstance(a, (str, int, bool, type(None))):
     if a != b:
       return ': %r != %r' % (a, b)
 
   else:
     return ': unknown type: %r' % (type(a).__name__)
+
+  return None
 
 
 class PostProcessError(ValueError):
@@ -585,8 +628,11 @@ class PostProcessError(ValueError):
   pass
 
 
-def post_process(test_failures: Outcome.Results, raw_expectations,
-                 test_data: TestData):
+def post_process(
+    test_failures: runner_pb.Outcome.Results,
+    raw_expectations: Mapping[str, dict[str, Any]],
+    test_data: recipe_test_api.TestData,
+) -> list[dict[str, Any]] | None:
   """Run post processing hooks against the expectations generated by a test.
 
   Args:
@@ -606,17 +652,19 @@ def post_process(test_failures: Outcome.Results, raw_expectations,
   """
   failed_checks: list[Check] = []
   for hook, args, kwargs, context in test_data.post_process_hooks:
-    steps = copy.deepcopy(raw_expectations)
+    steps: dict[str, Any] = copy.deepcopy(raw_expectations)
     # The checker MUST be saved to a local variable in order for it to be able
     # to correctly detect the frames to keep when creating a failure backtrace
     check = Checker(context, steps)
     for k, v in steps.items():
       if k != '$result':
-        steps[k] = Step.from_step_dict(v)
+        steps[k] = post_process_inputs.Step.from_step_dict(v)
     try:
       rslt = hook(check, steps, *args, **kwargs)
     except KeyError:
       exc_type, exc_value, exc_traceback = sys.exc_info()
+      assert exc_type is not None
+      assert exc_traceback is not None
       try:
         failed_checks.append(Check.create(
             '',
@@ -635,7 +683,7 @@ def post_process(test_failures: Outcome.Results, raw_expectations,
     failed_checks += check.failed_checks
     if rslt is not None:
       for k, v in rslt.items():
-        if isinstance(v, Step):
+        if isinstance(v, post_process_inputs.Step):
           rslt[k] = v.to_step_dict()
         else:
           cmd = rslt[k].get('cmd', None)
@@ -652,8 +700,8 @@ def post_process(test_failures: Outcome.Results, raw_expectations,
   if test_data.assert_workplan_hooks:
     workplan = turboci.query_nodes(
         turboci.make_query(
-            Query.SelectChecks(),
-            Query.CollectChecks(
+            query_pb.Query.SelectChecks(),
+            query_pb.Query.CollectChecks(
                 options=True,
                 result_data=True,
             ),

@@ -5,8 +5,10 @@
 from __future__ import annotations
 
 import collections
-import collections.abc
+from collections.abc import Callable, Iterable, Mapping, Sequence
+import difflib
 import errno
+import io
 import json
 import os
 import re
@@ -15,41 +17,42 @@ import tempfile
 import textwrap
 import time
 import traceback
+from types import TracebackType
+from typing import Any
 
-import difflib
 import coverage
 import gevent
-
-from builtins import range
-from builtins import str
 from gevent import subprocess
+import gevent.queue
 from google.protobuf import duration_pb2
 from google.protobuf import json_format as jsonpb
 
 # pylint: disable=import-error
 import PB
-from PB.recipe_engine.internal.test.runner import Description, Outcome
-from PB.go.chromium.org.luci.buildbucket.proto.common import Status
-
-
-from ... import legacy
+from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb
+from PB.recipe_engine import result as result_pb
+from PB.recipe_engine.internal.test import runner as runner_pb
 
 from .... import config_types
 from .... import engine_types
-
-from ...global_shutdown import GLOBAL_SHUTDOWN
-from ...simple_cfg import RECIPES_CFG_LOCATION_REL
+from .... import recipe_test_api
+from ... import global_shutdown
+from ... import legacy
+from ... import recipe_deps as recipe_deps_mod
+from ... import simple_cfg
+from ...test import execute_test_case as execute_test_case_mod
 from ...test import magic_check_fn
-from ...warn import record
-from ...test.execute_test_case import execute_test_case
 from ...turboci import common as turboci_common
 from ...turboci import fake as turboci_fake
+from ...warn import record
+from . import expectation_conversion
+from . import pipe
 
-from .expectation_conversion import transform_expectations
-from .pipe import write_message, read_message
 
-
-def _merge_presentation_updates(steps_ran, presentation_steps):
+def _merge_presentation_updates(
+    steps_ran: Mapping[str, dict[str, Any]],
+    presentation_steps: Mapping[str | None, dict[str, Any]],
+) -> collections.OrderedDict[str, dict[str, Any]]:
   """Merges the steps ran (from the SimulationStepRunner) with the steps
   presented (from the SimulationAnnotatorStreamEngine).
 
@@ -64,7 +67,7 @@ def _merge_presentation_updates(steps_ran, presentation_steps):
   Returns OrderedDict[str, expectation: dict]. This will have the order of steps
   in the order that they were presented.
   """
-  ret = collections.OrderedDict()
+  ret: collections.OrderedDict[str, dict[str, Any]] = collections.OrderedDict()
   for step_name, step_presented in presentation_steps.items():
     # root annotations
     if step_name is None:
@@ -86,7 +89,12 @@ def _merge_presentation_updates(steps_ran, presentation_steps):
   return ret
 
 
-def _check_bad_test(test_results, test_data, steps_ran, presentation_steps):
+def _check_bad_test(
+    test_results: runner_pb.Outcome.Results,
+    test_data: recipe_test_api.TestData,
+    steps_ran: Sequence[str],
+    presentation_steps: Sequence[str],
+) -> None:
   """Check to see if the user-provided test was malformed in some way.
 
   Currently this only identifies issues around unconsumed or misplaced
@@ -136,9 +144,9 @@ def _check_bad_test(test_results, test_data, steps_ran, presentation_steps):
         '  ' + repr(s) for s in presentation_steps if s in steps_ran)
 
 
-def _exception_class_names(exception: Exception):
-  if isinstance(exception, ExceptionGroup):
-    types = set()
+def _exception_class_names(exception: BaseException) -> set[str]:
+  if isinstance(exception, BaseExceptionGroup):
+    types: set[str] = set()
     for exc in exception.exceptions:
       types.update(_exception_class_names(exc))
     return types
@@ -146,8 +154,13 @@ def _exception_class_names(exception: Exception):
   return set((exception.__class__.__name__,))
 
 
-def _check_exception(test_results, expected_exceptions,
-                     uncaught_exception_info):
+def _check_exception(
+    test_results: runner_pb.Outcome.Results,
+    expected_exceptions: Iterable[str],
+    uncaught_exception_info: (
+        tuple[type[BaseException], BaseException, TracebackType | None] | None
+    ),
+) -> None:
   """Check to see if the test run failed with an exception from RunSteps.
 
   Args:
@@ -167,7 +180,7 @@ def _check_exception(test_results, expected_exceptions,
     exc_type, exc, _ = uncaught_exception_info
     exc_name = exc_type.__name__
   else:
-    exc_name = exc = None
+    exc_type = exc_name = exc = None
   if expected_exceptions:
     if not exc:
       test_results.crash_mismatch.append(
@@ -202,7 +215,12 @@ def _check_exception(test_results, expected_exceptions,
     test_results.crash_mismatch.extend(msg_lines)
 
 
-def _check_status(raw_result, test_data, test_results, enforce_status_check):
+def _check_status(
+    raw_result: result_pb.RawResult,
+    test_data: recipe_test_api.TestData,
+    test_results: runner_pb.Outcome.Results,
+    enforce_status_check: bool,
+) -> None:
   """Check the status of the test against the expected status.
 
   Args:
@@ -216,7 +234,7 @@ def _check_status(raw_result, test_data, test_results, enforce_status_check):
   Side-effect: updates test_failures with the formatted status failures.
   """
   build_status = raw_result.status
-  expected_status = test_data.expected_status or Status.SUCCESS
+  expected_status = test_data.expected_status or common_pb.Status.SUCCESS
   if raw_result.status != expected_status:
     # TODO (crbug.com/1426908): This will need to be happen without the config
     #  prop on all builds once tests are updated:
@@ -227,21 +245,30 @@ def _check_status(raw_result, test_data, test_results, enforce_status_check):
       # explain *why* the recipe failed. The summary_markdown is less likely to
       # be useful if the recipe passed, since it probably won't indicate where
       # the recipe was expected to fail but didn't.
-      if raw_result.summary_markdown and raw_result.status != Status.SUCCESS:
+      if (
+          raw_result.summary_markdown
+          and raw_result.status != common_pb.Status.SUCCESS
+      ):
         summary_info = '\nsummary_markdown:\n%s' % textwrap.indent(
             raw_result.summary_markdown, '  ')
       test_results.crash_mismatch.append(
           'Status mismatch in RunSteps. The test expected %r but '
-          'the status was %r.%s' % (Status.Name(expected_status),
-                                    Status.Name(build_status), summary_info))
+          'the status was %r.%s' % (common_pb.Status.Name(expected_status),
+                                    common_pb.Status.Name(build_status),
+                                    summary_info))
     else:
       test_results.global_warnings.append(
-          'expected %s, got %s' % (Status.Name(expected_status),
-                                   Status.Name(build_status))
+          'expected %s, got %s' % (common_pb.Status.Name(expected_status),
+                                   common_pb.Status.Name(build_status))
       )
 
 
-def _diff_test(test_results, expect_file, new_expect, is_train):
+def _diff_test(
+    test_results: runner_pb.Outcome.Results,
+    expect_file: str,
+    new_expect: Sequence[dict[str, Any]] | None,
+    is_train: bool,
+) -> None:
   """Compares the actual and expected results.
 
   Args:
@@ -327,8 +354,14 @@ def _diff_test(test_results, expect_file, new_expect, is_train):
           n=4, lineterm=''))
 
 
-def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
-              is_train):
+def _run_test(
+    path_cleaner: Callable[[list[str]], list[str]],
+    test_results: runner_pb.Outcome.Results,
+    recipe_deps: recipe_deps_mod.RecipeDeps,
+    test_desc: runner_pb.Description,
+    test_data: recipe_test_api.TestData,
+    is_train: bool,
+) -> None:
   """This is the main 'function' run by the worker. It executes the test in the
   recipe, compares/diffs/writes the expectation file and updates `test_results`
   as a side effect.
@@ -343,8 +376,8 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
   start_time = time.time()
 
   record.GLOBAL.reset_recorded_warning_names()
-  test_case_result = execute_test_case(
-        recipe_deps, test_desc.recipe_name, test_data)
+  test_case_result = execute_test_case_mod.execute_test_case(
+      recipe_deps, test_desc.recipe_name, test_data)
 
   duration = time.time() - start_time
   test_results.duration.CopyFrom(
@@ -373,23 +406,27 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
           always_print_fields_with_no_presence=True,
       ))
 
-  if not raw_expectations['$result'].get('failure'): # on success
-    if test_case_result.raw_result.summary_markdown: # has markdown populated
+  if not raw_expectations['$result'].get('failure'):  # on success
+    if test_case_result.raw_result.summary_markdown:  # has markdown populated
       raw_expectations['$result']['summaryMarkdown'] = (
           test_case_result.raw_result.summary_markdown
       )
 
   raw_expectations['$result']['name'] = '$result'
 
-  raw_expectations = magic_check_fn.post_process(
+  result_expectations = magic_check_fn.post_process(
       test_results, raw_expectations, test_data)
 
-  transform_expectations(path_cleaner, raw_expectations)
+  expectation_conversion.transform_expectations(
+      path_cleaner, result_expectations)
 
-  _diff_test(test_results, test_data.expect_file, raw_expectations, is_train)
+  assert test_data.expect_file is not None
+  _diff_test(test_results, test_data.expect_file, result_expectations, is_train)
 
 
-def _cover_all_imports(main_repo):
+def _cover_all_imports(
+    main_repo: recipe_deps_mod.RecipeRepo,
+) -> coverage.CoverageData:
   # If our process is supposed to collect coverage for all recipe module
   # imports, do that after we receive the first Description. This way we can
   # reply to the main process with an Outcome. Otherwise the main process
@@ -414,9 +451,16 @@ def _cover_all_imports(main_repo):
   cov.stop()
   return cov.get_data()
 
+
 # administrative stuff (main, pipe handling, etc.)
 
-def main(recipe_deps, cov_file, is_train, cover_module_imports):
+
+def main(
+    recipe_deps: recipe_deps_mod.RecipeDeps,
+    cov_file: str | None,
+    is_train: bool,
+    cover_module_imports: bool,
+) -> None:
   gevent.get_hub().exception_stream = None
 
   main_repo = recipe_deps.main_repo
@@ -437,13 +481,13 @@ def main(recipe_deps, cov_file, is_train, cover_module_imports):
       # instead, catch the error and send it back to the main process just in
       # case it's a genuine error not caused by being killed, in which case the
       # main process will still be alive to propagate the error.
-      result = Outcome()
+      result = runner_pb.Outcome()
       result.internal_error.append('Uncaught exception: %r' % (ex,))
       result.internal_error.extend(traceback.format_exc().splitlines())
-      write_message(sys.stdout.buffer, result)
+      pipe.write_message(sys.stdout.buffer, result)
       return
 
-  test_data_cache = {}
+  test_data_cache: dict[tuple[str, str], recipe_test_api.TestData] = {}
 
   path_cleaner = _make_path_cleaner(recipe_deps)
 
@@ -453,21 +497,21 @@ def main(recipe_deps, cov_file, is_train, cover_module_imports):
     # Reset global state as early as possible for each test case.
     config_types.ResetGlobalVariableAssignments()
     engine_types.PerGreentletStateRegistry.clear()
-    GLOBAL_SHUTDOWN.clear()
+    global_shutdown.GLOBAL_SHUTDOWN.clear()
     turboci_common.CLIENT = turboci_fake.FakeTurboCIOrchestrator(test_mode=True)
 
     test_desc = _read_test_desc()
     if not test_desc:
       # EOF or error - we attempt to write one final Outcome to capture all the
       # warnings recorded.
-      result = Outcome()
+      result = runner_pb.Outcome()
       for name, causes in record.GLOBAL.recorded_warnings.items():
         result.warnings[name].causes.extend(causes)
       # Ignore error from write_message - there is nothing we can do.
-      write_message(sys.stdout.buffer, result)
+      pipe.write_message(sys.stdout.buffer, result)
       break
 
-    result = Outcome()
+    result = runner_pb.Outcome()
     try:
       full_name = '%s.%s' % (test_desc.recipe_name, test_desc.test_name)
       test_result = result.test_results[full_name]
@@ -499,7 +543,7 @@ def main(recipe_deps, cov_file, is_train, cover_module_imports):
       result.internal_error.extend(traceback.format_exc().splitlines())
       fatal = True
 
-    if (not write_message(sys.stdout.buffer, result)
+    if (not pipe.write_message(sys.stdout.buffer, result)
         or fatal):
       break  # EOF
 
@@ -508,26 +552,32 @@ def main(recipe_deps, cov_file, is_train, cover_module_imports):
     cov_data.write()
 
 
-def _read_test_desc() -> Description | None:
+def _read_test_desc() -> runner_pb.Description | None:
   try:
-    return read_message(sys.stdin.buffer, Description)
+    return pipe.read_message(sys.stdin.buffer, runner_pb.Description)
   except Exception as ex:  # pylint: disable=broad-except
-    write_message(sys.stdout.buffer, Outcome(internal_error=[
+    pipe.write_message(sys.stdout.buffer, runner_pb.Outcome(internal_error=[
           'while reading: %r' % (ex,)
         ]+traceback.format_exc().splitlines()))
     return None
 
-def _get_test_data(cache, recipe, test_name):
+
+def _get_test_data(
+    cache: dict[tuple[str, str], recipe_test_api.TestData],
+    recipe: recipe_deps_mod.Recipe,
+    test_name: str,
+) -> recipe_test_api.TestData:
   key = (recipe.name, test_name)
   if key not in cache:
     for test_data in recipe.gen_tests():
+      assert test_data.name is not None
       cache[(recipe.name, test_data.name)] = test_data
   return cache[key]
 
 
 # TODO(iannucci): fix test system so that non-JSONish types cannot leak into
 # raw_expectations.
-def _encode_decode(obj):
+def _encode_decode(obj: Any) -> Any:
   """For py3: ensure any bytes are decoded to str"""
   if isinstance(obj, str):
     return obj
@@ -535,16 +585,18 @@ def _encode_decode(obj):
   if isinstance(obj, bytes):
     return obj.decode('utf-8', 'replace')
 
-  if isinstance(obj, collections.abc.Mapping):
+  if isinstance(obj, Mapping):
     return {_encode_decode(k): _encode_decode(v) for k, v in obj.items()}
 
-  if isinstance(obj, collections.abc.Iterable):
+  if isinstance(obj, Iterable):
     return [_encode_decode(i) for i in obj]
 
   return obj
 
 
-def _make_path_cleaner(recipe_deps):
+def _make_path_cleaner(
+    recipe_deps: recipe_deps_mod.RecipeDeps,
+) -> Callable[[list[str]], list[str]]:
   """Returns a filtering function which substitutes real paths-on-disk with
   expectation-compatible `RECIPE_REPO[repo name]` mock paths. This only works
   for paths contained in double-quotes (e.g. as part of a stack trace).
@@ -557,7 +609,7 @@ def _make_path_cleaner(recipe_deps):
   absolute paths to RECIPE_REPO mock paths.
   """
   # maps path_to_replace -> replacement
-  roots = {}
+  roots: dict[str, str] = {}
   # paths of all recipe_deps
   for repo in recipe_deps.repos.values():
     roots[repo.path] = 'RECIPE_REPO[%s]' % repo.name
@@ -574,13 +626,14 @@ def _make_path_cleaner(recipe_deps):
   # os is in the vpython root
   roots[os.path.abspath(dirn(dirn(dirn(os.__file__))))] = 'PYTHON'
   # io is in the system root
-  import io
+  assert io.__file__ is not None
   roots[os.path.abspath(dirn(dirn(dirn(io.__file__))))] = 'PYTHON'
   # coverage is in the local site-packages in the vpython root
+  assert coverage.__file__ is not None
   roots[os.path.abspath(dirn(dirn(coverage.__file__)))] = \
       'PYTHON(site-packages)'
 
-  def _root_subber(match):
+  def _root_subber(match: re.Match[str]) -> str:
     root = roots[match.group(1)]
     path = match.group(2).replace('\\', '/')
     line = ', line ' + match.group(3)
@@ -604,19 +657,26 @@ def _make_path_cleaner(recipe_deps):
 
 
 class RunnerThread(gevent.Greenlet):
-  def __init__(self, recipe_deps, description_queue, outcome_queue, is_train,
-               cov_file, cover_module_imports):
+  def __init__(
+      self,
+      recipe_deps: recipe_deps_mod.RecipeDeps,
+      description_queue: gevent.queue.UnboundQueue,
+      outcome_queue: gevent.queue.UnboundQueue,
+      is_train: bool,
+      cov_file: str | None,
+      cover_module_imports: bool,
+  ) -> None:
     super().__init__()
 
     self.cov_file = cov_file
-    self.exit_code = None
+    self.exit_code: int | None = None
 
     engine_path = recipe_deps.repos['recipe_engine'].path
 
     cmd = [
-        # NOTE: We use sys.executable to play nice with pydevd's os.exec patching.
-        # If we re-invoke vpython3 here, it will be confused and won't do it's
-        # awful dark magic on the runners.
+        # NOTE: We use sys.executable to play nice with pydevd's os.exec
+        # patching. If we re-invoke vpython3 here, it will be confused and
+        # won't do it's awful dark magic on the runners.
         #
         # If they ever introduce python4 (heaven help us all), you'll probably
         # need to generate the virtualenv for python4 here and then directly use
@@ -627,7 +687,9 @@ class RunnerThread(gevent.Greenlet):
         '-u',
         os.path.join(engine_path, 'recipe_engine', 'main.py'),
         '--package',
-        os.path.join(recipe_deps.main_repo.path, RECIPES_CFG_LOCATION_REL),
+        os.path.join(
+            recipe_deps.main_repo.path, simple_cfg.RECIPES_CFG_LOCATION_REL
+        ),
         '--proto-override',
         os.path.dirname(PB.__path__[0]),
         '--log-level',
@@ -653,8 +715,15 @@ class RunnerThread(gevent.Greenlet):
     self._outcome_queue = outcome_queue
 
   @classmethod
-  def make_pool(cls, recipe_deps, description_queue, outcome_queue, is_train,
-                collect_coverage, jobs):
+  def make_pool(
+      cls,
+      recipe_deps: recipe_deps_mod.RecipeDeps,
+      description_queue: gevent.queue.UnboundQueue,
+      outcome_queue: gevent.queue.UnboundQueue,
+      is_train: bool,
+      collect_coverage: bool,
+      jobs: int,
+  ) -> tuple[str | None, list[RunnerThread]]:
     """Returns a pool (list) of started RunnerThread instances.
 
     Each RunnerThread owns a `recipes.py test _runner` subprocess and
@@ -680,7 +749,9 @@ class RunnerThread(gevent.Greenlet):
     """
     if collect_coverage:
       cov_dir = tempfile.mkdtemp('.recipe_test_coverage')
-      cov_file = lambda tid: os.path.join(cov_dir, 'thread-%d.coverage' % tid)
+      cov_file: Callable[[int], str | None] = (
+          lambda tid: os.path.join(cov_dir, 'thread-%d.coverage' % tid)
+      )
     else:
       cov_dir = None
       cov_file = lambda tid: None
@@ -700,7 +771,7 @@ class RunnerThread(gevent.Greenlet):
     return cov_dir, pool
 
   # pylint: disable=method-hidden
-  def _run(self):
+  def _run(self) -> None:
     try:
       while True:
         test_desc = self._description_queue.get()
@@ -708,8 +779,10 @@ class RunnerThread(gevent.Greenlet):
         if not test_desc:
           # Signal to the process that no more test Descriptions will be coming.
           # The runner should dump all global warning state and quit now.
-          if not write_message(self._runner_proc.stdin, Description()):
-            self._outcome_queue.put(Outcome(internal_error=[
+          if not pipe.write_message(
+              self._runner_proc.stdin, runner_pb.Description()
+          ):
+            self._outcome_queue.put(runner_pb.Outcome(internal_error=[
               'Unable to send final empty test description from %r' % (
                 test_desc.recipe_name, test_desc.test_name, self.name
               )
@@ -718,7 +791,9 @@ class RunnerThread(gevent.Greenlet):
 
           # Read back the very last Outcome which will have all our warning
           # causes.
-          result = read_message(self._runner_proc.stdout, Outcome)
+          result = pipe.read_message(
+              self._runner_proc.stdout, runner_pb.Outcome
+          )
           if result is not None:
             self._outcome_queue.put(result)
 
@@ -733,15 +808,15 @@ class RunnerThread(gevent.Greenlet):
           self._runner_proc.wait()
           return
 
-        if not write_message(self._runner_proc.stdin, test_desc):
-          self._outcome_queue.put(Outcome(internal_error=[
+        if not pipe.write_message(self._runner_proc.stdin, test_desc):
+          self._outcome_queue.put(runner_pb.Outcome(internal_error=[
             'Unable to send test description for (%s.%s) from %r' % (
               test_desc.recipe_name, test_desc.test_name, self.name
             )
           ]))
           return
 
-        result = read_message(self._runner_proc.stdout, Outcome)
+        result = pipe.read_message(self._runner_proc.stdout, runner_pb.Outcome)
         if result is None:
           return
 
@@ -751,7 +826,7 @@ class RunnerThread(gevent.Greenlet):
     except gevent.GreenletExit:
       pass
     except Exception as ex:  # pylint: disable=broad-except
-      self._outcome_queue.put(Outcome(internal_error=[
+      self._outcome_queue.put(runner_pb.Outcome(internal_error=[
         'Uncaught exception in %r: %s' % (self.name, ex)
       ]+traceback.format_exc().splitlines()))
     finally:

@@ -14,7 +14,7 @@ import attr
 # TODO(crbug.com/1057298) Recipes can actually have '.' characters in their name
 # and this will fail to get the recipe name. Recipes should be restricted from
 # having '.' characters in their name.
-def split(test_name):
+def split(test_name: str) -> tuple[str, str]:
   """Split a fully-qualified test name.
 
   Returns:
@@ -32,32 +32,32 @@ class Filter:
   # TODO: Also track module names indicated by the filters.
   # TODO: Upstream this into RecipeDeps so that it will only scan the
   # modules/recipes that we're interested in.
-  _recipe_patterns : list[str] = attr.ib(default=[])
-  _full_test_name_patterns : list[str] = attr.ib(default=[])
+  _recipe_patterns: list[str] = attr.ib(default=[])
+  _full_test_name_patterns: list[str] = attr.ib(default=[])
 
-  _compiled_recipe_pattern : str = attr.ib(default=None)
-  _compiled_test_name_pattern : str = attr.ib(default=None)
+  _compiled_recipe_pattern: re.Pattern[str] | None = attr.ib(default=None)
+  _compiled_test_name_pattern: re.Pattern[str] | None = attr.ib(default=None)
 
-  def append(self, filt: str):
+  def append(self, filt: str) -> None:
     """Argparse calls this function with each argument to --filter on the
     command line."""
     if not filt:
       raise argparse.ArgumentTypeError('empty --filter values are not allowed')
 
-    # filters missing a test_name portion imply that it is a recipe prefix and we
-    # should run all tests for any recipes which match.
+    # filters missing a test_name portion imply that it is a recipe prefix and
+    # we should run all tests for any recipes which match.
     filt = filt if '.' in filt else filt+'*.*'
 
     self._recipe_patterns.append(fnmatch.translate(split(filt)[0]))
     self._full_test_name_patterns.append(fnmatch.translate(filt))
 
-  def __bool__(self):
+  def __bool__(self) -> bool:
     """Returns True if this object has any filter patterns."""
     # NOTE: self._recipe_patterns implies that self._full_test_name_patterns
     # also has values.
     return bool(self._recipe_patterns)
 
-  def recipe_name(self, recipe_name: str) -> bool:
+  def recipe_name(self, recipe_name: str) -> re.Match[str] | bool | None:
     """Returns True if `recipe_name` matches the accumulated filter state.
 
     Note that a complete absence of --filter arguments will always return True.
@@ -66,11 +66,12 @@ class Filter:
       return True
 
     if self._compiled_recipe_pattern is None:
-      self._compiled_recipe_pattern = re.compile('|'.join(self._recipe_patterns))
+      self._compiled_recipe_pattern = re.compile(
+          '|'.join(self._recipe_patterns))
 
     return self._compiled_recipe_pattern.match(recipe_name)
 
-  def full_name(self, test_name: str) -> bool:
+  def full_name(self, test_name: str) -> re.Match[str] | bool | None:
     """Returns True if `test_name` matches the accumulated filter state.
 
     Note that a complete absence of --filter arguments will always return True.
@@ -79,6 +80,7 @@ class Filter:
       return True
 
     if self._compiled_test_name_pattern is None:
-      self._compiled_test_name_pattern = re.compile('|'.join(self._full_test_name_patterns))
+      self._compiled_test_name_pattern = re.compile(
+          '|'.join(self._full_test_name_patterns))
 
     return self._compiled_test_name_pattern.match(test_name)

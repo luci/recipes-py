@@ -4,28 +4,43 @@
 
 from __future__ import annotations
 
-from builtins import object
-from past.builtins import basestring
+from types import TracebackType
+from typing import Any
+
 import attr
 
-from ..attr_util import attr_type, attr_dict_type
+from ... import recipe_test_api
+from .. import attr_util
+from .. import recipe_deps as recipe_deps_mod
+
 
 @attr.s(frozen=True, slots=True)
 class TestCaseResult:
   # Raw Result of recipe.
-  raw_result = attr.ib()  # type: result_pb2.RawResult
+  raw_result: Any = attr.ib()
   # The log of each step that would have been run.
-  ran_steps = attr.ib(factory=dict, validator=attr_dict_type(basestring, dict))
+  ran_steps: dict[str, dict[str, Any]] = attr.ib(
+      factory=dict, validator=attr_util.attr_dict_type(str, dict)
+  )
   # Annotations emitted for each step.
-  annotations = attr.ib(factory=dict,
-                        validator=attr_dict_type(basestring, dict))
+  annotations: dict[str | None, dict[str, Any]] = attr.ib(
+      factory=dict, validator=attr_util.attr_dict_type(str, dict)
+  )
   # Warnings issued during recipe execution.
-  warnings = attr.ib(factory=dict, validator=attr_type(dict))
+  warnings: dict[str, Any] = attr.ib(
+      factory=dict, validator=attr_util.attr_type(dict)
+  )
   # Uncaught exception triggered by recipe code or None.
-  uncaught_exception = attr.ib(default=None)
+  uncaught_exception: (
+      tuple[type[BaseException], BaseException, TracebackType | None] | None
+  ) = attr.ib(default=None)
 
 
-def execute_test_case(recipe_deps, recipe_name, test_data) -> TestCaseResult:
+def execute_test_case(
+    recipe_deps: recipe_deps_mod.RecipeDeps,
+    recipe_name: str,
+    test_data: recipe_test_api.TestData,
+) -> TestCaseResult:
   """Executes a single test case.
 
   Args:

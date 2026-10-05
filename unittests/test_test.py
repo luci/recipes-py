@@ -7,35 +7,34 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Iterable, Mapping, Sequence
+import enum
+import io
 import json
 import os
-
-from io import StringIO
+import re
+from typing import Any
 from unittest import mock
 
-from google.protobuf import json_format as jsonpb
-
-# pylint: disable=import-error
 import attr
-import enum
-import re
+from google.protobuf import json_format as jsonpb
 
 import test_env
 
-from PB.recipe_engine.internal.test.runner import Outcome
-
+from PB.recipe_engine.internal.test import runner as runner_pb
 from recipe_engine.internal.commands import test as test_parser
 from recipe_engine.internal.commands.test import test_name
 
 # pylint: disable=missing-docstring
 
+
 class Common(test_env.RecipeEngineUnitTest):
   @attr.s(frozen=True)
   class JsonResult:
-    text_output = attr.ib()
-    data = attr.ib()
+    text_output: str = attr.ib()
+    data: Any = attr.ib()
 
-  def _run_test(self, *args, **kwargs):
+  def _run_test(self, *args: str, **kwargs: Any) -> Common.JsonResult:
     should_fail = kwargs.pop('should_fail', False)
     self.assertDictEqual(
         kwargs, {}, 'got additional unexpected kwargs: {!r}'.format(kwargs))
@@ -93,7 +92,6 @@ class Common(test_env.RecipeEngineUnitTest):
         data = None
       return self.JsonResult(output, data)
 
-
   class OutcomeType(enum.Enum):
     diff = 1
     written = 2
@@ -104,9 +102,13 @@ class Common(test_env.RecipeEngineUnitTest):
     internal_error = 7
     needs_infra_fail = 12
 
-
-  def _outcome_json(self, per_test=None, coverage=100, uncovered_mods=(),
-                    unused_expects=()):
+  def _outcome_json(
+      self,
+      per_test: Mapping[str, Iterable[Common.OutcomeType]] | None = None,
+      coverage: float = 100,
+      uncovered_mods: Sequence[str] = (),
+      unused_expects: Sequence[str] = (),
+  ) -> dict[str, Any]:
     """Generates a JSON dict representing a runner.Outcome message.
 
     Args:
@@ -122,7 +124,7 @@ class Common(test_env.RecipeEngineUnitTest):
 
     Returns a python dict which is the JSONPB representation of the Outcome.
     """
-    ret = Outcome()
+    ret = runner_pb.Outcome()
 
     if per_test is None:
       per_test = {'foo.basic': []}
@@ -153,14 +155,14 @@ class Common(test_env.RecipeEngineUnitTest):
 
     return jsonpb.MessageToDict(ret, preserving_proto_field_name=True)
 
-  def setUp(self):
+  def setUp(self) -> None:
     super().setUp()
     self.deps = self.FakeRecipeDeps()
     self.main = self.deps.main_repo
 
 
 class TestList(Common):
-  def test_list(self):
+  def test_list(self) -> None:
     with self.main.write_recipe('foo'):
       pass
 
@@ -170,7 +172,7 @@ class TestList(Common):
 
 
 class TestRun(Common):
-  def test_basic(self):
+  def test_basic(self) -> None:
     with self.main.write_recipe('foo'):
       pass
 
@@ -178,7 +180,7 @@ class TestRun(Common):
         self._run_test('run').data,
         self._outcome_json())
 
-  def test_expectation_failure_empty(self):
+  def test_expectation_failure_empty(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       del recipe.expectation['basic']
 
@@ -187,7 +189,7 @@ class TestRun(Common):
       'foo.basic': [self.OutcomeType.diff],
     }))
 
-  def test_expectation_failure_stop(self):
+  def test_expectation_failure_stop(self) -> None:
     """Test the failfast flag '--stop'
 
     Introduces two expectation errors and checks that only one is reported.
@@ -202,7 +204,7 @@ class TestRun(Common):
     self.assertEqual(len(results), 1)
     self.assertEqual(list(list(results.values())[0].keys())[0], 'diff')
 
-  def test_expectation_failure_empty_filter(self):
+  def test_expectation_failure_empty_filter(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.GenTests.write('''
         yield api.test('basic')
@@ -220,7 +222,7 @@ class TestRun(Common):
         self._run_test('run', '--filter', 'foo.basic').data,
         self._outcome_json(coverage=0))
 
-  def test_expectation_failure_different(self):
+  def test_expectation_failure_different(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.RunSteps.write('api.step("test", ["echo", "bar"])')
 
@@ -230,7 +232,7 @@ class TestRun(Common):
           'foo.basic': [self.OutcomeType.diff],
         }))
 
-  def test_expectation_pass(self):
+  def test_expectation_pass(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.RunSteps.write('api.step("test", ["echo", "bar"])')
       recipe.expectation['basic'] = [
@@ -242,7 +244,7 @@ class TestRun(Common):
         self._run_test('run').data,
         self._outcome_json())
 
-  def test_recipe_not_covered(self):
+  def test_recipe_not_covered(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.RunSteps.write('''
         bool_var = False
@@ -255,7 +257,7 @@ class TestRun(Common):
         result.data,
         self._outcome_json(coverage=88.9))
 
-  def test_recipe_not_covered_filter(self):
+  def test_recipe_not_covered_filter(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.RunSteps.write('''
         if False:
@@ -266,7 +268,7 @@ class TestRun(Common):
         self._run_test('run', '--filter', 'foo.*').data,
         self._outcome_json(coverage=0))
 
-  def test_recipe_type_checking_imports_covered(self):
+  def test_recipe_type_checking_imports_covered(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.imports = [
           'import typing',
@@ -284,7 +286,7 @@ class TestRun(Common):
         self._run_test('run').data,
         self._outcome_json())
 
-  def test_recipe_type_checking_non_import_not_covered(self):
+  def test_recipe_type_checking_non_import_not_covered(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.imports = [
           'from typing import TYPE_CHECKING',
@@ -298,7 +300,7 @@ class TestRun(Common):
         result.data,
         self._outcome_json(coverage=90.0))
 
-  def test_recipe_type_checking_non_global_not_covered(self):
+  def test_recipe_type_checking_non_global_not_covered(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.imports = ['from typing import TYPE_CHECKING']
       recipe.RunSteps.write('''
@@ -311,7 +313,7 @@ class TestRun(Common):
         result.data,
         self._outcome_json(coverage=88.9))
 
-  def test_check_failure(self):
+  def test_check_failure(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.imports = ['from recipe_engine import post_process']
       recipe.GenTests.write('''
@@ -330,7 +332,9 @@ class TestRun(Common):
 
   @mock.patch('recipe_engine.internal.commands.test.'
               'fail_tracker.FailTracker.recent_fails')
-  def test_check_failure_test_no_longer_exists(self, recent_fails_mock):
+  def test_check_failure_test_no_longer_exists(
+      self, recent_fails_mock: mock.MagicMock
+  ) -> None:
     recent_fails_mock.return_value = [
         'foo.nonexistent'
     ]
@@ -351,7 +355,7 @@ class TestRun(Common):
         })
     )
 
-  def test_check_failure_stop(self):
+  def test_check_failure_stop(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.RunSteps.write('baz')
       recipe.GenTests.write('''
@@ -366,8 +370,7 @@ class TestRun(Common):
         str(result.text_output).count(
             'FAIL (recipe crashed in an unexpected way)'))
 
-
-  def test_check_failure_filter(self):
+  def test_check_failure_filter(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.imports = ['from recipe_engine import post_process']
       recipe.GenTests.write('''
@@ -385,7 +388,7 @@ class TestRun(Common):
           'foo.basic': [self.OutcomeType.check],
         }, coverage=0))
 
-  def test_check_success(self):
+  def test_check_success(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.imports = ['from recipe_engine import post_process']
       recipe.GenTests.write('''
@@ -398,7 +401,7 @@ class TestRun(Common):
         self._run_test('run').data,
         self._outcome_json())
 
-  def test_docs_change(self):
+  def test_docs_change(self) -> None:
     with self.main.write_recipe('foo'):
       pass
     with open(self.main.path + '/recipes/foo.py', 'r+') as f:
@@ -412,7 +415,7 @@ class TestRun(Common):
         self._run_test('run').data,
         self._outcome_json())
 
-  def test_docs_skipped_if_no_docs_in_config(self):
+  def test_docs_skipped_if_no_docs_in_config(self) -> None:
     with self.main.write_recipe('foo'):
       pass
     with open(self.main.path + '/recipes/foo.py', 'r+') as f:
@@ -429,7 +432,7 @@ class TestRun(Common):
     self._run_test('train')
     self.assertFalse(self.main.exists('README.recipes.md'))
 
-  def test_recipe_syntax_error(self):
+  def test_recipe_syntax_error(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.RunSteps.write('baz')
       recipe.GenTests.write('''
@@ -445,7 +448,7 @@ class TestRun(Common):
                         self.OutcomeType.needs_infra_fail],
         }))
 
-  def test_recipe_module_uncovered(self):
+  def test_recipe_module_uncovered(self) -> None:
     with self.main.write_module('foo') as mod:
       mod.api.write('''
         def foo(self):
@@ -461,7 +464,7 @@ class TestRun(Common):
             uncovered_mods=['foo'],
         ))
 
-  def test_recipe_module_syntax_error(self):
+  def test_recipe_module_syntax_error(self) -> None:
     with self.main.write_module('foo_module') as mod:
       mod.api.write('''
         def foo(self):
@@ -485,7 +488,7 @@ class TestRun(Common):
                                              self.OutcomeType.needs_infra_fail],
         }))
 
-  def test_recipe_module_syntax_error_in_example(self):
+  def test_recipe_module_syntax_error_in_example(self) -> None:
     with self.main.write_module('foo_module') as mod:
       mod.api.write('''
         def foo(self):
@@ -510,7 +513,7 @@ class TestRun(Common):
                                              self.OutcomeType.needs_infra_fail]
         }, coverage=95.0))
 
-  def test_recipe_module_example_not_covered(self):
+  def test_recipe_module_example_not_covered(self) -> None:
     with self.main.write_module('foo_module') as mod:
       mod.api.write('''
         def foo(self):
@@ -534,7 +537,7 @@ class TestRun(Common):
               [self.OutcomeType.diff],
         }, coverage=90.9))
 
-  def test_recipe_module_uncovered_not_strict(self):
+  def test_recipe_module_uncovered_not_strict(self) -> None:
     with self.main.write_module('foo_module') as mod:
       mod.DISABLE_STRICT_COVERAGE = True
       mod.api.write('''
@@ -546,7 +549,7 @@ class TestRun(Common):
         self._run_test('run', should_fail=True).data,
         self._outcome_json(coverage=92.3, per_test={}))
 
-  def test_recipe_module_covered_by_recipe_not_strict(self):
+  def test_recipe_module_covered_by_recipe_not_strict(self) -> None:
     with self.main.write_module('foo_module') as mod:
       mod.DISABLE_STRICT_COVERAGE = True
       mod.api.write('''
@@ -564,7 +567,7 @@ class TestRun(Common):
           'my_recipe.basic': []
         }))
 
-  def test_recipe_module_covered_by_recipe(self):
+  def test_recipe_module_covered_by_recipe(self) -> None:
     with self.main.write_module('foo_module') as mod:
       mod.api.write('''
         def bar(self):
@@ -586,9 +589,9 @@ class TestRun(Common):
             coverage=95.0,
         ))
 
-  def test_recipe_module_partially_covered_by_recipe_not_strict(self):
+  def test_recipe_module_partially_covered_by_recipe_not_strict(self) -> None:
     with self.main.write_module('foo_module') as mod:
-      mod.DISABLE_STRICT_COVERAGE= True
+      mod.DISABLE_STRICT_COVERAGE = True
       mod.api.write('''
         def foo(self):
           pass
@@ -612,7 +615,7 @@ class TestRun(Common):
           'foo_recipe.basic': [],
         }))
 
-  def test_recipe_module_partially_covered_by_recipe(self):
+  def test_recipe_module_partially_covered_by_recipe(self) -> None:
     with self.main.write_module('foo_module') as mod:
       mod.api.write('''
         def foo(self):
@@ -638,7 +641,7 @@ class TestRun(Common):
           'foo_recipe.basic': [],
         }, coverage=96.6))
 
-  def test_recipe_module_test_expectation_failure_empty(self):
+  def test_recipe_module_test_expectation_failure_empty(self) -> None:
     with self.main.write_module('foo_module'):
       pass
 
@@ -652,7 +655,7 @@ class TestRun(Common):
           'foo_module:tests/foo.basic': [self.OutcomeType.diff],
         }))
 
-  def test_module_tests_unused_expectation_file_test(self):
+  def test_module_tests_unused_expectation_file_test(self) -> None:
     with self.main.write_module('foo_module'):
       pass
 
@@ -667,7 +670,7 @@ class TestRun(Common):
               'recipe_modules/foo_module/tests/foo.expected/unused.json'
             ]))
 
-  def test_slash_in_name(self):
+  def test_slash_in_name(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.GenTests.write('yield api.test("bar/baz")')
       del recipe.expectation['basic']
@@ -679,7 +682,7 @@ class TestRun(Common):
           'foo.bar/baz': [],
         }))
 
-  def test_api_uncovered(self):
+  def test_api_uncovered(self) -> None:
     with self.main.write_module('foo_module') as mod:
       mod.DISABLE_STRICT_COVERAGE = True
       mod.test_api.write('''
@@ -694,7 +697,7 @@ class TestRun(Common):
             per_test={},
         ))
 
-  def test_api_uncovered_strict(self):
+  def test_api_uncovered_strict(self) -> None:
     with self.main.write_module('foo_module') as mod:
       mod.test_api.write('''
         def baz(self):
@@ -708,7 +711,7 @@ class TestRun(Common):
             per_test={},
         ))
 
-  def test_api_covered_by_recipe(self):
+  def test_api_covered_by_recipe(self) -> None:
     with self.main.write_module('foo_module') as mod:
       mod.DISABLE_STRICT_COVERAGE = True
       mod.test_api.write('''
@@ -727,7 +730,7 @@ class TestRun(Common):
         self._run_test('run').data,
         self._outcome_json())
 
-  def test_api_uncovered_by_recipe_strict(self):
+  def test_api_uncovered_by_recipe_strict(self) -> None:
     with self.main.write_module('foo_module') as mod:
       mod.test_api.write('''
         def baz(self):
@@ -748,7 +751,7 @@ class TestRun(Common):
             coverage=95.2,
         ))
 
-  def test_api_covered_by_example(self):
+  def test_api_covered_by_example(self) -> None:
     with self.main.write_module('foo_module') as mod:
       mod.test_api.write('''
         def baz(self):
@@ -768,7 +771,7 @@ class TestRun(Common):
           'foo_module:examples/full.basic': [],
         }))
 
-  def test_duplicate(self):
+  def test_duplicate(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.GenTests.write('''
         yield api.test("basic")
@@ -779,7 +782,7 @@ class TestRun(Common):
         "Emitted test with duplicate name 'basic'",
         self._run_test('run', should_fail='crash').text_output)
 
-  def test_duplicate_filename(self):
+  def test_duplicate_filename(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.GenTests.write('''
         yield api.test("bas_ic")
@@ -790,7 +793,7 @@ class TestRun(Common):
         "Emitted test 'bas/ic' which maps to the same JSON file as 'bas_ic'",
         self._run_test('run', should_fail='crash').text_output)
 
-  def test_unused_expectation_file(self):
+  def test_unused_expectation_file(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.expectation['unused'] = []
       expectation_file = os.path.join(recipe.expect_path, 'unused.json')
@@ -800,7 +803,7 @@ class TestRun(Common):
         self._outcome_json(
             unused_expects=['recipes/foo.expected/unused.json']))
 
-  def test_unused_expectation_file_from_deleted_recipe(self):
+  def test_unused_expectation_file_from_deleted_recipe(self) -> None:
     expectation_file = 'recipes/deleted.expected/stale.json'
     with self.main.write_file(expectation_file):
       pass
@@ -810,7 +813,7 @@ class TestRun(Common):
         self._outcome_json(
             per_test={}, coverage=0, unused_expects=[expectation_file]))
 
-  def test_ignores_expectation_files_in_invalid_directories(self):
+  def test_ignores_expectation_files_in_invalid_directories(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.GenTests.write('yield api.test("basic")')
     # Some recipe repos use expectation files to test their resource scripts,
@@ -821,7 +824,7 @@ class TestRun(Common):
     self.assertTrue(self.main.is_file(expectation_file))
     self.assertDictEqual(self._run_test('run').data, self._outcome_json())
 
-  def test_drop_expectation(self):
+  def test_drop_expectation(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.GenTests.write('''
         yield (api.test("basic") +
@@ -833,7 +836,7 @@ class TestRun(Common):
     self.assertFalse(self.main.exists(expectation_file))
     self.assertDictEqual(result.data, self._outcome_json())
 
-  def test_drop_expectation_diff(self):
+  def test_drop_expectation_diff(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.GenTests.write('''
         yield (api.test("basic") +
@@ -848,7 +851,7 @@ class TestRun(Common):
             per_test={'foo.basic': [self.OutcomeType.diff]},
         ))
 
-  def test_unused_expectation_preserves_owners(self):
+  def test_unused_expectation_preserves_owners(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       owners_file = os.path.join(recipe.expect_path, 'OWNERS')
     with self.main.write_file(owners_file):
@@ -856,7 +859,7 @@ class TestRun(Common):
     self.assertTrue(self.main.is_file(owners_file))
     self.assertDictEqual(self._run_test('run').data, self._outcome_json())
 
-  def test_config_covered_by_recipe(self):
+  def test_config_covered_by_recipe(self) -> None:
     with self.main.write_module('foo_module') as mod:
       mod.DISABLE_STRICT_COVERAGE = True
       mod.config.write('''
@@ -872,7 +875,7 @@ class TestRun(Common):
       recipe.RunSteps.write('api.foo_module.set_config("bar_config")')
     self.assertDictEqual(self._run_test('run').data, self._outcome_json())
 
-  def test_config_covered_by_recipe_strict(self):
+  def test_config_covered_by_recipe_strict(self) -> None:
     with self.main.write_module('foo_module') as mod:
       mod.config.write('''
         def BaseConfig(**_kwargs):
@@ -892,7 +895,7 @@ class TestRun(Common):
             uncovered_mods=['foo_module'],
         ))
 
-  def test_config_covered_by_example(self):
+  def test_config_covered_by_example(self) -> None:
     with self.main.write_module('foo_module') as mod:
       mod.config.write('''
         def BaseConfig(**_kwargs):
@@ -913,7 +916,7 @@ class TestRun(Common):
 
 
 class TestTrain(Common):
-  def test_module_tests_unused_expectation_file_train(self):
+  def test_module_tests_unused_expectation_file_train(self) -> None:
     with self.main.write_module('foo_module'):
       pass
 
@@ -929,7 +932,9 @@ class TestTrain(Common):
           'foo_module:examples/foo.basic': [],
         }))
 
-  def test_module_tests_unused_expectation_file_deleted_even_on_failure(self):
+  def test_module_tests_unused_expectation_file_deleted_even_on_failure(
+      self,
+  ) -> None:
     with self.main.write_module('foo_module'):
       pass
 
@@ -950,12 +955,12 @@ class TestTrain(Common):
           ],
         }))
 
-  def test_basic(self):
+  def test_basic(self) -> None:
     with self.main.write_recipe('foo'):
       pass
     self.assertDictEqual(self._run_test('train').data, self._outcome_json())
 
-  def test_missing(self):
+  def test_missing(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       del recipe.expectation['basic']
       expect_dir = recipe.expect_path
@@ -972,7 +977,7 @@ class TestTrain(Common):
         json.loads(self.main.read_file(expect_path)),
         [{'name': '$result'}])
 
-  def test_diff(self):
+  def test_diff(self) -> None:
     # 1. Initial state: recipe expectations are passing.
     with self.main.write_recipe('foo') as recipe:
       expect_path = os.path.join(recipe.expect_path, 'basic.json')
@@ -1003,7 +1008,7 @@ class TestTrain(Common):
           'foo.basic': [self.OutcomeType.written],
         }))
 
-  def test_invalid_json(self):
+  def test_invalid_json(self) -> None:
     # 1. Initial state: recipe expectations are passing.
     with self.main.write_recipe('foo') as recipe:
       expect_path = os.path.join(recipe.expect_path, 'basic.json')
@@ -1035,7 +1040,7 @@ class TestTrain(Common):
           'foo.basic': [self.OutcomeType.written],
         }))
 
-  def test_checks_coverage_without_any_label(self):
+  def test_checks_coverage_without_any_label(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.RunSteps.write('''
         bool_var = False
@@ -1046,7 +1051,7 @@ class TestTrain(Common):
     self.assertIn('Ran 1 tests in', result.text_output)
     self.assertDictEqual(result.data, self._outcome_json(coverage=88.9))
 
-  def test_runs_checks(self):
+  def test_runs_checks(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.imports = ['from recipe_engine import post_process']
       recipe.GenTests.write('''
@@ -1060,7 +1065,7 @@ class TestTrain(Common):
           'foo.basic': [self.OutcomeType.check],
         }))
 
-  def test_unused_expectation_file(self):
+  def test_unused_expectation_file(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.expectation['unused'] = []
       expectation_file = os.path.join(recipe.expect_path, 'unused.json')
@@ -1068,7 +1073,7 @@ class TestTrain(Common):
     self.assertFalse(self.main.exists(expectation_file))
     self.assertDictEqual(result.data, self._outcome_json())
 
-  def test_unused_expectation_file_with_filter(self):
+  def test_unused_expectation_file_with_filter(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.GenTests.write('yield api.test("basic")')
     with self.main.write_recipe('bar') as recipe:
@@ -1081,7 +1086,7 @@ class TestTrain(Common):
     # delete it) if its recipe isn't included in the filter.
     self.assertTrue(self.main.is_file(expectation_file))
 
-  def test_unused_expectation_file_from_deleted_recipe(self):
+  def test_unused_expectation_file_from_deleted_recipe(self) -> None:
     expectation_file = 'recipes/deleted.expected/stale.json'
     with self.main.write_file(expectation_file):
       pass
@@ -1091,7 +1096,7 @@ class TestTrain(Common):
     self.assertDictEqual(result.data,
                          self._outcome_json(per_test={}, coverage=0))
 
-  def test_drop_expectation(self):
+  def test_drop_expectation(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.GenTests.write('''
         yield (api.test("basic") +
@@ -1107,7 +1112,7 @@ class TestTrain(Common):
           'foo.basic': [self.OutcomeType.removed],
         }))
 
-  def test_unused_expectation_preserves_owners(self):
+  def test_unused_expectation_preserves_owners(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       owners_file = os.path.join(recipe.expect_path, 'OWNERS')
     with self.main.write_file(owners_file):
@@ -1116,7 +1121,7 @@ class TestTrain(Common):
     self.assertTrue(self.main.is_file(owners_file))
     self.assertDictEqual(result.data, self._outcome_json())
 
-  def test_config_uncovered(self):
+  def test_config_uncovered(self) -> None:
     with self.main.write_module('foo_module') as mod:
       mod.DISABLE_STRICT_COVERAGE = True
       mod.config.write('''
@@ -1128,7 +1133,7 @@ class TestTrain(Common):
         self._run_test('run', should_fail=True).data,
         self._outcome_json(coverage=94.1, per_test={}))
 
-  def test_config_uncovered_strict(self):
+  def test_config_uncovered_strict(self) -> None:
     with self.main.write_module('foo_module') as mod:
       mod.config.write('''
         def BaseConfig(**_kwargs):
@@ -1145,7 +1150,7 @@ class TestTrain(Common):
 
 
 class TestFilter(test_env.RecipeEngineUnitTest):
-  def test_empty_filter(self):
+  def test_empty_filter(self) -> None:
     filt = test_name.Filter()
     self.assertFalse(filt)
 
@@ -1155,7 +1160,7 @@ class TestFilter(test_env.RecipeEngineUnitTest):
     self.assertTrue(filt.full_name('something.test_case'))
     self.assertTrue(filt.recipe_name('module:tests/other.test_case'))
 
-  def test_recipe_only_filter(self):
+  def test_recipe_only_filter(self) -> None:
     filt = test_name.Filter()
     filt.append('something')
     filt.append('completely_different')
@@ -1169,7 +1174,7 @@ class TestFilter(test_env.RecipeEngineUnitTest):
 
     self.assertTrue(filt.recipe_name('something_else'))
 
-  def test_full_name_filter(self):
+  def test_full_name_filter(self) -> None:
     filt = test_name.Filter()
     filt.append('something.*specific')
 

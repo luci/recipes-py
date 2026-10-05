@@ -13,10 +13,11 @@ import argparse
 import json
 import multiprocessing
 import textwrap
-
-from . import test_name
+from typing import TextIO
 
 from ... import debugger
+from ... import recipe_deps as recipe_deps_mod
+from . import test_name
 
 
 # Give this a high priority so it shows second in help.
@@ -31,7 +32,7 @@ to execute, but it should correlate pretty closely. You can sort the file with
 `sort -g -k 2 -t $'\\t'` on unix to see the longest tests."""
 
 
-def add_arguments(parser):
+def add_arguments(parser: argparse.ArgumentParser) -> None:
 
   subp = parser.add_subparsers(
       dest='subcommand', metavar='{run, train, list}', required=True)
@@ -157,10 +158,11 @@ def add_arguments(parser):
   runner_p.add_argument('--cover-module-imports', action='store_true',
                         default=False)
 
-  def _launch(args):
+  def _launch(args: argparse.Namespace) -> int | None:
     if debugger.PROTOCOL == "pdb" and args.subcommand in {'run', 'train'}:
       parser.error(
-          f'Cannot use `recipes.py test {args.subcommand}` with RECIPE_DEBUGGER=pdb.'
+          f'Cannot use `recipes.py test {args.subcommand}` with '
+          'RECIPE_DEBUGGER=pdb.'
       )
 
     if 'jobs' in args and debugging_enabled and args.jobs != 1:
@@ -182,7 +184,11 @@ def add_arguments(parser):
   parser.set_defaults(func=_launch)
 
 
-def run_list(recipe_deps, json_file, test_filter: test_name.Filter):
+def run_list(
+    recipe_deps: recipe_deps_mod.RecipeDeps,
+    json_file: TextIO | None,
+    test_filter: test_name.Filter,
+) -> int:
   """Runs the `test list` subcommand.
 
   Lists all tests either to stdout or to a JSON file.

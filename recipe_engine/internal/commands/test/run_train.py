@@ -4,7 +4,9 @@
 
 from __future__ import annotations
 
+import argparse
 import collections
+from collections.abc import Collection
 import json
 import os
 import shutil
@@ -13,33 +15,43 @@ import tempfile
 import coverage
 import gevent
 import gevent.queue
-
 from google.protobuf import json_format
 
-# pylint: disable=import-error
-from PB.recipe_engine.internal.test.runner import Description, Outcome
+from PB.recipe_engine.internal.test import runner as runner_pb
 
-from ..doc.cmd import regenerate_doc, doc_diff
-
-from . import report, test_name
-from .fail_tracker import FailTracker
-from .runner import RunnerThread
+from .... import recipe_test_api
+from ... import recipe_deps as recipe_deps_mod
+from ..doc import cmd as doc_cmd
+from . import fail_tracker as fail_tracker_mod
+from . import report
+from . import runner as runner_mod
+from . import test_name
 
 
 # TODO(crbug.com/1147793): Remove the second return value after migration.
-def _push_tests(test_filter: test_name.Filter, is_train, main_repo, description_queue,
-                recent_fails):
+def _push_tests(
+    test_filter: test_name.Filter,
+    is_train: bool,
+    main_repo: recipe_deps_mod.RecipeRepo,
+    description_queue: gevent.queue.UnboundQueue,
+    recent_fails: Collection[str],
+) -> list[str] | set[str]:
   """
   Returns:
     * set - unused_expectation_files
   """
-  unused_expectation_files = set()
-  used_expectation_files = set()
-  test_filenames = collections.defaultdict(dict)
+  unused_expectation_files: set[str] = set()
+  used_expectation_files: set[str] = set()
+  test_filenames: dict[recipe_deps_mod.Recipe, dict[str, str]] = (
+      collections.defaultdict(dict)
+  )
 
-  def push_test(recipe, test_case):
+  def push_test(
+      recipe: recipe_deps_mod.Recipe, test_case: recipe_test_api.TestData
+  ) -> None:
     recipe_filenames = test_filenames[recipe]
     expect_file = test_case.expect_file
+    assert expect_file is not None
     used_expectation_files.add(expect_file)
     if expect_file in recipe_filenames:
       og_name = recipe_filenames[expect_file]
@@ -51,12 +63,13 @@ def _push_tests(test_filter: test_name.Filter, is_train, main_repo, description_
           'Emitted test %r which maps to the same JSON file as %r: %r' %
           (test_case.name, og_name, expect_file))
 
+    assert test_case.name is not None
     recipe_filenames[expect_file] = test_case.name
     if not test_filter.full_name(f'{recipe.name}.{test_case.name}'):
       return
 
     description_queue.put(
-        Description(
+        runner_pb.Description(
             recipe_name=recipe.name,
             test_name=test_case.name))
 
@@ -68,7 +81,9 @@ def _push_tests(test_filter: test_name.Filter, is_train, main_repo, description_
     unused_expectation_files.update(main_repo.expectation_paths)
 
   # Handle recent fails first
-  deferred_tests = []
+  deferred_tests: list[
+      tuple[recipe_deps_mod.Recipe, recipe_test_api.TestData]
+  ] = []
   for recipe in main_repo.recipes.values():
     if not test_filter.recipe_name(recipe.name):
       continue
@@ -79,6 +94,7 @@ def _push_tests(test_filter: test_name.Filter, is_train, main_repo, description_
     # Maps expect_file -> original test_name
     try:
       for test_case in recipe.gen_tests():  # User code, could raise
+        assert test_case.name is not None
         full_name = recipe.full_name.split('::')[-1] + '.' + test_case.name
         if len(recent_fails) == 0 or full_name in recent_fails:
           push_test(recipe, test_case)
@@ -104,8 +120,17 @@ def _push_tests(test_filter: test_name.Filter, is_train, main_repo, description_
   return set()
 
 
-def _run(test_results, recipe_deps, use_emoji, test_filter, is_train,
-         stop, jobs, show_warnings, show_durations):
+def _run(
+    test_results: runner_pb.Outcome,
+    recipe_deps: recipe_deps_mod.RecipeDeps,
+    use_emoji: bool,
+    test_filter: test_name.Filter,
+    is_train: bool,
+    stop: bool,
+    jobs: int,
+    show_warnings: bool,
+    show_durations: bool,
+) -> None:
   """Run tests in py3 subprocess pools.
   """
   main_repo = recipe_deps.main_repo
@@ -126,23 +151,26 @@ def _run(test_results, recipe_deps, use_emoji, test_filter, is_train,
       )
   ))
 
-  fail_tracker = FailTracker(recipe_deps.previous_test_failures_path)
+  fail_tracker = fail_tracker_mod.FailTracker(
+      recipe_deps.previous_test_failures_path
+  )
   reporter = report.Reporter(recipe_deps, use_emoji, is_train, fail_tracker,
                              show_warnings, show_durations)
 
   cov_dir = None
   # We use a non-suffixed file in a temp directory to avoid polluting the
   # checkout and avoid sharing issues.
-  total_cov_file = tempfile.NamedTemporaryFile(prefix='total_coverage', delete=False)
+  total_cov_file = tempfile.NamedTemporaryFile(
+      prefix='total_coverage', delete=False)
   total_cov_file.close()
-  total_cov = coverage.Coverage(config_file=False, data_file=total_cov_file.name,
-                                data_suffix=False)
-  total_cov.save() # Force to ensure the coverage data file is created.
+  total_cov = coverage.Coverage(
+      config_file=False, data_file=total_cov_file.name, data_suffix=False)
+  total_cov.save()  # Force to ensure the coverage data file is created.
   try:
     # in case of crash; don't want this undefined in finally clause.
-    live_threads = []
+    live_threads: list[runner_mod.RunnerThread] = []
 
-    cov_dir, all_threads = RunnerThread.make_pool(
+    cov_dir, all_threads = runner_mod.RunnerThread.make_pool(
         recipe_deps,
         description_queue,
         outcome_queue,
@@ -156,20 +184,20 @@ def _run(test_results, recipe_deps, use_emoji, test_filter, is_train,
         fail_tracker.recent_fails)
     test_results.unused_expectation_files.extend(unused_expectation_files)
 
-    def execute_queue():
+    def execute_queue() -> bool:
       has_fail = False
 
       while live_threads and not (has_fail and stop):
         rslt = outcome_queue.get()
-        if isinstance(rslt, RunnerThread):
+        if isinstance(rslt, runner_mod.RunnerThread):
           # should be done at this point, but make sure for cleanliness sake.
           gevent.wait([rslt])
           live_threads.remove(rslt)
           continue
 
         if rslt.warnings:
-          # Note - we don't just use MergeFrom here because it doesn't work well with
-          # map types, e.g. if you merge:
+          # Note - we don't just use MergeFrom here because it doesn't work well
+          # with map types, e.g. if you merge:
           #
           #    msg { mapval {key: "something" value: 1 value: 2} }
           #    msg { mapval {key: "something" value: 3 } }
@@ -195,8 +223,11 @@ def _run(test_results, recipe_deps, use_emoji, test_filter, is_train,
       #
       # If we don't have any filters, collect coverage data.
       if (test_filter or (stop and has_fail)) is False:
-        data_paths = [t.cov_file for t in all_threads
-                      if os.path.isfile(t.cov_file)]
+        data_paths = [
+            t.cov_file
+            for t in all_threads
+            if t.cov_file and os.path.isfile(t.cov_file)
+        ]
         if data_paths:
           total_cov.combine(data_paths)
 
@@ -228,7 +259,8 @@ def _run(test_results, recipe_deps, use_emoji, test_filter, is_train,
     except OSError:
       pass
 
-def main(args):
+
+def main(args: argparse.Namespace) -> int:
   """Runs simulation tests on a given repo of recipes.
 
   Args:
@@ -237,9 +269,9 @@ def main(args):
     Exit code
   """
   is_train = args.subcommand == 'train'
-  ret = Outcome()
+  ret = runner_pb.Outcome()
 
-  def _dump():
+  def _dump() -> None:
     if args.json:
       output = []
       result = json_format.MessageToDict(ret, preserving_proto_field_name=True)
@@ -270,7 +302,7 @@ def main(args):
   docs_enabled = (not repo.recipes_cfg_pb2.no_docs) and args.docs
   is_run = args.subcommand == 'run'
   if docs_enabled:
-    if is_run and doc_diff(repo):
+    if is_run and doc_cmd.doc_diff(repo):
       print('------')
       print('README.recipes.md needs to be updated. Please run:')
       print()
@@ -281,6 +313,6 @@ def main(args):
     if is_train:
       print('Generating README.recipes.md')
       with open(repo.readme_path, 'w') as f:
-        regenerate_doc(repo, f)
+        doc_cmd.regenerate_doc(repo, f)
 
   return 0

@@ -6,54 +6,55 @@
 
 from __future__ import annotations
 
-import sys
+import collections
+from collections.abc import Mapping
 import copy
 import datetime
 import re
-
-from collections import OrderedDict
+import sys
+from typing import Any
 
 import test_env
 
-from recipe_engine.post_process_inputs import Command
-from recipe_engine.recipe_test_api import PostprocessHookContext, RecipeTestApi
-from recipe_engine.internal.test.magic_check_fn import \
-  Checker, CheckFrame, PostProcessError, Step, VerifySubset, \
-  post_process
+from PB.recipe_engine.internal.test import runner as runner_pb
+from recipe_engine import post_process_inputs
+from recipe_engine import recipe_test_api
+from recipe_engine.internal.test import magic_check_fn
 
-from PB.recipe_engine.internal.test.runner import Outcome
-
-
-HOOK_CONTEXT = PostprocessHookContext(lambda: None, (), {}, '<filename>', 0)
-
-
-HOOK_CONTEXT = PostprocessHookContext(lambda: None, (), {}, '<filename>', 0)
+HOOK_CONTEXT = recipe_test_api.PostprocessHookContext(
+    lambda: None, (), {}, '<filename>', 0
+)
 
 
 class TestChecker(test_env.RecipeEngineUnitTest):
-  def sanitize(self, checkframe):
+  def sanitize(
+      self, checkframe: magic_check_fn.CheckFrame
+  ) -> magic_check_fn.CheckFrame:
     return checkframe._replace(line=0, fname='')
 
-  def mk(self, fname, code, varmap):
-    return CheckFrame(
-      fname='', line=0, function=fname, code=code, varmap=varmap)
+  def mk(
+      self, fname: str, code: str, varmap: dict[str, str] | None
+  ) -> magic_check_fn.CheckFrame:
+    return magic_check_fn.CheckFrame(
+        fname='', line=0, function=fname, code=code, varmap=varmap
+    )
 
-  def test_no_calls(self):
-    c = Checker(HOOK_CONTEXT)
+  def test_no_calls(self) -> None:
+    c = magic_check_fn.Checker(HOOK_CONTEXT)
     def body(_):
       pass
     body(c)
     self.assertEqual(len(c.failed_checks), 0)
 
-  def test_success_call(self):
-    c = Checker(HOOK_CONTEXT)
+  def test_success_call(self) -> None:
+    c = magic_check_fn.Checker(HOOK_CONTEXT)
     def body(check):
       check(True is True)
     body(c)
     self.assertEqual(len(c.failed_checks), 0)
 
-  def test_simple_fail(self):
-    c = Checker(HOOK_CONTEXT)
+  def test_simple_fail(self) -> None:
+    c = magic_check_fn.Checker(HOOK_CONTEXT)
     def body(check):
       check(True is False)
     body(c)
@@ -63,8 +64,8 @@ class TestChecker(test_env.RecipeEngineUnitTest):
       self.sanitize(c.failed_checks[0].frames[0]),
       self.mk('body', 'check((True is False))', {}))
 
-  def test_simple_fail_multiline(self):
-    c = Checker(HOOK_CONTEXT)
+  def test_simple_fail_multiline(self) -> None:
+    c = magic_check_fn.Checker(HOOK_CONTEXT)
     def body(check):
       falsey = lambda: False
       check(
@@ -79,8 +80,8 @@ class TestChecker(test_env.RecipeEngineUnitTest):
       self.sanitize(c.failed_checks[0].frames[0]),
       self.mk('body', 'check((True is falsey()))', {}))
 
-  def test_simple_fail_multiline_multistatement(self):
-    c = Checker(HOOK_CONTEXT)
+  def test_simple_fail_multiline_multistatement(self) -> None:
+    c = magic_check_fn.Checker(HOOK_CONTEXT)
     def body(check):
       other = 'thing'
       falsey = lambda: False
@@ -95,8 +96,8 @@ class TestChecker(test_env.RecipeEngineUnitTest):
         self.sanitize(c.failed_checks[0].frames[0]),
         self.mk('body', 'check((True is falsey()))', {}))
 
-  def test_fail_nested_statement(self):
-    c = Checker(HOOK_CONTEXT)
+  def test_fail_nested_statement(self) -> None:
+    c = magic_check_fn.Checker(HOOK_CONTEXT)
     def body(check):
       other = 'thing'
       falsey = lambda: False
@@ -118,8 +119,8 @@ class TestChecker(test_env.RecipeEngineUnitTest):
         self.mk('body', 'check((True is falsey()))', {}),
     )
 
-  def test_var_fail(self):
-    c = Checker(HOOK_CONTEXT)
+  def test_var_fail(self) -> None:
+    c = magic_check_fn.Checker(HOOK_CONTEXT)
     def body(check):
       val = True
       check(val is False)
@@ -130,8 +131,8 @@ class TestChecker(test_env.RecipeEngineUnitTest):
       self.sanitize(c.failed_checks[0].frames[0]),
       self.mk('body', 'check((val is False))', {'val': 'True'}))
 
-  def test_dict_membership(self):
-    c = Checker(HOOK_CONTEXT)
+  def test_dict_membership(self) -> None:
+    c = magic_check_fn.Checker(HOOK_CONTEXT)
     def body(check):
       targ = {'a': 'b', 'c': 'd'}
       check('a' not in targ)
@@ -143,8 +144,8 @@ class TestChecker(test_env.RecipeEngineUnitTest):
       self.mk('body', "check(('a' not in targ))",
               {'targ.keys()': "['a', 'c']"}))
 
-  def test_dict_lookup(self):
-    c = Checker(HOOK_CONTEXT)
+  def test_dict_lookup(self) -> None:
+    c = magic_check_fn.Checker(HOOK_CONTEXT)
     def body(check):
       targ = {'a': {'sub': 'b'}, 'c': 'd'}
       check('cow' in targ['a'])
@@ -156,8 +157,8 @@ class TestChecker(test_env.RecipeEngineUnitTest):
       self.mk('body', "check(('cow' in targ['a']))",
               {"targ['a'].keys()": "['sub']"}))
 
-  def test_dict_lookup_nest(self):
-    c = Checker(HOOK_CONTEXT)
+  def test_dict_lookup_nest(self) -> None:
+    c = magic_check_fn.Checker(HOOK_CONTEXT)
     def body(check):
       key = 'sub'
       targ = {'a': {'sub': 'whee'}, 'c': 'd'}
@@ -173,8 +174,8 @@ class TestChecker(test_env.RecipeEngineUnitTest):
             'key': "'sub'"
         }))
 
-  def test_lambda_call(self):
-    c = Checker(HOOK_CONTEXT)
+  def test_lambda_call(self) -> None:
+    c = magic_check_fn.Checker(HOOK_CONTEXT)
     def body(check):
       vals = ['whee', 'sub']
       targ = {'a': {'sub': 'whee'}, 'c': 'd'}
@@ -195,8 +196,8 @@ class TestChecker(test_env.RecipeEngineUnitTest):
                     "targ['a'].keys()": "['sub']"
                 }))
 
-  def test_lambda_in_multiline_expr_call(self):
-    c = Checker(HOOK_CONTEXT)
+  def test_lambda_in_multiline_expr_call(self) -> None:
+    c = magic_check_fn.Checker(HOOK_CONTEXT)
     def wrap(f):
       return f
     def body(check, f):
@@ -220,8 +221,8 @@ class TestChecker(test_env.RecipeEngineUnitTest):
         self.mk('<lambda>', '(lambda check: check((value in target)))',
                 {'value': "'food'", 'target': "['foo', 'bar', 'baz']"}))
 
-  def test_if_test(self):
-    c = Checker(HOOK_CONTEXT)
+  def test_if_test(self) -> None:
+    c = magic_check_fn.Checker(HOOK_CONTEXT)
     def body(check):
       vals = ['foo', 'bar']
       target = 'baz'
@@ -235,8 +236,8 @@ class TestChecker(test_env.RecipeEngineUnitTest):
         self.mk('body', 'check((target in vals))',
                 {'target': "'baz'", 'vals': "['foo', 'bar']"}))
 
-  def test_key_error_in_short_circuited_expression(self):
-    c = Checker(HOOK_CONTEXT)
+  def test_key_error_in_short_circuited_expression(self) -> None:
+    c = magic_check_fn.Checker(HOOK_CONTEXT)
     def body(check):
       d = {'foo': 1, 'bar': 2}
       check('baz' in d and d['baz'] == 3)
@@ -248,8 +249,8 @@ class TestChecker(test_env.RecipeEngineUnitTest):
         self.mk('body', "check((('baz' in d) and (d['baz'] == 3)))",
                 {'d.keys()': "['bar', 'foo']"}))
 
-  def test_elif_test(self):
-    c = Checker(HOOK_CONTEXT)
+  def test_elif_test(self) -> None:
+    c = magic_check_fn.Checker(HOOK_CONTEXT)
     def body(check):
       vals = ['foo', 'bar']
       target = 'baz'
@@ -265,8 +266,8 @@ class TestChecker(test_env.RecipeEngineUnitTest):
         self.mk('body', 'check((target in vals))',
                 {'target': "'baz'", 'vals': "['foo', 'bar']"}))
 
-  def test_while_test(self):
-    c = Checker(HOOK_CONTEXT)
+  def test_while_test(self) -> None:
+    c = magic_check_fn.Checker(HOOK_CONTEXT)
     def body(check):
       vals = ['foo', 'bar', 'baz']
       invalid_value = 'bar'
@@ -281,21 +282,26 @@ class TestChecker(test_env.RecipeEngineUnitTest):
         self.mk('body', 'check((vals[i] != invalid_value))',
                 {'i': '1', 'invalid_value': "'bar'", 'vals[i]': "'bar'"}))
 
+
 class TestStep(test_env.RecipeEngineUnitTest):
-  def assertConversion(self, step_dict, expected_step):
-    s = Step.from_step_dict(step_dict)
+  def assertConversion(
+      self,
+      step_dict: Mapping[str, Any],
+      expected_step: post_process_inputs.Step,
+  ) -> None:
+    s = post_process_inputs.Step.from_step_dict(step_dict)
     self.assertEqual(s, expected_step)
     self.assertEqual(s.to_step_dict(), step_dict)
 
-  def test_empty_step(self):
+  def test_empty_step(self) -> None:
     with self.assertRaisesRegex(ValueError, "step dict must have 'name' key"):
-      Step.from_step_dict({})
+      post_process_inputs.Step.from_step_dict({})
 
-  def test_minimal_step(self):
+  def test_minimal_step(self) -> None:
     d = {'name': 'foo'}
-    self.assertConversion(d, Step(name='foo'))
+    self.assertConversion(d, post_process_inputs.Step(name='foo'))
 
-  def test_all_step_dict_fields(self):
+  def test_all_step_dict_fields(self) -> None:
     d = {
         'name': 'fake-step-name',
         'cmd': ['my', 'command', 'arguments'],
@@ -316,22 +322,22 @@ class TestStep(test_env.RecipeEngineUnitTest):
         'nest_level': 42,
         'step_text': 'fake-step-text',
         'step_summary_text': 'fake-step-summary-text',
-        'logs': OrderedDict([
+        'logs': collections.OrderedDict([
             ('foo', 'foo-line-1\nfoo-line-2'),
             ('bar', 'bar-line-1\nbar-line-2'),
         ]),
-        'links': OrderedDict([
+        'links': collections.OrderedDict([
             ('foo', 'fake-foo-url'),
             ('bar', 'fake-bar-url'),
         ]),
         'status': 'EXCEPTION',
-        'output_properties': OrderedDict([
+        'output_properties': collections.OrderedDict([
             ('foo', 'foo-value'),
             ('bar', 'bar-value'),
         ]),
     }
 
-    self.assertConversion(d, Step(
+    self.assertConversion(d, post_process_inputs.Step(
         name='fake-step-name',
         cmd=['my', 'command', 'arguments'],
         cwd='fake-cwd',
@@ -351,16 +357,16 @@ class TestStep(test_env.RecipeEngineUnitTest):
         nest_level=42,
         step_text='fake-step-text',
         step_summary_text='fake-step-summary-text',
-        logs=OrderedDict([
+        logs=collections.OrderedDict([
             ('foo', 'foo-line-1\nfoo-line-2'),
             ('bar', 'bar-line-1\nbar-line-2'),
         ]),
-        links=OrderedDict([
+        links=collections.OrderedDict([
             ('foo', 'fake-foo-url'),
             ('bar', 'fake-bar-url'),
         ]),
         status='EXCEPTION',
-        output_properties=OrderedDict([
+        output_properties=collections.OrderedDict([
             ('foo', 'foo-value'),
             ('bar', 'bar-value'),
         ]),
@@ -368,27 +374,27 @@ class TestStep(test_env.RecipeEngineUnitTest):
 
 
 class CommandTest(test_env.RecipeEngineUnitTest):
-  def test_contains_single_non_matcher(self):
-    c = Command(['foo', 'bar', 'baz'])
+  def test_contains_single_non_matcher(self) -> None:
+    c = post_process_inputs.Command(['foo', 'bar', 'baz'])
     self.assertFalse(0 in c)
 
-  def test_contains_single_string(self):
-    c = Command(['foo', 'bar', 'baz'])
+  def test_contains_single_string(self) -> None:
+    c = post_process_inputs.Command(['foo', 'bar', 'baz'])
     self.assertTrue('foo' in c)
     self.assertTrue('bar' in c)
     self.assertTrue('baz' in c)
     self.assertFalse('quux' in c)
 
-  def test_contains_single_regex(self):
-    c = Command(['foo', 'bar', 'baz'])
+  def test_contains_single_regex(self) -> None:
+    c = post_process_inputs.Command(['foo', 'bar', 'baz'])
     self.assertTrue(re.compile('ba.') in c)
     self.assertTrue(re.compile('a') in c)
     self.assertTrue(re.compile('z$') in c)
     self.assertTrue(re.compile('^bar$') in c)
     self.assertFalse(re.compile('^a$') in c)
 
-  def test_contains_string_sequence(self):
-    c = Command(['foo', 'bar', 'baz'])
+  def test_contains_string_sequence(self) -> None:
+    c = post_process_inputs.Command(['foo', 'bar', 'baz'])
     self.assertTrue([] in c)
     self.assertTrue(['bar'] in c)
     self.assertTrue(['foo', 'bar'] in c)
@@ -396,32 +402,34 @@ class CommandTest(test_env.RecipeEngineUnitTest):
     self.assertTrue(['foo', 'bar', 'baz'] in c)
     self.assertFalse(['foo', 'baz'] in c)
 
-  def test_contains_matcher_sequence(self):
-    c = Command(['foo', 'bar', 'baz'])
+  def test_contains_matcher_sequence(self) -> None:
+    c = post_process_inputs.Command(['foo', 'bar', 'baz'])
     self.assertTrue([re.compile('z')] in c)
     self.assertTrue([re.compile('.o.'), 'bar', re.compile('z')] in c)
     self.assertFalse([re.compile('f'), re.compile('z'), re.compile('r')] in c)
 
-  def test_contains_ellipsis(self):
+  def test_contains_ellipsis(self) -> None:
     self.assertTrue(
         ['a', 'foo', Ellipsis, 'bar'] in
-        Command(['a', 'foo', 'narp', 'bar']))
+        post_process_inputs.Command(['a', 'foo', 'narp', 'bar']))
     self.assertTrue(
         ['foo', Ellipsis, 'bar', 'a'] in
-        Command(['foo', 'bar', 'a']))
+        post_process_inputs.Command(['foo', 'bar', 'a']))
 
     self.assertTrue(
         ['foo', Ellipsis, 'bar', Ellipsis, re.compile('^a')] in
-        Command(['foo', 'narp', 'bar', 'tarp', 'stuff', 'aardvark']))
+        post_process_inputs.Command(
+            ['foo', 'narp', 'bar', 'tarp', 'stuff', 'aardvark']))
 
     self.assertFalse(
         ['foo', Ellipsis, 'bar'] in
-        Command(['foo', 'narp']))
+        post_process_inputs.Command(['foo', 'narp']))
+
 
 class TestVerifySubset(test_env.RecipeEngineUnitTest):
   @staticmethod
-  def mkData(*steps):
-    return OrderedDict([
+  def mkData(*steps: str) -> collections.OrderedDict[str, dict[str, Any]]:
+    return collections.OrderedDict([
       (s, {
         'cmd': ['list', 'of', 'things'],
         'env': {
@@ -432,13 +440,13 @@ class TestVerifySubset(test_env.RecipeEngineUnitTest):
       }) for s in steps
     ])
 
-  def setUp(self):
+  def setUp(self) -> None:
     super().setUp()
-    self.v = VerifySubset
+    self.v = magic_check_fn.VerifySubset
     self.d = self.mkData('a', 'b', 'c')
     self.c = copy.deepcopy(self.d)
 
-  def test_types(self):
+  def test_types(self) -> None:
     self.assertIn(
       "type mismatch: 'str' v 'OrderedDict'",
       self.v('hi', self.d))
@@ -447,38 +455,38 @@ class TestVerifySubset(test_env.RecipeEngineUnitTest):
       "type mismatch: 'list' v 'OrderedDict'",
       self.v(['hi'], self.d))
 
-  def test_empty(self):
+  def test_empty(self) -> None:
     self.assertIsNone(self.v({}, self.d))
-    self.assertIsNone(self.v(OrderedDict(), self.d))
+    self.assertIsNone(self.v(collections.OrderedDict(), self.d))
 
-  def test_empty_cmd(self):
+  def test_empty_cmd(self) -> None:
     self.c['a']['cmd'] = []
     self.d['a']['cmd'] = []
     self.assertIsNone(self.v(self.c, self.d))
 
-  def test_single_removal(self):
+  def test_single_removal(self) -> None:
     del self.c['c']
     self.assertIsNone(self.v(self.c, self.d))
 
-  def test_add(self):
+  def test_add(self) -> None:
     self.c['d'] = self.c['a']
     self.assertIn(
       "added key 'd'",
       self.v(self.c, self.d))
 
-  def test_add_key(self):
+  def test_add_key(self) -> None:
     self.c['c']['blort'] = 'cake'
     self.assertIn(
       "added key 'blort'",
       self.v(self.c, self.d))
 
-  def test_key_alter(self):
+  def test_key_alter(self) -> None:
     self.c['c']['cmd'] = 'cake'
     self.assertEqual(
       "['c']['cmd']: type mismatch: 'str' v 'list'",
       self.v(self.c, self.d))
 
-  def test_list_add(self):
+  def test_list_add(self) -> None:
     self.c['c']['cmd'].append('something')
     self.assertIn(
       "['c']['cmd']: too long: 4 v 3",
@@ -489,13 +497,13 @@ class TestVerifySubset(test_env.RecipeEngineUnitTest):
       "['c']['cmd']: added 1 elements",
       self.v(self.c, self.d))
 
-  def test_list_of_dict(self):
+  def test_list_of_dict(self) -> None:
     self.assertIsNone(
       self.v(
         [{'c': 'd', 'a': 'cat'}],
         [{'a': 'b'}, {'c': 'd'}]))
 
-  def test_ordereddict(self):
+  def test_ordereddict(self) -> None:
     a = self.c['a']
     del self.c['a']
     self.c['a'] = a
@@ -507,23 +515,25 @@ class TestVerifySubset(test_env.RecipeEngineUnitTest):
 class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
 
   @staticmethod
-  def mkApi():
-    return RecipeTestApi(None)
+  def mkApi() -> recipe_test_api.RecipeTestApi:
+    return recipe_test_api.RecipeTestApi(None)
 
-  def assertHas(self, failure, *text):
+  def assertHas(
+      self, failure: runner_pb.Outcome.Results.Lines, *text: str
+  ) -> None:
     combined = '\n'.join(failure.lines)
     for item in text:
       self.assertIn(item, combined)
 
-  def test_returning_none(self):
-    d = OrderedDict([
+  def test_returning_none(self) -> None:
+    d = collections.OrderedDict([
         ('x', {'name': 'x', 'cmd': ['one', 'two', 'three']}),
         ('y', {'name': 'y', 'cmd': []}),
         ('z', {'name': 'z', 'cmd': ['foo', 'bar']}),
     ])
     test_data = self.mkApi().post_process(lambda check, steps: None)
-    results = Outcome.Results()
-    expectations = post_process(results, d, test_data)
+    results = runner_pb.Outcome.Results()
+    expectations = magic_check_fn.post_process(results, d, test_data)
     self.assertEqual(expectations, [
         {'name': 'x', 'cmd': ['one', 'two', 'three']},
         {'name': 'y', 'cmd': []},
@@ -531,60 +541,61 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
     ])
     self.assertEqual(len(results.check), 0)
 
-  def test_returning_subset(self):
-    d = OrderedDict([
+  def test_returning_subset(self) -> None:
+    d = collections.OrderedDict([
         ('x', {'name': 'x', 'cmd': ['one', 'two', 'three']}),
         ('y', {'name': 'y', 'cmd': []}),
         ('z', {'name': 'z', 'cmd': ['foo', 'bar']}),
     ])
     test_data = self.mkApi().post_process(
         lambda check, steps:
-        OrderedDict((k, {'name': v.name}) for k, v in steps.items()))
-    results = Outcome.Results()
-    expectations = post_process(results, d, test_data)
+        collections.OrderedDict((k, {'name': v.name}) for k, v in steps.items())
+    )
+    results = runner_pb.Outcome.Results()
+    expectations = magic_check_fn.post_process(results, d, test_data)
     self.assertEqual(
         expectations, [{'name': 'x'}, {'name': 'y'}, {'name': 'z'}])
     self.assertEqual(len(results.check), 0)
 
-  def test_returning_empty(self):
-    d = OrderedDict([
+  def test_returning_empty(self) -> None:
+    d = collections.OrderedDict([
         ('x', {'name': 'x', 'cmd': ['one', 'two', 'three']}),
         ('y', {'name': 'y', 'cmd': []}),
         ('z', {'name': 'z', 'cmd': ['foo', 'bar']}),
     ])
     test_data = self.mkApi().post_process(lambda check, steps: {})
-    results = Outcome.Results()
-    expectations = post_process(results, d, test_data)
+    results = runner_pb.Outcome.Results()
+    expectations = magic_check_fn.post_process(results, d, test_data)
     self.assertIsNone(expectations)
     self.assertEqual(len(results.check), 0)
 
-  def test_returning_nonsubset(self):
-    d = OrderedDict([
+  def test_returning_nonsubset(self) -> None:
+    d = collections.OrderedDict([
         ('x', {'name': 'x', 'cmd': ['one', 'two', 'three']}),
         ('y', {'name': 'y', 'cmd': []}),
         ('z', {'name': 'z', 'cmd': ['foo', 'bar']}),
     ])
     test_data = self.mkApi().post_process(
         lambda check, steps:
-        OrderedDict((k, dict(cwd='cwd', **v.to_step_dict()))
-                    for k, v in steps.items()))
-    with self.assertRaises(PostProcessError):
-      post_process(Outcome.Results(), d, test_data)
+        collections.OrderedDict((k, dict(cwd='cwd', **v.to_step_dict()))
+                                for k, v in steps.items()))
+    with self.assertRaises(magic_check_fn.PostProcessError):
+      magic_check_fn.post_process(runner_pb.Outcome.Results(), d, test_data)
 
-  def test_removing_name(self):
-    d = OrderedDict([
+  def test_removing_name(self) -> None:
+    d = collections.OrderedDict([
         ('x', {'name': 'x', 'cmd': ['one', 'two', 'three']}),
         ('y', {'name': 'y', 'cmd': []}),
         ('z', {'name': 'z', 'cmd': ['foo', 'bar']}),
     ])
     test_data = self.mkApi().post_process(
         lambda check, steps:
-        OrderedDict(
+        collections.OrderedDict(
             (k, {a: value for a, value in v.to_step_dict().items()
                  if a != 'name'})
-            for k,v in steps.items()))
-    results = Outcome.Results()
-    expectations = post_process(results, d, test_data)
+            for k, v in steps.items()))
+    results = runner_pb.Outcome.Results()
+    expectations = magic_check_fn.post_process(results, d, test_data)
     self.assertEqual(expectations, [
         {'name': 'x', 'cmd': ['one', 'two', 'three']},
         {'name': 'y', 'cmd': []},
@@ -592,13 +603,13 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
     ])
     self.assertEqual(len(results.check), 0)
 
-  def test_post_process_failure(self):
-    d = OrderedDict([('x', {'name': 'x'})])
+  def test_post_process_failure(self) -> None:
+    d = collections.OrderedDict([('x', {'name': 'x'})])
     def body(check, steps, *args, **kwargs):
       check('x' not in steps)
     test_data = self.mkApi().post_process(body, 'foo', 'bar', a=1, b=2)
-    results = Outcome.Results()
-    expectations = post_process(results, d, test_data)
+    results = runner_pb.Outcome.Results()
+    expectations = magic_check_fn.post_process(results, d, test_data)
     self.assertEqual(expectations, [{'name': 'x'}])
     self.assertEqual(len(results.check), 1)
     self.assertHas(results.check[0],
@@ -608,8 +619,8 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
         "check(('x' not in steps))",
         "steps.keys(): ['x']")
 
-  def test_post_process_failure_in_multiple_hooks(self):
-    d = OrderedDict([('x', {'name': 'x'})])
+  def test_post_process_failure_in_multiple_hooks(self) -> None:
+    d = collections.OrderedDict([('x', {'name': 'x'})])
     def body(check, steps, *args, **kwargs):
       check('x' not in steps)
     def body2(check, steps, *args, **kwargs):
@@ -617,8 +628,8 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
     api = self.mkApi()
     test_data = (api.post_process(body, 'foo', a=1) +
                  api.post_process(body2, 'bar', b=2))
-    results = Outcome.Results()
-    expectations = post_process(results, d, test_data)
+    results = runner_pb.Outcome.Results()
+    expectations = magic_check_fn.post_process(results, d, test_data)
     self.assertEqual(expectations, [{'name': 'x'}])
     self.assertEqual(len(results.check), 2)
     self.assertHas(
@@ -632,13 +643,13 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
         "check(('y' in steps))",
         "steps.keys(): ['x']")
 
-  def test_post_check_failure(self):
-    d = OrderedDict([('x', {'name': 'x'})])
+  def test_post_check_failure(self) -> None:
+    d = collections.OrderedDict([('x', {'name': 'x'})])
     test_data = self.mkApi().post_check(
         lambda check, steps, *args, **kwargs: check('x' not in steps),
         'foo', 'bar', a=1, b=2)
-    results = Outcome.Results()
-    expectations = post_process(results, d, test_data)
+    results = runner_pb.Outcome.Results()
+    expectations = magic_check_fn.post_process(results, d, test_data)
     self.assertEqual(expectations, [{'name': 'x'}])
     self.assertEqual(len(results.check), 1)
     self.assertHas(
@@ -655,13 +666,13 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
         "(lambda check, steps, *args, **kwargs: check(('x' not in steps)))",
         "steps.keys(): ['x']")
 
-  def test_key_error_implicit_check(self):
-    d = OrderedDict([('x', {'name': 'x'})])
+  def test_key_error_implicit_check(self) -> None:
+    d = collections.OrderedDict([('x', {'name': 'x'})])
     def body(check, steps):
       foo = steps['x'].env['foo']
     test_data = self.mkApi().post_process(body)
-    results = Outcome.Results()
-    expectations = post_process(results, d, test_data)
+    results = runner_pb.Outcome.Results()
+    expectations = magic_check_fn.post_process(results, d, test_data)
     self.assertEqual(len(results.check), 1)
     self.assertHas(
         results.check[0],
@@ -669,13 +680,13 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
         "steps['x'].env.keys(): []",
         "raised exception: KeyError: 'foo'")
 
-  def test_key_error_followed_by_attribute(self):
-    d = OrderedDict([('x', {'name': 'x'})])
+  def test_key_error_followed_by_attribute(self) -> None:
+    d = collections.OrderedDict([('x', {'name': 'x'})])
     def body(check, steps):
       foo = steps['y'].env['foo']
     test_data = self.mkApi().post_process(body)
-    results = Outcome.Results()
-    post_process(results, d, test_data)
+    results = runner_pb.Outcome.Results()
+    magic_check_fn.post_process(results, d, test_data)
     self.assertEqual(len(results.check), 1)
     self.assertHas(
         results.check[0],
@@ -683,14 +694,14 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
         "steps.keys(): ['x']",
         "raised exception: KeyError: 'y'")
 
-  def test_key_error_in_subscript_expression(self):
-    d = OrderedDict([('x', {'name': 'x'})])
+  def test_key_error_in_subscript_expression(self) -> None:
+    d = collections.OrderedDict([('x', {'name': 'x'})])
     def body(check, steps):
       d2 = {}
       foo = steps[d2['x']].env['foo']
     test_data = self.mkApi().post_process(body)
-    results = Outcome.Results()
-    expectations = post_process(results, d, test_data)
+    results = runner_pb.Outcome.Results()
+    expectations = magic_check_fn.post_process(results, d, test_data)
     self.assertEqual(len(results.check), 1)
     self.assertHas(
         results.check[0],
@@ -698,8 +709,8 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
         'd2.keys(): []',
         "raised exception: KeyError: 'x'")
 
-  def test_key_error_implicit_check_no_checker_in_frame(self):
-    d = OrderedDict([('x', {'name': 'x'})])
+  def test_key_error_implicit_check_no_checker_in_frame(self) -> None:
+    d = collections.OrderedDict([('x', {'name': 'x'})])
     def body(check, steps_dict):
       # The failure backtrace for the implicit check should even include frames
       # where check isn't explicitly passed
@@ -707,8 +718,8 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
         return steps_dict['x'].env['foo'] == 'bar'
       check(inner(steps_dict))
     test_data = self.mkApi().post_process(body)
-    results = Outcome.Results()
-    post_process(results, d, test_data)
+    results = runner_pb.Outcome.Results()
+    magic_check_fn.post_process(results, d, test_data)
     self.assertEqual(len(results.check), 1)
     self.assertHas(
         results.check[0],

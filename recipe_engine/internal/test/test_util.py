@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 
-def filesystem_safe(name):
+def filesystem_safe(name: str) -> str:
   """Returns a filesystem safe version of a test name.
 
   Args:

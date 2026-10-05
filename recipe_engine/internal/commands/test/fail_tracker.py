@@ -4,18 +4,20 @@
 
 from __future__ import annotations
 
-from builtins import object
-from typing import TextIO
+from typing import Any, TextIO
 
 import attr
+
 
 class ClosedFailFile:
   """Sentinel class that replaced the fail file after it's been closed."""
   pass
 
+
 class FailFileAlreadyClosedException(Exception):
   """An exception that is raised when FailTracker.cleanup() is called twice."""
   pass
+
 
 @attr.s
 class FailTracker:
@@ -26,12 +28,12 @@ class FailTracker:
   flowing in, so if a run is canceled early, the fail cache will remain
   unharmed.
   """
-  _fail_file_path = attr.ib()
+  _fail_file_path: str = attr.ib()
 
-  _fail_file = attr.ib(default=None, type=TextIO)
-  _recent_fails = attr.ib(factory=set)
+  _fail_file: TextIO | ClosedFailFile | None = attr.ib(default=None)
+  _recent_fails: set[str] = attr.ib(factory=set)
 
-  def __attrs_post_init__(self):
+  def __attrs_post_init__(self) -> None:
     try:
       with open(self._fail_file_path) as f:
         self._recent_fails = set(f.read().splitlines())
@@ -39,12 +41,12 @@ class FailTracker:
       self._recent_fails = set()
 
   @property
-  def recent_fails(self):
+  def recent_fails(self) -> set[str]:
     """Contains the contents of the .previous_fails file, which is a newline
     separated list of recipe.test_case that failed last run."""
     return self._recent_fails
 
-  def cache_recent_fails(self, test_name, test_result):
+  def cache_recent_fails(self, test_name: str, test_result: Any) -> bool:
     """Caches recently failed test cases to a file
 
     Args:
@@ -65,12 +67,13 @@ class FailTracker:
         # isn't closed, it shouldn't be the end of the world.
         self._fail_file = open(self._fail_file_path, 'w')
 
+      assert not isinstance(self._fail_file, ClosedFailFile)
       self._fail_file.write('%s\n' % test_name)
       self._fail_file.flush()
       return True
     return False
 
-  def cleanup(self):
+  def cleanup(self) -> None:
     """Cleans up the dangling file pointer that this class uses.
 
     This should be called once all test results have been streamed to the
@@ -85,7 +88,7 @@ class FailTracker:
       self._fail_file = ClosedFailFile()
 
   @staticmethod
-  def test_failed(test_result):
+  def test_failed(test_result: Any) -> set[str]:
     """Returns whether a test failed."""
     error_fields = set(('internal_error', 'bad_test', 'crash_mismatch', 'check',
                         'diff'))

@@ -8,9 +8,14 @@ file descriptors)."""
 from __future__ import annotations
 
 import struct
+from typing import BinaryIO, TypeVar
+
+from google.protobuf import message as message_pb
+
+_M = TypeVar('_M', bound=message_pb.Message)
 
 
-def read_message(in_file, msg_class):
+def read_message(in_file: BinaryIO, msg_class: type[_M]) -> _M | None:
   """Reads the given proto Message subclass from the file descriptor `in_file`.
 
   This expects a 4-byte network-order (big-endian) size prefix, followed by
@@ -27,7 +32,7 @@ def read_message(in_file, msg_class):
   Raises EOFError on EOF/partial read from in_file
   Raises any error that msg_class.ParseFromString could raise.
   """
-  def _read(size):
+  def _read(size: int) -> bytes:
     """Reads size bytes from in_file.
 
     If in_file is buffered, it will keep reading until there is either no data
@@ -61,7 +66,7 @@ def read_message(in_file, msg_class):
   return ret
 
 
-def write_message(out_file, message):
+def write_message(out_file: BinaryIO, message: message_pb.Message) -> bool:
   """Serializes `message` to binary proto, writes a size header and the proto
   data to `out_file`.
 

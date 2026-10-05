@@ -9,7 +9,7 @@ import test_env
 
 
 class TestSimulation(test_env.RecipeEngineUnitTest):
-  def test_basic(self):
+  def test_basic(self) -> None:
     deps = self.FakeRecipeDeps()
     with deps.main_repo.write_module('modname') as mod:
       mod.api.write('''
@@ -29,7 +29,7 @@ class TestSimulation(test_env.RecipeEngineUnitTest):
     output, retcode = deps.main_repo.recipes_py('test', 'train')
     self.assertEqual(retcode, 0, 'failed train with output:\n' + output)
 
-  def test_no_coverage(self):
+  def test_no_coverage(self) -> None:
     deps = self.FakeRecipeDeps()
     with deps.main_repo.write_module('modname') as mod:
       mod.api.write('''
@@ -45,7 +45,7 @@ class TestSimulation(test_env.RecipeEngineUnitTest):
         'The following modules lack any form of test coverage:\n   modname',
         output)
 
-  def test_no_coverage_allowlisted(self):
+  def test_no_coverage_allowlisted(self) -> None:
     deps = self.FakeRecipeDeps()
 
     with deps.main_repo.write_module('modname') as mod:
@@ -63,7 +63,7 @@ class TestSimulation(test_env.RecipeEngineUnitTest):
     self.assertEqual(retcode, 1)
     self.assertIn('FATAL: Insufficient total coverage', output)
 
-  def test_incomplete_coverage(self):
+  def test_incomplete_coverage(self) -> None:
     deps = self.FakeRecipeDeps()
 
     with deps.main_repo.write_module('modname') as mod:
@@ -86,7 +86,7 @@ class TestSimulation(test_env.RecipeEngineUnitTest):
     self.assertEqual(retcode, 1)
     self.assertIn('FATAL: Insufficient total coverage', output)
 
-  def test_incomplete_coverage_allowlisted(self):
+  def test_incomplete_coverage_allowlisted(self) -> None:
     deps = self.FakeRecipeDeps()
 
     # Even with disabled strict coverage, regular coverage (100%)
@@ -112,7 +112,7 @@ class TestSimulation(test_env.RecipeEngineUnitTest):
     self.assertEqual(retcode, 1)
     self.assertIn('FATAL: Insufficient total coverage', output)
 
-  def test_recipe_coverage_strict(self):
+  def test_recipe_coverage_strict(self) -> None:
     deps = self.FakeRecipeDeps()
 
     with deps.main_repo.write_module('modname') as mod:
@@ -141,7 +141,7 @@ class TestSimulation(test_env.RecipeEngineUnitTest):
     self.assertEqual(retcode, 1)
     self.assertIn('FATAL: Insufficient total coverage', output)
 
-  def test_recipe_coverage_strict_allowlisted(self):
+  def test_recipe_coverage_strict_allowlisted(self) -> None:
     deps = self.FakeRecipeDeps()
 
     with deps.main_repo.write_module('modname') as mod:
