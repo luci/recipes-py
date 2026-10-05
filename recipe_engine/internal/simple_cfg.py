@@ -10,15 +10,16 @@ engine can present a unified protobuf implementation.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 import json
 import logging
 import os
+from typing import Any, TypeVar
 
 import attr
 
-from ..engine_types import freeze
-
-from .attr_util import attr_dict_type, attr_type, attr_value_is
+from .. import engine_types
+from . import attr_util
 
 LOG = logging.getLogger(__name__)
 
@@ -29,8 +30,10 @@ LOG = logging.getLogger(__name__)
 RECIPES_CFG_LOCATION_TOKS = ('infra', 'config', 'recipes.cfg')
 RECIPES_CFG_LOCATION_REL = os.path.join(*RECIPES_CFG_LOCATION_TOKS)
 
+T = TypeVar('T')
 
-def _branch_converter(ref):
+
+def _branch_converter(ref: T) -> T | str:
   """Converts a possibly-non-absolute ref to an absolute one (i.e. one beginning
   with 'refs/').
 
@@ -39,7 +42,7 @@ def _branch_converter(ref):
   Returns the converted ref.
   """
   if not isinstance(ref, str):
-    return ref # validator will catch this
+    return ref  # validator will catch this
   if ref.startswith('refs/'):
     return ref
   if ref == 'HEAD':  # This is special, and is used in tests.
@@ -59,15 +62,17 @@ class SimpleDep:
   Equivalent to the recipes_cfg_pb2.DepSpec message.
   """
   # The git URL for this dependency.
-  url = attr.ib(validator=attr_type(str))
+  url: str = attr.ib(validator=attr_util.attr_type(str))
 
   # The ref to git-fetch if url is a git repo.
   # Automatically converts non-absolute refs to 'refs/heads/...'.
   # TODO(iannucci): Require absolute refs.
-  branch = attr.ib(converter=_branch_converter, validator=attr_type(str))
+  branch: str = attr.ib(
+      converter=_branch_converter, validator=attr_util.attr_type(str)
+  )
 
   # The git commit we depend on.
-  revision = attr.ib(validator=attr_type(str))
+  revision: str = attr.ib(validator=attr_util.attr_type(str))
 
 
 @attr.s(frozen=True)
@@ -81,28 +86,28 @@ class SimpleRecipesCfg:
   # will use to import modules from this repo. Currently this name must be
   # globally unique amongst recipe repos (d'oh). In practice, global uniqueness
   # has not yet been an issue.
-  repo_name = attr.ib(validator=attr_type(str))
+  repo_name: str = attr.ib(validator=attr_util.attr_type(str))
 
   # The mapping of other recipe repo id's that we depend on to their dependency
   # pin information.
-  deps = attr.ib(
-    converter=freeze,
-    validator=attr_dict_type(str, SimpleDep)
-  ) # type: dict[str, SimpleDep]
+  deps: dict[str, SimpleDep] = attr.ib(
+      converter=engine_types.freeze,
+      validator=attr_util.attr_dict_type(str, SimpleDep),
+  )
 
   # The repo-root-relative path to where 'recipes/' and/or 'recipe_modules/'
   # directories live.
-  recipes_path = attr.ib(validator=[
-    attr_type(str),
-    attr_value_is('a relative path', lambda v: not os.path.isabs(v)),
-    attr_value_is(
+  recipes_path: str = attr.ib(validator=[
+    attr_util.attr_type(str),
+    attr_util.attr_value_is('a relative path', lambda v: not os.path.isabs(v)),
+    attr_util.attr_value_is(
       'free of "." and ".."',
       lambda v: not any(x in ('.', '..') for x in v.split(os.path.sep))
     ),
   ])
 
   @classmethod
-  def from_dict(cls, dct):
+  def from_dict(cls, dct: Mapping[str, Any]) -> SimpleRecipesCfg:
     """Parses a SimpleRecipesCfg from a dict.
 
     Args:
@@ -130,7 +135,7 @@ class SimpleRecipesCfg:
     except Exception as ex:
       raise ValueError(f'Error parsing recipes.cfg: {ex}')
 
-  def asdict(self):
+  def asdict(self) -> dict[str, Any]:
     """Returns this SimpleRecipesCfg as a JSON-serializable dict.
 
     This is mostly the same as `attr.asdict`, except that it knows how to
@@ -141,7 +146,7 @@ class SimpleRecipesCfg:
     return ret
 
   @classmethod
-  def from_json_file(cls, path):
+  def from_json_file(cls, path: str) -> SimpleRecipesCfg:
     """Parses a SimpleRecipesCfg from a file on disk.
 
     Args:
@@ -158,7 +163,7 @@ class SimpleRecipesCfg:
     return cls.from_json_string(data)
 
   @classmethod
-  def from_json_string(cls, jstring):
+  def from_json_string(cls, jstring: str | bytes) -> SimpleRecipesCfg:
     """Parses a SimpleRecipesCfg from a JSON string.
 
     Args:

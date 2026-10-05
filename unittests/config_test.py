@@ -8,43 +8,43 @@ from __future__ import annotations
 import test_env
 
 from recipe_engine import config
-from PB.recipe_engine import doc
+from PB.recipe_engine import doc as doc_pb
 
 
-d = doc.Doc
+d = doc_pb.Doc
 
 
 class TestConfigGroupSchema(test_env.RecipeEngineUnitTest):
-  def testNewReturnsConfigGroup(self):
+  def testNewReturnsConfigGroup(self) -> None:
     schema = config.ConfigGroupSchema(test=config.Single(int))
 
     self.assertIsInstance(schema.new(test=3), config.ConfigGroup)
 
-  def testCallCallsNew(self):
+  def testCallCallsNew(self) -> None:
     schema = config.ConfigGroupSchema(test=config.Single(int))
     sentinel = object()
-    schema.new = lambda *args, **kwargs: sentinel
+    schema.new = lambda *args, **kwargs: sentinel  # type: ignore[method-assign]
 
     self.assertEqual(schema(test=3), sentinel)
 
-  def testMustHaveTypeMap(self):
+  def testMustHaveTypeMap(self) -> None:
     with self.assertRaises(ValueError):
       config.ConfigGroupSchema()
 
 
 class TestEnum(test_env.RecipeEngineUnitTest):
-  def testEnum(self):
+  def testEnum(self) -> None:
     schema = config.ConfigGroupSchema(test=config.Enum('foo', 'bar'))
     self.assertIsInstance(schema.new(test='foo'), config.ConfigGroup)
 
-  def testMustBeOneOf(self):
+  def testMustBeOneOf(self) -> None:
     schema = config.ConfigGroupSchema(test=config.Enum('foo', 'bar'))
     with self.assertRaises(ValueError):
       schema.new(test='baz')
 
 
 class TestSchemaProto(test_env.RecipeEngineUnitTest):
-  def test_config_group(self):
+  def test_config_group(self) -> None:
     cg = config.ConfigGroup(
       combo=config.Single((int, float), empty_val=20),
       other=config.List(str),
@@ -69,7 +69,7 @@ class TestSchemaProto(test_env.RecipeEngineUnitTest):
         )),
       })))
 
-  def test_config_group_schema(self):
+  def test_config_group_schema(self) -> None:
     cg = config.ConfigGroupSchema(
       combo=config.Single((int, float), empty_val=20),
       other=config.List(str),
@@ -94,7 +94,7 @@ class TestSchemaProto(test_env.RecipeEngineUnitTest):
         )),
       })))
 
-  def test_config_list(self):
+  def test_config_list(self) -> None:
     cl = config.ConfigList(lambda: config.ConfigGroup(
       a = config.Single(bool),
       b = config.Single(dict),
@@ -118,7 +118,7 @@ class TestSchemaProto(test_env.RecipeEngineUnitTest):
       ))
     )
 
-  def test_dict(self):
+  def test_dict(self) -> None:
     cd = config.Dict(value_type=list)
     self.assertEqual(
       cd.schema_proto(),
@@ -127,7 +127,7 @@ class TestSchemaProto(test_env.RecipeEngineUnitTest):
       ))
     )
 
-  def test_set(self):
+  def test_set(self) -> None:
     cd = config.Set(str)
     self.assertEqual(
       cd.schema_proto(),
@@ -136,7 +136,7 @@ class TestSchemaProto(test_env.RecipeEngineUnitTest):
       ))
     )
 
-  def test_list(self):
+  def test_list(self) -> None:
     cd = config.List((int, type(None)))
     self.assertEqual(
       cd.schema_proto(),
@@ -145,7 +145,7 @@ class TestSchemaProto(test_env.RecipeEngineUnitTest):
       ))
     )
 
-  def test_static(self):
+  def test_static(self) -> None:
     cd = config.Static("hello")
     self.assertEqual(
       cd.schema_proto(),
@@ -154,7 +154,7 @@ class TestSchemaProto(test_env.RecipeEngineUnitTest):
       ))
     )
 
-  def test_enum(self):
+  def test_enum(self) -> None:
     cd = config.Enum("hello", "world")
     self.assertEqual(
       cd.schema_proto(),

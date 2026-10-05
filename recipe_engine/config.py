@@ -70,23 +70,34 @@ derivatives for more info.
 
 from __future__ import annotations
 
-from builtins import object
-from past.builtins import basestring
-
-import collections.abc
+from collections.abc import (
+    Callable,
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    MutableSet,
+)
 import functools
 import json
 import types
+from typing import Any, NoReturn
 
-from PB.recipe_engine import doc
-from recipe_engine.config_types import Path
+import past.builtins
+
+from PB.recipe_engine import doc as doc_pb
+from recipe_engine import config_types
+
 
 class BadConf(Exception):
   pass
 
-def typeAssert(obj, typearg):
+
+def typeAssert(obj: Any, typearg: type | tuple[type, ...]) -> None:
   if not isinstance(obj, typearg):
     raise TypeError("Expected %r to be of type %r" % (obj, typearg))
+
 
 class ConfigContext:
   """A configuration context for a recipe module.
@@ -95,13 +106,19 @@ class ConfigContext:
   A recipe module can define at most one such context.
   """
 
-  def __init__(self, CONFIG_SCHEMA):
-    self.CONFIG_ITEMS = {}
-    self.MUTEX_GROUPS = {}
+  def __init__(self, CONFIG_SCHEMA: Callable[..., ConfigBase]) -> None:
+    self.CONFIG_ITEMS: dict[str, Callable[..., ConfigGroup]] = {}
+    self.MUTEX_GROUPS: dict[str, set[str]] = {}
     self.CONFIG_SCHEMA = CONFIG_SCHEMA
-    self.ROOT_CONFIG_ITEM = None
+    self.ROOT_CONFIG_ITEM: Callable[..., ConfigGroup] | None = None
 
-  def __call__(self, group=None, includes=None, deps=None, is_root=False):
+  def __call__(
+      self,
+      group: str | None = None,
+      includes: Iterable[str] | None = None,
+      deps: Iterable[str] | None = None,
+      is_root: bool = False,
+  ) -> Callable[[Callable[..., None]], Callable[..., ConfigGroup]]:
     """
     A decorator for functions which modify a given schema of configs.
     Examples continue using the schema and config_items defined in the module
@@ -155,10 +172,15 @@ class ConfigContext:
 
     Returns a new decorated version of this function (see inner()).
     """
-    def decorator(f):
+    def decorator(f: Callable[..., None]) -> Callable[..., ConfigGroup]:
       name = f.__name__
       @functools.wraps(f)
-      def inner(config=None, final=True, optional=False, **kwargs):
+      def inner(
+          config: ConfigGroup | None = None,
+          final: bool = True,
+          optional: bool = False,
+          **kwargs: Any,
+      ) -> ConfigGroup:
         """This is the function which is returned from the config_ctx
         decorator.
 
@@ -235,25 +257,27 @@ class ConfigContext:
         assert ret is None, 'Got return value (%s) from "%s"?' % (ret, name)
 
         return config
-      inner.WRAPPED = f
-      inner.INCLUDES = includes or []
+      inner.WRAPPED = f  # type: ignore[attr-defined]
+      inner.INCLUDES = includes or []  # type: ignore[attr-defined]
 
       assert name not in self.CONFIG_ITEMS, (
           '%s is already in CONFIG_ITEMS' % name)
       self.CONFIG_ITEMS[name] = inner
       if group:
         self.MUTEX_GROUPS.setdefault(group, set()).add(name)
-      inner.IS_ROOT = is_root
+      inner.IS_ROOT = is_root  # type: ignore[attr-defined]
       if is_root:
         assert not self.ROOT_CONFIG_ITEM, (
           'may only have one root config_ctx!')
         self.ROOT_CONFIG_ITEM = inner
-        inner.IS_ROOT = True
+        inner.IS_ROOT = True  # type: ignore[attr-defined]
       return inner
     return decorator
 
 
-def config_item_context(CONFIG_SCHEMA):
+def config_item_context(
+    CONFIG_SCHEMA: Callable[..., ConfigBase],
+) -> ConfigContext:
   """Create a configuration context.
 
   Args:
@@ -267,15 +291,17 @@ def config_item_context(CONFIG_SCHEMA):
   return ConfigContext(CONFIG_SCHEMA)
 
 
-class AutoHide:
+class _AutoHide:
   pass
-AutoHide = AutoHide()
+
+
+AutoHide = _AutoHide()
 
 
 class ConfigBase:
   """This is the root interface for all config schema types."""
 
-  def __init__(self, hidden=AutoHide):
+  def __init__(self, hidden: bool | _AutoHide = AutoHide) -> None:
     """
     Args:
       hidden -
@@ -290,60 +316,62 @@ class ConfigBase:
     object.__setattr__(self, '_hidden_mode', hidden)
     object.__setattr__(self, '_inclusions', set())
 
-  def get_val(self):
+  def get_val(self) -> Any:
     """Gets the native value of this config object."""
     return self
 
-  def set_val(self, val):
+  def set_val(self, val: Any) -> None:
     """Resets the value of this config object using data in val."""
     raise NotImplementedError
 
-  def reset(self):
+  def reset(self) -> None:
     """Resets the value of this config object to it's initial state."""
     raise NotImplementedError
 
-  def as_jsonish(self, include_hidden=False):
+  def as_jsonish(self, include_hidden: bool = False) -> Any:
     """Returns the value of this config object as simple types."""
     raise NotImplementedError
 
-  def complete(self):
+  def complete(self) -> bool:
     """Returns True iff this configuration blob is fully viable."""
     raise NotImplementedError
 
-  def _is_default(self):
+  def _is_default(self) -> bool:
     """Returns True iff this configuration blob is the default value."""
     raise NotImplementedError
 
   @property
-  def _hidden(self):
+  def _hidden(self) -> bool:
     """Returns True iff this configuration blob is hidden."""
     if self._hidden_mode is AutoHide:
       return self._is_default()
-    return self._hidden_mode
+    return bool(self._hidden_mode)
 
-  def schema_proto(self):
+  def schema_proto(self) -> doc_pb.Doc.Schema:
     """Returns a doc.Doc.Schema proto message for this config type."""
     raise NotImplementedError
 
 # TODO(crbug.com/1147793): Remove basestring mapping after we drop
 # Single(basestring) support in all downstream repos.
 _SIMPLE_TYPE_LOOKUP = {
-  str: doc.Doc.Schema.STRING,
-  basestring: doc.Doc.Schema.STRING,
-  int: doc.Doc.Schema.NUMBER,
-  float: doc.Doc.Schema.NUMBER,
-  bool: doc.Doc.Schema.BOOLEAN,
-  dict: doc.Doc.Schema.OBJECT,
-  list: doc.Doc.Schema.ARRAY,
-  type(None): doc.Doc.Schema.NULL,
-  bytes: doc.Doc.Schema.STRING,
+  str: doc_pb.Doc.Schema.STRING,
+  past.builtins.basestring: doc_pb.Doc.Schema.STRING,
+  int: doc_pb.Doc.Schema.NUMBER,
+  float: doc_pb.Doc.Schema.NUMBER,
+  bool: doc_pb.Doc.Schema.BOOLEAN,
+  dict: doc_pb.Doc.Schema.OBJECT,
+  list: doc_pb.Doc.Schema.ARRAY,
+  type(None): doc_pb.Doc.Schema.NULL,
+  bytes: doc_pb.Doc.Schema.STRING,
 }
 
 
-def _inner_type_schema(inner_type):
-  ret = []
-  def _flatten(typ):
-    if isinstance(typ, collections.abc.Iterable):
+def _inner_type_schema(
+    inner_type: Any,
+) -> list[doc_pb.Doc.Schema.SimpleType]:
+  ret: list[doc_pb.Doc.Schema.SimpleType] = []
+  def _flatten(typ: Any) -> None:
+    if isinstance(typ, Iterable):
       for subtyp in typ:
         _flatten(subtyp)
     else:
@@ -359,7 +387,7 @@ class ConfigSchemaBase:
   It generates a mutable, bound version of the schema it represents, using the
   mutable config objects such as ConfigGroup.
   """
-  def bind(self, value):
+  def bind(self, value: Any) -> Any:
     """
     Type check the value, and generate a resulting mutable object representation
     of this value.
@@ -381,7 +409,11 @@ class ConfigGroup(ConfigBase):
     config_blob.group.numbahs.update(range(10))
   """
 
-  def __init__(self, hidden=AutoHide, **type_map):
+  def __init__(
+      self,
+      hidden: bool | _AutoHide = AutoHide,
+      **type_map: ConfigBase,
+  ) -> None:
     """Expects type_map to be {python_name -> ConfigBase} instance."""
     super().__init__(hidden)
     assert type_map, 'A ConfigGroup with no type_map is meaningless.'
@@ -391,27 +423,27 @@ class ConfigGroup(ConfigBase):
       typeAssert(typeval, ConfigBase)
       object.__setattr__(self, name, typeval)
 
-  def __getattribute__(self, name):
+  def __getattribute__(self, name: str) -> Any:
     obj = object.__getattribute__(self, name)
     if isinstance(obj, ConfigBase):
       return obj.get_val()
     else:
       return obj
 
-  def __setattr__(self, name, val):
+  def __setattr__(self, name: str, val: Any) -> None:
     obj = object.__getattribute__(self, name)
     typeAssert(obj, ConfigBase)
     obj.set_val(val)
 
-  def __delattr__(self, name):
+  def __delattr__(self, name: str) -> None:
     obj = object.__getattribute__(self, name)
     typeAssert(obj, ConfigBase)
     obj.reset()
 
-  def set_val(self, val):
+  def set_val(self, val: ConfigBase | Mapping[str, Any]) -> None:
     if isinstance(val, ConfigBase):
       val = val.as_jsonish(include_hidden=True)
-    typeAssert(val, collections.abc.Mapping)
+    typeAssert(val, Mapping)
 
     val = dict(val)  # because we pop later.
     for name, config_obj in self._type_map.items():
@@ -424,24 +456,24 @@ class ConfigGroup(ConfigBase):
     if val:
       raise TypeError("Got extra keys while setting ConfigGroup: %s" % val)
 
-  def as_jsonish(self, include_hidden=False):
+  def as_jsonish(self, include_hidden: bool = False) -> dict[str, Any]:
     return dict(
       (n, v.as_jsonish(include_hidden)) for n, v in self._type_map.items()
         if include_hidden or not v._hidden)  # pylint: disable=W0212
 
-  def reset(self):
+  def reset(self) -> None:
     for v in self._type_map.values():
       v.reset()
 
-  def complete(self):
+  def complete(self) -> bool:
     return all(v.complete() for v in self._type_map.values())
 
-  def _is_default(self):
+  def _is_default(self) -> bool:
     # pylint: disable=W0212
     return all(v._is_default() for v in self._type_map.values())
 
-  def schema_proto(self):
-    ret = doc.Doc.Schema()
+  def schema_proto(self) -> doc_pb.Doc.Schema:
+    ret = doc_pb.Doc.Schema()
     for k, v in self._type_map.items():
       ret.struct.type_map[k].CopyFrom(v.schema_proto())
     return ret
@@ -455,7 +487,7 @@ class ConfigGroupSchema(ConfigSchemaBase):
   any leftover values in the return ConfigGroup.
   """
 
-  def __init__(self, **type_map):
+  def __init__(self, **type_map: ConfigBase) -> None:
     """Expects type_map to be {python_name -> ConfigBase} instance."""
     super().__init__()
     if not type_map:
@@ -465,17 +497,17 @@ class ConfigGroupSchema(ConfigSchemaBase):
     for _, typeval in self._type_map.items():
       typeAssert(typeval, ConfigBase)
 
-  def __call__(self, *args, **kwargs):
+  def __call__(self, *args: Any, **kwargs: Any) -> ConfigGroup:
     return self.new(*args, **kwargs)
 
-  def new(self, **kwargs):
+  def new(self, **kwargs: Any) -> ConfigGroup:
     """Generates a ConfigGroup with my type map and the given values."""
     cfg = ConfigGroup(**self._type_map)
     cfg.set_val(kwargs)
     return cfg
 
-  def schema_proto(self):
-    ret = doc.Doc.Schema()
+  def schema_proto(self) -> doc_pb.Doc.Schema:
+    ret = doc_pb.Doc.Schema()
     for k, v in self._type_map.items():
       ret.struct.type_map[k].CopyFrom(v.schema_proto())
     return ret
@@ -484,7 +516,7 @@ class ConfigGroupSchema(ConfigSchemaBase):
 ReturnSchema = ConfigGroupSchema
 
 
-class ConfigList(ConfigBase, collections.abc.MutableSequence):
+class ConfigList(ConfigBase, MutableSequence[Any]):
   """Allows you to provide an ordered repetition to a configuration schema.
 
   Example usage:
@@ -500,7 +532,11 @@ class ConfigList(ConfigBase, collections.abc.MutableSequence):
     config_blob.some_items[0].derp = 'bob'
   """
 
-  def __init__(self, item_schema, hidden=AutoHide):
+  def __init__(
+      self,
+      item_schema: Callable[[], ConfigGroup],
+      hidden: bool | _AutoHide = AutoHide,
+  ) -> None:
     """
     Args:
       item_schema: The schema of each object. Should be a function which returns
@@ -510,38 +546,38 @@ class ConfigList(ConfigBase, collections.abc.MutableSequence):
     typeAssert(item_schema, types.FunctionType)
     typeAssert(item_schema(), ConfigGroup)
     self.item_schema = item_schema
-    self.data = []
+    self.data: list[ConfigGroup] = []
 
-  def __getitem__(self, index):
+  def __getitem__(self, index: int | slice) -> Any:
     return self.data.__getitem__(index)
 
-  def __setitem__(self, index, value):
+  def __setitem__(self, index: int, value: Any) -> None:
     datum = self.item_schema()
     datum.set_val(value)
-    return self.data.__setitem__(index, datum)
+    self.data.__setitem__(index, datum)
 
-  def __delitem__(self, index):
-    return self.data.__delitem__(index)
+  def __delitem__(self, index: int | slice) -> None:
+    self.data.__delitem__(index)
 
-  def __len__(self):
+  def __len__(self) -> int:
     return len(self.data)
 
-  def insert(self, index, value):
+  def insert(self, index: int, value: Any) -> None:
     datum = self.item_schema()
     datum.set_val(value)
-    return self.data.insert(index, datum)
+    self.data.insert(index, datum)
 
-  def add(self):
+  def add(self) -> ConfigGroup:
     self.append({})
     return self[-1]
 
-  def reset(self):
+  def reset(self) -> None:
     self.data = []
 
-  def complete(self):
+  def complete(self) -> bool:
     return all(i.complete() for i in self.data)
 
-  def set_val(self, data):
+  def set_val(self, data: ConfigList | list[Any]) -> None:
     if isinstance(data, ConfigList):
       data = data.as_jsonish(include_hidden=True)
 
@@ -550,25 +586,30 @@ class ConfigList(ConfigBase, collections.abc.MutableSequence):
     for item in data:
       self.append(item)
 
-  def as_jsonish(self, include_hidden=False):
+  def as_jsonish(self, include_hidden: bool = False) -> list[dict[str, Any]]:
     return [i.as_jsonish(include_hidden) for i in self.data
             if include_hidden or not i._hidden]  # pylint: disable=W0212
 
-  def _is_default(self):
+  def _is_default(self) -> bool:
     # pylint: disable=W0212
     return all(v._is_default() for v in self.data)
 
-  def schema_proto(self):
-    ret = doc.Doc.Schema()
+  def schema_proto(self) -> doc_pb.Doc.Schema:
+    ret = doc_pb.Doc.Schema()
     ret.sequence.inner_type.CopyFrom(self.item_schema().schema_proto())
     return ret
 
 
-class Dict(ConfigBase, collections.abc.MutableMapping):
+class Dict(ConfigBase, MutableMapping[Any, Any]):
   """Provides a semi-homogenous dict()-like configuration object."""
 
-  def __init__(self, item_fn=lambda i: i, jsonish_fn=dict, value_type=None,
-               hidden=AutoHide):
+  def __init__(
+      self,
+      item_fn: Callable[[tuple[Any, Any]], Any] = lambda i: i,
+      jsonish_fn: Callable[[list[Any]], Any] = dict,
+      value_type: type | tuple[type, ...] | None = None,
+      hidden: bool | _AutoHide = AutoHide,
+  ) -> None:
     """
     Args:
       item_fn - A function which renders (k, v) pairs to input items for
@@ -583,66 +624,71 @@ class Dict(ConfigBase, collections.abc.MutableMapping):
     self.value_type = value_type
     self.item_fn = item_fn
     self.jsonish_fn = jsonish_fn
-    self.data = {}
+    self.data: dict[Any, Any] = {}
 
-  def __getitem__(self, k):
+  def __getitem__(self, k: Any) -> Any:
     return self.data.__getitem__(k)
 
-  def __setitem__(self, k, v):
+  def __setitem__(self, k: Any, v: Any) -> None:
     if self.value_type:
       typeAssert(v, self.value_type)
-    return self.data.__setitem__(k, v)
+    self.data.__setitem__(k, v)
 
-  def __delitem__(self, k):
-    return self.data.__delitem__(k)
+  def __delitem__(self, k: Any) -> None:
+    self.data.__delitem__(k)
 
-  def __iter__(self):
+  def __iter__(self) -> Iterator[Any]:
     return iter(self.data)
 
-  def __len__(self):
+  def __len__(self) -> int:
     return len(self.data)
 
-  def __repr__(self):
+  def __repr__(self) -> str:
     return repr(self.data)
 
-  def __str__(self):
+  def __str__(self) -> str:
     return str(self.data)
 
-  def set_val(self, val):
+  def set_val(self, val: Dict | Mapping[Any, Any]) -> None:
     if isinstance(val, Dict):
       val = val.data
-    typeAssert(val, collections.abc.Mapping)
+    typeAssert(val, Mapping)
     if self.value_type:
       for v in val.values():
         typeAssert(v, self.value_type)
-    self.data = val
+    self.data = dict(val)
 
-  def as_jsonish(self, _include_hidden=None):
+  def as_jsonish(self, _include_hidden: bool | None = None) -> Any:
     return self.jsonish_fn([
       self.item_fn(item)
       for item in sorted(self.data.items(), key=lambda x: x[0])
     ])
 
-  def reset(self):
+  def reset(self) -> None:
     self.data.clear()
 
-  def complete(self):
+  def complete(self) -> bool:
     return True
 
-  def _is_default(self):
+  def _is_default(self) -> bool:
     return not self.data
 
-  def schema_proto(self):
-    ret = doc.Doc.Schema()
+  def schema_proto(self) -> doc_pb.Doc.Schema:
+    ret = doc_pb.Doc.Schema()
     if self.value_type is not None:
       ret.dict.value_type.extend(_inner_type_schema(self.value_type))
     return ret
 
 
-class List(ConfigBase, collections.abc.MutableSequence):
+class List(ConfigBase, MutableSequence[Any]):
   """Provides a semi-homogenous list()-like configuration object."""
 
-  def __init__(self, inner_type, jsonish_fn=list, hidden=AutoHide):
+  def __init__(
+      self,
+      inner_type: type | tuple[type, ...],
+      jsonish_fn: Callable[[list[Any]], Any] = list,
+      hidden: bool | _AutoHide = AutoHide,
+  ) -> None:
     """
     Args:
       inner_type - The type of data contained in this set, e.g. str, int, ...
@@ -654,57 +700,62 @@ class List(ConfigBase, collections.abc.MutableSequence):
     super().__init__(hidden)
     self.inner_type = inner_type
     self.jsonish_fn = jsonish_fn
-    self.data = []
+    self.data: list[Any] = []
 
-  def __getitem__(self, index):
+  def __getitem__(self, index: int | slice) -> Any:
     return self.data[index]
 
-  def __setitem__(self, index, value):
+  def __setitem__(self, index: int, value: Any) -> None:
     typeAssert(value, self.inner_type)
     self.data[index] = value
 
-  def __delitem__(self, index):
+  def __delitem__(self, index: int | slice) -> None:
     del self.data[index]
 
-  def __len__(self):
+  def __len__(self) -> int:
     return len(self.data)
 
-  def __radd__(self, other):
+  def __radd__(self, other: Iterable[Any]) -> list[Any]:
     if not isinstance(other, list):
       other = list(other)
     return other + self.data
 
-  def insert(self, index, value):
+  def insert(self, index: int, value: Any) -> None:
     typeAssert(value, self.inner_type)
     self.data.insert(index, value)
 
-  def set_val(self, val):
+  def set_val(self, val: Iterable[Any]) -> None:
     for v in val:
       typeAssert(v, self.inner_type)
     self.data = list(val)
 
-  def as_jsonish(self, _include_hidden=None):
+  def as_jsonish(self, _include_hidden: bool | None = None) -> Any:
     return self.jsonish_fn(self.data)
 
-  def reset(self):
+  def reset(self) -> None:
     self.data = []
 
-  def complete(self):
+  def complete(self) -> bool:
     return True
 
-  def _is_default(self):
+  def _is_default(self) -> bool:
     return not self.data
 
-  def schema_proto(self):
-    ret = doc.Doc.Schema()
+  def schema_proto(self) -> doc_pb.Doc.Schema:
+    ret = doc_pb.Doc.Schema()
     ret.list.inner_type.extend(_inner_type_schema(self.inner_type))
     return ret
 
 
-class Set(ConfigBase, collections.abc.MutableSet):
+class Set(ConfigBase, MutableSet[Any]):
   """Provides a semi-homogenous set()-like configuration object."""
 
-  def __init__(self, inner_type, jsonish_fn=list, hidden=AutoHide):
+  def __init__(
+      self,
+      inner_type: type | tuple[type, ...],
+      jsonish_fn: Callable[[list[Any]], Any] = list,
+      hidden: bool | _AutoHide = AutoHide,
+  ) -> None:
     """
     Args:
       inner_type - The type of data contained in this set, e.g. str, int, ...
@@ -716,48 +767,48 @@ class Set(ConfigBase, collections.abc.MutableSet):
     super().__init__(hidden)
     self.inner_type = inner_type
     self.jsonish_fn = jsonish_fn
-    self.data = set()
+    self.data: set[Any] = set()
 
-  def __contains__(self, val):
+  def __contains__(self, val: Any) -> bool:
     return val in self.data
 
-  def __iter__(self):
+  def __iter__(self) -> Iterator[Any]:
     return iter(self.data)
 
-  def __len__(self):
+  def __len__(self) -> int:
     return len(self.data)
 
-  def add(self, value):
+  def add(self, value: Any) -> None:
     typeAssert(value, self.inner_type)
     self.data.add(value)
 
-  def update(self, values):
+  def update(self, values: Iterable[Any]) -> None:
     for value in values:
       if value not in self:
         self.add(value)
 
-  def discard(self, value):
+  def discard(self, value: Any) -> None:
     self.data.discard(value)
 
-  def set_val(self, val):
+  def set_val(self, val: Iterable[Any]) -> None:
     for v in val:
       typeAssert(v, self.inner_type)
     self.data = set(val)
 
-  def as_jsonish(self, _include_hidden=None):
+  def as_jsonish(self, _include_hidden: bool | None = None) -> Any:
     return self.jsonish_fn(sorted(self.data))
 
-  def reset(self):
+  def reset(self) -> None:
     self.data = set()
 
-  def complete(self):
+  def complete(self) -> bool:
     return True
 
-  def _is_default(self):
+  def _is_default(self) -> bool:
     return not self.data
 
-  def schema_proto(self):
-    ret = doc.Doc.Schema()
+  def schema_proto(self) -> doc_pb.Doc.Schema:
+    ret = doc_pb.Doc.Schema()
     ret.set.inner_type.extend(_inner_type_schema(self.inner_type))
     return ret
 
@@ -765,8 +816,14 @@ class Set(ConfigBase, collections.abc.MutableSet):
 class Single(ConfigBase):
   """Provides a configuration object which holds a single 'simple' type."""
 
-  def __init__(self, inner_type, jsonish_fn=lambda x: x, empty_val=None,
-               required=True, hidden=AutoHide):
+  def __init__(
+      self,
+      inner_type: type | tuple[type, ...],
+      jsonish_fn: Callable[[Any], Any] = lambda x: x,
+      empty_val: Any = None,
+      required: bool = True,
+      hidden: bool | _AutoHide = AutoHide,
+  ) -> None:
     """
     Args:
       inner_type - The type of data contained in this object, e.g. str, int, ...
@@ -786,30 +843,30 @@ class Single(ConfigBase):
     self.data = empty_val
     self.required = required
 
-  def get_val(self):
+  def get_val(self) -> Any:
     return self.data
 
-  def set_val(self, val):
+  def set_val(self, val: Any) -> None:
     if isinstance(val, Single):
       val = val.data
     if val is not self.empty_val:
       typeAssert(val, self.inner_type)
     self.data = val
 
-  def as_jsonish(self, _include_hidden=None):
+  def as_jsonish(self, _include_hidden: bool | None = None) -> Any:
     return self.jsonish_fn(self.data)
 
-  def reset(self):
+  def reset(self) -> None:
     self.data = self.empty_val
 
-  def complete(self):
+  def complete(self) -> bool:
     return not self.required or self.data is not self.empty_val
 
-  def _is_default(self):
+  def _is_default(self) -> bool:
     return self.data is self.empty_val
 
-  def schema_proto(self):
-    ret = doc.Doc.Schema()
+  def schema_proto(self) -> doc_pb.Doc.Schema:
+    ret = doc_pb.Doc.Schema()
     ret.single.inner_type.extend(_inner_type_schema(self.inner_type))
     ret.single.required = self.required
     ret.single.default_json = json.dumps(self.jsonish_fn(self.empty_val))
@@ -822,7 +879,11 @@ class Static(ConfigBase):
   This is very useful for holding the 'input' configuration values.
   """
 
-  def __init__(self, value, hidden=AutoHide):
+  def __init__(
+      self,
+      value: Any,
+      hidden: bool | _AutoHide = AutoHide,
+  ) -> None:
     super().__init__(hidden=hidden)
     # HACK: Paths are functionally immutable, but cannot have their __hash__
     # execute correctly until the checkout_dir has actually been set (because
@@ -832,7 +893,7 @@ class Static(ConfigBase):
     # Since we plan to entirely remove all of this config.py contents at some
     # point, and Paths are the only known exception to the immutability rule
     # with well-understood semantics we have a special carve-out here.
-    if isinstance(value, Path):
+    if isinstance(value, config_types.Path):
       pass
     else:
       # Attempt to hash the value, which will ensure that it's immutable all the
@@ -840,26 +901,26 @@ class Static(ConfigBase):
       hash(value)
     self.data = value
 
-  def get_val(self):
+  def get_val(self) -> Any:
     return self.data
 
-  def set_val(self, val):
+  def set_val(self, val: Any) -> NoReturn:
     raise TypeError("Cannot assign to a Static config member")
 
-  def as_jsonish(self, _include_hidden=None):
+  def as_jsonish(self, _include_hidden: bool | None = None) -> Any:
     return self.data
 
-  def reset(self):
+  def reset(self) -> NoReturn:
     assert False
 
-  def complete(self):
+  def complete(self) -> bool:
     return True
 
-  def _is_default(self):
+  def _is_default(self) -> bool:
     return True
 
-  def schema_proto(self):
-    ret = doc.Doc.Schema()
+  def schema_proto(self) -> doc_pb.Doc.Schema:
+    ret = doc_pb.Doc.Schema()
     ret.static.default_json = json.dumps(self.data)
     return ret
 
@@ -867,7 +928,7 @@ class Static(ConfigBase):
 class Enum(ConfigBase):
   """Provides a configuration object which holds one of acceptable values."""
 
-  def __init__(self, *values, **kwargs):
+  def __init__(self, *values: Any, **kwargs: Any) -> None:
     """
     Args:
       values - List of acceptable values.
@@ -883,15 +944,15 @@ class Enum(ConfigBase):
     if not values:
       raise ValueError("Enumerations cannot be empty")
     self.values = values
-    self.inner_type = kwargs.get('inner_type', basestring)
+    self.inner_type = kwargs.get('inner_type', past.builtins.basestring)
     self.jsonish_fn = kwargs.get('jsonish_fn', lambda x: x)
     self.data = None
     self.required = kwargs.get('required', True)
 
-  def get_val(self):
+  def get_val(self) -> Any:
     return self.data
 
-  def set_val(self, val):
+  def set_val(self, val: Any) -> None:
     if isinstance(val, Enum):
       val = val.data
     typeAssert(val, self.inner_type)
@@ -900,20 +961,20 @@ class Enum(ConfigBase):
                        (val, ', '.join(self.values)))
     self.data = val
 
-  def as_jsonish(self, _include_hidden=None):
+  def as_jsonish(self, _include_hidden: bool | None = None) -> Any:
     return self.jsonish_fn(self.data)
 
-  def reset(self):
+  def reset(self) -> None:
     self.data = None
 
-  def complete(self):
+  def complete(self) -> bool:
     return not self.required or self.data is not None
 
-  def _is_default(self):
+  def _is_default(self) -> bool:
     return self.data is None
 
-  def schema_proto(self):
-    ret = doc.Doc.Schema()
+  def schema_proto(self) -> doc_pb.Doc.Schema:
+    ret = doc_pb.Doc.Schema()
     ret.enum.values_json.extend(json.dumps(self.jsonish_fn(v))
                                 for v in self.values)
     ret.enum.required = self.required

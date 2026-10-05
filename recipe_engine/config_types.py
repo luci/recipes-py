@@ -4,15 +4,16 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
+import dataclasses
 import itertools
-
-from dataclasses import dataclass, field
-from typing import ClassVar, Generator, TYPE_CHECKING
+from typing import ClassVar, TYPE_CHECKING
 
 if TYPE_CHECKING:
-  from recipe_engine.internal.recipe_deps import RecipeModule, Recipe, RecipeRepo
+  from recipe_engine.internal import recipe_deps
 
-def ResetGlobalVariableAssignments():
+
+def ResetGlobalVariableAssignments() -> None:
   """This function is called from inside of the recipe test runner prior to each
   test case executed.
 
@@ -32,7 +33,7 @@ class RelativeToNotParent(ValueError):
   pass
 
 
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class CheckoutBasePath:
   """CheckoutBasePath is a placeholder base for Paths relative to
   api.path.checkout_dir.
@@ -65,6 +66,7 @@ class CheckoutBasePath:
     otherwise return None."""
     if self._resolved:
       return self._resolved
+    return None
 
   def resolve(self) -> Path:
     """Resolve this CheckoutBasePath, raise ValueError if not yet defined."""
@@ -90,7 +92,7 @@ class CheckoutBasePath:
     return 'CheckoutBasePath[UNRESOLVED]'
 
 
-@dataclass(frozen=True, order=True)
+@dataclasses.dataclass(frozen=True, order=True)
 class ResolvedBasePath:
   """ResolvedBasePath represents a 'resolved' base path.
 
@@ -103,8 +105,11 @@ class ResolvedBasePath:
   resolved: str
 
   @classmethod
-  def for_recipe_module(cls, test_enabled: bool,
-                        module: RecipeModule) -> ResolvedBasePath:
+  def for_recipe_module(
+      cls,
+      test_enabled: bool,
+      module: recipe_deps.RecipeModule,
+  ) -> ResolvedBasePath:
     if not test_enabled:
       return cls(module.path)
 
@@ -113,15 +118,21 @@ class ResolvedBasePath:
     return cls(f'RECIPE_MODULE[{module.repo.name}::{module.name}]')
 
   @classmethod
-  def for_recipe_script_resources(cls, test_enabled: bool,
-                                  recipe: Recipe) -> ResolvedBasePath:
+  def for_recipe_script_resources(
+      cls,
+      test_enabled: bool,
+      recipe: recipe_deps.Recipe,
+  ) -> ResolvedBasePath:
     if not test_enabled:
       return cls(recipe.resources_dir)
     return cls(f'RECIPE[{recipe.full_name}].resources')
 
   @classmethod
-  def for_bundled_repo(cls, test_enabled: bool,
-                       repo: RecipeRepo) -> ResolvedBasePath:
+  def for_bundled_repo(
+      cls,
+      test_enabled: bool,
+      repo: recipe_deps.RecipeRepo,
+  ) -> ResolvedBasePath:
     if not test_enabled:
       return cls(repo.path)
     return cls(f'RECIPE_REPO[{repo.name}]')
@@ -130,7 +141,7 @@ class ResolvedBasePath:
     return self.resolved
 
 
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class Path:
   """Represents an absolute path which is relative to a 'base' path.
 
@@ -160,9 +171,15 @@ class Path:
   # adding Path.__str__.cache_clear() to ResetGlobalVariableAssignments, but
   # I don't think introducing the extra global variable is necessary or
   # desirable here, especially since we know that Path is immutable.
-  _str: str | None = field(default=None, repr=False, hash=False, compare=False)
+  _str: str | None = dataclasses.field(
+      default=None, repr=False, hash=False, compare=False
+  )
 
-  def __init__(self, base: CheckoutBasePath | ResolvedBasePath, *pieces: str):
+  def __init__(
+      self,
+      base: CheckoutBasePath | ResolvedBasePath,
+      *pieces: str,
+  ) -> None:
     """Creates a Path.
 
     Args:
@@ -304,7 +321,7 @@ class Path:
     return '.' + parts[1]
 
   @property
-  def suffixes(self) -> str:
+  def suffixes(self) -> list[str]:
     """For 'dir/foo.tar.gz', return ['.tar', '.gz']."""
     return [f'.{x}' for x in self.name.split('.')[1:]]
 
@@ -394,7 +411,9 @@ class Path:
       if not self._OS_SEP:
         raise ValueError('Unable to render Path to string - '
                          'recipe_engine/path has not been initialized yet.')
-      str_val = self._OS_SEP.join(itertools.chain((str(self.base),), self.pieces))
+      str_val = self._OS_SEP.join(
+          itertools.chain((str(self.base),), self.pieces)
+      )
       object.__setattr__(self, '_str', str_val)
       return str_val
     return self._str

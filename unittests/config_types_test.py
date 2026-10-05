@@ -7,10 +7,9 @@ from __future__ import annotations
 
 import unittest
 
-import test_env  # for sys.path manipulation
+import test_env
 
 from recipe_engine import config_types
-from recipe_engine.config_types import Path, ResolvedBasePath, CheckoutBasePath
 
 
 class TestPathsPreGlobalInit(unittest.TestCase):
@@ -19,87 +18,97 @@ class TestPathsPreGlobalInit(unittest.TestCase):
   """
 
   def tearDown(self) -> None:
-    CheckoutBasePath._resolved = None
+    config_types.CheckoutBasePath._resolved = None
     return super().tearDown()
 
-  def test_path_construction_resolved(self):
+  def test_path_construction_resolved(self) -> None:
     # Doesn't raise any errors
-    cachePath = Path(ResolvedBasePath('[CACHE]'))
-    assert isinstance(cachePath.base, ResolvedBasePath)
+    cachePath = config_types.Path(config_types.ResolvedBasePath('[CACHE]'))
+    assert isinstance(cachePath.base, config_types.ResolvedBasePath)
     self.assertEqual(cachePath.base.resolved, '[CACHE]')
     self.assertEqual(cachePath.pieces, ())
 
-  def test_path_construction_checkout(self):
-    checkoutPath = Path(CheckoutBasePath())
-    assert isinstance(checkoutPath.base, CheckoutBasePath)
+  def test_path_construction_checkout(self) -> None:
+    checkoutPath = config_types.Path(config_types.CheckoutBasePath())
+    assert isinstance(checkoutPath.base, config_types.CheckoutBasePath)
 
-  def test_path_construction_error_base(self):
+  def test_path_construction_error_base(self) -> None:
     with self.assertRaisesRegex(ValueError, 'First argument'):
-      Path('yo')  # type: ignore
+      config_types.Path('yo')  # type: ignore
 
-  def test_path_construction_error_pieces(self):
+  def test_path_construction_error_pieces(self) -> None:
     with self.assertRaisesRegex(ValueError, 'must only be `str`'):
-      Path(ResolvedBasePath('[CACHE]'), 100)  # type: ignore
+      config_types.Path(
+          config_types.ResolvedBasePath('[CACHE]'), 100  # type: ignore
+      )
 
-  def test_path_construction_error_backslash(self):
+  def test_path_construction_error_backslash(self) -> None:
     with self.assertRaisesRegex(ValueError, 'contain backslash'):
-      Path(ResolvedBasePath('[CACHE]'), 'bad\\path')
+      config_types.Path(config_types.ResolvedBasePath('[CACHE]'), 'bad\\path')
 
-  def test_path_construction_resolved_pieces(self):
-    a = Path(ResolvedBasePath('[CACHE]'), 'hello', 'world')
+  def test_path_construction_resolved_pieces(self) -> None:
+    a = config_types.Path(
+        config_types.ResolvedBasePath('[CACHE]'), 'hello', 'world'
+    )
     self.assertEqual(a.pieces, ('hello', 'world'))
 
-    b = Path(ResolvedBasePath('[CACHE]'), 'hello/world')
+    b = config_types.Path(
+        config_types.ResolvedBasePath('[CACHE]'), 'hello/world'
+    )
     self.assertEqual(b.pieces, ('hello', 'world'))
 
     self.assertEqual(a, b)
 
-  def test_path_construction_checkout_pieces(self):
-    a = Path(CheckoutBasePath(), 'hello', 'world')
+  def test_path_construction_checkout_pieces(self) -> None:
+    a = config_types.Path(config_types.CheckoutBasePath(), 'hello', 'world')
     self.assertEqual(a.pieces, ('hello', 'world'))
 
-    b = Path(CheckoutBasePath(), 'hello/world')
+    b = config_types.Path(config_types.CheckoutBasePath(), 'hello/world')
     self.assertEqual(b.pieces, ('hello', 'world'))
 
     # Note that these can be compared when they are both based on
     # CheckoutBasePath.
     self.assertEqual(a, b)
 
-  def test_path_equality_non_path_type(self):
-    a = Path(ResolvedBasePath('[CACHE]'), 'hello', 'world')
+  def test_path_equality_non_path_type(self) -> None:
+    a = config_types.Path(
+        config_types.ResolvedBasePath('[CACHE]'), 'hello', 'world'
+    )
     self.assertNotEqual(a, None)
 
-  def test_path_inequality_resolved(self):
-    p = Path(ResolvedBasePath('[CACHE]'))
+  def test_path_inequality_resolved(self) -> None:
+    p = config_types.Path(config_types.ResolvedBasePath('[CACHE]'))
     self.assertLess(p / 'a', p / 'b')
     self.assertLess(p / 'a', p / 'b' / 'c')
     self.assertLess(p / 'a' / 'c', p / 'b' / 'c')
 
-  def test_path_inequality_checkout(self):
-    p = Path(CheckoutBasePath())
+  def test_path_inequality_checkout(self) -> None:
+    p = config_types.Path(config_types.CheckoutBasePath())
     self.assertLess(p / 'a', p / 'b')
     self.assertLess(p / 'a', p / 'b' / 'c')
     self.assertLess(p / 'a' / 'c', p / 'b' / 'c')
 
-  def test_path_inequality_non_path_type(self):
-    a = Path(ResolvedBasePath('[CACHE]'), 'hello', 'world')
+  def test_path_inequality_non_path_type(self) -> None:
+    a = config_types.Path(
+        config_types.ResolvedBasePath('[CACHE]'), 'hello', 'world'
+    )
     with self.assertRaisesRegex(TypeError, "'<' not supported"):
-      a < None
+      a < None  # type: ignore[operator]
 
-  def test_path_inequality_mismatch(self):
-    a = Path(CheckoutBasePath())
-    b = Path(ResolvedBasePath('[CACHE]'))
+  def test_path_inequality_mismatch(self) -> None:
+    a = config_types.Path(config_types.CheckoutBasePath())
+    b = config_types.Path(config_types.ResolvedBasePath('[CACHE]'))
     with self.assertRaisesRegex(ValueError, 'before checkout_dir is set'):
       self.assertLess(a, b)
 
-  def test_path_equality_mismatch(self):
-    a = Path(CheckoutBasePath())
-    b = Path(ResolvedBasePath('[CACHE]'))
+  def test_path_equality_mismatch(self) -> None:
+    a = config_types.Path(config_types.CheckoutBasePath())
+    b = config_types.Path(config_types.ResolvedBasePath('[CACHE]'))
     with self.assertRaisesRegex(ValueError, 'before checkout_dir is set'):
       self.assertEqual(a, b)
 
-  def test_path_dots_removal(self):
-    p = Path(ResolvedBasePath('[CACHE]'))
+  def test_path_dots_removal(self) -> None:
+    p = config_types.Path(config_types.ResolvedBasePath('[CACHE]'))
 
     self.assertEqual(p / 'hello', p / '.' / 'hello' / '.' / '.')
 
@@ -116,8 +125,8 @@ class TestPathsPreGlobalInit(unittest.TestCase):
         (p / 'some/path/to/stuff' / '../..').joinpath('etc', '..////.', '..',
                                                       'hello'))
 
-  def test_path_dots_removal_error(self):
-    p = Path(ResolvedBasePath('[CACHE]'))
+  def test_path_dots_removal_error(self) -> None:
+    p = config_types.Path(config_types.ResolvedBasePath('[CACHE]'))
 
     with self.assertRaisesRegex(ValueError, 'going above the base'):
       print(repr(p / '..'))
@@ -125,91 +134,111 @@ class TestPathsPreGlobalInit(unittest.TestCase):
     with self.assertRaisesRegex(ValueError, 'going above the base'):
       print(repr(p / 'something' / '..///./..'))
 
-  def test_path_joinpath(self):
+  def test_path_joinpath(self) -> None:
     """Tests for Path.joinpath()."""
-    base_path = Path(ResolvedBasePath('[START_DIR]'))
+    base_path = config_types.Path(config_types.ResolvedBasePath('[START_DIR]'))
     reference_path = base_path.joinpath('foo').joinpath('bar')
     self.assertEqual(base_path / 'foo' / 'bar', reference_path)
 
-  def test_path_joinpath_with_path(self):
-    start_path = Path(ResolvedBasePath('[START_DIR]'))
-    cache_path = Path(ResolvedBasePath('[CACHE]'))
-    self.assertEqual(start_path.joinpath('foo', cache_path, 'bar'), cache_path / 'bar')
+  def test_path_joinpath_with_path(self) -> None:
+    start_path = config_types.Path(config_types.ResolvedBasePath('[START_DIR]'))
+    cache_path = config_types.Path(config_types.ResolvedBasePath('[CACHE]'))
+    self.assertEqual(
+        start_path.joinpath('foo', cache_path, 'bar'), cache_path / 'bar'
+    )
 
-  def test_path_joinpath_with_none(self):
-    base_path = Path(ResolvedBasePath('[START_DIR]'))
+  def test_path_joinpath_with_none(self) -> None:
+    base_path = config_types.Path(config_types.ResolvedBasePath('[START_DIR]'))
     with self.assertRaisesRegex(
         ValueError, 'Variadic arguments to Path must only be `str`'):
-      base_path.joinpath(None)
+      base_path.joinpath(None)  # type: ignore[arg-type]
 
-  def test_is_parent_of(self):
-    p = Path(ResolvedBasePath('[CACHE]'))
+  def test_is_parent_of(self) -> None:
+    p = config_types.Path(config_types.ResolvedBasePath('[CACHE]'))
 
     self.assertTrue(p in (p / 'a').parents)
     self.assertTrue(p in (p / 'a' / 'b' / 'c').parents)
     self.assertTrue(p / 'a' in (p / 'a' / 'b' / 'c').parents)
 
-  def test_is_parent_of_mismatch(self):
-    p1 = Path(ResolvedBasePath('[CACHE]'))
-    p2 = Path(ResolvedBasePath('[CLEANUP]'))
+  def test_is_parent_of_mismatch(self) -> None:
+    p1 = config_types.Path(config_types.ResolvedBasePath('[CACHE]'))
+    p2 = config_types.Path(config_types.ResolvedBasePath('[CLEANUP]'))
 
     self.assertFalse(p1 in p2.parents)
     self.assertFalse(p2 in p1.parents)
 
-  def test_is_parent_of_checkout(self):
-    p1 = Path(CheckoutBasePath(), 'some')
-    p2 = Path(ResolvedBasePath('[CACHE]'), 'builder', 'src', 'some', 'thing')
+  def test_is_parent_of_checkout(self) -> None:
+    p1 = config_types.Path(config_types.CheckoutBasePath(), 'some')
+    p2 = config_types.Path(
+        config_types.ResolvedBasePath('[CACHE]'),
+        'builder',
+        'src',
+        'some',
+        'thing',
+    )
 
     with self.assertRaisesRegex(ValueError, 'before checkout_dir is set'):
       p1 in p2.parents
     with self.assertRaisesRegex(ValueError, 'before checkout_dir is set'):
       p2 in p1.parents
 
-    CheckoutBasePath._resolved = Path(
-        ResolvedBasePath('[CACHE]'), 'builder', 'src')
+    config_types.CheckoutBasePath._resolved = config_types.Path(
+        config_types.ResolvedBasePath('[CACHE]'), 'builder', 'src'
+    )
 
     self.assertTrue(p1 in p2.parents)
     self.assertFalse(p2 in p1.parents)
 
-  def test_is_parent_of_checkout_mismatch(self):
-    p1 = Path(CheckoutBasePath(), 'some')
-    p2 = Path(ResolvedBasePath('[CLEANUP]'), 'unrelated')
+  def test_is_parent_of_checkout_mismatch(self) -> None:
+    p1 = config_types.Path(config_types.CheckoutBasePath(), 'some')
+    p2 = config_types.Path(
+        config_types.ResolvedBasePath('[CLEANUP]'), 'unrelated'
+    )
 
-    CheckoutBasePath._resolved = Path(
-        ResolvedBasePath('[CACHE]'), 'builder', 'src')
+    config_types.CheckoutBasePath._resolved = config_types.Path(
+        config_types.ResolvedBasePath('[CACHE]'), 'builder', 'src'
+    )
 
     self.assertFalse(p1 in p2.parents)
     self.assertFalse(p2 in p1.parents)
 
-  def test_is_parent_of_check(self):
-    p = Path(ResolvedBasePath('[CLEANUP]'))
+  def test_is_parent_of_check(self) -> None:
+    p = config_types.Path(config_types.ResolvedBasePath('[CLEANUP]'))
     self.assertFalse(p / 'a' in (p / 'ab').parents)
     self.assertFalse(p / 'ab' in (p / 'a').parents)
 
-  def test_relative_to_parent(self):
-    p1 = Path(ResolvedBasePath('[CLEANUP]'), 'foo', 'bar', 'baz')
-    p2 = Path(ResolvedBasePath('[CLEANUP]'), 'foo')
+  def test_relative_to_parent(self) -> None:
+    p1 = config_types.Path(
+        config_types.ResolvedBasePath('[CLEANUP]'), 'foo', 'bar', 'baz'
+    )
+    p2 = config_types.Path(config_types.ResolvedBasePath('[CLEANUP]'), 'foo')
     self.assertEqual(p1.relative_to(p2), 'bar/baz')
     with self.assertRaises(config_types.RelativeToNotParent):
       p2.relative_to(p1)
 
-  def test_relative_to_different_base(self):
-    p1 = Path(ResolvedBasePath('[CLEANUP]'), 'foo')
-    p2 = Path(ResolvedBasePath('[CACHE]'), 'bar')
+  def test_relative_to_different_base(self) -> None:
+    p1 = config_types.Path(config_types.ResolvedBasePath('[CLEANUP]'), 'foo')
+    p2 = config_types.Path(config_types.ResolvedBasePath('[CACHE]'), 'bar')
     with self.assertRaises(config_types.RelativeToDifferentBases):
       p1.relative_to(p2)
     with self.assertRaises(config_types.RelativeToDifferentBases):
       p2.relative_to(p1)
 
-  def test_relative_to_walk_up_parent(self):
-    p1 = Path(ResolvedBasePath('[CLEANUP]'), 'foo', 'bar', 'baz')
-    p2 = Path(ResolvedBasePath('[CLEANUP]'), 'foo')
+  def test_relative_to_walk_up_parent(self) -> None:
+    p1 = config_types.Path(
+        config_types.ResolvedBasePath('[CLEANUP]'), 'foo', 'bar', 'baz'
+    )
+    p2 = config_types.Path(config_types.ResolvedBasePath('[CLEANUP]'), 'foo')
     self.assertEqual(p1.relative_to(p2, walk_up=True), 'bar/baz')
     self.assertEqual(p2.relative_to(p1, walk_up=True), '../..')
 
-  def test_relative_to_walk_up_sibling(self):
-    p1 = Path(ResolvedBasePath('[CLEANUP]'), 'foo', 'bar')
-    p2 = Path(ResolvedBasePath('[CLEANUP]'), 'foo', 'baz')
+  def test_relative_to_walk_up_sibling(self) -> None:
+    p1 = config_types.Path(
+        config_types.ResolvedBasePath('[CLEANUP]'), 'foo', 'bar'
+    )
+    p2 = config_types.Path(
+        config_types.ResolvedBasePath('[CLEANUP]'), 'foo', 'baz'
+    )
     self.assertEqual(p1.relative_to(p2, walk_up=True), '../bar')
     self.assertEqual(p2.relative_to(p1, walk_up=True), '../baz')
 
@@ -217,7 +246,7 @@ class TestPathsPreGlobalInit(unittest.TestCase):
 class TestPathsPostGlobalInit(unittest.TestCase):
   """Test case for config_types.Path."""
 
-  def tearDown(self):
+  def tearDown(self) -> None:
     config_types.ResetGlobalVariableAssignments()
     return super().tearDown()
 
