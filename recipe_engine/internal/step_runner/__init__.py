@@ -4,15 +4,20 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+from typing import Any
+
 import attr
 
-from google.protobuf.message import Message
+from google.protobuf import message
 
-from ..attr_util import attr_list_type, attr_type, attr_dict_type
-from ..stream import StreamEngine
+from ... import recipe_test_api
+from ... import step_data
+from ... import util
 
-from ...recipe_test_api import BaseTestData
-from ...step_data import ExecutionResult
+from .. import attr_util
+from .. import engine_step
+from .. import stream
 
 
 @attr.s(frozen=True)
@@ -20,27 +25,30 @@ class Step:
   """Step is the full definition of a step to run for a StepRunner."""
   # The full command line as a list of strings. cmd0 will be an absolute path to
   # an executable.
-  cmd = attr.ib(validator=attr_list_type(str))
+  cmd: list[str] = attr.ib(validator=attr_util.attr_list_type(str))
 
   # The absolute path for the step's current working directory.
-  cwd = attr.ib(validator=attr_type(str))
+  cwd: str = attr.ib(validator=attr_util.attr_type(str))
 
   # File path or None. If None, stdin for the subprocess should be closed.
-  stdin = attr.ib(validator=attr_type((str, type(None))))
+  stdin: str | None = attr.ib(validator=attr_util.attr_type((str, type(None))))
 
   # File path, Stream or a file descriptor.
   #
   # Note that Streams may return a file .fileno() if they support subprocess
   # redirection. Otherwise the step runner implementation is expected to read
   # the output from the step and then write it into the Stream.
-  stdout = attr.ib(validator=attr_type((str, StreamEngine.Stream)))
-  stderr = attr.ib(validator=attr_type((str, StreamEngine.Stream)))
+  stdout: str | stream.StreamEngine.Stream = attr.ib(
+      validator=attr_util.attr_type((str, stream.StreamEngine.Stream)))
+  stderr: str | stream.StreamEngine.Stream = attr.ib(
+      validator=attr_util.attr_type((str, stream.StreamEngine.Stream)))
 
   # The full environment that this step should execute with.
-  env = attr.ib(validator=attr_dict_type(str, str))
+  env: dict[str, str] = attr.ib(validator=attr_util.attr_dict_type(str, str))
 
   # The sectionname->Message mapping of LUCI_CONTEXT modifications.
-  luci_context = attr.ib(validator=attr_dict_type(str, Message))
+  luci_context: dict[str, message.Message] = attr.ib(
+      validator=attr_util.attr_dict_type(str, message.Message))
 
 
 class StepRunner:
@@ -54,7 +62,9 @@ class StepRunner:
   # pylint: disable=no-self-use
   # pylint: disable=unused-argument
 
-  def register_step_config(self, name_token, step_config):
+  def register_step_config(
+      self, name_token: Sequence[str], step_config: engine_step.StepConfig
+  ) -> None:
     """Called to register the precursor of the step (the StepConfig).
 
     Only used for the simulation API.
@@ -71,7 +81,9 @@ class StepRunner:
     """
     pass
 
-  def placeholder(self, name_tokens, placeholder):
+  def placeholder(
+      self, name_tokens: Sequence[str], placeholder: util.Placeholder
+  ) -> recipe_test_api.BaseTestData:
     """Returns PlaceholderTestData for the given step and placeholder
     combination.
 
@@ -86,9 +98,11 @@ class StepRunner:
 
     Returns PlaceholderTestData (or BaseTestData with enabled=False).
     """
-    return BaseTestData(False)
+    return recipe_test_api.BaseTestData(False)
 
-  def handle_placeholder(self, name_tokens, handle_name):
+  def handle_placeholder(
+      self, name_tokens: Sequence[str], handle_name: str
+  ) -> recipe_test_api.BaseTestData:
     """Returns PlaceholderTestData for the given step and handle name
     combination.
 
@@ -102,21 +116,28 @@ class StepRunner:
 
     Returns PlaceholderTestData (or BaseTestData with enabled=False).
     """
-    return BaseTestData(False)
+    return recipe_test_api.BaseTestData(False)
 
-  def isabs(self, name_tokens, path):
+  def isabs(self, name_tokens: Sequence[str], path: str) -> bool:
     """Return True iff `path` is os.path.isabs."""
     return True
 
-  def isdir(self, name_tokens, path):
+  def isdir(self, name_tokens: Sequence[str], path: str) -> bool:
     """Return True iff `path` is os.path.isdir."""
     return True
 
-  def access(self, name_tokens, path, mode):
+  def access(self, name_tokens: Sequence[str], path: str, mode: int) -> bool:
     """Return True iff `path` is os.access(path, mode)."""
     return True
 
-  def resolve_cmd0(self, name_tokens, debug_log, cmd0, cwd, paths):
+  def resolve_cmd0(
+      self,
+      name_tokens: Sequence[str],
+      debug_log: stream.StreamEngine.Stream,
+      cmd0: str,
+      cwd: str,
+      paths: Sequence[str],
+  ) -> str | None:
     """Should resolve the 0th argument of the command (`cmd0`) to an absolute
     path to the intended executable.
 
@@ -134,7 +155,7 @@ class StepRunner:
     """
     return cmd0
 
-  def now(self):
+  def now(self) -> float:
     """Should return time.time().
 
     Used as the basis for adjusting the LUCI_CONTEXT['deadline'] section with
@@ -142,7 +163,7 @@ class StepRunner:
     """
     raise NotImplementedError()
 
-  def write_luci_context(self, section_values):
+  def write_luci_context(self, section_values: Mapping[str, Any]) -> str | None:
     """Writes a mapping of str->dict to disk (as a temp file), returning that
     path.
 
@@ -151,7 +172,12 @@ class StepRunner:
     """
     raise NotImplementedError()
 
-  def run(self, name_tokens, debug_log, step):
+  def run(
+      self,
+      name_tokens: Sequence[str],
+      debug_log: stream.StreamEngine.Stream,
+      step: Step,
+  ) -> step_data.ExecutionResult:
     """Runs the step defined by step_config.
 
     Args:
@@ -164,7 +190,11 @@ class StepRunner:
     """
     raise NotImplementedError()
 
-  def run_noop(self, name_tokens, debug_log):
+  def run_noop(
+      self,
+      name_tokens: Sequence[str],
+      debug_log: stream.StreamEngine.Stream,
+  ) -> step_data.ExecutionResult:
     """Runs a no-op step.
 
     This may occur because the recipe needs to establish some step for UI
@@ -179,4 +209,4 @@ class StepRunner:
 
     Returns recipe_engine.step_data.ExecutionResult.
     """
-    return ExecutionResult(retcode=0)
+    return step_data.ExecutionResult(retcode=0)

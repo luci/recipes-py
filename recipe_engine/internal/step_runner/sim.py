@@ -4,26 +4,29 @@
 
 from __future__ import annotations
 
-from collections import OrderedDict
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 import attr
 
 from google.protobuf import json_format as jsonpb
 
-from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
+from PB.go.chromium.org.luci.lucictx import sections as sections_pb
 
-from ...recipe_test_api import StepTestData, BaseTestData
-from ...step_data import ExecutionResult
+from ... import engine_types
+from ... import recipe_test_api
+from ... import step_data
+from ... import util
 from ...third_party import luci_context
-from ...engine_types import ResourceCost
 
-from ..engine_env import FakeEnviron
-from ..global_shutdown import GLOBAL_SHUTDOWN
+from .. import engine_env
+from .. import engine_step
+from .. import global_shutdown
+from .. import step_runner
+from .. import stream
 
-from . import StepRunner, Step
 
-
-class SimulationStepRunner(StepRunner):
+class SimulationStepRunner(step_runner.StepRunner):
   """Pretends to run steps, instead recording what would have been run.
 
   This is the main workhorse of recipes.py simulation_test.  Returns the log of
@@ -31,17 +34,21 @@ class SimulationStepRunner(StepRunner):
   values.
   """
 
-  def __init__(self, test_data):
+  def __init__(self, test_data: recipe_test_api.TestData) -> None:
     self._test_data = test_data
 
     # dot-name -> StepTestData
-    self._used_steps = {}
+    self._used_steps: dict[str, recipe_test_api.StepTestData] = {}
 
     # (dot-name, namespace, name) -> PlaceholderTestData
-    self._used_placeholders = {}
+    self._used_placeholders: dict[
+        tuple[str, ...], recipe_test_api.PlaceholderTestData
+    ] = {}
 
     # (dot-name, handle_name) -> PlaceholderTestData
-    self._used_handle_placeholders = {}
+    self._used_handle_placeholders: dict[
+        tuple[str, str], recipe_test_api.PlaceholderTestData
+    ] = {}
 
     # dot-name -> {
     #   env_prefixes: {str: List[str]}
@@ -58,21 +65,25 @@ class SimulationStepRunner(StepRunner):
     #
     # TODO(iannucci): Make this expectation data a real type (either @attr.s or
     # a protobuf message)
-    self._step_precursor_data = {}
+    self._step_precursor_data: dict[str, dict[str, Any]] = {}
 
     # dot-name -> Step
-    self._step_history = {}
+    self._step_history: dict[str, dict[str, Any]] = {}
 
-  def register_step_config(self, name_tokens, step_config):
+  def register_step_config(
+      self, name_tokens: Sequence[str], step_config: engine_step.StepConfig
+  ) -> None:
     dot_name = '.'.join(name_tokens)
 
     # This moves the test data from _test_data to _used_steps. This will return
     # StepData() if `dot_name` isn't in self._test_data.
     self._used_steps[dot_name] = self._test_data.pop_step_test_data(
-        dot_name, step_config.step_test_data or StepTestData)
+        dot_name,
+        step_config.step_test_data or recipe_test_api.StepTestData,
+    )
 
     if self._used_steps[dot_name].global_shutdown_event == 'before':
-      GLOBAL_SHUTDOWN.set()
+      global_shutdown.GLOBAL_SHUTDOWN.set()
 
     self._step_precursor_data[dot_name] = {
       'env_prefixes': step_config.env_prefixes.mapping,
@@ -88,10 +99,12 @@ class SimulationStepRunner(StepRunner):
       'allow_subannotations': step_config.allow_subannotations,
     }
 
-    if step_config.cost != ResourceCost():
+    if step_config.cost != engine_types.ResourceCost():
       self._step_precursor_data[dot_name]['cost'] = step_config.cost
 
-  def placeholder(self, name_tokens, placeholder):
+  def placeholder(
+      self, name_tokens: Sequence[str], placeholder: util.Placeholder
+  ) -> recipe_test_api.PlaceholderTestData:
     dot_name = '.'.join(name_tokens)
     # TODO(iannucci): this is janky; simplify all the placeholder naming stuff.
     # See comment on step_data.StepData.
@@ -105,7 +118,9 @@ class SimulationStepRunner(StepRunner):
     ret = self._used_placeholders[key]
     return ret
 
-  def handle_placeholder(self, name_tokens, handle_name):
+  def handle_placeholder(
+      self, name_tokens: Sequence[str], handle_name: str
+  ) -> recipe_test_api.PlaceholderTestData:
     dot_name = '.'.join(name_tokens)
 
     key = (dot_name, handle_name)
@@ -114,18 +129,23 @@ class SimulationStepRunner(StepRunner):
           self._used_steps[dot_name], handle_name)
     return self._used_placeholders[key]
 
-  def now(self):
+  def now(self) -> float:
     # Note that we COULD coordinate with some simulatable time system (e.g. the
     # recipe_engine/time module)... however this is just used for adjusting
     # the soft_deadline in LUCI_CONTEXT['deadline'] prior to invoking
     # write_luci_context where the simulation currently discards it anyway.
     return 0
 
-  def write_luci_context(self, section_values):
+  def write_luci_context(self, section_values: Mapping[str, Any]) -> str:
     # We ignore this environment variable anyway.
     return ""
 
-  def run(self, name_tokens, debug_log, step: Step):
+  def run(
+      self,
+      name_tokens: Sequence[str],
+      debug_log: stream.StreamEngine.Stream,
+      step: step_runner.Step,
+  ) -> step_data.ExecutionResult:
     del debug_log  # unused
 
     dot_name = '.'.join(name_tokens)
@@ -149,7 +169,7 @@ class SimulationStepRunner(StepRunner):
           # This is the default deadline and is fully specified by the
           # `timeout` parameter below. To avoid blowing out expectations, we
           # omit the section.
-          default_deadline = sections_pb2.Deadline(
+          default_deadline = sections_pb.Deadline(
               soft_deadline=precursor['timeout'],
               grace_period=30,
           )
@@ -173,7 +193,7 @@ class SimulationStepRunner(StepRunner):
     if precursor['env_suffixes']:
       step_obj['env_suffixes'] = precursor['env_suffixes']
     if precursor['env']:
-      fake_env = FakeEnviron()
+      fake_env = engine_env.FakeEnviron()
       step_obj['env'] = {
         k: (v if v is None else v % fake_env)
         for k, v in precursor['env'].items()
@@ -211,19 +231,23 @@ class SimulationStepRunner(StepRunner):
           ' an error, use `api.step.empty()`.')
 
     if tdata.global_shutdown_event == 'after':
-      GLOBAL_SHUTDOWN.set()
+      global_shutdown.GLOBAL_SHUTDOWN.set()
 
     if tdata.times_out_after and precursor['timeout']:
       if tdata.times_out_after > precursor['timeout']:
-        return ExecutionResult(had_timeout=True)
+        return step_data.ExecutionResult(had_timeout=True)
 
     if tdata.cancel:
-      return ExecutionResult(was_cancelled=True, retcode=tdata.retcode)
+      return step_data.ExecutionResult(was_cancelled=True, retcode=tdata.retcode)
 
-    return ExecutionResult(retcode=tdata.retcode or 0)
+    return step_data.ExecutionResult(retcode=tdata.retcode or 0)
 
-  def run_noop(self, name_tokens, debug_log):
-    return self.run(name_tokens, debug_log, Step(
+  def run_noop(
+      self,
+      name_tokens: Sequence[str],
+      debug_log: stream.StreamEngine.Stream,
+  ) -> step_data.ExecutionResult:
+    return self.run(name_tokens, debug_log, step_runner.Step(
         cmd=[],
         cwd='',
         stdin=None,
@@ -233,7 +257,7 @@ class SimulationStepRunner(StepRunner):
         luci_context={},
     ))
 
-  def export_steps_ran(self):
+  def export_steps_ran(self) -> dict[str, dict[str, Any]]:
     """Returns a dictionary of all steps run.
 
     This maps from the step's dot-name to dictionaries of:

@@ -4,25 +4,26 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 import os
 import signal
 import sys
 import time
+from typing import Any, IO
 
 from gevent import subprocess
 
 import attr
 import gevent
 
-from ...step_data import ExecutionResult
+from ... import step_data
 from ...third_party import luci_context
 
-from ..global_shutdown import GLOBAL_SHUTDOWN, GLOBAL_QUITQUITQUIT, MSWINDOWS
-from ..global_shutdown import UNKILLED_PROC_GROUPS, GLOBAL_SOFT_DEADLINE
+from .. import global_shutdown
+from .. import step_runner
+from .. import stream
 
-from . import StepRunner
-
-if MSWINDOWS:
+if global_shutdown.MSWINDOWS:
   # Windows has a bad habit of opening a dialog when a console program
   # crashes, rather than just letting it crash.  Therefore, when a
   # program crashes on Windows, we don't find out until the build step
@@ -42,25 +43,27 @@ if MSWINDOWS:
   # gevent.subprocess has special import logic. This symbol is definitely there
   # on Windows.
   # pylint: disable=no-member
-  EXTRA_KWARGS = {'creationflags': subprocess.CREATE_NEW_PROCESS_GROUP}
+  EXTRA_KWARGS: dict[str, Any] = {
+      'creationflags': subprocess.CREATE_NEW_PROCESS_GROUP
+  }
 else:
   EXTRA_KWARGS = {'preexec_fn': lambda: os.setpgid(0, 0)}
 
 
-class SubprocessStepRunner(StepRunner):
+class SubprocessStepRunner(step_runner.StepRunner):
   """Responsible for actually running steps as subprocesses, filtering their
   output into a stream."""
-  def isabs(self, _name_tokens, path):
+  def isabs(self, _name_tokens: Sequence[str], path: str) -> bool:
     return os.path.isabs(path)
 
-  def isdir(self, _name_tokens, path):
+  def isdir(self, _name_tokens: Sequence[str], path: str) -> bool:
     return os.path.isdir(path)
 
-  def access(self, _name_tokens, path, mode):
+  def access(self, _name_tokens: Sequence[str], path: str, mode: int) -> bool:
     return os.access(path, mode)
 
   @staticmethod
-  def _is_executable_file(path):
+  def _is_executable_file(path: str) -> bool:
     """Returns True iff `path` is:
 
       * A file
@@ -70,7 +73,9 @@ class SubprocessStepRunner(StepRunner):
 
   _PATH_EXTS = ('.exe', '.bat') if sys.platform == "win32" else ('',)
   @classmethod
-  def _resolve_base_path(cls, debug_log, base_path):
+  def _resolve_base_path(
+      cls, debug_log: stream.StreamEngine.Stream, base_path: str
+  ) -> str | None:
     """Checks for existence/permission for a potential executable at
     `base_path`.
 
@@ -107,7 +112,14 @@ class SubprocessStepRunner(StepRunner):
 
     return None
 
-  def resolve_cmd0(self, name_tokens, debug_log, cmd0, cwd, paths):
+  def resolve_cmd0(
+      self,
+      name_tokens: Sequence[str],
+      debug_log: stream.StreamEngine.Stream,
+      cmd0: str,
+      cwd: str,
+      paths: Sequence[str],
+  ) -> str | None:
     """Transforms `cmd0` into an absolute path to the resolved executable, as if
     we had used `shell=True` in the current `env` and `cwd`.
 
@@ -150,28 +162,34 @@ class SubprocessStepRunner(StepRunner):
 
     return None
 
-  def now(self):
+  def now(self) -> float:
     return time.time()
 
-  def write_luci_context(self, section_values):
+  def write_luci_context(self, section_values: Mapping[str, Any]) -> str | None:
     with luci_context.stage(_leak=True, **section_values) as file_path:
       return file_path or os.environ.get(luci_context.ENV_KEY)
 
-  def run(self, name_tokens, debug_log, step):
+  def run(
+      self,
+      name_tokens: Sequence[str],
+      debug_log: stream.StreamEngine.Stream,
+      step: step_runner.Step,
+  ) -> step_data.ExecutionResult:
     proc, gid, pipes = self._mk_proc(step, debug_log)
 
     workers, to_close = self._mk_workers(step, proc, pipes)
 
-    timeout = None
-    grace_period = 30
+    timeout: float | None = None
+    grace_period: float = 30
     # See write_luci_context above; Sometime before `run`, `write_luci_context`
     # was called and populated soft_deadline. Now all we have to do is respect
     # that.
     if 'deadline' in step.luci_context:
-      soft = step.luci_context['deadline'].soft_deadline
-      if soft != GLOBAL_SOFT_DEADLINE:
+      deadline: Any = step.luci_context['deadline']
+      soft = deadline.soft_deadline
+      if soft != global_shutdown.GLOBAL_SOFT_DEADLINE:
         timeout = soft - time.time()
-      grace_period = step.luci_context['deadline'].grace_period
+      grace_period = deadline.grace_period
     exc_result = self._wait_proc(proc, gid, timeout, grace_period, debug_log)
 
     self._reap_workers(workers, to_close, debug_log)
@@ -179,7 +197,9 @@ class SubprocessStepRunner(StepRunner):
     return exc_result
 
   @staticmethod
-  def _mk_proc(step, debug_log):
+  def _mk_proc(
+      step: step_runner.Step, debug_log: stream.StreamEngine.Stream
+  ) -> tuple[subprocess.Popen, int | None, set[str]]:
     """Makes a subprocess.Popen object from the Step.
 
     Args:
@@ -197,7 +217,7 @@ class SubprocessStepRunner(StepRunner):
 
     Should not raise an exception.
     """
-    stdin = None
+    stdin: int | IO[bytes] | None = None
     if step.stdin:
       stdin = open(step.stdin, 'rb')
     else:
@@ -205,7 +225,7 @@ class SubprocessStepRunner(StepRunner):
       # (see https://crbug.com/1249150#c12 for problems it causes).
       # So use DEVNULL as a workaround.
       stdin = subprocess.DEVNULL
-    fhandles = {
+    fhandles: dict[str, Any] = {
       'stdin': stdin,
       'stdout': _fd_for_out(step.stdout),
       'stderr': _fd_for_out(step.stderr),
@@ -232,11 +252,11 @@ class SubprocessStepRunner(StepRunner):
       os.environ['PATH'] = orig_path
 
     # Lifted from subprocess42.
-    gid = None
-    if not MSWINDOWS:
+    gid: int | None = None
+    if not global_shutdown.MSWINDOWS:
       try:
         gid = os.getpgid(proc.pid)
-        UNKILLED_PROC_GROUPS.add(gid)
+        global_shutdown.UNKILLED_PROC_GROUPS.add(gid)
       except OSError:
         # sometimes the process can run+finish before we collect its pgid.
         pass
@@ -245,11 +265,11 @@ class SubprocessStepRunner(StepRunner):
       # process does tricks to daemonize, this can easily leak processes.
       #
       # TODO(iannucci): Use Job Objects for process management.
-      UNKILLED_PROC_GROUPS.add(proc)
+      global_shutdown.UNKILLED_PROC_GROUPS.add(proc)
 
     debug_log.write_line('launched pid:%r gid:%r' % (proc.pid, gid))
 
-    pipes = set()
+    pipes: set[str] = set()
     for handle_name, handle in fhandles.items():
       # Close all closable file handles, since the subprocess has them now.
       if hasattr(handle, 'close'):
@@ -260,7 +280,9 @@ class SubprocessStepRunner(StepRunner):
     return proc, gid, pipes
 
   @staticmethod
-  def _mk_workers(step, proc, pipes):
+  def _mk_workers(
+      step: step_runner.Step, proc: subprocess.Popen, pipes: set[str]
+  ) -> tuple[list[gevent.Greenlet], list[tuple[str, Any]]]:
     """Makes greenlets to shuttle lines from the process's PIPE'd std{out,err}
     handles to the recipe Step's std{out,err} handles.
 
@@ -288,8 +310,8 @@ class SubprocessStepRunner(StepRunner):
     ]. Both returned values are expected to be passed directly to
     `_reap_workers` without inspection or alteration.
     """
-    workers = []
-    to_close = []
+    workers: list[gevent.Greenlet] = []
+    to_close: list[tuple[str, Any]] = []
     for handle_name in pipes:
       proc_handle = getattr(proc, handle_name)
       to_close.append((handle_name, proc_handle))
@@ -298,7 +320,14 @@ class SubprocessStepRunner(StepRunner):
       ))
     return workers, to_close
 
-  def _wait_proc(self, proc, gid, timeout, grace_period, debug_log):
+  def _wait_proc(
+      self,
+      proc: subprocess.Popen,
+      gid: int | None,
+      timeout: float | None,
+      grace_period: float | None,
+      debug_log: stream.StreamEngine.Stream,
+  ) -> step_data.ExecutionResult:
     """Waits for the completion (or timeout) of `proc`.
 
     Args:
@@ -315,7 +344,7 @@ class SubprocessStepRunner(StepRunner):
 
     Should not raise an exception.
     """
-    ret = ExecutionResult()
+    ret = step_data.ExecutionResult()
 
     # We're about to do gevent-blocking operations (waiting on the subprocess)
     # and so another greenlet could kill us; we guard all of these operations
@@ -326,8 +355,10 @@ class SubprocessStepRunner(StepRunner):
       if timeout is not None:
         extra_log = ' (timeout=%fs)' % (timeout,)
       debug_log.write_line('Waiting for process%s.' % (extra_log,))
-      gevent.wait([GLOBAL_SHUTDOWN, proc], timeout=timeout, count=1)
-      if GLOBAL_SHUTDOWN.ready():
+      gevent.wait(
+          [global_shutdown.GLOBAL_SHUTDOWN, proc], timeout=timeout, count=1
+      )
+      if global_shutdown.GLOBAL_SHUTDOWN.ready():
         debug_log.write_line('Interrupted by GLOBAL_SHUTDOWN')
         return attr.evolve(ret,
                            retcode=self._kill(
@@ -367,7 +398,11 @@ class SubprocessStepRunner(StepRunner):
     return ret
 
   @staticmethod
-  def _reap_workers(workers, to_close, debug_log):
+  def _reap_workers(
+      workers: Sequence[gevent.Greenlet],
+      to_close: Sequence[tuple[str, Any]],
+      debug_log: stream.StreamEngine.Stream,
+  ) -> None:
     """Collects the IO workers created with _mk_workers.
 
     After killing the workers, also closes the subprocess's open PIPE handles.
@@ -392,8 +427,14 @@ class SubprocessStepRunner(StepRunner):
       _safe_close(debug_log, handle_name, handle)
 
 
-  if MSWINDOWS:
-    def _kill(self, debug_log, proc, gid, grace_period):
+  if global_shutdown.MSWINDOWS:
+    def _kill(
+        self,
+        debug_log: stream.StreamEngine.Stream,
+        proc: subprocess.Popen,
+        gid: int | None,
+        grace_period: float | None,
+    ) -> int | None:
       """Kills the process as gracefully as possible:
 
         * Send CTRL_BREAK_EVENT (to the process group, there's no other way)
@@ -411,7 +452,7 @@ class SubprocessStepRunner(StepRunner):
       # subprocess42 for reference.
       _ = gid  # unused on windows
 
-      def _ctrlbreak():
+      def _ctrlbreak() -> None:
         debug_log.write_line(
             'Proc(%d).send_signal(CTRL_BREAK_EVENT)' % (proc.pid,))
         try:
@@ -421,10 +462,14 @@ class SubprocessStepRunner(StepRunner):
           pass
 
       _ctrlbreak()
-      gevent.wait([GLOBAL_QUITQUITQUIT, proc], timeout=grace_period, count=1)
+      gevent.wait(
+          [global_shutdown.GLOBAL_QUITQUITQUIT, proc],
+          timeout=grace_period,
+          count=1,
+      )
       ret = proc.poll()
       if ret is None:
-        if GLOBAL_QUITQUITQUIT.ready():
+        if global_shutdown.GLOBAL_QUITQUITQUIT.ready():
           debug_log.write_line('GLOBAL_QUITQUITQUIT')
         else:
           debug_log.write_line('Grace period expired (%fs)' % (grace_period,))
@@ -436,7 +481,7 @@ class SubprocessStepRunner(StepRunner):
         proc.terminate()
       except OSError:
         pass
-      UNKILLED_PROC_GROUPS.discard(proc)
+      global_shutdown.UNKILLED_PROC_GROUPS.discard(proc)
 
       ret = proc.wait()
       if ret is not None:
@@ -445,14 +490,24 @@ class SubprocessStepRunner(StepRunner):
 
   else:
     @staticmethod
-    def _killpg(debug_log, gid, signame):
+    def _killpg(
+        debug_log: stream.StreamEngine.Stream, gid: int | None, signame: str
+    ) -> None:
+      if gid is None:
+        return
       debug_log.write_line('killpg(%d, %s)' % (gid, signame))
       try:
         os.killpg(gid, getattr(signal, signame))
       except OSError:
         pass
 
-    def _kill(self, debug_log, proc, gid, grace_period):
+    def _kill(
+        self,
+        debug_log: stream.StreamEngine.Stream,
+        proc: subprocess.Popen,
+        gid: int | None,
+        grace_period: float | None,
+    ) -> int | None:
       """Kills the process in group `gid` as gracefully as possible:
 
         * Send SIGTERM to the process group.
@@ -471,10 +526,14 @@ class SubprocessStepRunner(StepRunner):
       """
       self._killpg(debug_log, gid, 'SIGTERM')
       debug_log.write_line('Waiting for process %d.' % (proc.pid,))
-      gevent.wait([GLOBAL_QUITQUITQUIT, proc], timeout=grace_period, count=1)
+      gevent.wait(
+          [global_shutdown.GLOBAL_QUITQUITQUIT, proc],
+          timeout=grace_period,
+          count=1,
+      )
       ret = proc.poll()
       if ret is None:
-        if GLOBAL_QUITQUITQUIT.ready():
+        if global_shutdown.GLOBAL_QUITQUITQUIT.ready():
           debug_log.write_line('GLOBAL_QUITQUITQUIT')
         else:
           debug_log.write_line('Grace period expired (%fs)' % (grace_period,))
@@ -483,11 +542,11 @@ class SubprocessStepRunner(StepRunner):
 
       self._killpg(debug_log, gid, 'SIGKILL')
 
-      UNKILLED_PROC_GROUPS.discard(gid)
+      global_shutdown.UNKILLED_PROC_GROUPS.discard(gid)
       return ret
 
 
-def _copy_lines(handle, outstream):
+def _copy_lines(handle: Any, outstream: stream.StreamEngine.Stream) -> None:
   while True:
     try:
       # Because we use readline here we could, technically, lose some data in
@@ -503,7 +562,7 @@ def _copy_lines(handle, outstream):
 
 # It's either a file-like object, a string or it's a Stream (so we need to
 # return PIPE)
-def _fd_for_out(raw_val):
+def _fd_for_out(raw_val: str | stream.StreamEngine.Stream) -> int | IO[bytes]:
   if hasattr(raw_val, 'fileno'):
     return raw_val.fileno()
   if isinstance(raw_val, str):
@@ -511,7 +570,9 @@ def _fd_for_out(raw_val):
   return subprocess.PIPE
 
 
-def _safe_close(debug_log, handle_name, handle):
+def _safe_close(
+    debug_log: stream.StreamEngine.Stream, handle_name: str, handle: Any
+) -> None:
   """Safely attempt to close the given handle.
 
   Args:
