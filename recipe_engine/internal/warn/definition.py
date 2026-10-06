@@ -4,11 +4,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+import datetime
 import errno
+import io
 import re
-
-from datetime import datetime
-from io import open
+from typing import Any
 
 from google.protobuf import text_format as textpb
 
@@ -17,7 +18,7 @@ from google.protobuf import text_format as textpb
 RECIPE_WARNING_DEFINITIONS_REL = 'recipe.warnings'
 
 
-def parse_warning_definitions(file_path):
+def parse_warning_definitions(file_path: str) -> dict[str, Any]:
   """Parse the warning definition file at the given absolute path. The file
   content is expected to be in text proto format of warning.DefinitionCollection
   proto message. Duplicate warning names will be raised. Each warning definition
@@ -30,7 +31,7 @@ def parse_warning_definitions(file_path):
   """
   raw_text = ''
   try:
-    with open(file_path, encoding='utf-8') as f:
+    with io.open(file_path, encoding='utf-8') as f:
       raw_text = f.read()
   except IOError as ex:
     if ex.errno == errno.ENOENT:
@@ -38,8 +39,9 @@ def parse_warning_definitions(file_path):
       return {}
     raise ex
 
-  from PB.recipe_engine.warning import DefinitionCollection
-  definition_collection = textpb.Parse(raw_text, DefinitionCollection())
+  from PB.recipe_engine import warning as warning_pb
+  definition_collection = textpb.Parse(
+      raw_text, warning_pb.DefinitionCollection())
   definitions = list(definition_collection.warning)
 
   _populate_bug_issue_fields(definitions,
@@ -56,8 +58,11 @@ def parse_warning_definitions(file_path):
   return ret
 
 
-def _populate_bug_issue_fields(definitions, monorail_bug_default,
-                               google_issue_default):
+def _populate_bug_issue_fields(
+    definitions: Sequence[Any],
+    monorail_bug_default: Any,
+    google_issue_default: Any,
+) -> None:
   """If default field value has been declared for bugs/issues, run through all
   bugs/issues declared in all warning definitions and assign default value to
   fields which are unset.
@@ -77,7 +82,7 @@ def _populate_bug_issue_fields(definitions, monorail_bug_default,
       iss.host = iss.host or google_issue_default.host
 
 
-def _validate(definition):
+def _validate(definition: Any) -> None:
   """Ensure the given warning definition is valid. ValueError will be
   raised otherwise. All conditions are documented in warning.proto.
 
@@ -91,7 +96,7 @@ def _validate(definition):
 
   if definition.deadline:
     try:
-      datetime.strptime(definition.deadline, '%Y-%m-%d')
+      datetime.datetime.strptime(definition.deadline, '%Y-%m-%d')
     except ValueError:
       raise ValueError(
         'The deadline should be in YYYY-MM-DD format. Actual: %s' % (
@@ -109,7 +114,7 @@ def _validate(definition):
     _require_non_zero_value(iss.id, err_msg_template % 'id')
 
 
-def _require_non_zero_value(value, message):
+def _require_non_zero_value(value: Any, message: str) -> None:
   """Raise ValueError with message if the supplied value is a zero value
   """
   if not value:
