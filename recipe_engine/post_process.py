@@ -227,6 +227,112 @@ def MustRunRE(check: magic_check_fn.Checker,
     check(matches <= at_most)
 
 
+def _adjacent_indices(step_odict: StepODict) -> list[tuple[int, ...]]:
+  """Returns the indices of the steps that can immediately follow each step."""
+  levels = [
+      step.nest_level if isinstance(step, post_process_inputs.Step) else 0
+      for step in step_odict.values()
+  ]
+  ret = []
+  for i, level in enumerate(levels):
+    end = i + 1
+    while end < len(levels) and levels[end] > level:
+      end += 1
+    ret.append(tuple(sorted({i + 1, end})))
+  return ret
+
+
+def MustRunInOrder(check: magic_check_fn.Checker,
+                   step_odict: StepODict,
+                   *steps: str,
+                   adjacent: bool = False) -> None:
+  """Asserts that the given steps all ran, in the given order.
+
+  Order is by when steps started, so this isn't meaningful for steps that run
+  concurrently.
+
+  Args:
+    steps (str) - The steps, in the order they must run.
+    adjacent (bool) - If True, each step must immediately follow the previous
+      one, either as the next step or as the first step after the previous
+      step's nested steps.
+
+  Usage:
+    yield api.test(..., api.post_process(MustRunInOrder, 'build', 'upload'))
+  """
+  all_ran = True
+  for step in steps:
+    if not check(step in step_odict):
+      all_ran = False
+  if not all_ran:
+    return
+
+  indices = {name: i for i, name in enumerate(step_odict)}
+  adjacent_indices = _adjacent_indices(step_odict) if adjacent else None
+  for prev_step, step in zip(steps, steps[1:]):
+    prev_index = indices[prev_step]
+    index = indices[step]
+    if adjacent:
+      hint = 'step %r immediately follows step %r' % (step, prev_step)
+      check(hint, index in adjacent_indices[prev_index])
+    else:
+      hint = 'step %r runs after step %r' % (step, prev_step)
+      check(hint, index > prev_index)
+
+
+def MustRunInOrderRE(check: magic_check_fn.Checker,
+                     step_odict: StepODict,
+                     *step_regexes: str | re.Pattern,
+                     adjacent: bool = False) -> None:
+  """Asserts that steps fully matching the given regexes ran, in order.
+
+  Each regex must match a distinct step. See MustRunInOrder for details.
+
+  Args:
+    step_regexes (str, compiled regex) - The regexes, in the order the matching
+      steps must run.
+    adjacent (bool) - Same as for MustRunInOrder.
+
+  Usage:
+    yield api.test(...,
+                   api.post_process(MustRunInOrderRE, r'build.*', 'upload'))
+  """
+  compiled_regexes = [re.compile(r) for r in step_regexes]
+  if not compiled_regexes:
+    return
+  step_names = list(step_odict)
+
+  if adjacent:
+    adjacent_indices = _adjacent_indices(step_odict)
+    first, *rest = compiled_regexes
+    # Indices of steps that can end a chain matching the regexes so far.
+    ends = {i for i, name in enumerate(step_names) if first.fullmatch(name)}
+    for regex in rest:
+      candidates = {j for i in ends for j in adjacent_indices[i]}
+      ends = {
+          j for j in candidates
+          if j < len(step_names) and regex.fullmatch(step_names[j])
+      }
+    patterns = [r.pattern for r in compiled_regexes]
+    hint = 'adjacent steps fully match %r' % (patterns,)
+    check(hint, bool(ends))
+    return
+
+  pos = 0
+  for regex in compiled_regexes:
+    match_index = next(
+        (i for i in range(pos, len(step_names))
+         if regex.fullmatch(step_names[i])),
+        None,
+    )
+    hint = 'a step fully matching %r runs' % regex.pattern
+    if pos:
+      hint += ' after step %r' % step_names[pos - 1]
+    if not check(hint, match_index is not None):
+      return
+    pos = match_index + 1
+
+
 def StepSuccess(check: magic_check_fn.Checker, step_odict: StepODict,
                 step: str) -> None:
   """Assert that a step succeeded.

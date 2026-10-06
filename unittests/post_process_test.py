@@ -247,6 +247,159 @@ class TestRun(PostProcessUnitTest):
     self.expect_fails(3, post_process.DoesNotRunRE, 'b')
 
 
+class TestRunInOrder(PostProcessUnitTest):
+  """Test case for checks relating to the order in which steps run."""
+
+  @property
+  def step_dict(self) -> dict[str, dict[str, Any]]:
+    """Return a standard step dict for this test case.
+
+    Steps are nested according to the number of dots in their names:
+      a
+      b
+        b.sub
+          b.sub.deep
+        b.sub2
+      c
+      d
+      $result
+    """
+    ret = make_step_dict('a', 'b', 'b.sub', 'b.sub.deep', 'b.sub2', 'c', 'd',
+                         '$result')
+    for name, step in ret.items():
+      if name != '$result' and name.count('.'):
+        step['nest_level'] = name.count('.')
+    return ret
+
+  def test_pass(self):
+    self.expect_pass(post_process.MustRunInOrder, 'a', 'c', 'd')
+
+  def test_pass_single_and_empty(self):
+    self.expect_pass(post_process.MustRunInOrder, 'a')
+    self.expect_pass(post_process.MustRunInOrder)
+
+  def test_fail_wrong_order(self):
+    failures = self.expect_fails(1, post_process.MustRunInOrder, 'c', 'a')
+    self.assertHas(failures[0], "step 'a' runs after step 'c'")
+
+  def test_fail_multiple_pairs(self):
+    self.expect_fails(2, post_process.MustRunInOrder, 'd', 'c', 'a')
+
+  def test_fail_missing(self):
+    failures = self.expect_fails(2, post_process.MustRunInOrder, 'c', 'x', 'a',
+                                 'y')
+    self.assertHas(failures[0], "step: 'x'")
+    self.assertHas(failures[1], "step: 'y'")
+
+  def test_fail_duplicate_arg(self):
+    self.expect_fails(1, post_process.MustRunInOrder, 'a', 'a')
+
+  def test_adjacent_pass(self):
+    self.expect_pass(post_process.MustRunInOrder, 'c', 'd', adjacent=True)
+
+  def test_adjacent_pass_into_nested(self):
+    self.expect_pass(
+        post_process.MustRunInOrder,
+        'a',
+        'b',
+        'b.sub',
+        'b.sub.deep',
+        'b.sub2',
+        'c',
+        adjacent=True)
+
+  def test_adjacent_skips_nested_steps(self):
+    self.expect_pass(post_process.MustRunInOrder, 'b', 'c', adjacent=True)
+    self.expect_pass(
+        post_process.MustRunInOrder, 'b.sub', 'b.sub2', adjacent=True)
+
+  def test_adjacent_result(self):
+    self.expect_pass(post_process.MustRunInOrder, 'd', '$result', adjacent=True)
+
+  def test_adjacent_fail_gap(self):
+    failures = self.expect_fails(
+        1, post_process.MustRunInOrder, 'a', 'c', adjacent=True)
+    self.assertHas(failures[0], "step 'c' immediately follows step 'a'")
+
+  def test_adjacent_fail_into_later_nested(self):
+    self.expect_fails(
+        1, post_process.MustRunInOrder, 'b', 'b.sub2', adjacent=True)
+    self.expect_fails(
+        1, post_process.MustRunInOrder, 'a', 'b.sub', adjacent=True)
+
+  def test_adjacent_fail_out_of_parent(self):
+    # 'b.sub2' runs between 'b.sub' (and its nested steps) and 'c'.
+    self.expect_fails(
+        1, post_process.MustRunInOrder, 'b.sub', 'c', adjacent=True)
+    self.expect_pass(post_process.MustRunInOrder, 'b.sub2', 'c', adjacent=True)
+
+  def test_re_pass(self):
+    self.expect_pass(post_process.MustRunInOrderRE, 'a', r'b\..*', 'd')
+
+  def test_re_pass_empty(self):
+    self.expect_pass(post_process.MustRunInOrderRE)
+
+  def test_re_fullmatch(self):
+    self.expect_pass(post_process.MustRunInOrderRE, 'b')
+    self.expect_fails(1, post_process.MustRunInOrderRE, r'b\.s')
+
+  def test_re_fail_order(self):
+    failures = self.expect_fails(1, post_process.MustRunInOrderRE, 'd', 'a')
+    self.assertHas(failures[0], "a step fully matching 'a' runs after step 'd'")
+
+  def test_re_distinct_steps(self):
+    self.expect_pass(post_process.MustRunInOrderRE, *([r'b.*'] * 4))
+    self.expect_fails(1, post_process.MustRunInOrderRE, *([r'b.*'] * 5))
+
+  def test_re_greedy(self):
+    self.expect_pass(post_process.MustRunInOrderRE, r'.*', 'b')
+    self.expect_fails(1, post_process.MustRunInOrderRE, r'.*', 'a')
+
+  def test_re_compiled_pattern(self):
+    self.expect_pass(post_process.MustRunInOrderRE, re.compile('a'),
+                     re.compile('c'))
+
+  def test_re_adjacent_pass(self):
+    self.expect_pass(
+        post_process.MustRunInOrderRE, 'a', r'b', r'b\.sub', adjacent=True)
+
+  def test_re_adjacent_skips_nested_steps(self):
+    self.expect_pass(
+        post_process.MustRunInOrderRE, 'a', 'b', 'c', adjacent=True)
+
+  def test_re_adjacent_branches(self):
+    # '.*' after 'b' could be 'b.sub' or 'c'; only 'c' leads to 'd'.
+    self.expect_pass(
+        post_process.MustRunInOrderRE, 'b', '.*', 'd', adjacent=True)
+
+  def test_re_adjacent_fail(self):
+    failures = self.expect_fails(
+        1, post_process.MustRunInOrderRE, 'a', 'c', adjacent=True)
+    self.assertHas(failures[0], "adjacent steps fully match ['a', 'c']")
+
+  def test_re_adjacent_fail_into_later_nested(self):
+    self.expect_fails(
+        1, post_process.MustRunInOrderRE, 'b', r'b\.sub2', adjacent=True)
+
+  def test_re_adjacent_too_many_regexes(self):
+    self.expect_pass(
+        post_process.MustRunInOrderRE, *(['.*'] * 8), adjacent=True)
+    self.expect_fails(
+        1, post_process.MustRunInOrderRE, *(['.*'] * 9), adjacent=True)
+
+
+class TestRunInOrderBacktrack(PostProcessUnitTest):
+  """Test case for adjacent regex matching that must skip a false start."""
+
+  @property
+  def step_dict(self) -> dict[str, dict[str, Any]]:
+    """Return a standard step dict for this test case."""
+    return make_step_dict('x1', 'y', 'x2', 'z')
+
+  def test_re_adjacent_backtrack(self):
+    self.expect_pass(post_process.MustRunInOrderRE, 'x.', 'z', adjacent=True)
+
+
 class TestStepStatus(PostProcessUnitTest):
   """Test case for checks relating to step status."""
 
