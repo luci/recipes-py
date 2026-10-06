@@ -4,29 +4,30 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import collections
+from collections.abc import Callable, Sequence
+import dataclasses
+import functools
 import sys
-from collections import defaultdict
-from collections import namedtuple
-from functools import reduce
-from os import stat
-from typing import TYPE_CHECKING, Literal, Sequence
+from typing import Any, Literal, TYPE_CHECKING
 
-from past.builtins import basestring
-
+from recipe_engine import util
 from recipe_engine.internal import recipe_deps
-
-from .internal.warn import escape
-from .util import ModuleInjectionSite
-from .util import ModuleInjectionError
-from .util import static_call
-from .util import static_wraps
+from recipe_engine.internal.warn import escape
 
 if TYPE_CHECKING:
-  from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
+  from PB.turboci.graph.orchestrator.v1 import (
+      write_nodes_request as write_nodes_request_pb
+  )
 
 
-def combineify(name, dest, a, b, overwrite=False):
+def combineify(
+    name: str,
+    dest: Any,
+    a: Any,
+    b: Any,
+    overwrite: bool = False,
+) -> None:
   """
   Combines dictionary members in two objects into a third one using addition.
 
@@ -51,22 +52,22 @@ def combineify(name, dest, a, b, overwrite=False):
 
 
 class BaseTestData:
-  def __init__(self, enabled=True):
+  def __init__(self, enabled: bool = True) -> None:
     super().__init__()
     self._enabled = enabled
 
   @property
-  def enabled(self):
+  def enabled(self) -> bool:
     return self._enabled
 
 
 class PlaceholderTestData(BaseTestData):
-  def __init__(self, data=None, name=None):
+  def __init__(self, data: Any = None, name: str | None = None) -> None:
     super().__init__()
     self.data = data
     self.name = name
 
-  def __repr__(self):
+  def __repr__(self) -> str:
     if self.name is None:
       return "PlaceholderTestData(DEFAULT, %r)" % (self.data,)
     else:
@@ -80,19 +81,21 @@ class StepTestData(BaseTestData):
   This data is consumed while running the recipe (during
   annotated_run.run_steps).
   """
-  def __init__(self):
+  def __init__(self) -> None:
     super().__init__()
     # { (module, placeholder, name) -> data }. Data are for output placeholders.
-    self.placeholder_data = defaultdict(dict)
+    self.placeholder_data: collections.defaultdict[
+        tuple[str, str, str | None], Any
+    ] = collections.defaultdict(dict)
     self.override = False
-    self._stdout = None
-    self._stderr = None
-    self._retcode = None
-    self._times_out_after = None
+    self._stdout: PlaceholderTestData | None = None
+    self._stderr: PlaceholderTestData | None = None
+    self._retcode: int | None = None
+    self._times_out_after: int | None = None
     self._cancel = False
-    self._global_shutdown_event = None  # None, "before" or "after"
+    self._global_shutdown_event: Literal['before', 'after'] | None = None
 
-  def __add__(self, other):
+  def __add__(self, other: StepTestData) -> StepTestData:
     assert isinstance(other, StepTestData)
 
     if other.override:
@@ -123,73 +126,83 @@ class StepTestData(BaseTestData):
 
     return ret
 
-  def unwrap_placeholder(self):
+  def unwrap_placeholder(self) -> PlaceholderTestData:
     # {(module, placeholder, name): data} => data.
     if len(self.placeholder_data) != 1:
       raise ValueError('Cannot unwrap placeholder_data with length > 1: len=%d'
                        % len(self.placeholder_data))
     return list(self.placeholder_data.values())[0]
 
-  def pop_placeholder(self, module_name, placeholder_name, name):
+  def pop_placeholder(
+      self,
+      module_name: str,
+      placeholder_name: str,
+      name: str | None,
+  ) -> PlaceholderTestData:
     return self.placeholder_data.pop(
         (module_name, placeholder_name, name), PlaceholderTestData())
 
   @property
-  def retcode(self):  # pylint: disable=E0202
+  def retcode(self) -> int | None:  # pylint: disable=E0202
     return self._retcode
 
   @retcode.setter
-  def retcode(self, value):  # pylint: disable=E0202
+  def retcode(self, value: int | None) -> None:  # pylint: disable=E0202
     self._retcode = value
 
   @property
-  def times_out_after(self):  # pylint: disable=E0202
+  def times_out_after(self) -> int:  # pylint: disable=E0202
     return self._times_out_after or 0
 
   @times_out_after.setter
-  def times_out_after(self, value):  # pylint: disable=E0202
+  def times_out_after(self, value: int | None) -> None:  # pylint: disable=E0202
     self._times_out_after = value
 
   @property
-  def global_shutdown_event(self):  # pylint: disable=E0202
+  def global_shutdown_event(  # pylint: disable=E0202
+      self,
+  ) -> Literal['before', 'after'] | None:
     return self._global_shutdown_event
 
   @global_shutdown_event.setter
-  def global_shutdown_event(self, value):  # pylint: disable=E0202
+  def global_shutdown_event(  # pylint: disable=E0202
+      self,
+      value: Literal['before', 'after'] | None,
+  ) -> None:
     assert value in ('before', 'after', None), "bad global_shutdown_event"
     self._global_shutdown_event = value
 
   @property
-  def cancel(self):  # pylint: disable=E0202
+  def cancel(self) -> bool:  # pylint: disable=E0202
     return self._cancel
 
   @cancel.setter
-  def cancel(self, value):  # pylint: disable=E0202
+  def cancel(self, value: bool) -> None:  # pylint: disable=E0202
     self._cancel = value
 
   @property
-  def stdout(self):
+  def stdout(self) -> PlaceholderTestData:
     return self._stdout or PlaceholderTestData(None)
 
   @stdout.setter
-  def stdout(self, value):
+  def stdout(self, value: PlaceholderTestData) -> None:
     assert isinstance(value, PlaceholderTestData)
     self._stdout = value
 
   @property
-  def stderr(self):
+  def stderr(self) -> PlaceholderTestData:
     return self._stderr or PlaceholderTestData(None)
 
   @stderr.setter
-  def stderr(self, value):
+  def stderr(self, value: PlaceholderTestData) -> None:
     assert isinstance(value, PlaceholderTestData)
     self._stderr = value
 
   @property
-  def stdin(self):  # pylint: disable=R0201
+  def stdin(self) -> PlaceholderTestData:  # pylint: disable=R0201
     return PlaceholderTestData(None)
 
-  def __repr__(self):
+  def __repr__(self) -> str:
     dct = {
       'placeholder_data': dict(self.placeholder_data.items()),
       'stdout': self._stdout,
@@ -215,7 +228,7 @@ class ModuleTestData(BaseTestData, dict):
   This test data is consumed at module load time (i.e. when create_recipe_api
   runs).
   """
-  def __add__(self, other):
+  def __add__(self, other: ModuleTestData) -> ModuleTestData:
     assert isinstance(other, ModuleTestData)
     # BUG(crbug.com/327644647) - this implementation can silently drop data.
     ret = ModuleTestData()
@@ -223,15 +236,15 @@ class ModuleTestData(BaseTestData, dict):
     ret.update(other)
     return ret
 
-  def __repr__(self):
+  def __repr__(self) -> str:
     return "ModuleTestData(%r)" % super().__repr__()
 
 
-PostprocessHookContext = namedtuple(
+PostprocessHookContext = collections.namedtuple(
     'PostprocessHookContext', 'func args kwargs filename lineno')
 """The context describing where a post-process hook was added."""
 
-PostprocessHook = namedtuple(
+PostprocessHook = collections.namedtuple(
   'PostprocessHook', 'func args kwargs context')
 """The details of a post-process hook.
 
@@ -242,32 +255,36 @@ and kwargs.
 """
 
 
-@dataclass
+@dataclasses.dataclass
 class WriteNodesBlock:
-  nodes: Sequence[WriteNodesRequest.CheckWrite]
+  nodes: Sequence[write_nodes_request_pb.WriteNodesRequest.CheckWrite]
   filename: str
   lineno: int
 
 
 class TestData(BaseTestData):
-  def __init__(self, name=None):
+  def __init__(self, name: str | None = None) -> None:
     super().__init__()
     self.name = name
-    self.properties = {}  # key -> val
-    self.environ = {}  # key -> val
-    self.luci_context = {}  # key -> val
-    self.mod_data = defaultdict(ModuleTestData)
-    self.step_data = defaultdict(StepTestData)
-    self.expected_exceptions = []
-    self.expected_status = None
+    self.properties: dict[str, Any] = {}  # key -> val
+    self.environ: dict[str, str] = {}  # key -> val
+    self.luci_context: dict[str, Any] = {}  # key -> val
+    self.mod_data: collections.defaultdict[str | None, ModuleTestData] = (
+        collections.defaultdict(ModuleTestData)
+    )
+    self.step_data: collections.defaultdict[str, StepTestData] = (
+        collections.defaultdict(StepTestData)
+    )
+    self.expected_exceptions: list[str] = []
+    self.expected_status: int | None = None
     self.post_process_hooks: list[PostprocessHook] = []
     self.assert_workplan_hooks: list[PostprocessHook] = []
     self.turboci_write_nodes: list[WriteNodesBlock] = []
 
     # Filled in by recipe_deps.Recipe.gen_tests()
-    self.expect_file = None
+    self.expect_file: str | None = None
 
-  def __add__(self, other):
+  def __add__(self, other: TestData) -> TestData:
     assert isinstance(other, TestData), repr(other)
 
     ret = TestData(self.name or other.name)
@@ -290,7 +307,9 @@ class TestData(BaseTestData):
     ret.assert_workplan_hooks.extend(self.assert_workplan_hooks)
     ret.assert_workplan_hooks.extend(other.assert_workplan_hooks)
 
-    ret.turboci_write_nodes = self.turboci_write_nodes + other.turboci_write_nodes
+    ret.turboci_write_nodes = (
+        self.turboci_write_nodes + other.turboci_write_nodes
+    )
 
     ret.expected_status = self.expected_status
     if other.expected_status is not None:
@@ -303,10 +322,14 @@ class TestData(BaseTestData):
     return ret
 
   @property
-  def consumed(self):
+  def consumed(self) -> bool:
     return not (self.step_data or self.expected_exception)
 
-  def pop_step_test_data(self, step_name, step_test_data_fn):
+  def pop_step_test_data(
+      self,
+      step_name: str,
+      step_test_data_fn: Callable[[], StepTestData],
+  ) -> StepTestData:
     step_test_data = step_test_data_fn()
     if step_name in self.step_data:
       try:
@@ -315,29 +338,41 @@ class TestData(BaseTestData):
         raise ValueError('in step %r: %s' % (step_name, ve))
     return step_test_data
 
-  def get_module_test_data(self, module_name):
+  def get_module_test_data(self, module_name: str | None) -> ModuleTestData:
     return self.mod_data.get(module_name, ModuleTestData())
 
-  def expect_exception(self, exception):
-    if not isinstance(exception, basestring):
+  def expect_exception(self, exception: str) -> None:
+    if not isinstance(exception, str):
       raise ValueError('expect_exception expects a string containing the '
                        'exception class name')
     self.expected_exceptions.append(exception)
 
   @escape.escape_warnings('.*')
-  def post_process(self, func, args, kwargs, context):
+  def post_process(
+      self,
+      func: Callable[..., Any],
+      args: tuple[Any, ...],
+      kwargs: dict[str, Any],
+      context: PostprocessHookContext,
+  ) -> None:
     for warning in getattr(func, 'recipe_warnings', ()):
       record_execution_warning(warning)
     self.post_process_hooks.append(PostprocessHook(func, args, kwargs, context))
 
   @escape.escape_warnings('.*')
-  def assert_workplan(self, func, args, kwargs, context):
+  def assert_workplan(
+      self,
+      func: Callable[..., Any],
+      args: tuple[Any, ...],
+      kwargs: dict[str, Any],
+      context: PostprocessHookContext,
+  ) -> None:
     for warning in getattr(func, 'recipe_warnings', ()):
       record_execution_warning(warning)
     self.assert_workplan_hooks.append(
         PostprocessHook(func, args, kwargs, context))
 
-  def __repr__(self):
+  def __repr__(self) -> str:
     return "TestData(%r)" % ({
       'name': self.name,
       'properties': self.properties,
@@ -351,34 +386,46 @@ class TestData(BaseTestData):
 
 
 class DisabledTestData(BaseTestData):
-  def __init__(self):
+  def __init__(self) -> None:
     super().__init__(False)
 
-  def __getattr__(self, name):
+  def __getattr__(self, name: str) -> DisabledTestData:
     return self
 
-  def pop_placeholder(self, _module_name, _placeholder_name, _name):
+  def pop_placeholder(
+      self,
+      _module_name: str,
+      _placeholder_name: str,
+      _name: str | None,
+  ) -> DisabledTestData:
     return self
 
-  def pop_step_test_data(self, _step_name, _step_test_data_fn):
+  def pop_step_test_data(
+      self,
+      _step_name: str,
+      _step_test_data_fn: Callable[[], StepTestData],
+  ) -> DisabledTestData:
     return self
 
-  def get_module_test_data(self, _module_name):
+  def get_module_test_data(self, _module_name: str | None) -> ModuleTestData:
     return ModuleTestData(enabled=False)
 
 
-def mod_test_data(func):
-  @static_wraps(func)
-  def inner(self, *args, **kwargs):
+def mod_test_data(func: Callable[..., Any]) -> Callable[..., TestData]:
+  @util.static_wraps(func)
+  def inner(self: RecipeTestApi, *args: Any, **kwargs: Any) -> TestData:
     assert isinstance(self, RecipeTestApi)
+    assert self._module is not None
     ret = TestData(None)
-    data = static_call(self, func, *args, **kwargs)
+    data = util.static_call(self, func, *args, **kwargs)
     ret.mod_data[self._module.name][inner.__name__] = data
     return ret
   return inner
 
 
-def placeholder_step_data(func):
+def placeholder_step_data(
+    func: Callable[..., Any] | staticmethod | str,
+) -> Callable[..., Any]:
   """Decorates RecipeTestApi member functions to allow those functions to
   return just the output placeholder data, instead of the normally required
   StepTestData() object.
@@ -452,22 +499,28 @@ def placeholder_step_data(func):
     # Decorator with placeholder name argument:
     # @placeholder_step_data('placeholder_name')
     mocked_func_name = func
-    assert isinstance(mocked_func_name, basestring), (
+    assert isinstance(mocked_func_name, str), (
       'placeholder_step_data used as decorator with non-string argument %r'
       % mocked_func_name
     )
 
-    def decorator(func):
+    def decorator(
+        func: Callable[..., Any] | staticmethod,
+    ) -> Callable[..., StepTestData]:
       return _placeholder_step_data(func, mocked_func_name)
 
     return decorator
 
 
-def _placeholder_step_data(func, placeholder_name=None):
-  @static_wraps(func)
-  def inner(self, *args, **kwargs):
+def _placeholder_step_data(
+    func: Callable[..., Any] | staticmethod,
+    placeholder_name: str | None = None,
+) -> Callable[..., StepTestData]:
+  @util.static_wraps(func)
+  def inner(self: RecipeTestApi, *args: Any, **kwargs: Any) -> StepTestData:
     assert isinstance(self, RecipeTestApi)
-    data = static_call(self, func, *args, **kwargs)
+    assert self._module is not None
+    data = util.static_call(self, func, *args, **kwargs)
     if isinstance(data, StepTestData):
       all_data = list(data.placeholder_data.values())
       if len(all_data) != 1:
@@ -558,22 +611,22 @@ class RecipeTestApi:
   The json.output() call is documented in the 'json' module's test_api.
   """
 
-  def __init__(self, module: 'recipe_deps.RecipeModule | None'):
+  def __init__(self, module: recipe_deps.RecipeModule | None) -> None:
     """Note: Injected dependencies are NOT available in __init__()."""
     # If we're the 'root' api, inject directly into 'self'.
     # Otherwise inject into 'self.m'
-    self.m = self if module is None else ModuleInjectionSite()
+    self.m: Any = self if module is None else util.ModuleInjectionSite()
     self._module = module
 
-  def __getattr__(self, name):
+  def __getattr__(self, name: str) -> Any:
     if self._module is None:
-      raise ModuleInjectionError(
+      raise util.ModuleInjectionError(
           f"Recipe has no dependency {name!r}. (Add it to DEPS?)")
     raise AttributeError(f"'RecipeTestApi' object has no attribute {name!r}")
 
   # TODO(iannucci): Fix this and other kwargs to use direct keyword py3 syntax.
   @staticmethod
-  def test(name, *test_data, **kwargs):
+  def test(name: str, *test_data: TestData, **kwargs: Any) -> TestData:
     """Returns a new empty TestData with the name filled in.
 
     Use in GenTests:
@@ -647,15 +700,15 @@ class RecipeTestApi:
           TestData. The returned TestData will have each element added (in the
           same order they are passed) to it.
     """
-    from PB.go.chromium.org.luci.buildbucket.proto.common import Status
+    from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb
     base = TestData(name)
     if 'status' in kwargs:
-      base.expected_status = Status.Value(kwargs['status'])
+      base.expected_status = common_pb.Status.Value(kwargs['status'])
     ret = sum(test_data, base)
     return ret
 
   @staticmethod
-  def empty_test_data():
+  def empty_test_data() -> TestData:
     """Returns a TestData with no information.
 
     This is the identity of the + operator for combining TestData.
@@ -663,7 +716,7 @@ class RecipeTestApi:
     return TestData()
 
   @staticmethod
-  def recipe_test_data(**kwargs) -> TestData:
+  def recipe_test_data(**kwargs: Any) -> TestData:
     """Returns TestData which gets plumbed through to RunSteps' `api`.
 
     Example:
@@ -757,7 +810,7 @@ class RecipeTestApi:
 
     ret = TestData(None)
     if data:
-      ret.step_data[name] = reduce(lambda x,y: x + y, data)
+      ret.step_data[name] = functools.reduce(lambda x, y: x + y, data)
     if retcode is not None:
       ret.step_data[name].retcode = retcode
     if times_out_after is not None:
@@ -776,18 +829,23 @@ class RecipeTestApi:
 
     return ret
 
-  def step_data(self, name, *data, **kwargs):
+  def step_data(self, name: str, *data: StepTestData, **kwargs: Any) -> TestData:
     """See _step_data()"""
     return self._step_data(name, *data, **kwargs)
   step_data.__doc__ = _step_data.__doc__
 
-  def override_step_data(self, name, *data, **kwargs):
+  def override_step_data(
+      self,
+      name: str,
+      *data: StepTestData,
+      **kwargs: Any,
+  ) -> TestData:
     """See _step_data()"""
     kwargs['override'] = True
     return self._step_data(name, *data, **kwargs)
   override_step_data.__doc__ = _step_data.__doc__
 
-  def expect_exception(self, exc_type):
+  def expect_exception(self, exc_type: str) -> TestData:
     """Indicate that this test should end by raising an exception from RunSteps
     whose exception class name is `exc_type`.
 
@@ -801,13 +859,13 @@ class RecipeTestApi:
     from GenTests, or can be included as `*test_data` to the `test(name, ...)`
     function in RecipeTestApi.
     """
-    from PB.go.chromium.org.luci.buildbucket.proto.common import Status
+    from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb
     ret = TestData()
     ret.expect_exception(exc_type)
-    ret.expected_status = Status.INFRA_FAILURE
+    ret.expected_status = common_pb.Status.INFRA_FAILURE
     return ret
 
-  def expect_status(self, status):
+  def expect_status(self, status: str) -> TestData:
     """Indicate that this test should have an overall status of `status`.
 
     Args:
@@ -818,12 +876,17 @@ class RecipeTestApi:
     from GenTests, or can be included as `*test_data` to the `test(name, ...)`
     function in RecipeTestApi.
     """
-    from PB.go.chromium.org.luci.buildbucket.proto.common import Status
+    from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb
     ret = TestData()
-    ret.expected_status = Status.Value(status)
+    ret.expected_status = common_pb.Status.Value(status)
     return ret
 
-  def post_process(self, func, *args, **kwargs):
+  def post_process(
+      self,
+      func: Callable[..., Any],
+      *args: Any,
+      **kwargs: Any,
+  ) -> TestData:
     """Calling this adds a post-processing hook for this test's expectations.
 
     `func` should be a callable whose signature is in the form of:
@@ -930,7 +993,12 @@ class RecipeTestApi:
     ret.post_process(func, args, kwargs, context)
     return ret
 
-  def post_check(self, func, *args, **kwargs):
+  def post_check(
+      self,
+      func: Callable[..., Any],
+      *args: Any,
+      **kwargs: Any,
+  ) -> TestData:
     """Add a check-only post-processing hook.
 
     See `post_process` for information on the arguments and behavior. The
@@ -953,7 +1021,13 @@ class RecipeTestApi:
         + api.post_process(DropExpectation)
       )
     """
-    def post_check(check, steps, f, *args, **kwargs):
+    def post_check(
+        check: Any,
+        steps: Any,
+        f: Callable[..., Any],
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
       f(check, steps, *args, **kwargs)
     ret = TestData()
     frame = sys._getframe(1)
@@ -963,7 +1037,12 @@ class RecipeTestApi:
     ret.post_process(post_check, (func,) + args, kwargs, context)
     return ret
 
-  def assert_workplan(self, func, *args, **kwargs):
+  def assert_workplan(
+      self,
+      func: Callable[..., Any],
+      *args: Any,
+      **kwargs: Any,
+  ) -> TestData:
     """Add a check-only post-processing hook which asserts on the TurboCI
     WorkPlan state.
 
@@ -987,7 +1066,13 @@ class RecipeTestApi:
       yield api.test('whatever', api.assert_workplan(_check_workplan))
     """
 
-    def assert_workplan(check, steps, f, *args, **kwargs):
+    def assert_workplan(
+        check: Any,
+        steps: Any,
+        f: Callable[..., Any],
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
       f(check, steps, *args, **kwargs)
 
     ret = TestData()
@@ -998,7 +1083,10 @@ class RecipeTestApi:
     ret.assert_workplan(assert_workplan, (func,) + args, kwargs, context)
     return ret
 
-  def turboci_write_nodes(self, *nodes: WriteNodesRequest.CheckWrite):
+  def turboci_write_nodes(
+      self,
+      *nodes: write_nodes_request_pb.WriteNodesRequest.CheckWrite,
+  ) -> TestData:
     """Set the initial state of the TurboCI workplan.
 
     This block of nodes will be written to the turboci workplan with a single
@@ -1054,7 +1142,7 @@ escape_all_warnings = escape.escape_all_warnings
 ignore_warnings = escape.ignore_warnings
 
 
-def record_execution_warning(warning_name, skip=0):
+def record_execution_warning(warning_name: str, skip: int = 0) -> None:
   """Records a warning during testing.
 
   No-op in production contexts.
@@ -1068,5 +1156,5 @@ def record_execution_warning(warning_name, skip=0):
       A value of 0 indicates that your frame is skipped, so 1 would skip your
       caller's frame, etc.
   """
-  from recipe_engine.internal.warn.record import GLOBAL
-  GLOBAL.record_execution_warning(warning_name, skip+1)
+  from recipe_engine.internal.warn import record
+  record.GLOBAL.record_execution_warning(warning_name, skip+1)

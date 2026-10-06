@@ -4,22 +4,20 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
-from io import StringIO
-
+from collections.abc import Callable
 import datetime
 import functools
+import io
 import logging
 import re
+from typing import Any
+
 import gevent
-import typing
 
-from builtins import map, range
-from past.builtins import basestring
-from recipe_engine.internal.global_shutdown import GLOBAL_SHUTDOWN
+from recipe_engine.internal import global_shutdown
 
 
-def sentinel(name, **attrs):
+def sentinel(name: str, **attrs: Any) -> Any:
   """Create a sentinel object.
 
   The sentinel's type is a class with the given name that has no behavior except
@@ -49,14 +47,14 @@ class ModuleInjectionError(AttributeError):
 
 
 class ModuleInjectionSite:
-  def __init__(self, owner_module=None):
+  def __init__(self, owner_module: Any = None) -> None:
     self.owner_module = owner_module
 
   # pyright will infer NoReturn with no return type annotation and then any
   # context managers accessed via a module's dependencies (e.g.
   # self.m.context(...) or self.m.step.nest(...)) get flagged as errors because
   # NoReturn doesn't implement the context manager protocol
-  def __getattr__(self, key: str) -> typing.Any:
+  def __getattr__(self, key: str) -> Any:
     raise ModuleInjectionError(
       "Recipe Module %r has no dependency %r. (Add it to __init__.py:DEPS?)"
       % (module_name(self.owner_module), key))
@@ -64,27 +62,28 @@ class ModuleInjectionSite:
 
 class Placeholder:
   """Base class for command line argument placeholders. Do not use directly."""
-  def __init__(self, name=None):
+  def __init__(self, name: str | None = None) -> None:
     if name is not None:
-      assert isinstance(name, basestring), (
+      assert isinstance(name, str), (
           'Expect a string name for a placeholder, but got %r' % name)
     self.name = name
-    self.namespaces = None
+    self.namespaces: tuple[str, str] | None = None
 
   @property
-  def backing_file(self):  # pragma: no cover
+  def backing_file(self) -> str | None:  # pragma: no cover
     """Return path to a temp file that holds or receives the data.
 
     Valid only after 'render' has been called.
     """
     raise NotImplementedError
 
-  def render(self, test):  # pragma: no cover
+  def render(self, test: Any) -> list[str]:  # pragma: no cover
     """Return [cmd items]*"""
     raise NotImplementedError
 
   @property
-  def label(self):
+  def label(self) -> str:
+    assert self.namespaces is not None
     if self.name is None:
       return "%s.%s" % self.namespaces
     else:
@@ -93,7 +92,7 @@ class Placeholder:
 
 class InputPlaceholder(Placeholder):
   """Base class for json/raw_io input placeholders. Do not use directly."""
-  def cleanup(self, test_enabled):
+  def cleanup(self, test_enabled: bool) -> None:
     """Called after step completion.
 
     Args:
@@ -104,7 +103,7 @@ class InputPlaceholder(Placeholder):
 
 class OutputPlaceholder(Placeholder):
   """Base class for json/raw_io output placeholders. Do not use directly."""
-  def result(self, presentation, test):
+  def result(self, presentation: Any, test: Any) -> Any:
     """Called after step completion.
 
     Args:
@@ -117,7 +116,9 @@ class OutputPlaceholder(Placeholder):
     pass
 
 
-def static_wraps(func):
+def static_wraps(
+    func: Callable[..., Any] | staticmethod,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
   wrapped_fn = func
   if isinstance(func, staticmethod):
     # __get__(obj) is the way to get the function contained in the staticmethod.
@@ -128,14 +129,19 @@ def static_wraps(func):
   return functools.wraps(wrapped_fn)
 
 
-def static_call(obj, func, *args, **kwargs):
+def static_call(
+    obj: Any,
+    func: Callable[..., Any] | staticmethod,
+    *args: Any,
+    **kwargs: Any,
+) -> Any:
   if isinstance(func, staticmethod):
     return func.__get__(obj)(*args, **kwargs)
   else:
     return func(obj, *args, **kwargs)
 
 
-def static_name(obj, func):
+def static_name(obj: Any, func: Callable[..., Any] | staticmethod) -> str:
   if isinstance(func, staticmethod):
     return func.__get__(obj).__name__
   else:
@@ -151,9 +157,12 @@ def module_name(api_subclass_instance: object) -> str:
   raise ValueError(f'Cannot find recipe module name from {py_mod_name}')
 
 
-def _returns_placeholder(func, alternate_name=None):
+def _returns_placeholder(
+    func: Callable[..., Any] | staticmethod,
+    alternate_name: str | None = None,
+) -> Callable[..., Placeholder]:
   @static_wraps(func)
-  def inner(self, *args, **kwargs):
+  def inner(self: Any, *args: Any, **kwargs: Any) -> Placeholder:
     ret = static_call(self, func, *args, **kwargs)
     assert isinstance(ret, Placeholder)
     selfname = module_name(self)
@@ -162,7 +171,9 @@ def _returns_placeholder(func, alternate_name=None):
   # prevent this placeholder-returning function from becoming a composite_step.
   return inner
 
-def returns_placeholder(func):
+def returns_placeholder(
+    func: Callable[..., Any] | staticmethod | str,
+) -> Callable[..., Any]:
   """Decorates a RecipeApi placeholder-returning method to set the namespace
   of the returned PlaceHolder.
 
@@ -173,29 +184,33 @@ def returns_placeholder(func):
   if callable(func) or isinstance(func, staticmethod):
     return _returns_placeholder(func)
   elif isinstance(func, str) and func:
-    def decorator(f):
+    def decorator(
+        f: Callable[..., Any] | staticmethod,
+    ) -> Callable[..., Placeholder]:
       return _returns_placeholder(f, func)
     return decorator
   else:
     raise ValueError('Expected either a function or string; got %r' % func)
 
 class StringListIO:
-  def __init__(self):
-    self.lines = [StringIO()]
+  def __init__(self) -> None:
+    self.lines: list[io.StringIO | str] = [io.StringIO()]
 
-  def write(self, s):
+  def write(self, s: str) -> None:
     while s:
       i = s.find('\n')
+      last = self.lines[-1]
+      assert isinstance(last, io.StringIO)
       if i == -1:
-        self.lines[-1].write(str(s))
+        last.write(str(s))
         break
-      self.lines[-1].write(str(s[:i]))
-      self.lines[-1] = self.lines[-1].getvalue()
-      self.lines.append(StringIO())
+      last.write(str(s[:i]))
+      self.lines[-1] = last.getvalue()
+      self.lines.append(io.StringIO())
       s = s[i+1:]
 
-  def close(self):
-    if isinstance(self.lines[-1], StringIO):
+  def close(self) -> None:
+    if isinstance(self.lines[-1], io.StringIO):
       self.lines[-1] = self.lines[-1].getvalue()
 
 
@@ -208,7 +223,12 @@ class exponential_retry:
   TODO(iannucci): Use a recipe warning for this
   """
 
-  def __init__(self, retries=None, delay=None, condition=None):
+  def __init__(
+      self,
+      retries: int | None = None,
+      delay: datetime.timedelta | None = None,
+      condition: Callable[[Exception], bool] | None = None,
+  ) -> None:
     """Creates a new exponential retry decorator.
 
     Args:
@@ -223,9 +243,9 @@ class exponential_retry:
     self.delay = delay or datetime.timedelta(seconds=1)
     self.condition = condition or (lambda e: True)
 
-  def __call__(self, f):
+  def __call__(self, f: Callable[..., Any]) -> Callable[..., Any]:
     @functools.wraps(f)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
       retry_delay = self.delay
       for i in range(self.retries):
         try:
@@ -235,7 +255,9 @@ class exponential_retry:
             raise
           logging.exception('Exception encountered, retrying in %s',
                             retry_delay)
-          gevent.wait([GLOBAL_SHUTDOWN], timeout=retry_delay.total_seconds())
+          gevent.wait(
+              [global_shutdown.GLOBAL_SHUTDOWN],
+              timeout=retry_delay.total_seconds())
           retry_delay *= 2
     return wrapper
 
@@ -243,7 +265,7 @@ class exponential_retry:
 MIN_SAFE_INTEGER = -((2**53) - 1)
 MAX_SAFE_INTEGER = (2**53) - 1
 
-def fix_json_object(obj):
+def fix_json_object(obj: Any) -> Any:
   """Recursively:
 
     * Replaces floats with ints when:

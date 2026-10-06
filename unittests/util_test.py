@@ -15,13 +15,13 @@ from recipe_engine import util
 class TestSentinel(test_env.RecipeEngineUnitTest):
   SENTINEL = util.sentinel('SENTINEL')
 
-  def test_repr(self):
+  def test_repr(self) -> None:
     self.assertEqual(repr(self.SENTINEL), 'SENTINEL')
 
-  def test_copy(self):
+  def test_copy(self) -> None:
     self.assertIs(copy.copy(self.SENTINEL), self.SENTINEL)
 
-  def test_deepcopy(self):
+  def test_deepcopy(self) -> None:
     self.assertIs(copy.deepcopy(self.SENTINEL), self.SENTINEL)
 
 

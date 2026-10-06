@@ -23,7 +23,9 @@ from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb
 from PB.go.chromium.org.luci.buildbucket.proto import step as step_pb
 from PB.recipe_engine import result as result_pb
 
-from ...third_party import logdog
+from ...third_party.logdog import bootstrap as logdog_bootstrap
+from ...third_party.logdog import stream as logdog_stream
+from ...third_party.logdog import streamname as logdog_streamname
 
 from .. import attr_util
 from .. import stream as stream_mod
@@ -73,9 +75,9 @@ class LUCILogStream(stream_mod.StreamEngine.Stream):
   It's a very thin wrapper around a LogDog text stream."""
 
   # pylint: disable=protected-access
-  _stream: logdog.stream.StreamClient._BasicStream | None = attr.ib(
+  _stream: logdog_stream.StreamClient._BasicStream | None = attr.ib(
       validator=attr_util.attr_type(
-          (type(None), logdog.stream.StreamClient._BasicStream)))
+          (type(None), logdog_stream.StreamClient._BasicStream)))
 
   def fileno(self) -> int:
     """Returns underlying logdog file descriptor.
@@ -137,8 +139,8 @@ class LUCIStepStream(stream_mod.StreamEngine.StepStream):
   _change_cb: Callable[[], None] = attr.ib()
 
   # The Butler StreamClient. Used to generate logs for individual steps.
-  _bsc: logdog.stream.StreamClient = attr.ib(
-      validator=attr_util.attr_type(logdog.stream.StreamClient))
+  _bsc: logdog_stream.StreamClient = attr.ib(
+      validator=attr_util.attr_type(logdog_stream.StreamClient))
 
   # If True, after initialization, allocate a log stream '$build.proto' that
   # points to the 'build.proto' stream of the luciexe this step launches and
@@ -206,7 +208,7 @@ class LUCIStepStream(stream_mod.StreamEngine.StepStream):
 
   def __attrs_post_init__(self) -> None:
     self._stream_namespace = '/'.join(
-      logdog.streamname.normalize_segment(seg, 'l')
+      logdog_streamname.normalize_segment(seg, 'l')
       for seg in self._step.name.split('|')
     )
 
@@ -214,7 +216,7 @@ class LUCIStepStream(stream_mod.StreamEngine.StepStream):
       stream_name = '/'.join((self._stream_namespace, 'u', 'build.proto'))
       if stream_name in self._CREATED_LOGS:
         raise ValueError("Duplicated build.proto stream %s" % (stream_name,))
-      logdog.streamname.validate_stream_name(stream_name)
+      logdog_streamname.validate_stream_name(stream_name)
       self._CREATED_LOGS.add(stream_name)
 
       self._step.merge_build.from_logdog_stream = stream_name
@@ -249,15 +251,15 @@ class LUCIStepStream(stream_mod.StreamEngine.StepStream):
     dedup_idx = 0
     base_flattened_name = '/'.join((
         self._stream_namespace,
-        logdog.streamname.normalize_segment(log_name, 'l')
+        logdog_streamname.normalize_segment(log_name, 'l')
     ))
     flat_name = base_flattened_name
     while flat_name in self._CREATED_LOGS:
-      flat_name = logdog.streamname.normalize(
+      flat_name = logdog_streamname.normalize(
           base_flattened_name + ('_%d' % dedup_idx), 'l')
       dedup_idx += 1
 
-    logdog.streamname.validate_stream_name(flat_name)
+    logdog_streamname.validate_stream_name(flat_name)
     log_stream = self._bsc.open_text(flat_name)
     self._CREATED_LOGS.add(flat_name)
 
@@ -414,9 +416,9 @@ class LUCIStreamEngine(stream_mod.StreamEngine):
   ))
 
   # The Butler StreamClient. Used to generate logs for individual steps.
-  _bsc: logdog.stream.StreamClient = attr.ib(
-      validator=attr_util.attr_type(logdog.stream.StreamClient),
-      factory=lambda: logdog.bootstrap.ButlerBootstrap.probe().stream_client(),
+  _bsc: logdog_stream.StreamClient = attr.ib(
+      validator=attr_util.attr_type(logdog_stream.StreamClient),
+      factory=lambda: logdog_bootstrap.ButlerBootstrap.probe().stream_client(),
   )
 
   # The Build message datagram stream.
