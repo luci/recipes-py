@@ -5,32 +5,36 @@
 
 from __future__ import annotations
 
-from gevent.threadpool import ThreadPool
+from collections.abc import Callable, Sequence
 import json
 import logging
 import random
 import threading
 import time
+from typing import Any, cast
 import urllib.request
 
-import grpc
+from gevent import threadpool
 from google.protobuf import json_format as jsonpb
 from google.protobuf import message as protobuf_message
 from google.rpc import code_pb2
+import grpc
+from turboci.utils.client import clients, errors, grpc_transport, transports
 
-from turboci.utils.client import clients, errors, transports
-from turboci.utils.client import grpc_transport
+from PB.turboci.graph.ids.v1 import identifier as identifier_pb
+from PB.turboci.graph.orchestrator.v1 import (
+    query_nodes_request as query_nodes_request_pb,
+)
+from PB.turboci.graph.orchestrator.v1 import (
+    query_nodes_response as query_nodes_response_pb,
+)
+from PB.turboci.graph.orchestrator.v1 import (
+    read_workplan_request as read_workplan_request_pb,
+)
+from PB.turboci.graph.orchestrator.v1 import (
+    read_workplan_response as read_workplan_response_pb,
+)
 from recipe_engine.third_party import luci_context
-
-from PB.turboci.graph.ids.v1 import identifier
-from PB.turboci.graph.orchestrator.v1.query_nodes_request import (
-    QueryNodesRequest,)
-from PB.turboci.graph.orchestrator.v1.query_nodes_response import (
-    QueryNodesResponse,)
-from PB.turboci.graph.orchestrator.v1.read_workplan_request import (
-    ReadWorkPlanRequest,)
-from PB.turboci.graph.orchestrator.v1.read_workplan_response import (
-    ReadWorkPlanResponse,)
 
 from . import query_util
 
@@ -48,7 +52,7 @@ class _LocalAuthTokenManager:
   builds to fail abruptly with `UNAUTHENTICATED` errors after 1 hour.
   """
 
-  def __init__(self):
+  def __init__(self) -> None:
     self._token_cache: tuple[str, float | None] | None = None
     self._token_lock = threading.Lock()
 
@@ -74,7 +78,7 @@ class _LocalAuthTokenManager:
     """Extracts and caches an OAuth access token from LUCI_CONTEXT."""
     # Fast-path check without acquiring the lock.
     cache = self._token_cache
-    if self._is_cache_valid(cache):
+    if cache is not None and self._is_cache_valid(cache):
       return cache[0]
 
     if not self._local_auth_url:
@@ -83,11 +87,14 @@ class _LocalAuthTokenManager:
     with self._token_lock:
       # Double-check after acquiring the lock in case another greenlet/thread
       # refreshed the token while we were waiting.
-      if self._is_cache_valid(self._token_cache):
+      if (
+          self._token_cache is not None
+          and self._is_cache_valid(self._token_cache)
+      ):
         return self._token_cache[0]
 
       try:
-        payload = {
+        payload: dict[str, Any] = {
             "scopes": [
               "https://www.googleapis.com/auth/androidbuild.internal",
               "https://www.googleapis.com/auth/userinfo.email"
@@ -167,7 +174,11 @@ def _init_grpc_channel(endpoint: str) -> grpc.Channel:
 
   # Callback invoked by gRPC's C-core on every outgoing request to inject
   # the current OAuth Bearer token into HTTP/2 metadata headers.
-  def auth_metadata_plugin(context, callback):
+  def auth_metadata_plugin(
+      context: Any,
+      callback: Callable[[Sequence[tuple[str, str]], Exception | None], None],
+  ) -> None:
+    _ = context
     token = token_manager.get_token()
     if token:
       callback([("authorization", f"Bearer {token}")], None)
@@ -191,10 +202,10 @@ class _RecipeGrpcTransport(grpc_transport.GrpcTransport):
       self,
       channel: grpc.Channel,
       max_concurrency: int = _DEFAULT_MAX_CONCURRENT_RPCS,
-  ):
+  ) -> None:
     super().__init__(channel)
     # Dedicated thread pool bounded to at most `max_concurrency` gevent threads.
-    self._thread_pool = ThreadPool(maxsize=max_concurrency)
+    self._thread_pool = threadpool.ThreadPool(maxsize=max_concurrency)
 
   def call_unary(
       self,
@@ -204,7 +215,10 @@ class _RecipeGrpcTransport(grpc_transport.GrpcTransport):
   ) -> protobuf_message.Message:
     self._log_request(method_name, request)
     if method_name == "QueryNodes":
-      res = self._query_nodes(request, options=options)
+      res: protobuf_message.Message = self._query_nodes(
+          cast(query_nodes_request_pb.QueryNodesRequest, request),
+          options=options,
+      )
     else:
       res = self._call_unary_in_thread(method_name, request, options=options)
     self._log_response(method_name, res)
@@ -223,38 +237,40 @@ class _RecipeGrpcTransport(grpc_transport.GrpcTransport):
 
   def _query_nodes(
       self,
-      req: QueryNodesRequest,
+      req: query_nodes_request_pb.QueryNodesRequest,
       options: transports.CallOptions | None = None,
-  ) -> QueryNodesResponse:
+  ) -> query_nodes_response_pb.QueryNodesResponse:
     read_req = query_util.query_to_read_work_plan_request(req)
     read_response = self._read_work_plan(read_req, options=options)
     return query_util.filter_read_work_plan_responses(req, read_response)
 
   def _read_work_plan(
       self,
-      req: ReadWorkPlanRequest,
+      req: read_workplan_request_pb.ReadWorkPlanRequest,
       options: transports.CallOptions | None = None,
-  ) -> ReadWorkPlanResponse:
+  ) -> read_workplan_response_pb.ReadWorkPlanResponse:
     return query_util.paginate_read_work_plan(
-        lambda r: self._call_unary_in_thread(
-            "ReadWorkPlan", r, options=options),
+        lambda r: cast(
+            read_workplan_response_pb.ReadWorkPlanResponse,
+            self._call_unary_in_thread("ReadWorkPlan", r, options=options),
+        ),
         req,
     )
 
-  def _log_request(self, name: str, req: protobuf_message.Message):
-    req_copy = req.__class__()
+  def _log_request(self, name: str, req: protobuf_message.Message) -> None:
+    req_copy: Any = req.__class__()
     req_copy.CopyFrom(req)
     if hasattr(req_copy, "token") and req_copy.token:
       req_copy.token = "<redacted>"
     LOG.info("%s request: %s", name, jsonpb.MessageToJson(req_copy))
 
-  def _log_response(self, name: str, res: protobuf_message.Message):
+  def _log_response(self, name: str, res: protobuf_message.Message) -> None:
     LOG.info("%s response: %s", name, jsonpb.MessageToJson(res))
 
 
 def TurboCIGRPCClient(
     endpoint: str,
-    wpid: identifier.WorkPlan,
+    wpid: identifier_pb.WorkPlan,
     token: str | None = None,
     logger: logging.Logger | None = None,
 ) -> clients.Sync:

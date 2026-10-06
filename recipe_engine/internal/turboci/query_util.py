@@ -5,31 +5,31 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 import re
-from typing import Callable
 
-from PB.turboci.graph.ids.v1 import identifier
-from PB.turboci.graph.ids.v1 import identifier_kind
-from PB.turboci.graph.orchestrator.v1.check import Check
-from PB.turboci.graph.orchestrator.v1.query import Query
-from PB.turboci.graph.orchestrator.v1.query_nodes_request import (
-    QueryNodesRequest,
+from PB.turboci.graph.ids.v1 import identifier as identifier_pb
+from PB.turboci.graph.ids.v1 import identifier_kind as identifier_kind_pb
+from PB.turboci.graph.orchestrator.v1 import check as check_pb
+from PB.turboci.graph.orchestrator.v1 import query as query_pb
+from PB.turboci.graph.orchestrator.v1 import (
+    query_nodes_request as query_nodes_request_pb,
 )
-from PB.turboci.graph.orchestrator.v1.query_nodes_response import (
-    QueryNodesResponse,
+from PB.turboci.graph.orchestrator.v1 import (
+    query_nodes_response as query_nodes_response_pb,
 )
-from PB.turboci.graph.orchestrator.v1.read_workplan_request import (
-    ReadWorkPlanRequest,
+from PB.turboci.graph.orchestrator.v1 import (
+    read_workplan_request as read_workplan_request_pb,
 )
-from PB.turboci.graph.orchestrator.v1.read_workplan_response import (
-    ReadWorkPlanResponse,
+from PB.turboci.graph.orchestrator.v1 import (
+    read_workplan_response as read_workplan_response_pb,
 )
-from PB.turboci.graph.orchestrator.v1.type_set import TypeSet
-from PB.turboci.graph.orchestrator.v1.value_mask import VALUE_MASK_VALUE_TYPE
-from PB.turboci.graph.orchestrator.v1.value_ref import ValueRef
+from PB.turboci.graph.orchestrator.v1 import type_set as type_set_pb
+from PB.turboci.graph.orchestrator.v1 import value_mask as value_mask_pb
+from PB.turboci.graph.orchestrator.v1 import value_ref as value_ref_pb
 
 
-def type_set_to_re(ts: TypeSet) -> re.Pattern:
+def type_set_to_re(ts: type_set_pb.TypeSet) -> re.Pattern[str]:
   fragments: list[str] = []
   for frag in ts.type_urls:
     q = re.escape(frag)
@@ -41,17 +41,19 @@ def type_set_to_re(ts: TypeSet) -> re.Pattern:
   return re.compile(f'({")|(".join(fragments)})')
 
 
-def want_value_ref(pat: re.Pattern, value_ref: ValueRef) -> bool:
+def want_value_ref(
+    pat: re.Pattern[str], value_ref: value_ref_pb.ValueRef
+) -> bool:
   return bool(pat.match(value_ref.type_url))
 
 
 def workplan_id_from_query_request(
-    req: QueryNodesRequest,
-) -> identifier.WorkPlan | None:
+    req: query_nodes_request_pb.QueryNodesRequest,
+) -> identifier_pb.WorkPlan | None:
   wp_id = None
   first_query = True
 
-  def set_wp_id(new_wp_id):
+  def set_wp_id(new_wp_id: identifier_pb.WorkPlan | None) -> None:
     nonlocal wp_id
     nonlocal first_query
     if first_query:
@@ -73,6 +75,7 @@ def workplan_id_from_query_request(
     elif node_set_type == 'nodes_by_id':
       for node in query.nodes_by_id.nodes:
         node_type = node.WhichOneof('type')
+        assert node_type is not None
         inner_node = getattr(node, node_type)
         set_wp_id(inner_node.work_plan)
     else:
@@ -84,8 +87,8 @@ def workplan_id_from_query_request(
 
 
 def infer_read_workplan_args(
-    query_req: QueryNodesRequest,
-    read_req: ReadWorkPlanRequest,
+    query_req: query_nodes_request_pb.QueryNodesRequest,
+    read_req: read_workplan_request_pb.ReadWorkPlanRequest,
 ) -> None:
   wants_checks = False
   wants_check_options = False
@@ -119,12 +122,14 @@ def infer_read_workplan_args(
           raise NotImplementedError('QueryNodes with stages is not supported')
 
   if wants_checks:
-    read_req.included_node_types.append(identifier_kind.IDENTIFIER_KIND_CHECK)
+    read_req.included_node_types.append(
+        identifier_kind_pb.IDENTIFIER_KIND_CHECK
+    )
 
   if query_req.HasField("type_info"):
     read_req.value_filter.type_info.CopyFrom(query_req.type_info)
 
-  val_type = VALUE_MASK_VALUE_TYPE
+  val_type = value_mask_pb.VALUE_MASK_VALUE_TYPE
 
   if wants_check_options:
     read_req.value_filter.check_options = val_type
@@ -134,12 +139,12 @@ def infer_read_workplan_args(
 
 
 def query_to_read_work_plan_request(
-    req: QueryNodesRequest,
-) -> ReadWorkPlanRequest:
+    req: query_nodes_request_pb.QueryNodesRequest,
+) -> read_workplan_request_pb.ReadWorkPlanRequest:
   """Translates a QueryNodesRequest to an equivalent ReadWorkPlanRequest."""
   wp_id = workplan_id_from_query_request(req)
 
-  read_req = ReadWorkPlanRequest()
+  read_req = read_workplan_request_pb.ReadWorkPlanRequest()
   if wp_id and wp_id.id:
     read_req.workplan_id.CopyFrom(wp_id)
 
@@ -151,8 +156,8 @@ def query_to_read_work_plan_request(
 
 
 def check_matches_select(
-    check: Check,
-    select_checks: Query.SelectChecks,
+    check: check_pb.Check,
+    select_checks: query_pb.Query.SelectChecks,
 ) -> bool:
   if len(select_checks.predicates) == 0:
     return True  # Empty predicates list means all checks match.
@@ -182,7 +187,9 @@ def check_matches_select(
   return False
 
 
-def check_is_selected_by_query(check: Check, q: Query) -> bool:
+def check_is_selected_by_query(
+    check: check_pb.Check, q: query_pb.Query
+) -> bool:
   if q.HasField("nodes_by_id"):
     for node in q.nodes_by_id.nodes:
       if (
@@ -201,13 +208,13 @@ def check_is_selected_by_query(check: Check, q: Query) -> bool:
 
 
 def filter_read_work_plan_responses(
-    req: QueryNodesRequest,
-    read_res: ReadWorkPlanResponse,
-) -> QueryNodesResponse:
+    req: query_nodes_request_pb.QueryNodesRequest,
+    read_res: read_workplan_response_pb.ReadWorkPlanResponse,
+) -> query_nodes_response_pb.QueryNodesResponse:
   """Filters a ReadWorkPlanResponse against the criteria in
   QueryNodesRequest.
   """
-  query_resp = QueryNodesResponse()
+  query_resp = query_nodes_response_pb.QueryNodesResponse()
 
   if read_res.HasField("workplan"):
     # Copies the WorkPlan block so we can prune it safely
@@ -237,13 +244,16 @@ def filter_read_work_plan_responses(
 
 
 def paginate_read_work_plan(
-    read_fn: Callable[[ReadWorkPlanRequest], ReadWorkPlanResponse],
-    req: ReadWorkPlanRequest,
-) -> ReadWorkPlanResponse:
+    read_fn: Callable[
+        [read_workplan_request_pb.ReadWorkPlanRequest],
+        read_workplan_response_pb.ReadWorkPlanResponse,
+    ],
+    req: read_workplan_request_pb.ReadWorkPlanRequest,
+) -> read_workplan_response_pb.ReadWorkPlanResponse:
   """Consolidates paginated ReadWorkPlanResponse objects into a single
   response.
   """
-  res = ReadWorkPlanResponse()
+  res = read_workplan_response_pb.ReadWorkPlanResponse()
   first_page = True
 
   while True:

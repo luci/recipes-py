@@ -4,74 +4,78 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
-from copy import deepcopy
-from dataclasses import dataclass, field
+import collections
+from collections.abc import Callable, Iterable
+import copy
+import dataclasses
 import enum
-from typing import Any, Callable, Iterable, Literal, cast
-
-from PB.turboci.graph.orchestrator.v1.check import Check
-from PB.turboci.graph.orchestrator.v1.dependencies import Dependencies
-from PB.turboci.graph.orchestrator.v1.query import QueryExpandDepsMode
-from PB.turboci.graph.orchestrator.v1.stage import Stage
-from PB.turboci.graph.orchestrator.v1.check_state import CheckState
-from PB.turboci.graph.orchestrator.v1.edge import (
-  Edge, Resolution, RESOLUTION_UNKNOWN, RESOLUTION_SATISFIED,
-  RESOLUTION_UNSATISFIED)
-from PB.turboci.graph.orchestrator.v1.revision import Revision
-from PB.turboci.graph.orchestrator.v1.stage_state import StageState
-from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
-
-from .errors import InvalidArgumentException
+from typing import Any, Literal, cast
 
 from turboci.utils import ids
 
-@dataclass(slots=True, frozen=True)
+from PB.turboci.graph.orchestrator.v1 import check as check_pb
+from PB.turboci.graph.orchestrator.v1 import check_state as check_state_pb
+from PB.turboci.graph.orchestrator.v1 import dependencies as dependencies_pb
+from PB.turboci.graph.orchestrator.v1 import edge as edge_pb
+from PB.turboci.graph.orchestrator.v1 import query as query_pb
+from PB.turboci.graph.orchestrator.v1 import revision as revision_pb
+from PB.turboci.graph.orchestrator.v1 import stage as stage_pb
+from PB.turboci.graph.orchestrator.v1 import stage_state as stage_state_pb
+from PB.turboci.graph.orchestrator.v1 import (
+    write_nodes_request as write_nodes_request_pb,
+)
+
+from . import errors
+
+
+@dataclasses.dataclass(slots=True, frozen=True)
 class CheckCondition:
   """Frozen version of Edge.Check.Condition."""
-  on_state: CheckState
+  on_state: check_state_pb.CheckState
   expression: str
 
   @classmethod
-  def from_edge(cls, check_edge: Edge.Check) -> CheckCondition:
+  def from_edge(cls, check_edge: edge_pb.Edge.Check) -> CheckCondition:
     return cls(
-        check_edge.condition.on_state or CheckState.CHECK_STATE_FINAL,
+        check_edge.condition.on_state
+        or check_state_pb.CheckState.CHECK_STATE_FINAL,
         check_edge.condition.expression or "true",
     )
 
-  def evaluate(self, check: Check) -> Resolution:
-    assert isinstance(check, Check)
+  def evaluate(self, check: check_pb.Check) -> edge_pb.Resolution:
+    assert isinstance(check, check_pb.Check)
 
     if check.state < self.on_state:
-      return RESOLUTION_UNKNOWN
+      return edge_pb.RESOLUTION_UNKNOWN
 
     if self.expression == 'true':
-      return RESOLUTION_SATISFIED
+      return edge_pb.RESOLUTION_SATISFIED
 
     raise NotImplementedError('StageState.expression not implemented.')
 
 
-@dataclass(slots=True, frozen=True)
+@dataclasses.dataclass(slots=True, frozen=True)
 class StageCondition:
   """Frozen version of Edge.Stage.Condition."""
-  on_state: StageState
+  on_state: stage_state_pb.StageState
   expression: str
 
   @classmethod
-  def from_edge(cls, stage_edge: Edge.Stage) -> StageCondition:
+  def from_edge(cls, stage_edge: edge_pb.Edge.Stage) -> StageCondition:
     return cls(
-        stage_edge.condition.on_state or StageState.STAGE_STATE_FINAL,
+        stage_edge.condition.on_state
+        or stage_state_pb.StageState.STAGE_STATE_FINAL,
         stage_edge.condition.expression or "true",
     )
 
-  def evaluate(self, stage: Stage) -> Resolution:
-    assert isinstance(stage, Stage)
+  def evaluate(self, stage: stage_pb.Stage) -> edge_pb.Resolution:
+    assert isinstance(stage, stage_pb.Stage)
 
     if stage.state < self.on_state:
-      return RESOLUTION_UNKNOWN
+      return edge_pb.RESOLUTION_UNKNOWN
 
     if self.expression == 'true':
-      return RESOLUTION_SATISFIED
+      return edge_pb.RESOLUTION_SATISFIED
 
     raise NotImplementedError('StageState.expression not implemented.')
 
@@ -79,22 +83,28 @@ class StageCondition:
 Condition = StageCondition | CheckCondition
 
 
-def extract_ident_condition(e: Edge) -> tuple[str, Condition]:
+def extract_ident_condition(e: edge_pb.Edge) -> tuple[str, Condition]:
   """Extracts the string identifier and condition for this Edge."""
   match target := e.WhichOneof('target'):
     case 'check':
-      return ids.to_string(e.check.identifier), CheckCondition.from_edge(e.check)
+      return (
+          ids.to_string(e.check.identifier),
+          CheckCondition.from_edge(e.check),
+      )
     case 'stage':
-      return ids.to_string(e.stage.identifier), StageCondition.from_edge(e.stage)
+      return (
+          ids.to_string(e.stage.identifier),
+          StageCondition.from_edge(e.stage),
+      )
     case _:
       raise AssertionError(f'impossible: edge.target is {target!r}')
 
 
 def extract_dependencies(
-    deps: WriteNodesRequest.DependencyGroup,
+    deps: write_nodes_request_pb.WriteNodesRequest.DependencyGroup,
     *,
     for_node_type: Literal['check', 'stage'] = 'check',
-) -> Dependencies:
+) -> dependencies_pb.Dependencies:
   """Extracts a Dependencies value from a WriteNodesRequest.DependencyGroup.
 
   The DependencyGroup will be checked for well-formed-ness (no empty
@@ -103,7 +113,7 @@ def extract_dependencies(
 
   Returns the normalized Dependencies if everything looks good.
   """
-  out = Dependencies()
+  out = dependencies_pb.Dependencies()
 
   if for_node_type == 'check':
     allowed_targets = frozenset(('check',))
@@ -113,9 +123,9 @@ def extract_dependencies(
   # mapping of stringified edge to index in edge table.
   edge_map: dict[tuple[str, Condition], int] = {}
 
-  def _add_edge(e: Edge) -> int:
+  def _add_edge(e: edge_pb.Edge) -> int:
     if (target := e.WhichOneof('target')) not in allowed_targets:
-      raise InvalidArgumentException(
+      raise errors.InvalidArgumentException(
           f'{for_node_type} cannot depend on objects type {target!r}.')
 
     key = extract_ident_condition(e)
@@ -128,25 +138,26 @@ def extract_dependencies(
     return ret
 
   def _visit(
-      group: WriteNodesRequest.DependencyGroup) -> Dependencies.Group:
+      group: write_nodes_request_pb.WriteNodesRequest.DependencyGroup,
+  ) -> dependencies_pb.Dependencies.Group:
     N = len(group.groups) + len(group.edges)
     threshold: int = group.threshold
     if threshold > N:
-      raise InvalidArgumentException(
+      raise errors.InvalidArgumentException(
           f'group threshold {threshold} exceeds number '
           f'of edges+groups {N}')
     elif threshold == N:
       threshold = 0
     elif threshold < 0:
-      raise InvalidArgumentException(
+      raise errors.InvalidArgumentException(
           f'group threshold {threshold} is less than 0')
 
-    subgroups: list[Dependencies.Group] = []
+    subgroups: list[dependencies_pb.Dependencies.Group] = []
     edges: list[int] = []
 
     for subgroup in group.groups:
       if len(subgroup.groups) == 0 and len(subgroup.edges) == 0:
-        raise InvalidArgumentException(
+        raise errors.InvalidArgumentException(
             'subgroups of DependencyGroup may not be empty')
       subgroups.append(_visit(subgroup))
     for e in group.edges:
@@ -159,7 +170,7 @@ def extract_dependencies(
     if len(subgroups) == 1 and len(edges) == 0:
       return subgroups[0]
 
-    return Dependencies.Group(
+    return dependencies_pb.Dependencies.Group(
         groups=subgroups,
         edges=sorted(edges),
         threshold=threshold or None,  # normalized to unset
@@ -170,7 +181,7 @@ def extract_dependencies(
   return out
 
 
-def resolve_dependencies(deps: Dependencies):
+def resolve_dependencies(deps: dependencies_pb.Dependencies) -> None:
   """Evaluates `deps` to see if it can be resolved, based on its contained
   resolution_events.
 
@@ -180,10 +191,12 @@ def resolve_dependencies(deps: Dependencies):
   # See if we can satisfy the dependencies.
   if not deps.predicate.groups and not deps.predicate.edges:
     # empty deps are immediately resolved - set satisfied to an empty Group.
-    deps.resolution = RESOLUTION_SATISFIED
+    deps.resolution = edge_pb.RESOLUTION_SATISFIED
     return
 
-  def _resolve(pred: Dependencies.Group) -> Resolution:
+  def _resolve(
+      pred: dependencies_pb.Dependencies.Group,
+  ) -> edge_pb.Resolution:
     """If `pred` is fully resolved in `deps`, return the minimal Group which
     is the resolving subset of `pred`, or 'unsatisfiable' if this Group
     cannot ever be satisfied.
@@ -201,27 +214,27 @@ def resolve_dependencies(deps: Dependencies):
       if edge not in deps.resolution_events:
         continue
       match deps.resolution_events[edge].resolution:
-        case Resolution.RESOLUTION_SATISFIED:
+        case edge_pb.Resolution.RESOLUTION_SATISFIED:
           num_satisfied += 1
-        case Resolution.RESOLUTION_UNSATISFIED:
+        case edge_pb.Resolution.RESOLUTION_UNSATISFIED:
           num_unsatisfied += 1
 
     for group in pred.groups:
       match _resolve(group):
-        case Resolution.RESOLUTION_SATISFIED:
+        case edge_pb.Resolution.RESOLUTION_SATISFIED:
           num_satisfied += 1
-        case Resolution.RESOLUTION_UNSATISFIED:
+        case edge_pb.Resolution.RESOLUTION_UNSATISFIED:
           num_unsatisfied += 1
 
     if total - num_unsatisfied < threshold:
-      return RESOLUTION_UNSATISFIED
+      return edge_pb.RESOLUTION_UNSATISFIED
 
     if num_satisfied < threshold:
-      return RESOLUTION_UNKNOWN
+      return edge_pb.RESOLUTION_UNKNOWN
 
-    return RESOLUTION_SATISFIED
+    return edge_pb.RESOLUTION_SATISFIED
 
-  if (resolution := _resolve(deps.predicate)) != RESOLUTION_UNKNOWN:
+  if (resolution := _resolve(deps.predicate)) != edge_pb.RESOLUTION_UNKNOWN:
     deps.resolution = resolution
 
 
@@ -240,13 +253,14 @@ class _DepsState(enum.Enum):
   RESOLVED = 2
 
 
-@dataclass(slots=True)
+@dataclasses.dataclass(slots=True)
 class DependencyIndex:
   """An index of dependency edges between nodes in a TurboCI graph.
 
   The intended lifecycle is:
     * `ensure_conditions` before writing any dependencies.
-    * `index_predicate` any time a node's dependencies.{predicate,edges} changes.
+    * `index_predicate` any time a node's dependencies.{predicate,edges}
+      changes.
     * `index_resolved` any time a node's dependencies.resolution becomes set.
     * `index_node_write` any time a node is written (after all mutations to the
     node).
@@ -255,24 +269,24 @@ class DependencyIndex:
   The `index_*` methods do not need to observe the state of the graph, apart
   from the provided arguments and the current state of the *index*.
 
-  `ensure_conditions` and `process_queue` both need to potentially observe target
-  nodes in the graph.
+  `ensure_conditions` and `process_queue` both need to potentially observe
+  target nodes in the graph.
 
   `dependencies_of` and `dependents_of` are read-only operations which reflect
   the current dependencies/dependents of the nodes in the graph.
   """
 
-  @dataclass(slots=True)
+  @dataclasses.dataclass(slots=True)
   class _Entry:
-    # edges_flat is a flattened easy-to-diff version of `Dependencies.edges` which
-    # just includes the target ids.
-    edges_flat: set[str] = field(default_factory=set)
+    # edges_flat is a flattened easy-to-diff version of `Dependencies.edges`
+    # which just includes the target ids.
+    edges_flat: set[str] = dataclasses.field(default_factory=set)
 
-    # satisfied_edges_flat is a flattened version of `Dependencies.satisfied` once
-    # the node dependencies are RESOLVED.
+    # satisfied_edges_flat is a flattened version of `Dependencies.satisfied`
+    # once the node dependencies are RESOLVED.
     #
     # If the Dependencies are unsatisfiable, this will be empty.
-    satisfied_edges_flat: set[str] = field(default_factory=set)
+    satisfied_edges_flat: set[str] = dataclasses.field(default_factory=set)
 
     # The state of the dependencies on this node.
     #
@@ -295,8 +309,11 @@ class DependencyIndex:
     # ensure_conditions.
     #
     # Append-only via ensure_conditions.
-    conditions: dict[Condition, Resolution] = field(
-        default_factory=lambda: defaultdict(lambda: RESOLUTION_UNKNOWN))
+    conditions: dict[Condition, edge_pb.Resolution] = dataclasses.field(
+        default_factory=lambda: collections.defaultdict(
+            lambda: edge_pb.RESOLUTION_UNKNOWN
+        )
+    )
 
     # The set of other nodes which depend on this one via edges_flat.
     #
@@ -304,7 +321,7 @@ class DependencyIndex:
     #
     # This is always mutable (because a new Check could be added at any time in
     # the PLANNING state).
-    dependents: set[str] = field(default_factory=set)
+    dependents: set[str] = dataclasses.field(default_factory=set)
 
     # The set of other nodes which depend on this one via satisfied_edges_flat.
     #
@@ -312,26 +329,32 @@ class DependencyIndex:
     #
     # This is always mutable (because a new Check could be added at any time in
     # the WAITING state).
-    satisfied_dependents: set[str] = field(default_factory=set)
+    satisfied_dependents: set[str] = dataclasses.field(default_factory=set)
 
   # Mapping of node string identifier to an _Entry.
-  _data: dict[str, _Entry] = field(
-      default_factory=lambda: defaultdict(DependencyIndex._Entry))
+  _data: dict[str, _Entry] = dataclasses.field(
+      default_factory=lambda: collections.defaultdict(DependencyIndex._Entry)
+  )
 
-  @dataclass(slots=True, frozen=True)
+  @dataclasses.dataclass(slots=True, frozen=True)
   class _ResolutionEvent:
     node_ident_str: str
     condition: Condition
-    resolution: Resolution
+    resolution: edge_pb.Resolution
 
   # Contains unprocessed resolution events.
   #
   # All dependents of these events need to incorporate them into their
   # `dependencies.resolution_events`.
-  _resolution_events: set[_ResolutionEvent] = field(default_factory=set)
+  _resolution_events: set[_ResolutionEvent] = dataclasses.field(
+      default_factory=set
+  )
 
-  def ensure_conditions(self, edges: Iterable[Edge],
-                        get_node: Callable[[str], Check | Stage | None]):
+  def ensure_conditions(
+      self,
+      edges: Iterable[edge_pb.Edge],
+      get_node: Callable[[str], check_pb.Check | stage_pb.Stage | None],
+  ) -> None:
     """Updates the index to ensure that the conditions in `edges` is tracked by
     the index.
 
@@ -342,8 +365,8 @@ class DependencyIndex:
     `get_node` should return the current committed state of the node, and may
     return None if the target node has not yet been written; This could happen
     when a write is creating new nodes and also edges to them. When the node is
-    actually comitted, it will pick up this conditions and evaluate it as part of
-    that write transaction.
+    actually comitted, it will pick up this conditions and evaluate it as part
+    of that write transaction.
 
     Called prior to the main transaction which would write a node containing
     `edges`.
@@ -357,17 +380,16 @@ class DependencyIndex:
           # argument type.
           entry.conditions[condition] = condition.evaluate(cast(Any, node))
         else:
-          entry.conditions[condition] = RESOLUTION_UNKNOWN
-
+          entry.conditions[condition] = edge_pb.RESOLUTION_UNKNOWN
 
   def index_predicate(
       self,
       node_ident_str: str,
-      deps: Dependencies,
-      now: Revision,
+      deps: dependencies_pb.Dependencies,
+      now: revision_pb.Revision,
       *,
       mark_immutable: bool,
-  ):
+  ) -> None:
     """Updates the index to record a likely-just-mutated `deps.edges` into
     `edges_flat`.
 
@@ -400,27 +422,29 @@ class DependencyIndex:
       for idx, edge in enumerate(deps.edges):
         target_ident_str, condition = extract_ident_condition(edge)
         resolution = self._data[target_ident_str].conditions[condition]
-        if resolution != RESOLUTION_UNKNOWN:
+        if resolution != edge_pb.RESOLUTION_UNKNOWN:
           deps.resolution_events[idx].resolution = resolution
           deps.resolution_events[idx].version.CopyFrom(now)
 
       resolve_dependencies(deps)
       # We will set the state to RESOLVED in index_resolved
 
-  def index_node_write(self, real_node: Check | Stage):
+  def index_node_write(
+      self, real_node: check_pb.Check | stage_pb.Stage
+  ) -> None:
     """Updates the indexed conditions for `real_node`.
 
-    Looks at current unresolved conditions for `real_node` and attempts to resolve
-    them. If one or more conditions are resolved, adds events to the
+    Looks at current unresolved conditions for `real_node` and attempts to
+    resolve them. If one or more conditions are resolved, adds events to the
     _resolution_events queue.
     """
     node_ident_str = ids.to_string(real_node.identifier)
     node = self._data[node_ident_str]
 
     for condition, resolution in node.conditions.items():
-      if resolution == RESOLUTION_UNKNOWN:
+      if resolution == edge_pb.RESOLUTION_UNKNOWN:
         new_resolution = condition.evaluate(cast(Any, real_node))
-        if new_resolution != RESOLUTION_UNKNOWN:
+        if new_resolution != edge_pb.RESOLUTION_UNKNOWN:
           self._resolution_events.add(
               self._ResolutionEvent(
                   node_ident_str,
@@ -433,8 +457,11 @@ class DependencyIndex:
     """Returns True iff this DependencyIndex has a non-empty message queue."""
     return bool(self._resolution_events)
 
-  def process_queue(self, get_node: Callable[[str], Check | Stage],
-                    now: Revision) -> dict[str, Dependencies]:
+  def process_queue(
+      self,
+      get_node: Callable[[str], check_pb.Check | stage_pb.Stage],
+      now: revision_pb.Revision,
+  ) -> dict[str, dependencies_pb.Dependencies]:
     """Called after a write transaction closes.
 
     Propagates all pending _resolution_events into a set of pending dependency
@@ -453,7 +480,7 @@ class DependencyIndex:
     advancing the state of the node (if the dependencies are resolved), and
     finally `index_node_write`.
     """
-    ret: dict[str, Dependencies] = {}
+    ret: dict[str, dependencies_pb.Dependencies] = {}
 
     for event in self._resolution_events:
       for dependent in self._data[event.node_ident_str].dependents:
@@ -464,7 +491,7 @@ class DependencyIndex:
         deps = ret.get(dependent)
         if deps is None:
           real_node = get_node(dependent)
-          deps = deepcopy(real_node.dependencies)
+          deps = copy.deepcopy(real_node.dependencies)
           ret[dependent] = deps
 
         propagated = False
@@ -476,16 +503,20 @@ class DependencyIndex:
             continue
 
           if idx in deps.resolution_events:
-            event = deps.resolution_events[idx]
+            existing_event = deps.resolution_events[idx]
             raise AssertionError(
-                f'node[{dependent}]: already has resolution for {idx}? {event}')
+                f'node[{dependent}]: already has resolution for {idx}? '
+                f'{existing_event}'
+            )
 
           deps.resolution_events[idx].resolution = event.resolution
           deps.resolution_events[idx].version.CopyFrom(now)
           propagated = True
           break
         if not propagated:
-          raise AssertionError(f'node[{dependent}]: failed to propagate {event}?')
+          raise AssertionError(
+              f'node[{dependent}]: failed to propagate {event}?'
+          )
 
         resolve_dependencies(deps)
 
@@ -494,7 +525,9 @@ class DependencyIndex:
 
     return ret
 
-  def index_resolved(self, node_ident_str: str, deps: Dependencies):
+  def index_resolved(
+      self, node_ident_str: str, deps: dependencies_pb.Dependencies
+  ) -> None:
     """Records that `node_ident_str` dependencies are resolved.
 
     `deps` must be resolved, or this raises an error.
@@ -510,12 +543,12 @@ class DependencyIndex:
           'index_resolved: called on dependencies not in RECEIVING_EVENTS:'
           f' {node.state}')
 
-    if deps.resolution == RESOLUTION_SATISFIED:
+    if deps.resolution == edge_pb.RESOLUTION_SATISFIED:
       # Find all edges which are SATISFIED.
       satisfied_edges = {
         idx
         for idx, event in deps.resolution_events.items()
-        if event.resolution == RESOLUTION_SATISFIED
+        if event.resolution == edge_pb.RESOLUTION_SATISFIED
       }
       # compute the set of edges which actually contributed to the successful
       # resolution of `deps`.
@@ -523,7 +556,7 @@ class DependencyIndex:
       # For any given group, if the group itself is satisfied, this returns the
       # cumulative set of edges for that group; Otherwise if the group is not
       # satisfied, returns the empty set.
-      def visit(group: Dependencies.Group) -> set[int]:
+      def visit(group: dependencies_pb.Dependencies.Group) -> set[int]:
         edges = {idx for idx in group.edges if idx in satisfied_edges}
         groups: list[set[int]] = [
           visited for subgroup in group.groups
@@ -546,12 +579,15 @@ class DependencyIndex:
   def dependencies_of(
       self,
       node_ident_str: str,
-      mode: QueryExpandDepsMode,
+      mode: query_pb.QueryExpandDepsMode,
   ) -> set[str]:
     """Returns nodes which `node_ident_str` depends on."""
     node = self._data[node_ident_str]
     edges: set[str]
-    if mode == QueryExpandDepsMode.QUERY_EXPAND_DEPS_MODE_SATISFIED:
+    if (
+        mode
+        == query_pb.QueryExpandDepsMode.QUERY_EXPAND_DEPS_MODE_SATISFIED
+    ):
       edges = node.satisfied_edges_flat
     else:
       edges = node.edges_flat
@@ -561,12 +597,15 @@ class DependencyIndex:
   def dependents_of(
       self,
       target_ident_str: str,
-      mode: QueryExpandDepsMode,
+      mode: query_pb.QueryExpandDepsMode,
   ) -> set[str]:
     """Return nodes which depend on `target_ident_str`."""
     node = self._data[target_ident_str]
     edges: set[str]
-    if mode == QueryExpandDepsMode.QUERY_EXPAND_DEPS_MODE_SATISFIED:
+    if (
+        mode
+        == query_pb.QueryExpandDepsMode.QUERY_EXPAND_DEPS_MODE_SATISFIED
+    ):
       edges = node.satisfied_dependents
     else:
       edges = node.dependents

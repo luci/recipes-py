@@ -5,41 +5,59 @@
 
 from __future__ import annotations
 
-import collections.abc
+from collections.abc import Iterable, Sequence
+from typing import Literal, Protocol, TypeVar, cast
 
-from typing import Iterable, Literal, Protocol, Sequence, TypeVar, cast
-
-from google.protobuf.message import Message
-
-from PB.turboci.graph.ids.v1 import identifier
-from PB.turboci.graph.orchestrator.v1 import type_set
-from PB.turboci.graph.orchestrator.v1.check import Check
-from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
-from PB.turboci.graph.orchestrator.v1.check_state import CheckState
-from PB.turboci.graph.orchestrator.v1.edge import Edge
-from PB.turboci.graph.orchestrator.v1.query import Query
-from PB.turboci.graph.orchestrator.v1.query_nodes_request import QueryNodesRequest
-from PB.turboci.graph.orchestrator.v1.query_nodes_response import QueryNodesResponse
-from PB.turboci.graph.orchestrator.v1.read_workplan_request import ReadWorkPlanRequest
-from PB.turboci.graph.orchestrator.v1.read_workplan_response import ReadWorkPlanResponse
-from PB.turboci.graph.orchestrator.v1.transaction_details import TransactionDetails
-from PB.turboci.graph.orchestrator.v1.type_info import TypeInfo
-from PB.turboci.graph.orchestrator.v1.workplan import WorkPlan
-from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
-from PB.turboci.graph.orchestrator.v1.write_nodes_response import WriteNodesResponse
-
+from google.protobuf import message
 from turboci.utils import ids, value
+
+from PB.turboci.graph.ids.v1 import identifier as identifier_pb
+from PB.turboci.graph.orchestrator.v1 import check as check_pb
+from PB.turboci.graph.orchestrator.v1 import check_kind as check_kind_pb
+from PB.turboci.graph.orchestrator.v1 import check_state as check_state_pb
+from PB.turboci.graph.orchestrator.v1 import edge as edge_pb
+from PB.turboci.graph.orchestrator.v1 import query as query_pb
+from PB.turboci.graph.orchestrator.v1 import (
+    query_nodes_request as query_nodes_request_pb,
+)
+from PB.turboci.graph.orchestrator.v1 import (
+    query_nodes_response as query_nodes_response_pb,
+)
+from PB.turboci.graph.orchestrator.v1 import (
+    read_workplan_request as read_workplan_request_pb,
+)
+from PB.turboci.graph.orchestrator.v1 import (
+    read_workplan_response as read_workplan_response_pb,
+)
+from PB.turboci.graph.orchestrator.v1 import (
+    transaction_details as transaction_details_pb,
+)
+from PB.turboci.graph.orchestrator.v1 import type_info as type_info_pb
+from PB.turboci.graph.orchestrator.v1 import type_set as type_set_pb
+from PB.turboci.graph.orchestrator.v1 import workplan as workplan_pb
+from PB.turboci.graph.orchestrator.v1 import (
+    write_nodes_request as write_nodes_request_pb,
+)
+from PB.turboci.graph.orchestrator.v1 import (
+    write_nodes_response as write_nodes_response_pb,
+)
 
 
 class TurboCIClient(Protocol):
 
-  def WriteNodes(self, req: WriteNodesRequest) -> WriteNodesResponse:
+  def WriteNodes(
+      self, req: write_nodes_request_pb.WriteNodesRequest
+  ) -> write_nodes_response_pb.WriteNodesResponse:
     ...
 
-  def QueryNodes(self, req: QueryNodesRequest) -> QueryNodesResponse:
+  def QueryNodes(
+      self, req: query_nodes_request_pb.QueryNodesRequest
+  ) -> query_nodes_response_pb.QueryNodesResponse:
     ...
 
-  def ReadWorkPlan(self, req: ReadWorkPlanRequest) -> ReadWorkPlanResponse:
+  def ReadWorkPlan(
+      self, req: read_workplan_request_pb.ReadWorkPlanRequest
+  ) -> read_workplan_response_pb.ReadWorkPlanResponse:
     ...
 
 
@@ -52,11 +70,18 @@ class TurboCIClient(Protocol):
 CLIENT: TurboCIClient
 
 
-def dep_group(*contained: str | identifier.Identifier | identifier.Check
-              | identifier.Stage | WriteNodesRequest.DependencyGroup,
-              stages: Sequence[str] = (),
-              threshold: int = 0,
-              in_workplan: str = "") -> WriteNodesRequest.DependencyGroup:
+def dep_group(
+    *contained: (
+        str
+        | identifier_pb.Identifier
+        | identifier_pb.Check
+        | identifier_pb.Stage
+        | write_nodes_request_pb.WriteNodesRequest.DependencyGroup
+    ),
+    stages: Sequence[str] = (),
+    threshold: int = 0,
+    in_workplan: str = "",
+) -> write_nodes_request_pb.WriteNodesRequest.DependencyGroup:
   """Helper to generate a WriteNodesRequest.DependencyGroup.
 
   You may pass:
@@ -75,30 +100,34 @@ def dep_group(*contained: str | identifier.Identifier | identifier.Check
   for this group to be satisfied), but you can set it to another value with the
   threshold keyword arg.
   """
-  ret = WriteNodesRequest.DependencyGroup()
+  ret = write_nodes_request_pb.WriteNodesRequest.DependencyGroup()
   wp = ids.workplan(in_workplan) if in_workplan else None
 
   for obj in contained:
     match obj:
-      case WriteNodesRequest.DependencyGroup():
+      case write_nodes_request_pb.WriteNodesRequest.DependencyGroup():
         ret.groups.append(obj)
-      case identifier.Identifier():
+      case identifier_pb.Identifier():
         match (typ := obj.WhichOneof('type')):
           case 'check':
-            ret.edges.add(check=Edge.Check(identifier=obj.check))
+            ret.edges.add(check=edge_pb.Edge.Check(identifier=obj.check))
           case 'stage':
-            ret.edges.add(stage=Edge.Stage(identifier=obj.stage))
+            ret.edges.add(stage=edge_pb.Edge.Stage(identifier=obj.stage))
           case _:
-            raise ValueError(f'Cannot create a dependency on target of kind {typ!r}')
-      case identifier.Check():
-        ret.edges.add(check=Edge.Check(identifier=obj))
-      case identifier.Stage():
-        ret.edges.add(stage=Edge.Stage(identifier=obj))
+            raise ValueError(
+                f'Cannot create a dependency on target of kind {typ!r}'
+            )
+      case identifier_pb.Check():
+        ret.edges.add(check=edge_pb.Edge.Check(identifier=obj))
+      case identifier_pb.Stage():
+        ret.edges.add(stage=edge_pb.Edge.Stage(identifier=obj))
       case str():
-        ret.edges.add(check=Edge.Check(identifier=ids.check(obj, wp)))
+        ret.edges.add(check=edge_pb.Edge.Check(identifier=ids.check(obj, wp)))
 
   for stage_bare in stages:
-    ret.edges.add(stage=Edge.Stage(identifier=ids.stage(stage_bare, wp)))
+    ret.edges.add(
+        stage=edge_pb.Edge.Stage(identifier=ids.stage(stage_bare, wp))
+    )
 
   if threshold > (N := len(contained) + len(stages)):
     raise ValueError(
@@ -112,9 +141,11 @@ def dep_group(*contained: str | identifier.Identifier | identifier.Check
   return ret
 
 
-def reason(message: str, *details: Message) -> WriteNodesRequest.Reason:
+def reason(
+    message: str, *details: message.Message
+) -> write_nodes_request_pb.WriteNodesRequest.Reason:
   """Helper to generate a WriteNodesRequest.Reason for WriteNodes."""
-  ret = WriteNodesRequest.Reason(message=message)
+  ret = write_nodes_request_pb.WriteNodesRequest.Reason(message=message)
   for detail in details:
     a = ret.details.add()
     a.data.Pack(detail, deterministic=True)
@@ -122,32 +153,44 @@ def reason(message: str, *details: Message) -> WriteNodesRequest.Reason:
 
 
 CheckKindType = (
-  CheckKind|
-  Literal['CHECK_KIND_SOURCE', 'CHECK_KIND_BUILD', 'CHECK_KIND_TEST', 'CHECK_KIND_ANALYSIS']
+    check_kind_pb.CheckKind
+    | Literal[
+        'CHECK_KIND_SOURCE',
+        'CHECK_KIND_BUILD',
+        'CHECK_KIND_TEST',
+        'CHECK_KIND_ANALYSIS',
+    ]
 )
 
 CheckStateType = (
-  CheckState|
-  Literal['CHECK_STATE_PLANNING', 'CHECK_STATE_PLANNED', 'CHECK_STATE_WAITING', 'CHECK_STATE_FINAL']
+    check_state_pb.CheckState
+    | Literal[
+        'CHECK_STATE_PLANNING',
+        'CHECK_STATE_PLANNED',
+        'CHECK_STATE_WAITING',
+        'CHECK_STATE_FINAL',
+    ]
 )
 
 
 def check(
     id: str,
     *,
-    kind: CheckKindType = CheckKind.CHECK_KIND_UNKNOWN,
-    state: CheckStateType = CheckState.CHECK_STATE_UNKNOWN,
-    options: Sequence[Message] = (),
-    deps: WriteNodesRequest.DependencyGroup | None = None,
-    results: Sequence[Message] = (),
+    kind: CheckKindType = check_kind_pb.CheckKind.CHECK_KIND_UNKNOWN,
+    state: CheckStateType = check_state_pb.CheckState.CHECK_STATE_UNKNOWN,
+    options: Sequence[message.Message] = (),
+    deps: (
+        write_nodes_request_pb.WriteNodesRequest.DependencyGroup | None
+    ) = None,
+    results: Sequence[message.Message] = (),
     finalize_results: bool = False,
 
     # Not needed for fake.
     in_workplan: str = "",
     realm: str | None = None,
-    realm_options: Sequence[tuple[str, Message]] = (),
-    realm_results: Sequence[tuple[str, Message]] = (),
-) -> WriteNodesRequest.CheckWrite:
+    realm_options: Sequence[tuple[str, message.Message]] = (),
+    realm_results: Sequence[tuple[str, message.Message]] = (),
+) -> write_nodes_request_pb.WriteNodesRequest.CheckWrite:
   """Helper to generate a CheckWrite for client.WriteNodes.
 
   Notes:
@@ -161,18 +204,22 @@ def check(
       in BOTH `options` and `realm_options`.
   """
   wp = ids.workplan(in_workplan) if in_workplan else None
-  ret = WriteNodesRequest.CheckWrite(realm=realm)
+  ret = write_nodes_request_pb.WriteNodesRequest.CheckWrite(realm=realm)
   ret.identifier.CopyFrom(ids.check(id, wp))
 
   if kind:
     if isinstance(kind, str):
-      ret.kind = cast(CheckKind, CheckKind.Value(kind))
+      ret.kind = cast(
+          check_kind_pb.CheckKind, check_kind_pb.CheckKind.Value(kind)
+      )
     else:
       ret.kind = kind
 
   if state:
     if isinstance(state, str):
-      ret.state = cast(CheckState, CheckState.Value(state))
+      ret.state = cast(
+          check_state_pb.CheckState, check_state_pb.CheckState.Value(state)
+      )
     else:
       ret.state = state
 
@@ -202,13 +249,20 @@ def check(
 
 
 def write_nodes(
-    *atoms: WriteNodesRequest.CheckWrite | WriteNodesRequest.StageWrite
-    | WriteNodesRequest.Reason,
-    current_stage: WriteNodesRequest.CurrentStageWrite | None = None,
-    current_attempt: WriteNodesRequest.CurrentAttemptWrite | None = None,
-    txn: TransactionDetails | None = None,
+    *atoms: (
+        write_nodes_request_pb.WriteNodesRequest.CheckWrite
+        | write_nodes_request_pb.WriteNodesRequest.StageWrite
+        | write_nodes_request_pb.WriteNodesRequest.Reason
+    ),
+    current_stage: (
+        write_nodes_request_pb.WriteNodesRequest.CurrentStageWrite | None
+    ) = None,
+    current_attempt: (
+        write_nodes_request_pb.WriteNodesRequest.CurrentAttemptWrite | None
+    ) = None,
+    txn: transaction_details_pb.TransactionDetails | None = None,
     client: TurboCIClient | None = None,
-) -> WriteNodesResponse:
+) -> write_nodes_response_pb.WriteNodesResponse:
   """Convenience function for client.WriteNodes.
 
   At least one Reason is required. If more than one is provided, they will be
@@ -216,18 +270,18 @@ def write_nodes(
 
   Also see `check` and `reason` to help generate CheckWrite and Reason messages.
   """
-  req = WriteNodesRequest(
+  req = write_nodes_request_pb.WriteNodesRequest(
       current_stage=current_stage,
       current_attempt=current_attempt,
       txn=txn,
   )
   for atom in atoms:
     match atom:
-      case WriteNodesRequest.CheckWrite():
+      case write_nodes_request_pb.WriteNodesRequest.CheckWrite():
         req.checks.append(atom)
-      case WriteNodesRequest.StageWrite():
+      case write_nodes_request_pb.WriteNodesRequest.StageWrite():
         req.stages.append(atom)
-      case WriteNodesRequest.Reason():
+      case write_nodes_request_pb.WriteNodesRequest.Reason():
         req.reason.MergeFrom(atom)
       case _:
         raise TypeError(f'write_nodes: unknown atom {type(atom)}')
@@ -238,41 +292,43 @@ def write_nodes(
 
 # NodesInWorkplan is a QueryNodeSet which selects from all nodes in the
 # current workplan.
-NodesInWorkplan = identifier.WorkPlan()
+NodesInWorkplan = identifier_pb.WorkPlan()
 
 
 QueryNodeSet = (
-  identifier.WorkPlan|
-  Query.NodesByID|
-  Query.NodesAcrossWorkPlans|
-  Iterable[ids.AnyIdentifier]
+    identifier_pb.WorkPlan
+    | query_pb.Query.NodesByID
+    | query_pb.Query.NodesAcrossWorkPlans
+    | Iterable[ids.AnyIdentifier]
 )
 
 QuerySelectAtom = (
-  Query.SelectChecks|
-  Query.SelectChecks.Predicate|
-  Query.SelectStages|
-  Query.SelectStages.Predicate
+    query_pb.Query.SelectChecks
+    | query_pb.Query.SelectChecks.Predicate
+    | query_pb.Query.SelectStages
+    | query_pb.Query.SelectStages.Predicate
 )
 
 QueryExpandAtom = (
-  Query.ExpandDependencies|
-  Query.ExpandDependents
+    query_pb.Query.ExpandDependencies
+    | query_pb.Query.ExpandDependents
 )
 
 QueryCollectAtom = (
-  Query.CollectChecks|
-  Query.CollectStages
+    query_pb.Query.CollectChecks
+    | query_pb.Query.CollectStages
 )
 
 QueryAtoms = (
-  QuerySelectAtom|
-  QueryExpandAtom|
-  QueryCollectAtom
+    QuerySelectAtom
+    | QueryExpandAtom
+    | QueryCollectAtom
 )
 
 
-def make_query(*atoms: QueryAtoms | None, node_set: QueryNodeSet = NodesInWorkplan) -> Query:
+def make_query(
+    *atoms: QueryAtoms | None, node_set: QueryNodeSet = NodesInWorkplan
+) -> query_pb.Query:
   """Convenience function to make a Query message from atomic bits.
 
   None atoms are skipped.
@@ -281,15 +337,15 @@ def make_query(*atoms: QueryAtoms | None, node_set: QueryNodeSet = NodesInWorkpl
 
   Repeated fields are appended (e.g. CheckPattern and StagePattern).
   """
-  ret = Query()
+  ret = query_pb.Query()
   match node_set:
-    case identifier.WorkPlan():
+    case identifier_pb.WorkPlan():
       ret.nodes_in_workplan.CopyFrom(node_set)
-    case Query.NodesByID():
+    case query_pb.Query.NodesByID():
       ret.nodes_by_id.CopyFrom(node_set)
-    case Query.NodesAcrossWorkPlans():
+    case query_pb.Query.NodesAcrossWorkPlans():
       ret.nodes_across_workplans.CopyFrom(node_set)
-    case collections.abc.Iterable():
+    case Iterable():
       ret.nodes_by_id.nodes.extend(ids.wrap(x) for x in node_set)
     case _:
       raise TypeError(f'make_query: unknown node_set {type(node_set)}')
@@ -299,25 +355,25 @@ def make_query(*atoms: QueryAtoms | None, node_set: QueryNodeSet = NodesInWorkpl
       continue
     match atom:
     # QuerySelectAtom
-      case Query.SelectChecks():
+      case query_pb.Query.SelectChecks():
         ret.select_checks.MergeFrom(atom)
-      case Query.SelectChecks.Predicate():
+      case query_pb.Query.SelectChecks.Predicate():
         ret.select_checks.predicates.append(atom)
-      case Query.SelectStages():
+      case query_pb.Query.SelectStages():
         ret.select_stages.MergeFrom(atom)
-      case Query.SelectStages.Predicate():
+      case query_pb.Query.SelectStages.Predicate():
         ret.select_stages.predicates.append(atom)
 
       # QueryExpandAtom
-      case Query.ExpandDependencies():
+      case query_pb.Query.ExpandDependencies():
         ret.expand_dependencies.MergeFrom(atom)
-      case Query.ExpandDependents():
+      case query_pb.Query.ExpandDependents():
         ret.expand_dependents.MergeFrom(atom)
 
       # QueryCollectAtom
-      case Query.CollectChecks():
+      case query_pb.Query.CollectChecks():
         ret.collect_checks.MergeFrom(atom)
-      case Query.CollectStages():
+      case query_pb.Query.CollectStages():
         ret.collect_stages.MergeFrom(atom)
 
       case _:
@@ -327,33 +383,42 @@ def make_query(*atoms: QueryAtoms | None, node_set: QueryNodeSet = NodesInWorkpl
 
 
 def query_nodes(
-    *queries: Query,
-    version: QueryNodesRequest.VersionRestriction | None = None,
-    types: Sequence[str | Message | type[Message]] = (),
+    *queries: query_pb.Query,
+    version: (
+        query_nodes_request_pb.QueryNodesRequest.VersionRestriction | None
+    ) = None,
+    types: Sequence[str | message.Message | type[message.Message]] = (),
     client: TurboCIClient | None = None,
-) -> QueryNodesResponse:
+) -> query_nodes_response_pb.QueryNodesResponse:
   """Convenience function for CLIENT.QueryNodes."""
   return (client or CLIENT).QueryNodes(
-      QueryNodesRequest(
+      query_nodes_request_pb.QueryNodesRequest(
           version=version,
           query=queries,
-          type_info=TypeInfo(wanted=type_set.TypeSet(type_urls=[
-            x if isinstance(x, str) else value.url(x) for x in types
-          ])),
-      ))
+          type_info=type_info_pb.TypeInfo(
+              wanted=type_set_pb.TypeSet(
+                  type_urls=[
+                      x if isinstance(x, str) else value.url(x) for x in types
+                  ]
+              )
+          ),
+      )
+  )
 
 
-def read_checks(*idents: identifier.Check | str,
-                collect: Query.CollectChecks | None = None,
-                types: Sequence[str | Message | type[Message]] = (),
-                client: TurboCIClient | None = None) -> list[Check]:
+def read_checks(
+    *idents: identifier_pb.Check | str,
+    collect: query_pb.Query.CollectChecks | None = None,
+    types: Sequence[str | message.Message | type[message.Message]] = (),
+    client: TurboCIClient | None = None,
+) -> list[check_pb.Check]:
   """Convenience function for reading one or more checks by ID.
 
   This just does a query_nodes for the ids specified by `idents`, and then
   unwraps the result.
   """
-  wrapped: tuple[identifier.Identifier, ...] = tuple(
-      ids.wrap(x if isinstance(x, identifier.Check) else ids.check(x))
+  wrapped: tuple[identifier_pb.Identifier, ...] = tuple(
+      ids.wrap(x if isinstance(x, identifier_pb.Check) else ids.check(x))
       for x in idents
   )
   work_plan = {ident.check.work_plan.id for ident in wrapped}
@@ -369,10 +434,12 @@ def read_checks(*idents: identifier.Check | str,
   return list(checks)
 
 
-MsgT = TypeVar('MsgT', bound=Message)
+MsgT = TypeVar('MsgT', bound=message.Message)
 
 
-def get_check_by_short_id(workplan: WorkPlan, check_id: str) -> Check|None:
+def get_check_by_short_id(
+    workplan: workplan_pb.WorkPlan, check_id: str
+) -> check_pb.Check | None:
   """Finds and returns the Check for the check whose identifier.id is
   `check_id`.
 
@@ -386,7 +453,9 @@ def get_check_by_short_id(workplan: WorkPlan, check_id: str) -> Check|None:
   return None
 
 
-def get_check_by_full_id(workplan: WorkPlan, check_id: str) -> Check|None:
+def get_check_by_full_id(
+    workplan: workplan_pb.WorkPlan, check_id: str
+) -> check_pb.Check | None:
   """Finds and returns the Check for the check whose identifier's string
   representation (e.g. 'L12345:C123') is `check_id`.
 

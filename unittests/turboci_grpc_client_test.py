@@ -9,52 +9,54 @@ from unittest import mock
 
 import test_env
 
-from PB.turboci.graph.ids.v1.identifier import Check, Stage, WorkPlan
-from PB.turboci.graph.ids.v1 import identifier_kind
-from PB.turboci.graph.orchestrator.v1 import check_kind as check_kind_pb2
-from PB.turboci.graph.orchestrator.v1 import check_state as check_state_pb2
-from PB.turboci.graph.orchestrator.v1.query import Query
-from PB.turboci.graph.orchestrator.v1.query_nodes_request import (
-    QueryNodesRequest,)
-from PB.turboci.graph.orchestrator.v1.read_workplan_request import (
-    ReadWorkPlanRequest,)
-from PB.turboci.graph.orchestrator.v1.read_workplan_response import (
-    ReadWorkPlanResponse,)
-from PB.turboci.graph.orchestrator.v1.value_data import ValueData
-from PB.turboci.graph.orchestrator.v1.type_set import TypeSet
-from PB.turboci.graph.orchestrator.v1.write_nodes_request import (
-    WriteNodesRequest,)
-from PB.turboci.graph.orchestrator.v1.write_nodes_response import (
-    WriteNodesResponse,)
-
-from recipe_engine.internal.turboci.grpc_client import TurboCIGRPCClient
+from PB.turboci.graph.ids.v1 import identifier as identifier_pb
+from PB.turboci.graph.orchestrator.v1 import (
+    query_nodes_request as query_nodes_request_pb,
+)
+from PB.turboci.graph.orchestrator.v1 import (
+    read_workplan_response as read_workplan_response_pb,
+)
+from PB.turboci.graph.orchestrator.v1 import (
+    write_nodes_request as write_nodes_request_pb,
+)
+from PB.turboci.graph.orchestrator.v1 import (
+    write_nodes_response as write_nodes_response_pb,
+)
 from turboci.utils import ids
 from turboci.utils.client import errors
+
+from recipe_engine.internal.turboci import grpc_client
 
 
 class TurboCIGRPCClientTest(test_env.RecipeEngineUnitTest):
 
-  def setUp(self):
+  def setUp(self) -> None:
     super().setUp()
-    self.client = TurboCIGRPCClient('localhost:12345', wpid=WorkPlan(id='123'))
+    self.client = grpc_client.TurboCIGRPCClient(
+        'localhost:12345', wpid=identifier_pb.WorkPlan(id='123'))
     self.mock_read_work_plan = mock.patch.object(
         self.client.transport, '_read_work_plan', autospec=True).start()
-    self.mock_read_work_plan.return_value = ReadWorkPlanResponse()
+    self.mock_read_work_plan.return_value = (
+        read_workplan_response_pb.ReadWorkPlanResponse()
+    )
     self.addCleanup(mock.patch.stopall)
 
-  def test_query_nodes_select_checks_by_id(self):
+  def test_query_nodes_select_checks_by_id(self) -> None:
     """Tests that QueryNodes can select checks by their ID over gRPC client."""
-    mock_response = ReadWorkPlanResponse()
+    mock_response = read_workplan_response_pb.ReadWorkPlanResponse()
     mock_response.workplan.checks.add(
-        identifier=Check(work_plan=WorkPlan(id="123"), id='check1'))
+        identifier=identifier_pb.Check(
+            work_plan=identifier_pb.WorkPlan(id="123"), id='check1'))
     mock_response.workplan.checks.add(
-        identifier=Check(work_plan=WorkPlan(id="123"), id='check2'))
+        identifier=identifier_pb.Check(
+            work_plan=identifier_pb.WorkPlan(id="123"), id='check2'))
     self.mock_read_work_plan.return_value = mock_response
 
-    req = QueryNodesRequest()
+    req = query_nodes_request_pb.QueryNodesRequest()
     query = req.query.add()
     query.nodes_by_id.nodes.add(
-        check=Check(work_plan=WorkPlan(id="123"), id='check1'))
+        check=identifier_pb.Check(
+            work_plan=identifier_pb.WorkPlan(id="123"), id='check1'))
 
     response = self.client.QueryNodes(req)
 
@@ -62,10 +64,10 @@ class TurboCIGRPCClientTest(test_env.RecipeEngineUnitTest):
     self.assertEqual(len(response.workplans[0].checks), 1)
     self.assertEqual(response.workplans[0].checks[0].identifier.id, 'check1')
 
-  def test_write_nodes_delegates_to_transport(self):
+  def test_write_nodes_delegates_to_transport(self) -> None:
     """Tests that WriteNodes cleanly delegates to the underlying transport."""
-    req = WriteNodesRequest()
-    mock_resp = WriteNodesResponse()
+    req = write_nodes_request_pb.WriteNodesRequest()
+    mock_resp = write_nodes_response_pb.WriteNodesResponse()
     with mock.patch.object(
         self.client.transport, 'call_unary',
         return_value=mock_resp) as mock_call:
@@ -74,20 +76,20 @@ class TurboCIGRPCClientTest(test_env.RecipeEngineUnitTest):
       mock_call.assert_called_once()
       self.assertEqual(mock_call.call_args[0][0], 'WriteNodes')
 
-  def test_wpid_parsing(self):
+  def test_wpid_parsing(self) -> None:
     """Tests that TurboCIGRPCClient correctly accepts and binds an
     `identifier.WorkPlan` object on construction."""
     wp_proto, _, _ = ids.root(ids.from_string('L12345:S67:A1'))
     self.assertIsNotNone(wp_proto)
     self.assertEqual(wp_proto.id, '12345')
 
-    c1 = TurboCIGRPCClient('localhost:12345', wpid=wp_proto)
+    c1 = grpc_client.TurboCIGRPCClient('localhost:12345', wpid=wp_proto)
     self.assertEqual(c1.wpid.id, '12345')
 
-  def test_rpc_retry_logging(self):
+  def test_rpc_retry_logging(self) -> None:
     """Tests that transient RPC errors trigger warning logs and retries."""
-    req = WriteNodesRequest()
-    mock_resp = WriteNodesResponse()
+    req = write_nodes_request_pb.WriteNodesRequest()
+    mock_resp = write_nodes_response_pb.WriteNodesResponse()
     err = errors.RetryableRPCError.make('Server temporarily unavailable')
 
     with mock.patch.object(

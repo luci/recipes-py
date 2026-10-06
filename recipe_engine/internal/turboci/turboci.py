@@ -7,53 +7,57 @@ from __future__ import annotations
 
 import logging
 import sys
+from typing import Any
 
 from gevent import subprocess
-
 from google.protobuf import json_format as jsonpb
-from google.protobuf.message import Message
+from google.protobuf import message
 
-from PB.turboci.graph.orchestrator.v1.query_nodes_request import (
-    QueryNodesRequest,
+from PB.turboci.graph.orchestrator.v1 import (
+    query_nodes_request as query_nodes_request_pb,
 )
-from PB.turboci.graph.orchestrator.v1.query_nodes_response import (
-    QueryNodesResponse,
+from PB.turboci.graph.orchestrator.v1 import (
+    query_nodes_response as query_nodes_response_pb,
 )
-from PB.turboci.graph.orchestrator.v1.read_workplan_request import (
-    ReadWorkPlanRequest,
+from PB.turboci.graph.orchestrator.v1 import (
+    read_workplan_request as read_workplan_request_pb,
 )
-from PB.turboci.graph.orchestrator.v1.read_workplan_response import (
-    ReadWorkPlanResponse,
+from PB.turboci.graph.orchestrator.v1 import (
+    read_workplan_response as read_workplan_response_pb,
 )
-from PB.turboci.graph.orchestrator.v1.write_nodes_request import (
-    WriteNodesRequest,
+from PB.turboci.graph.orchestrator.v1 import (
+    write_nodes_request as write_nodes_request_pb,
 )
-from PB.turboci.graph.orchestrator.v1.write_nodes_response import (
-    WriteNodesResponse,
+from PB.turboci.graph.orchestrator.v1 import (
+    write_nodes_response as write_nodes_response_pb,
 )
 
-from .common import TurboCIClient
+from . import common
 from . import query_util
 
 LOG = logging.getLogger(__name__)
 TURBOCI = 'turboci.exe' if sys.platform == 'win32' else 'turboci'
 
 
-class TurboCIOrchestrator(TurboCIClient):
+class TurboCIOrchestrator(common.TurboCIClient):
 
-  def __init__(self, endpoint: str):
+  def __init__(self, endpoint: str) -> None:
     super().__init__()
     self.endpoint = endpoint
 
-  def WriteNodes(self, req: WriteNodesRequest) -> WriteNodesResponse:
+  def WriteNodes(
+      self, req: write_nodes_request_pb.WriteNodesRequest
+  ) -> write_nodes_response_pb.WriteNodesResponse:
     self._log_request('write-nodes', req)
     ret = self._run_cmd('write-nodes', req.SerializeToString())
-    res = WriteNodesResponse()
+    res = write_nodes_response_pb.WriteNodesResponse()
     res.ParseFromString(ret)
     LOG.info('write-nodes response: %s', jsonpb.MessageToJson(res))
     return res
 
-  def QueryNodes(self, req: QueryNodesRequest) -> QueryNodesResponse:
+  def QueryNodes(
+      self, req: query_nodes_request_pb.QueryNodesRequest
+  ) -> query_nodes_response_pb.QueryNodesResponse:
     self._log_request('query-nodes', req)
     # Calls ReadWorkPlan under the hood, with some limitations:
     # * Currently only supports the case where all queries are searching the
@@ -69,15 +73,19 @@ class TurboCIOrchestrator(TurboCIClient):
     LOG.info('query-nodes response: %s', jsonpb.MessageToJson(res))
     return res
 
-  def ReadWorkPlan(self, req: ReadWorkPlanRequest) -> ReadWorkPlanResponse:
+  def ReadWorkPlan(
+      self, req: read_workplan_request_pb.ReadWorkPlanRequest
+  ) -> read_workplan_response_pb.ReadWorkPlanResponse:
     self._log_request('read-workplan', req)
     ret = self._run_cmd('read-workplan', req.SerializeToString())
-    res = ReadWorkPlanResponse()
+    res = read_workplan_response_pb.ReadWorkPlanResponse()
     res.ParseFromString(ret)
     LOG.info('read-workplan response: %s', jsonpb.MessageToJson(res))
     return res
 
-  def _read_work_plan(self, req: ReadWorkPlanRequest) -> ReadWorkPlanResponse:
+  def _read_work_plan(
+      self, req: read_workplan_request_pb.ReadWorkPlanRequest
+  ) -> read_workplan_response_pb.ReadWorkPlanResponse:
     return query_util.paginate_read_work_plan(self.ReadWorkPlan, req)
 
   def _run_cmd(self, sub_cmd: str, req: bytes) -> bytes:
@@ -91,9 +99,9 @@ class TurboCIOrchestrator(TurboCIClient):
       raise
     return proc.stdout
 
-  def _log_request(self, name: str, req: Message):
+  def _log_request(self, name: str, req: message.Message) -> None:
     """Redacts token and logs the request."""
-    req_copy = req.__class__()
+    req_copy: Any = req.__class__()
     req_copy.CopyFrom(req)
     if hasattr(req_copy, 'token') and req_copy.token:
       req_copy.token = '<redacted>'

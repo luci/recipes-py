@@ -5,35 +5,40 @@
 
 from __future__ import annotations
 
-from google.protobuf.message import Message
+from google.protobuf import message
+from google.protobuf import struct_pb2
+from google.protobuf import timestamp_pb2
 
 import test_env
 
-from google.protobuf.struct_pb2 import Struct, Value
-from google.protobuf.timestamp_pb2 import Timestamp
+from PB.turboci.graph.ids.v1 import identifier as identifier_pb
+from PB.turboci.graph.orchestrator.v1 import check as check_pb
+from PB.turboci.graph.orchestrator.v1 import check_kind as check_kind_pb
+from PB.turboci.graph.orchestrator.v1 import check_state as check_state_pb
+from PB.turboci.graph.orchestrator.v1 import value_ref as value_ref_pb
+from PB.turboci.graph.orchestrator.v1 import (
+    write_nodes_request as write_nodes_request_pb,
+)
+from turboci.utils import ids
 
 from recipe_engine import turboci
 from recipe_engine.internal.turboci import check_invariant, edge
 
-from PB.turboci.graph.ids.v1 import identifier
-from PB.turboci.graph.orchestrator.v1.check import Check
-from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
-from PB.turboci.graph.orchestrator.v1.check_state import CheckState
-from PB.turboci.graph.orchestrator.v1.value_ref import ValueRef
-from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
-from turboci.utils import ids
+demoStruct = struct_pb2.Struct(
+    fields={'hello': struct_pb2.Value(string_value='world')})
+demoStruct2 = struct_pb2.Struct(
+    fields={'hola': struct_pb2.Value(string_value='mundo')})
 
-demoStruct = Struct(fields={'hello': Value(string_value='world')})
-demoStruct2 = Struct(fields={'hola': Value(string_value='mundo')})
-
-demoTS = Timestamp(seconds=100, nanos=100)
-demoTS2 = Timestamp(seconds=200, nanos=200)
+demoTS = timestamp_pb2.Timestamp(seconds=100, nanos=100)
+demoTS2 = timestamp_pb2.Timestamp(seconds=200, nanos=200)
 
 
-def _mkOptions(*msg: type[Message] | Message) -> list[ValueRef]:
+def _mkOptions(
+    *msg: type[message.Message] | message.Message,
+) -> list[value_ref_pb.ValueRef]:
   ret = []
   for _, m in enumerate(msg):
-    vr = ValueRef()
+    vr = value_ref_pb.ValueRef()
     if isinstance(m, type):
       m = m()
     vr.inline.Pack(m, deterministic=True)
@@ -43,7 +48,7 @@ def _mkOptions(*msg: type[Message] | Message) -> list[ValueRef]:
 
 class CheckDeltaTest(test_env.RecipeEngineUnitTest):
 
-  def test_PLANNING_maximum(self):
+  def test_PLANNING_maximum(self) -> None:
     delta = turboci.check(
         id='hey',
         kind='CHECK_KIND_ANALYSIS',
@@ -55,7 +60,7 @@ class CheckDeltaTest(test_env.RecipeEngineUnitTest):
     # can apply same delta to already-created check in PLANNING.
     check_invariant.assert_can_apply(
         delta,
-        Check(
+        check_pb.Check(
             identifier=turboci.check_id('hey'),
             kind='CHECK_KIND_ANALYSIS',
             state='CHECK_STATE_PLANNING',
@@ -63,12 +68,13 @@ class CheckDeltaTest(test_env.RecipeEngineUnitTest):
             dependencies=edge.extract_dependencies(turboci.dep_group('neat')),
         ))
 
-  def test_creation_errors(self):
+  def test_creation_errors(self) -> None:
     with self.assertRaises(turboci.CheckWriteInvariantException):
       check_invariant.assert_can_apply(
-          WriteNodesRequest.CheckWrite(
-              # cannot have : in check_id() - checking error from assert_can_apply
-              identifier=identifier.Check(id='hey:there'),
+          write_nodes_request_pb.WriteNodesRequest.CheckWrite(
+              # cannot have : in check_id() - checking error from
+              # assert_can_apply
+              identifier=identifier_pb.Check(id='hey:there'),
               kind='CHECK_KIND_ANALYSIS',
           ),
           None)
@@ -95,14 +101,14 @@ class CheckDeltaTest(test_env.RecipeEngineUnitTest):
             id='hey',
             kind='CHECK_KIND_ANALYSIS',
             results=[demoStruct],
-            state=CheckState.CHECK_STATE_PLANNED,
+            state=check_state_pb.CheckState.CHECK_STATE_PLANNED,
         ), None)
 
-  def test_PLANNING_errors(self):
-    check = Check(
+  def test_PLANNING_errors(self) -> None:
+    check = check_pb.Check(
         identifier=ids.check('hey'),
-        kind=CheckKind.CHECK_KIND_ANALYSIS,
-        state=CheckState.CHECK_STATE_PLANNING,
+        kind=check_kind_pb.CheckKind.CHECK_KIND_ANALYSIS,
+        state=check_state_pb.CheckState.CHECK_STATE_PLANNING,
         options=_mkOptions(demoStruct),
         dependencies=edge.extract_dependencies(turboci.dep_group('neat')),
     )
@@ -131,12 +137,12 @@ class CheckDeltaTest(test_env.RecipeEngineUnitTest):
           turboci.check(
               id='hey',
               # changing kind
-              kind=CheckKind.CHECK_KIND_BUILD,
+              kind=check_kind_pb.CheckKind.CHECK_KIND_BUILD,
           ),
           check)
 
-  def test_PLANNED_errors(self):
-    check = Check(
+  def test_PLANNED_errors(self) -> None:
+    check = check_pb.Check(
         identifier=ids.check('hey'),
         kind='CHECK_KIND_ANALYSIS',
         state='CHECK_STATE_PLANNED',
