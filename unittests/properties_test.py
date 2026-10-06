@@ -5,35 +5,39 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import test_env
 
-from recipe_engine import recipe_api, config
+from recipe_engine import config
+from recipe_engine import recipe_api
 
 
 RECIPE_PROPERTY = recipe_api.BoundProperty.RECIPE_PROPERTY
 MODULE_PROPERTY = recipe_api.BoundProperty.MODULE_PROPERTY
 
 
-def make_prop(**kwargs):
+def make_prop(**kwargs: Any) -> recipe_api.BoundProperty:
   name = kwargs.pop('name', 'dumb_name')
   return recipe_api.Property(**kwargs).bind(
-    name, RECIPE_PROPERTY, 'fake_repo::fake_recipe')
+      name, RECIPE_PROPERTY, 'fake_repo::fake_recipe'
+  )
 
 
 class TestProperties(test_env.RecipeEngineUnitTest):
-  def testDefault(self):
+  def testDefault(self) -> None:
     """Tests the default option of properties."""
     for val in (1, {}, 'test', None):
       prop = make_prop(default=val)
       self.assertEqual(val, prop.interpret(recipe_api.PROPERTY_SENTINEL, {}))
 
-  def testRequired(self):
+  def testRequired(self) -> None:
     """Tests that a required property errors when not provided."""
     prop = make_prop()
     with self.assertRaises(ValueError):
       prop.interpret(recipe_api.PROPERTY_SENTINEL, {})
 
-  def testTypeSingle(self):
+  def testTypeSingle(self) -> None:
     """Tests a simple typed property."""
     prop = make_prop(kind=bool)
     with self.assertRaises(TypeError):
@@ -41,7 +45,7 @@ class TestProperties(test_env.RecipeEngineUnitTest):
 
     self.assertEqual(True, prop.interpret(True, {}))
 
-  def testTypeFancy(self):
+  def testTypeFancy(self) -> None:
     """Tests a config style type property."""
     prop = make_prop(kind=config.List(int))
     for value in (1, 'hi', [3, 'test']):
@@ -50,7 +54,7 @@ class TestProperties(test_env.RecipeEngineUnitTest):
 
     self.assertEqual([2, 3], prop.interpret([2, 3], {}))
 
-  def testFromEnviron(self):
+  def testFromEnviron(self) -> None:
     """Tests that properties can pick up values from environment."""
     prop = make_prop(default='def', from_environ='ENV_VAR')
 
@@ -62,7 +66,7 @@ class TestProperties(test_env.RecipeEngineUnitTest):
     # Explicit values override the environment.
     self.assertEqual('value', prop.interpret('value', {'ENV_VAR': 'var'}))
 
-  def testValidTypes(self):
+  def testValidTypes(self) -> None:
     check = recipe_api.BoundProperty.legal_name
 
     for test, result, is_param_name in (
@@ -77,7 +81,7 @@ class TestProperties(test_env.RecipeEngineUnitTest):
           "name {} should be {}. is_param_name={}".format(
               test, result, is_param_name))
 
-  def testParamName(self):
+  def testParamName(self) -> None:
     """
     Tests setting a param name correctly carries through to a bound property.
     """
@@ -86,7 +90,7 @@ class TestProperties(test_env.RecipeEngineUnitTest):
 
     self.assertEqual('b', bound.param_name)
 
-  def testParamNameDotted(self):
+  def testParamNameDotted(self) -> None:
     """
     Tests setting a param name correctly carries through to a bound property.
     """
@@ -96,7 +100,7 @@ class TestProperties(test_env.RecipeEngineUnitTest):
 
     self.assertEqual('good_name', bound.param_name)
 
-  def testModuleName(self):
+  def testModuleName(self) -> None:
     """
     Tests declaring $repo_name/module properties.
     """
@@ -114,7 +118,7 @@ class TestProperties(test_env.RecipeEngineUnitTest):
 
 
 class TestProtoProperties(test_env.RecipeEngineUnitTest):
-  def setUp(self):
+  def setUp(self) -> None:
     super().setUp()
     self.deps = self.FakeRecipeDeps()
 
@@ -135,7 +139,7 @@ class TestProtoProperties(test_env.RecipeEngineUnitTest):
         }
       ''')
 
-  def testRecipeProperties(self):
+  def testRecipeProperties(self) -> None:
     main = self.deps.main_repo
 
     with main.write_recipe('recipe') as recipe:
@@ -151,13 +155,13 @@ class TestProtoProperties(test_env.RecipeEngineUnitTest):
 
     output, retcode = main.recipes_py(
         'run', 'recipe', 'best_prop="best property"', env={
-          'STR_ENVVAR': 'coolio',
+            'STR_ENVVAR': 'coolio',
         })
     self.assertEqual(retcode, 0, output)
     self.assertIn('[ normal prop: best property ]', output)
     self.assertIn('[ env prop: coolio ]', output)
 
-  def testModuleProperties(self):
+  def testModuleProperties(self) -> None:
     main = self.deps.main_repo
 
     with main.write_module('modname') as mod:
@@ -179,16 +183,22 @@ class TestProtoProperties(test_env.RecipeEngineUnitTest):
       recipe.RunSteps.write('''
         api.step('dump global', ['echo', '[ global:', api.modname.value, ']'])
         api.step('dump mod', ['echo', '[ mod:', api.modname.mod_value, ']'])
-        api.step('dump env str', ['echo', '[ env str:', api.modname.env_value_str, ']'])
-        api.step('dump env num', ['echo', '[ env num:', api.modname.env_value_num, ']'])
+        api.step(
+            'dump env str',
+            ['echo', '[ env str:', api.modname.env_value_str, ']'],
+        )
+        api.step(
+            'dump env num',
+            ['echo', '[ env num:', api.modname.env_value_num, ']'],
+        )
       ''')
 
     output, retcode = main.recipes_py(
         'run', 'recipe', 'best_prop="best property"',
         '$main/modname={"mod_prop": "mod property"}',
         env={
-          'STR_ENVVAR': 'env property',
-          'NUM_ENVVAR': '9000',
+            'STR_ENVVAR': 'env property',
+            'NUM_ENVVAR': '9000',
         })
     self.assertEqual(retcode, 0, output)
     self.assertIn('[ global: best property ]', output)
@@ -196,7 +206,7 @@ class TestProtoProperties(test_env.RecipeEngineUnitTest):
     self.assertIn('[ env str: env property ]', output)
     self.assertIn('[ env num: 9000 ]', output)
 
-  def testBadPropertyType(self):
+  def testBadPropertyType(self) -> None:
     main = self.deps.main_repo
 
     with main.write_recipe('recipe') as recipe:

@@ -5,18 +5,27 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 import json
 import os
-import subprocess
+from typing import Any
 
 import test_env
+import fake_recipe_deps
 
 
 class ErrorsTest(test_env.RecipeEngineUnitTest):
-  def _test_cmd(self, deps, cmd, asserts=None, retcode=0):
+  def _test_cmd(
+      self,
+      deps: fake_recipe_deps.FakeRecipeDeps,
+      cmd: Sequence[str],
+      asserts: Callable[[str], None] | None = None,
+      retcode: int = 0,
+  ) -> dict[str, Any] | None:
+    path = ''
     if cmd[0] == 'run':
       path = self.tempfile()
-      cmd = [cmd[0]] + ['--output-result-json', path] + cmd[1:]
+      cmd = [cmd[0]] + ['--output-result-json', path] + list(cmd[1:])
 
     try:
       output, returncode = deps.main_repo.recipes_py(*cmd)
@@ -29,7 +38,7 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
 
       if cmd[0] == 'run':
         if not os.path.exists(path):
-          return
+          return None
 
         with open(path) as tf:
           raw = tf.read()
@@ -37,24 +46,25 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
           if raw:
             data = json.loads(raw)
         return data
+      return None
     finally:
       if cmd[0] == 'run':
         if os.path.exists(path):
           os.unlink(path)
 
-  def test_missing_dependency(self):
+  def test_missing_dependency(self) -> None:
     deps = self.FakeRecipeDeps()
     with deps.main_repo.write_recipe('foo') as recipe:
       recipe.DEPS = ['aint_no_thang']
 
-    def _assert_nomodule(output):
+    def _assert_nomodule(output: str) -> None:
       self.assertRegex(output,
                        r"No module named 'aint_no_thang' in repo 'main'.")
 
     self._test_cmd(
         deps, ['run', 'foo'], retcode=1, asserts=_assert_nomodule)
 
-  def test_missing_module_dependency(self):
+  def test_missing_module_dependency(self) -> None:
     deps = self.FakeRecipeDeps()
     with deps.main_repo.write_recipe('foo') as recipe:
       recipe.DEPS = ['le_module']
@@ -62,26 +72,27 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
     with deps.main_repo.write_module('le_module') as mod:
       mod.DEPS.append('love')
 
-    def _assert_nomodule(output):
+    def _assert_nomodule(output: str) -> None:
       self.assertRegex(output, r"No module named 'love' in repo 'main'")
 
     self._test_cmd(
         deps, ['run', 'foo'], retcode=1, asserts=_assert_nomodule)
 
-  def test_no_such_recipe(self):
+  def test_no_such_recipe(self) -> None:
     deps = self.FakeRecipeDeps()
     result = self._test_cmd(
         deps, ['run', 'nooope'], retcode=1)
+    assert result is not None
     self.assertNotIn('failure', result['failure'])
 
-  def test_syntax_error(self):
+  def test_syntax_error(self) -> None:
     deps = self.FakeRecipeDeps()
     with deps.main_repo.write_file('recipes/foo.py') as buf:
       buf.write('''
       DEPS = [ (sic)
       ''')
 
-    def assert_syntaxerror(output):
+    def assert_syntaxerror(output: str) -> None:
       self.assertRegex(output, r'RecipeSyntaxError')
 
     self._test_cmd(deps, ['test', 'run', '--filter', 'foo'],
@@ -91,7 +102,7 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
     self._test_cmd(deps, ['run', 'foo'],
         asserts=assert_syntaxerror, retcode=1)
 
-  def test_engine_failure(self):
+  def test_engine_failure(self) -> None:
     deps = self.FakeRecipeDeps()
     with deps.main_repo.write_recipe('print_step_error') as recipe:
       recipe.imports = [
@@ -114,7 +125,7 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
           output),
       retcode=1)
 
-  def test_missing_method(self):
+  def test_missing_method(self) -> None:
     deps = self.FakeRecipeDeps()
     with deps.main_repo.write_file('recipes/no_gen_tests.py') as buf:
       buf.write('''
@@ -139,7 +150,7 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
         retcode=1)
 
 
-  def test_unconsumed_assertion(self):
+  def test_unconsumed_assertion(self) -> None:
     # There was a regression where unconsumed exceptions would not be detected
     # if the exception was AssertionError.
     deps = self.FakeRecipeDeps()
@@ -155,19 +166,19 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
           'FAIL (recipe crashed in an unexpected way)', output),
       retcode=1)
 
-  def test_run_recipe_help(self):
+  def test_run_recipe_help(self) -> None:
     deps = self.FakeRecipeDeps()
     with deps.main_repo.write_recipe('do_nothing') as recipe:
       recipe.DEPS = []
 
-    def _assert_output(output):
+    def _assert_output(output: str) -> None:
       self.assertRegex(output, r'from the root of a \'main\' checkout')
       self.assertRegex(output, r'\./recipes\.py run .* do_nothing')
 
     self._test_cmd(deps, ['run', 'do_nothing'],
       asserts=_assert_output)
 
-  def test_bad_config_import(self):
+  def test_bad_config_import(self) -> None:
     deps = self.FakeRecipeDeps()
     with deps.main_repo.write_module('mod') as mod:
       mod.config.write('''
@@ -183,7 +194,7 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
             output, r"No module named 'BAD_IMPORT'"),
         retcode=1)
 
-  def test_bad_test_api_import(self):
+  def test_bad_test_api_import(self) -> None:
     deps = self.FakeRecipeDeps()
     with deps.main_repo.write_module('mod') as mod:
       mod.test_api.write('''
@@ -199,7 +210,7 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
             output, r"No module named 'BAD_IMPORT'"),
         retcode=1)
 
-  def test_custom_method_on_deps_class(self):
+  def test_custom_method_on_deps_class(self) -> None:
     deps = self.FakeRecipeDeps()
     with deps.main_repo.write_file('recipes/foo.py') as buf:
       buf.write('''
@@ -214,7 +225,7 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
         pass
       ''')
 
-    def assert_custom_method_error(output):
+    def assert_custom_method_error(output: str) -> None:
       self.assertRegex(output,
                        r"Cannot define custom method 'my_helper' on DEPS")
 
@@ -226,3 +237,4 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
 
 if __name__ == '__main__':
   test_env.main()
+

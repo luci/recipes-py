@@ -4,15 +4,22 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Mapping, Sequence
 import inspect
+from typing import Any
 
-from ..recipe_api import BoundProperty, PROPERTY_SENTINEL
+from .. import recipe_api
+from . import exceptions
 
-from .exceptions import UndefinedPropertyException
 
-
-def _invoke_with_properties(callable_obj, all_props, environ, prop_defs,
-                            arg_names, **additional_args):
+def _invoke_with_properties(
+    callable_obj: Callable[..., Any],
+    all_props: Mapping[str, Any],
+    environ: Mapping[str, str],
+    prop_defs: Mapping[str, recipe_api.BoundProperty],
+    arg_names: Sequence[str],
+    **additional_args: Any,
+) -> Any:
   """Internal version of invoke_with_properties.
 
   The main difference is it gets passed the argument names as `arg_names`.
@@ -20,7 +27,7 @@ def _invoke_with_properties(callable_obj, all_props, environ, prop_defs,
   which has arbitrary argument names.
   """
   for name, prop in prop_defs.items():
-    if not isinstance(prop, BoundProperty):
+    if not isinstance(prop, recipe_api.BoundProperty):
       raise ValueError(
           "You tried to invoke {} with an unbound Property {} named {}".format(
               callable_obj, prop, name))
@@ -38,24 +45,30 @@ def _invoke_with_properties(callable_obj, all_props, environ, prop_defs,
       continue
 
     if param_name not in param_name_mapping:
-      raise UndefinedPropertyException(
+      raise exceptions.UndefinedPropertyException(
           "Missing property definition for parameter '{}'.".format(param_name))
 
     prop_name = param_name_mapping[param_name]
 
     if prop_name not in prop_defs:
-      raise UndefinedPropertyException(
+      raise exceptions.UndefinedPropertyException(
           "Missing property value for '{}'.".format(prop_name))
 
     prop = prop_defs[prop_name]
     props.append(
-        prop.interpret(all_props.get(prop_name, PROPERTY_SENTINEL), environ))
+        prop.interpret(
+            all_props.get(prop_name, recipe_api.PROPERTY_SENTINEL), environ))
 
   return callable_obj(*props, **additional_args)
 
 
-def invoke_with_properties(callable_obj, all_props, environ, prop_defs,
-                           **additional_args):
+def invoke_with_properties(
+    callable_obj: Callable[..., Any],
+    all_props: Mapping[str, Any],
+    environ: Mapping[str, str],
+    prop_defs: Mapping[str, recipe_api.BoundProperty],
+    **additional_args: Any,
+) -> Any:
   """
   Invokes callable with filtered, type-checked properties.
 
@@ -89,3 +102,4 @@ def invoke_with_properties(callable_obj, all_props, environ, prop_defs,
     arg_names = inspect.getfullargspec(callable_obj).args
   return _invoke_with_properties(callable_obj, all_props, environ, prop_defs,
                                  arg_names, **additional_args)
+

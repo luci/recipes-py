@@ -4,8 +4,9 @@
 
 from __future__ import annotations
 
-from itertools import chain
-from collections import defaultdict
+import collections
+from collections.abc import ItemsView, Mapping, Sequence
+import itertools
 
 
 class FakeEnviron:
@@ -21,40 +22,46 @@ class FakeEnviron:
 
   The 'formatted' result can be obtained by looking at .data.
   """
-  def __init__(self):
-    self.data = {}
+  def __init__(self) -> None:
+    self.data: dict[str, str | None] = {}
 
-  def __getitem__(self, key):
+  def __getitem__(self, key: str) -> str:
     return '<%s>' % key
 
-  def get(self, key, default=None):
+  def get(self, key: str, default: str | None = None) -> str:
     return self[key]
 
-  def keys(self):
+  def keys(self) -> list[str]:
     return list(self.data)
 
-  def items(self):
+  def items(self) -> ItemsView[str, str | None]:
     return self.data.items()
 
-  def pop(self, key, default=None):
+  def pop(self, key: str, default: str | None = None) -> str | None:
     result = self.data.get(key, default)
     self.data[key] = None
     return result
 
-  def __delitem__(self, key):
+  def __delitem__(self, key: str) -> None:
     self.data[key] = None
 
-  def __contains__(self, key):
+  def __contains__(self, key: str) -> bool:
     return True
 
-  def __setitem__(self, key, value):
+  def __setitem__(self, key: str, value: str | None) -> None:
     self.data[key] = value
 
-  def copy(self):
+  def copy(self) -> FakeEnviron:
     return self
 
 
-def merge_envs(original, overrides, prefixes, suffixes, pathsep):
+def merge_envs(
+    original: Mapping[str, str] | FakeEnviron,
+    overrides: Mapping[str, str | None],
+    prefixes: Mapping[str, Sequence[str]],
+    suffixes: Mapping[str, Sequence[str]],
+    pathsep: str,
+) -> tuple[dict[str, str | None], set[str]]:
   """Merges two environments.
 
   Returns a new environment dict with entries from `overrides` overwriting
@@ -83,13 +90,13 @@ def merge_envs(original, overrides, prefixes, suffixes, pathsep):
   Returns (merged_env : Dict[str, str], removed_keys : Set[str])
   """
   result = dict(original.items())
-  removed = set()
+  removed: set[str] = set()
 
   if not any((prefixes, suffixes, overrides)):
     return result, removed
 
   subst = (original if isinstance(original, FakeEnviron)
-           else defaultdict(lambda: '', **original))
+           else collections.defaultdict(lambda: '', **original))
 
   merged = set()
   for k in set(suffixes).union(prefixes):
@@ -113,7 +120,7 @@ def merge_envs(original, overrides, prefixes, suffixes, pathsep):
       val = original.get(k, '')
     if val:
       pfxs += (val,)
-    result[k] = pathsep.join(str(v) for v in chain(pfxs, sfxs))
+    result[k] = pathsep.join(str(v) for v in itertools.chain(pfxs, sfxs))
 
   for k, v in overrides.items():
     if k in merged:

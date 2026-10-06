@@ -15,33 +15,34 @@ Access this via test_env.RecipeEngineUnitTest.FakeRecipeDeps().
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 import contextlib
 import errno
-from io import StringIO
+import io
 import json
 import os
 import shutil
 import subprocess
 import sys
 import textwrap
-from typing import ContextManager, Generator
+from typing import Any
 
 import attr
-
 from google.protobuf import json_format as jsonpb
 
-from PB.recipe_engine.recipes_cfg import RepoSpec
-from recipe_engine import __path__ as RECIPE_ENGINE_PATH
-from recipe_engine.internal.fetch import GitBackend, CommitMetadata
-from recipe_engine.internal.simple_cfg import RECIPES_CFG_LOCATION_REL
-from recipe_engine.internal.test.test_util import filesystem_safe
+from PB.recipe_engine import recipes_cfg as recipes_cfg_pb
 
-ROOT_DIR = os.path.dirname(RECIPE_ENGINE_PATH[0])
+import recipe_engine
+from recipe_engine.internal import fetch
+from recipe_engine.internal import simple_cfg
+from recipe_engine.internal.test import test_util
+
+ROOT_DIR = os.path.dirname(recipe_engine.__path__[0])
 DEVNULL = open(os.devnull, 'w')
 REAL_STDERR = sys.stderr  # capture stderr before tests potentially mess with it
 
 
-def _get_suite(buf, default, indent='  '):
+def _get_suite(buf: io.StringIO, default: str, indent: str = '  ') -> str:
   """This is a helper function to extract a python code suite from a StringIO
   object.
 
@@ -73,12 +74,12 @@ class FakeRecipeRepo:
   path: str = attr.ib()
 
   # The GitBackend for this FakeRecipeRepo.
-  backend: GitBackend = attr.ib(default=attr.Factory(
-      lambda self: GitBackend(self.path, None),
+  backend: fetch.GitBackend = attr.ib(default=attr.Factory(
+      lambda self: fetch.GitBackend(self.path, None),
       takes_self=True))
 
   @contextlib.contextmanager
-  def edit_recipes_cfg_pb2(self) -> Generator[RepoSpec]:
+  def edit_recipes_cfg_pb2(self) -> Iterator[recipes_cfg_pb.RepoSpec]:
     """Context manager for read/modify/write'ing the recipes.cfg file in this
     repo.
 
@@ -87,26 +88,26 @@ class FakeRecipeRepo:
         with repo.edit_recipes_cfg_pb2() as pb:
           pb.deps['some_repo'].revision = 'abcdefg'
 
-    Yields a recipes_cfg_pb2.RepoSpec object decoded from the current state of
+    Yields a recipes_cfg_pb.RepoSpec object decoded from the current state of
     the recipes.cfg file. Any modifications done to this object will be recorded
     back to disk.
     """
     spec = self.recipes_cfg_pb2
     yield spec
-    cfg_path = os.path.join(self.path, RECIPES_CFG_LOCATION_REL)
+    cfg_path = os.path.join(self.path, simple_cfg.RECIPES_CFG_LOCATION_REL)
     with open(cfg_path, 'w') as fil:
       fil.write(jsonpb.MessageToJson(spec, preserving_proto_field_name=True))
 
   @property
-  def recipes_cfg_pb2(self):
-    """Returns the current recipes_cfg_pb2.RepoSpec decoded from the recipes.cfg
+  def recipes_cfg_pb2(self) -> recipes_cfg_pb.RepoSpec:
+    """Returns the current recipes_cfg_pb.RepoSpec decoded from the recipes.cfg
     file in this repo."""
-    cfg_path = os.path.join(self.path, RECIPES_CFG_LOCATION_REL)
+    cfg_path = os.path.join(self.path, simple_cfg.RECIPES_CFG_LOCATION_REL)
     with open(cfg_path, 'r') as fil:
-      return jsonpb.Parse(fil.read(), RepoSpec())
+      return jsonpb.Parse(fil.read(), recipes_cfg_pb.RepoSpec())
 
   @contextlib.contextmanager
-  def write_file(self, path):
+  def write_file(self, path: str) -> Iterator[io.StringIO]:
     """Context manager for writing a file inside the repo.
 
     Any missing directories will be automatically created.
@@ -133,12 +134,12 @@ class FakeRecipeRepo:
       if ex.errno != errno.EEXIST:
         raise
 
-    buf = StringIO()
+    buf = io.StringIO()
     yield buf
     with open(full_path, 'w') as fil:
       fil.write(textwrap.dedent(buf.getvalue()))
 
-  def read_file(self, path):
+  def read_file(self, path: str) -> str | None:
     """Reads a file inside the repo.
 
     Args:
@@ -154,7 +155,7 @@ class FakeRecipeRepo:
     except:  # pylint: disable=bare-except
       return None
 
-  def exists(self, path):
+  def exists(self, path: str) -> bool:
     """Checks to see if a path exists in the repo.
 
     Args:
@@ -164,7 +165,7 @@ class FakeRecipeRepo:
     """
     return os.path.exists(os.path.join(self.path, path))
 
-  def is_dir(self, path):
+  def is_dir(self, path: str) -> bool:
     """Checks to see if a path is a directory in the repo.
 
     Args:
@@ -174,7 +175,7 @@ class FakeRecipeRepo:
     """
     return os.path.isdir(os.path.join(self.path, path))
 
-  def is_file(self, path):
+  def is_file(self, path: str) -> bool:
     """Checks to see if a path is a file in the repo.
 
     Args:
@@ -222,31 +223,34 @@ class FakeRecipeRepo:
     final result (i.e. the RunSteps function returned None without running
     steps).
     """
-    base_path = attr.ib()
+    base_path: str = attr.ib()
 
-    imports = attr.ib(factory=list)
-    RunSteps = attr.ib(factory=StringIO)
-    RunSteps_args = attr.ib(factory=lambda: ['api'])
-    GenTests = attr.ib(factory=StringIO)
-    DEPS = attr.ib(factory=lambda: ['recipe_engine/step'])
-    PROPERTIES = attr.ib(default='{}')
-    ENV_PROPERTIES = attr.ib(default='None')
-    expectation = attr.ib(factory=lambda: {
+    imports: list[str] = attr.ib(factory=list)
+    RunSteps: io.StringIO = attr.ib(factory=io.StringIO)
+    RunSteps_args: list[str] = attr.ib(factory=lambda: ['api'])
+    GenTests: io.StringIO = attr.ib(factory=io.StringIO)
+    DEPS: list[str] | dict[str, str] = attr.ib(
+        factory=lambda: ['recipe_engine/step'])
+    PROPERTIES: str = attr.ib(default='{}')
+    ENV_PROPERTIES: str = attr.ib(default='None')
+    expectation: dict[str, Any] = attr.ib(factory=lambda: {
       'basic': [{'name': '$result'}],
     })
 
     @property
-    def path(self):
+    def path(self) -> str:
       """Returns the repo-relative path to the recipe file."""
       return self.base_path + '.py'
 
     @property
-    def expect_path(self):
+    def expect_path(self) -> str:
       """Returns the repo-relative path to the recipe's expectation dir."""
       return self.base_path + '.expected'
 
   @contextlib.contextmanager
-  def write_recipe(self, name_or_module, name=None):
+  def write_recipe(
+      self, name_or_module: str, name: str | None = None
+  ) -> Iterator[WriteableRecipe]:
     """Context manager for writing a recipe to the disk in this testing repo.
 
     Overwrites any existing recipe. This can be called like:
@@ -315,7 +319,7 @@ class FakeRecipeRepo:
               recipe.GenTests, "yield api.test('basic')")))
 
     for test_name, expectation in recipe.expectation.items():
-      test_name = filesystem_safe(test_name)
+      test_name = test_util.filesystem_safe(test_name)
       expect_path = os.path.join(base_path + '.expected', test_name + '.json')
       with self.write_file(expect_path) as buf:
         json.dump(expectation, buf, indent=2)
@@ -353,21 +357,22 @@ class FakeRecipeRepo:
     The DISABLE_STRICT_COVERAGE maps directly to the same-named option in
     `__init__.py`.
     """
-    path = attr.ib()  # base path of the module folder
+    path: str = attr.ib()  # base path of the module folder
 
-    api = attr.ib(factory=StringIO)
-    test_api = attr.ib(factory=StringIO)
-    config = attr.ib(factory=StringIO)
-    imports = attr.ib(factory=list)
-    DEPS = attr.ib(factory=lambda: ['recipe_engine/step'])
-    PROPERTIES = attr.ib(default='{}')
-    GLOBAL_PROPERTIES = attr.ib(default='None')
-    ENV_PROPERTIES = attr.ib(default='None')
-    WARNINGS = attr.ib(factory=list)
-    DISABLE_STRICT_COVERAGE = attr.ib(default=False)
+    api: io.StringIO = attr.ib(factory=io.StringIO)
+    test_api: io.StringIO = attr.ib(factory=io.StringIO)
+    config: io.StringIO = attr.ib(factory=io.StringIO)
+    imports: list[str] = attr.ib(factory=list)
+    DEPS: list[str] | dict[str, str] = attr.ib(
+        factory=lambda: ['recipe_engine/step'])
+    PROPERTIES: str = attr.ib(default='{}')
+    GLOBAL_PROPERTIES: str = attr.ib(default='None')
+    ENV_PROPERTIES: str = attr.ib(default='None')
+    WARNINGS: list[str] = attr.ib(factory=list)
+    DISABLE_STRICT_COVERAGE: bool = attr.ib(default=False)
 
   @contextlib.contextmanager
-  def write_module(self, mod_name):
+  def write_module(self, mod_name: str) -> Iterator[WriteableModule]:
     """Context manager for writing a recipe module to the disk in this testing
     repo.
 
@@ -465,7 +470,7 @@ class FakeRecipeRepo:
             config_body=config_body,
         ))
 
-  def add_dep(self, *depnames):
+  def add_dep(self, *depnames: str) -> None:
     """Adds new repo-level dependencies to this repo.
 
     The recipes_cfg_pb2 file will be updated to contain all the new entries;
@@ -483,7 +488,7 @@ class FakeRecipeRepo:
         dep_entry.branch = 'refs/heads/main'
         dep_entry.revision = dep_repo.backend.commit_metadata('HEAD').revision
 
-  def recipes_py(self, *args, **kwargs):
+  def recipes_py(self, *args: str, **kwargs: Any) -> tuple[str, int]:
     """Runs `recipes.py` in this repo with the given args, just like a user
     might run it.
 
@@ -510,13 +515,13 @@ class FakeRecipeRepo:
     output, _ = proc.communicate()
     return output, proc.returncode
 
-  class TestCommitMetadata(CommitMetadata):
+  class TestCommitMetadata(fetch.CommitMetadata):
     """Commit metadata for a git commit.
 
     Identical to `fetch.CommitMetadata`, except that it has a helper function
     to make writing autoroller tests less tedious.
     """
-    def as_roll_info(self):
+    def as_roll_info(self) -> dict[str, Any]:
       """Returns a dict of author_email, message_lines and revision which
       is JSON serializable.
 
@@ -528,9 +533,12 @@ class FakeRecipeRepo:
         'revision': self.revision,
       }
 
-  def commit(self, msg,
-             author_name='Phinley Pfeiffer',
-             author_email='ph.pf@example.com'):
+  def commit(
+      self,
+      msg: str,
+      author_name: str = 'Phinley Pfeiffer',
+      author_email: str = 'ph.pf@example.com',
+  ) -> TestCommitMetadata:
     """Adds all files in the repo, then commits it with the given message.
 
     Returns a TestCommitMetadata object describing the commit we just created.
@@ -579,12 +587,12 @@ class FakeRecipeDeps:
   # available everywhere in the test.
   ambient_toplevel_code: list[str] = attr.ib(factory=list)
 
-  def _ambient_toplevel_code_dump(self):
+  def _ambient_toplevel_code_dump(self) -> str:
     return '\n'.join(map(textwrap.dedent, self.ambient_toplevel_code))
 
-  ENGINE_REVISION = None
+  ENGINE_REVISION: str | None = None
   @classmethod
-  def _get_engine_revision(cls):
+  def _get_engine_revision(cls) -> str:
     if not cls.ENGINE_REVISION:
       if subprocess.call(['git', 'diff-index', '--quiet', 'HEAD', '--']):
         print('*' * 6, file=REAL_STDERR)
@@ -602,7 +610,7 @@ class FakeRecipeDeps:
           ['git', 'rev-parse', 'HEAD'], text=True).strip()
     return cls.ENGINE_REVISION
 
-  def _create_repo(self, name, path):
+  def _create_repo(self, name: str, path: str) -> bytes:
     """Creates a recipe repo with the given name at the given path.
 
     This generates an `infra/config/recipes.cfg` with a file:// dependency on
@@ -616,7 +624,7 @@ class FakeRecipeDeps:
     os.makedirs(path)
     subprocess.check_call(
         ['git', 'init', '-b', 'main'], cwd=path, stdout=DEVNULL)
-    cfg_path = os.path.join(path, RECIPES_CFG_LOCATION_REL)
+    cfg_path = os.path.join(path, simple_cfg.RECIPES_CFG_LOCATION_REL)
     os.makedirs(os.path.dirname(cfg_path))
     with open(cfg_path, 'w') as fil:
       json.dump(
@@ -644,7 +652,7 @@ class FakeRecipeDeps:
     return subprocess.check_output(
       ['git', 'rev-parse', 'HEAD'], cwd=path).strip()
 
-  def __attrs_post_init__(self):
+  def __attrs_post_init__(self) -> None:
     """Makes a new RecipeDeps temp folder on disk with a single (main) repo
     called 'main' which has no dependencies."""
     self._create_repo('main', os.path.join(self._root, 'main'))
@@ -655,7 +663,7 @@ class FakeRecipeDeps:
     """
     return os.path.join(self.main_repo.path, '.recipe_deps')
 
-  def add_repo(self, name: str, detached=False) -> FakeRecipeRepo:
+  def add_repo(self, name: str, detached: bool = False) -> FakeRecipeRepo:
     """Adds a new repo to the RecipeDeps.
 
     This is created in `{FakeRecipeDeps.recipe_deps_path}/{name}`.
@@ -677,3 +685,4 @@ class FakeRecipeDeps:
   def main_repo(self) -> FakeRecipeRepo:
     """Returns the main FakeRecipeRepo for this FakeRecipeDeps."""
     return self.repos['main']
+

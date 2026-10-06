@@ -21,16 +21,23 @@ don't exist on the real objects (i.e. "path helpers" or things of that nature).
 
 from __future__ import annotations
 
-import sys
+from collections.abc import Mapping, Sequence
 import os
+import sys
 
-from recipe_engine.internal.recipe_deps import parse_deps_spec
+from recipe_engine.internal import recipe_deps
+
+DepsSpec = Sequence[str] | Mapping[str, str]
 
 
 class MockRecipeDeps:
   """A mock version of recipe_deps.RecipeDeps."""
 
-  def __init__(self, modules_to_deps=None, recipes_to_deps=None):
+  def __init__(
+      self,
+      modules_to_deps: Mapping[str, DepsSpec] | None = None,
+      recipes_to_deps: Mapping[str, DepsSpec] | None = None,
+  ) -> None:
     """Creates a MockRecipeDeps with a single 'main' repo containing the modules
     and recipes specified by modules_to_deps and recipes_to_deps.
 
@@ -44,10 +51,16 @@ class MockRecipeDeps:
     """
     self.main_repo_id = 'main'
     self.main_repo = MockRecipeRepo(
-        self, 'main', modules_to_deps or {}, recipes_to_deps or {})
+        self, 'main', modules_to_deps or {}, recipes_to_deps or {}
+    )
     self.repos = {'main': self.main_repo}
 
-  def add_repo(self, name, modules_to_deps=None, recipes_to_deps=None):
+  def add_repo(
+      self,
+      name: str,
+      modules_to_deps: Mapping[str, DepsSpec] | None = None,
+      recipes_to_deps: Mapping[str, DepsSpec] | None = None,
+  ) -> None:
     """Creates and adds an additional repo to the MockRecipeDeps.
 
     This will be available in `.repos`, and can be referred to in DEPS entries
@@ -66,13 +79,20 @@ class MockRecipeDeps:
         self,
         name,
         modules_to_deps or {},
-        recipes_to_deps or {}
+        recipes_to_deps or {},
     )
+
 
 class MockRecipeRepo:
   """A mock version of recipe_deps.RecipeRepo."""
 
-  def __init__(self, rdeps, name, modules_to_deps, recipes_to_deps):
+  def __init__(
+      self,
+      rdeps: MockRecipeDeps,
+      name: str,
+      modules_to_deps: Mapping[str, DepsSpec],
+      recipes_to_deps: Mapping[str, DepsSpec],
+  ) -> None:
     """Creates a MockRecipeRepo with the name `name` containing the
     modules and recipes specified by modules_to_deps and recipes_to_deps.
 
@@ -94,18 +114,19 @@ class MockRecipeRepo:
     else:
       self.path = '/%s_ROOT/' % name.upper()
     self.modules = {
-      module_name: MockRecipeModule(self, module_name, DEPS)
-      for module_name, DEPS in modules_to_deps.items()
+        module_name: MockRecipeModule(self, module_name, DEPS)
+        for module_name, DEPS in modules_to_deps.items()
     }
     self.recipes = {
-      recipe_name: MockRecipe(self, recipe_name, DEPS)
-      for recipe_name, DEPS in recipes_to_deps.items()
+        recipe_name: MockRecipe(self, recipe_name, DEPS)
+        for recipe_name, DEPS in recipes_to_deps.items()
     }
+
 
 class MockRecipeModule:
   """A mock version of recipe_deps.RecipeModule."""
 
-  def __init__(self, repo, name, DEPS):
+  def __init__(self, repo: MockRecipeRepo, name: str, DEPS: DepsSpec) -> None:
     """Creates a MockRecipeModule with the given name and DEPS spec.
 
     Args:
@@ -118,12 +139,15 @@ class MockRecipeModule:
     self.name = '%s/%s' % (repo.name, name)
     self.path = os.path.join(repo.path, 'recipe_modules', name)
     # pylint: disable=invalid-name
-    self.normalized_DEPS = parse_deps_spec(repo.name, DEPS, source=__file__)
+    self.normalized_DEPS = recipe_deps.parse_deps_spec(
+        repo.name, DEPS, source=__file__
+    )
+
 
 class MockRecipe:
   """A mock version of recipe_deps.Recipe."""
 
-  def __init__(self, repo, name, DEPS):
+  def __init__(self, repo: MockRecipeRepo, name: str, DEPS: DepsSpec) -> None:
     """Creates a MockRecipe with the given name and DEPS spec.
 
     Args:
@@ -137,4 +161,6 @@ class MockRecipe:
     self.path = os.path.join(repo.path, 'recipes', name) + '.py'
     self.resources_dir = os.path.join(repo.path, 'recipes', name) + '.resources'
     # pylint: disable=invalid-name
-    self.normalized_DEPS = parse_deps_spec(repo.name, DEPS, source=__file__)
+    self.normalized_DEPS = recipe_deps.parse_deps_spec(
+        repo.name, DEPS, source=__file__
+    )

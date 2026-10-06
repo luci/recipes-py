@@ -19,7 +19,7 @@ LOG_URL = BASE_URL+'/+log/main/client/libs?format=JSON&n=1'
 TAR_URL = BASE_URL+'/+archive/%s/client/libs.tar.gz'
 
 
-def main():
+def main() -> None:
   """Automatically updates the client libraries in this directory."""
   base_dir = os.path.abspath(os.path.dirname(__file__))
 

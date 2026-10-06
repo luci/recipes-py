@@ -5,20 +5,18 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 import contextlib
-import copy
 import os
-import shutil
-import subprocess
 import sys
 
 import test_env
 
-from recipe_engine.internal.simple_cfg import RECIPES_CFG_LOCATION_REL
+from recipe_engine.internal import simple_cfg
 
 
 @contextlib.contextmanager
-def fake_git():
+def fake_git() -> Iterator[None]:
   fake_git_dir = os.path.join(test_env.ROOT_DIR, 'unittests', 'fakegit')
   cur_path = os.environ['PATH']
   try:
@@ -29,7 +27,7 @@ def fake_git():
 
 
 class TestOverride(test_env.RecipeEngineUnitTest):
-  def test_simple(self):
+  def test_simple(self) -> None:
     deps = self.FakeRecipeDeps()
     upstream = deps.add_repo('upstream')
 
@@ -63,13 +61,14 @@ class TestOverride(test_env.RecipeEngineUnitTest):
 
     # Then using an override pointing to a repo without up_mod should fail.
     output, retcode = deps.main_repo.recipes_py(
-      '-O', 'upstream='+other_upstream.path, 'test', 'train')
+        '-O', 'upstream=' + other_upstream.path, 'test', 'train'
+    )
     self.assertEqual(retcode, 1)
     self.assertIn(
         ('"No module named \'up_mod\' in repo \'other_upstream\'."'),
         output)
 
-  def test_bundle(self):
+  def test_bundle(self) -> None:
     deps = self.FakeRecipeDeps()
     upstream = deps.add_repo('upstream')
 
@@ -79,7 +78,8 @@ class TestOverride(test_env.RecipeEngineUnitTest):
       output, retcode = deps.main_repo.recipes_py(
           # Provide --package to bypass all git calls in recipes.py
           '--package',
-          os.path.join(deps.main_repo.path, RECIPES_CFG_LOCATION_REL),
+          os.path.join(
+              deps.main_repo.path, simple_cfg.RECIPES_CFG_LOCATION_REL),
           '-O', 'upstream='+upstream.path,
           'test', 'train'
       )
@@ -88,13 +88,22 @@ class TestOverride(test_env.RecipeEngineUnitTest):
 
       output, retcode = deps.main_repo.recipes_py(
           '--package',
-          os.path.join(deps.main_repo.path,
-                       RECIPES_CFG_LOCATION_REL), '--proto-override',
-          os.path.join(test_env.ROOT_DIR, '.recipe_deps',
-                       '_pb%s' % sys.version[0]), '-O',
-          'upstream=' + upstream.path, '-O',
-          'recipe_engine=' + test_env.ROOT_DIR, 'test', 'train')
+          os.path.join(
+              deps.main_repo.path, simple_cfg.RECIPES_CFG_LOCATION_REL
+          ),
+          '--proto-override',
+          os.path.join(
+              test_env.ROOT_DIR, '.recipe_deps', '_pb%s' % sys.version[0]
+          ),
+          '-O',
+          'upstream=' + upstream.path,
+          '-O',
+          'recipe_engine=' + test_env.ROOT_DIR,
+          'test',
+          'train',
+      )
       self.assertEqual(retcode, 0, output)
+
 
 if __name__ == '__main__':
   sys.exit(test_env.main())

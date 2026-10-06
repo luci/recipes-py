@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 
 class RecipeUsageError(Exception):
   """Base exception class for all errors raised due to some misuse of the
@@ -68,7 +70,7 @@ class CrashEngine(BaseException):
 
   This exception should only be handled by the recipe engine.
   """
-  def __init__(self, reason):
+  def __init__(self, reason: Any) -> None:
     super().__init__(reason)
     self.reason = reason
 
@@ -85,7 +87,7 @@ class CancelledBuild(BaseException):
   This exception should only be handled by the recipe engine.
   """
 
-  def __init__(self, reason: str | None = None):
+  def __init__(self, reason: str | None = None) -> None:
     prefix = 'The build was cancelled'
     final_reason = f'{prefix}: {reason}\n' if reason else f'{prefix}\n'
     super().__init__(final_reason)

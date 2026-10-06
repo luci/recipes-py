@@ -7,50 +7,58 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterator
 import ast
 import difflib
+from lib2to3 import refactor
 import linecache
 import os
+from typing import Any
 import unittest
 import warnings
 
-from lib2to3 import refactor
-
-from libfuturize.fixes import (lib2to3_fix_names_stage1,
-                               libfuturize_fix_names_stage1)
-
+from libfuturize import fixes
 import test_env
 
 
-def _py_files():
+def _py_files() -> Iterator[str]:
   for (dirpath, dirnames, filenames) in os.walk(test_env.ROOT_DIR):
     try:
       dirnames.remove('.recipe_deps')
     except ValueError:
       pass
     yield from (
-      os.path.join(dirpath, n)
-      for n in filenames
-      if n.endswith('.py')
+        os.path.join(dirpath, n)
+        for n in filenames
+        if n.endswith('.py')
     )
 
+
 class _2to3TestTool(refactor.RefactoringTool):
-  def __init__(self, test_fail, *args, **kwargs):
+  def __init__(
+      self, test_fail: Callable[[str], None], *args: Any, **kwargs: Any
+  ) -> None:
     self.test_fail = test_fail
     super().__init__(*args, **kwargs)
 
-
   @staticmethod
-  def diff_texts(a, b, filename):
+  def diff_texts(a: str, b: str, filename: str) -> Iterator[str]:
     """Return a unified diff of two strings."""
-    a = a.splitlines()
-    b = b.splitlines()
+    a_lines = a.splitlines()
+    b_lines = b.splitlines()
     return difflib.unified_diff(
-        a, b, filename, filename,
-        "(original)", "(refactored)",
-        lineterm="")
+        a_lines,
+        b_lines,
+        filename,
+        filename,
+        "(original)",
+        "(refactored)",
+        lineterm="",
+    )
 
-  def print_output(self, old_text, new_text, filename, equal):
+  def print_output(
+      self, old_text: str, new_text: str, filename: str, equal: bool
+  ) -> None:
     if equal:
       return
     self.test_fail('\n' + '\n'.join(self.diff_texts(
@@ -58,7 +66,7 @@ class _2to3TestTool(refactor.RefactoringTool):
 
 
 class Py3Syntax(unittest.TestCase):
-  def test_python3_syntax(self):
+  def test_python3_syntax(self) -> None:
     for fname in _py_files():
       with self.subTest(fname=fname):
         with open(fname) as sourcef:
@@ -75,8 +83,10 @@ class Py3Syntax(unittest.TestCase):
               ) for msg in warn_msgs
           ))
 
-  def test_futurize_stage1(self):
-    avail_fixes = lib2to3_fix_names_stage1 | libfuturize_fix_names_stage1
+  def test_futurize_stage1(self) -> None:
+    avail_fixes = (
+        fixes.lib2to3_fix_names_stage1 | fixes.libfuturize_fix_names_stage1
+    )
     tool = _2to3TestTool(self.fail, avail_fixes)
 
     for fname in _py_files():

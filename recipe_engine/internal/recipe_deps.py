@@ -36,51 +36,41 @@ All DEPS evaluation is also handled in this file.
 from __future__ import annotations
 
 import bdb
+from collections.abc import Iterator, Mapping, Sequence
 import dataclasses
+import functools
 import importlib
 import inspect
 import logging
 import os
 import re
 import sys
+import types
 import typing
-
-from collections.abc import Mapping, Sequence, Iterator
-from functools import cached_property
-from typing import TYPE_CHECKING
-
-from future.utils import raise_
+from typing import Any, TYPE_CHECKING
 
 import attr
-
-from attr.validators import optional
-
+import future.utils
 from google.protobuf import json_format as jsonpb
-from google.protobuf.message import Message
+import google.protobuf.message
 
-from ..config_types import Path, ResolvedBasePath
-from ..engine_types import freeze, FrozenDict
-from ..recipe_api import UnresolvedRequirement, RecipeScriptApi, BoundProperty
-from ..recipe_api import RecipeApi
-from ..recipe_test_api import RecipeTestApi, BaseTestData, DisabledTestData
+from .. import config_types
+from .. import engine_types
+from .. import recipe_api
+from .. import recipe_test_api
 
+from . import attr_util
+from . import dev_support
+from . import exceptions
 from . import fetch
 from . import proto_support
-from . import dev_support
-
-from .attr_util import attr_type, attr_value_is, attr_superclass, attr_dict_type
-from .exceptions import CyclicalDependencyError, UnknownRecipe, UnknownRepoName
-from .exceptions import RecipeLoadError, RecipeSyntaxError, MalformedRecipeError
-from .exceptions import MalformedModuleError, UnknownRecipeModule
-from .simple_cfg import SimpleRecipesCfg, RECIPES_CFG_LOCATION_REL
-from .test.test_util import filesystem_safe
+from . import simple_cfg as simple_cfg_mod
+from .test import test_util
 from .warn import definition as warn_def
-from .warn.definition import (parse_warning_definitions,
-                              RECIPE_WARNING_DEFINITIONS_REL)
 
 if TYPE_CHECKING:
-  from .engine import RecipeEngine
-  from .test.test_util import RecipeTestData
+  from .. import config
+  from . import engine as engine_mod
 
 
 LOG = logging.getLogger(__name__)
@@ -99,13 +89,13 @@ class RecipeDeps:
   """
 
   # The mapping of repo_name -> RecipeRepo for all known repos.
-  repos: dict[str, RecipeRepo] = attr.ib(converter=freeze)
+  repos: dict[str, RecipeRepo] = attr.ib(converter=engine_types.freeze)
   @repos.validator
-  def check(self, attrib, value):
+  def check(self, attrib: Any, value: Any) -> None:
     # This is a separate function (as opposed to the `validator=` kwarg),
     # to avoid need for forward declaration of `RecipeRepo`.
-    attr_type(FrozenDict)(self, attrib, value)
-    attr_dict_type(str, RecipeRepo)(self, attrib, value)
+    attr_util.attr_type(engine_types.FrozenDict)(self, attrib, value)
+    attr_util.attr_dict_type(str, RecipeRepo)(self, attrib, value)
 
   # The repo_name for the 'entry point' repo for the current process. All
   # recipe names on the command line will be resolved relative to this repo, and
@@ -113,11 +103,11 @@ class RecipeDeps:
   # RecipeDeps.
   #
   # This repo is guaranteed to be a member of `repos`.
-  main_repo_id: str = attr.ib(validator=attr_type(str))
+  main_repo_id: str = attr.ib(validator=attr_util.attr_type(str))
 
-  def __attrs_post_init__(self):
-    def _raise_unknown_rname(repo_name):
-      raise UnknownRepoName(
+  def __attrs_post_init__(self) -> None:
+    def _raise_unknown_rname(repo_name: str) -> None:
+      raise exceptions.UnknownRepoName(
         'No repo with repo_name {repo_name!r}. Add it to recipes.cfg?'.
         format(repo_name=repo_name))
     self.repos.on_missing = _raise_unknown_rname
@@ -127,22 +117,22 @@ class RecipeDeps:
     """Returns the RecipeRepo corresponding to the main repo name."""
     return self.repos[self.main_repo_id]
 
-  @cached_property
+  @functools.cached_property
   def recipe_deps_path(self) -> str:
     """Returns the location of the .recipe_deps directory."""
     return os.path.join(self.main_repo.recipes_root_path, '.recipe_deps')
 
-  @cached_property
+  @functools.cached_property
   def protos_path(self) -> str:
     """Returns the location of the .recipe_deps/_pb3 directory."""
     return os.path.join(self.recipe_deps_path, '_pb3')
 
-  @cached_property
+  @functools.cached_property
   def previous_test_failures_path(self) -> str:
     """Returns the location of the .previous_failures file."""
     return os.path.join(self.recipe_deps_path, '.previous_test_failures')
 
-  @cached_property
+  @functools.cached_property
   def warning_definitions(self) -> dict[str, warn_def.Definition]:
     """Returns warning definitions for all repos in this RecipeDeps.
 
@@ -178,8 +168,8 @@ class RecipeDeps:
 
     Returns a RecipeDeps.
     """
-    simple_cfg = SimpleRecipesCfg.from_json_file(
-      os.path.join(main_repo_path, RECIPES_CFG_LOCATION_REL))
+    simple_cfg = simple_cfg_mod.SimpleRecipesCfg.from_json_file(
+      os.path.join(main_repo_path, simple_cfg_mod.RECIPES_CFG_LOCATION_REL))
 
     extra = set(overrides) - set(simple_cfg.deps)
     if extra:
@@ -193,8 +183,8 @@ class RecipeDeps:
 
     # Check that our repo doesn't depend on itself.
     if ret.main_repo_id in simple_cfg.deps:
-      raise RecipeLoadError('recipes.cfg: cannot depend on self (repo %r)' % (
-        (ret.main_repo,)))
+      raise exceptions.RecipeLoadError(
+          'recipes.cfg: cannot depend on self (repo %r)' % ((ret.main_repo,)))
 
     repos = {}
     main_backend = None
@@ -232,19 +222,19 @@ class RecipeDeps:
       missing_deps = set(repos[repo_name].simple_cfg.deps)
       missing_deps.difference_update(simple_cfg.deps)
       if ret.main_repo_id in missing_deps:
-        raise RecipeLoadError(
+        raise exceptions.RecipeLoadError(
             'recipes.cfg: Dependency %r has circular dependency on %r' %
             (repo_name, ret.main_repo_id))
 
       if missing_deps:
-        raise RecipeLoadError(
+        raise exceptions.RecipeLoadError(
             'recipes.cfg: Repo %r depends on %r, which %s missing' %
             (repo_name, sorted(missing_deps),
              ('is' if len(missing_deps) == 1 else 'are')))
 
     # This makes `repos` unmodifiable. object.__setattr__ is needed to get
     # around attrs' frozen attributes.
-    repos = freeze(repos)
+    repos = engine_types.freeze(repos)
     repos.on_missing = ret.repos.on_missing
     object.__setattr__(ret, 'repos', repos)
 
@@ -282,67 +272,70 @@ class RecipeRepo:
   already been done).
   """
 
-  recipe_deps: RecipeDeps = attr.ib(validator=attr_type(RecipeDeps))
+  recipe_deps: RecipeDeps = attr.ib(validator=attr_util.attr_type(RecipeDeps))
 
   # Absolute path to the root of this repository.
   path: str = attr.ib(validator=[
-    attr_type(str),
-    attr_value_is('an absolute path', os.path.isabs),
+    attr_util.attr_type(str),
+    attr_util.attr_value_is('an absolute path', os.path.isabs),
   ])
 
   # The SimpleRecipesCfg for this repo.
-  simple_cfg: SimpleRecipesCfg = attr.ib(
-      validator=attr_type(SimpleRecipesCfg)
+  simple_cfg: simple_cfg_mod.SimpleRecipesCfg = attr.ib(
+      validator=attr_util.attr_type(simple_cfg_mod.SimpleRecipesCfg)
   )
 
   # Mapping of module name -> RecipeModule for all recipe modules in this repo.
-  modules: dict[str, RecipeModule] = attr.ib(converter=freeze)
+  modules: dict[str, RecipeModule] = attr.ib(converter=engine_types.freeze)
   @modules.validator
-  def check(self, attrib, value):
+  def check(self, attrib: Any, value: Any) -> None:
     # This is a separate function (as opposed to the `validator=` kwarg),
     # to avoid need for forward declaration of `RecipeModule`.
-    attr_type(FrozenDict)(self, attrib, value)
-    attr_dict_type(str, RecipeModule)(self, attrib, value)
+    attr_util.attr_type(engine_types.FrozenDict)(self, attrib, value)
+    attr_util.attr_dict_type(str, RecipeModule)(self, attrib, value)
 
   # Mapping of recipe name -> Recipe for all recipes in this repo.
-  recipes: dict[str, Recipe] = attr.ib(converter=freeze)
+  recipes: dict[str, Recipe] = attr.ib(converter=engine_types.freeze)
   @recipes.validator
-  def check(self, attrib, value):
+  def check(self, attrib: Any, value: Any) -> None:
     # This is a separate function (as opposed to the `validator=` kwarg),
     # to avoid need for forward declaration of `Recipe`.
-    attr_type(FrozenDict)(self, attrib, value)
-    attr_dict_type(str, Recipe)(self, attrib, value)
+    attr_util.attr_type(engine_types.FrozenDict)(self, attrib, value)
+    attr_util.attr_dict_type(str, Recipe)(self, attrib, value)
 
   # The fetch.Backend, or None (if this repo was overridden on the command
   # line), for this repo.
   backend: fetch.Backend | None = attr.ib(
-    validator=attr_type((type(None), fetch.Backend)))
+    validator=attr_util.attr_type((type(None), fetch.Backend)))
 
-  def __attrs_post_init__(self):
+  def __attrs_post_init__(self) -> None:
     suffix = ' in repo {name!r}.'.format(name=self.name)
-    def _raise_missing_module(module):
-      raise UnknownRecipeModule(
+    def _raise_missing_module(module: str) -> None:
+      raise exceptions.UnknownRecipeModule(
         'No module named {module!r}'.format(module=module) + suffix)
     self.modules.on_missing = _raise_missing_module
 
-    def _raise_missing_recipe(recipe):
-      raise UnknownRecipe(
+    def _raise_missing_recipe(recipe: str) -> None:
+      raise exceptions.UnknownRecipe(
         'No recipe named {recipe!r}'.format(recipe=recipe) + suffix)
     self.recipes.on_missing = _raise_missing_recipe
 
-  @cached_property
-  def recipes_cfg_pb2(self) -> Message:
+  @functools.cached_property
+  def recipes_cfg_pb2(self) -> google.protobuf.message.Message:
     """Read recipes.cfg as a recipes_cfg_pb2.RepoSpec proto message.
 
     If successful, the return value is cached.
     """
-    from PB.recipe_engine.recipes_cfg import RepoSpec
-    recipes_cfg = os.path.join(self.path, RECIPES_CFG_LOCATION_REL)
+    from PB.recipe_engine import recipes_cfg as recipes_cfg_pb
+    recipes_cfg = os.path.join(
+        self.path, simple_cfg_mod.RECIPES_CFG_LOCATION_REL)
     with open(recipes_cfg, 'rb') as cfg_file:
       return jsonpb.Parse(
-          cfg_file.read(), RepoSpec(), ignore_unknown_fields=True)
+          cfg_file.read(),
+          recipes_cfg_pb.RepoSpec(),
+          ignore_unknown_fields=True)
 
-  @cached_property
+  @functools.cached_property
   def recipes_root_path(self) -> str:
     """The absolute path to the directory containing the `recipes`,
     `recipe_modules`, etc. directories."""
@@ -350,25 +343,25 @@ class RecipeRepo:
     return os.path.normpath(
       os.path.join(self.path, self.simple_cfg.recipes_path))
 
-  @cached_property
+  @functools.cached_property
   def readme_path(self) -> str:
     """The absolute path for the 'README.recipes.md' file."""
     return os.path.join(self.recipes_root_path, 'README.recipes.md')
 
-  @cached_property
+  @functools.cached_property
   def warning_definitions(self) -> dict[str, warn_def.Definition]:
     """The warnings defined (a dict of warning name to warning.Definition proto
     message) in this repo. Empty dict if not defined.
     """
-    return parse_warning_definitions(os.path.join(
-      self.recipes_root_path, RECIPE_WARNING_DEFINITIONS_REL))
+    return warn_def.parse_warning_definitions(os.path.join(
+      self.recipes_root_path, warn_def.RECIPE_WARNING_DEFINITIONS_REL))
 
   @property
   def name(self) -> str:
     """Shorthand for `RecipeRepo.simple_cfg.repo_name`."""
     return self.simple_cfg.repo_name
 
-  @cached_property
+  @functools.cached_property
   def sloppy_coverage_patterns(self) -> frozenset[str]:
     """Returns a frozenset of patterns (fnmatch absolute paths) for files which
     are covered in this repo by `DISABLE_STRICT_COVERAGE=True`."""
@@ -378,12 +371,12 @@ class RecipeRepo:
         patterns.append(os.path.join(mod.path, '*.py'))
     return frozenset(patterns)
 
-  @cached_property
+  @functools.cached_property
   def recipes_dir(self) -> str:
     """Returns the absolute path to this repo's recipes directory."""
     return os.path.join(self.recipes_root_path, 'recipes')
 
-  @cached_property
+  @functools.cached_property
   def modules_dir(self) -> str:
     """Returns the absolute path to this repo's recipe modules directory."""
     return os.path.join(self.recipes_root_path, 'recipe_modules')
@@ -397,7 +390,7 @@ class RecipeRepo:
     """
 
     # This can be replaced by glob.glob(..., recursive=True) in Python 3.
-    def find_expectations(directory, pattern):
+    def find_expectations(directory: str, pattern: str) -> Iterator[str]:
       regex = re.compile(pattern)
       for path, dirs, files in os.walk(
           os.path.abspath(directory), topdown=True):
@@ -429,9 +422,13 @@ class RecipeRepo:
     return paths
 
   @classmethod
-  def create(cls, recipe_deps: RecipeDeps, path: str,
-             backend: fetch.Backend | None = None,
-             simple_cfg: SimpleRecipesCfg | None = None) -> RecipeRepo:
+  def create(
+      cls,
+      recipe_deps: RecipeDeps,
+      path: str,
+      backend: fetch.Backend | None = None,
+      simple_cfg: simple_cfg_mod.SimpleRecipesCfg | None = None,
+  ) -> RecipeRepo:
     """Creates a RecipeRepo.
 
     Args:
@@ -446,8 +443,8 @@ class RecipeRepo:
     Returns a RecipeRepo.
     """
     if not simple_cfg:
-      simple_cfg = SimpleRecipesCfg.from_json_file(
-        os.path.join(path, RECIPES_CFG_LOCATION_REL))
+      simple_cfg = simple_cfg_mod.SimpleRecipesCfg.from_json_file(
+        os.path.join(path, simple_cfg_mod.RECIPES_CFG_LOCATION_REL))
 
     # A bit hacky; Recipe and RecipeModule objects have a backreference to the
     # RecipeRepo, so we have to create it first.
@@ -490,10 +487,10 @@ class RecipeRepo:
 
     # This makes `modules` and `recipes` unmodifiable. object.__setattr__ is
     # needed to get around attrs' frozen attributes.
-    recipes = freeze(recipes)
+    recipes = engine_types.freeze(recipes)
     recipes.on_missing = ret.recipes.on_missing
     object.__setattr__(ret, 'recipes', recipes)
-    modules = freeze(modules)
+    modules = engine_types.freeze(modules)
     modules.on_missing = ret.modules.on_missing
     object.__setattr__(ret, 'modules', modules)
 
@@ -502,45 +499,45 @@ class RecipeRepo:
 
 @attr.s(frozen=True)
 class RecipeModule:
-  repo: RecipeRepo = attr.ib(validator=attr_type(RecipeRepo))
-  name: str = attr.ib(validator=attr_type(str))
+  repo: RecipeRepo = attr.ib(validator=attr_util.attr_type(RecipeRepo))
+  name: str = attr.ib(validator=attr_util.attr_type(str))
 
   # Maps from all recipe names under this module to the Recipe object.
   #
   # Note: the names of these will be e.g. `examples\full`. Use the Recipe's
   # .name field to get the repo-importable name `module:examples\full`.
-  recipes: dict[str, Recipe] = attr.ib(converter=freeze)
+  recipes: dict[str, Recipe] = attr.ib(converter=engine_types.freeze)
   @recipes.validator
-  def check(self, attrib, value):
+  def check(self, attrib: Any, value: Any) -> None:
     # This is a separate function (as opposed to the `validator=` kwarg),
     # to avoid need for forward declaration of `Recipe`.
-    attr_type(FrozenDict)(self, attrib, value)
-    attr_dict_type(str, Recipe)(self, attrib, value)
+    attr_util.attr_type(engine_types.FrozenDict)(self, attrib, value)
+    attr_util.attr_dict_type(str, Recipe)(self, attrib, value)
 
-  def __attrs_post_init__(self):
-    def _raise_missing_recipe(recipe):
-      raise UnknownRecipe(
+  def __attrs_post_init__(self) -> None:
+    def _raise_missing_recipe(recipe: str) -> None:
+      raise exceptions.UnknownRecipe(
         'No such recipe {recipe!r} in module {module!r} in repo {repo!r}.'.
         format(recipe=recipe, module=self.name, repo=self.repo.name))
     self.recipes.on_missing = _raise_missing_recipe
 
-  @cached_property
+  @functools.cached_property
   def full_name(self) -> str:
     """The fully qualified name of the recipe module (e.g. `repo/module`)."""
     return '%s/%s' % (self.repo.name, self.name)
 
-  @cached_property
+  @functools.cached_property
   def path(self) -> str:
     """The absolute path to the directory for this recipe module."""
     return os.path.join(self.repo.modules_dir, self.name)
 
-  @cached_property
+  @functools.cached_property
   def relpath(self) -> str:
     """The path to the directory for this recipe module relative to the repo
     root."""
     return os.path.relpath(self.path, self.repo.path)
 
-  @cached_property
+  @functools.cached_property
   def normalized_DEPS(self) -> dict[str, tuple[str, str]]:
     """Returns a normalized form of the DEPS specification for this object.
 
@@ -554,13 +551,13 @@ class RecipeModule:
     DEPS = getattr(mod, 'DEPS', ())
     return parse_deps_spec(self.repo.name, DEPS, mod.__dict__, source=self.path)
 
-  @cached_property
+  @functools.cached_property
   def warnings(self) -> tuple[str, ...]:
     """Returns a tuple of warnings issued against this recipe module."""
     WARNINGS = getattr(self.do_import(), 'WARNINGS', ())
     return tuple(WARNINGS)
 
-  @cached_property
+  @functools.cached_property
   def _cumulative_import_warnings(self) -> tuple[tuple[str, RecipeModule], ...]:
     """Returns all import warnings as a tuple that this module and its
     dependent modules hit. Each element of the tuple is a tuple of
@@ -568,7 +565,7 @@ class RecipeModule:
     """
     return tuple(_collect_import_warnings(self))
 
-  def do_import(self):
+  def do_import(self) -> types.ModuleType:
     """Imports the raw recipe module (i.e. python module).
 
     Does NOT instantiate the module's RecipeApi or RecipeTestApi classes.
@@ -581,8 +578,13 @@ class RecipeModule:
     return importlib.import_module(
       'RECIPE_MODULES.%s.%s' % (self.repo.name, self.name))
 
-  @cached_property
-  def PROPERTIES(self) -> Type[Message] | dict:
+  @functools.cached_property
+  def PROPERTIES(
+      self,
+  ) -> (
+      type[google.protobuf.message.Message]
+      | dict[str, recipe_api.BoundProperty]
+  ):
     """Will return either a protobuf message, or an dictionary for config-style
     properties.
 
@@ -596,13 +598,13 @@ class RecipeModule:
     # Let each property object know about the property name.
     full_decl_name = f'{self.repo.name}::{self.name}'
     return {
-        prop_name: value.bind(prop_name, BoundProperty.MODULE_PROPERTY,
-                              full_decl_name)
+        prop_name: value.bind(
+            prop_name, recipe_api.BoundProperty.MODULE_PROPERTY, full_decl_name)
         for prop_name, value in properties_def.items()
     }
 
-  @cached_property
-  def TEST_API(self) -> Type[RecipeTestApi] | None:
+  @functools.cached_property
+  def TEST_API(self) -> type[recipe_test_api.RecipeTestApi]:
     """Returns this module's TestApi subclass, if this recipe module has one.
 
     This will prefer an explicitly exported TEST_API object in the module's
@@ -613,10 +615,10 @@ class RecipeModule:
 
     ret = getattr(imported_module, 'TEST_API', None)
     if ret:
-      if issubclass(ret, RecipeTestApi):
+      if issubclass(ret, recipe_test_api.RecipeTestApi):
         # This module explicitly exports TEST_API, return it.
         return ret
-      raise MalformedModuleError(
+      raise exceptions.MalformedModuleError(
           f'Module "{self.repo.name}/{self.name}" exports '
           'TEST_API which is not a subclass of RecipeTestApi.')
 
@@ -627,20 +629,20 @@ class RecipeModule:
         f'RECIPE_MODULES.{self.repo.name}.{self.name}.test_api')
 
     if not test_module:
-      return RecipeTestApi
+      return recipe_test_api.RecipeTestApi
 
     for v in test_module.__dict__.values():
       # If the recipe has literally imported the RecipeTestApi, we don't want
       # to consider that to be the real RecipeTestApi :)
-      if v is RecipeTestApi:
+      if v is recipe_test_api.RecipeTestApi:
         continue
-      if inspect.isclass(v) and issubclass(v, RecipeTestApi):
+      if inspect.isclass(v) and issubclass(v, recipe_test_api.RecipeTestApi):
         return v
 
-    return RecipeTestApi
+    return recipe_test_api.RecipeTestApi
 
-  @cached_property
-  def API(self) -> Type[RecipeApi]:
+  @functools.cached_property
+  def API(self) -> type[recipe_api.RecipeApi]:
     """Returns this module's RecipeApi subclass, which is required.
 
     This will prefer an explicitly exported API object in the module's
@@ -652,10 +654,10 @@ class RecipeModule:
     # Identify the RecipeApi subclass as this module's API.
     ret = getattr(self.do_import(), 'API', None)
     if ret:
-      if issubclass(ret, RecipeApi):
+      if issubclass(ret, recipe_api.RecipeApi):
         # This module explicitly explicitly exports API, return it.
         return ret
-      raise MalformedModuleError(
+      raise exceptions.MalformedModuleError(
           f'Module "{self.repo.name}/{self.name}" exports '
           'API which is not a subclass of RecipeApi.')
 
@@ -665,17 +667,17 @@ class RecipeModule:
 
     for v in api_module.__dict__.values():
       # skip RecipeApi class
-      if v is RecipeApi:
+      if v is recipe_api.RecipeApi:
         continue
 
-      if inspect.isclass(v) and issubclass(v, RecipeApi):
+      if inspect.isclass(v) and issubclass(v, recipe_api.RecipeApi):
         return v
 
-    raise MalformedModuleError(
+    raise exceptions.MalformedModuleError(
         f'Recipe module "{self.repo.name}/{self.name}" is missing API.')
 
-  @cached_property
-  def CONFIG_CTX(self):
+  @functools.cached_property
+  def CONFIG_CTX(self) -> config.ConfigContext | None:
     # The current config system relies on implicitly importing all the
     # *_config.py files... ugh.
     for fname in os.listdir(self.path):
@@ -684,11 +686,11 @@ class RecipeModule:
             f'RECIPE_MODULES.{self.repo.name}.{self.name}.{fname.strip(".py")}')
 
     # NOTE: late import for protobuf reasons
-    from ..config import ConfigContext
+    from .. import config as config_mod
 
     if CONFIG_CTX := getattr(self.do_import(), 'CONFIG_CTX', None):
-      if not isinstance(CONFIG_CTX, ConfigContext):
-        raise MalformedModuleError(
+      if not isinstance(CONFIG_CTX, config_mod.ConfigContext):
+        raise exceptions.MalformedModuleError(
             'Module defines CONFIG_CTX but it is not an instance of ConfigContext?')
       return CONFIG_CTX
 
@@ -701,10 +703,11 @@ class RecipeModule:
           f'RECIPE_MODULES.{self.repo.name}.{self.name}.config')
 
       for v in cfg_module.__dict__.values():
-        if isinstance(v, ConfigContext):
+        if isinstance(v, config_mod.ConfigContext):
           return v
+    return None
 
-  @cached_property
+  @functools.cached_property
   def uses_sloppy_coverage(self) -> bool:
     """Returns True if this module has DISABLE_STRICT_COVERAGE set.
 
@@ -746,7 +749,7 @@ class RecipeModule:
 
     # This makes `recipes` unmodifiable. object.__setattr__ is needed to get
     # around attrs' frozen attributes.
-    recipes = freeze(recipes)
+    recipes = engine_types.freeze(recipes)
     recipes.on_missing = ret.recipes.on_missing
     object.__setattr__(ret, 'recipes', recipes)
 
@@ -756,16 +759,16 @@ class RecipeModule:
 @attr.s(frozen=True)
 class Recipe:
   # The repo in which this recipe is located.
-  repo: RecipeRepo = attr.ib(validator=attr_type(RecipeRepo))
+  repo: RecipeRepo = attr.ib(validator=attr_util.attr_type(RecipeRepo))
 
   # The name of the recipe (e.g. `path/to/recipe` or 'module:run/recipe').
-  name: str = attr.ib(validator=attr_type(str))
+  name: str = attr.ib(validator=attr_util.attr_type(str))
 
   # The RecipeModule, if any, to which this Recipe belongs.
   module: RecipeModule | None = attr.ib(
-      validator=optional(attr_type(RecipeModule)))
+      validator=attr.validators.optional(attr_util.attr_type(RecipeModule)))
 
-  def __attrs_post_init__(self):
+  def __attrs_post_init__(self) -> None:
     if self.module:
       if not self.name.startswith(self.module.name + ':'):
         raise ValueError(
@@ -777,7 +780,7 @@ class Recipe:
           'recipe name contains ":" but does not belong to a module: '
           '{recipe_name!r}'.format(recipe_name=self.name))
 
-  @cached_property
+  @functools.cached_property
   def path(self) -> str:
     """The absolute path of the recipe script."""
     native_name = self.name.replace('/', os.path.sep)
@@ -787,23 +790,23 @@ class Recipe:
       ret = os.path.join(self.repo.recipes_dir, native_name)
     return ret + '.py'
 
-  @cached_property
+  @functools.cached_property
   def expectation_dir(self) -> str:
     """Returns the directory where this recipe's expectation JSON files live."""
     # TODO(iannucci): move expectation tree outside of the recipe tree.
     return os.path.splitext(self.path)[0] + '.expected'
 
-  @cached_property
+  @functools.cached_property
   def resources_dir(self) -> str:
     """Returns the directory where this recipe's resource files live."""
     return os.path.splitext(self.path)[0] + '.resources'
 
-  @cached_property
+  @functools.cached_property
   def relpath(self) -> str:
     """The path to the recipe relative to the repo root."""
     return os.path.relpath(self.path, self.repo.path)
 
-  @cached_property
+  @functools.cached_property
   def expectation_paths(self) -> set[str]:
     """Get all existing expectation file paths for this recipe.
 
@@ -820,7 +823,7 @@ class Recipe:
 
     return ret
 
-  @cached_property
+  @functools.cached_property
   def coverage_patterns(self) -> frozenset[str]:
     """Returns a frozenset of patterns (fnmatch absolute paths) for files which
     are covered by this recipe.
@@ -832,8 +835,8 @@ class Recipe:
       patterns.append(os.path.join(self.module.path, '*.py'))
     return self.repo.sloppy_coverage_patterns | frozenset(patterns)
 
-  @cached_property
-  def global_symbols(self) -> dict[str, object]:
+  @functools.cached_property
+  def global_symbols(self) -> dict[str, Any]:
     """Returns the global symbols for this recipe.
 
     This will exec the recipe's code (at most once) and return the dict
@@ -844,7 +847,7 @@ class Recipe:
     Returns a dictionary of names to python objects, as defined by the recipe
     script file.
     """
-    recipe_globals = {}
+    recipe_globals: dict[str, Any] = {}
     recipe_globals['__file__'] = self.path
 
     orig_path = sys.path[:]
@@ -861,7 +864,8 @@ class Recipe:
           repo=self.repo.name,
           err=ex,
         ))
-      raise_(RecipeSyntaxError, tuple(args), sys.exc_info()[2])
+      future.utils.raise_(
+          exceptions.RecipeSyntaxError, tuple(args), sys.exc_info()[2])
     except bdb.BdbQuit:
       raise
     except Exception as ex:
@@ -873,16 +877,17 @@ class Recipe:
           repo=self.repo.name,
           err=ex,
         ))
-      raise_(RecipeLoadError, tuple(args), sys.exc_info()[2])
+      future.utils.raise_(
+          exceptions.RecipeLoadError, tuple(args), sys.exc_info()[2])
     finally:
       sys.path = orig_path
 
     if 'RunSteps' not in recipe_globals:
-      raise MalformedRecipeError(
+      raise exceptions.MalformedRecipeError(
           'Missing or misspelled RunSteps function in recipe %r.' % self.path)
 
     if 'GenTests' not in recipe_globals:
-      raise MalformedRecipeError(
+      raise exceptions.MalformedRecipeError(
           'Missing or misspelled GenTests function in recipe %r.' % self.path)
 
     properties_def = recipe_globals.get('PROPERTIES', {})
@@ -891,19 +896,20 @@ class Recipe:
     if not proto_support.is_message_class(properties_def):
       # Let each property object know about the fully qualified property name.
       recipe_globals['PROPERTIES'] = {
-          name: value.bind(name, BoundProperty.RECIPE_PROPERTY, self.full_name)
+          name: value.bind(
+              name, recipe_api.BoundProperty.RECIPE_PROPERTY, self.full_name)
           for name, value in properties_def.items()
       }
 
     return recipe_globals
 
-  @cached_property
+  @functools.cached_property
   def full_name(self) -> str:
     """The fully qualified name of the recipe (e.g. `repo::path/to/recipe`, or
     `repo::module:run/recipe`)."""
     return '%s::%s' % (self.repo.name, self.name)
 
-  def gen_tests(self) -> Iterator[BaseTestData]:
+  def gen_tests(self) -> Iterator[recipe_test_api.BaseTestData]:
     """Runs this recipe's GenTests function.
 
     Yields all TestData fixtures for this recipe. Fills in the .expect_file
@@ -921,16 +927,16 @@ class Recipe:
     if dataclasses.is_dataclass(test_deps_cls):
       api = test_deps_cls(**filtered_deps)
     else:
-      api = RecipeTestApi(module=None)
+      api = recipe_test_api.RecipeTestApi(module=None)
       api.__dict__.update(filtered_deps)
 
     for test_data in self.global_symbols['GenTests'](api):
       test_data.expect_file = os.path.join(
-          self.expectation_dir, filesystem_safe(test_data.name),
+          self.expectation_dir, test_util.filesystem_safe(test_data.name),
       ) + '.json'
       yield test_data
 
-  @cached_property
+  @functools.cached_property
   def normalized_DEPS(self) -> dict[str, tuple[str, str]]:
     """Returns a normalized form of the DEPS specification for this object.
 
@@ -946,7 +952,7 @@ class Recipe:
         self.global_symbols,
         source=self.path)
 
-  @cached_property
+  @functools.cached_property
   def normalized_TEST_DEPS(self) -> dict[str, tuple[str, str]]:
     """Returns a normalized form of the TEST_DEPS specification for GenTests."""
     test_deps_spec = (
@@ -956,16 +962,19 @@ class Recipe:
         self.repo.name, test_deps_spec, self.global_symbols, source=self.path)
 
 
-  def mk_api(self, engine: RecipeEngine,
-             test_data: RecipeTestData | None = None) -> RecipeScriptApi:
+  def mk_api(
+      self,
+      engine: engine_mod.RecipeEngine,
+      test_data: recipe_test_api.BaseTestData | None = None,
+  ) -> recipe_api.RecipeScriptApi:
     """Makes a RecipeScriptApi, suitable for use with run_steps.
 
       * engine (RecipeEngine) - The engine to use for running.
-      * test_data (RecipeTestData) - The test data to build the api with.
+      * test_data (BaseTestData) - The test data to build the api with.
 
     Returns RecipeScriptApi.
     """
-    test_data = test_data or DisabledTestData()
+    test_data = test_data or recipe_test_api.DisabledTestData()
 
     resolved_deps = _resolve(
       self.repo.recipe_deps, self.normalized_DEPS, 'API', engine, test_data)
@@ -974,21 +983,25 @@ class Recipe:
       record.GLOBAL.record_import_warning(warning, importer)
 
     test_data_inst = test_data.get_module_test_data(None)
-    resource_path = Path(
-        ResolvedBasePath.for_recipe_script_resources(test_data.enabled, self))
-    repo_path = Path(
-        ResolvedBasePath.for_bundled_repo(test_data.enabled, self.repo))
+    resource_path = config_types.Path(
+        config_types.ResolvedBasePath.for_recipe_script_resources(
+            test_data.enabled, self))
+    repo_path = config_types.Path(
+        config_types.ResolvedBasePath.for_bundled_repo(
+            test_data.enabled, self.repo))
     deps = {k: v for k, v in resolved_deps.items() if v is not None}
 
     deps_cls = self.global_symbols.get('DEPS')
     if dataclasses.is_dataclass(deps_cls):
       return deps_cls(test_data_inst, resource_path, repo_path, **deps)
 
-    api = RecipeScriptApi(test_data_inst, resource_path, repo_path)
+    api = recipe_api.RecipeScriptApi(test_data_inst, resource_path, repo_path)
     api.__dict__.update(deps)
     return api
 
-  def run_steps(self, api: RecipeScriptApi, engine: RecipeEngine) -> object:
+  def run_steps(
+      self, api: recipe_api.RecipeScriptApi, engine: engine_mod.RecipeEngine
+  ) -> Any:
     """Runs this recipe's RunSteps function.
 
     Args:
@@ -1033,8 +1046,8 @@ class Recipe:
     else:
       # Old-style Property dict.
       # NOTE: late import to avoid early protobuf import
-      from .property_invoker import invoke_with_properties
-      recipe_result = invoke_with_properties(
+      from . import property_invoker
+      recipe_result = property_invoker.invoke_with_properties(
           self.global_symbols['RunSteps'], engine.properties, engine.environ,
           properties_def, api=api)
     return recipe_result
@@ -1056,8 +1069,8 @@ def _scan_recipe_directory(path: str) -> Iterator[str]:
 
 # Field names from base API classes that should not be treated as DEPS recipe modules.
 _BASE_API_FIELDS: frozenset[str] = frozenset(
-    set(typing.get_type_hints(RecipeScriptApi))
-    | set(typing.get_type_hints(RecipeTestApi)))
+    set(typing.get_type_hints(recipe_api.RecipeScriptApi))
+    | set(typing.get_type_hints(recipe_test_api.RecipeTestApi)))
 
 
 def parse_deps_spec(
@@ -1177,8 +1190,10 @@ def _collect_import_warnings(
   return ret
 
 
-def _instantiate_test_api(module: RecipeModule,
-                          resolved_deps: Mapping[str, RecipeTestApi | None]) -> RecipeTestApi:
+def _instantiate_test_api(
+    module: RecipeModule,
+    resolved_deps: Mapping[str, recipe_test_api.RecipeTestApi | None],
+) -> recipe_test_api.RecipeTestApi:
   """Instantiates the RecipeTestApi class from the given imported recipe module.
 
   Args:
@@ -1190,7 +1205,7 @@ def _instantiate_test_api(module: RecipeModule,
   Returns the instantiated RecipeTestApi subclass.
   """
   inst = module.TEST_API(module)
-  assert isinstance(inst, RecipeTestApi)
+  assert isinstance(inst, recipe_test_api.RecipeTestApi)
   inst.m.__dict__.update({
     local_name: resolved_dep
     for local_name, resolved_dep in resolved_deps.items()
@@ -1200,10 +1215,14 @@ def _instantiate_test_api(module: RecipeModule,
   return inst
 
 
-def _instantiate_api(engine: RecipeEngine, test_data: RecipeTestData,
-                     fqname: str, module: RecipeModule,
-                     test_api: RecipeTestApi,
-                     resolved_deps: Mapping[str, RecipeApi | None]) -> RecipeApi:
+def _instantiate_api(
+    engine: engine_mod.RecipeEngine,
+    test_data: recipe_test_api.BaseTestData,
+    fqname: str,
+    module: RecipeModule,
+    test_api: recipe_test_api.RecipeTestApi,
+    resolved_deps: Mapping[str, recipe_api.RecipeApi | None],
+) -> recipe_api.RecipeApi:
   """Instantiates the RecipeApi subclass from the given imported recipe
   module.
 
@@ -1275,9 +1294,9 @@ def _instantiate_api(engine: RecipeEngine, test_data: RecipeTestData,
   else:
     # Old-style Property dict.
     # NOTE: late import to avoid early protobuf import
-    from .property_invoker import invoke_with_properties
-    inst = invoke_with_properties(module.API, engine.properties,
-                                  engine.environ, properties_def, **kwargs)
+    from . import property_invoker
+    inst = property_invoker.invoke_with_properties(
+        module.API, engine.properties, engine.environ, properties_def, **kwargs)
 
   inst.test_api = test_api
 
@@ -1292,16 +1311,20 @@ def _instantiate_api(engine: RecipeEngine, test_data: RecipeTestData,
   # Replace class-level Requirements placeholders in the recipe API with
   # their instance-level real values.
   for k, v in module.API.__dict__.items():
-    if isinstance(v, UnresolvedRequirement):
+    if isinstance(v, recipe_api.UnresolvedRequirement):
       setattr(inst, k, engine.resolve_requirement(v))
 
   inst.initialize()
   return inst
 
 
-def _resolve(recipe_deps: RecipeDeps, deps_spec: Mapping[str, tuple[str, str]],
-             variant: str, engine: RecipeEngine | None,
-             test_data: RecipeTestData | None) -> dict[str, RecipeApi | RecipeTestApi | None]:
+def _resolve(
+    recipe_deps: RecipeDeps,
+    deps_spec: Mapping[str, tuple[str, str]],
+    variant: str,
+    engine: engine_mod.RecipeEngine | None,
+    test_data: recipe_test_api.BaseTestData | None,
+) -> dict[str, Any]:
   """Resolves a deps_spec to a map of {local_name: api instance}
 
   Args:
@@ -1323,28 +1346,35 @@ def _resolve(recipe_deps: RecipeDeps, deps_spec: Mapping[str, tuple[str, str]],
   else:
     # NOTE: late import to avoid import cycle
     # NOTE: late import to avoid early protobuf import
-    from .engine import RecipeEngine
-    assert isinstance(engine, RecipeEngine)
-    assert isinstance(test_data, BaseTestData)
+    from . import engine as engine_mod
+    assert isinstance(engine, engine_mod.RecipeEngine)
+    assert isinstance(test_data, recipe_test_api.BaseTestData)
 
   @attr.s(frozen=True)
   class cache_entry:
-    api = attr.ib(validator=optional(attr_superclass(RecipeApi)))
-    test_api = attr.ib(validator=attr_superclass(RecipeTestApi))
+    api: recipe_api.RecipeApi | None = attr.ib(
+        validator=attr.validators.optional(
+            attr_util.attr_superclass(recipe_api.RecipeApi)))
+    test_api: recipe_test_api.RecipeTestApi = attr.ib(
+        validator=attr_util.attr_superclass(recipe_test_api.RecipeTestApi))
 
-    def pick(self):
+    def pick(
+        self,
+    ) -> recipe_api.RecipeApi | recipe_test_api.RecipeTestApi | None:
       return self.api if variant == 'API' else self.test_api
 
   # map of (repo_name, module_name) -> cache_entry
-  instance_cache = {}
+  instance_cache: dict[tuple[str, str], cache_entry | None] = {}
 
-  def _inner(repo_name, module_name, loading_chain):
+  def _inner(
+      repo_name: str, module_name: str, loading_chain: list[tuple[str, str]]
+  ) -> cache_entry:
     key = (repo_name, module_name)
     if key in instance_cache:
       cached = instance_cache[key]
       if cached is None:
         first = loading_chain.index(key)
-        raise CyclicalDependencyError(
+        raise exceptions.CyclicalDependencyError(
           '%r has a cyclical dependency. Loading chain %r.' %
           ('%s/%s' % key, loading_chain[first:]))
       return cached
@@ -1363,6 +1393,8 @@ def _resolve(recipe_deps: RecipeDeps, deps_spec: Mapping[str, tuple[str, str]],
     fqname = '%s/%s' % (repo_name, module_name)
     api = None
     if variant == 'API':
+      assert engine is not None
+      assert test_data is not None
       api = _instantiate_api(
           engine, test_data, fqname, module, test_api, {
               local_name: _inner(d_repo_name, d_module, loading_chain).api
@@ -1389,3 +1421,4 @@ def _resolve(recipe_deps: RecipeDeps, deps_spec: Mapping[str, tuple[str, str]],
   _inner('recipe_engine', 'path', [])
 
   return ret
+

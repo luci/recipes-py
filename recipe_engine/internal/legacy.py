@@ -9,16 +9,19 @@ TODO(yiwzhang): Delete the module after recipe engine is fully on luciexe mode
 
 from __future__ import annotations
 
-from PB.recipe_engine import result as result_pb2
-from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
+from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb
+from PB.recipe_engine import result as result_pb
 
-def to_legacy_result(result):
-  """Convert from result_pb2.RawResult to result_pb2.Result."""
+
+def to_legacy_result(
+    result: result_pb.RawResult | None,
+) -> result_pb.Result | None:
+  """Convert from result_pb.RawResult to result_pb.Result."""
   if not result:
     return None
-  legacy_result = result_pb2.Result()
-  if result.status != common_pb2.SUCCESS:
+  legacy_result = result_pb.Result()
+  if result.status != common_pb.SUCCESS:
     legacy_result.failure.human_reason = result.summary_markdown
-    if result.status not in (common_pb2.INFRA_FAILURE, common_pb2.CANCELED):
+    if result.status not in (common_pb.INFRA_FAILURE, common_pb.CANCELED):
       legacy_result.failure.failure.SetInParent()
   return legacy_result

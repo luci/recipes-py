@@ -34,11 +34,14 @@ There are some subtleties here like:
 
 from __future__ import annotations
 
-
+from collections.abc import Sequence
 import imp
 import importlib
 import os
 import sys
+import types
+
+from . import recipe_deps as recipe_deps_mod
 
 
 class RecipeModuleImporter:
@@ -51,10 +54,12 @@ class RecipeModuleImporter:
 
   PREFIX = 'RECIPE_MODULES'
 
-  def __init__(self, recipe_deps):
+  def __init__(self, recipe_deps: recipe_deps_mod.RecipeDeps) -> None:
     self._recipe_deps = recipe_deps
 
-  def find_module(self, fullname, path=None):  # pylint: disable=unused-argument
+  def find_module(
+      self, fullname: str, path: Sequence[str] | None = None
+  ) -> RecipeModuleImporter | None:  # pylint: disable=unused-argument
     if fullname == self.PREFIX or fullname.startswith(self.PREFIX + '.'):
       toks = fullname.split('.')
       if 1 <= len(toks) <= 3:
@@ -89,7 +94,7 @@ class RecipeModuleImporter:
       # and builtins.
       return None
 
-  def load_module(self, fullname):
+  def load_module(self, fullname: str) -> types.ModuleType:
     """Returns:
 
       * `RECIPE_MODULES` module. This is an empty placeholder module.

@@ -7,31 +7,28 @@
 from __future__ import annotations
 
 import ast
+from collections.abc import Callable, Sequence
 import errno
 import hashlib
 import inspect
+import io
 import os
+import pathlib
 import posixpath
 import re
 import shutil
 import sys
 import tempfile
 
-from collections.abc import Callable, Sequence
-from io import StringIO
-from pathlib import Path
-
-from gevent import subprocess
-
 import attr
-
-import google.protobuf  # pinned in .vpython
-import google.protobuf.message
+import gevent.subprocess
+import google.protobuf
 from google.protobuf import descriptor_pb2
+import google.protobuf.message
 
+from . import attr_util
+from . import exceptions
 from . import recipe_deps
-from .attr_util import attr_type
-from .exceptions import BadProtoDefinitions
 
 PROTOC_VERSION = google.protobuf.__version__.encode('utf-8')
 
@@ -54,7 +51,7 @@ def _blob_checksum(blob: str) -> str:
   return csum.hexdigest()
 
 
-def _file_checksum(path) -> str:
+def _file_checksum(path: str | os.PathLike[str]) -> str:
   csum = hashlib.sha1()
   with open(path, 'rb') as ins:
     csum.update(f'blob {os.fstat(ins.fileno()).st_size}'.encode())
@@ -72,34 +69,34 @@ class _ProtoInfo:
   """_ProtoInfo holds information about the proto files found in a recipe repo.
   """
   # Native-slash-delimited path to the source file
-  src_abspath: str = attr.ib(validator=attr_type(str))
+  src_abspath: str = attr.ib(validator=attr_util.attr_type(str))
 
   # The fwd-slash-delimited path relative to `repo.path` of the proto file.
-  relpath: str = attr.ib(validator=attr_type(str))
+  relpath: str = attr.ib(validator=attr_util.attr_type(str))
 
   # The fwd-slash-delimited path relative to the output PB directory of where
   # this file should go when we compile protos.
-  dest_relpath: str = attr.ib(validator=attr_type(str))
+  dest_relpath: str = attr.ib(validator=attr_util.attr_type(str))
 
   # Set to True iff this is a reserved path
-  reserved: bool = attr.ib(validator=attr_type(bool))
+  reserved: bool = attr.ib(validator=attr_util.attr_type(bool))
 
   # If not-None, this _ProtoInfo refers to synthesized file content which
   # needs to be written to disk at generation-time.
-  synthetic_content: str|None = attr.ib(
-      validator=attr_type((str, type(None))))
+  synthetic_content: str | None = attr.ib(
+      validator=attr_util.attr_type((str, type(None))))
 
   # The git blob hash of this file.
   #
   # We use the git algorithm here in case we ever want to use e.g. the committed
   # git index as a source for these hashes (and it's not really any more
   # expensive to compute).
-  blobhash: str = attr.ib(validator=attr_type(str))
+  blobhash: str = attr.ib(validator=attr_util.attr_type(str))
 
   @classmethod
   def create(
       cls, repo: recipe_deps.RecipeRepo, scan_relpath: str,
-      dest_namespace: str, relpath: str, synthetic_content: str|None = None,
+      dest_namespace: str, relpath: str, synthetic_content: str | None = None,
     ) -> _ProtoInfo:
     """Creates a _ProtoInfo.
 
@@ -194,7 +191,7 @@ class _ProtoInfo:
     )
     proto_relpath = _to_posix(os.path.relpath(proto_path, repo.path))
 
-    buf = StringIO()
+    buf = io.StringIO()
     print(f'// This file is generated from {path}', file=buf)
     print('syntax = "proto3";', file=buf)
 
@@ -282,7 +279,7 @@ def _gather_proto_info_from_repo(
 
 def _gather_protos(
     deps: recipe_deps.RecipeDeps,
-) -> tuple[str, list[tuple[str, str]], list[tuple[Path, str]]]:
+) -> tuple[str, list[tuple[str, str]], list[tuple[pathlib.Path, str]]]:
   """Gathers all .proto files from all repos, and calculates their collective
   hash.
 
@@ -322,7 +319,7 @@ def _gather_protos(
   dups: set[str] = set()
   reserved: set[str] = set()
   proto_files: list[tuple[str, str]] = []
-  synthetic_files: list[tuple[Path, str]] = []
+  synthetic_files: list[tuple[pathlib.Path, str]] = []
   for repo_name, proto_infos in sorted(all_protos.items()):
     csum.update(repo_name.encode('utf-8'))
     csum.update(b'\0\0')
@@ -337,7 +334,8 @@ def _gather_protos(
 
       proto_files.append((info.src_abspath, info.dest_relpath))
       if info.synthetic_content is not None:
-        synthetic_files.append((Path(info.src_abspath), info.synthetic_content))
+        synthetic_files.append(
+            (pathlib.Path(info.src_abspath), info.synthetic_content))
 
       csum.update(info.relpath.encode('utf-8'))
       csum.update(b'\0')
@@ -363,7 +361,7 @@ def _gather_protos(
             '  %r in %s' % (relpath, ', '.join(rel_to_projs[relpath]))
             for relpath in sorted(reserved)))
 
-    raise BadProtoDefinitions(msg)
+    raise exceptions.BadProtoDefinitions(msg)
 
   return csum.hexdigest(), proto_files, synthetic_files
 
@@ -612,9 +610,11 @@ def _compile_protos(proto_files: Sequence[tuple[str, str]], proto_tree: str,
       every .proto file in proto_tree on its own line.
     * dest: Path to the destination where the compiled protos should go.
   """
-  protoc_proc = subprocess.Popen(
+  protoc_proc = gevent.subprocess.Popen(
       [protoc, '--python_out', dest, '--pyi_out', dest, '@'+argfile],
-      cwd=proto_tree, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+      cwd=proto_tree,
+      stdout=gevent.subprocess.PIPE,
+      stderr=gevent.subprocess.STDOUT)
   output, _ = protoc_proc.communicate()
   try:
     os.remove(argfile)
@@ -666,9 +666,9 @@ def _install_protos(proto_package_path: str, dgst: str,
     * Ensures that `{proto_package_path}/protoc` contains the correct
       `protoc` compiler from CIPD.
   """
-  cipd_proc = subprocess.Popen([
+  cipd_proc = gevent.subprocess.Popen([
     'cipd'+_BAT, 'ensure', '-root', os.path.join(proto_package_path, 'protoc'),
-    '-ensure-file', '-'], stdin=subprocess.PIPE)
+    '-ensure-file', '-'], stdin=gevent.subprocess.PIPE)
   protoc_version = PROTOC_VERSION.split(b'.', 1)[1]
   cipd_proc.communicate(b'infra/3pp/tools/protoc/${platform} version:3@' +
                         protoc_version)

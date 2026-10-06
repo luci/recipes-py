@@ -6,8 +6,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any
 
-def attr_type(type_, subname=''):
+
+def attr_type(
+    type_: Any,
+    subname: str = '',
+) -> Callable[[Any, Any, Any], None]:
   """An `attr.s` validator for asserting the type of a value.
 
   Essentially the same as `attr.validators.instance_of`, except that it allows
@@ -23,7 +29,7 @@ def attr_type(type_, subname=''):
   the value.
   """
 
-  def inner(_self, attrib, value):
+  def inner(_self: Any, attrib: Any, value: Any) -> None:
     if not isinstance(value, type_):
       raise TypeError(
         "'{name}' must be {type!r} (got {value!r} that is a "
@@ -41,7 +47,10 @@ def attr_type(type_, subname=''):
   return inner
 
 
-def attr_superclass(type_, subname=''):
+def attr_superclass(
+    type_: Any,
+    subname: str = '',
+) -> Callable[[Any, Any, Any], None]:
   """An `attr.s` validator for asserting the superclass of a value.
 
   Args:
@@ -54,7 +63,7 @@ def attr_superclass(type_, subname=''):
   the value.
   """
 
-  def inner(_self, attrib, value):
+  def inner(_self: Any, attrib: Any, value: Any) -> None:
     if not issubclass(type(value), type_):
       raise TypeError(
         "'{name}' must be a subclass of {type!r} (got {value!r} that is a "
@@ -72,7 +81,11 @@ def attr_superclass(type_, subname=''):
   return inner
 
 
-def attr_dict_type(key_type, val_type, value_seq=False):
+def attr_dict_type(
+    key_type: Any,
+    val_type: Any,
+    value_seq: bool = False,
+) -> Callable[[Any, Any, Any], None]:
   """Helper function for writing attr.s validators for dictionary types.
 
   Args:
@@ -87,11 +100,11 @@ def attr_dict_type(key_type, val_type, value_seq=False):
     * All of it's values don't match `val_type`
   """
 
-  def inner(self, attrib, value):
+  def inner(self: Any, attrib: Any, value: Any) -> None:
     # late import to avoid import cycle
-    from ..engine_types import FrozenDict
+    from recipe_engine import engine_types
 
-    attr_type((dict, FrozenDict))(self, attrib, value)
+    attr_type((dict, engine_types.FrozenDict))(self, attrib, value)
     for k, subval in value.items():
       attr_type(key_type, ' keys')(self, attrib, k)
       subname = '[%r]' % k
@@ -103,7 +116,10 @@ def attr_dict_type(key_type, val_type, value_seq=False):
   return inner
 
 
-def attr_seq_type(val_type, subname=''):
+def attr_seq_type(
+    val_type: Any,
+    subname: str = '',
+) -> Callable[[Any, Any, Any], None]:
   """Helper function for writing attr.s validators for list types.
 
   Args:
@@ -114,7 +130,7 @@ def attr_seq_type(val_type, subname=''):
     * All of it's values don't match `val_type`
   """
 
-  def inner(self, attrib, value):
+  def inner(self: Any, attrib: Any, value: Any) -> None:
     attr_type((list, tuple, set, frozenset), subname)(self, attrib, value)
     for subval in value:
       attr_type(val_type, subname + ' values')(self, attrib, subval)
@@ -122,7 +138,7 @@ def attr_seq_type(val_type, subname=''):
   return inner
 
 
-def attr_list_type(val_type):
+def attr_list_type(val_type: Any) -> Callable[[Any, Any, Any], None]:
   """Helper function for writing attr.s validators for list types.
 
   Args:
@@ -133,7 +149,7 @@ def attr_list_type(val_type):
     * All of it's values don't match `val_type`
   """
 
-  def inner(self, attrib, value):
+  def inner(self: Any, attrib: Any, value: Any) -> None:
     attr_type((list, tuple))(self, attrib, value)
     for subval in value:
       attr_type(val_type, ' values')(self, attrib, subval)
@@ -141,7 +157,11 @@ def attr_list_type(val_type):
   return inner
 
 
-def attr_value_is(msg, check_fn, subname=''):
+def attr_value_is(
+    msg: str,
+    check_fn: Callable[[Any], bool],
+    subname: str = '',
+) -> Callable[[Any, Any, Any], None]:
   """Helper function for writing attr.s validators.
 
   Args:
@@ -155,7 +175,7 @@ def attr_value_is(msg, check_fn, subname=''):
   Returns a validator function which raises TypeError if the value doesn't match
   the value.
   """
-  def inner(_self, attrib, value):
+  def inner(_self: Any, attrib: Any, value: Any) -> None:
     if not check_fn(value):
       raise ValueError(
         "'{name}' is not {msg} (got {value!r})".format(

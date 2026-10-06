@@ -4,22 +4,20 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+import contextlib
 import errno
 import logging
 import os
 import signal
 import sys
-import time
-
-from contextlib import contextmanager
-
-from recipe_engine.third_party import luci_context
-
-from builtins import zip
-from google.protobuf import json_format as jsonpb
+from typing import Any
 
 import gevent
 import gevent.event
+from google.protobuf import json_format as jsonpb
+
+from recipe_engine.third_party import luci_context
 
 
 MSWINDOWS = sys.platform.startswith(('win', 'cygwin'))
@@ -62,13 +60,13 @@ del _lc_raw_deadline
 #
 # This is manipulated by step_runner/subproc and will have types in it which
 # are platform specific
-UNKILLED_PROC_GROUPS = set()
+UNKILLED_PROC_GROUPS: set[Any] = set()
 
 LOG = logging.getLogger(__name__)
 
 
 if MSWINDOWS:
-  def _kill_proc_group(proc):
+  def _kill_proc_group(proc: Any) -> None:
     try:
       proc.send_signal(signal.CTRL_BREAK_EVENT)
     except OSError as ex:
@@ -79,7 +77,7 @@ if MSWINDOWS:
     except OSError as ex:
       LOG.warning('TerminateProcess(%r): %s' % (proc.pid, ex))
 else:
-  def _kill_proc_group(pgid):
+  def _kill_proc_group(pgid: int) -> None:
     try:
       os.killpg(pgid, signal.SIGKILL)
     except OSError as ex:
@@ -88,8 +86,8 @@ else:
         LOG.warning('killpg(%d, SIGKILL): %s' % (pgid, ex))
 
 
-@contextmanager
-def install_signal_handlers():
+@contextlib.contextmanager
+def install_signal_handlers() -> Iterator[None]:
   """Sets up a the global terminator greenlet to:
 
     * Set GLOBAL_SHUTDOWN on an interrupt signal (which should occur at
@@ -100,8 +98,8 @@ def install_signal_handlers():
   Sets LUCI_CONTEXT['deadline'] for the duration of this contextmanager.
   """
   # late importing since recipe_engine/util is imported before protos are set up
-  from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
-  d = sections_pb2.Deadline()
+  from PB.go.chromium.org.luci.lucictx import sections as sections_pb
+  d = sections_pb.Deadline()
   deadline_raw = luci_context.read('deadline')
   if deadline_raw:
     d = jsonpb.ParseDict(deadline_raw, d)
@@ -116,7 +114,7 @@ def install_signal_handlers():
 
   # terminator_greenlet reacts to signal from parent, which occurs during
   # cancellation or timeout.
-  def _terminator_greenlet():
+  def _terminator_greenlet() -> None:
     GLOBAL_SHUTDOWN.wait()
     gevent.wait([GLOBAL_QUITQUITQUIT], timeout=d.grace_period)
     if not GLOBAL_QUITQUITQUIT.ready():
@@ -129,7 +127,7 @@ def install_signal_handlers():
 
   terminator_greenlet = gevent.spawn(_terminator_greenlet)
 
-  def _set_shutdown(signum, _frame):
+  def _set_shutdown(signum: int, _frame: Any) -> None:
     LOG.info('Got signal (%d), Setting GLOBAL_SHUTDOWN', signum)
     GLOBAL_SHUTDOWN.set()
 

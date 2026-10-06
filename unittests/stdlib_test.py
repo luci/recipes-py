@@ -8,13 +8,12 @@
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
 
-from subprocess import check_call
+import test_env
 
-from test_env import ROOT_DIR
+recipes_py = os.path.join(test_env.ROOT_DIR, 'recipes.py')
 
-recipes_py = os.path.join(ROOT_DIR, 'recipes.py')
-
-check_call([sys.executable, recipes_py, 'test', 'run'])
-check_call([sys.executable, recipes_py, 'lint'])
+subprocess.check_call([sys.executable, recipes_py, 'test', 'run'])
+subprocess.check_call([sys.executable, recipes_py, 'lint'])

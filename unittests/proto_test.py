@@ -10,18 +10,19 @@ import os
 import shutil
 import subprocess
 import textwrap
+from typing import Any
 
 import test_env
 
-from recipe_engine.internal.simple_cfg import RECIPES_CFG_LOCATION_REL
+from recipe_engine.internal import simple_cfg
 
 
 class TestProtoSupport(test_env.RecipeEngineUnitTest):
-  def setUp(self):
+  def setUp(self) -> None:
     super().setUp()
     self.deps = self.FakeRecipeDeps()
     self.deps.ambient_toplevel_code = [
-      '''
+        '''
         def _dumps(msg):
           import json
           from google.protobuf.json_format import MessageToDict
@@ -30,12 +31,12 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
       '''
     ]
 
-  def assertProtoInOutput(self, data, output):
+  def assertProtoInOutput(self, data: Any, output: str) -> None:
     self.assertIn(
         json.dumps(data, indent=2, sort_keys=True),
         output)
 
-  def test_recipe_proto_in_main(self):
+  def test_recipe_proto_in_main(self) -> None:
     main = self.deps.main_repo
 
     with main.write_file('recipes/my_proto.proto') as proto:
@@ -49,7 +50,7 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
 
     with main.write_recipe('my_proto') as recipe:
       recipe.imports = [
-        'from PB.recipes.main import my_proto',
+          'from PB.recipes.main import my_proto',
       ]
       recipe.DEPS.append('recipe_engine/json')
       recipe.RunSteps.write('''
@@ -61,7 +62,7 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
     self.assertEqual(retcode, 0, output)
     self.assertProtoInOutput({"hello": "I am a banana"}, output)
 
-  def test_recipe_module_proto_in_main(self):
+  def test_recipe_module_proto_in_main(self) -> None:
     main = self.deps.main_repo
 
     with main.write_module('modname') as mod:
@@ -83,7 +84,7 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
 
     with main.write_recipe('recipe') as recipe:
       recipe.imports = [
-        'from PB.recipe_modules.main.modname import mod_proto',
+          'from PB.recipe_modules.main.modname import mod_proto',
       ]
       recipe.DEPS.append('modname')
       recipe.RunSteps.write('''
@@ -96,7 +97,7 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
     self.assertEqual(retcode, 0, output)
     self.assertProtoInOutput({"field": "value"}, output)
 
-  def test_global_proto_in_main(self):
+  def test_global_proto_in_main(self) -> None:
     main = self.deps.main_repo
 
     with main.write_file('recipe_proto/some.example.com/cool.proto') as proto:
@@ -110,7 +111,7 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
 
     with main.write_recipe('recipe') as recipe:
       recipe.imports = [
-        'from PB.some.example.com import cool',
+          'from PB.some.example.com import cool',
       ]
       recipe.RunSteps.write('''
         data = cool.Data(field="value")
@@ -121,7 +122,7 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
     self.assertEqual(retcode, 0, output)
     self.assertProtoInOutput({"field": "value"}, output)
 
-  def test_proto_import_from_recipe(self):
+  def test_proto_import_from_recipe(self) -> None:
     main = self.deps.main_repo
 
     with main.write_file('recipes/subdir/common.proto') as proto:
@@ -146,7 +147,7 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
 
     with main.write_recipe('recipe') as recipe:
       recipe.imports = [
-        'from PB.recipes.main import a',
+          'from PB.recipes.main import a',
       ]
       recipe.RunSteps.write('''
         data = a.Data(field="value")
@@ -157,13 +158,13 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
     output, retcode = main.recipes_py('run', 'recipe')
     self.assertEqual(retcode, 0, output)
     self.assertProtoInOutput({
-      "field": "value",
-      "common": {
-        "commonField": "neat",
-      }
+        "field": "value",
+        "common": {
+            "commonField": "neat",
+        }
     }, output)
 
-  def test_proto_import_from_module(self):
+  def test_proto_import_from_module(self) -> None:
     main = self.deps.main_repo
 
     with main.write_file('recipe_modules/modname/common.proto') as proto:
@@ -188,7 +189,7 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
 
     with main.write_recipe('recipe') as recipe:
       recipe.imports = [
-        'from PB.recipes.main import a',
+          'from PB.recipes.main import a',
       ]
       recipe.RunSteps.write('''
         data = a.Data(field="value")
@@ -199,13 +200,13 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
     output, retcode = main.recipes_py('run', 'recipe')
     self.assertEqual(retcode, 0, output)
     self.assertProtoInOutput({
-      "field": "value",
-      "modData": {
-        "modnameField": "neat",
-      }
+        "field": "value",
+        "modData": {
+            "modnameField": "neat",
+        }
     }, output)
 
-  def test_proto_import_from_engine(self):
+  def test_proto_import_from_engine(self) -> None:
     main = self.deps.main_repo
 
     with main.write_file('recipes/a.proto') as proto:
@@ -221,7 +222,7 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
 
     with main.write_recipe('recipe') as recipe:
       recipe.imports = [
-        'from PB.recipes.main import a',
+          'from PB.recipes.main import a',
       ]
       recipe.RunSteps.write('''
         data = a.Data(field="value")
@@ -232,17 +233,17 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
     output, retcode = main.recipes_py('run', 'recipe')
     self.assertEqual(retcode, 0, output)
     self.assertProtoInOutput({
-      "field": "value",
-      "spec": {
-        "deps": {
-          "hello": {
-            "revision": "deadbeef",
-          }
+        "field": "value",
+        "spec": {
+            "deps": {
+                "hello": {
+                    "revision": "deadbeef",
+                }
+            }
         }
-      }
     }, output)
 
-  def test_proto_import_from_buildbucket(self):
+  def test_proto_import_from_buildbucket(self) -> None:
     main = self.deps.main_repo
 
     with main.write_file('recipes/a.proto') as proto:
@@ -258,7 +259,7 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
 
     with main.write_recipe('recipe') as recipe:
       recipe.imports = [
-        'from PB.recipes.main import a',
+          'from PB.recipes.main import a',
       ]
       recipe.RunSteps.write('''
         data = a.Data(field="value")
@@ -269,15 +270,15 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
     output, retcode = main.recipes_py('run', 'recipe')
     self.assertEqual(retcode, 0, output)
     self.assertProtoInOutput({
-      "field": "value",
-      "build": {
-        "input": {
-          "experimental": True,
+        "field": "value",
+        "build": {
+            "input": {
+                "experimental": True,
+            }
         }
-      }
     }, output)
 
-  def test_bundled_protoc(self):
+  def test_bundled_protoc(self) -> None:
     main = self.deps.main_repo
 
     with main.write_file('recipe_modules/modname/cool.proto') as proto:
@@ -304,7 +305,7 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
 
     with main.write_recipe('recipe') as recipe:
       recipe.imports = [
-        'from PB.recipes.main import a',
+          'from PB.recipes.main import a',
       ]
       recipe.RunSteps.write('''
         data = a.Data(field="value")
@@ -330,20 +331,20 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
 
     self.assertEqual(proc.returncode, 0, output)
     self.assertProtoInOutput({
-      "field": "value",
-      "spec": {
-        "deps": {
-          "hello": {
-            "revision": "deadbeef",
-          }
-        }
-      },
-      "modStuff": {
-        "modField": "awesome"
-      },
+        "field": "value",
+        "spec": {
+            "deps": {
+                "hello": {
+                    "revision": "deadbeef",
+                }
+            }
+        },
+        "modStuff": {
+            "modField": "awesome"
+        },
     }, output)
 
-  def test_filesystem_repo_scan(self):
+  def test_filesystem_repo_scan(self) -> None:
     main = self.deps.main_repo
 
     with main.write_file('recipe_modules/modname/cool.proto') as proto:
@@ -370,7 +371,7 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
 
     with main.write_recipe('recipe') as recipe:
       recipe.imports = [
-        'from PB.recipes.main import a',
+          'from PB.recipes.main import a',
       ]
       recipe.RunSteps.write('''
         data = a.Data(field="value")
@@ -384,24 +385,25 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
     shutil.rmtree(os.path.join(main.path, '.git'))
 
     output, retcode = main.recipes_py(
-        '--package', os.path.join(main.path, RECIPES_CFG_LOCATION_REL),
+        '--package',
+        os.path.join(main.path, simple_cfg.RECIPES_CFG_LOCATION_REL),
         'run', 'recipe')
     self.assertEqual(retcode, 0, output)
     self.assertProtoInOutput({
-      "field": "value",
-      "spec": {
-        "deps": {
-          "hello": {
-            "revision": "deadbeef",
-          }
-        }
-      },
-      "modStuff": {
-        "modField": "awesome"
-      },
+        "field": "value",
+        "spec": {
+            "deps": {
+                "hello": {
+                    "revision": "deadbeef",
+                }
+            }
+        },
+        "modStuff": {
+            "modField": "awesome"
+        },
     }, output)
 
-  def test_update_proto_file(self):
+  def test_update_proto_file(self) -> None:
     main = self.deps.main_repo
 
     with main.write_file('recipes/cool.proto') as proto:
@@ -415,7 +417,7 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
 
     with main.write_recipe('cool') as recipe:
       recipe.imports = [
-        'from PB.recipes.main.cool import CoolData'
+          'from PB.recipes.main.cool import CoolData'
       ]
       recipe.RunSteps.write('''
         data = CoolData(field="norp")
@@ -438,7 +440,7 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
 
     with main.write_recipe('cool') as recipe:
       recipe.imports = [
-        'from PB.recipes.main.cool import CoolData'
+          'from PB.recipes.main.cool import CoolData'
       ]
       recipe.RunSteps.write('''
         data = CoolData(field="norp", fweep="dorp")
@@ -449,7 +451,7 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
     self.assertEqual(retcode, 0, output)
     self.assertProtoInOutput({"field": "norp", "fweep": "dorp"}, output)
 
-  def test_conflicting_proto_error(self):
+  def test_conflicting_proto_error(self) -> None:
     main = self.deps.main_repo
     upstream = self.deps.add_repo('upstream')
 
@@ -483,7 +485,7 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
         'something.proto' in main, upstream
     ''').strip(), output)
 
-  def test_reserved_proto_error(self):
+  def test_reserved_proto_error(self) -> None:
     main = self.deps.main_repo
 
     with main.write_file('recipes/recipes/is_ok.proto'):
@@ -510,7 +512,7 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
           'recipes/reserved.proto' in main
     ''').strip(), output)
 
-  def test_bad_proto_syntax_recipes(self):
+  def test_bad_proto_syntax_recipes(self) -> None:
     main = self.deps.main_repo
 
     with main.write_file('recipes/norp.proto') as proto:
@@ -524,7 +526,7 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
       BASE/recipes/norp.proto:1:20: Expected top-level statement (e.g. "message").
     ''').strip(), output.replace(main.path, 'BASE').replace('\\', '/'))
 
-  def test_bad_proto_syntax_recipe_modules(self):
+  def test_bad_proto_syntax_recipe_modules(self) -> None:
     main = self.deps.main_repo
 
     with main.write_file('recipe_modules/foop/norp.proto') as proto:
@@ -538,7 +540,7 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
       BASE/recipe_modules/foop/norp.proto:1:20: Expected top-level statement (e.g. "message").
     ''').strip(), output.replace(main.path, 'BASE').replace('\\', '/'))
 
-  def test_bad_proto_syntax_global(self):
+  def test_bad_proto_syntax_global(self) -> None:
     main = self.deps.main_repo
 
     with main.write_file('recipe_proto/foop/norp.proto') as proto:
@@ -552,7 +554,7 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
       BASE/recipe_proto/foop/norp.proto:1:20: Expected top-level statement (e.g. "message").
     ''').strip(), output.replace(main.path, 'BASE').replace('\\', '/'))
 
-  def test_bad_packages(self):
+  def test_bad_packages(self) -> None:
     main = self.deps.main_repo
 
     with main.write_file('recipes/bad_namespace.proto') as proto:
@@ -600,7 +602,8 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
                    "uses reserved namespace 'recipes'"), output)
     self.assertIn((
         "BASE/recipe_modules/foobar/bad_namespace.proto: bad package: "
-        "expected 'recipe_modules.main.foobar', got 'recipe_modules.main.foobar.etc'"
+        "expected 'recipe_modules.main.foobar', "
+        "got 'recipe_modules.main.foobar.etc'"
     ), output)
     self.assertIn(("BASE/recipes/bad_namespace.proto: bad package: "
                    "expected 'recipes.main.bad_namespace', got 'recipes.main'"),

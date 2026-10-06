@@ -5,36 +5,31 @@
 from __future__ import annotations
 
 import collections
-import collections.abc
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 import copy
+import functools
 import json
 import operator
 from typing import (
     Any,
-    Callable,
     ClassVar,
-    Iterable,
-    Iterator,
     Literal,
-    Sequence,
     TypeVar,
     TYPE_CHECKING,
 )
 
-from functools import reduce
-
 import attr
-from gevent.local import local
+import gevent.local
 from google.protobuf import json_format as json_pb
 from google.protobuf import message
 
-from .config_types import Path
-from .internal.attr_util import attr_type
+from recipe_engine import config_types
+from recipe_engine.internal import attr_util
 
 if TYPE_CHECKING:
-  from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
-  LogDataType = common_pb2.Log | str | bytes | Iterable[str | bytes]
-  StoredLogDataType = common_pb2.Log | str | _StringSequence
+  from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb
+  LogDataType = common_pb.Log | str | bytes | Iterable[str | bytes]
+  StoredLogDataType = common_pb.Log | str | _StringSequence
 
 T = TypeVar('T')
 
@@ -65,7 +60,7 @@ def freeze(obj: T) -> Any:
   # Since we plan to entirely remove all of this config.py contents at some
   # point, and Paths are the only known exception to the immutability rule
   # with well-understood semantics we have a special carve-out here.
-  if not isinstance(obj, Path):
+  if not isinstance(obj, config_types.Path):
     hash(obj)
   return obj
 
@@ -94,7 +89,7 @@ K = TypeVar('K')
 V = TypeVar('V')
 
 
-class FrozenDict(collections.abc.Mapping[K, V]):
+class FrozenDict(Mapping[K, V]):
   """An immutable OrderedDict.
 
   Modified From: http://stackoverflow.com/a/2704866
@@ -113,11 +108,11 @@ class FrozenDict(collections.abc.Mapping[K, V]):
 
     # Calculate the hash immediately so that we know all the items are
     # hashable too.
-    self._hash = reduce(operator.xor,
-                        (hash(i) for i in enumerate(self._d.items())), 0)
+    self._hash = functools.reduce(
+        operator.xor, (hash(i) for i in enumerate(self._d.items())), 0)
 
   def __eq__(self, other: Any) -> bool:
-    if not isinstance(other, collections.abc.Mapping):
+    if not isinstance(other, Mapping):
       return NotImplemented
     if self is other:
       return True
@@ -221,15 +216,15 @@ class _OrderedDictString(collections.OrderedDict[str, 'StoredLogDataType']):
   to str with _fix_stringlike.
   """
 
-  def __setitem__(self, key: str, value: 'LogDataType') -> None:
+  def __setitem__(self, key: str, value: LogDataType) -> None:
     # late proto import
-    from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
-    if isinstance(value, (common_pb2.Log, str, _StringSequence)):
+    from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb
+    if isinstance(value, (common_pb.Log, str, _StringSequence)):
       # these values are fine
       pass
     elif isinstance(value, bytes):
       value = _fix_stringlike(value)
-    elif isinstance(value, collections.abc.Iterable):
+    elif isinstance(value, Iterable):
       value = _StringSequence(value)
     else:
       raise ValueError(
@@ -239,7 +234,7 @@ class _OrderedDictString(collections.OrderedDict[str, 'StoredLogDataType']):
     return super().__setitem__(key, value)
 
   def setdefault(self, key: str,
-                 default: 'LogDataType' | None) -> 'StoredLogDataType':
+                 default: LogDataType | None) -> StoredLogDataType:
     if key in self:
       return self[key]
     self[key] = default
@@ -457,11 +452,11 @@ class StepPresentation:
     return self._step_text
 
   @step_text.setter
-  def step_text(self, val: str | collections.abc.Sequence[str] | None) -> None:
+  def step_text(self, val: str | Sequence[str] | None) -> None:
     assert not self._finalized, 'Changing finalized step %r' % self._name
     # str objects match collections.abc.Sequence, but items from a str are all
     # strs so this still works.
-    if isinstance(val, collections.abc.Sequence):
+    if isinstance(val, Sequence):
       assert all(isinstance(x, str) for x in val)
     else:
       assert val is None
@@ -473,11 +468,11 @@ class StepPresentation:
 
   @step_summary_text.setter
   def step_summary_text(
-      self, val: str | collections.abc.Sequence[str] | None) -> None:
+      self, val: str | Sequence[str] | None) -> None:
     assert not self._finalized, 'Changing finalized step %r' % self._name
     # str objects match collections.abc.Sequence, but items from a str are all
     # strs so this still works.
-    if isinstance(val, collections.abc.Sequence):
+    if isinstance(val, Sequence):
       assert all(isinstance(x, str) for x in val)
     else:
       assert val is None
@@ -509,10 +504,10 @@ class StepPresentation:
 
   @properties.setter
   def properties(
-      self, val: collections.abc.Mapping[str, Any]
+      self, val: Mapping[str, Any]
   ) -> None:  # pylint: disable=E0202
     assert not self._finalized, 'Changing finalized step %r' % self._name
-    assert isinstance(val, collections.abc.Mapping)
+    assert isinstance(val, Mapping)
     self._properties = dict(val)
 
   def finalize(self, step_stream: Any) -> None:
@@ -527,15 +522,15 @@ class StepPresentation:
     if self.step_summary_text:
       step_stream.add_step_summary_text(self.step_summary_text)
     # late proto import
-    from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
+    from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb
     for name, log in logs.items():
-      if isinstance(log, common_pb2.Log):
+      if isinstance(log, common_pb.Log):
         step_stream.append_log(log)
       else:
         with step_stream.new_log_stream(name) as log_stream:
           if isinstance(log, (str, bytes)):
             self.write_data(log_stream, log)
-          elif isinstance(log, collections.abc.Iterable):
+          elif isinstance(log, Iterable):
             for line in log:
               self.write_data(log_stream, line)
           else:
@@ -592,10 +587,10 @@ class ResourceCost:
 
   See `api.step.ResourceCost` for full documentation.
   """
-  cpu: int = attr.ib(validator=attr_type(int), default=500)
-  memory: int = attr.ib(validator=attr_type(int), default=50)
-  disk: int = attr.ib(validator=attr_type(int), default=0)
-  net: int = attr.ib(validator=attr_type(int), default=0)
+  cpu: int = attr.ib(validator=attr_util.attr_type(int), default=500)
+  memory: int = attr.ib(validator=attr_util.attr_type(int), default=50)
+  disk: int = attr.ib(validator=attr_util.attr_type(int), default=0)
+  net: int = attr.ib(validator=attr_util.attr_type(int), default=0)
 
   @classmethod
   def zero(cls) -> ResourceCost:
@@ -638,7 +633,7 @@ class ResourceCost:
     )
 
 
-class PerGreenletState(local):
+class PerGreenletState(gevent.local.local):
   """Subclass from PerGreenletState to get an object whose state is tied to the
   current greenlet.
 

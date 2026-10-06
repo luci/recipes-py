@@ -1,24 +1,28 @@
 # Copyright 2023 The LUCI Authors
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
-"""Provides utility functions for the engine to enable remote python debuggers."""
+"""Provides utility functions for the engine to enable remote python
+debuggers.
+"""
 
 from __future__ import annotations
 
 import os
-import sys
 import pdb
+import sys
+import types
+from typing import Any
 
 _DEBUGGER_ENVVAR = 'RECIPE_DEBUGGER'
 _DEBUG_ALL_ENVVAR = 'RECIPE_DEBUG_ALL'
 
-_PDB = None
+_PDB: pdb.Pdb | None = None
 
-PROTOCOL = None
+PROTOCOL: str | None = None
 IMPLICIT_BREAKPOINTS = False
 
 
-def should_set_implicit_breakpoints():
+def should_set_implicit_breakpoints() -> bool:
   """Returns True if the engine should set implicit breakpoints.
 
   This only applies to the 'debug' command when using PDB.
@@ -26,7 +30,11 @@ def should_set_implicit_breakpoints():
   return _PDB is not None and IMPLICIT_BREAKPOINTS
 
 
-def set_implicit_pdb_breakpoint(filename, lineno, funcname=None):
+def set_implicit_pdb_breakpoint(
+    filename: str,
+    lineno: int,
+    funcname: str | None = None,
+) -> None:
   """
   Sets an implicit breakpoint with pdb, if pdb debugging and implicit
   breakpoints are enabled.
@@ -34,6 +42,7 @@ def set_implicit_pdb_breakpoint(filename, lineno, funcname=None):
   if not should_set_implicit_breakpoints():
     return
 
+  assert _PDB is not None
   _PDB.set_break(_PDB.canonic(filename), lineno, funcname=funcname)
 
 
@@ -78,7 +87,8 @@ def parse_remote_debugger() -> (
     proto_data.append('')
   elif len(proto_data) != 2:
     sys.exit(
-        f'${_DEBUGGER_ENVVAR} must be protocol[://host[:port]] - got {debugger!r}'
+        f'${_DEBUGGER_ENVVAR} must be protocol[://host[:port]] - got '
+        f'{debugger!r}'
     )
 
   protocol = proto_data[0]
@@ -103,7 +113,7 @@ def parse_remote_debugger() -> (
   return protocol, host, port
 
 
-def engage_debugger():
+def engage_debugger() -> None:
   """Connects to a remote debugger, if one is configured in the environment.
 
   If the RECIPE_DEBUGGER envvar is set, expects it to look like:
@@ -134,7 +144,11 @@ def engage_debugger():
     global _PDB  # pylint: disable=global-statement
     debugger = pdb.Pdb()
 
-    def dispatch_thunk(frame, event, arg):
+    def dispatch_thunk(
+        frame: types.FrameType,
+        event: str,
+        arg: Any,
+    ) -> None:
       """Triggers 'continue' command when debugger starts."""
       debugger.trace_dispatch(frame, event, arg)
       debugger.set_continue()
