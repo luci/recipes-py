@@ -4,11 +4,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping, Sequence
 import copy
 
-from ..fetch import CommitMetadata
+from recipe_engine import engine_types
 
-from recipe_engine.engine_types import freeze
+from .. import fetch
+from .. import simple_cfg
 
 
 class UnknownCommit(KeyError):
@@ -26,21 +28,26 @@ class CommitList:
   purposes of generating a changelist.
   """
 
-  def __init__(self, url, branch, commit_list):
+  def __init__(
+      self,
+      url: str,
+      branch: str,
+      commit_list: Sequence[fetch.CommitMetadata],
+  ) -> None:
     """
     Args:
       commit_list (list(CommitMetadata)) - The list of CommitMetadata objects to
       use.
     """
     assert commit_list, 'commit_list is empty'
-    assert all(isinstance(c, CommitMetadata) for c in commit_list)
+    assert all(isinstance(c, fetch.CommitMetadata) for c in commit_list)
 
     # This maps from commit hash -> index in _commits.
-    rev_idx = {}
+    rev_idx: dict[str, int] = {}
     # This maps dep_repo_name -> dep_commit -> set(idxs)
-    dep_idx = {}
+    dep_idx: dict[str, dict[str | None, set[int]]] = {}
 
-    revs_for_dep = {}
+    revs_for_dep: dict[str, set[int]] = {}
     for i, c in enumerate(commit_list):
       rev_idx[c.revision] = i
 
@@ -58,14 +65,18 @@ class CommitList:
     self.url = url
     self.branch = branch
     self._commits = tuple(commit_list)
-    self._rev_idx = freeze(rev_idx)
-    self._dep_idx = freeze(dep_idx)
+    self._rev_idx = engine_types.freeze(rev_idx)
+    self._dep_idx = engine_types.freeze(dep_idx)
 
-  def __len__(self):
+  def __len__(self) -> int:
     return len(self._commits)
 
   @classmethod
-  def from_backend(cls, dep, git_backend):
+  def from_backend(
+      cls,
+      dep: simple_cfg.SimpleRecipeDep,
+      git_backend: fetch.GitBackend,
+  ) -> CommitList:
     """Returns a CommitList given the main repo's recipes.cfg and the repo
     itself.
 
@@ -86,12 +97,12 @@ class CommitList:
 
   class _Cursor:
 
-    def __init__(self, commit_list):
+    def __init__(self, commit_list: CommitList) -> None:
       self._commit_list = commit_list
       self._cur_idx = 0
 
     @property
-    def current(self):
+    def current(self) -> fetch.CommitMetadata | None:
       """Gets the current CommitMetadata.
 
       Returns CommitMetadata or None if there is no current commit.
@@ -101,7 +112,7 @@ class CommitList:
       return self._commit_list._commits[self._cur_idx]
 
     @property
-    def next_roll_candidate(self):
+    def next_roll_candidate(self) -> fetch.CommitMetadata | None:
       """Gets the next CommitMetadata with roll_candidate==True
       without advancing the current index.
 
@@ -114,7 +125,7 @@ class CommitList:
           return commit
       return None
 
-    def advance_to(self, revision):
+    def advance_to(self, revision: str) -> None:
       """Advances the current position to == revision.
 
       Args:
@@ -132,12 +143,12 @@ class CommitList:
         raise BackwardsRoll(revision)
       self._cur_idx = idx
 
-  def cursor(self):
+  def cursor(self) -> _Cursor:
     """Returns a cursor for maintaining a position within the commits.
     """
     return self._Cursor(self)
 
-  def dist(self, revision1, revision2=None):
+  def dist(self, revision1: str, revision2: str | None = None) -> int | None:
     """Compute the distance to a revision.
 
     The function can be called with one or two revisions. If called with
@@ -172,13 +183,13 @@ class CommitList:
       return None
     return dist
 
-  def _idx_of(self, revision):
+  def _idx_of(self, revision: str) -> int:
     idx = self._rev_idx.get(revision)
     if idx is None:
       raise UnknownCommit(revision)
     return idx
 
-  def lookup(self, revision):
+  def lookup(self, revision: str) -> fetch.CommitMetadata:
     """Finds a CommitMetadata given its commit id.
 
     Returns: CommitMetadata
@@ -187,7 +198,11 @@ class CommitList:
     """
     return self._commits[self._idx_of(revision)]
 
-  def _compatible_indexes(self, config, limited_to=None):
+  def _compatible_indexes(
+      self,
+      config: Mapping[str, str],
+      limited_to: Iterable[int] | None = None,
+  ) -> set[int]:
     """Finds the indexes of commits that are compatible with the config.
 
     Args:
@@ -219,7 +234,7 @@ class CommitList:
 
     return compatible_indexes
 
-  def is_compatible(self, revision, config):
+  def is_compatible(self, revision: str, config: Mapping[str, str]) -> bool:
     """Returns whether or not a revision is compatible with the config.
 
     Args:
@@ -235,7 +250,9 @@ class CommitList:
                                                   [self._idx_of(revision)])
     return bool(compatible_indexes)
 
-  def compatible_commits(self, config):
+  def compatible_commits(
+      self, config: Mapping[str, str]
+  ) -> list[fetch.CommitMetadata]:
     """Returns the revisions that are compatible with the config.
 
     Args:
@@ -248,7 +265,7 @@ class CommitList:
     """
     return [self._commits[i] for i in self._compatible_indexes(config)]
 
-  def changelist(self, revision):
+  def changelist(self, revision: str) -> list[fetch.CommitMetadata]:
     """Returns a list of all CommitMetadata from the beginning of this
     CommitList up to and including the provided revision.
 

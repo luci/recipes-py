@@ -9,9 +9,13 @@ import json
 import sys
 
 import test_env
+import fake_recipe_deps
+
 
 class ManualRollSmokeTest(test_env.RecipeEngineUnitTest):
-  def run_roll(self, deps, should_fail=False):
+  def run_roll(
+      self, deps: fake_recipe_deps.FakeRecipeDeps, should_fail: bool = False
+  ) -> str:
     """Runs the autoroll command and returns JSON.
     Does not commit the resulting roll.
     """
@@ -23,7 +27,7 @@ class ManualRollSmokeTest(test_env.RecipeEngineUnitTest):
           retcode, expected_retcode, output))
     return output
 
-  def test_empty(self):
+  def test_empty(self) -> None:
     """No rolls are available."""
     deps = self.FakeRecipeDeps()
     upstream = deps.add_repo('upstream')
@@ -34,7 +38,7 @@ class ManualRollSmokeTest(test_env.RecipeEngineUnitTest):
         'No roll found',
         self.run_roll(deps, should_fail=True))
 
-  def test_single(self):
+  def test_single(self) -> None:
     deps = self.FakeRecipeDeps()
     upstream = deps.add_repo('upstream')
     deps.main_repo.add_dep('upstream')
@@ -51,7 +55,7 @@ class ManualRollSmokeTest(test_env.RecipeEngineUnitTest):
         deps.main_repo.recipes_cfg_pb2.deps['upstream'].revision,
         up_commit.revision)
 
-  def test_multi(self):
+  def test_multi(self) -> None:
     deps = self.FakeRecipeDeps()
     upstream = deps.add_repo('upstream')
     deps.main_repo.add_dep('upstream')

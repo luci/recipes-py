@@ -4,7 +4,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 import copy
+from typing import Any
+
+from .. import fetch
+from . import commit_list
 
 
 # TODO(iannucci): This value is split with the autoroller recipe which lives in
@@ -27,7 +32,7 @@ class RollCandidate:
   representing a potential autoroll candidate.
   """
 
-  def __init__(self, repo_spec):
+  def __init__(self, repo_spec: Any) -> None:
     """
     Args:
       repo_spec (recipes_cfg_pb2.RepoSpec) - Read-only RepoSpec message, will be
@@ -35,7 +40,9 @@ class RollCandidate:
     """
     self.repo_spec = copy.deepcopy(repo_spec)
 
-  def changelist(self, repos):
+  def changelist(
+      self, repos: Mapping[str, commit_list.CommitList]
+  ) -> dict[str, list[fetch.CommitMetadata]]:
     """Returns changelist for this RollCandidate.
 
     This will return all CommitMetadata in every repo that was rolled by this

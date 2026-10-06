@@ -9,9 +9,11 @@ from __future__ import annotations
 # TODO(iannucci): Add a real docstring.
 
 import argparse
+from collections.abc import Callable
+from typing import NoReturn
 
 
-def add_arguments(parser):
+def add_arguments(parser: argparse.ArgumentParser) -> None:
   parser.add_argument(
       '--output-json',
       type=argparse.FileType('w', encoding='utf-8'),
@@ -23,10 +25,13 @@ def add_arguments(parser):
         'Emit even more data in the output-json file. Requires --output-json.'
       ))
 
-  def _launch(args):
-    from .cmd import main
-    return main(args)
-  def _postprocess_func(error, args):
+  def _launch(args: argparse.Namespace) -> int:
+    from . import cmd
+    return cmd.main(args)
+
+  def _postprocess_func(
+      error: Callable[[str], NoReturn], args: argparse.Namespace
+  ) -> None:
     if args.verbose_json and not args.output_json:
       error('--verbose-json passed without --output-json')
 

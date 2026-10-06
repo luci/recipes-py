@@ -11,18 +11,18 @@ Exits 1 if no roll is found.
 
 from __future__ import annotations
 
+import argparse
 import sys
 
-from .autoroll.cmd import write_global_files_to_main_repo
+from ..autoroll_impl import candidate_algorithm
+from .autoroll import cmd
 
-from ..autoroll_impl.candidate_algorithm import get_roll_candidates
 
-
-def add_arguments(parser):
+def add_arguments(parser: argparse.ArgumentParser) -> None:
   parser.set_defaults(func=main, minimal_recipe_deps=True)
 
 
-def main(args):
+def main(args: argparse.Namespace) -> int:
   original_spec = args.recipe_deps.main_repo.recipes_cfg_pb2
 
   # Fetch all remote changes locally, so we can compute metadata for them.
@@ -31,7 +31,8 @@ def main(args):
       continue
     repo.backend.fetch(original_spec.deps[repo.name].branch)
 
-  candidates, rejected, repos = get_roll_candidates(args.recipe_deps)
+  candidates, rejected, repos = candidate_algorithm.get_roll_candidates(
+      args.recipe_deps)
 
   if not candidates:
     print(
@@ -55,6 +56,6 @@ def main(args):
         commit.revision, commit.message_lines[0], commit.author_email
       ))
 
-  write_global_files_to_main_repo(args.recipe_deps, candidate.repo_spec)
+  cmd.write_global_files_to_main_repo(args.recipe_deps, candidate.repo_spec)
 
   return 0

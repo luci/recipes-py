@@ -4,23 +4,32 @@
 
 from __future__ import annotations
 
-import collections
-import collections.abc
+from collections.abc import (
+    Callable,
+    Generator,
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    Set,
+)
 import functools
 import logging
 import os
 import sys
 import time
+from typing import Any
 
-from ..fetch import GitBackend
-
-from .commit_list import CommitList
-from .roll_candidate import RollCandidate
+from .. import fetch
+from .. import recipe_deps as recipe_deps_module
+from .. import simple_cfg
+from . import commit_list
+from . import roll_candidate
 
 LOGGER = logging.getLogger(__name__)
 
 
-class _Config(collections.abc.Mapping):
+class _Config(Mapping[str, str]):
   """An immutable mapping type storing the revisions to pin repos to.
 
   Instances are hashable and in contrast to FrozenDict, the equality
@@ -29,29 +38,29 @@ class _Config(collections.abc.Mapping):
   Instances do not necessarily represent a complete config.
   """
 
-  def __init__(self, revisions_by_repo):
+  def __init__(self, revisions_by_repo: Mapping[str, str]) -> None:
     self._revisions_by_repo = dict(revisions_by_repo)
     # Calculate the hash immediately so that we know all the items are
     # hashable too.
     self._hash = hash(tuple(sorted(self._revisions_by_repo.items())))
 
-  def __hash__(self):
+  def __hash__(self) -> int:
     return self._hash
 
-  def __getitem__(self, key):
+  def __getitem__(self, key: str) -> str:
     return self._revisions_by_repo[key]
 
-  def __iter__(self):
+  def __iter__(self) -> Iterator[str]:
     return iter(self._revisions_by_repo)
 
-  def __len__(self):
+  def __len__(self) -> int:
     return len(self._revisions_by_repo)
 
-  def __str__(self):
+  def __str__(self) -> str:
     return '{}({})'.format(type(self).__name__, self._revisions_by_repo)
 
 
-def memoize(f):
+def memoize(f: Callable[..., Any]) -> Callable[..., Any]:
   """Decorator that can be applied to a method to memoize the results.
 
   Args:
@@ -65,10 +74,10 @@ def memoize(f):
     set of input arguments.
   """
 
-  cache = {}
+  cache: dict[tuple[Any, ...], Any] = {}
 
   @functools.wraps(f)
-  def cached(self, *args):
+  def cached(self: Any, *args: Any) -> Any:
     if args in cache:
       return cache[args]
     ret = f(self, *args)
@@ -80,12 +89,20 @@ def memoize(f):
 
 class _ConfigFinder:
 
-  def __init__(self, commit_lists_by_repo, new_repo_commit_list_getter):
+  def __init__(
+      self,
+      commit_lists_by_repo: Mapping[str, commit_list.CommitList],
+      new_repo_commit_list_getter: Callable[
+          [str, simple_cfg.SimpleRecipeDep], commit_list.CommitList
+      ],
+  ) -> None:
     self._commit_lists_by_repo = commit_lists_by_repo
     self._new_repo_commit_list_getter = new_repo_commit_list_getter
 
   @memoize
-  def find_configs(self, repo, revision, repos_to_pin):
+  def find_configs(
+      self, repo: str, revision: str, repos_to_pin: Iterable[str]
+  ) -> set[_Config]:
     """Find configs for candidate commits.
 
     Args:
@@ -103,9 +120,9 @@ class _ConfigFinder:
       guaranteed to be consistent but may roll some repos backwards.
     """
     commit = self._commit_lists_by_repo[repo].lookup(revision)
-    config = {}
+    config: dict[str, str] = {}
     repos_to_pin = set(repos_to_pin)
-    configs = set()
+    configs: set[_Config] = set()
     if self._pin(config, repo, commit, repos_to_pin):
       configs.update(
           self._find_configs_impl(_Config(config), frozenset(repos_to_pin)))
@@ -122,13 +139,15 @@ class _ConfigFinder:
   # the implementation not use cursors into the commit lists as that would
   # invalidate results when the cursors are advanced.
   @memoize
-  def _find_configs_impl(self, config, repos_to_pin):
+  def _find_configs_impl(
+      self, config: _Config, repos_to_pin: frozenset[str]
+  ) -> set[_Config] | list[_Config]:
     if not repos_to_pin:
       return [config]
 
     repo = next(iter(repos_to_pin))
 
-    configs = set()
+    configs: set[_Config] = set()
     for commit in self._commit_lists_by_repo[repo].compatible_commits(config):
       pinned = dict(config)
       to_pin = set(repos_to_pin)
@@ -138,7 +157,13 @@ class _ConfigFinder:
 
     return configs
 
-  def _pin(self, config, repo, commit, repos_to_pin):
+  def _pin(
+      self,
+      config: MutableMapping[str, str],
+      repo: str,
+      commit: fetch.CommitMetadata,
+      repos_to_pin: set[str],
+  ) -> bool:
     config[repo] = commit.revision
     new_pins_by_repo = {}
     for dep_repo, dep in commit.spec.deps.items():
@@ -158,7 +183,12 @@ class _ConfigFinder:
     return True
 
 
-def _score(commit_lists_by_repo, config, current_config, top_level_repos):
+def _score(
+    commit_lists_by_repo: Mapping[str, commit_list.CommitList],
+    config: Mapping[str, str],
+    current_config: Mapping[str, str],
+    top_level_repos: Set[str],
+) -> tuple[int, int, int, int]:
   backwards_rolls = 0
   new_deps = 0
   movement = 0
@@ -168,7 +198,7 @@ def _score(commit_lists_by_repo, config, current_config, top_level_repos):
     clist = commit_lists_by_repo[repo]
     if repo not in current_config:
       new_deps += 1
-      movement += clist.dist(revision)
+      movement += clist.dist(revision) or 0
     else:
       dist = clist.dist(current_config[repo], revision)
       # If it's moving backwards, it doesn't matter how far, just increment the
@@ -187,18 +217,21 @@ def _score(commit_lists_by_repo, config, current_config, top_level_repos):
 
 class _CandidateCallback:
 
-  def __init__(self):
+  def __init__(self) -> None:
     self._accepted = False
 
   @property
-  def accepted(self):
+  def accepted(self) -> bool:
     return self._accepted
 
-  def accept(self):
+  def accept(self) -> None:
     self._accepted = True
 
 
-def _get_roll_candidates_impl(recipe_deps, commit_lists_by_repo):
+def _get_roll_candidates_impl(
+    recipe_deps: recipe_deps_module.RecipeDeps,
+    commit_lists_by_repo: MutableMapping[str, commit_list.CommitList],
+) -> Generator[tuple[_Config, _Config], bool | None, None]:
   """Generator for configs to try rolling.
 
   All yielded configs will be consistent; configs are produced by
@@ -249,10 +282,12 @@ def _get_roll_candidates_impl(recipe_deps, commit_lists_by_repo):
 
   # Cache of backends for new repos, the backend caches resolved refspecs, so
   # this will prevent repeated network traffic for the same repo
-  new_backends_by_repo = {}
+  new_backends_by_repo: dict[str, fetch.GitBackend] = {}
 
   # Local function so that it can use the value of current_config
-  def get_new_repo_commit_list(repo, dep):
+  def get_new_repo_commit_list(
+      repo: str, dep: simple_cfg.SimpleRecipeDep
+  ) -> commit_list.CommitList:
     # Once a repo is incorporated into the current config, we will no
     # longer re-fetch it
     assert repo not in current_config, '{} is in current config: {}'.format(
@@ -261,7 +296,7 @@ def _get_roll_candidates_impl(recipe_deps, commit_lists_by_repo):
       clist = commit_lists_by_repo[repo]
       try:
         clist.lookup(dep.revision)
-      except:
+      except Exception:
         pass
       else:
         return clist
@@ -272,10 +307,10 @@ def _get_roll_candidates_impl(recipe_deps, commit_lists_by_repo):
       # abstraction leak, but adding this to RecipeDeps just for autoroller
       # seemed like a worse alternative.
       dep_path = os.path.join(recipe_deps.recipe_deps_path, repo)
-      backend = GitBackend(dep_path, dep.url)
+      backend = fetch.GitBackend(dep_path, dep.url)
       backend.checkout(dep.branch, dep.revision)
 
-    clist = CommitList.from_backend(dep, backend)
+    clist = commit_list.CommitList.from_backend(dep, backend)
     commit_lists_by_repo[repo] = clist
     return clist
 
@@ -293,23 +328,25 @@ def _get_roll_candidates_impl(recipe_deps, commit_lists_by_repo):
   current_config = _Config({
       repo: cursor.current.revision
       for repo, cursor in cursors_by_repo.items()
+      if cursor.current is not None
   })
-  top_level_repos = None
+  top_level_repos: frozenset[str] | None = None
   yielded_configs = set([current_config])
 
   while True:
     if top_level_repos is None:
-      top_level_repos = set(current_config)
+      mutable_top_level = set(current_config)
       for repo, revision in current_config.items():
         commit = commit_lists_by_repo[repo].lookup(revision)
-        top_level_repos.difference_update(commit.spec.deps)
-      top_level_repos = frozenset(top_level_repos)
+        mutable_top_level.difference_update(commit.spec.deps)
+      top_level_repos = frozenset(mutable_top_level)
 
-    candidate_configs = set()
+    candidate_configs: set[_Config] | list[_Config] = set()
     for repo, cursor in cursors_by_repo.items():
       if repo not in top_level_repos:
         continue
       commit = cursor.current
+      assert commit is not None
       candidate_configs.update(
           config_finder.find_configs(repo, commit.revision, current_config))
     candidate_configs.difference_update(yielded_configs)
@@ -325,6 +362,8 @@ def _get_roll_candidates_impl(recipe_deps, commit_lists_by_repo):
     key_fn = (lambda c: _score(commit_lists_by_repo, c, current_config,
                                top_level_repos))
     candidate_configs = sorted(candidate_configs, key=key_fn)
+
+    new_revisions: dict[str, str] = {}
 
     for candidate_config in candidate_configs:
       yielded_configs.add(candidate_config)
@@ -359,7 +398,9 @@ def _get_roll_candidates_impl(recipe_deps, commit_lists_by_repo):
       cursor.advance_to(revision)
 
 
-def _report_commit_counts(commit_lists_by_repo):
+def _report_commit_counts(
+    commit_lists_by_repo: Mapping[str, commit_list.CommitList],
+) -> None:
   commits_to_consider = {
       r: len(commits) - 1
       for r, commits in commit_lists_by_repo.items()
@@ -374,8 +415,11 @@ def _report_commit_counts(commit_lists_by_repo):
   sys.stdout.flush()
 
 
-def _describe_candidate_config(current_config, candidate_config,
-                               commit_lists_by_repo):
+def _describe_candidate_config(
+    current_config: Mapping[str, str],
+    candidate_config: Mapping[str, str],
+    commit_lists_by_repo: Mapping[str, commit_list.CommitList],
+) -> str:
   config_description = []
   for repo, revision in candidate_config.items():
     if repo not in current_config:
@@ -395,7 +439,13 @@ def _describe_candidate_config(current_config, candidate_config,
   return '\n'.join(config_description)
 
 
-def get_roll_candidates(recipe_deps):
+def get_roll_candidates(
+    recipe_deps: recipe_deps_module.RecipeDeps,
+) -> tuple[
+    list[roll_candidate.RollCandidate],
+    list[roll_candidate.RollCandidate],
+    dict[str, commit_list.CommitList],
+]:
   """Returns a list of RollCandidate objects.
 
   Prints diagnostic information to stderr.
@@ -418,16 +468,17 @@ def get_roll_candidates(recipe_deps):
 
   print('finding roll candidates... ', file=sys.stderr)
   commit_lists_by_repo = {
-      repo_name:
-      CommitList.from_backend(recipe_deps.main_repo.simple_cfg.deps[repo_name],
-                              repo.backend)
+      repo_name: commit_list.CommitList.from_backend(
+          recipe_deps.main_repo.simple_cfg.deps[repo_name],
+          repo.backend,  # type: ignore[arg-type]
+      )
       for repo_name, repo in recipe_deps.repos.items()
       if repo_name != recipe_deps.main_repo_id
   }
 
   _report_commit_counts(commit_lists_by_repo)
 
-  current_pb = recipe_deps.main_repo.recipes_cfg_pb2
+  current_pb: Any = recipe_deps.main_repo.recipes_cfg_pb2
 
   good_candidates = []
   bad_candidates = []
@@ -470,10 +521,10 @@ def get_roll_candidates(recipe_deps):
         break
     if backwards_roll:
       LOGGER.info('rejecting config #%s due to backwards roll', i)
-      bad_candidates.append(RollCandidate(current_pb))
+      bad_candidates.append(roll_candidate.RollCandidate(current_pb))
     else:
       LOGGER.info('config #%s accepted', i)
-      good_candidates.append(RollCandidate(current_pb))
+      good_candidates.append(roll_candidate.RollCandidate(current_pb))
       # Signal that the config is accepted so that the _impl function will start
       # a new round using this config as the current config
       accepted = True

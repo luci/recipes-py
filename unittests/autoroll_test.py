@@ -7,13 +7,17 @@ from __future__ import annotations
 
 import json
 import sys
+from typing import Any
 
 from google.protobuf import json_format as jsonpb
 
 import test_env
+import fake_recipe_deps
 
 
-def add_repo_with_basic_upstream_dependency(deps):
+def add_repo_with_basic_upstream_dependency(
+    deps: fake_recipe_deps.FakeRecipeDeps,
+) -> None:
   """Does:
 
   Create `upstream` repo with `up_mod` module, containing a single method
@@ -48,7 +52,9 @@ def add_repo_with_basic_upstream_dependency(deps):
 
 
 class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
-  def run_roll(self, deps, *args):
+  def run_roll(
+      self, deps: fake_recipe_deps.FakeRecipeDeps, *args: str
+  ) -> dict[str, Any]:
     """Runs the autoroll command and returns JSON.
     Does not commit the resulting roll.
     """
@@ -63,7 +69,7 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
     with open(outfile) as fil:
       return json.load(fil)
 
-  def test_empty(self):
+  def test_empty(self) -> None:
     """Tests the scenario where there are no roll candidates."""
     deps = self.FakeRecipeDeps()
 
@@ -72,7 +78,7 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
     self.assertEqual([], roll_result['roll_details'])
     self.assertEqual([], roll_result['rejected_candidate_specs'])
 
-  def test_trivial(self):
+  def test_trivial(self) -> None:
     """Tests the simplest trivial (i.e. no expectation changes) roll scenario.
     """
     # prep
@@ -107,7 +113,7 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
     self.assertEqual(
         0, roll_result['picked_roll_details']['recipes_simulation_test']['rc'])
 
-  def test_nontrivial(self):
+  def test_nontrivial(self) -> None:
     """Tests the simplest nontrivial (i.e. expectation changes) roll scenario.
     """
     deps = self.FakeRecipeDeps()
@@ -151,7 +157,7 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
     self.assertEqual(
         0, picked_roll['recipes_simulation_test_train']['rc'])
 
-  def test_failure(self):
+  def test_failure(self) -> None:
     """Tests the simplest scenario where an automated roll is not possible
     because of incompatible API changes.
     """
@@ -171,7 +177,7 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
     roll_result = self.run_roll(deps)
     self.assertFalse(roll_result['success'])
 
-  def test_jump_over_failure(self):
+  def test_jump_over_failure(self) -> None:
     """Tests whether the roller considers pulling more commits to make
     the roll succeed, when earlier ones have incompatible API changes
     fixed later.
@@ -224,7 +230,7 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
     self.assertEqual(
         0, picked_roll['recipes_simulation_test_train']['rc'])
 
-  def test_pick_smallest_nontrivial_roll(self):
+  def test_pick_smallest_nontrivial_roll(self) -> None:
     """Test that with several nontrivial rolls possible, the minimal one
     is picked.
     """
@@ -285,7 +291,7 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
     self.assertEqual(
         0, picked_roll['recipes_simulation_test_train']['rc'])
 
-  def test_pick_largest_trivial_roll(self):
+  def test_pick_largest_trivial_roll(self) -> None:
     """Test that with several trivial rolls possible, the largest one is picked.
     This helps avoid noise with several rolls where one is sufficient,
     with no expectation changes.
@@ -355,7 +361,7 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
     self.assertEqual(
         0, picked_roll['recipes_simulation_test']['rc'])
 
-  def test_find_minimal_candidate(self):
+  def test_find_minimal_candidate(self) -> None:
     """Tests that the roller can automatically find a viable minimal
     roll candidate, in a scenario where previous roll algorithm
     was getting stuck.
@@ -431,7 +437,7 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
     self.assertEqual(
         0, picked_roll['recipes_simulation_test']['rc'])
 
-  def test_no_backwards_roll(self):
+  def test_no_backwards_roll(self) -> None:
     """Tests that we never roll backwards."""
     deps = self.FakeRecipeDeps()
     upstream = deps.add_repo('upstream')
@@ -465,7 +471,7 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
     self.assertTrue(roll_result['success'])
     self.assertEqual([], roll_result['roll_details'])
 
-  def test_inconsistent_errors(self):
+  def test_inconsistent_errors(self) -> None:
     deps = self.FakeRecipeDeps()
     upstream = deps.add_repo('upstream')
     upstream_deeper = deps.add_repo('upstream_deeper')
@@ -500,7 +506,7 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
     self.assertEqual([], roll_result['roll_details'])
     self.assertEqual(roll_result['rejected_candidate_specs'], [])
 
-  def test_inconsistent_candidates_do_not_advance(self):
+  def test_inconsistent_candidates_do_not_advance(self) -> None:
     deps = self.FakeRecipeDeps()
     upstream = deps.add_repo('upstream')
     upstream_deeper = deps.add_repo('upstream_deeper')
@@ -556,7 +562,7 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
                      picked_roll['commit_infos'])
     self.assertEqual(expected_picked_roll['spec'], picked_roll['spec'])
 
-  def non_candidate_commits_are_not_considered(self):
+  def non_candidate_commits_are_not_considered(self) -> None:
     deps = self.FakeRecipeDeps()
     upstream = deps.add_repo('upstream')
 
@@ -600,7 +606,7 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
     self.assertEqual(expected_picked_roll['spec'], picked_roll['spec'])
     self.assertEqual(len(roll_result['roll_details']), 1)
 
-  def test_roll_fixes_inconsistent_deeper_deps(self):
+  def test_roll_fixes_inconsistent_deeper_deps(self) -> None:
     deps = self.FakeRecipeDeps()
     upstream = deps.add_repo('upstream')
     upstream_deeper = deps.add_repo('upstream_deeper')
@@ -660,7 +666,7 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
     self.assertEqual(expected_picked_roll['spec'], picked_roll['spec'])
     self.assertEqual(len(roll_result['roll_details']), 1)
 
-  def test_roll_adds_dependency(self):
+  def test_roll_adds_dependency(self) -> None:
     deps = self.FakeRecipeDeps()
     upstream = deps.add_repo('upstream')
     other = deps.add_repo('other')
@@ -687,7 +693,7 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
     spec.deps['other'].CopyFrom(upstream.recipes_cfg_pb2.deps['other'])
     self.assertEqual(spec, deps.main_repo.recipes_cfg_pb2)
 
-  def test_roll_diamond_deps(self):
+  def test_roll_diamond_deps(self) -> None:
     deps = self.FakeRecipeDeps()
     upstream_a = deps.add_repo('upstream_a')
     upstream_b = deps.add_repo('upstream_b')

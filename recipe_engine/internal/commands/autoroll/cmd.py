@@ -4,17 +4,23 @@
 
 from __future__ import annotations
 
+import argparse
+from collections.abc import Mapping
 import json
 import logging
 import os
 import sys
+from typing import Any
 
 from gevent import subprocess
-
 from google.protobuf import json_format as jsonpb
+from google.protobuf import message
 
+from ... import recipe_deps as recipe_deps_module
 from ... import simple_cfg
-from ...autoroll_impl.candidate_algorithm import get_roll_candidates
+from ...autoroll_impl import candidate_algorithm
+from ...autoroll_impl import commit_list
+from ...autoroll_impl import roll_candidate
 
 
 LOGGER = logging.getLogger(__name__)
@@ -24,7 +30,7 @@ VPYTHON3 = 'vpython3' + ('.bat' if IS_WIN else '')
 GIT = 'git' + ('.bat' if IS_WIN else '')
 
 
-def _toPBDict(spec):
+def _toPBDict(spec: message.Message) -> dict[str, Any]:
   ret = jsonpb.MessageToDict(spec, preserving_proto_field_name=True)
   # HACK: For recipe specs we want to convert py3_only &&
   # require_py3_compatibility to just py3_only (and, hopefully soon, we can
@@ -34,7 +40,9 @@ def _toPBDict(spec):
   return ret
 
 
-def write_global_files_to_main_repo(recipe_deps, spec):
+def write_global_files_to_main_repo(
+    recipe_deps: recipe_deps_module.RecipeDeps, spec: Any
+) -> None:
   """Writes the recipes.cfg and recipes.py scripts to the main repo on disk.
 
   This pulls `recipes.py` from the current 'recipe_engine' dep in recipe_deps.
@@ -61,13 +69,16 @@ def write_global_files_to_main_repo(recipe_deps, spec):
     cfg_file.write(out)
 
   engine = recipe_deps.repos['recipe_engine']
+  assert engine.backend is not None
   recipes_py_path = os.path.join(main_repo.recipes_root_path, 'recipes.py')
   with open(recipes_py_path, 'w') as recipes_py:
     recipes_py.write(engine.backend.cat_file(
         spec.deps['recipe_engine'].revision, 'recipes.py'))
 
 
-def run_simulation_test(repo, *additional_args):
+def run_simulation_test(
+    repo: recipe_deps_module.RecipeRepo, *additional_args: str
+) -> tuple[int, str]:
   """Runs the recipe simulation test for given repo.
 
   Returns a tuple of exit code and output.
@@ -84,7 +95,7 @@ def run_simulation_test(repo, *additional_args):
   return retcode, output
 
 
-def regen_docs(repo):
+def regen_docs(repo: recipe_deps_module.RecipeRepo) -> None:
   """Regenerates README.recipes.md.
 
   Raises a CalledProcessError on failure.
@@ -95,7 +106,12 @@ def regen_docs(repo):
   ])
 
 
-def process_candidates(recipe_deps, candidates, repos, verbose_json):
+def process_candidates(
+    recipe_deps: recipe_deps_module.RecipeDeps,
+    candidates: list[roll_candidate.RollCandidate],
+    repos: Mapping[str, commit_list.CommitList],
+    verbose_json: bool,
+) -> tuple[bool | None, dict[str, Any] | None, list[dict[str, Any]]]:
   """This processes a list of candidates by running simulation tests to find the
   'best' roll.
 
@@ -144,7 +160,7 @@ def process_candidates(recipe_deps, candidates, repos, verbose_json):
         * output (str): The full combined stdout/stderr from the test command.
         * retcode (int): The return code of the test command.
   """
-  roll_details = []
+  roll_details: list[dict[str, Any]] = []
   trivial = None
   picked_roll_details = None
 
@@ -226,17 +242,21 @@ def process_candidates(recipe_deps, candidates, repos, verbose_json):
   return trivial, picked_roll_details, roll_details
 
 
-def test_rolls(recipe_deps, verbose_json):
-  candidates, rejected_candidates, repos = get_roll_candidates(recipe_deps)
+def test_rolls(
+    recipe_deps: recipe_deps_module.RecipeDeps, verbose_json: bool
+) -> dict[str, Any]:
+  candidates, rejected_candidates, repos = (
+      candidate_algorithm.get_roll_candidates(recipe_deps)
+  )
 
-  roll_details = []
+  roll_details: list[dict[str, Any]] = []
   picked_roll_details = None
-  trivial = True
+  trivial: bool | None = True
   if candidates:
     trivial, picked_roll_details, roll_details = process_candidates(
         recipe_deps, candidates, repos, verbose_json)
 
-  ret = {
+  ret: dict[str, Any] = {
     # it counts as success if there are no candidates at all :)
     'success': bool(not candidates or picked_roll_details),
     'trivial': trivial,
@@ -251,7 +271,7 @@ def test_rolls(recipe_deps, verbose_json):
   return ret
 
 
-def main(args):
+def main(args: argparse.Namespace) -> int:
   original_spec = args.recipe_deps.main_repo.recipes_cfg_pb2
 
   # Fetch all remote changes locally, so we can compute metadata for them.
@@ -260,7 +280,7 @@ def main(args):
       continue
     repo.backend.fetch(original_spec.deps[repo.name].branch)
 
-  results = {}
+  results: dict[str, Any] = {}
   try:
     results = test_rolls(args.recipe_deps, args.verbose_json)
   finally:
