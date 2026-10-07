@@ -7,17 +7,16 @@
 from __future__ import annotations
 
 import collections
+from collections.abc import Callable, Sequence
 import re
-from typing import Any, Callable, OrderedDict
+from typing import Any
 
 import test_env
 
-from recipe_engine import post_process
-from recipe_engine.config_types import Path, ResolvedBasePath
+from recipe_engine import config_types, post_process, recipe_test_api
 from recipe_engine.internal.test import magic_check_fn
-from recipe_engine.recipe_test_api import RecipeTestApi
 
-from PB.recipe_engine.internal.test.runner import Outcome
+from PB.recipe_engine.internal.test import runner as runner_pb
 
 
 def make_step(name: str, *fields: str) -> dict[str, Any]:
@@ -43,7 +42,7 @@ def make_step(name: str, *fields: str) -> dict[str, Any]:
   return ret
 
 
-def make_step_dict(*names: str) -> OrderedDict[str, dict[str, Any]]:
+def make_step_dict(*names: str) -> collections.OrderedDict[str, dict[str, Any]]:
   """Create an OrderedDict of step dicts with given names and default fields.
 
   Args:
@@ -72,8 +71,9 @@ class PostProcessUnitTest(test_env.RecipeEngineUnitTest):
     """
     raise NotImplementedError()
 
-  def post_process(self, func: Callable, *args,
-                   **kwargs) -> tuple[Any, list[list[str]]]:
+  def post_process(
+      self, func: Callable, *args: Any, **kwargs: Any
+  ) -> tuple[Any, Sequence[runner_pb.Outcome.Results.Lines]]:
     """Run the given post_process function with self.step_dict.
 
     Args:
@@ -86,13 +86,15 @@ class PostProcessUnitTest(test_env.RecipeEngineUnitTest):
       magic_check_fn.post_process, and failures is a list of failures returned
       by the check, each represented by a list of output strings.
     """
-    test_data = RecipeTestApi(None).post_process(func, *args, **kwargs)
-    results = Outcome.Results()
+    test_data = recipe_test_api.RecipeTestApi(None).post_process(
+        func, *args, **kwargs
+    )
+    results = runner_pb.Outcome.Results()
     expectations = magic_check_fn.post_process(results, self.step_dict,
                                                test_data)
     return expectations, results.check
 
-  def expect_pass(self, func: Callable, *args, **kwargs) -> None:
+  def expect_pass(self, func: Callable, *args: Any, **kwargs: Any) -> None:
     """Assert that the given post_process func passes.
 
     The given function will be called with self.step_dict.
@@ -108,8 +110,9 @@ class PostProcessUnitTest(test_env.RecipeEngineUnitTest):
     _, failures = self.post_process(func, *args, **kwargs)
     self.assertEqual(len(failures), 0)
 
-  def expect_fails(self, num_fails: int, func: Callable, *args,
-                   **kwargs) -> list[list[str]]:
+  def expect_fails(
+      self, num_fails: int, func: Callable, *args: Any, **kwargs: Any
+  ) -> Sequence[runner_pb.Outcome.Results.Lines]:
     """Assert that the post_process func fails the expected number of times.
 
     The given function will be called with self.step_dict.
@@ -131,7 +134,9 @@ class PostProcessUnitTest(test_env.RecipeEngineUnitTest):
     self.assertEqual(len(failures), num_fails)
     return failures
 
-  def assertHas(self, failure: Outcome.Results.Lines, *text: str) -> None:
+  def assertHas(
+      self, failure: runner_pb.Outcome.Results.Lines, *text: str
+  ) -> None:
     """Assert that the given failure contains all the given strings.
 
     Args:
@@ -155,12 +160,12 @@ class TestFilter(PostProcessUnitTest):
     """Return a standard step dict for this test case."""
     return make_step_dict('a', 'b', 'b.sub', 'b.sub2')
 
-  def test_basic(self):
+  def test_basic(self) -> None:
     results, failures = self.post_process(self.f('a', 'b'))
     self.assertEqual(results, list(make_step_dict('a', 'b').values()))
     self.assertEqual(len(failures), 0)
 
-  def test_built(self):
+  def test_built(self) -> None:
     f = self.f()
     f = f.include('b')
     f = f.include('a')
@@ -168,7 +173,7 @@ class TestFilter(PostProcessUnitTest):
     self.assertEqual(results, list(make_step_dict('a', 'b').values()))
     self.assertEqual(len(failures), 0)
 
-  def test_built_fields(self):
+  def test_built_fields(self) -> None:
     f = self.f()
     f = f.include('b', ['env'])
     f = f.include('a', ['cmd'])
@@ -176,7 +181,7 @@ class TestFilter(PostProcessUnitTest):
     self.assertEqual(results, [make_step('a', 'cmd'), make_step('b', 'env')])
     self.assertEqual(len(failures), 0)
 
-  def test_built_extra_includes(self):
+  def test_built_extra_includes(self) -> None:
     f = self.f('a', 'b', 'x')
     results, failures = self.post_process(f)
     self.assertEqual(results, list(make_step_dict('a', 'b').values()))
@@ -185,13 +190,13 @@ class TestFilter(PostProcessUnitTest):
                    'check((len(unused_includes) == 0))',
                    "unused_includes: {'x': ()}")
 
-  def test_re(self):
+  def test_re(self) -> None:
     f = self.f().include_re(r'b\.')
     results, failures = self.post_process(f)
     self.assertEqual(results, list(make_step_dict('b.sub', 'b.sub2').values()))
     self.assertEqual(len(failures), 0)
 
-  def test_re_low_limit(self):
+  def test_re_low_limit(self) -> None:
     f = self.f().include_re(r'b\.', at_least=3)
     results, failures = self.post_process(f)
     self.assertEqual(results, list(make_step_dict('b.sub', 'b.sub2').values()))
@@ -200,7 +205,7 @@ class TestFilter(PostProcessUnitTest):
                    'at_least: 3', 're_usage_count[regex]: 2',
                    'regex: re.compile(\'b\\\\.\'')
 
-  def test_re_high_limit(self):
+  def test_re_high_limit(self) -> None:
     f = self.f().include_re(r'b\.', at_most=1)
     results, failures = self.post_process(f)
     self.assertEqual(results, list(make_step_dict('b.sub', 'b.sub2').values()))
@@ -218,32 +223,32 @@ class TestRun(PostProcessUnitTest):
     """Return a standard step dict for this test case."""
     return make_step_dict('a', 'b', 'b.sub', 'b.sub2')
 
-  def test_mr_pass(self):
+  def test_mr_pass(self) -> None:
     self.expect_pass(post_process.MustRun, 'a')
 
-  def test_mr_fail(self):
+  def test_mr_fail(self) -> None:
     self.expect_fails(1, post_process.MustRun, 'x')
 
-  def test_mr_pass_re(self):
+  def test_mr_pass_re(self) -> None:
     self.expect_pass(post_process.MustRunRE, 'a')
     self.expect_pass(post_process.MustRunRE, 'a', at_most=1)
     self.expect_pass(post_process.MustRunRE, 'a', at_least=1, at_most=1)
 
-  def test_mr_fail_re(self):
+  def test_mr_fail_re(self) -> None:
     self.expect_fails(1, post_process.MustRunRE, 'x')
     self.expect_fails(1, post_process.MustRunRE, 'b', at_most=1)
     self.expect_fails(1, post_process.MustRunRE, 'b', at_least=4)
 
-  def test_dnr_pass(self):
+  def test_dnr_pass(self) -> None:
     self.expect_pass(post_process.DoesNotRun, 'x')
 
-  def test_dnr_fail(self):
+  def test_dnr_fail(self) -> None:
     self.expect_fails(1, post_process.DoesNotRun, 'a')
 
-  def test_dnr_pass_re(self):
+  def test_dnr_pass_re(self) -> None:
     self.expect_pass(post_process.DoesNotRunRE, 'x')
 
-  def test_dnr_fail_re(self):
+  def test_dnr_fail_re(self) -> None:
     self.expect_fails(3, post_process.DoesNotRunRE, 'b')
 
 
@@ -421,10 +426,10 @@ class TestStepStatus(PostProcessUnitTest):
         }),
     ])
 
-  def test_step_success_pass(self):
+  def test_step_success_pass(self) -> None:
     self.expect_pass(post_process.StepSuccess, 'success-step')
 
-  def test_step_success_fail(self):
+  def test_step_success_fail(self) -> None:
     failures = self.expect_fails(1, post_process.StepSuccess, 'failure-step')
     self.assertHas(failures[0],
                    "check((step_odict[step].status == 'SUCCESS'))")
@@ -432,10 +437,10 @@ class TestStepStatus(PostProcessUnitTest):
     self.assertHas(failures[0],
                    "check((step_odict[step].status == 'SUCCESS'))")
 
-  def test_step_failure_pass(self):
+  def test_step_failure_pass(self) -> None:
     self.expect_pass(post_process.StepFailure, 'failure-step')
 
-  def test_step_failure_fail(self):
+  def test_step_failure_fail(self) -> None:
     failures = self.expect_fails(1, post_process.StepFailure, 'success-step')
     self.assertHas(failures[0],
                    "check((step_odict[step].status == 'FAILURE'))")
@@ -443,10 +448,10 @@ class TestStepStatus(PostProcessUnitTest):
     self.assertHas(failures[0],
                    "check((step_odict[step].status == 'FAILURE'))")
 
-  def test_step_exception_pass(self):
+  def test_step_exception_pass(self) -> None:
     self.expect_pass(post_process.StepException, 'exception-step')
 
-  def test_step_exception_fail(self):
+  def test_step_exception_fail(self) -> None:
     failures = self.expect_fails(1, post_process.StepException, 'success-step')
     self.assertHas(failures[0],
                    "check((step_odict[step].status == 'EXCEPTION'))")
@@ -463,26 +468,26 @@ class TestStepCommandEquals(PostProcessUnitTest):
     """Return a standard step dict for this test case."""
     return make_step_dict('my-step')
 
-  def test_pass(self):
+  def test_pass(self) -> None:
     """Assert that comparing against the exact cmd list passes."""
     self.expect_pass(post_process.StepCommandEquals, 'my-step',
                      ['thing', 'other'])
 
-  def test_too_many_args(self):
+  def test_too_many_args(self) -> None:
     """Assert that comparing against the cmd list plus extra args fails."""
     self.expect_fails(1, post_process.StepCommandEquals, 'my-step',
                       ['thing', 'other', 'foo'])
 
-  def test_too_few_args(self):
+  def test_too_few_args(self) -> None:
     """Assert that comparing against the cmd list minus some args fails."""
     self.expect_fails(1, post_process.StepCommandEquals, 'my-step', ['thing'])
 
-  def test_string_instead_of_list(self):
+  def test_string_instead_of_list(self) -> None:
     """Assert that comparing against a command string fails."""
     self.expect_fails(1, post_process.StepCommandEquals, 'my-step',
                       'thing other')
 
-  def test_regex_would_pass(self):
+  def test_regex_would_pass(self) -> None:
     """Assert that comparing against a list of cmd regexes fails."""
     self.expect_pass(post_process.StepCommandRE, 'my-step',
                      ['thing', '[other]+'])
@@ -501,11 +506,11 @@ class TestStepCommandRe(PostProcessUnitTest):
         'cmd': ['echo', 'foo', 'bar', 'baz']
     })])
 
-  def test_step_command_re_pass(self):
+  def test_step_command_re_pass(self) -> None:
     self.expect_pass(post_process.StepCommandRE, 'x',
                      ['echo', 'f.*', 'bar', '.*z'])
 
-  def test_step_command_re_fail(self):
+  def test_step_command_re_fail(self) -> None:
     failures = self.expect_fails(2, post_process.StepCommandRE, 'x',
                                  ['echo', 'fo', 'bar2', 'baz'])
     self.assertHas(failures[0],
@@ -548,43 +553,45 @@ class TestStepCommandContains(PostProcessUnitTest):
         'cmd': ['echo', 'foo', 'bar', 'baz']
     })])
 
-  def expect_fail(self, func, failure, *args, **kwargs):
+  def expect_fail(
+      self, func: Callable, failure: str, *args: Any, **kwargs: Any
+  ) -> Sequence[runner_pb.Outcome.Results.Lines]:
     _, failures = self.post_process(func, *args, **kwargs)
     self.assertEqual(len(failures), 1)
     self.assertHas(failures[0], 'CHECK %r' % failure)
     return failures
 
-  def test_step_command_contains_one_pass(self):
+  def test_step_command_contains_one_pass(self) -> None:
     self.expect_pass(post_process.StepCommandContains, 'one', ['a'])
 
-  def test_step_command_contains_one_pass_trivial(self):
+  def test_step_command_contains_one_pass_trivial(self) -> None:
     self.expect_pass(post_process.StepCommandContains, 'one', [])
 
-  def test_step_command_contains_one_fail(self):
+  def test_step_command_contains_one_fail(self) -> None:
     self.expect_fail(post_process.StepCommandContains,
                      "command line for step one contained ['b']",
                      'one', ['b'])
 
-  def test_step_command_contains_two_fail_order(self):
+  def test_step_command_contains_two_fail_order(self) -> None:
     self.expect_fail(post_process.StepCommandContains,
                      "command line for step two contained ['b', 'a']",
                      'two', ['b', 'a'])
 
-  def test_step_command_contains_zero_pass(self):
+  def test_step_command_contains_zero_pass(self) -> None:
     self.expect_pass(post_process.StepCommandContains, 'zero', [])
 
-  def test_step_command_contains_zero_fail(self):
+  def test_step_command_contains_zero_fail(self) -> None:
     self.expect_fail(post_process.StepCommandContains,
                      "command line for step zero contained ['a']",
                      'zero', ['a'])
 
-  def test_step_command_contains_pass(self):
+  def test_step_command_contains_pass(self) -> None:
     self.expect_pass(post_process.StepCommandContains, 'x',
                      ['echo', 'foo', 'bar'])
     self.expect_pass(post_process.StepCommandContains, 'x',
                      ['foo', 'bar', 'baz'])
 
-  def test_step_command_contains_fail(self):
+  def test_step_command_contains_fail(self) -> None:
     self.expect_fail(post_process.StepCommandContains,
                      'command line for step x contained %r' % ['foo', 'baz'],
                      'x', ['foo', 'baz'])
@@ -610,34 +617,36 @@ class TestStepCommandDoesNotContain(PostProcessUnitTest):
         'cmd': ['echo', 'foo', 'bar', 'baz']
     })])
 
-  def expect_pass(self, func, *args, **kwargs):
+  def expect_pass(self, func: Callable, *args: Any, **kwargs: Any) -> None:
     _, failures = self.post_process(func, *args, **kwargs)
     self.assertEqual(len(failures), 0)
 
-  def expect_fail(self, func, *args, **kwargs):
+  def expect_fail(
+      self, func: Callable, *args: Any, **kwargs: Any
+  ) -> Sequence[runner_pb.Outcome.Results.Lines]:
     _, failures = self.post_process(func, *args, **kwargs)
     self.assertEqual(len(failures), 1)
     return failures
 
-  def test_step_command_does_not_contain_one_pass(self):
+  def test_step_command_does_not_contain_one_pass(self) -> None:
     self.expect_pass(post_process.StepCommandDoesNotContain, 'one', ['foo'])
 
-  def test_step_command_does_not_contain_one_fail(self):
+  def test_step_command_does_not_contain_one_fail(self) -> None:
     self.expect_fail(post_process.StepCommandDoesNotContain, 'one', ['a'])
 
-  def test_step_command_does_not_contain_two_pass_order(self):
+  def test_step_command_does_not_contain_two_pass_order(self) -> None:
     self.expect_pass(post_process.StepCommandDoesNotContain, 'two', ['b', 'a'])
 
-  def test_step_command_does_not_contain_two_fail_order(self):
+  def test_step_command_does_not_contain_two_fail_order(self) -> None:
     self.expect_fail(post_process.StepCommandDoesNotContain, 'two', ['a', 'b'])
 
-  def test_step_command_does_not_contain_fail(self):
+  def test_step_command_does_not_contain_fail(self) -> None:
     self.expect_fail(post_process.StepCommandDoesNotContain, 'x',
                      ['echo', 'foo', 'bar'])
     self.expect_fail(post_process.StepCommandDoesNotContain, 'x',
                      ['foo', 'bar', 'baz'])
 
-  def test_step_command_does_not_contain_pass(self):
+  def test_step_command_does_not_contain_pass(self) -> None:
     self.expect_pass(post_process.StepCommandDoesNotContain, 'x',
                      ['foo', 'baz'])
 
@@ -654,39 +663,38 @@ class TestStepText(PostProcessUnitTest):
         'step_summary_text': 'test summary',
     })])
 
-  def test_step_text_equals_pass(self):
+  def test_step_text_equals_pass(self) -> None:
     self.expect_pass(post_process.StepTextEquals, 'x', 'foobar')
 
-  def test_step_text_equals_fail(self):
+  def test_step_text_equals_fail(self) -> None:
     failures = self.expect_fails(1, post_process.StepTextEquals, 'x', 'foo')
     self.assertHas(failures[0],
                    'check((step_odict[step].step_text == expected))')
 
-  def test_step_text_contains_pass(self):
+  def test_step_text_contains_pass(self) -> None:
     self.expect_pass(post_process.StepTextContains, 'x', ['foo', 'bar'])
 
-  def test_step_summary_text_equals_pass(self):
+  def test_step_summary_text_equals_pass(self) -> None:
     self.expect_pass(post_process.StepSummaryEquals, 'x', 'test summary')
 
-  def test_step_summary_text_equals_fail(self):
+  def test_step_summary_text_equals_fail(self) -> None:
     failures = self.expect_fails(1, post_process.StepSummaryEquals, 'x',
                                  'bad')
     self.assertHas(failures[0],
                    'check((step_odict[step].step_summary_text == expected))',
                    "expected: 'bad'")
 
-  def test_step_summary_text_contains_pass(self):
+  def test_step_summary_text_contains_pass(self) -> None:
     self.expect_pass(post_process.StepSummaryContains, 'x', ['test', 'summary'])
 
-  def test_step_summary_text_contains_fail(self):
+  def test_step_summary_text_contains_fail(self) -> None:
     failures = self.expect_fails(1, post_process.StepSummaryContains, 'x',
                                  ['bad'])
     self.assertHas(failures[0],
                    'check((expected in step_odict[step].step_summary_text))',
                    "expected: 'bad'")
 
-
-  def test_step_text_contains_fail(self):
+  def test_step_text_contains_fail(self) -> None:
     failures = self.expect_fails(
         2, post_process.StepTextContains, 'x', ['food', 'bar', 'baz'])
     self.assertHas(failures[0],
@@ -710,34 +718,34 @@ class TestLog(PostProcessUnitTest):
         },
     })])
 
-  def test_has_log_pass(self):
+  def test_has_log_pass(self) -> None:
     self.expect_pass(post_process.HasLog, 'x', 'log-x')
 
-  def test_has_log_fail(self):
+  def test_has_log_fail(self) -> None:
     failures = self.expect_fails(1, post_process.HasLog, 'x', 'log-y')
     self.assertHas(failures[0], 'check((log in step_odict[step].logs))')
 
-  def test_does_not_have_log_pass(self):
+  def test_does_not_have_log_pass(self) -> None:
     self.expect_pass(post_process.DoesNotHaveLog, 'x', 'log-y')
 
-  def test_does_not_have_log_fail(self):
+  def test_does_not_have_log_fail(self) -> None:
     failures = self.expect_fails(1, post_process.DoesNotHaveLog, 'x', 'log-x')
     self.assertHas(failures[0], 'check((log not in step_odict[step].logs))')
 
-  def test_log_equals_pass(self):
+  def test_log_equals_pass(self) -> None:
     self.expect_pass(post_process.LogEquals, 'x', 'log-x', 'foo\nbar')
 
-  def test_log_equals_fail(self):
+  def test_log_equals_fail(self) -> None:
     failures = self.expect_fails(1, post_process.LogEquals,
                                  'x', 'log-x', 'foo\nbar\n')
     self.assertHas(failures[0],
                    'check((step_odict[step].logs[log] == expected))')
 
-  def test_log_contains_pass(self):
+  def test_log_contains_pass(self) -> None:
     self.expect_pass(post_process.LogContains, 'x', 'log-x',
                      ['foo\n', '\nbar', 'foo\nbar'])
 
-  def test_log_contains_fail(self):
+  def test_log_contains_fail(self) -> None:
     failures = self.expect_fails(
         3, post_process.LogContains, 'x', 'log-x',
         ['food', 'bar', 'baz', 'foobar'])
@@ -751,11 +759,11 @@ class TestLog(PostProcessUnitTest):
                    'check((expected in step_odict[step].logs[log]))',
                    "expected: 'foobar'")
 
-  def test_log_does_not_contain_pass(self):
+  def test_log_does_not_contain_pass(self) -> None:
     self.expect_pass(post_process.LogDoesNotContain, 'x', 'log-x',
                      ['i dont exist'])
 
-  def test_log_does_not_contain_fail(self):
+  def test_log_does_not_contain_fail(self) -> None:
     failures = self.expect_fails(1, post_process.LogDoesNotContain, 'x',
                                  'log-x', ['foo'])
     self.assertHas(failures[0],
@@ -782,12 +790,12 @@ class TestLink(PostProcessUnitTest):
         ],
     )
 
-  def test_has_link_pass(self):
+  def test_has_link_pass(self) -> None:
     self.expect_pass(post_process.HasLink, 'x', 'foo')
     self.expect_pass(post_process.HasLinkRE, 'x', r'fo+')
     self.expect_pass(post_process.HasLinkRE, 'x', re.compile(r'fo+'))
 
-  def test_has_link_fail(self):
+  def test_has_link_fail(self) -> None:
     failures = self.expect_fails(1, post_process.HasLink, 'x', 'bar')
     self.assertHas(failures[0], 'check((link in step_odict[step].links))')
 
@@ -806,12 +814,12 @@ class TestLink(PostProcessUnitTest):
         'check(any((_fullmatch(link, x) for x in step_odict[step].links)))',
     )
 
-  def test_does_not_have_link_pass(self):
+  def test_does_not_have_link_pass(self) -> None:
     self.expect_pass(post_process.DoesNotHaveLink, 'x', 'fo')
     self.expect_pass(post_process.DoesNotHaveLinkRE, 'x', r'fo')
     self.expect_pass(post_process.DoesNotHaveLinkRE, 'x', re.compile(r'fo'))
 
-  def test_does_not_have_link_fail(self):
+  def test_does_not_have_link_fail(self) -> None:
     failures = self.expect_fails(1, post_process.DoesNotHaveLink, 'x', 'foo')
     self.assertHas(failures[0], 'check((link not in step_odict[step].links))')
 
@@ -822,12 +830,12 @@ class TestLink(PostProcessUnitTest):
         'for x in step_odict[step].links))))',
     )
 
-  def test_link_equals_pass(self):
+  def test_link_equals_pass(self) -> None:
     self.expect_pass(post_process.LinkEquals, 'x', 'foo', 'http://foo.com')
     self.expect_pass(post_process.LinkEqualsRE, 'x', 'foo', r'.*/foo.com.*')
     self.expect_pass(post_process.LinkEqualsRE, 'y', 'bar', r'.*/bar.com/.*')
 
-  def test_link_equals_fail(self):
+  def test_link_equals_fail(self) -> None:
     failures = self.expect_fails(1, post_process.LinkEquals,
                                  'x', 'foo', 'http://bar.com')
     self.assertHas(failures[0],
@@ -850,48 +858,48 @@ class TestProperty(PostProcessUnitTest):
         'output_properties': {'x': 'foo', 'y': list('bar')}
     })])
 
-  def test_property_equals_pass(self):
+  def test_property_equals_pass(self) -> None:
     self.expect_pass(post_process.PropertyEquals, 'x', 'foo')
 
-  def test_property_equals_fail(self):
+  def test_property_equals_fail(self) -> None:
     failures = self.expect_fails(1, post_process.PropertyEquals, 'x', 'foobar')
     self.assertHas(failures[0], 'check((build_properties[key] == value))')
 
-  def test_property_matches_regex_pass(self):
+  def test_property_matches_regex_pass(self) -> None:
     self.expect_pass(post_process.PropertyMatchesRE, 'x', r'^fo+$')
 
-  def test_property_matches_regex_not_str(self):
+  def test_property_matches_regex_not_str(self) -> None:
     failures = self.expect_fails(1, post_process.PropertyMatchesRE, 'y',
                                  r'^fo+$')
     self.assertHas(failures[0], 'check(isinstance(build_properties[key], str))')
 
-  def test_property_matches_regex_fail(self):
+  def test_property_matches_regex_fail(self) -> None:
     failures = self.expect_fails(1, post_process.PropertyMatchesRE, 'x',
                                  r'^fooo+$')
     self.assertHas(failures[0],
                    'check(re.search(pattern, build_properties[key]))')
 
-  def test_property_matches_callable_pass(self):
+  def test_property_matches_callable_pass(self) -> None:
     self.expect_pass(post_process.PropertyMatchesCallable, 'y',
                      lambda check, i: check(''.join(i) == 'bar'))
 
-  def test_property_matches_callable_fail(self):
+  def test_property_matches_callable_fail(self) -> None:
     failures = self.expect_fails(2, post_process.PropertyMatchesCallable, 'y',
                                  lambda check, i: check(''.join(i) == 'foo'))
     self.assertHas(failures[0], "check((''.join(i) == 'foo'))")
     self.assertHas(failures[1], 'check(matcher(check, build_properties[key]))')
 
-  def test_properties_contain_pass(self):
+  def test_properties_contain_pass(self) -> None:
     self.expect_pass(post_process.PropertiesContain, 'x')
 
-  def test_properties_contain_fail(self):
+  def test_properties_contain_fail(self) -> None:
     failures = self.expect_fails(1, post_process.PropertiesContain, 'q')
     self.assertHas(failures[0], 'check((key in build_properties))')
 
-  def test_properties_do_not_contain_pass(self):
+  def test_properties_do_not_contain_pass(self) -> None:
     self.expect_pass(post_process.PropertiesDoNotContain, 'q')
 
-  def test_properties_do_not_contain_fail(self):
+  def test_properties_do_not_contain_fail(self) -> None:
     failures = self.expect_fails(1, post_process.PropertiesDoNotContain, 'x')
     self.assertHas(failures[0], 'check((key not in build_properties))')
 
@@ -907,42 +915,43 @@ class TestTags(PostProcessUnitTest):
         'tags': {'x': 'foo', 'y': 'bar'},
     })])
 
-  def test_num_tags_equals_pass(self):
+  def test_num_tags_equals_pass(self) -> None:
     self.expect_pass(post_process.NumTagsEquals, 'step', 2)
 
-  def test_num_tags_equals_fail(self):
+  def test_num_tags_equals_fail(self) -> None:
     failures = self.expect_fails(1, post_process.NumTagsEquals, 'step', 138)
     self.assertHas(failures[0], 'check((len(step.tags) == count))')
 
-  def test_has_tag_pass(self):
+  def test_has_tag_pass(self) -> None:
     self.expect_pass(post_process.HasTag, 'step', 'x', 'y')
 
-  def test_has_tag_fail(self):
+  def test_has_tag_fail(self) -> None:
     failures = self.expect_fails(1, post_process.HasTag, 'step', 'z')
     self.assertHas(failures[0], 'check((t in step.tags))')
 
-  def test_lacks_tag_pass(self):
+  def test_lacks_tag_pass(self) -> None:
     self.expect_pass(post_process.LacksTag, 'step', 'z')
 
-  def test_lacks_tag_fail(self):
+  def test_lacks_tag_fail(self) -> None:
     failures = self.expect_fails(2, post_process.LacksTag, 'step', 'x', 'y')
     self.assertHas(failures[0], 'check((t not in step.tags))')
 
-  def test_tag_equals_pass(self):
+  def test_tag_equals_pass(self) -> None:
     self.expect_pass(post_process.TagEquals, 'step', 'x', 'foo')
 
-  def test_tag_equals_fail(self):
+  def test_tag_equals_fail(self) -> None:
     failures = self.expect_fails(1, post_process.TagEquals, 'step', 'x', 'foobar')
     self.assertHas(failures[0], 'check((step.tags[tag] == value))')
 
-  def test_tag_matches_regex_pass(self):
+  def test_tag_matches_regex_pass(self) -> None:
     self.expect_pass(post_process.TagMatchesRE, 'step', 'x', r'^fo+$')
 
-  def test_tag_matches_regex_fail(self):
+  def test_tag_matches_regex_fail(self) -> None:
     failures = self.expect_fails(1, post_process.TagMatchesRE, 'step',
                                  'x', r'^fooo+$')
     self.assertHas(failures[0],
                    'check(re.search(pattern, step.tags[tag]))')
+
 
 class TestStepCwdEquals(PostProcessUnitTest):
   """Test case for StepCwdEquals."""
@@ -960,23 +969,27 @@ class TestStepCwdEquals(PostProcessUnitTest):
         }),
     ])
 
-  def test_pass(self):
+  def test_pass(self) -> None:
     self.expect_pass(
         post_process.StepCwdEquals, 'step-with-cwd', 'expected/path')
 
-  def test_pass_path(self):
-    Path._OS_SEP = '/'
+  def test_pass_path(self) -> None:
+    config_types.Path._OS_SEP = '/'
     try:
-      expected_path = Path(ResolvedBasePath('expected'), 'path')
+      expected_path = config_types.Path(
+          config_types.ResolvedBasePath('expected'), 'path'
+      )
       self.expect_pass(
           post_process.StepCwdEquals, 'step-with-cwd', expected_path)
     finally:
-      Path._OS_SEP = None
+      config_types.Path._OS_SEP = None
 
-  def test_fail_path(self):
-    Path._OS_SEP = '/'
+  def test_fail_path(self) -> None:
+    config_types.Path._OS_SEP = '/'
     try:
-      expected_path = Path(ResolvedBasePath('wrong'), 'path')
+      expected_path = config_types.Path(
+          config_types.ResolvedBasePath('wrong'), 'path'
+      )
       failures = self.expect_fails(
           1, post_process.StepCwdEquals, 'step-with-cwd', expected_path)
       self.assertHas(
@@ -984,9 +997,9 @@ class TestStepCwdEquals(PostProcessUnitTest):
           "step step-with-cwd cwd is wrong/path (actual: expected/path)",
       )
     finally:
-      Path._OS_SEP = None
+      config_types.Path._OS_SEP = None
 
-  def test_fail_different_cwd(self):
+  def test_fail_different_cwd(self) -> None:
     failures = self.expect_fails(
         1, post_process.StepCwdEquals, 'step-with-cwd', 'wrong/path')
     self.assertHas(
@@ -994,7 +1007,7 @@ class TestStepCwdEquals(PostProcessUnitTest):
         "step step-with-cwd cwd is wrong/path (actual: expected/path)",
     )
 
-  def test_fail_missing_cwd(self):
+  def test_fail_missing_cwd(self) -> None:
     # If cwd is missing in the step dict, it defaults to ''
     failures = self.expect_fails(
         1, post_process.StepCwdEquals, 'step-without-cwd', 'expected/path')
@@ -1003,10 +1016,10 @@ class TestStepCwdEquals(PostProcessUnitTest):
         "step step-without-cwd cwd is expected/path (actual: )",
     )
 
-  def test_pass_missing_cwd_expected_empty(self):
+  def test_pass_missing_cwd_expected_empty(self) -> None:
     self.expect_pass(post_process.StepCwdEquals, 'step-without-cwd', '')
 
-  def test_fail_step_not_found(self):
+  def test_fail_step_not_found(self) -> None:
     failures = self.expect_fails(
         1, post_process.StepCwdEquals, 'non-existent-step', 'expected/path')
     self.assertHas(failures[0], "step non-existent-step exists")

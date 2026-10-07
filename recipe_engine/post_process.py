@@ -8,20 +8,20 @@ RecipeTestApi.post_process method in GenTests.
 
 from __future__ import annotations
 
-from collections import defaultdict, OrderedDict, namedtuple
+import collections
+from collections.abc import Callable, Iterable, Mapping, Sequence
 import re
-from typing import Any, Callable, Iterable, Mapping, Sequence, TYPE_CHECKING
+from typing import Any
 
 from past.builtins import basestring
-from recipe_engine import post_process_inputs
-
-if TYPE_CHECKING:
-  from recipe_engine.internal.test import magic_check_fn
-  from recipe_engine.config_types import Path
+from recipe_engine import config_types, post_process_inputs
+from recipe_engine.internal.test import magic_check_fn
 
 StepODict = Mapping[str, post_process_inputs.Step | dict[str, Any]]
 
-_filterRegexEntry = namedtuple('_filterRegexEntry', 'at_most at_least fields')
+_filterRegexEntry = collections.namedtuple(
+    '_filterRegexEntry', 'at_most at_least fields'
+)
 
 
 class Filter:
@@ -41,17 +41,20 @@ class Filter:
 
       yield TEST + api.post_process(Filter('step_a', 'step_b', 'other_step'))
     """
-    self.data: dict[str, frozenset[str]] = {name: () for name in steps}
+    self.data: dict[str, frozenset[str] | tuple[()]] = {
+        name: () for name in steps
+    }
     self.re_data: dict[re.Pattern, _filterRegexEntry] = {}
 
-  def __call__(self, check: magic_check_fn.Checker,
-               step_odict: StepODict) -> OrderedDict[str, Any]:
+  def __call__(
+      self, check: magic_check_fn.Checker, step_odict: StepODict
+  ) -> collections.OrderedDict[str, Any]:
     unused_includes = self.data.copy()
     re_data = self.re_data.copy()
 
-    re_usage_count = defaultdict(int)
+    re_usage_count = collections.defaultdict(int)
 
-    to_ret = OrderedDict()
+    to_ret = collections.OrderedDict()
     for name, step in step_odict.items():
       field_set = unused_includes.pop(name, None)
       if field_set is None:
@@ -399,7 +402,7 @@ def StepCanceled(check: magic_check_fn.Checker, step_odict: StepODict,
 
 
 def StepCwdEquals(check: magic_check_fn.Checker, step_odict: StepODict,
-                  step: str, expected_cwd: str | Path) -> None:
+                  step: str, expected_cwd: str | config_types.Path) -> None:
   """Assert that a step ran in the given directory.
 
   Args:
@@ -1145,8 +1148,9 @@ def SummaryMarkdownRE(check: magic_check_fn.Checker, step_odict: StepODict,
       (summary_regex, actual_summary), re.search(summary_regex, actual_summary))
 
 
-def DropExpectation(_check: magic_check_fn.Checker, step_odict: StepODict,
-                    *prefixes: str) -> OrderedDict[str, Any] | dict[Any, Any]:
+def DropExpectation(
+    _check: magic_check_fn.Checker, step_odict: StepODict, *prefixes: str
+) -> collections.OrderedDict[str, Any] | dict[Any, Any]:
   """Using this post-process hook will drop expectations for this test.
 
   With no arguments this must be the last post-process check—there will be no
@@ -1167,7 +1171,7 @@ def DropExpectation(_check: magic_check_fn.Checker, step_odict: StepODict,
   if not prefixes:
     return {}
 
-  result_steps: OrderedDict[str, Any] = OrderedDict()
+  result_steps: collections.OrderedDict[str, Any] = collections.OrderedDict()
   step_stack: list[str] = []
 
   for name, step in step_odict.items():

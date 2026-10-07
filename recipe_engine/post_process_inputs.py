@@ -14,7 +14,7 @@ from typing import Any
 import attr
 from past.builtins import basestring
 
-from .engine_types import ResourceCost
+from . import engine_types
 
 
 class Command(list):
@@ -183,7 +183,9 @@ class Step:
   cwd: str = attr.ib(default='')
 
   # The resource cost of this Step. Will be None for no-command steps.
-  cost: ResourceCost = attr.ib(default=ResourceCost())
+  cost: engine_types.ResourceCost | None = attr.ib(
+      default=engine_types.ResourceCost()
+  )
 
   # See //recipe_modules/context/api.py for information on the precise meaning
   # of env, env_prefixes and env_suffixes.
@@ -290,11 +292,11 @@ class Step:
       raise ValueError("step dict must have 'name' key, step dict keys: %r" %
                        sorted(step_dict))
     if 'cmd' in step_dict or 'cost' in step_dict:
-      step_dict = step_dict.copy()
+      step_dict = dict(step_dict)
       if 'cmd' in step_dict:
         step_dict['cmd'] = Command(step_dict['cmd'])
       if 'cost' in step_dict and step_dict['cost'] is not None:
-        step_dict['cost'] = ResourceCost(**step_dict['cost'])
+        step_dict['cost'] = engine_types.ResourceCost(**step_dict['cost'])
     return cls(**step_dict)
 
   def _as_dict(self) -> dict[str, Any]:
@@ -314,4 +316,4 @@ class Step:
     return step_dict
 
 
-PROTOTYPE_STEP = Step('')._as_dict()
+PROTOTYPE_STEP: dict[str, Any] = Step('')._as_dict()
