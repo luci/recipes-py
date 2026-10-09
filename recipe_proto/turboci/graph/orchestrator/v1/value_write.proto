@@ -7,6 +7,7 @@ syntax = "proto3";
 package turboci.graph.orchestrator.v1;
 
 import "google/protobuf/any.proto";
+import "turboci/graph/orchestrator/v1/tags.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
 option java_multiple_files = true;
@@ -58,7 +59,20 @@ message ValueWrite {
   // will be checked for writing and/or reading this data.
   optional string realm = 2;
 
-  // TBD: An additional disambiguator/key in addition to data.type_url?
-
-  // TBD: Orchestrator-visible index values (e.g. tags).
+  // Additional tags to associate with the written data.
+  //
+  // Typically you should not set these directly; they should be generated for
+  // you using the `turboci.tag` field annotations in your protos, using one of
+  // the Turbo CI helper libraries (such as the Go or Python libraries in this
+  // repo).
+  //
+  // These must be fully normalized or the server will reject them. This means:
+  //   * This field must be sorted an unique on `key`.
+  //   * Each Tag's `values` must be sorted and unique (see Tag.values).
+  //
+  // Tags are subject to server-imposed limits which restrict:
+  //   * Tag key length.
+  //   * Number of values per Tag.
+  //   * Amount of data in Tag values.
+  repeated Tag tags = 3;
 }

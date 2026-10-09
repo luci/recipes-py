@@ -1,0 +1,28 @@
+// Copyright 2026 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// BuiltinExecutor enumerates stage kinds that Orchestrator implements natively.
+enum BuiltinExecutor {
+  // UNKNOWN is the same as "the stage is implemented by an external executor".
+  BUILTIN_EXECUTOR_UNKNOWN = 0;
+
+  // This executor just immediately finishes the stage (with a single COMPLETE
+  // attempt) as soon as the stage is unblocked.
+  //
+  // By being a builtin executor, it can do so in the same transaction that
+  // unblocks the stage, skipping a lot of overhead associated with actually
+  // launching a real attempt.
+  //
+  // Noop stage are useful for grouping dependencies. A stage with a particular
+  // args type URL can be defined as a noop by setting `noop: true` in the stage
+  // registry config entry for this type URL.
+  BUILTIN_EXECUTOR_NOOP = 1;
+}

@@ -9,6 +9,7 @@ package turboci.graph.orchestrator.v1;
 import "google/api/field_behavior.proto";
 import "turboci/graph/ids/v1/identifier.proto";
 import "turboci/graph/orchestrator/v1/actor.proto";
+import "turboci/graph/orchestrator/v1/attribute.proto";
 import "turboci/graph/orchestrator/v1/check_kind.proto";
 import "turboci/graph/orchestrator/v1/check_state.proto";
 import "turboci/graph/orchestrator/v1/dependencies.proto";
@@ -39,7 +40,7 @@ option java_multiple_files = true;
 // Checks are not, themselves, executable, but Stages are the executable nodes
 // which operate to plan and resolve Checks.
 //
-// Next ID: 14
+// Next ID: 15
 message Check {
   // The Check's identifier.
   //
@@ -63,7 +64,7 @@ message Check {
   // Used as part of a Checks query for a coarse-grained filter.
   optional CheckKind kind = 3 [(google.api.field_behavior) = IMMUTABLE];
 
-  // An optinoal disambiguating sub-type of this check, controlled by the
+  // An optional disambiguating sub-type of this check, controlled by the
   // inserter of the Check.
   //
   // Identifies a specific, named, variant of this Check kind, to differentiate
@@ -206,6 +207,11 @@ message Check {
   //
   // Sorted ascending by `version`.
   repeated Edit edits = 11;
+
+  // Attributes defined for this Check.
+  //
+  // Unique and sorted ascending by `name`.
+  repeated Attribute attributes = 14;
 
   // TBD: Add another field for 'Resolved-To' edges to Checks for the case where
   // this Check is 'underspecified' and the Workflow resolves/evolves it to

@@ -1,0 +1,136 @@
+// Copyright 2026 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// ReadScope indicates where something (Tag key or value) is readable.
+//
+// The zero value is meaningful (and default); Suffixing it with UNKNOWN does
+// not improve anything.
+//
+// buf:lint:ignore ENUM_ZERO_VALUE_SUFFIX
+enum ReadScope {
+  // The default value; Item will be readable on the ValueRef which contains it
+  // (e.g. usable for Edge conditions).
+  READ_SCOPE_VALUE_REF = 0;
+
+  // Readable at the Node level (allowing search for tagged nodes within a
+  // WorkPlan via QueryNodes).
+  //
+  // Also stored in the ValueRef itself (see READ_SCOPE_VALUE_REF).
+  //
+  // Writing a tag via a Check Option, and then later removing it by
+  // overwriting the Option without that tag (e.g. while the Check is still
+  // PLANNING) will make it so that searching for this Tag will no longer yield
+  // that Check.
+  READ_SCOPE_NODE = 1;
+
+  // Readable at the WorkPlan level (allowing search for tagged WorkPlans via
+  // QueryWorkPlans).
+  //
+  // Also readable at the Node level and the ValueRef itself
+  // (READ_SCOPE_NODE and READ_SCOPE_VALUE_REF respectively).
+  //
+  // These tags will only be searchable at the WorkPlan level once they belong
+  // to some *immutable* piece of the WorkPlan (e.g. ValueWrites in a Stage
+  // Attempt, Check Options for a Check in the PLANNED state or later, etc.)
+  //
+  // WorkPlan-scoped tags should be used sparingly, as they are more costly
+  // to write performance than Node or ValueRef-scoped tags.
+  READ_SCOPE_WORK_PLAN = 2;
+}
+
+// Tags allow WorkPlans to export queryable data from a ValueWrite.
+//
+// A given ValueWrite can export zero or more tags.
+//
+// Tags are multi-valued (i.e. it is allowed to have multiple values all with
+// the same key, even on the same ValueWrite).
+//
+// A Tag has a key which should be the protobuf 'full name' of the field from
+// which it originated. This will be some path like
+// `full.proto.package.MessageName.field_name`.
+//
+// In addition to the key, a Tag has one or more values.
+//
+// These Tags and their Values are retained on the ValueRef which results from
+// the ValueWrite, and are visible as long as you have read access to that
+// ValueRef. Edge conditions which point to a node may use these tags and
+// their values as filtering criteria.
+//
+// Tags and their values *may* additionally be indexed to allow using them as
+// filter criteria in QueryWorkPlans or QueryNodes. It's recommended to keep
+// index scopes as narrow as possible.
+//
+// If using one of the TurboCI client libraries, you may annotate your value
+// protobufs with the `turboci.tag` field annotation in order to have the
+// library *automatically* extract tags as a side effect of serializing a proto
+// via ValueWrite.
+message Tag {
+  // Key should be the protobuf 'full name' of the proto field from which
+  // this tag originated.
+  optional string key = 1;
+
+  // Scope indicates the level at which the tag *key* can be read.
+  //
+  // Defaults to READ_SCOPE_VALUE_REF.
+  optional ReadScope scope = 2;
+
+  // A single value associated with a tag.
+  message Value {
+    // Scope indicates the level at which this *value* can be read.
+    //
+    // If unset, the value will be retained on the ValueRef, but will not be
+    // indexed.
+    //
+    // Must be <= `Tag.scope`.
+    //
+    // Defaults to READ_SCOPE_VALUE_REF.
+    optional ReadScope scope = 1;
+
+    // Indicates how many times this value was duplicated.
+    //
+    // Unset/0 indicates that this value is unique.
+    // Values > 0 indicate how many duplications occurred.
+    //
+    // e.g. if this tag had values like ["a", "b", "a"], the "a" Value would set
+    // duplicate_count to `1` and the "b" Value would have `duplicate_count`
+    // unset.
+    optional uint32 duplicate_count = 2;
+
+    // Data for this value.
+    //
+    // Must be set.
+    oneof data {
+      // A string value. Indexed verbatim and supports equality searches.
+      string str_value = 3;
+
+      // A boolean value. Indexed verbatim and supports equality searches.
+      bool bool_value = 4;
+
+      // A numeric (integer) value. Indexed both for equality and inequality.
+      //
+      // NOTE: Numeric tags are not summed. If you have multiple tags:
+      //   * failure_count=10
+      //   * failure_count=8
+      //   * failure_count=2
+      //
+      // And then query for failure_count>10, it will NOT be a match.
+      int64 int_value = 5;
+    }
+  }
+
+  // One or more values to associate with this tag.
+  //
+  // Must be sorted and unique on `data`.
+  //
+  // The sort order is (proto tag #, data). That is, strings before bools,
+  // bools before ints.
+  repeated Value values = 3;
+}

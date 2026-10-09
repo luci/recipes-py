@@ -8,6 +8,7 @@ package turboci.graph.orchestrator.v1;
 
 import "google/protobuf/timestamp.proto";
 import "turboci/graph/ids/v1/identifier.proto";
+import "turboci/graph/orchestrator/v1/attribute.proto";
 import "turboci/graph/orchestrator/v1/check_kind.proto";
 import "turboci/graph/orchestrator/v1/check_state.proto";
 import "turboci/graph/orchestrator/v1/edge.proto";
@@ -15,6 +16,7 @@ import "turboci/graph/orchestrator/v1/field_options.proto";
 import "turboci/graph/orchestrator/v1/stage.proto";
 import "turboci/graph/orchestrator/v1/stage_attempt_execution_policy.proto";
 import "turboci/graph/orchestrator/v1/stage_execution_policy.proto";
+import "turboci/graph/orchestrator/v1/stage_state.proto";
 import "turboci/graph/orchestrator/v1/transaction_details.proto";
 import "turboci/graph/orchestrator/v1/value_write.proto";
 
@@ -176,13 +178,79 @@ message WriteNodesRequest {
   // to the state of the graph, but it's not expected or required.
   optional TransactionDetails txn = 3;
 
+  // An Attribute declaration on CheckWrite.
+  //
+  // Next ID: 5
+  message CheckAttributeWrite {
+    // Required non-empty. Unique among Attributes defined for parent Check.
+    // Must match regex: ^([a-z][a-z0-9_]*\.)+[a-z][a-z0-9_]*$
+    // (dot-separated lower_snake_case with at least one dot).
+    //
+    // See attribute.proto#Attribute.name for more information on
+    // namespaces for names.
+    //
+    // Valid: `foo.bar`, `my_team.my_component.metric_count`.
+    // Invalid: `foo`, `_foo.bar`, `foo.Bar`.
+    optional string name = 1;
+
+    // Required non-empty. The CEL expression evaluated against Check Tags and
+    // check.* properties.
+    //
+    // TODO(b/528434792): Add reference to expressions' documentation in
+    // attribute.proto once it is added.
+    optional string expression = 2;
+
+    // State trigger: on what Check state this attribute must be evaluated.
+    // Defaults to CHECK_STATE_FINAL if omitted.
+    optional CheckState on_state = 3;
+
+    // Expected type of the attribute.
+    //
+    // If set, must match the type inferred from expression.
+    // If not set, the inferred expression's type will be used.
+    optional AttributeType attribute_type = 4;
+  }
+
+  // An Attribute declaration on StageWrite.
+  //
+  // Next ID: 5
+  message StageAttributeWrite {
+    // Required non-empty. Unique among Attributes defined for parent Stage.
+    // Must match regex: ^([a-z][a-z0-9_]*\.)+[a-z][a-z0-9_]*$
+    // (dot-separated lower_snake_case with at least one dot).
+    //
+    // See attribute.proto#Attribute.name for more information on
+    // namespaces for names.
+    //
+    // Valid: `foo.bar`, `my_team.my_component.metric_count`.
+    // Invalid: `foo`, `_foo.bar`, `foo.Bar`.
+    optional string name = 1;
+
+    // Required non-empty. The CEL expression evaluated against Stage Tags and
+    // stage.* properties.
+    //
+    // TODO(b/528434792): Add reference to expressions' documentation in
+    // attribute.proto once it is added.
+    optional string expression = 2;
+
+    // State trigger: on what Stage state this attribute must be evaluated.
+    // Defaults to STAGE_STATE_FINAL if omitted.
+    optional StageState on_state = 3;
+
+    // Expected type of the attribute.
+    //
+    // If set, must match the type inferred from expression.
+    // If not set, the inferred expression's type will be used.
+    optional AttributeType attribute_type = 4;
+  }
+
   // A description of modifications to make to a single Check.
   //
   // All fields annotated as `(turboci).creation_only = true` can be set only
   // once in a sense that if a CheckWrite updates an existing check, values
   // of all these fields (if they are set) must match existing check values.
   //
-  // Next ID: 11
+  // Next ID: 12
   message CheckWrite {
     // The check to write to.
     //
@@ -294,6 +362,11 @@ message WriteNodesRequest {
     // If set, must be equal to, or greater than, the current state of the
     // Check.
     optional CheckState state = 8;
+
+    // Attributes defined for this Check.
+    //
+    // Evaluated when the Check enters the specified state.
+    repeated CheckAttributeWrite attributes = 11 [(turboci).creation_only = true];
   }
 
   // Write to zero or more Checks.
@@ -389,6 +462,11 @@ message WriteNodesRequest {
     //
     // Currently not implemented.
     repeated Stage.Assignment assignments = 6 [(turboci).creation_only = true];
+
+    // Attributes defined for this Stage.
+    //
+    // Evaluated when the Stage enters the specified state.
+    repeated StageAttributeWrite attributes = 9 [(turboci).creation_only = true];
   }
 
   // Write to zero or more Stages.

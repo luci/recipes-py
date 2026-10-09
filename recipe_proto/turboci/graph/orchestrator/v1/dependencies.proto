@@ -7,6 +7,7 @@ syntax = "proto3";
 package turboci.graph.orchestrator.v1;
 
 import "turboci/graph/orchestrator/v1/edge.proto";
+import "turboci/graph/orchestrator/v1/evaluation_error.proto";
 import "turboci/graph/orchestrator/v1/revision.proto";
 
 option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
@@ -152,6 +153,11 @@ message Dependencies {
     // This MAY be substantially before `version` (even before the
     // containing node was created).
     optional Revision condition_version = 3;
+
+    // Optional. If defined, it means that the edge condition evaluation or one
+    // of its referenced attributes had an error. In such case, `resolution`
+    // will be UNSATISFIED.
+    optional EvaluationError error_reason = 4;
   }
 
   // While containing node is in the PLANNED state, this will accumulate all

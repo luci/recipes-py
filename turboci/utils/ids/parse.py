@@ -63,7 +63,7 @@ def to_string(ident: wrapping.AnyIdentifier) -> str:
         any_id = any_id.stage
 
       case _:
-        raise NotImplementedError(f'to_string({type(id)})')
+        raise NotImplementedError(f'to_string({type(ident)})')
 
   parts.reverse()
   return ''.join(parts)
@@ -86,10 +86,8 @@ def from_string(ident_str: str) -> identifier_pb2.Identifier:
       case '?':
         stg.ClearField('is_worknode')
       case _:
-        raise NotImplementedError(
-            'from_string: expected token to start with S, N or ?, '
-            f'got {toks[1][0]!r}'
-        )
+        raise ValueError('from_string: expected token to start with S, N or ?, '
+                         f'got {toks[1][0]!r}')
 
   def parse_vers(v: str, to: timestamp_pb2.Timestamp):
     secs, nanos = v.split('/')
@@ -139,6 +137,6 @@ def from_string(ident_str: str) -> identifier_pb2.Identifier:
       parse_vers(trim[2], ret.stage_edit.version)
 
   if not ret.WhichOneof('type'):
-    raise NotImplementedError(f'from_string: unrecognized ID {ident_str!r}')
+    raise ValueError(f'from_string: unrecognized ID {ident_str!r}')
 
   return ret

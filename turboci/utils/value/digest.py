@@ -11,6 +11,7 @@ from __future__ import annotations
 __all__ = [
     'Digest',
     'deterministially_serialize_any',
+    'deterministically_serialize_any',
 ]
 
 import base64
@@ -185,9 +186,13 @@ def _write_any_bytes(data: any_pb2.Any, w: typing.Any):
     _any_value_tag_encoder(w, value, True)
 
 
-def deterministially_serialize_any(data: any_pb2.Any) -> bytes:
+def deterministically_serialize_any(data: any_pb2.Any) -> bytes:
   """Deterministic and error-free function to serialize an Any."""
   buf = io.BytesIO()
   buf.truncate(_size_any(data))
   _write_any_bytes(data, buf.write)
   return buf.getvalue()
+
+# TODO(who/htellez): remove alias once this has been
+# corrected in recipes-py/turboci/utils/value/digest.py
+deterministially_serialize_any = deterministically_serialize_any

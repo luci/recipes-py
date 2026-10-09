@@ -1,0 +1,163 @@
+// Copyright 2026 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+// We intentionally pick the bare `turboci` package name (rather than
+// `turboci.v1`)  because:
+//
+//   1) These are source-only proto descriptor options, not serialized to disk
+//      and not part of any RPC interface.
+//   2) We want the usage of these file and field options to be as low-friction
+//      and high-clarity as possible. `(turboci.tag).xxx` is much less arcane
+//      than `(turboci.v1.tag).xxx`.
+//
+// buf:lint:ignore PACKAGE_VERSION_SUFFIX
+package turboci;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/tag;tagpb";
+option java_multiple_files = true;
+
+// Friendly version of graph.orchestrator.v1.ReadScope for field annotations.
+//
+// Drops READ_SCOPE_ prefix but otherwise maps exactly.
+//
+// buf:lint:ignore ENUM_VALUE_PREFIX
+// buf:lint:ignore ENUM_ZERO_VALUE_SUFFIX
+enum ReadScope {
+  // VALUE_REF means this aspect of the tag will be available to read on the
+  // ValueRef itself.
+  VALUE_REF = 0;
+
+  // NODE means this aspect of the tag will be indexed at the Node level for
+  // finding Nodes in the WorkPlan via QueryNodes.
+  //
+  // Also implies VALUE_REF.
+  NODE = 1;
+
+  // WORK_PLAN means this aspect of the tag will be indexed at the WorkPlan
+  // level for finding WorkPlans via QueryWorkPlans.
+  //
+  // Also implies NODE and VALUE_REF.
+  WORK_PLAN = 2;
+}
+
+// Indicates that the annotated field and its value should be exported when
+// generating a ValueWrite using the Turbo CI client libraries.
+//
+// The tag key is the field's fully qualified name.
+//
+// Can only be applied to scalar (possibly repeated) fields of the following
+// types:
+//   * string
+//   * uint32, fixed32, int32, int64, sint32, sint64, sfixed32, sfixed64 -
+//     captured as int64.
+//   * bool - These will have their value indexed, by default, at
+//     max(key_scope, value_scope). Bool fields also implicitly have
+//     `index_unset` as `true`. Without these, you will get weird effects
+//     when attempting to search for `tag==false` or having to know that
+//     presence-of-tag-in-search is the same as true, but absence may be false
+//     OR unindexed.
+//   * enums - captured as both int64 and the string representation of the
+//     enum.
+//
+// Tags may OPTIONALLY also be indexed at the WorkPlan or globally.
+//
+// When a field is annotated with this option it will be populated in the
+// ValueWrite as long as the field has a value. The field is considered as
+// having a value in accordance with the behaviour of the annotated proto (e.g.
+// `proto3` without the `optional` keyword does not track field presence, and so
+// the zero value counts as 'not set').
+//
+// In other words, if the generated code has msg.HasField() and it this is true,
+// its value will be captured; if the generated code does not have
+// msg.HasField(), it will be captured only if it is a non-zero value.
+//
+// More on field presence:
+// https://protobuf.dev/programming-guides/field_presence
+//
+// Example:
+//
+//   syntax = "proto3";
+//
+//   package my.cool.package.v1;
+//
+//   import "turboci/tag.proto";
+//
+//   message MyMessage {
+//     // This will export the key 'my.cool.package.v1.MyMessage.my_field' if
+//     // `my_field` has a non-zero value.
+//     //
+//     // The tag *key* will be visible for WORK_PLAN queries, queries within
+//     the
+//     // WorkPlan, and directly visible in the ValueRef itself.
+//     //
+//     // The tag *value* will be retained only on the ValueRef itself.
+//     string my_field = 1 [(turboci.tag).key_scope = WORK_PLAN];
+//
+//     // This will export the key 'my.cool.package.v1.MyMessage.other_field'
+//     // if `other_field` has any value explicitly set (including "").
+//     //
+//     // Additionally, the tag key and value will both be available on the
+//     // ValueRef as well to search via QueryNodes and QueryWorkPlans.
+//     optional string other_field = 2 [(turboci.tag).value_scope = WORK_PLAN];
+//
+//     // This will export the key 'my.cool.package.v1.MyMessage.local_field'
+//     // if `local_field` has any non-zero value.
+//     //
+//     // The tag key and value will both be available on the ValueRef only.
+//     //
+//     // This can also be spelled as `[(turboci.tag) = {}]`.
+//     int local_field = 3 [(turboci.tag).key_scope = VALUE_REF];
+//
+//     // This will export the key 'my.cool.package.v1.MyMessage.enum_field'
+//     // if `enum_field` has any value explicit set (including 0).
+//     //
+//     // The value will be captured both as the enum string name as well as
+//     // its integer value (e.g. "MY_ENUM_VALUE1" and 1).
+//     //
+//     // The tag key and value will both be available on the ValueRef. The key
+//     // will also be indexed within the WorkPlan for use with QueryNodes as
+//     // well as globally for use with QueryWorkPlans.
+//     optional MyEnum enum_field = 3 [(turboci.tag).key_scope = WORK_PLAN];
+//   }
+message Tag {
+  // The scope at which to index this tag's key.
+  //
+  // Defaults to VALUE_REF.
+  optional ReadScope key_scope = 1;
+
+  // The scope at which to index this tag's value.
+  //
+  // If this is greater than `key_scope`, then key_scope will be increased to
+  // match this.
+  //
+  // Defaults to VALUE_REF.
+  optional ReadScope value_scope = 2;
+
+  // Alternate keys for this tag.
+  //
+  // Intended exclusively for migrating readers from an old name to the new one.
+  //
+  // The tag will be recorded under both the alt key(s) and also the canonical
+  // key.
+  repeated string alt_key = 3;
+
+  // If `true` will index the field even when unset in the surrounding message
+  // using the default value for the field as the captured value.
+  //
+  // This defaults to `true` for bool fields, and `false` for all other field
+  // types.
+  optional bool index_unset = 4;
+}
+
+extend google.protobuf.FieldOptions {
+  // User-supplied Turbo CI options for fields.
+  //
+  // This is interpreted exclusively by the Turbo CI client libraries, not by
+  // the Turbo CI service.
+  optional Tag tag = 535801945;
+}

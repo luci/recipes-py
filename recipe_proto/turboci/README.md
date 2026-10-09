@@ -2,4 +2,4 @@
 
 These protos were copied from:
 
-https://chromium.googlesource.com/infra/turboci/proto/+/fb7e142d80fad527eadea3b42713576e1a55600e/turboci
+https://chromium.googlesource.com/infra/turboci/proto/+/4019e8a580929e97eec6a5a5cdc5aa3e97cbb00a/turboci

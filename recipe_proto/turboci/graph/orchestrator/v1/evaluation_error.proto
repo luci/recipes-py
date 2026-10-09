@@ -1,0 +1,18 @@
+// Copyright 2026 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// EvaluationError holds details about why a CEL expression failed to evaluate.
+//
+// Next ID: 2
+message EvaluationError {
+  // Human-readable reason explaining why expression evaluation failed.
+  optional string reason = 1;
+}

@@ -10,6 +10,8 @@ import "google/api/field_behavior.proto";
 import "google/protobuf/timestamp.proto";
 import "turboci/graph/ids/v1/identifier.proto";
 import "turboci/graph/orchestrator/v1/actor.proto";
+import "turboci/graph/orchestrator/v1/attribute.proto";
+import "turboci/graph/orchestrator/v1/builtin_executor.proto";
 import "turboci/graph/orchestrator/v1/check_state.proto";
 import "turboci/graph/orchestrator/v1/dependencies.proto";
 import "turboci/graph/orchestrator/v1/edit.proto";
@@ -33,7 +35,7 @@ option java_multiple_files = true;
 // See also:
 //   * Identifier.Stage* (Identifiers for Stages, StageAttempts, etc.)
 //
-// Next ID: 20
+// Next ID: 21
 message Stage {
   // The Stage's identifier.
   optional ids.v1.Stage identifier = 1 [(google.api.field_behavior) = IMMUTABLE];
@@ -202,6 +204,14 @@ message Stage {
     // This is the policy that TurboCI will use to drive Attempts for this
     // Stage.
     optional StageExecutionPolicy validated = 2;
+
+    // Present if this stage is implemented natively by the Orchestrator (i.e.
+    // there's no external Executor that implements it, instead its logic is
+    // implemented directly inside the Orchestrator).
+    //
+    // This field is set by the Orchestrator (based on its configuration) when
+    // the stage is submitted.
+    optional BuiltinExecutor builtin_executor = 3;
   }
 
   // Execution policy for this Stage.
@@ -448,6 +458,11 @@ message Stage {
   //
   // Sorted ascending by `version`.
   repeated Edit edits = 15;
+
+  // Attributes defined for this Stage.
+  //
+  // Unique and sorted ascending by `name`.
+  repeated Attribute attributes = 20;
 }
 
 // StageAttemptClaimedFailure is a gRPC error detail message returned by

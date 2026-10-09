@@ -1,0 +1,118 @@
+// Copyright 2026 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package turboci.graph.orchestrator.v1;
+
+import "turboci/graph/orchestrator/v1/check_state.proto";
+import "turboci/graph/orchestrator/v1/evaluation_error.proto";
+import "turboci/graph/orchestrator/v1/revision.proto";
+import "turboci/graph/orchestrator/v1/stage_state.proto";
+
+option go_package = "go.chromium.org/turboci/proto/go/graph/orchestrator/v1;orchestratorpb";
+option java_multiple_files = true;
+
+// AttributeType defines the type of an Attribute result.
+enum AttributeType {
+  // UNKNOWN is the default, invalid, result type.
+  ATTRIBUTE_TYPE_UNKNOWN = 0;
+
+  // The attribute expression evaluates to a boolean value.
+  ATTRIBUTE_TYPE_BOOL = 10;
+
+  // The attribute expression evaluates to a list of boolean values.
+  ATTRIBUTE_TYPE_BOOL_LIST = 15;
+
+  // The attribute expression evaluates to an int64 value.
+  ATTRIBUTE_TYPE_INT64 = 20;
+
+  // The attribute expression evaluates to a list of int64 values.
+  ATTRIBUTE_TYPE_INT64_LIST = 25;
+
+  // The attribute expression evaluates to a string value.
+  ATTRIBUTE_TYPE_STRING = 30;
+
+  // The attribute expression evaluates to a list of string values.
+  ATTRIBUTE_TYPE_STRING_LIST = 35;
+}
+
+// Attributes are typed information about a node.
+//
+// They can be dynamically computed through CEL expressions from
+// Tags and node information.
+//
+// Attributes are properties on the node have the same visibility as
+// other node-level properties.
+//
+// Attributes' names and values can be referenced in Edges' CEL
+// expressions.
+//
+// TODO(b/528434792): Add more information about the use of reserved
+// attributes and document CEL expression syntax, preferably as a
+// markdown file within this directory so that we have better
+// formatting options.
+//
+// Next ID: 11
+message Attribute {
+  // Required non-empty. Unique among Attributes defined for parent node.
+  // Must match regex: ^([a-z][a-z0-9_]*\.)+[a-z][a-z0-9_]*$
+  // (dot-separated lower_snake_case with at least one dot).
+  //
+  // This allows users to define namespaces to organize their Attributes.
+  // check.*, stage.* are restricted namespaces where users are not allowed
+  // to define attributes.
+  //
+  // TODO(b/528434792): Update the paragraph below once we have turboci.*
+  // Attributes defined.
+  //
+  // The namespace turboci.* is special, only certain variables are permitted
+  // to be defined in there and they have a fixed type that cannot be
+  // overridden by users. At the moment of writing, this list is empty so
+  // any Attribute with name turboci.foo_bar will be rejected.
+  //
+  // Valid: `foo.bar`, `my_team.my_component.metric_count`.
+  // Invalid: `foo`, `_foo.bar`, `foo.Bar`.
+  optional string name = 1;
+
+  // Required non-empty. The CEL expression evaluated against Tags and node
+  // properties.
+  optional string expression = 2;
+
+  // State trigger: on what node state this attribute must be evaluated.
+  oneof on_state {
+    // Evaluated when the Stage enters this StageState.
+    StageState on_stage_state = 3;
+
+    // Evaluated when the Check enters this CheckState.
+    CheckState on_check_state = 4;
+  }
+
+  // Inferred or explicitly supplied attribute result type.
+  optional AttributeType attribute_type = 5;
+
+  // Revision timestamp when this attribute was evaluated.
+  optional Revision resolved_at = 6;
+
+  // The fields *_results are mutually exclusive. Exactly one of them will be
+  // considered non-trivial. If `error_result` is defined, all repeated
+  // *_results will be empty.
+  // The repeated fields will hold exactly one value if `attribute_type`
+  // specifies a scalar (a non *_LIST). If `attribute_type` specifies a list,
+  // then the corresponding *_results can have zero or more entries.
+  //
+  // Optional. If defined, it means that the expression had an error while
+  // trying to evaluate.
+  // Filled by Orchestrator.
+  optional EvaluationError error_result = 7;
+
+  // Filled by Orchestrator.
+  repeated int64 int_results = 8;
+
+  // Filled by Orchestrator.
+  repeated string str_results = 9;
+
+  // Filled by Orchestrator.
+  repeated bool bool_results = 10;
+}

@@ -3,8 +3,6 @@
 # found in the LICENSE file.
 """Helper for writing tests which want to populate DataSource."""
 
-from __future__ import annotations
-
 __all__ = [
     'absorb_inline',
 ]
