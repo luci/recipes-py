@@ -5,22 +5,23 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 import json
 import subprocess
-
+from typing import Any
 from unittest import mock
 
 import attr
 
 import test_env
 
-from recipe_engine.internal import fetch, exceptions
-from recipe_engine.internal.simple_cfg import \
-  SimpleRecipesCfg, RECIPES_CFG_LOCATION_REL
+from recipe_engine.internal import exceptions
+from recipe_engine.internal import fetch
+from recipe_engine.internal import simple_cfg
 
 
 CPE = subprocess.CalledProcessError
-IRC = RECIPES_CFG_LOCATION_REL
+IRC = simple_cfg.RECIPES_CFG_LOCATION_REL
 
 FETCH_MOD = fetch.__name__
 
@@ -28,10 +29,12 @@ class NoMoreExpectatedCalls(ValueError):
   pass
 
 
-def multi(*side_effect_funcs):
+def multi(
+    *side_effect_funcs: Callable[..., Any],
+) -> Callable[..., Any]:
   l = len(side_effect_funcs)
   it = iter(side_effect_funcs)
-  def _inner(*args, **kwargs):
+  def _inner(*args: Any, **kwargs: Any) -> Any:
     try:
       return next(it)(*args, **kwargs)
     except StopIteration:
@@ -42,35 +45,39 @@ def multi(*side_effect_funcs):
 
 class TestGit(test_env.RecipeEngineUnitTest):
 
-  def setUp(self):
+  def setUp(self) -> None:
     super().setUp()
     fetch.Backend._GIT_METADATA_CACHE = {}
     mock.patch(fetch.__name__+'.GitBackend.GIT_BINARY', 'GIT').start()
     self.addCleanup(mock.patch.stopall)
 
-  def assertMultiDone(self, mocked_call):
+  def assertMultiDone(self, mocked_call: Callable[[], Any]) -> None:
     with self.assertRaises(NoMoreExpectatedCalls):
       mocked_call()
 
-  def g(self, args, data_or_exception=''):
+  def g(
+      self,
+      args: Sequence[str],
+      data_or_exception: str | Exception = '',
+  ) -> Callable[..., str]:
     full_args = ['GIT']
     if args[0] != 'init':  # init is special
       full_args += ['-c', 'advice.detachedHead=false']
     full_args += args
 
     if isinstance(data_or_exception, Exception):
-      def _inner(*real_args):
+      def _inner(*real_args: str) -> str:
         self.assertListEqual(list(real_args), full_args)
         raise data_or_exception
     else:
-      def _inner(*real_args):
+      def _inner(*real_args: str) -> str:
         self.assertListEqual(list(real_args), full_args)
         return data_or_exception
     return _inner
 
   @property
-  def default_spec(self):
-    return SimpleRecipesCfg.from_dict({
+  def default_spec(self) -> simple_cfg.SimpleRecipesCfg:
+    return simple_cfg.SimpleRecipesCfg.from_dict({
         'api_version': 2,
         'repo_name': 'main',
         'deps': {
@@ -82,10 +89,16 @@ class TestGit(test_env.RecipeEngineUnitTest):
         }
     })
 
-  def g_metadata_calls(self, dirname='dir', commit='a'*40,
-                       email='foo@example.com', msg='hello\nworld',
-                       commit_timestamp=1492131405, config=None,
-                       diff=('foo', 'bar')):
+  def g_metadata_calls(
+      self,
+      dirname: str = 'dir',
+      commit: str = 'a' * 40,
+      email: str = 'foo@example.com',
+      msg: str = 'hello\nworld',
+      commit_timestamp: int = 1492131405,
+      config: simple_cfg.SimpleRecipesCfg | None = None,
+      diff: Sequence[str] = ('foo', 'bar'),
+  ) -> list[Callable[..., str]]:
     config = config or self.default_spec
 
     return [
@@ -101,13 +114,17 @@ class TestGit(test_env.RecipeEngineUnitTest):
       ], '\n'.join(diff))
     ]
 
-  def g_ls_remote(self):
+  def g_ls_remote(self) -> Callable[..., str]:
     return self.g(['-C', 'dir', 'ls-remote', 'repo', 'ref'],
                   'a'*40 + '\tref')
 
   @mock.patch('os.path.isdir')
   @mock.patch(fetch.__name__+'.GitBackend._execute')
-  def test_fresh_clone(self, git, isdir):
+  def test_fresh_clone(
+      self,
+      git: mock.MagicMock,
+      isdir: mock.MagicMock,
+  ) -> None:
     isdir.return_value = False
     git.side_effect = multi(*([
       self.g(['init', 'dir']),
@@ -122,7 +139,11 @@ class TestGit(test_env.RecipeEngineUnitTest):
 
   @mock.patch('os.path.isdir')
   @mock.patch(fetch.__name__+'.GitBackend._execute')
-  def test_existing_checkout(self, git, isdir):
+  def test_existing_checkout(
+      self,
+      git: mock.MagicMock,
+      isdir: mock.MagicMock,
+  ) -> None:
     isdir.return_value = True
     git.side_effect = multi(*([
       self.g_ls_remote(),
@@ -140,7 +161,11 @@ class TestGit(test_env.RecipeEngineUnitTest):
 
   @mock.patch('os.path.isdir')
   @mock.patch(fetch.__name__+'.GitBackend._execute')
-  def test_existing_checkout_same_revision(self, git, isdir):
+  def test_existing_checkout_same_revision(
+      self,
+      git: mock.MagicMock,
+      isdir: mock.MagicMock,
+  ) -> None:
     isdir.return_value = True
     git.side_effect = multi(*(
       self.g_metadata_calls() + [
@@ -156,9 +181,13 @@ class TestGit(test_env.RecipeEngineUnitTest):
 
   @mock.patch('os.path.isdir')
   @mock.patch(fetch.__name__+'.GitBackend._execute')
-  def test_unclean_filesystem(self, git, isdir):
+  def test_unclean_filesystem(
+      self,
+      git: mock.MagicMock,
+      isdir: mock.MagicMock,
+  ) -> None:
     isdir.return_value = False
-    def _mock_execute(*_args):
+    def _mock_execute(*_args: Any) -> None:
       raise CPE(1, 'bad stuff')
     git.side_effect = _mock_execute
 
@@ -169,7 +198,11 @@ class TestGit(test_env.RecipeEngineUnitTest):
 
   @mock.patch('os.path.isdir')
   @mock.patch(fetch.__name__+'.GitBackend._execute')
-  def test_rev_parse_fail(self, git, isdir):
+  def test_rev_parse_fail(
+      self,
+      git: mock.MagicMock,
+      isdir: mock.MagicMock,
+  ) -> None:
     isdir.return_value = True
     git.side_effect = multi(*(
       self.g(
@@ -187,7 +220,11 @@ class TestGit(test_env.RecipeEngineUnitTest):
 
   @mock.patch('os.path.isdir')
   @mock.patch(fetch.__name__+'.GitBackend._execute')
-  def test_commit_metadata_empty_recipes_path(self, git, isdir):
+  def test_commit_metadata_empty_recipes_path(
+      self,
+      git: mock.MagicMock,
+      isdir: mock.MagicMock,
+  ) -> None:
     isdir.return_value = False
     git.side_effect = multi(*([
       self.g(['init', 'dir']),
@@ -208,7 +245,12 @@ class TestGit(test_env.RecipeEngineUnitTest):
   @mock.patch('os.path.isdir')
   @mock.patch(fetch.__name__+'.GitBackend._execute')
   @mock.patch(fetch.__name__+'.gitattr_checker.AttrChecker.check_files')
-  def test_commit_metadata_not_interesting(self, attr_checker, git, isdir):
+  def test_commit_metadata_not_interesting(
+      self,
+      attr_checker: mock.MagicMock,
+      git: mock.MagicMock,
+      isdir: mock.MagicMock,
+  ) -> None:
     attr_checker.side_effect = [False]
     isdir.return_value = False
     spec = attr.evolve(self.default_spec, recipes_path='recipes')
@@ -232,7 +274,11 @@ class TestGit(test_env.RecipeEngineUnitTest):
 
   @mock.patch('os.path.isdir')
   @mock.patch(fetch.__name__+'.GitBackend._execute')
-  def test_commit_metadata_IRC_change(self, git, isdir):
+  def test_commit_metadata_IRC_change(
+      self,
+      git: mock.MagicMock,
+      isdir: mock.MagicMock,
+  ) -> None:
     isdir.return_value = False
     spec = attr.evolve(self.default_spec, recipes_path='recipes')
 
@@ -254,7 +300,11 @@ class TestGit(test_env.RecipeEngineUnitTest):
 
   @mock.patch('os.path.isdir')
   @mock.patch(fetch.__name__+'.GitBackend._execute')
-  def test_commit_metadata_recipes_change(self, git, isdir):
+  def test_commit_metadata_recipes_change(
+      self,
+      git: mock.MagicMock,
+      isdir: mock.MagicMock,
+  ) -> None:
     isdir.return_value = False
     spec = attr.evolve(self.default_spec, recipes_path='recipes')
 
@@ -277,7 +327,12 @@ class TestGit(test_env.RecipeEngineUnitTest):
   @mock.patch('os.path.isdir')
   @mock.patch(fetch.__name__+'.GitBackend._execute')
   @mock.patch(fetch.__name__+'.gitattr_checker.AttrChecker.check_files')
-  def test_commit_metadata_tagged_change(self, attr_checker, git, isdir):
+  def test_commit_metadata_tagged_change(
+      self,
+      attr_checker: mock.MagicMock,
+      git: mock.MagicMock,
+      isdir: mock.MagicMock,
+  ) -> None:
     attr_checker.side_effect = [True]
     isdir.return_value = False
     spec = attr.evolve(self.default_spec, recipes_path='recipes')
@@ -301,7 +356,11 @@ class TestGit(test_env.RecipeEngineUnitTest):
 
   @mock.patch('os.path.isdir')
   @mock.patch(fetch.__name__+'.GitBackend._execute')
-  def test_commit_metadata_only_gitattributes_file(self, git, isdir):
+  def test_commit_metadata_only_gitattributes_file(
+      self,
+      git: mock.MagicMock,
+      isdir: mock.MagicMock,
+  ) -> None:
     isdir.return_value = False
     spec = attr.evolve(self.default_spec, recipes_path='recipes')
 
@@ -323,7 +382,11 @@ class TestGit(test_env.RecipeEngineUnitTest):
 
   @mock.patch('os.path.isdir')
   @mock.patch(fetch.__name__+'.GitBackend._execute')
-  def test_commit_metadata_only_gitattributes_file_2(self, git, isdir):
+  def test_commit_metadata_only_gitattributes_file_2(
+      self,
+      git: mock.MagicMock,
+      isdir: mock.MagicMock,
+  ) -> None:
     isdir.return_value = False
     spec = attr.evolve(self.default_spec, recipes_path='recipes')
 

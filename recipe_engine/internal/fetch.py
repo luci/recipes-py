@@ -4,19 +4,18 @@
 
 from __future__ import annotations
 
+import collections
 import errno
 import logging
 import os
 import re
 import sys
 
-from collections import namedtuple
-
 from gevent import subprocess
 
+from . import exceptions
 from . import gitattr_checker
 from . import simple_cfg
-from .exceptions import GitFetchError, UnresolvedRefspec
 
 
 LOGGER = logging.getLogger(__name__)
@@ -30,13 +29,13 @@ LOGGER = logging.getLogger(__name__)
 # roll_candidate (bool): if this commit contains changes which are known to
 #   affect the behavior of the recipes (i.e. modifications within recipe_path
 #   and/or modifications to recipes.cfg)
-CommitMetadata = namedtuple(
+CommitMetadata = collections.namedtuple(
   '_CommitMetadata',
   'revision author_email commit_timestamp message_lines spec roll_candidate')
 
 
 class Backend:
-  def __init__(self, checkout_dir, repo_url):
+  def __init__(self, checkout_dir: str, repo_url: str | None) -> None:
     """
     Args:
       checkout_dir (str): native absolute path to local directory that this
@@ -53,12 +52,12 @@ class Backend:
   # This is a simple mapping of
   #   repo_url -> git_revision -> commit_metadata()
   # It only holds cache entries for git commits (e.g. sha1 hashes)
-  _GIT_METADATA_CACHE = {}
+  _GIT_METADATA_CACHE: dict[str, dict[str, CommitMetadata]] = {}
 
   # This matches git commit hashes.
   _COMMIT_RE = re.compile(r'^[a-fA-F0-9]{40}$')
 
-  def commit_metadata(self, refspec):
+  def commit_metadata(self, refspec: str) -> CommitMetadata:
     """Cached version of _commit_metadata_impl.
 
     The refspec will be resolved if it's not absolute.
@@ -75,20 +74,20 @@ class Backend:
     return cache[revision]
 
   @classmethod
-  def is_resolved_revision(cls, revision):
+  def is_resolved_revision(cls, revision: str) -> re.Match[str] | None:
     return cls._COMMIT_RE.match(revision)
 
   @classmethod
-  def assert_resolved(cls, revision):
+  def assert_resolved(cls, revision: str) -> None:
     if not cls.is_resolved_revision(revision):
-      raise UnresolvedRefspec('unresolved refspec %r' % revision)
+      raise exceptions.UnresolvedRefspec('unresolved refspec %r' % revision)
 
-  def resolve_refspec(self, refspec):
+  def resolve_refspec(self, refspec: str) -> str:
     if self.is_resolved_revision(refspec):
       return refspec
     return self._resolve_refspec_impl(refspec)
 
-  def updates(self, refspec, revision):
+  def updates(self, refspec: str, revision: str) -> list[CommitMetadata]:
     """Returns a list of revisions contained in |refspec| starting after
     |revision|.
 
@@ -101,7 +100,7 @@ class Backend:
 
   ### direct overrides. These are public methods which must be overridden.
 
-  def fetch(self, refspec):
+  def fetch(self, refspec: str) -> None:
     """Does a fetch for the provided refspec (e.g. get all data from remote), if
     this backend supports it. Otherwise does nothing.
 
@@ -111,7 +110,7 @@ class Backend:
     """
     raise NotImplementedError()
 
-  def checkout(self, refspec, revision=None):
+  def checkout(self, refspec: str, revision: str | None = None) -> None:
     """Checks out given |repo| at |refspec| to |checkout_dir|.
 
     Args:
@@ -126,7 +125,7 @@ class Backend:
     # subcommand uses.
     raise NotImplementedError()
 
-  def cat_file(self, revision, file_path):
+  def cat_file(self, revision: str, file_path: str) -> str:
     """Returns the bytes of the given |file_path| in |revision|.
 
     Args:
@@ -137,7 +136,7 @@ class Backend:
     """
     raise NotImplementedError()
 
-  def ls_files(self, *args):
+  def ls_files(self, *args: str) -> str:
     """Returns the stdout from `git ls-files *args` in this repo.
 
     Args:
@@ -151,7 +150,11 @@ class Backend:
   ### private overrides. Override these in the implementations, but don't call
   ### externally.
 
-  def _updates_impl(self, revision, other_revision):
+  def _updates_impl(
+      self,
+      revision: str,
+      other_revision: str,
+  ) -> list[CommitMetadata]:
     """Returns a list of revisions |revision| through |other_revision|. This
     includes |revision| and |other_revision|.
 
@@ -164,7 +167,7 @@ class Backend:
     """
     raise NotImplementedError()
 
-  def _resolve_refspec_impl(self, refspec):
+  def _resolve_refspec_impl(self, refspec: str) -> str:
     """Resolves the refspec to it's current REMOTE value.
 
     This must resolve to the remote value even when using a local clone (i.e.
@@ -178,7 +181,7 @@ class Backend:
     """
     raise NotImplementedError()
 
-  def _commit_metadata_impl(self, revision):
+  def _commit_metadata_impl(self, revision: str) -> CommitMetadata:
     """Returns CommitMetadata for commit |revision|."""
     raise NotImplementedError()
 
@@ -191,13 +194,13 @@ class GitBackend(Backend):
   else:
     GIT_BINARY = 'git'
 
-  def __init__(self, *args, **kwargs):
-    super().__init__(*args, **kwargs)
+  def __init__(self, checkout_dir: str, repo_url: str | None) -> None:
+    super().__init__(checkout_dir, repo_url)
     self._did_ensure = False
-    self._resolved_refspecs = {}
+    self._resolved_refspecs: dict[str, str] = {}
     self._gitattr_checker = gitattr_checker.AttrChecker(self.checkout_dir)
 
-  def _git(self, *args):
+  def _git(self, *args: str) -> str:
     """Runs a git command.
 
     Will automatically set low speed limit/time, and cd into the checkout_dir.
@@ -214,20 +217,22 @@ class GitBackend(Backend):
       # ^'s for when we invoke the .bat, and each of those needs to be escaped
       # when the bat ultimately invokes the git.exe binary. This leaves us with
       # a total of 4x the ^'s that we originally wanted. Hooray.
-      args = [a.replace('^', '^^^^') for a in args]
+      cmd_args = [a.replace('^', '^^^^') for a in args]
+    else:
+      cmd_args = list(args)
 
     cmd = [
       self.GIT_BINARY,
       '-c', 'advice.detachedHead=false',  # to avoid spamming logs
       '-C', self.checkout_dir,
-    ] + list(args)
+    ] + cmd_args
 
     try:
       return self._execute(*cmd)
     except subprocess.CalledProcessError as e:
-      raise GitFetchError('%r failed: %s: %s' % (cmd, e, e.output))
+      raise exceptions.GitFetchError('%r failed: %s: %s' % (cmd, e, e.output))
 
-  def _execute(self, *args):
+  def _execute(self, *args: str) -> str:
     """Runs a raw command. Separate so it's easily mockable."""
     LOGGER.info('Running: %s', args)
 
@@ -244,7 +249,7 @@ class GitBackend(Backend):
         retcode, args, new_output)
     return output.decode('utf-8')
 
-  def _ensure_local_repo_exists(self):
+  def _ensure_local_repo_exists(self) -> None:
     """Ensures that self.checkout_dir is a valid git repository.
 
     Safe to call multiple times. If this is successful, the GitBackend will not
@@ -262,9 +267,9 @@ class GitBackend(Backend):
         self._execute(self.GIT_BINARY, 'init', self.checkout_dir)
         self._did_ensure = True
       except subprocess.CalledProcessError as e:
-        raise GitFetchError(False, 'Git "init" failed: %s' % e)
+        raise exceptions.GitFetchError(False, 'Git "init" failed: %s' % e)
 
-  def _has_rev(self, revision):
+  def _has_rev(self, revision: str) -> bool:
     """Returns True iff the on-disk repo has the given revision."""
     self.assert_resolved(revision)
     try:
@@ -272,13 +277,13 @@ class GitBackend(Backend):
       # shortly after _has_rev anyway.
       self.commit_metadata(revision)
       return True
-    except GitFetchError:
+    except exceptions.GitFetchError:
       return False
 
 
   ### Backend implementations
 
-  def fetch(self, refspec):
+  def fetch(self, refspec: str) -> None:
     if self.repo_url is None:
       raise ValueError('cannot call GitBackend.fetch without a `repo_url`')
     self._ensure_local_repo_exists()
@@ -290,7 +295,7 @@ class GitBackend(Backend):
     LOGGER.info('fetching %s', self.repo_url)
     self._git(*args)
 
-  def checkout(self, refspec, revision=None):
+  def checkout(self, refspec: str, revision: str | None = None) -> None:
     if not revision:
       revision = self.resolve_refspec(refspec)
 
@@ -306,7 +311,7 @@ class GitBackend(Backend):
     # diff, which will exit if `revision` is not already checked out.
     try:
       self._git('diff', '--quiet', revision)
-    except GitFetchError:
+    except exceptions.GitFetchError:
       # At this point there are two possibilities:
       #   1) We have multiple processes attempting to manipulate this checkout.
       #      1a) They're trying to check out the same version (ok)
@@ -331,14 +336,14 @@ class GitBackend(Backend):
                       exc)
       self._git('reset', '-q', '--hard', revision)
 
-  def cat_file(self, revision, file_path):
+  def cat_file(self, revision: str, file_path: str) -> str:
     self.assert_resolved(revision)
     return self._git('cat-file', 'blob', '%s:%s' % (revision, file_path))
 
-  def ls_files(self, *args):
+  def ls_files(self, *args: str) -> str:
     return self._git('ls-files', *args)
 
-  def _updates_impl(self, refspec, revision):
+  def _updates_impl(self, refspec: str, revision: str) -> list[CommitMetadata]:
     other_revision = self._resolve_refspec_impl(refspec)
     if not self._has_rev(other_revision):
       self.fetch(refspec)
@@ -354,7 +359,7 @@ class GitBackend(Backend):
       if bool(rev)
     ]
 
-  def _resolve_refspec_impl(self, refspec):
+  def _resolve_refspec_impl(self, refspec: str) -> str:
     self._ensure_local_repo_exists()
     rslt = self._resolved_refspecs.get(refspec)
     if rslt is None:
@@ -380,7 +385,7 @@ class GitBackend(Backend):
         self._resolved_refspecs[refspec] = rslt
     return rslt
 
-  def _commit_metadata_impl(self, revision):
+  def _commit_metadata_impl(self, revision: str) -> CommitMetadata:
     self.assert_resolved(revision)
 
     # show
@@ -395,7 +400,7 @@ class GitBackend(Backend):
     try:
       spec = simple_cfg.SimpleRecipesCfg.from_json_string(
         self.cat_file(revision, simple_cfg.RECIPES_CFG_LOCATION_REL))
-    except GitFetchError:
+    except exceptions.GitFetchError:
       spec = None
     except ValueError:  # commit with unparsable recipes.cfg
       spec = None

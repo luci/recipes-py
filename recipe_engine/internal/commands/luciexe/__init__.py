@@ -17,9 +17,10 @@ This synthesizes properties from the Build message:
 from __future__ import annotations
 
 import argparse
+from collections.abc import Callable
 import logging
 import os
-import sys
+from typing import Any
 
 
 LOG = logging.getLogger(__name__)
@@ -29,7 +30,7 @@ class RunBuildContractViolation(Exception):
   pass
 
 
-def _valid_output(output):
+def _valid_output(output: str) -> str:
   _, ext = os.path.splitext(output)
   allowed_exts = ('.pb', '.json', '.textpb')
   if ext not in allowed_exts:
@@ -37,7 +38,7 @@ def _valid_output(output):
       'one of %s; Got %s' % (allowed_exts, ext))
   return output
 
-def add_arguments(parser):
+def add_arguments(parser: argparse.ArgumentParser) -> None:
   parser.add_argument(
       '--output', action='store', type=_valid_output, help=(
         'Path to write the final build.proto state to. The path extension MUST '
@@ -51,15 +52,18 @@ def add_arguments(parser):
         'of PB. Only for debugging.'
       ))
 
-  def _launch(args):
-    from .cmd import main
+  def _launch(args: argparse.Namespace) -> int:
+    from . import cmd
     try:
-      return main(args)
+      return cmd.main(args)
     except RunBuildContractViolation as ex:
       LOG.fatal('"luciexe" protocol contract violation: %s', ex)
       return 1
 
-  def _post(_error, _args):
+  def _post(
+      _error: Callable[[str], Any],
+      _args: argparse.Namespace,
+  ) -> None:
     logging.getLogger().setLevel(logging.INFO)
 
   parser.set_defaults(func=_launch, postprocess_func=_post, skip_deps=True)

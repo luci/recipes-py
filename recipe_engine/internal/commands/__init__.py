@@ -11,18 +11,18 @@ directory.
 from __future__ import annotations
 
 import argparse
+from collections.abc import Sequence
 import errno
 import logging
 import os
 import pkgutil
 import sys
-
-from builtins import zip
+from typing import Any
 
 # pylint: disable=wrong-import-position
+from .. import recipe_deps as recipe_deps_mod
+from .. import recipe_module_importer
 from .. import simple_cfg
-from ..recipe_deps import RecipeDeps
-from ..recipe_module_importer import RecipeModuleImporter
 
 
 LOG = logging.getLogger(__name__)
@@ -63,7 +63,7 @@ _COMMANDS.sort(
 # This is needed to allow some tests (though it may be worth adjusting these
 # tests later to not need this. Just delete this function and see which tests
 # fail to find the dependencies on this behavior).
-def _patch_our_attrs():
+def _patch_our_attrs() -> None:
   self = sys.modules[__name__]
   self.__all__ = [mod.__name__[len(__name__)+1:] for mod in _COMMANDS]
   for modname, mod in zip(self.__all__, _COMMANDS):
@@ -71,7 +71,9 @@ def _patch_our_attrs():
 _patch_our_attrs()
 
 
-def _check_recipes_cfg_consistency(recipe_deps):
+def _check_recipes_cfg_consistency(
+    recipe_deps: recipe_deps_mod.RecipeDeps,
+) -> None:
   """Checks all recipe.cfg files for the loaded recipe_deps and logs
   inconsistent dependencies.
 
@@ -101,7 +103,7 @@ def _check_recipes_cfg_consistency(recipe_deps):
         req_repo_name, actual_spec.revision, repo_name, req_spec.revision)
 
 
-def _cleanup_pyc(recipe_deps):
+def _cleanup_pyc(recipe_deps: recipe_deps_mod.RecipeDeps) -> None:
   """Removes any .pyc files from the recipes/recipe_module directories.
 
   Args:
@@ -125,7 +127,7 @@ def _cleanup_pyc(recipe_deps):
               raise
 
 
-def _common_post_process(args):
+def _common_post_process(args: argparse.Namespace) -> None:
   logging.basicConfig()
   if args.log_level:
     logging.getLogger().setLevel(args.log_level)
@@ -141,7 +143,7 @@ def _common_post_process(args):
     except Exception:
       logging.exception("unable to write pidfile")
 
-  args.recipe_deps = RecipeDeps.create(
+  args.recipe_deps = recipe_deps_mod.RecipeDeps.create(
       args.main_repo_path,
       {} if args.minimal_recipe_deps else args.repo_override,
       args.proto_override,
@@ -152,7 +154,9 @@ def _common_post_process(args):
 
   # Allows:
   #   import RECIPE_MODULES.repo_name.module_name.submodule
-  sys.meta_path = [RecipeModuleImporter(args.recipe_deps)] + sys.meta_path
+  sys.meta_path = [
+      recipe_module_importer.RecipeModuleImporter(args.recipe_deps)
+  ] + sys.meta_path
 
   _cleanup_pyc(args.recipe_deps)
 
@@ -164,9 +168,16 @@ def _common_post_process(args):
   del args.proto_override
 
 
-def _add_common_args(parser):
+def _add_common_args(parser: argparse.ArgumentParser) -> None:
   class _RepoOverrideAction(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str | Sequence[Any] | None,
+        option_string: str | None = None,
+    ) -> None:
+      assert isinstance(values, str)
       tokens = values.split('=', 2)
       if len(tokens) != 2:
         raise ValueError('Override must have the form: repo=path')
@@ -182,7 +193,7 @@ def _add_common_args(parser):
         raise ValueError('Override path [%s] is not a directory' % (path,))
       override_dict[repo_name] = path
 
-  def _package_to_main_repo(value):
+  def _package_to_main_repo(value: str) -> str:
     try:
       value = os.path.abspath(value)
     except Exception as ex:  # pylint: disable=broad-except
@@ -201,7 +212,7 @@ def _add_common_args(parser):
 
     return value
 
-  def _to_log_level(val):
+  def _to_log_level(val: str) -> int:
     mapping = {
       'DEBUG': logging.DEBUG,
       'INFO': logging.INFO,
@@ -243,7 +254,7 @@ def _add_common_args(parser):
         'Absolute path to a file where the engine should write its pid. '
         'Path must be absolute and not exist.'))
 
-  def _proto_override_abspath(value):
+  def _proto_override_abspath(value: str) -> str:
     try:
       value = os.path.abspath(value)
     except Exception as ex:  # pylint: disable=broad-except
@@ -271,7 +282,7 @@ def _add_common_args(parser):
   )
 
 
-def parse_and_run():
+def parse_and_run() -> int | None:
   """Parses the command line and runs the chosen subcommand.
 
   Returns the command's return value (either int or None, suitable as input to

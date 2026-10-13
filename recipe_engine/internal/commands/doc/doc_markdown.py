@@ -5,14 +5,16 @@
 
 from __future__ import annotations
 
-from builtins import object, range, str
+from collections.abc import Mapping
+from typing import Any, TextIO
 
-from PB.recipe_engine import doc
+from PB.recipe_engine import doc as doc_pb
+from PB.recipe_engine import recipes_cfg as recipes_cfg_pb
 
 
 GITHUB, GITILES = range(2)
 
-def markdown_flavor_for_url(url):
+def markdown_flavor_for_url(url: str) -> int:
   """Returns either GITHUB or GITILES for the given URL to indicate which flavor
   of markdown is hosted at the URL."""
   if 'github' in url:
@@ -21,56 +23,57 @@ def markdown_flavor_for_url(url):
 
 
 class Printer:
-  def __init__(self, outf):
+  def __init__(self, outf: TextIO) -> None:
     self._outf = outf
-    self._url = None
-    self._current_repo = None
-    self._known_objects = None
-    self._specs = None
+    self._url: str | None = None
+    self._current_repo: str | None = None
+    self._known_objects: Mapping[str, doc_pb.Doc.Known] | None = None
+    self._specs: Mapping[str, recipes_cfg_pb.RepoSpec] | None = None
 
     # name -> url:
     #   <repo_name/recipe_modules/modname>
     #   <repo_name>/wkt/<type_name>
-    self._links = {}
+    self._links: dict[str, str] = {}
 
   @property
-  def specs(self):
+  def specs(self) -> Mapping[str, recipes_cfg_pb.RepoSpec] | None:
     return self._specs
 
   @specs.setter
-  def specs(self, v):
+  def specs(self, v: Mapping[str, recipes_cfg_pb.RepoSpec]) -> None:
     self._specs = v
 
   @property
-  def url(self):
+  def url(self) -> str:
+    assert self._specs is not None and self._current_repo is not None
     return self._specs[self._current_repo].canonical_repo_url
 
   @property
-  def markdown_flavor(self):
+  def markdown_flavor(self) -> int:
     return markdown_flavor_for_url(self.url)
 
   @property
-  def current_repo(self):
+  def current_repo(self) -> str | None:
     return self._current_repo
 
   @current_repo.setter
-  def current_repo(self, v):
+  def current_repo(self, v: str) -> None:
     self._current_repo = v
 
   @property
-  def known_objects(self):
+  def known_objects(self) -> Mapping[str, doc_pb.Doc.Known] | None:
     return self._known_objects
 
   @known_objects.setter
-  def known_objects(self, v):
+  def known_objects(self, v: Mapping[str, doc_pb.Doc.Known]) -> None:
     self._known_objects = v
 
-  def __call__(self, *args):
+  def __call__(self, *args: Any) -> None:
     """Prints some text to the document. Behaves exactly like the builtin print
     function."""
     print(*args, file=self._outf)
 
-  def docstring(self, node):
+  def docstring(self, node: Any) -> None:
     """Prints the docstring on the node (if any).
 
     In the future this will adjust the docstring to better fit in the overall
@@ -113,14 +116,22 @@ class Printer:
         self(line)
 
   @staticmethod
-  def generic_link(name, url, ref=False):
+  def generic_link(name: str, url: str, ref: bool = False) -> str:
     """Returns a markdown link for the name,url pair."""
     name = name.replace('_', r'\_')
     if ref:
       return "[%s][%s]" % (name, url)
     return "[%s](%s)" % (name, url)
 
-  def munge_url(self, url, flavor, node, name=None, relpath=None, lineno=None):
+  def munge_url(
+      self,
+      url: str,
+      flavor: int,
+      node: Any,
+      name: str | None = None,
+      relpath: str | None = None,
+      lineno: int | None = None,
+  ) -> tuple[str, str]:
     if name is None:
       name = getattr(node, 'name')
     if relpath is None:
@@ -140,7 +151,13 @@ class Printer:
 
     return name, url
 
-  def srclink(self, node, name=None, relpath=None, lineno=None):
+  def srclink(
+      self,
+      node: Any,
+      name: str | None = None,
+      relpath: str | None = None,
+      lineno: int | None = None,
+  ) -> str:
     """Links to the source for a given documentation node.
 
     Node is duck-typed, and will be probed for:
@@ -160,7 +177,7 @@ class Printer:
     return self.generic_link(name, url)
 
   @staticmethod
-  def anchor(flavor, name, prefix=None):
+  def anchor(flavor: int, name: str, prefix: str | None = None) -> str:
     anchor = name
     if flavor == GITILES:
       if prefix is not None:
@@ -179,11 +196,12 @@ class Printer:
       anchor = anchor.lower()
     return anchor
 
-  def anchorlink(self, name, prefix=None):
+  def anchorlink(self, name: str, prefix: str | None = None) -> str:
     anchor = self.anchor(self.markdown_flavor, name, prefix)
     return "[%s](#%s)" % (name, anchor)
 
-  def baseurl(self, pkgname):
+  def baseurl(self, pkgname: str) -> tuple[str, str, int]:
+    assert self.specs is not None and self.current_repo is not None
     if pkgname == self.current_repo:
       return '', self.specs[pkgname].recipes_path, self.markdown_flavor
 
@@ -197,7 +215,7 @@ class Printer:
       url += '/+/%s' % r
     return url, s.recipes_path, flavor
 
-  def readmeurl(self, pkgname):
+  def readmeurl(self, pkgname: str) -> tuple[str, int]:
     if pkgname == self.current_repo:
       return '', self.markdown_flavor
 
@@ -207,7 +225,7 @@ class Printer:
     url += '/README.recipes.md'
     return url, flavor
 
-  def modlink(self, pkgname, name):
+  def modlink(self, pkgname: str, name: str) -> str:
     """Returns a link to the generated markdown for a recipe module."""
     displayname = name
     url, flavor = self.readmeurl(pkgname)
@@ -222,15 +240,16 @@ class Printer:
       self._links[link_name] = url
     return self.generic_link(displayname, link_name, ref=True)
 
-  def objlink(self, obj):
+  def objlink(self, obj: doc_pb.Doc.Object) -> str:
     """Returns a markdown link to a well-known object `obj`"""
     if obj.generic:
       return str(obj.generic)
     else:
       # TODO(iannucci): link to a generated markdown doc, not directly to
       # source.
-      obj = self.known_objects[obj.known]
-      node = getattr(obj, obj.WhichOneof('kind'))
+      assert self.known_objects is not None
+      known_obj = self.known_objects[obj.known]
+      node = getattr(known_obj, known_obj.WhichOneof('kind'))
       url, _, flavor = self.baseurl('recipe_engine')
       _, url = self.munge_url(url, flavor, node)
 
@@ -243,7 +262,7 @@ class Printer:
 
       return self.generic_link(node.name, link_name, ref=True)
 
-  def toc(self, section_name, section_map):
+  def toc(self, section_name: str, section_map: Mapping[str, Any]) -> None:
     if section_map:
       self()
       self('**%s**' % (self.anchorlink(section_name),))
@@ -256,13 +275,13 @@ class Printer:
         else:
           self('  * %s' % (link,))
 
-  def dump_links(self):
+  def dump_links(self) -> None:
     self()
     for name, url in sorted(self._links.items()):
       self('[%s]: %s' % (name, url))
 
 
-def emit_funcs(p, func_map):
+def emit_funcs(p: Printer, func_map: Mapping[str, doc_pb.Doc.Func]) -> None:
   for _, func in sorted(func_map.items()):
     name = func.name
     if name.startswith('__') and name.endswith('__') and not func.docstring:
@@ -271,10 +290,10 @@ def emit_funcs(p, func_map):
     Emit(p, func)
 
 
-def Emit(p, node):
+def Emit(p: Printer, node: Any) -> None:
   assert isinstance(p, Printer)
 
-  if isinstance(node, doc.Doc.Recipe):
+  if isinstance(node, doc_pb.Doc.Recipe):
     p("### *recipes* /", p.srclink(node))
 
     Emit(p, node.deps)
@@ -287,7 +306,7 @@ def Emit(p, node):
 
     emit_funcs(p, node.funcs)
 
-  elif isinstance(node, doc.Doc.Repo):
+  elif isinstance(node, doc_pb.Doc.Repo):
     p.current_repo = node.repo_name
     p.specs = node.specs
     p.known_objects = node.known_objects
@@ -316,7 +335,7 @@ def Emit(p, node):
 
     p.dump_links()
 
-  elif isinstance(node, doc.Doc.Module):
+  elif isinstance(node, doc_pb.Doc.Module):
     p("### *recipe_modules* /", p.srclink(node))
 
     Emit(p, node.deps)
@@ -333,14 +352,14 @@ def Emit(p, node):
 
     # TODO(iannucci): funcs
 
-  elif isinstance(node, doc.Doc.Deps):
+  elif isinstance(node, doc_pb.Doc.Deps):
     if node.module_links:
       p()
       links = [p.modlink(pkg, name) for pkg, name in
                sorted((n.repo_name, n.name) for n in node.module_links)]
       p(p.srclink(node, name="DEPS")+":", ', '.join(links))
 
-  elif isinstance(node, doc.Doc.Class):
+  elif isinstance(node, doc_pb.Doc.Class):
     p()
     bases = [p.objlink(b) for b in node.bases]
     p('#### **class %s(%s):**' % (
@@ -352,7 +371,7 @@ def Emit(p, node):
 
     emit_funcs(p, node.funcs)
 
-  elif isinstance(node, doc.Doc.Func):
+  elif isinstance(node, doc_pb.Doc.Func):
     p()
     decos = '<br>'.join([
       "&emsp; **@%s**" % p.objlink(d)

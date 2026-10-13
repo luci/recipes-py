@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping, Sequence
 import contextlib
 import json
 import os
@@ -15,13 +15,13 @@ import subprocess
 import sys
 import tempfile
 import time
+from typing import Any
 
-from parameterized import parameterized
+import parameterized
 
 import test_env
 
-from recipe_engine.internal.engine import _shell_quote
-
+from recipe_engine.internal import engine
 from recipe_engine.third_party import luci_context
 
 # prevent LUCI_CONTEXT leakage :)
@@ -29,7 +29,7 @@ os.environ.pop(luci_context.ENV_KEY, None)
 
 
 class RunTest(test_env.RecipeEngineUnitTest):
-  def test_run(self):
+  def test_run(self) -> None:
     deps = self.FakeRecipeDeps()
 
     with deps.main_repo.write_module('mod') as mod:
@@ -48,7 +48,7 @@ class RunTest(test_env.RecipeEngineUnitTest):
     self.assertEqual(retcode, 0,
                      'ret code is not zero. Recipe output\n%s' % output)
 
-  def test_summary_markdown_too_long(self):
+  def test_summary_markdown_too_long(self) -> None:
     deps = self.FakeRecipeDeps()
 
     with deps.main_repo.write_recipe('long_summary_recipe') as recipe:
@@ -65,7 +65,7 @@ class RunTest(test_env.RecipeEngineUnitTest):
     output, retcode = deps.main_repo.recipes_py('run', 'long_summary_recipe')
     self.assertEqual(retcode, 1)
 
-  def test_run_incomplete_deps(self):
+  def test_run_incomplete_deps(self) -> None:
     deps = self.FakeRecipeDeps()
 
     a = deps.add_repo('a', detached=True)
@@ -84,7 +84,7 @@ class RunTest(test_env.RecipeEngineUnitTest):
     self.assertEqual(retcode, 1)
     self.assertIn('Repo \'a\' depends on [\'b\'], which is missing', output)
 
-  def test_run_circular_deps(self):
+  def test_run_circular_deps(self) -> None:
     deps = self.FakeRecipeDeps()
 
     a = deps.add_repo('a', detached=True)
@@ -103,11 +103,17 @@ class RunTest(test_env.RecipeEngineUnitTest):
 
 
 class RunSmokeTest(test_env.RecipeEngineUnitTest):
-  def _run_cmd(self, recipe, workdir, properties=None, engine_args=()):
+  def _run_cmd(
+      self,
+      recipe: str,
+      workdir: str,
+      properties: Mapping[str, Any] | None = None,
+      engine_args: Sequence[str] = (),
+  ) -> list[str]:
     script_path = os.path.join(test_env.ROOT_DIR, 'recipes.py')
 
     proplist = [
-      '%s=%s' % (k, json.dumps(v)) for k, v in properties or {}.items()
+      '%s=%s' % (k, json.dumps(v)) for k, v in (properties or {}).items()
     ]
 
     return (
@@ -117,7 +123,12 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
       proplist
     )
 
-  def _test_recipe(self, recipe, properties=None, env=None):
+  def _test_recipe(
+      self,
+      recipe: str,
+      properties: Mapping[str, Any] | None = None,
+      env: Mapping[str, str] | None = None,
+  ) -> None:
     workdir = tempfile.mkdtemp(prefix='recipe_engine_run_test-')
     try:
       proc = subprocess.Popen(
@@ -132,7 +143,7 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
     finally:
       shutil.rmtree(workdir, ignore_errors=True)
 
-  @parameterized.expand([
+  @parameterized.parameterized.expand([
       ('context:examples/full',),
       (
           'context:tests/env',
@@ -152,9 +163,11 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
       ('step:examples/full',),
       ('engine_tests/functools_partial',),
   ])
-  def test_examples(self,
-                    recipe_name: str,
-                    env_overrides: Mapping[str, str] | None = None):
+  def test_examples(
+      self,
+      recipe_name: str,
+      env_overrides: Mapping[str, str] | None = None,
+  ) -> None:
     env = None
     if env_overrides:
       env = os.environ.copy()
@@ -162,7 +175,7 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
         env[k] = v
     self._test_recipe(recipe_name, env=env)
 
-  def test_grpc_fork_support(self):
+  def test_grpc_fork_support(self) -> None:
     # recipe_engine/main.py must disable gRPC fork support by setting
     # GRPC_ENABLE_FORK_SUPPORT=0 before importing grpc, so the subprocess
     # (fork+exec) that the engine runs for every step does not crash. Run
@@ -172,7 +185,7 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
     env.pop('GRPC_ENABLE_FORK_SUPPORT', None)
     self._test_recipe('engine_tests/grpc_fork_support', env=env)
 
-  def test_bad_subprocess(self):
+  def test_bad_subprocess(self) -> None:
     now = time.time()
     self._test_recipe('engine_tests/bad_subprocess')
     after = time.time()
@@ -187,10 +200,10 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
     # timing issues like this, but sill effectively test this functionality.
     self.assertLess(after - now, 20)
 
-  def test_shell_quote(self):
+  def test_shell_quote(self) -> None:
     # For regular-looking commands we shouldn't need any specialness.
     self.assertEqual(
-        _shell_quote('/usr/bin/python-wrapper.bin'),
+        engine._shell_quote('/usr/bin/python-wrapper.bin'),
         '/usr/bin/python-wrapper.bin')
 
     STRINGS = [
@@ -203,7 +216,7 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
     ]
 
     for s in STRINGS:
-      quoted = _shell_quote(s)
+      quoted = engine._shell_quote(s)
 
       # We shouldn't ever get an actual newline in a command, that's awful
       # for copypasta.
@@ -222,7 +235,7 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
 
 
 class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
-  def _wait_for_file(self, filename, duration):
+  def _wait_for_file(self, filename: str, duration: float) -> str:
     begin = time.time()
     while True:
       self.assertLessEqual(time.time() - begin, duration,
@@ -234,7 +247,11 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
         time.sleep(.5)
 
   @contextlib.contextmanager
-  def _run_bbagent(self, properties, grace_period=30):
+  def _run_bbagent(
+      self,
+      properties: Mapping[str, Any],
+      grace_period: int = 30,
+  ) -> Iterator[tuple[subprocess.Popen[str], int]]:
     workdir = tempfile.mkdtemp(prefix='recipe_engine_run_test-')
     proc = None
     try:
@@ -250,6 +267,7 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
                               stdin=subprocess.PIPE,
                               env=env,
                               text=True)
+      assert proc.stdin is not None
       json.dump({
           "input": {
               "properties": properties,
@@ -265,7 +283,12 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
         proc.kill()
       shutil.rmtree(workdir, ignore_errors=True)
 
-  def _test_bbagent(self, properties, grace_period=30, timeout=30):
+  def _test_bbagent(
+      self,
+      properties: Mapping[str, Any],
+      grace_period: int = 30,
+      timeout: int = 30,
+  ) -> dict[str, Any]:
     scrap = tempfile.mkdtemp(prefix='recipe_engine_run_test-')
     try:
       wd = os.path.join(scrap, 'wd')
@@ -275,7 +298,7 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
       pidfile = os.path.join(wd, 'pidfile')
       fake_bbagent = os.path.join(test_env.ROOT_DIR, 'misc', 'fake_bbagent.sh')
 
-      deadline = time.time() + timeout
+      deadline: float | None = time.time() + timeout
 
       env = os.environ.copy()
       env.pop(luci_context.ENV_KEY, None)
@@ -288,6 +311,7 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
                               env=env,
                               text=True)
 
+      assert proc.stdin is not None
       json.dump({
           "input": {
               "properties": properties,
@@ -327,7 +351,7 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
     finally:
       shutil.rmtree(scrap, ignore_errors=True)
 
-  def test_early_terminate(self):
+  def test_early_terminate(self) -> None:
     scrap = tempfile.mkdtemp(prefix='recipe_engine-run_test-scrap-')
     try:
       # The recipe will make a bunch of subprocesses which will touch this
@@ -362,7 +386,7 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
     finally:
       shutil.rmtree(scrap, ignore_errors=True)
 
-  def test_add_build_tags(self):
+  def test_add_build_tags(self) -> None:
     final_build = self._test_bbagent(
         {'recipe': 'buildbucket:tests/add_build_tags'},
     )
@@ -376,7 +400,7 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
       ],
     )
 
-  def test_add_step_tags(self):
+  def test_add_step_tags(self) -> None:
     final_build = self._test_bbagent(
         {'recipe': 'buildbucket:tests/add_step_tags'},
     )
@@ -390,7 +414,7 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
           ],
         )
 
-  def test_output_gitiles(self):
+  def test_output_gitiles(self) -> None:
     final_build = self._test_bbagent(
         {'recipe': 'buildbucket:tests/output_commit'},
     )
@@ -402,7 +426,7 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
       'ref': 'refs/heads/main',
     })
 
-  def test_proto_output_properties(self):
+  def test_proto_output_properties(self) -> None:
     final_build = self._test_bbagent(
         {'recipe': 'engine_tests/proto_output_properties'},
     )
@@ -416,7 +440,7 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
       },
     })
 
-  def test_external_timeout(self):
+  def test_external_timeout(self) -> None:
     final_build = self._test_bbagent(
         {'recipe': 'engine_tests/long_sleep'},
         timeout=15,
@@ -451,7 +475,7 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
             },
         })
 
-  def test_external_timeout_recovery(self):
+  def test_external_timeout_recovery(self) -> None:
     final_build = self._test_bbagent(
         {
           'recipe': 'engine_tests/long_sleep',
@@ -461,7 +485,7 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
     )
     self.assertEqual(final_build['status'], 'SUCCESS')
 
-  def test_nonexistent_command(self):
+  def test_nonexistent_command(self) -> None:
     final_build = self._test_bbagent(
       {'recipe': 'engine_tests/nonexistent_command'},
     )

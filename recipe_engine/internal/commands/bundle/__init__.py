@@ -47,16 +47,17 @@ For more information on how gitattributes work.
 
 from __future__ import annotations
 
+import argparse
 import os
 
 
-def add_arguments(parser):
+def add_arguments(parser: argparse.ArgumentParser) -> None:
   parser.add_argument(
       '--destination', default='./bundle',
       type=os.path.abspath,
       help='The directory of where to put the bundle (default: %(default)r).')
 
-  def _launch(args):
-    from .cmd import main
-    return main(args)
+  def _launch(args: argparse.Namespace) -> None:
+    from . import cmd
+    return cmd.main(args)
   parser.set_defaults(func=_launch)

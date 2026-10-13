@@ -5,10 +5,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 import os
-import shutil
 import subprocess
-
+from typing import Any
 from unittest import mock
 
 import test_env
@@ -17,13 +17,13 @@ from recipe_engine.internal import gitattr_checker
 
 
 class AttrCheckerEquivalenceTests(test_env.RecipeEngineUnitTest):
-  def setUp(self):
+  def setUp(self) -> None:
     super().setUp()
     self.git_repo = self.tempdir()
     self.git('init', '-q')
     self.attr_checker = gitattr_checker.AttrChecker(self.git_repo, False)
 
-  def git(self, *cmd, **kwargs):
+  def git(self, *cmd: str, **kwargs: Any) -> str:
     stdin = kwargs.pop('stdin', None)
     if stdin:
       kwargs['stdin'] = subprocess.PIPE
@@ -36,7 +36,7 @@ class AttrCheckerEquivalenceTests(test_env.RecipeEngineUnitTest):
     self.assertEqual(p.returncode, 0, stderr)
     return stdout.strip()
 
-  def write(self, path, contents):
+  def write(self, path: str, contents: Sequence[str]) -> None:
     file_path = os.path.join(self.git_repo, path)
     dirname = os.path.dirname(file_path)
     if dirname and not os.path.exists(dirname):
@@ -44,12 +44,16 @@ class AttrCheckerEquivalenceTests(test_env.RecipeEngineUnitTest):
     with open(os.path.join(self.git_repo, path), 'w') as f:
       f.write('\n'.join(contents))
 
-  def commit(self):
+  def commit(self) -> str:
     self.git('add', '-A')
     self.git('commit', '-m', 'foo')
     return self.git('rev-parse', 'HEAD')
 
-  def getRecipeAttrValue(self, revision, files):
+  def getRecipeAttrValue(
+      self,
+      revision: str,
+      files: Sequence[str],
+  ) -> list[bool]:
     self.git('checkout', revision)
     output = self.git('check-attr', '-z', '--stdin', 'recipes',
                       stdin='\0'.join(files))
@@ -66,12 +70,13 @@ class AttrCheckerEquivalenceTests(test_env.RecipeEngineUnitTest):
         for attr_value in output.split('\0')[2::3]
     ]
 
-  def assertEqualAttr(self, revision, files):
+  def assertEqualAttr(self, revision: str, files: Sequence[str]) -> None:
     actual = self.attr_checker.check_files(revision, files)
+    assert isinstance(actual, list)
     expected = self.getRecipeAttrValue(revision, files)
     self.assertDictEqual(dict(zip(files, actual)), dict(zip(files, expected)))
 
-  def testComments(self):
+  def testComments(self) -> None:
     self.write('.gitattributes',
                ['# Some comment',
                 r'\# recipes',
@@ -79,11 +84,11 @@ class AttrCheckerEquivalenceTests(test_env.RecipeEngineUnitTest):
                 '/foo recipes',])
     revision = self.commit()
     self.assertEqualAttr(
-        revision,
+         revision,
         ['#', '#foo', 'foo', 'foo#', 'bar/foo', 'bar/#', 'bar/foo#',
          'bar/#foo'])
 
-  def testBang(self):
+  def testBang(self) -> None:
     self.write('.gitattributes',
                [r'\!foo recipes',])
     revision = self.commit()
@@ -91,7 +96,7 @@ class AttrCheckerEquivalenceTests(test_env.RecipeEngineUnitTest):
         revision,
         ['!foo', 'foo', 'bar'])
 
-  def testSpecialCharacters(self):
+  def testSpecialCharacters(self) -> None:
     """Test that characters like . + and $ are handled correctly."""
     self.write('.gitattributes',
                ['foo.bar recipes',
@@ -112,7 +117,7 @@ class AttrCheckerEquivalenceTests(test_env.RecipeEngineUnitTest):
          's t', r's\wt',
          'h', 'e', 'l', 'o', '[', '[hello]'])
 
-  def testQuotedPattern(self):
+  def testQuotedPattern(self) -> None:
     self.write('.gitattributes',
                ['"space file" recipes',
                 '"foo bar.*" recipes',
@@ -125,7 +130,7 @@ class AttrCheckerEquivalenceTests(test_env.RecipeEngineUnitTest):
          'inside quote', 'inside.quote', 'inside  quote', 'inside"?"quote',
          'inside" "quote', 'inside""quote'])
 
-  def testDoubleStars(self):
+  def testDoubleStars(self) -> None:
     # Test /**/
     self.write('.gitattributes',
                ['/**/foo recipes',])
@@ -166,7 +171,7 @@ class AttrCheckerEquivalenceTests(test_env.RecipeEngineUnitTest):
         revision,
         ['foo', 'bar', 'foo/bar', 'foo/bar/baz', 'foox/bar', 'xfoo/bar'])
 
-  def testStar(self):
+  def testStar(self) -> None:
     self.write('.gitattributes',
                ['* recipes',])
     revision = self.commit()
@@ -187,7 +192,7 @@ class AttrCheckerEquivalenceTests(test_env.RecipeEngineUnitTest):
          'baz', 'bazx', 'xbaz', 'baxz', 'bxaz', 'baz/x', 'x/baz', 'x/xbaz',
          'x/bazx', 'mu', 'lemur', 'mur', 'lemur', 'x/lemur', 'lemur/x'])
 
-  def testEscapedStar(self):
+  def testEscapedStar(self) -> None:
     self.write('.gitattributes',
                [r'foo\* recipes',
                 r'baz/\** recipes',])
@@ -197,7 +202,7 @@ class AttrCheckerEquivalenceTests(test_env.RecipeEngineUnitTest):
         ['foo', 'foo*', 'foox', 'bar/foo', 'bar/foo*', 'bar/foox', 'baz/x',
          'baz/*x', 'baz/*', 'baz/x/y', 'baz/*x/y'])
 
-  def testQuestionMark(self):
+  def testQuestionMark(self) -> None:
     self.write('.gitattributes',
                ['f?o recipes',])
     revision = self.commit()
@@ -205,7 +210,7 @@ class AttrCheckerEquivalenceTests(test_env.RecipeEngineUnitTest):
         revision,
         ['foo', 'fao', 'f o', 'fo', 'bar/foo', 'bar/fo', 'bar/f o'])
 
-  def testAbsolutePath(self):
+  def testAbsolutePath(self) -> None:
     self.write('.gitattributes',
                ['/*foo',])
     revision = self.commit()
@@ -213,7 +218,7 @@ class AttrCheckerEquivalenceTests(test_env.RecipeEngineUnitTest):
         revision,
         ['foo', 'xfoo', 'foox', 'bar/foo', 'bar/xfoo', 'bar/foox'])
 
-  def testLastAttributeTakesPrecedence(self):
+  def testLastAttributeTakesPrecedence(self) -> None:
     self.write('.gitattributes',
                ['foo recipes -recipes !recipes',
                 'bar -recipes recipes !recipes',
@@ -224,7 +229,7 @@ class AttrCheckerEquivalenceTests(test_env.RecipeEngineUnitTest):
         ['foo', 'bar', 'baz', 'foo/bar', 'bar/foo', 'baz/bar', 'baz/foo',
          'bar/foo/baz'])
 
-  def testLastLineTakesPrecedence(self):
+  def testLastLineTakesPrecedence(self) -> None:
     self.write('.gitattributes',
                ['/bar/** recipes',
                 '/bar/foo/** -recipes',
@@ -238,7 +243,7 @@ class AttrCheckerEquivalenceTests(test_env.RecipeEngineUnitTest):
         ['bar', 'bar/x', 'bar/y/z', 'bar/foo/x', 'bar/foo/y', 'bar/baz/x',
          'bar/baz/y/z', 'batman', 'nananananananana/batman'])
 
-  def testMoreSpecificTakesPrecedence(self):
+  def testMoreSpecificTakesPrecedence(self) -> None:
     self.write('.gitattributes',
                ['foo !recipes',
                 'bar -recipes',])
@@ -255,7 +260,7 @@ class AttrCheckerEquivalenceTests(test_env.RecipeEngineUnitTest):
         ['foo', 'bar', 'baz', 'a/foo', 'a/bar', 'a/baz', 'a/b/foo', 'a/b/bar',
          'a/b/baz', 'a/b/c/foo', 'a/b/c/bar', 'a/b/c/baz'])
 
-  def testProcessesTheRightRevision(self):
+  def testProcessesTheRightRevision(self) -> None:
     self.write('.gitattributes',
                ['foo recipes',
                 'bar recipes',
@@ -273,7 +278,7 @@ class AttrCheckerEquivalenceTests(test_env.RecipeEngineUnitTest):
 
 
 class AttrCheckerMockTests(test_env.RecipeEngineUnitTest):
-  def setUp(self):
+  def setUp(self) -> None:
     super().setUp()
     self._attr_checker = gitattr_checker.AttrChecker('repo', False)
     self._blobs = {
@@ -322,11 +327,16 @@ class AttrCheckerMockTests(test_env.RecipeEngineUnitTest):
                self._git_mock).start()
     self.addCleanup(mock.patch.stopall)
 
-  def _fake_git(self, cmd, stdin=None):
+  def _fake_git(
+      self,
+      cmd: Sequence[str],
+      stdin: str | None = None,
+  ) -> list[str]:
     self.assertEqual(cmd[0], 'cat-file')
     if not cmd[1].startswith('--batch-check'):
       return self._blobs[cmd[-1]]
     self.assertIsNotNone(stdin)
+    assert stdin is not None
     result = []
     for line in stdin.splitlines():
       rev, path = line.split(':')
@@ -336,11 +346,11 @@ class AttrCheckerMockTests(test_env.RecipeEngineUnitTest):
         result.append(self._tree[rev][path])
     return result
 
-  def assertNewCalls(self, expected_calls):
+  def assertNewCalls(self, expected_calls: Sequence[Any]) -> None:
     self.assertEqual(self._git_mock.mock_calls, expected_calls)
     self._git_mock.reset_mock()
 
-  def testDoesntQueryNonGitattributesFiles(self):
+  def testDoesntQueryNonGitattributesFiles(self) -> None:
     # We should only ask information about the .gitattributes files that affect
     # the modified files.
     self.assertEqual(
@@ -353,7 +363,7 @@ class AttrCheckerMockTests(test_env.RecipeEngineUnitTest):
         mock.call(['cat-file', 'blob', 'blob1']),
     ])
 
-  def testCachesGitattributesFiles(self):
+  def testCachesGitattributesFiles(self) -> None:
     self.assertEqual(
         self._attr_checker.check_files('rev1', ['foo', 'bar', 'baz/foo']),
         [True, False, True]
@@ -375,7 +385,7 @@ class AttrCheckerMockTests(test_env.RecipeEngineUnitTest):
                   'rev2:.gitattributes\nrev2:baz/.gitattributes'),
     ])
 
-  def testQueriesNewGitattributesFile(self):
+  def testQueriesNewGitattributesFile(self) -> None:
     self.assertEqual(
         self._attr_checker.check_files('rev2', ['foo', 'bar', 'baz/foo']),
         [True, False, True]
@@ -397,7 +407,7 @@ class AttrCheckerMockTests(test_env.RecipeEngineUnitTest):
         mock.call(['cat-file', 'blob', 'blob3']),
     ])
 
-  def testQueriesModifiedGitattributesFile(self):
+  def testQueriesModifiedGitattributesFile(self) -> None:
     self.assertEqual(
         self._attr_checker.check_files('rev3', ['foo', 'bar', 'baz/foo']),
         [True, False, False]
@@ -420,7 +430,7 @@ class AttrCheckerMockTests(test_env.RecipeEngineUnitTest):
         mock.call(['cat-file', 'blob', 'blob4']),
     ])
 
-  def testDeletedGitattributesFile(self):
+  def testDeletedGitattributesFile(self) -> None:
     self.assertEqual(
         self._attr_checker.check_files('rev1', ['foo', 'bar', 'baz/foo']),
         [True, False, True]

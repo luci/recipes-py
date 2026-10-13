@@ -16,7 +16,7 @@ from recipe_engine.internal.commands.doc import cmd as doc
 
 
 class DocSmokeTest(test_env.RecipeEngineUnitTest):
-  def test_doc(self):
+  def test_doc(self) -> None:
     nul = open(os.devnull, 'w')
 
     script_path = os.path.join(test_env.ROOT_DIR, 'recipes.py')
@@ -28,7 +28,7 @@ class DocSmokeTest(test_env.RecipeEngineUnitTest):
 
 
 class TestMockImports(test_env.RecipeEngineUnitTest):
-  def test_all_mock_imports_importable(self):
+  def test_all_mock_imports_importable(self) -> None:
     for imp_name in doc.ALL_IMPORTS:
       if '.' in imp_name:
         mod, obj = imp_name.rsplit('.', 1)

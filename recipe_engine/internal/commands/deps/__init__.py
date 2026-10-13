@@ -28,7 +28,12 @@ its transitive dependencies).
 
 from __future__ import annotations
 
-def add_arguments(parser):
+import argparse
+from collections.abc import Callable
+from typing import Any
+
+
+def add_arguments(parser: argparse.ArgumentParser) -> None:
   parser.add_argument(
       '--include-test-recipes',
       action='store_true',
@@ -57,11 +62,14 @@ def add_arguments(parser):
             'empty `$repo` (i.e. `::recipe`, `/module`). Use `*` to include'
             ' everything.'))
 
-  def _launch(args):
-    from .cmd import main
-    return main(args)
+  def _launch(args: argparse.Namespace) -> int | None:
+    from . import cmd
+    return cmd.main(args)
 
-  def _postprocess_func(error, args):
+  def _postprocess_func(
+      error: Callable[[str], Any],
+      args: argparse.Namespace,
+  ) -> None:
     rom = args.recipe_or_module
     if not (rom == '*' or '/' in rom or '::' in rom):
       error('recipe_or_module must be fully qualified (or `*`).')

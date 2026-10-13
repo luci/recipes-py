@@ -6,14 +6,14 @@
 from __future__ import annotations
 
 import os
-import sys
 import subprocess
+import sys
 
 import test_env
 
 
 class TestBundle(test_env.RecipeEngineUnitTest):
-  def test_simple(self):
+  def test_simple(self) -> None:
     deps = self.FakeRecipeDeps()
     with deps.main_repo.write_recipe('foo') as recipe:
       recipe.DEPS = ['recipe_engine/step']

@@ -4,13 +4,15 @@
 
 from __future__ import annotations
 
+import argparse
+
 from google.protobuf import json_format as jsonpb
 
-from PB.recipe_engine.recipes_cfg import DepRepoSpecs
+from PB.recipe_engine import recipes_cfg as recipes_cfg_pb
 
 
-def main(args):
-  specs = DepRepoSpecs()
+def main(args: argparse.Namespace) -> int:
+  specs = recipes_cfg_pb.DepRepoSpecs()
 
   for name, dep in args.recipe_deps.repos.items():
     specs.repo_specs[name].CopyFrom(dep.recipes_cfg_pb2)

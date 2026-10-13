@@ -12,12 +12,13 @@ import argparse
 import json
 import os
 import sys
+from typing import Any
 
 # Give this a high priority so it shows first in help.
 __cmd_priority__ = 0
 
-def add_arguments(parser):
-  def _properties_file_type(filename):
+def add_arguments(parser: argparse.ArgumentParser) -> None:
+  def _properties_file_type(filename: str) -> dict[str, Any]:
     with (sys.stdin if filename == '-' else open(filename)) as fil:
       obj = json.load(fil)
       if not isinstance(obj, dict):
@@ -25,7 +26,7 @@ def add_arguments(parser):
           'must contain a JSON object, i.e. `{}`.')
       return obj
 
-  def _parse_prop(prop):
+  def _parse_prop(prop: str) -> dict[str, Any]:
     key, val = prop.split('=', 1)
     try:
       val = json.loads(val)
@@ -33,7 +34,7 @@ def add_arguments(parser):
       pass  # If a value couldn't be evaluated, keep the string version
     return {key: val}
 
-  def _properties_type(value):
+  def _properties_type(value: str) -> dict[str, Any]:
     obj = json.loads(value)
     if not isinstance(obj, dict):
       raise argparse.ArgumentTypeError('must contain a JSON object, i.e. `{}`.')
@@ -74,7 +75,7 @@ def add_arguments(parser):
       'prefix="foobar", but if this decoding fails the value will be '
       'interpreted as a string, e.g. prop=implicit_string.'))
 
-  def _launch(args):
-    from .cmd import main
-    return main(args)
+  def _launch(args: argparse.Namespace) -> int:
+    from . import cmd
+    return cmd.main(args)
   parser.set_defaults(properties={}, func=_launch)

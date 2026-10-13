@@ -4,56 +4,60 @@
 
 from __future__ import annotations
 
+import argparse
+from collections.abc import Mapping
 import logging
 import os
 import sys
-
-from io import open
-
-import psutil
+from typing import Any
 
 from google.protobuf import json_format as jsonpb
 from google.protobuf import text_format as textpb
-
-from PB.go.chromium.org.luci.buildbucket.proto.build import Build
+import psutil
 from turboci.utils import ids
 
-from ....third_party import luci_context
-from ....util import fix_json_object
+from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb
 
-from ...engine import RecipeEngine
-from ...global_shutdown import install_signal_handlers
-from ...step_runner.subproc import SubprocessStepRunner
-from ...stream.invariants import StreamEngineInvariants
-from ...stream.luci import LUCIStreamEngine
+from .... import util
+from ....third_party import luci_context
+
+from ... import engine
+from ... import global_shutdown
+from ...step_runner import subproc
+from ...stream import invariants
+from ...stream import luci
 from ...turboci import common as turboci_common
 from ...turboci import fake as turboci_fake
-from ...turboci import turboci as turboci_real
 from ...turboci import grpc_client as turboci_grpc
+from ...turboci import turboci as turboci_real
 
-from . import RunBuildContractViolation
+from .. import luciexe
 
 
 LOG = logging.getLogger(__name__)
 
 
-def _contract_in_env(key):
+def _contract_in_env(key: str) -> str:
   if key not in os.environ:
-    raise RunBuildContractViolation('Expected $%s in environment.' % key)
+    raise luciexe.RunBuildContractViolation(
+        'Expected $%s in environment.' % key)
   return os.environ[key]
 
 
-def _contract_in_luci_context(section_name, key):
+def _contract_in_luci_context(section_name: str, key: str) -> Any:
   section = luci_context.read(section_name)
   if section is None or key not in section:
-    raise RunBuildContractViolation('Expected %r in $LUCI_CONTEXT[%r].' % (
-      key, section_name))
+    raise luciexe.RunBuildContractViolation(
+        'Expected %r in $LUCI_CONTEXT[%r].' % (key, section_name))
   return section[key]
 
 
-def _synth_properties(build, current_properties):
+def _synth_properties(
+    build: build_pb.Build,
+    current_properties: Mapping[str, Any],
+) -> dict[str, Any]:
   # TODO(iannucci): expose this data natively as a Build message.
-  synth_props = {
+  synth_props: dict[str, Any] = {
     '$recipe_engine/runtime': {
       'is_experimental': build.input.experimental,
     },
@@ -79,21 +83,21 @@ def _synth_properties(build, current_properties):
   LOG.info('Synthesized properties: %r', synth_props)
   return synth_props
 
-def _tweak_env():
+def _tweak_env() -> None:
   # These tweaks are recipe-engine-specific tweaks to be compatible with the
   # behavior of `recipes.py run`.
   os.environ['PYTHONUNBUFFERED'] = '1'
   os.environ['PYTHONIOENCODING'] = 'UTF-8'
 
 
-def main(args):
-  with install_signal_handlers():
+def main(args: argparse.Namespace) -> int:
+  with global_shutdown.install_signal_handlers():
     return _main_impl(args)
 
 
-def _main_impl(args):
+def _main_impl(args: argparse.Namespace) -> int:
   LOG.info('luciexe started, parsing Build message from stdin.')
-  build = Build()
+  build = build_pb.Build()
   build.ParseFromString(open(sys.stdin.fileno(), 'rb').read())
   LOG.info('finished parsing Build message')
   LOG.debug('build proto: %s', jsonpb.MessageToJson(build))
@@ -124,18 +128,18 @@ def _main_impl(args):
 
   properties = jsonpb.MessageToDict(build.input.properties)
   properties.update(_synth_properties(build, properties))
-  properties = fix_json_object(properties)
+  properties = util.fix_json_object(properties)
 
   _tweak_env()
 
-  luciexe_engine = LUCIStreamEngine(args.build_proto_stream_jsonpb)
+  luciexe_engine = luci.LUCIStreamEngine(args.build_proto_stream_jsonpb)
 
   raw_result = None
-  with StreamEngineInvariants.wrap(luciexe_engine) as stream_engine:
+  with invariants.StreamEngineInvariants.wrap(luciexe_engine) as stream_engine:
     try:
-      raw_result, _ = RecipeEngine.run_steps(
+      raw_result, _ = engine.RecipeEngine.run_steps(
         args.recipe_deps, properties, stream_engine,
-        SubprocessStepRunner(), os.environ, os.getcwd(),
+        subproc.SubprocessStepRunner(), os.environ, os.getcwd(),
         luci_context.read_full(), psutil.cpu_count(),
         psutil.virtual_memory().total)
       stream_engine.write_result(raw_result)

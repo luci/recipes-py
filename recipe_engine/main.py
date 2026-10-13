@@ -11,10 +11,12 @@ infra/config/recipes.cfg.
 
 from __future__ import annotations
 
-import sys
 import errno
 import os
+import sys
 import time
+import traceback
+from typing import NoReturn
 
 # Disable gRPC fork handlers before any module imports grpc. The recipe engine
 # uses gevent and spawns child processes via subprocess.Popen (fork+exec); if
@@ -33,7 +35,7 @@ os.environ.setdefault('GRPC_ENABLE_FORK_SUPPORT', '0')
 # parameters works... go figure.
 if sys.platform == 'darwin':
   _REAL_OS_READ = os.read
-  def _hacked_read(fileno, bufsiz):
+  def _hacked_read(fileno: int, bufsiz: int) -> bytes:
     tries = 3
     while True:
       try:
@@ -84,10 +86,10 @@ if debugger.PROTOCOL == 'pdb' and not debugger.IMPLICIT_BREAKPOINTS:
   # early in the recipe engine. Manually add any additional breakpoints.
   # It is recommended to use a remote debugger (see doc/user_guide.md).
 
-from recipe_engine.internal.commands import parse_and_run
+from recipe_engine.internal import commands
 
 
-def _strip_virtualenv():
+def _strip_virtualenv() -> None:
   # Prune all evidence of VPython/VirtualEnv out of the environment. This means
   # that recipe engine 'unwraps' vpython VirtualEnv path/env manipulation.
   # Invocations of `python` from recipes should never inherit the recipe
@@ -108,7 +110,7 @@ def _strip_virtualenv():
   ])
 
 
-def _main():
+def _main() -> NoReturn:
   # Use os._exit instead of sys.exit to prevent the python interpreter from
   # hanging on threads/processes which may have been spawned and not reaped
   # (e.g. by a leaky test harness).
@@ -117,7 +119,7 @@ def _main():
     sleep_duration = float(os.environ.pop('RECIPES_DEBUG_SLEEP'))
     sys.stderr.write(
         '[engine will sleep for %f seconds after execution]\n' % sleep_duration)
-    def exit_fn(code):
+    def exit_fn(code: int) -> NoReturn:
       sys.stderr.write(
           '[engine sleeping for %f seconds]\n' % sleep_duration)
       time.sleep(sleep_duration)
@@ -135,9 +137,8 @@ def _main():
     os.environ.pop('RECIPES_USE_PY3')
 
   try:
-    ret = parse_and_run()
+    ret = commands.parse_and_run()
   except Exception as exc:  # pylint: disable=broad-except
-    import traceback
     traceback.print_exc(file=sys.stderr)
     print('Uncaught exception (%s): %s' % (
       type(exc).__name__, exc), file=sys.stderr)

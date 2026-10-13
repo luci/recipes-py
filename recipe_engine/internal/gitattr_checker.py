@@ -4,15 +4,15 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 import os
 import re
-import sys
+from typing import Any
 
-from builtins import zip
 from gevent import subprocess
 
 
-def _pattern2re(pattern):
+def _pattern2re(pattern: str) -> str:
   """Transforms a GA pattern to a regular expression."""
   i = 0
   escaped = False
@@ -60,7 +60,7 @@ def _pattern2re(pattern):
   return regex + '$'
 
 
-def _parse_gitattr_line(line):
+def _parse_gitattr_line(line: str) -> tuple[str, bool] | None:
   """Parses a line in a GA files.
 
   Args:
@@ -79,10 +79,11 @@ def _parse_gitattr_line(line):
   if line.startswith((r'\#', r'\!')):
     line = line[1:]
 
+  attributes: list[str] = []
   if not line.startswith('"'):
-    line = line.split()
-    pattern = line[0]
-    attributes = line[1:]
+    tokens = line.split()
+    pattern = tokens[0]
+    attributes = tokens[1:]
   else:
     is_escaped = False
     pattern = ''
@@ -115,7 +116,7 @@ def _parse_gitattr_line(line):
 
 
 class AttrChecker:
-  def __init__(self, repo, shortcircuit=True):
+  def __init__(self, repo: str, shortcircuit: bool = True) -> None:
     self._repo = repo
     # Shortcircuit means we only care about whether any of the files we check
     # has the 'recipes' attribute set (which is useful when checking if the
@@ -128,24 +129,25 @@ class AttrChecker:
     # regex that matches the affected files, and action is True if the 'recipes'
     # attributes is to be set or False otherwise.
     # Rules are stored in the order they appear in the .gitattributes file.
-    self._gitattr_files_cache = {}
+    self._gitattr_files_cache: dict[str, list[list[Any]]] = {}
     # Stores the gitattributes files for the current revision.
-    self._gitattr_files = None
+    self._gitattr_files: list[tuple[str, list[list[Any]]]] | None = None
 
-  def _git(self, cmd, stdin=None):
+  def _git(self, cmd: Sequence[str], stdin: str | None = None) -> list[str]:
     """Executes a git command and returns the standard output."""
     p = subprocess.Popen(
-        ['git'] + cmd,
+        ['git'] + list(cmd),
         cwd=self._repo,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         text=True)
     stdout, _ = p.communicate(stdin if stdin else None)
     if p.returncode != 0:
-      raise subprocess.CalledProcessError(p.returncode, ['git'] + cmd, None)
+      raise subprocess.CalledProcessError(
+          p.returncode, ['git'] + list(cmd), None)
     return stdout.strip().splitlines()
 
-  def _get_directories(self, files):
+  def _get_directories(self, files: Iterable[str]) -> set[str]:
     """Lists all the directories touched by any of the |files|."""
     dirs = set([''])
     for f in files:
@@ -155,7 +157,11 @@ class AttrChecker:
         f = os.path.dirname(f)
     return dirs
 
-  def _ensure_gitattributes_files_loaded(self, revision, files):
+  def _ensure_gitattributes_files_loaded(
+      self,
+      revision: str,
+      files: Iterable[str],
+  ) -> None:
     """Loads and parses all the .gitattributes files in the given revision."""
     self._gitattr_files = []
 
@@ -183,7 +189,7 @@ class AttrChecker:
     self._gitattr_files.sort()
     self._gitattr_files.reverse()
 
-  def _parse_gitattr_file(self, blob_hash):
+  def _parse_gitattr_file(self, blob_hash: str) -> list[list[Any]]:
     """Returns a list of patterns and actions parsed from the GA file.
 
     Parses the .gitattributes file pointed at by |blob_hash|, and returns the
@@ -200,7 +206,7 @@ class AttrChecker:
     if blob_hash in self._gitattr_files_cache:
       return self._gitattr_files_cache[blob_hash]
 
-    rules = []
+    rules: list[list[Any]] = []
     for line in self._git(['cat-file', 'blob', blob_hash]):
       parsed_line = _parse_gitattr_line(line)
       if parsed_line is None:
@@ -218,7 +224,7 @@ class AttrChecker:
     self._gitattr_files_cache[blob_hash] = rules
     return rules
 
-  def _check_file(self, f):
+  def _check_file(self, f: str) -> bool:
     """Check whether |f| has the 'recipes' attribute set.
 
     Returns True if the file |f| has the 'recipes' attribute set, and False
@@ -227,6 +233,7 @@ class AttrChecker:
     # If the file path starts with the GA path, then the path is a parent of
     # the file. Note that since the GA paths are sorted desc. according to
     # length, the first we find will be the most specific one.
+    assert self._gitattr_files is not None
     for path, rules in self._gitattr_files:
       if not f.startswith(path):
         continue
@@ -245,7 +252,11 @@ class AttrChecker:
     # not set.
     return False
 
-  def check_files(self, revision, files):
+  def check_files(
+      self,
+      revision: str,
+      files: Iterable[str],
+  ) -> bool | list[bool]:
     """Checks the 'recipes' attribute for the |files| at the given |revision|.
 
     If |shortcircuit| was specified when creating this object, returns True if

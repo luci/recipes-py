@@ -19,26 +19,29 @@ See `doc/user_guide.md` for more information on how to set these up.
 
 from __future__ import annotations
 
+import argparse
 import ast
 import bdb
+from collections.abc import Iterator
 import sys
 import traceback
 
 from ... import config_types
 from ... import engine_types
+from ... import recipe_test_api
 
 from .. import debugger
 from .. import global_shutdown
 from .. import recipe_deps
 
-from ..test.execute_test_case import execute_test_case
-from .test.fail_tracker import FailTracker
+from ..test import execute_test_case as execute_test_case_mod
+from .test import fail_tracker
 from .test import test_name
 
 
-_recipes_breakpointed = set()
+_recipes_breakpointed: set[str] = set()
 
-def _breakpoint_recipe(recipe):
+def _breakpoint_recipe(recipe: recipe_deps.Recipe) -> None:
   if debugger.should_set_implicit_breakpoints():
     if recipe.name not in _recipes_breakpointed:
       with open(recipe.path, 'rb') as recipe_file:
@@ -54,7 +57,9 @@ def _breakpoint_recipe(recipe):
       _recipes_breakpointed.add(recipe.name)
 
 
-def _safely_gen_tests(recipe):
+def _safely_gen_tests(
+    recipe: recipe_deps.Recipe,
+) -> Iterator[recipe_test_api.TestData]:
   # This little function just makes the command exit cleanly if the user aborts
   # the debugger during the GenTests execution.
   print(f'Parsing recipe {recipe.name!r}')
@@ -64,7 +69,11 @@ def _safely_gen_tests(recipe):
     sys.exit(0)
 
 
-def _dump_recipes(rdeps, errmsg, contain=''):
+def _dump_recipes(
+    rdeps: recipe_deps.RecipeDeps,
+    errmsg: str,
+    contain: str = '',
+) -> None:
   print(errmsg)
   available = sorted(rdeps.main_repo.recipes)
   msg = 'Available recipes are:'
@@ -80,7 +89,8 @@ def _dump_recipes(rdeps, errmsg, contain=''):
 
 def _parse_debug_target(
     rdeps: recipe_deps.RecipeDeps,
-    debug_target: str | None):
+    debug_target: str | None,
+) -> tuple[recipe_deps.Recipe | None, recipe_test_api.TestData | None]:
   """Parses the singular `debug_target` argument, and returns the Recipe and
   TestData it indicates.
 
@@ -90,11 +100,12 @@ def _parse_debug_target(
 
   if not debug_target:
     # Try to pull it from previous failures.
-    tracker = FailTracker(rdeps.previous_test_failures_path)
+    tracker = fail_tracker.FailTracker(rdeps.previous_test_failures_path)
     for fail in tracker.recent_fails:
       recipe_name, test_case_name = test_name.split(fail)
       print(
-          f'Attempting to pick most recent test failure: {recipe_name}.{test_case_name}.'
+          f'Attempting to pick most recent test failure:'
+          f' {recipe_name}.{test_case_name}.'
       )
       break
   else:
@@ -138,7 +149,7 @@ def _parse_debug_target(
   return None, None
 
 
-def add_arguments(parser):
+def add_arguments(parser: argparse.ArgumentParser) -> None:
   """Implements the subcommand protocol for recipe engine."""
 
   parser.add_argument(
@@ -150,12 +161,14 @@ def add_arguments(parser):
             'If omitted entirely, will debug the most recent test failure.'))
 
   parser.add_argument(
-      '--filter', dest='test_filter', action='append', default=test_name.Filter(),
+      '--filter', dest='test_filter', action='append',
+      default=test_name.Filter(),
       help=(
-        'Debug all tests which match this filter. Mutually exclusive with `debug_target`.'
+        'Debug all tests which match this filter. Mutually exclusive with'
+        ' `debug_target`.'
       ))
 
-  def _main(args):
+  def _main(args: argparse.Namespace) -> None:
     if args.test_filter and args.debug_target:
       parser.error("cannot specify debug_target with --filter")
 
@@ -170,7 +183,7 @@ def add_arguments(parser):
       return
 
     recipe, test_data = _parse_debug_target(args.recipe_deps, args.debug_target)
-    if recipe is None:
+    if recipe is None or test_data is None:
       return
 
     _debug_recipe(args.recipe_deps, recipe, test_data)
@@ -178,8 +191,11 @@ def add_arguments(parser):
   parser.set_defaults(func=_main)
 
 
-def _debug_recipe(rdeps: recipe_deps.RecipeDeps, recipe: recipe_deps.Recipe,
-                  test_data):
+def _debug_recipe(
+    rdeps: recipe_deps.RecipeDeps,
+    recipe: recipe_deps.Recipe,
+    test_data: recipe_test_api.TestData,
+) -> bool | None:
   """Debugs the given recipe + test case."""
   # Reset global state.
   config_types.ResetGlobalVariableAssignments()
@@ -193,7 +209,7 @@ def _debug_recipe(rdeps: recipe_deps.RecipeDeps, recipe: recipe_deps.Recipe,
 
   try:
     print(f'RunSteps() # Loaded test case: {recipe.name}.{test_data.name}')
-    execute_test_case(rdeps, recipe.name, test_data)
+    execute_test_case_mod.execute_test_case(rdeps, recipe.name, test_data)
     return True
   except bdb.BdbQuit:
     return False
@@ -202,3 +218,4 @@ def _debug_recipe(rdeps: recipe_deps.RecipeDeps, recipe: recipe_deps.Recipe,
     print('Uncaught exception. Entering post mortem debugging')
     print('Running \'cont\' or \'step\' will restart the program')
     debugger.set_pdb_post_mortem()
+    return None

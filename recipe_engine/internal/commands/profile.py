@@ -18,24 +18,28 @@ However, you can also configure it to do a couple additional things:
 
 from __future__ import annotations
 
+import argparse
 import bdb
+from collections.abc import Iterator
 import cProfile
 import sys
 import traceback
 
 from ... import config_types
 from ... import engine_types
+from ... import recipe_test_api
 
-from .. import recipe_deps
 from .. import global_shutdown
+from .. import recipe_deps
 
-from ..test.execute_test_case import execute_test_case
-from .test.fail_tracker import FailTracker
+from ..test import execute_test_case as execute_test_case_mod
+from .test import fail_tracker
 from .test import test_name
 
 
-
-def _safely_gen_tests(recipe):
+def _safely_gen_tests(
+    recipe: recipe_deps.Recipe,
+) -> Iterator[recipe_test_api.TestData]:
   # This little function just makes the command exit cleanly if the user aborts
   # the profiler during the GenTests execution.
   print(f'Parsing recipe {recipe.name!r}')
@@ -48,7 +52,8 @@ def _safely_gen_tests(recipe):
 def _dump_recipes(
     rdeps: recipe_deps.RecipeDeps,
     errmsg: str,
-    contain: str=''):
+    contain: str = '',
+) -> None:
   print(errmsg)
   available = sorted(rdeps.main_repo.recipes)
   msg = 'Available recipes are:'
@@ -64,7 +69,8 @@ def _dump_recipes(
 
 def _parse_profile_target(
     rdeps: recipe_deps.RecipeDeps,
-    profile_target: str | None):
+    profile_target: str | None,
+) -> tuple[recipe_deps.Recipe | None, recipe_test_api.TestData | None]:
   """Parses the singular `profile_target` argument, and returns the Recipe and
   TestData it indicates.
 
@@ -74,11 +80,12 @@ def _parse_profile_target(
 
   if not profile_target:
     # Try to pull it from previous failures.
-    tracker = FailTracker(rdeps.previous_test_failures_path)
+    tracker = fail_tracker.FailTracker(rdeps.previous_test_failures_path)
     for fail in tracker.recent_fails:
       recipe_name, test_case_name = test_name.split(fail)
       print(
-          f'Attempting to pick most recent test failure: {recipe_name}.{test_case_name}.'
+          f'Attempting to pick most recent test failure:'
+          f' {recipe_name}.{test_case_name}.'
       )
       break
   else:
@@ -121,7 +128,7 @@ def _parse_profile_target(
   return None, None
 
 
-def add_arguments(parser):
+def add_arguments(parser: argparse.ArgumentParser) -> None:
   """Implements the subcommand protocol for recipe engine."""
 
   parser.add_argument(
@@ -133,9 +140,11 @@ def add_arguments(parser):
             'If omitted entirely, will profile the most recent test failure.'))
 
   parser.add_argument(
-      '--filter', dest='test_filter', action='append', default=test_name.Filter(),
+      '--filter', dest='test_filter', action='append',
+      default=test_name.Filter(),
       help=(
-        'Profile all tests which match this filter. Mutually exclusive with `profile_target`.'
+        'Profile all tests which match this filter. Mutually exclusive with'
+        ' `profile_target`.'
       ))
 
   parser.add_argument(
@@ -150,7 +159,7 @@ def add_arguments(parser):
       'File to write profiler dump to. If not provided, dumps to stdout.'
     ))
 
-  def _main(args):
+  def _main(args: argparse.Namespace) -> None:
     if args.test_filter and args.profile_target:
       parser.error("cannot specify profile_target with --filter")
 
@@ -159,12 +168,15 @@ def add_arguments(parser):
         if args.test_filter.recipe_name(recipe.name):
           for test_data in _safely_gen_tests(recipe):
             if args.test_filter.full_name(f"{recipe.name}.{test_data.name}"):
-              if not _profile_recipe(args.recipe_deps, recipe, test_data, args.sort, args.file):
+              if not _profile_recipe(
+                  args.recipe_deps, recipe, test_data, args.sort, args.file
+              ):
                 return
       return
 
-    recipe, test_data = _parse_profile_target(args.recipe_deps, args.profile_target)
-    if recipe is None:
+    recipe, test_data = _parse_profile_target(
+        args.recipe_deps, args.profile_target)
+    if recipe is None or test_data is None:
       return
 
     _profile_recipe(args.recipe_deps, recipe, test_data, args.sort, args.file)
@@ -172,8 +184,13 @@ def add_arguments(parser):
   parser.set_defaults(func=_main)
 
 
-def _profile_recipe(rdeps: recipe_deps.RecipeDeps, recipe: recipe_deps.Recipe,
-                  test_data, sort: str, file: str):
+def _profile_recipe(
+    rdeps: recipe_deps.RecipeDeps,
+    recipe: recipe_deps.Recipe,
+    test_data: recipe_test_api.TestData,
+    sort: str | int,
+    file: str | None,
+) -> bool | None:
   """Profiles the given recipe + test case."""
   # Reset global state.
   config_types.ResetGlobalVariableAssignments()
@@ -183,7 +200,7 @@ def _profile_recipe(rdeps: recipe_deps.RecipeDeps, recipe: recipe_deps.Recipe,
   try:
     print(f'RunSteps() # Loaded test case: {recipe.name}.{test_data.name}')
     with cProfile.Profile() as pr:
-      execute_test_case(rdeps, recipe.name, test_data)
+      execute_test_case_mod.execute_test_case(rdeps, recipe.name, test_data)
       if file:
         pr.dump_stats(file)
       else:
@@ -193,3 +210,4 @@ def _profile_recipe(rdeps: recipe_deps.RecipeDeps, recipe: recipe_deps.Recipe,
     return False
   except Exception:  # pylint: disable=broad-except
     traceback.print_exc()
+    return None

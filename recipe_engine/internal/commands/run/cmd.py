@@ -6,40 +6,35 @@
 
 from __future__ import annotations
 
-from io import open
-
+import argparse
 import logging
 import os
 import sys
 
+from google.protobuf import json_format as jsonpb
 import psutil
 
-from builtins import str
-from google.protobuf import json_format as jsonpb
-
-from recipe_engine import __path__ as RECIPE_ENGINE_PATH
+import recipe_engine
 
 from .... import util
+from ....third_party import luci_context
 
+from ... import engine
+from ... import global_shutdown
 from ... import legacy
-
-from ...engine import RecipeEngine
-from ...global_shutdown import install_signal_handlers
-from ...step_runner.subproc import SubprocessStepRunner
-from ...stream.annotator import AnnotatorStreamEngine
-from ...stream.invariants import StreamEngineInvariants
+from ...step_runner import subproc
+from ...stream import annotator
+from ...stream import invariants
 from ...turboci import common as turboci_common
 from ...turboci import fake as turboci_fake
 
-from ....third_party import luci_context
 
-
-def main(args):
-  with install_signal_handlers():
+def main(args: argparse.Namespace) -> int:
+  with global_shutdown.install_signal_handlers():
     return _main_impl(args)
 
 
-def _main_impl(args):
+def _main_impl(args: argparse.Namespace) -> int:
   if args.props:
     for p in args.props:
       args.properties.update(p)
@@ -59,19 +54,19 @@ def _main_impl(args):
   # Shouldn't the caller of recipes just CD somewhere if they want a different
   # workdir?
   workdir = (args.workdir or
-      os.path.join(RECIPE_ENGINE_PATH[0], os.path.pardir, 'workdir'))
+      os.path.join(recipe_engine.__path__[0], os.path.pardir, 'workdir'))
   logging.info('Using %s as work directory' % workdir)
   if not os.path.exists(workdir):
     os.makedirs(workdir)
 
-  stream_engine = AnnotatorStreamEngine(sys.stdout)
+  stream_engine = annotator.AnnotatorStreamEngine(sys.stdout)
 
   # Have a top-level set of invariants to enforce StreamEngine expectations.
-  raw_result, _ = RecipeEngine.run_steps(
+  raw_result, _ = engine.RecipeEngine.run_steps(
       args.recipe_deps,
       properties,
-      StreamEngineInvariants.wrap(stream_engine),
-      SubprocessStepRunner(),
+      invariants.StreamEngineInvariants.wrap(stream_engine),
+      subproc.SubprocessStepRunner(),
       os.environ,
       os.path.abspath(workdir),
       luci_context.read_full(),

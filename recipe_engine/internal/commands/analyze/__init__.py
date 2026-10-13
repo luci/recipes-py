@@ -12,11 +12,11 @@ message in JSONPB.
 
 from __future__ import annotations
 
-import sys
 import argparse
+import sys
 
 
-def add_arguments(parser):
+def add_arguments(parser: argparse.ArgumentParser) -> None:
   parser.add_argument(
     'input', type=argparse.FileType('r'),
     help='Path to a JSON object. Valid fields: "files", "recipes". See'
@@ -25,7 +25,7 @@ def add_arguments(parser):
     'output', type=argparse.FileType('w'), default=sys.stdout,
     help='The file to write output to. See analyze.proto for more information.')
 
-  def _launch(args):
-    from .cmd import main
-    return main(args)
+  def _launch(args: argparse.Namespace) -> int:
+    from . import cmd
+    return cmd.main(args)
   parser.set_defaults(func=_launch)

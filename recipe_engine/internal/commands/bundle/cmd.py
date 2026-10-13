@@ -4,13 +4,14 @@
 
 from __future__ import annotations
 
+import argparse
 import logging
 import os
 import sys
 
 from gevent import subprocess
 
-from ...recipe_deps import RecipeDeps
+from ... import recipe_deps as recipe_deps_mod
 
 LOGGER = logging.getLogger(__name__)
 CIPD = 'cipd.bat' if sys.platform == 'win32' else 'cipd'
@@ -18,7 +19,7 @@ BUNDLE_RECIPE_PKG_NAME = 'infra/tools/luci/bundle_recipe'
 BUNDLE_RECIPE_VERSION = '	git_revision:e995ce992ce5c615c6a25f63b7e33b6467ee92c3'
 
 
-def _bundle_recipe(recipe_deps: RecipeDeps, dest: str) -> None:
+def _bundle_recipe(recipe_deps: recipe_deps_mod.RecipeDeps, dest: str) -> None:
   """Downloads bundle_recipe package and invoke it to bundle this recipe repo.
 
   Args:
@@ -50,5 +51,5 @@ def _bundle_recipe(recipe_deps: RecipeDeps, dest: str) -> None:
   LOGGER.info('done!')
 
 
-def main(args):
+def main(args: argparse.Namespace) -> None:
   _bundle_recipe(args.recipe_deps, args.destination)

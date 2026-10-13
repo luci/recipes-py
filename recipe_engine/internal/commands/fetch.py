@@ -10,7 +10,9 @@ As a side-effect this also refreshes the following:
 
 from __future__ import annotations
 
+import argparse
 
-def add_arguments(parser):
+
+def add_arguments(parser: argparse.ArgumentParser) -> None:
   # fetch action is implied by recipes.py
   parser.set_defaults(func=(lambda _: 0))

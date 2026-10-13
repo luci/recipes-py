@@ -14,8 +14,12 @@ from __future__ import annotations
 
 # TODO(luqui): Implement lint for recipe modules also.
 
+import argparse
+from collections.abc import Iterator, Sequence
 import re
 import types
+
+from .. import recipe_deps
 
 
 ALLOWED_MODULES = [
@@ -56,7 +60,10 @@ ALLOWED_MODULES = [
 ]
 
 
-def ImportsTest(recipe, allowed_modules):
+def ImportsTest(
+    recipe: recipe_deps.Recipe,
+    allowed_modules: Sequence[re.Pattern[str]],
+) -> Iterator[str]:
   """Tests that recipe_name only uses allowed imports.
 
   Returns a list of errors, or an empty list if there are no errors (duh).
@@ -82,7 +89,7 @@ def ImportsTest(recipe, allowed_modules):
                '  Disallowed import of %s' % (recipe.path, module_name))
 
 
-def add_arguments(parser):
+def add_arguments(parser: argparse.ArgumentParser) -> None:
   # TODO(iannucci): merge this with the test command, doesn't need to be top
   # level.
   parser.add_argument(
@@ -96,7 +103,7 @@ def add_arguments(parser):
   parser.set_defaults(func=main, skip_deps=True)
 
 
-def main(args):
+def main(args: argparse.Namespace) -> int:
   allowed_modules = tuple(map(re.compile, ALLOWED_MODULES + args.allowlist))
 
   errors = []

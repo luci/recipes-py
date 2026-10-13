@@ -4,19 +4,21 @@
 
 from __future__ import annotations
 
+import argparse
 import os
 import sys
 
 from gevent import subprocess
-
 from google.protobuf import json_format as jsonpb
 
-from PB.recipe_engine.analyze import Input, Output
+from PB.recipe_engine import analyze as analyze_pb
+
+from ... import recipe_deps as recipe_deps_mod
 
 GIT = 'git.bat' if sys.platform == 'win32' else 'git'
 
 
-def get_git_attribute_files(repo_root):
+def get_git_attribute_files(repo_root: str) -> list[str]:
   """Returns the files referenced from repo's .gitattribute file.
 
   TODO(iannucci): Move this functionality to fetch.GitBackend
@@ -35,7 +37,10 @@ def get_git_attribute_files(repo_root):
       subprocess.check_output(args, text=True).splitlines()]
 
 
-def analyze(recipe_deps, in_data):
+def analyze(
+    recipe_deps: recipe_deps_mod.RecipeDeps,
+    in_data: analyze_pb.Input,
+) -> analyze_pb.Output:
   """Determine which recipes are affected by a list of files.
 
   Args:
@@ -45,7 +50,7 @@ def analyze(recipe_deps, in_data):
   Returns an instance of analyze_pb2.Output, representing the result of the
   analysis.
   """
-  output = Output()
+  output = analyze_pb.Output()
 
   if not in_data.recipes:
     output.error = 'Must provide a set of recipes as input'
@@ -66,7 +71,7 @@ def analyze(recipe_deps, in_data):
 
   # Used to look at git attributes later. Maps repo_name to the contents of
   # its .gitattributes file. Mainly a cache so we only read the file once.
-  git_attr_file_map = {}
+  git_attr_file_map: dict[str, set[str]] = {}
 
   # We look at 4 different sets of files which could affect the recipe.
   for recipe_name in (r for r in in_data.recipes if r in valid_recipes):
@@ -95,7 +100,7 @@ def analyze(recipe_deps, in_data):
     # 3: The modules. This is the list of (repo_name, module_name)
     queue = set(recipe.normalized_DEPS.values())
 
-    processed = set()
+    processed: set[tuple[str, str]] = set()
 
     # Do a Breadth First Search of all the modules this recipe transitively
     # depends on.
@@ -139,11 +144,11 @@ def analyze(recipe_deps, in_data):
   return output
 
 
-def main(args):
-  in_data = jsonpb.Parse(args.input.read(), Input())
+def main(args: argparse.Namespace) -> int:
+  in_data = jsonpb.Parse(args.input.read(), analyze_pb.Input())
   args.input.close()
 
   data = analyze(args.recipe_deps, in_data)
   args.output.write(
       jsonpb.MessageToJson(data, always_print_fields_with_no_presence=True))
-  return bool(data.error)
+  return int(bool(data.error))

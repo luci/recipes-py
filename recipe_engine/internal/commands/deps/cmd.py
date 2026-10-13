@@ -5,29 +5,37 @@
 
 from __future__ import annotations
 
-import contextlib
-import logging
+import argparse
+from collections.abc import Iterable, Iterator
 import sys
+from typing import TextIO
 
 from google.protobuf import json_format as jsonpb
 
-from PB.recipe_engine.internal.commands.deps import deps
+from PB.recipe_engine.internal.commands.deps import deps as deps_pb
 
-from ...recipe_deps import RecipeDeps   # for type info
-from ...exceptions import RecipeUsageError
+from ... import exceptions
+from ... import recipe_deps as recipe_deps_mod
 
 
-def extract_module_names(obj):
+def extract_module_names(
+    obj: recipe_deps_mod.Recipe | recipe_deps_mod.RecipeModule,
+) -> Iterator[str]:
   for repo, name in obj.normalized_DEPS.values():
     yield '%s/%s' % (repo, name)
 
 
-def load_recipes_modules(rd, target, include_test_recipes, include_dependants):
-  recipes = []
-  mod_names = set()
+def load_recipes_modules(
+    rd: recipe_deps_mod.RecipeDeps,
+    target: str,
+    include_test_recipes: bool,
+    include_dependants: bool,
+) -> tuple[list[recipe_deps_mod.Recipe], set[str]]:
+  recipes: list[recipe_deps_mod.Recipe] = []
+  mod_names: set[str] = set()
 
   if target == '*':
-    recipes = rd.main_repo.recipes.values()
+    recipes = list(rd.main_repo.recipes.values())
     for mod in rd.main_repo.modules.values():
       recipes.extend(mod.recipes.values())
     mod_name = set(rd.main_repo.modules.keys())
@@ -54,7 +62,7 @@ def load_recipes_modules(rd, target, include_test_recipes, include_dependants):
       mod_names.add('%s/%s' % (target_repo, target_name))
 
       if include_dependants:
-        mod = (target_repo, target_name)
+        mod_key = (target_repo, target_name)
         for repo in rd.repos.values():
           if repo.name == target_repo or target_repo in repo.simple_cfg.deps:
             for recipe in repo.recipes.values():
@@ -63,7 +71,7 @@ def load_recipes_modules(rd, target, include_test_recipes, include_dependants):
                   or ':tests/' in recipe.name)):
                 continue
 
-              if mod in recipe.normalized_DEPS.values():
+              if mod_key in recipe.normalized_DEPS.values():
                 recipes.append(recipe)
 
   for recipe in recipes:
@@ -72,8 +80,12 @@ def load_recipes_modules(rd, target, include_test_recipes, include_dependants):
   return recipes, mod_names
 
 
-def process_modules(ret, rd, mod_names):
-  processed_mod_names = set()
+def process_modules(
+    ret: deps_pb.Deps,
+    rd: recipe_deps_mod.RecipeDeps,
+    mod_names: set[str],
+) -> None:
+  processed_mod_names: set[str] = set()
   while mod_names:
     full_mod_name = mod_names.pop()
     processed_mod_names.add(full_mod_name)
@@ -97,7 +109,10 @@ def process_modules(ret, rd, mod_names):
       )
 
 
-def process_recipes(ret, recipes):
+def process_recipes(
+    ret: deps_pb.Deps,
+    recipes: Iterable[recipe_deps_mod.Recipe],
+) -> None:
   for recipe in recipes:
     rRecord = ret.recipes[recipe.full_name]
     rRecord.repo = recipe.repo.name
@@ -113,7 +128,7 @@ def process_recipes(ret, recipes):
       )
 
 
-def output_cli(ret):
+def output_cli(ret: deps_pb.Deps) -> None:
   print("recipes:")
   for _, recipe in sorted(ret.recipes.items()):
     print("  %s::%s - %s" % (recipe.repo, recipe.name, recipe.url))
@@ -124,7 +139,7 @@ def output_cli(ret):
     print("  %s/%s - %s" % (module.repo, module.name, module.url))
 
 
-def output_json(fd, ret):
+def output_json(fd: TextIO, ret: deps_pb.Deps) -> None:
   fd.write(jsonpb.MessageToJson(
       ret,
       preserving_proto_field_name=True,
@@ -133,26 +148,27 @@ def output_json(fd, ret):
   fd.write('\n')
 
 
-def main(args):
-  rd = args.recipe_deps  # type: RecipeDeps
+def main(args: argparse.Namespace) -> int | None:
+  rd: recipe_deps_mod.RecipeDeps = args.recipe_deps
 
   try:
     recipes, mod_names = load_recipes_modules(
         rd, args.recipe_or_module, args.include_test_recipes,
         args.include_dependants)
-  except RecipeUsageError as ex:
+  except exceptions.RecipeUsageError as ex:
     print('{}: {}'.format(type(ex).__name__, ex), file=sys.stderr)
     return 1
 
-  ret = deps.Deps()
+  ret = deps_pb.Deps()
 
   process_recipes(ret, recipes)
   process_modules(ret, rd, mod_names)
 
   if not args.json_output:
     output_cli(ret)
-    return
+    return None
 
   if args.json_output:
     out = args.json_output
     output_json(sys.stdout if out == '-' else open(out, 'wb'), ret)
+  return None

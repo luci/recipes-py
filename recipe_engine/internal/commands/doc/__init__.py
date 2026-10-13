@@ -11,7 +11,10 @@ Markdown (either on stdout or written to the repo).
 
 from __future__ import annotations
 
-def add_arguments(parser):
+import argparse
+
+
+def add_arguments(parser: argparse.ArgumentParser) -> None:
   parser.add_argument(
       'recipe', nargs='?', help='Restrict documentation to this recipe')
   parser.add_argument(
@@ -28,11 +31,11 @@ def add_arguments(parser):
       )
   )
 
-  def _launch(args):
-    from .cmd import main
+  def _launch(args: argparse.Namespace) -> int | None:
+    from . import cmd
 
     if args.check and args.kind != 'gen':
       parser.error('--check must use --kind=gen')
 
-    return main(args)
+    return cmd.main(args)
   parser.set_defaults(func=_launch)
