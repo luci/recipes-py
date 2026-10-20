@@ -4129,7 +4129,7 @@ RPCExplorer available at
 
 A module for interacting with LUCI Scheduler service.
 
-&mdash; **def [emit\_trigger](/recipe_modules/scheduler/api.py#239)(self, trigger: Trigger, project: str, jobs: Iterable[str], step_name: (str | None)=None):**
+&mdash; **def [emit\_trigger](/recipe_modules/scheduler/api.py#244)(self, trigger: Trigger, project: str, jobs: Iterable[str], step_name: (str | None)=None):**
 
 Emits trigger to one or more jobs of a given project.
 
@@ -4140,7 +4140,7 @@ Args:
   jobs (iterable of str): job names per LUCI Scheduler config for the given
     project. These typically are the same as builder names.
 
-&mdash; **def [emit\_triggers](/recipe_modules/scheduler/api.py#257)(self, trigger_project_jobs: Iterable[tuple[(Trigger, str, Iterable[str])]], timestamp_usec: (int | None)=None, step_name: (str | None)=None):**
+&mdash; **def [emit\_triggers](/recipe_modules/scheduler/api.py#262)(self, trigger_project_jobs: Iterable[tuple[(Trigger, str, Iterable[str])]], timestamp_usec: (int | None)=None, step_name: (str | None)=None):**
 
 Emits a batch of triggers spanning one or more projects.
 

@@ -105,6 +105,7 @@ class SchedulerApi(recipe_api.RecipeApi):
         properties: Mapping[str, Any] | None = None,
         tags: Mapping[str, str | None] | None = None,
         inherit_tags: bool = True,
+        add_parent_tags: bool = True,
     ) -> None:
       self._id = id
       self._title = title
@@ -112,6 +113,7 @@ class SchedulerApi(recipe_api.RecipeApi):
       self._properties = properties
       self._tags = tags
       self._inherit_tags = inherit_tags
+      self._add_parent_tags = add_parent_tags
 
     def _serialize(self, api_self: SchedulerApi) -> dict[str, Any]:
       t = {}
@@ -123,7 +125,9 @@ class SchedulerApi(recipe_api.RecipeApi):
 
       tags = {}
       if self._inherit_tags:
-        tags = self._tags_for_child_build(api_self.m.buildbucket.build).copy()
+        tags = self._tags_for_child_build(
+            api_self.m.buildbucket.build,
+            add_parent_tags=self._add_parent_tags).copy()
       if self._tags:
         tags.update(self._tags)
       self._cleanup_tags(tags)
@@ -141,7 +145,7 @@ class SchedulerApi(recipe_api.RecipeApi):
       return t
 
     def _tags_for_child_build(
-        self, build: build_pb.Build
+        self, build: build_pb.Build, add_parent_tags: bool = True
     ) -> dict[str, str]:  # pragma: no cover
       """A dict of tags (key -> value) derived from current (parent) build for a
       child build."""
@@ -168,10 +172,11 @@ class SchedulerApi(recipe_api.RecipeApi):
         if buildset:
           new_tags['buildset'] = buildset
 
-      if build.number:
-        new_tags['parent_buildnumber'] = str(build.number)
-      if build.builder.builder:
-        new_tags['parent_buildername'] = str(build.builder.builder)
+      if add_parent_tags:
+        if build.number:
+          new_tags['parent_buildnumber'] = str(build.number)
+        if build.builder.builder:
+          new_tags['parent_buildername'] = str(build.builder.builder)
       return new_tags
 
     def _cleanup_tags(self, tags: dict[str, str | None]) -> None:
