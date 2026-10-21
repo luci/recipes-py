@@ -51,7 +51,7 @@ from . import stream as stream_mod
 
 
 LOG = logging.getLogger(__name__)
-MAX_SUMMARY_MARKDOWN_SIZE = 4000
+MAX_SUMMARY_MARKDOWN_SIZE = engine_types.MAX_SUMMARY_MARKDOWN_SIZE
 
 
 @attr.s(frozen=True, slots=True, repr=False)

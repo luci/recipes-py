@@ -31,6 +31,9 @@ if TYPE_CHECKING:
   LogDataType = common_pb.Log | str | bytes | Iterable[str | bytes]
   StoredLogDataType = common_pb.Log | str | _StringSequence
 
+# Maximum size, in bytes of UTF-8, of a build's summary_markdown.
+MAX_SUMMARY_MARKDOWN_SIZE = 4000
+
 T = TypeVar('T')
 
 
