@@ -2,17 +2,16 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+# /// script
+# requires-python = '>=3.11,<3.12'
+# dependencies = [
+#   'zstandard==0.16.0',
+# ]
+# ///
+
 """Standalone Python script to archive a set of files. Intended to be used by
 the 'archive' recipe module internally. Should not be used elsewhere.
 """
-
-# [VPYTHON:BEGIN]
-# python_version: "3.11"
-# wheel: <
-#   name: "infra/python/wheels/zstandard/${vpython_platform}"
-#   version: "version:0.16.0"
-# >
-# [VPYTHON:END]
 
 from __future__ import annotations
 
