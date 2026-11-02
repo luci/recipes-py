@@ -7,13 +7,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from RECIPE_MODULES.recipe_engine import (
-    cipd,
-    context,
-    file,
-    path,
-    properties,
-    step,
-    time,
+  cipd,
+  context,
+  file,
+  path,
+  properties,
+  step,
+  time,
 )
 
 
@@ -26,6 +26,7 @@ class DEPS(RecipeScriptApi):
   properties: properties.API
   step: step.API
   time: time.API
+
 
 from .api import BcidReporterApi as API
 from .test_api import BcidReporterTestApi as TEST_API

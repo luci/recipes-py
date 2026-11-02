@@ -16,11 +16,11 @@ import fake_recipe_deps
 
 class ErrorsTest(test_env.RecipeEngineUnitTest):
   def _test_cmd(
-      self,
-      deps: fake_recipe_deps.FakeRecipeDeps,
-      cmd: Sequence[str],
-      asserts: Callable[[str], None] | None = None,
-      retcode: int = 0,
+    self,
+    deps: fake_recipe_deps.FakeRecipeDeps,
+    cmd: Sequence[str],
+    asserts: Callable[[str], None] | None = None,
+    retcode: int = 0,
   ) -> dict[str, Any] | None:
     path = ''
     if cmd[0] == 'run':
@@ -33,8 +33,10 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
       if asserts:
         asserts(output)
       self.assertEqual(
-          returncode, retcode,
-          '%d != %d.\noutput:\n%s' % (returncode, retcode, output))
+        returncode,
+        retcode,
+        '%d != %d.\noutput:\n%s' % (returncode, retcode, output),
+      )
 
       if cmd[0] == 'run':
         if not os.path.exists(path):
@@ -58,11 +60,11 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
       recipe.DEPS = ['aint_no_thang']
 
     def _assert_nomodule(output: str) -> None:
-      self.assertRegex(output,
-                       r"No module named 'aint_no_thang' in repo 'main'.")
+      self.assertRegex(
+        output, r"No module named 'aint_no_thang' in repo 'main'."
+      )
 
-    self._test_cmd(
-        deps, ['run', 'foo'], retcode=1, asserts=_assert_nomodule)
+    self._test_cmd(deps, ['run', 'foo'], retcode=1, asserts=_assert_nomodule)
 
   def test_missing_module_dependency(self) -> None:
     deps = self.FakeRecipeDeps()
@@ -75,13 +77,11 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
     def _assert_nomodule(output: str) -> None:
       self.assertRegex(output, r"No module named 'love' in repo 'main'")
 
-    self._test_cmd(
-        deps, ['run', 'foo'], retcode=1, asserts=_assert_nomodule)
+    self._test_cmd(deps, ['run', 'foo'], retcode=1, asserts=_assert_nomodule)
 
   def test_no_such_recipe(self) -> None:
     deps = self.FakeRecipeDeps()
-    result = self._test_cmd(
-        deps, ['run', 'nooope'], retcode=1)
+    result = self._test_cmd(deps, ['run', 'nooope'], retcode=1)
     assert result is not None
     self.assertNotIn('failure', result['failure'])
 
@@ -95,19 +95,24 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
     def assert_syntaxerror(output: str) -> None:
       self.assertRegex(output, r'RecipeSyntaxError')
 
-    self._test_cmd(deps, ['test', 'run', '--filter', 'foo'],
-        asserts=assert_syntaxerror, retcode=1)
-    self._test_cmd(deps, ['test', 'train', '--filter', 'foo'],
-        asserts=assert_syntaxerror, retcode=1)
-    self._test_cmd(deps, ['run', 'foo'],
-        asserts=assert_syntaxerror, retcode=1)
+    self._test_cmd(
+      deps,
+      ['test', 'run', '--filter', 'foo'],
+      asserts=assert_syntaxerror,
+      retcode=1,
+    )
+    self._test_cmd(
+      deps,
+      ['test', 'train', '--filter', 'foo'],
+      asserts=assert_syntaxerror,
+      retcode=1,
+    )
+    self._test_cmd(deps, ['run', 'foo'], asserts=assert_syntaxerror, retcode=1)
 
   def test_engine_failure(self) -> None:
     deps = self.FakeRecipeDeps()
     with deps.main_repo.write_recipe('print_step_error') as recipe:
-      recipe.imports = [
-        'from recipe_engine.internal import engine'
-      ]
+      recipe.imports = ['from recipe_engine.internal import engine']
       recipe.RunSteps.write('''
         def bad_print_step(execution_log, step):
           raise Exception("bad to the bone")
@@ -119,11 +124,14 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
           api.step.active_result.presentation.status = 'WARNING'
       ''')
 
-    self._test_cmd(deps, ['run', 'print_step_error'],
+    self._test_cmd(
+      deps,
+      ['run', 'print_step_error'],
       asserts=lambda output: self.assertIn(
-          '@@@STEP_LOG_LINE@$debug@Exception: bad to the bone@@@',
-          output),
-      retcode=1)
+        '@@@STEP_LOG_LINE@$debug@Exception: bad to the bone@@@', output
+      ),
+      retcode=1,
+    )
 
   def test_missing_method(self) -> None:
     deps = self.FakeRecipeDeps()
@@ -133,10 +141,13 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
         pass
       ''')
     self._test_cmd(
-        deps, ['run', 'no_gen_tests'],
-        asserts=lambda output: self.assertRegex(output,
-                                                r'(?s)misspelled GenTests'),
-        retcode=1)
+      deps,
+      ['run', 'no_gen_tests'],
+      asserts=lambda output: self.assertRegex(
+        output, r'(?s)misspelled GenTests'
+      ),
+      retcode=1,
+    )
 
     with deps.main_repo.write_file('recipes/no_run_steps.py') as buf:
       buf.write('''
@@ -144,11 +155,13 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
         pass
       ''')
     self._test_cmd(
-        deps, ['run', 'no_run_steps'],
-        asserts=lambda output: self.assertRegex(output,
-                                                r'(?s)misspelled RunSteps'),
-        retcode=1)
-
+      deps,
+      ['run', 'no_run_steps'],
+      asserts=lambda output: self.assertRegex(
+        output, r'(?s)misspelled RunSteps'
+      ),
+      retcode=1,
+    )
 
   def test_unconsumed_assertion(self) -> None:
     # There was a regression where unconsumed exceptions would not be detected
@@ -160,11 +173,14 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
         yield api.test('basic') + api.expect_exception('AssertionError')
       ''')
 
-    self._test_cmd(deps, [
-        'test', 'train', '--filter', 'unconsumed_assertion'],
+    self._test_cmd(
+      deps,
+      ['test', 'train', '--filter', 'unconsumed_assertion'],
       asserts=lambda output: self.assertIn(
-          'FAIL (recipe crashed in an unexpected way)', output),
-      retcode=1)
+        'FAIL (recipe crashed in an unexpected way)', output
+      ),
+      retcode=1,
+    )
 
   def test_run_recipe_help(self) -> None:
     deps = self.FakeRecipeDeps()
@@ -175,8 +191,7 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
       self.assertRegex(output, r'from the root of a \'main\' checkout')
       self.assertRegex(output, r'\./recipes\.py run .* do_nothing')
 
-    self._test_cmd(deps, ['run', 'do_nothing'],
-      asserts=_assert_output)
+    self._test_cmd(deps, ['run', 'do_nothing'], asserts=_assert_output)
 
   def test_bad_config_import(self) -> None:
     deps = self.FakeRecipeDeps()
@@ -189,10 +204,13 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
       recipe.DEPS.append('mod')
 
     self._test_cmd(
-        deps, ['test', 'train'],
-        asserts=lambda output: self.assertRegex(
-            output, r"No module named 'BAD_IMPORT'"),
-        retcode=1)
+      deps,
+      ['test', 'train'],
+      asserts=lambda output: self.assertRegex(
+        output, r"No module named 'BAD_IMPORT'"
+      ),
+      retcode=1,
+    )
 
   def test_bad_test_api_import(self) -> None:
     deps = self.FakeRecipeDeps()
@@ -205,10 +223,13 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
       recipe.DEPS.append('mod')
 
     self._test_cmd(
-        deps, ['test', 'train'],
-        asserts=lambda output: self.assertRegex(
-            output, r"No module named 'BAD_IMPORT'"),
-        retcode=1)
+      deps,
+      ['test', 'train'],
+      asserts=lambda output: self.assertRegex(
+        output, r"No module named 'BAD_IMPORT'"
+      ),
+      retcode=1,
+    )
 
   def test_custom_method_on_deps_class(self) -> None:
     deps = self.FakeRecipeDeps()
@@ -226,15 +247,17 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
       ''')
 
     def assert_custom_method_error(output: str) -> None:
-      self.assertRegex(output,
-                       r"Cannot define custom method 'my_helper' on DEPS")
+      self.assertRegex(
+        output, r"Cannot define custom method 'my_helper' on DEPS"
+      )
 
     self._test_cmd(
-        deps, ['test', 'run', '--filter', 'foo'],
-        asserts=assert_custom_method_error,
-        retcode=1)
+      deps,
+      ['test', 'run', '--filter', 'foo'],
+      asserts=assert_custom_method_error,
+      retcode=1,
+    )
 
 
 if __name__ == '__main__':
   test_env.main()
-

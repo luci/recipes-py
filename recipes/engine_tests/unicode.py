@@ -12,8 +12,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    properties,
-    step,
+  properties,
+  step,
 )
 
 
@@ -30,12 +30,12 @@ class TEST_DEPS(RecipeTestApi):
 
 def RunSteps(api: DEPS) -> None:
   result = api.step(
-      'trigger some junk',
-      cmd=['echo', 'hi'],
+    'trigger some junk',
+    cmd=['echo', 'hi'],
   )
   result.presentation.logs['thing'] = [
-      u'hiiiii 😀…' , # This is valid, and should be displayed.
-      b'\xe4\xb8\xad', # Raw utf-8 bytes will be decoded.
+    'hiiiii 😀…',  # This is valid, and should be displayed.
+    b'\xe4\xb8\xad',  # Raw utf-8 bytes will be decoded.
   ]
 
 

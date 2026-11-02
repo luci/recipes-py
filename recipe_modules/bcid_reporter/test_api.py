@@ -6,14 +6,14 @@ from __future__ import annotations
 
 from recipe_engine import recipe_test_api
 
+
 class BcidReporterTestApi(recipe_test_api.RecipeTestApi):
   @recipe_test_api.mod_test_data
   @staticmethod
   def pid(pid: int) -> int:
-    """Set the process id for the current test.
-    """
-    assert isinstance(pid, int), ('bad pid (not integer): %r' % (pid,))
+    """Set the process id for the current test."""
+    assert isinstance(pid, int), 'bad pid (not integer): %r' % (pid,)
     return pid
 
   def __call__(self, pid: int) -> recipe_test_api.TestData:
-    return (self.pid(pid))
+    return self.pid(pid)

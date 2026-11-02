@@ -24,9 +24,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    futures,
-    properties,
-    step,
+  futures,
+  properties,
+  step,
 )
 
 
@@ -41,20 +41,25 @@ class DEPS(RecipeScriptApi):
 class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
 
+
 PROPERTIES = Input
 
 
 def RunSteps(api: DEPS, props: Input) -> RawResult:
   work = []
   for i in range(props.num_steps):
-    work.append(api.futures.spawn_immediate(
-        api.step, ('hw %d' % i), ['sleep', '.1'],
+    work.append(
+      api.futures.spawn_immediate(
+        api.step,
+        ('hw %d' % i),
+        ['sleep', '.1'],
         __name='step %d' % i,
-    ))
+      )
+    )
   api.futures.wait(work)
   return RawResult(
-      summary_markdown="Ran %d steps" % (len(work),),
-      status=common.SUCCESS,
+    summary_markdown="Ran %d steps" % (len(work),),
+    status=common.SUCCESS,
   )
 
 

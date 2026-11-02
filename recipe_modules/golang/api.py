@@ -24,10 +24,10 @@ class GolangApi(recipe_api.RecipeApi):
 
   @contextlib.contextmanager
   def __call__(
-      self,
-      version: str,
-      path: config_types.Path | None = None,
-      cache: config_types.Path | None = None,
+    self,
+    version: str,
+    path: config_types.Path | None = None,
+    cache: config_types.Path | None = None,
   ) -> Iterator[None]:
     """Installs a Golang SDK and activates it in the environment.
 
@@ -65,32 +65,33 @@ class GolangApi(recipe_api.RecipeApi):
       yield
 
   def _ensure_installed(
-      self,
-      version: str,
-      path: config_types.Path,
-      cache: config_types.Path,
+    self,
+    version: str,
+    path: config_types.Path,
+    cache: config_types.Path,
   ) -> tuple[dict[str, Any], dict[str, list[Any]], dict[str, list[Any]]]:
     if self._installed.get(path) != version:
       pkgs = self.m.cipd.EnsureFile()
-      pkgs.add_package('infra/3pp/tools/go/${platform}',
-                       'version:%s@%s' % (_3pp_epoch(version), version))
+      pkgs.add_package(
+        'infra/3pp/tools/go/${platform}',
+        'version:%s@%s' % (_3pp_epoch(version), version),
+      )
       self.m.cipd.ensure(path, pkgs)
       self._installed[path] = version
 
     env = {
-        'GOROOT': path,
-        'GO111MODULE': 'on',
-        'GOPROXY': None,
-        'GOPATH': None,
-        'GOPRIVATE': '*.googlesource.com,*.git.corp.google.com,google.com',
-        'GOPACKAGESDRIVER': 'off',
-        'GOTOOLCHAIN': 'local',
-
-        # Caches and GOBIN can be shared across Go versions: defaults are shared
-        # hardcoded paths under '~'.
-        'GOBIN': cache / 'bin',
-        'GOCACHE': cache / 'cache',
-        'GOMODCACHE': cache / 'modcache',
+      'GOROOT': path,
+      'GO111MODULE': 'on',
+      'GOPROXY': None,
+      'GOPATH': None,
+      'GOPRIVATE': '*.googlesource.com,*.git.corp.google.com,google.com',
+      'GOPACKAGESDRIVER': 'off',
+      'GOTOOLCHAIN': 'local',
+      # Caches and GOBIN can be shared across Go versions: defaults are shared
+      # hardcoded paths under '~'.
+      'GOBIN': cache / 'bin',
+      'GOCACHE': cache / 'cache',
+      'GOMODCACHE': cache / 'modcache',
     }
 
     # Disable cgo on Windows by default since it lacks a C compiler by default.
@@ -98,11 +99,11 @@ class GolangApi(recipe_api.RecipeApi):
       env['CGO_ENABLED'] = '0'
 
     env_prefixes = {
-        'PATH': [path / 'bin'],
+      'PATH': [path / 'bin'],
     }
 
     env_suffixes = {
-        'PATH': [env['GOBIN']],
+      'PATH': [env['GOBIN']],
     }
 
     return env, env_prefixes, env_suffixes

@@ -41,6 +41,7 @@ from .test import test_name
 
 _recipes_breakpointed: set[str] = set()
 
+
 def _breakpoint_recipe(recipe: recipe_deps.Recipe) -> None:
   if debugger.should_set_implicit_breakpoints():
     if recipe.name not in _recipes_breakpointed:
@@ -50,15 +51,16 @@ def _breakpoint_recipe(recipe: recipe_deps.Recipe) -> None:
 
       func = recipe.global_symbols['RunSteps']
       debugger.set_implicit_pdb_breakpoint(
-          func.__code__.co_filename,
-          func.__code__.co_firstlineno,
-          funcname=func.__code__.co_name)
+        func.__code__.co_filename,
+        func.__code__.co_firstlineno,
+        funcname=func.__code__.co_name,
+      )
 
       _recipes_breakpointed.add(recipe.name)
 
 
 def _safely_gen_tests(
-    recipe: recipe_deps.Recipe,
+  recipe: recipe_deps.Recipe,
 ) -> Iterator[recipe_test_api.TestData]:
   # This little function just makes the command exit cleanly if the user aborts
   # the debugger during the GenTests execution.
@@ -70,9 +72,9 @@ def _safely_gen_tests(
 
 
 def _dump_recipes(
-    rdeps: recipe_deps.RecipeDeps,
-    errmsg: str,
-    contain: str = '',
+  rdeps: recipe_deps.RecipeDeps,
+  errmsg: str,
+  contain: str = '',
 ) -> None:
   print(errmsg)
   available = sorted(rdeps.main_repo.recipes)
@@ -88,8 +90,8 @@ def _dump_recipes(
 
 
 def _parse_debug_target(
-    rdeps: recipe_deps.RecipeDeps,
-    debug_target: str | None,
+  rdeps: recipe_deps.RecipeDeps,
+  debug_target: str | None,
 ) -> tuple[recipe_deps.Recipe | None, recipe_test_api.TestData | None]:
   """Parses the singular `debug_target` argument, and returns the Recipe and
   TestData it indicates.
@@ -104,8 +106,8 @@ def _parse_debug_target(
     for fail in tracker.recent_fails:
       recipe_name, test_case_name = test_name.split(fail)
       print(
-          f'Attempting to pick most recent test failure:'
-          f' {recipe_name}.{test_case_name}.'
+        f'Attempting to pick most recent test failure:'
+        f' {recipe_name}.{test_case_name}.'
       )
       break
   else:
@@ -117,16 +119,14 @@ def _parse_debug_target(
   # By this point we need at least the recipe name.
   if recipe_name is None:
     _dump_recipes(
-        rdeps,
-        'No recipe specified and no recent test failures found.')
+      rdeps, 'No recipe specified and no recent test failures found.'
+    )
     return None, None
 
   # And the recipe should actually exist in our repo.
   recipe = rdeps.main_repo.recipes.get(recipe_name, None)
   if recipe is None:
-    _dump_recipes(rdeps,
-                  f'Unable to find recipe {recipe_name!r}.',
-                  recipe_name)
+    _dump_recipes(rdeps, f'Unable to find recipe {recipe_name!r}.', recipe_name)
     return None, None
   _breakpoint_recipe(recipe)
 
@@ -140,7 +140,7 @@ def _parse_debug_target(
     names.append(test_data.name)
 
   print(
-      f'Unable to find test case {test_case_name!r} in recipe {recipe.name!r}'
+    f'Unable to find test case {test_case_name!r} in recipe {recipe.name!r}'
   )
   print('For reference, we found the following test cases:')
   for name in names:
@@ -153,20 +153,26 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
   """Implements the subcommand protocol for recipe engine."""
 
   parser.add_argument(
-      'debug_target',
-      nargs='?',
-      metavar='recipe_name[.test_case_name]',
-      help=('The name of the recipe to debug, plus an optional test case name. '
-            'If test_case_name is omitted, this will use the first test case. '
-            'If omitted entirely, will debug the most recent test failure.'))
+    'debug_target',
+    nargs='?',
+    metavar='recipe_name[.test_case_name]',
+    help=(
+      'The name of the recipe to debug, plus an optional test case name. '
+      'If test_case_name is omitted, this will use the first test case. '
+      'If omitted entirely, will debug the most recent test failure.'
+    ),
+  )
 
   parser.add_argument(
-      '--filter', dest='test_filter', action='append',
-      default=test_name.Filter(),
-      help=(
-        'Debug all tests which match this filter. Mutually exclusive with'
-        ' `debug_target`.'
-      ))
+    '--filter',
+    dest='test_filter',
+    action='append',
+    default=test_name.Filter(),
+    help=(
+      'Debug all tests which match this filter. Mutually exclusive with'
+      ' `debug_target`.'
+    ),
+  )
 
   def _main(args: argparse.Namespace) -> None:
     if args.test_filter and args.debug_target:
@@ -192,9 +198,9 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def _debug_recipe(
-    rdeps: recipe_deps.RecipeDeps,
-    recipe: recipe_deps.Recipe,
-    test_data: recipe_test_api.TestData,
+  rdeps: recipe_deps.RecipeDeps,
+  recipe: recipe_deps.Recipe,
+  test_data: recipe_test_api.TestData,
 ) -> bool | None:
   """Debugs the given recipe + test case."""
   # Reset global state.
@@ -205,6 +211,7 @@ def _debug_recipe(
   # Late imports for PB :/
   from ..turboci import common as turboci_common
   from ..turboci import fake as turboci_fake
+
   turboci_common.CLIENT = turboci_fake.FakeTurboCIOrchestrator(test_mode=True)
 
   try:

@@ -51,13 +51,13 @@ def type_url_for(msg: type[message.Message] | message.Message) -> str:
 
 
 def type_urls(
-    *msgs: str | type[message.Message] | message.Message,
+  *msgs: str | type[message.Message] | message.Message,
 ) -> Iterator[str]:
   return (x if isinstance(x, str) else _value.url(x) for x in msgs)
 
 
 def type_set(
-    *msgs: str | type[message.Message] | message.Message,
+  *msgs: str | type[message.Message] | message.Message,
 ) -> type_set_pb.TypeSet:
   return type_set_pb.TypeSet(type_urls=list(type_urls(*msgs)))
 
@@ -71,7 +71,7 @@ def check_id(id: str, *, in_workplan: str = '') -> identifier_pb.Check:
 
 
 def collect_check_ids(
-    *idents: identifier_pb.Check | str, in_workplan: str = ''
+  *idents: identifier_pb.Check | str, in_workplan: str = ''
 ) -> Iterator[identifier_pb.Identifier]:
   wp = _ids.workplan(in_workplan) if in_workplan else None
   for id in idents:
@@ -116,28 +116,28 @@ def get_client() -> TurboCIClient:
 
 
 __all__ = [
-    'CheckWriteInvariantException',
-    'InvalidArgumentException',
-    'TransactionConflictException',
-    'TransactionUseAfterWriteException',
-    'TurboCIException',
-    'check',
-    'check_id',
-    'collect_check_ids',
-    'dep_group',
-    'from_id',
-    'get_check_by_short_id',
-    'get_client',
-    'get_option',
-    'get_results',
-    'make_query',
-    'query_nodes',
-    'read_checks',
-    'reason',
-    'to_id',
-    'type_set',
-    'type_url_for',
-    'type_urls',
-    'wrap_id',
-    'write_nodes',
+  'CheckWriteInvariantException',
+  'InvalidArgumentException',
+  'TransactionConflictException',
+  'TransactionUseAfterWriteException',
+  'TurboCIException',
+  'check',
+  'check_id',
+  'collect_check_ids',
+  'dep_group',
+  'from_id',
+  'get_check_by_short_id',
+  'get_client',
+  'get_option',
+  'get_results',
+  'make_query',
+  'query_nodes',
+  'read_checks',
+  'reason',
+  'to_id',
+  'type_set',
+  'type_url_for',
+  'type_urls',
+  'wrap_id',
+  'write_nodes',
 ]

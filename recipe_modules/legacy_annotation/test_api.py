@@ -26,24 +26,22 @@ class LegacyAnnotationTestApi(recipe_test_api.RecipeTestApi):
 
   @property
   def failure_step(self) -> recipe_test_api.StepTestData:
-    """Returns a StepTestData that fails the step and raises `step.StepFailure`.
-    """
+    """Returns a StepTestData that fails the step and raises `step.StepFailure`."""
     ret = self.m.step.sub_build(build_pb2.Build(status=common_pb2.FAILURE))
     ret.retcode = 1
     return ret
 
   @property
   def infra_failure_step(self) -> recipe_test_api.StepTestData:
-    """Returns a StepTestData that fails the step and raise `step.InfraFailure`.
-    """
+    """Returns a StepTestData that fails the step and raise `step.InfraFailure`."""
     ret = self.m.step.sub_build(
-      build_pb2.Build(status=common_pb2.INFRA_FAILURE))
+      build_pb2.Build(status=common_pb2.INFRA_FAILURE)
+    )
     ret.retcode = 1
     return ret
 
   @recipe_test_api.mod_test_data
   @staticmethod
   def simulate_kitchen() -> bool:
-    """Simulate Kitchen behavior in test instead of bbagent/luciexe behavior.
-    """
+    """Simulate Kitchen behavior in test instead of bbagent/luciexe behavior."""
     return True

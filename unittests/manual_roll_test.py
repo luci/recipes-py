@@ -14,7 +14,7 @@ import fake_recipe_deps
 
 class ManualRollSmokeTest(test_env.RecipeEngineUnitTest):
   def run_roll(
-      self, deps: fake_recipe_deps.FakeRecipeDeps, should_fail: bool = False
+    self, deps: fake_recipe_deps.FakeRecipeDeps, should_fail: bool = False
   ) -> str:
     """Runs the autoroll command and returns JSON.
     Does not commit the resulting roll.
@@ -22,9 +22,11 @@ class ManualRollSmokeTest(test_env.RecipeEngineUnitTest):
     output, retcode = deps.main_repo.recipes_py('-v', '-v', 'manual_roll')
     expected_retcode = 1 if should_fail else 0
     self.assertEqual(
-        retcode, expected_retcode,
-        'unexpected retcode (%d vs %d)!\noutput:\n%s' % (
-          retcode, expected_retcode, output))
+      retcode,
+      expected_retcode,
+      'unexpected retcode (%d vs %d)!\noutput:\n%s'
+      % (retcode, expected_retcode, output),
+    )
     return output
 
   def test_empty(self) -> None:
@@ -34,9 +36,7 @@ class ManualRollSmokeTest(test_env.RecipeEngineUnitTest):
     deps.main_repo.add_dep('upstream')
     deps.main_repo.commit('add dep on upstream')
 
-    self.assertIn(
-        'No roll found',
-        self.run_roll(deps, should_fail=True))
+    self.assertIn('No roll found', self.run_roll(deps, should_fail=True))
 
   def test_single(self) -> None:
     deps = self.FakeRecipeDeps()
@@ -52,8 +52,9 @@ class ManualRollSmokeTest(test_env.RecipeEngineUnitTest):
 
     self.run_roll(deps)
     self.assertEqual(
-        deps.main_repo.recipes_cfg_pb2.deps['upstream'].revision,
-        up_commit.revision)
+      deps.main_repo.recipes_cfg_pb2.deps['upstream'].revision,
+      up_commit.revision,
+    )
 
   def test_multi(self) -> None:
     deps = self.FakeRecipeDeps()
@@ -75,13 +76,15 @@ class ManualRollSmokeTest(test_env.RecipeEngineUnitTest):
 
     self.run_roll(deps)
     self.assertEqual(
-        deps.main_repo.recipes_cfg_pb2.deps['upstream'].revision,
-        up_commit1.revision)
+      deps.main_repo.recipes_cfg_pb2.deps['upstream'].revision,
+      up_commit1.revision,
+    )
 
     self.run_roll(deps)
     self.assertEqual(
-        deps.main_repo.recipes_cfg_pb2.deps['upstream'].revision,
-        up_commit2.revision)
+      deps.main_repo.recipes_cfg_pb2.deps['upstream'].revision,
+      up_commit2.revision,
+    )
 
 
 if __name__ == '__main__':

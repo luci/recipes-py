@@ -29,6 +29,7 @@ class Filter:
   """Filter is an argparse `type` which collects --filter arguments from the
   CLI into a usable filter object.
   """
+
   # TODO: Also track module names indicated by the filters.
   # TODO: Upstream this into RecipeDeps so that it will only scan the
   # modules/recipes that we're interested in.
@@ -46,7 +47,7 @@ class Filter:
 
     # filters missing a test_name portion imply that it is a recipe prefix and
     # we should run all tests for any recipes which match.
-    filt = filt if '.' in filt else filt+'*.*'
+    filt = filt if '.' in filt else filt + '*.*'
 
     self._recipe_patterns.append(fnmatch.translate(split(filt)[0]))
     self._full_test_name_patterns.append(fnmatch.translate(filt))
@@ -67,7 +68,8 @@ class Filter:
 
     if self._compiled_recipe_pattern is None:
       self._compiled_recipe_pattern = re.compile(
-          '|'.join(self._recipe_patterns))
+        '|'.join(self._recipe_patterns)
+      )
 
     return self._compiled_recipe_pattern.match(recipe_name)
 
@@ -81,6 +83,7 @@ class Filter:
 
     if self._compiled_test_name_pattern is None:
       self._compiled_test_name_pattern = re.compile(
-          '|'.join(self._full_test_name_patterns))
+        '|'.join(self._full_test_name_patterns)
+      )
 
     return self._compiled_test_name_pattern.match(test_name)

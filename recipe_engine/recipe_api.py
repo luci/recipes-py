@@ -51,8 +51,7 @@ class UnknownRequirementError:
   """
 
   def __init__(self, req: UnresolvedRequirement) -> None:
-    super().__init__(
-        'Unknown requirement [%s]' % (req,))
+    super().__init__('Unknown requirement [%s]' % (req,))
     self.typ = req._typ
     self.name = req._name
 
@@ -69,12 +68,24 @@ class UnresolvedRequirement:
 
   def __getattr__(self, key: str) -> Any:
     raise AttributeError(
-        'Cannot reference [%s] in unresolved requirement [%s]' % (
-            key, str(self,)))
+      'Cannot reference [%s] in unresolved requirement [%s]'
+      % (
+        key,
+        str(
+          self,
+        ),
+      )
+    )
 
   def __call__(self, *args: Any, **kwargs: Any) -> Any:
-    raise AttributeError('Cannot call unresolved requirement [%s]' % (
-        str(self,)))
+    raise AttributeError(
+      'Cannot call unresolved requirement [%s]'
+      % (
+        str(
+          self,
+        )
+      )
+    )
 
 
 def RequireClient(name: str) -> UnresolvedRequirement:
@@ -111,14 +122,15 @@ def RequireClient(name: str) -> UnresolvedRequirement:
 @attr.s(frozen=True, slots=True)
 class LUCIContextClient:
   """A recipe engine client which reads/writes the LUCI_CONTEXT."""
+
   IDENT = 'lucictx'
   ENV_KEY = luci_context.ENV_KEY
 
   initial_context: engine_types.FrozenDict = attr.ib(
-      validator=attr_util.attr_dict_type(
-          str, (dict, engine_types.FrozenDict)),
-      factory=dict,
-      converter=engine_types.freeze)
+    validator=attr_util.attr_dict_type(str, (dict, engine_types.FrozenDict)),
+    factory=dict,
+    converter=engine_types.freeze,
+  )
 
 
 class PathsClient:
@@ -138,14 +150,15 @@ class PathsClient:
     self._start_dir = start_dir
 
   def _initialize_with_recipe_api(
-      self,
-      root_api: RecipeApi | RecipeScriptApi,
+    self,
+    root_api: RecipeApi | RecipeScriptApi,
   ) -> None:
     """This method is called once before the start of every recipe.
 
     It is passed the recipe's `api` object. This method crawls the api object
     and extracts every resource base path it can find."""
     paths_found: dict[str, config_types.Path] = {}
+
     def add_found(path: config_types.Path | None) -> None:
       if path is not None:
         paths_found[str(path)] = path
@@ -175,9 +188,9 @@ class PathsClient:
       self.paths.append(path)
 
   def find_longest_prefix(
-      self,
-      target: str,
-      sep: str,
+    self,
+    target: str,
+    sep: str,
   ) -> tuple[str | None, config_types.Path | None]:
     """Identifies a known resource path which would contain the `target` path.
 
@@ -189,15 +202,15 @@ class PathsClient:
     """
     idx = bisect.bisect_left(self.path_strings, target)
     if idx == len(self.paths):
-      return (None, None) # off the end
+      return (None, None)  # off the end
 
     sPath, path = self.path_strings[idx], self.paths[idx]
     if target == sPath:
       return sPath, path
 
     if idx > 0:
-      sPath, path = self.path_strings[idx-1], self.paths[idx-1]
-      if target.startswith(sPath+sep):
+      sPath, path = self.path_strings[idx - 1], self.paths[idx - 1]
+      if target.startswith(sPath + sep):
         return sPath, path
 
     return (None, None)
@@ -239,15 +252,16 @@ class StepClient:
     active_step_data = self._engine.active_step
     if not active_step_data:
       raise ValueError(
-          'No steps have been run yet, and you are asking for a previous step '
-          'result.')
+        'No steps have been run yet, and you are asking for a previous step '
+        'result.'
+      )
     return active_step_data
 
   def parent_step(
-      self,
-      name_tokens: Sequence[str],
+    self,
+    name_tokens: Sequence[str],
   ) -> ContextManager[
-      tuple[engine_types.StepPresentation, list[step_data.StepData]]
+    tuple[engine_types.StepPresentation, list[step_data.StepData]]
   ]:
     """Opens a parent step.
 
@@ -276,10 +290,13 @@ class StepClient:
 
 
 class _spawner(Protocol):
-
-  def __call__(self, func: Callable[..., Any], args: Sequence[Any],
-               kwargs: Mapping[str, Any], name: str) -> gevent.Greenlet:
-    ...
+  def __call__(
+    self,
+    func: Callable[..., Any],
+    args: Sequence[Any],
+    kwargs: Mapping[str, Any],
+    name: str,
+  ) -> gevent.Greenlet: ...
 
 
 @attr.s(frozen=True, slots=True)
@@ -290,11 +307,11 @@ class ConcurrencyClient:
   _spawn_impl: _spawner = attr.ib()
 
   def spawn(
-      self,
-      func: Callable[..., Any],
-      args: Sequence[Any],
-      kwargs: Mapping[str, Any],
-      greenlet_name: str,
+    self,
+    func: Callable[..., Any],
+    args: Sequence[Any],
+    kwargs: Mapping[str, Any],
+    greenlet_name: str,
   ) -> gevent.Greenlet:
     return self._spawn_impl(func, args, kwargs, greenlet_name)
 
@@ -334,7 +351,8 @@ def record_execution_warning(warning_name: str, skip: int = 0) -> None:
       caller's frame, etc.
   """
   from recipe_engine.internal.warn import record
-  record.GLOBAL.record_execution_warning(warning_name, skip+1)
+
+  record.GLOBAL.record_execution_warning(warning_name, skip + 1)
 
 
 class StepFailure(Exception):
@@ -347,10 +365,11 @@ class StepFailure(Exception):
   FIXME: These exceptions should be made into more-normal exceptions (e.g.
   the way reason_message is overridden by subclasses is very strange).
   """
+
   def __init__(
-      self,
-      name_or_reason: str,
-      result: step_data.StepData | None = None,
+    self,
+    name_or_reason: str,
+    result: step_data.StepData | None = None,
   ) -> None:
     self.exc_result: step_data.ExecutionResult | None = None
     if result:
@@ -438,6 +457,7 @@ class StepWarning(StepFailure):
   A subclass of StepFailure, which still fails the build, but which is
   a warning. Need to figure out how exactly this will be useful.
   """
+
   def reason_message(self) -> str:  # pragma: no cover
     return "Warning: Step({!r})".format(self.name)
 
@@ -453,6 +473,7 @@ class InfraFailure(StepFailure):
     * Step was marked as `infra_step`, or run in a context with `infra_steps`
       set and returned a not-ok retcode.
   """
+
   def reason_message(self) -> str:
     return "Infra Failure: Step({!r})".format(self.name)
 
@@ -469,30 +490,38 @@ class RecipeApi:
   """
 
   def __init__(
-      self,
-      module: recipe_deps.RecipeModule,
-      test_data: (
-          recipe_test_api.ModuleTestData | recipe_test_api.DisabledTestData
-      ) = recipe_test_api.DisabledTestData(),
-      **_kwargs: Any,
+    self,
+    module: recipe_deps.RecipeModule,
+    test_data: (
+      recipe_test_api.ModuleTestData | recipe_test_api.DisabledTestData
+    ) = recipe_test_api.DisabledTestData(),
+    **_kwargs: Any,
   ) -> None:
     """Note: Injected dependencies are NOT available in __init__()."""
     super().__init__()
 
     assert module
     self._module = module
-    self._resource_directory = config_types.Path(
+    self._resource_directory = (
+      config_types.Path(
         config_types.ResolvedBasePath.for_recipe_module(
-            test_data.enabled, module)) / 'resources'
+          test_data.enabled, module
+        )
+      )
+      / 'resources'
+    )
     self._repo_root = config_types.Path(
-        config_types.ResolvedBasePath.for_bundled_repo(test_data.enabled,
-                                                       module.repo))
+      config_types.ResolvedBasePath.for_bundled_repo(
+        test_data.enabled, module.repo
+      )
+    )
 
     assert isinstance(
-        test_data,
-        (recipe_test_api.ModuleTestData, recipe_test_api.DisabledTestData))
+      test_data,
+      (recipe_test_api.ModuleTestData, recipe_test_api.DisabledTestData),
+    )
     self._test_data: (
-        recipe_test_api.ModuleTestData | recipe_test_api.DisabledTestData
+      recipe_test_api.ModuleTestData | recipe_test_api.DisabledTestData
     ) = test_data
 
     # If we're the 'root' api, inject directly into 'self'.
@@ -519,18 +548,18 @@ class RecipeApi:
     return {}
 
   def make_config(
-      self,
-      config_name: str | None = None,
-      optional: bool = False,
-      **CONFIG_VARS: Any,
+    self,
+    config_name: str | None = None,
+    optional: bool = False,
+    **CONFIG_VARS: Any,
   ) -> Any:
     """Returns a 'config blob' for the current API."""
     return self.make_config_params(config_name, optional, **CONFIG_VARS)[0]
 
   def _get_config_item(
-      self,
-      config_name: str,
-      optional: bool = False,
+    self,
+    config_name: str,
+    optional: bool = False,
   ) -> Any:
     """Get the config item for a given name.
 
@@ -548,14 +577,15 @@ class RecipeApi:
       if optional:
         return None
       raise KeyError(
-          '%s is not the name of a configuration for module %s: %s' %
-          (config_name, self._module.full_name, sorted(ctx.CONFIG_ITEMS)))
+        '%s is not the name of a configuration for module %s: %s'
+        % (config_name, self._module.full_name, sorted(ctx.CONFIG_ITEMS))
+      )
 
   def make_config_params(
-      self,
-      config_name: str | None,
-      optional: bool = False,
-      **CONFIG_VARS: Any,
+    self,
+    config_name: str | None,
+    optional: bool = False,
+    **CONFIG_VARS: Any,
   ) -> tuple[Any, dict[str, Any]]:
     """Returns a 'config blob' for the current API, and the computed params
     for all dependent configurations.
@@ -567,20 +597,20 @@ class RecipeApi:
       * CONFIG_VARS
     """
     generic_params = self.get_config_defaults()  # generic defaults
-    generic_params.update(CONFIG_VARS)           # per-invocation values
+    generic_params.update(CONFIG_VARS)  # per-invocation values
 
     ctx = self._module.CONFIG_CTX
     if optional and not ctx:
       return None, generic_params
 
     assert ctx, '%s has no config context' % self
-    params = self.get_config_defaults()         # generic defaults
+    params = self.get_config_defaults()  # generic defaults
     itm = None
     if config_name:
       itm = self._get_config_item(config_name, optional)
       if not itm:
         return None, generic_params
-    params.update(CONFIG_VARS)                  # per-invocation values
+    params.update(CONFIG_VARS)  # per-invocation values
 
     base = ctx.CONFIG_SCHEMA(**params)
     if config_name is None:
@@ -589,10 +619,10 @@ class RecipeApi:
       return itm(base), params
 
   def set_config(
-      self,
-      config_name: str | None = None,
-      optional: bool = False,
-      **CONFIG_VARS: Any,
+    self,
+    config_name: str | None = None,
+    optional: bool = False,
+    **CONFIG_VARS: Any,
   ) -> None:
     """Sets the modules and its dependencies to the named configuration."""
     config, _ = self.make_config_params(config_name, optional, **CONFIG_VARS)
@@ -600,10 +630,10 @@ class RecipeApi:
       self.c = config
 
   def apply_config(
-      self,
-      config_name: str,
-      config_object: Any = None,
-      optional: bool = False,
+    self,
+    config_name: str,
+    config_object: Any = None,
+    optional: bool = False,
   ) -> None:
     """Apply a named configuration to the provided config object or self."""
     itm = self._get_config_item(config_name)
@@ -641,13 +671,14 @@ class RecipeScriptApi:
   Then `api.json` will correspond to an instance of the JsonApi class from the
   `json` recipe_module in the recipe_engine repo.
   '''
+
   # NOTE: This is a bit of an historical accident; the only thing this is useful
   # for is to say `api._test_data.enabled` to determine, within a recipe script
   # (i.e. somewhere under RunSteps), that the recipe is currently in test mode.
   #
   # TODO: Find a better API for this.
   _test_data: (
-      recipe_test_api.ModuleTestData | recipe_test_api.DisabledTestData | None
+    recipe_test_api.ModuleTestData | recipe_test_api.DisabledTestData | None
   )
 
   _resource_path: config_types.Path
@@ -676,12 +707,14 @@ class RecipeScriptApi:
 
   def __getattr__(self, key: str) -> Any:
     raise util.ModuleInjectionError(
-        f"Recipe has no dependency {key!r}. (Add it to DEPS?)")
+      f"Recipe has no dependency {key!r}. (Add it to DEPS?)"
+    )
 
 
 # This is a sentinel object for the Property system. This allows users to
 # specify a default of None that will actually be respected.
 PROPERTY_SENTINEL = object()
+
 
 class BoundProperty:
   """
@@ -741,20 +774,21 @@ class BoundProperty:
     if keyword.iskeyword(name):
       return False
 
-    regex = r'^[a-zA-Z][a-zA-Z0-9_]*$' if is_param_name else (
-        r'^[a-zA-Z][.\w-]*$')
+    regex = (
+      r'^[a-zA-Z][a-zA-Z0-9_]*$' if is_param_name else (r'^[a-zA-Z][.\w-]*$')
+    )
     return bool(re.match(regex, name))
 
   def __init__(
-      self,
-      default: Any,
-      from_environ: str | None,
-      help: str,
-      kind: Any,
-      name: str,
-      property_type: str,
-      full_decl_name: str,
-      param_name: str | None = None,
+    self,
+    default: Any,
+    from_environ: str | None,
+    help: str,
+    kind: Any,
+    name: str,
+    property_type: str,
+    full_decl_name: str,
+    param_name: str | None = None,
   ) -> None:
     """
     Constructor for BoundProperty.
@@ -784,14 +818,16 @@ class BoundProperty:
             'foo.bar.bam': Property(param_name="bizbaz")
           }
     """
-    assert property_type in (self.RECIPE_PROPERTY, self.MODULE_PROPERTY), \
+    assert property_type in (self.RECIPE_PROPERTY, self.MODULE_PROPERTY), (
       property_type
+    )
 
     # first, check if this is a special '$repo_name/module' property type
     # declaration.
     is_module_property = (
-      property_type is self.MODULE_PROPERTY and
-      self.legal_module_property_name(name, full_decl_name))
+      property_type is self.MODULE_PROPERTY
+      and self.legal_module_property_name(name, full_decl_name)
+    )
     if not (is_module_property or BoundProperty.legal_name(name)):
       raise ValueError("Illegal name '{}'.".format(name))
 
@@ -874,16 +910,19 @@ class BoundProperty:
 
     raise ValueError(
       "No default specified and no value provided for '{}' from {} '{}'".format(
-        self.name, self.__property_type, self.full_decl_name))
+        self.name, self.__property_type, self.full_decl_name
+      )
+    )
+
 
 class Property:
   def __init__(
-      self,
-      default: Any = PROPERTY_SENTINEL,
-      from_environ: str | None = None,
-      help: str = '',
-      kind: Any = None,
-      param_name: str | None = None,
+    self,
+    default: Any = PROPERTY_SENTINEL,
+    from_environ: str | None = None,
+    help: str = '',
+    kind: Any = None,
+    param_name: str | None = None,
   ) -> None:
     """
     Constructor for Property.
@@ -920,22 +959,31 @@ class Property:
 
     # NOTE: late import to avoid early protobuf import
     from recipe_engine import config
+
     if isinstance(kind, type):
       kind = config.Single(kind)
     self.kind = kind
 
   def bind(
-      self,
-      name: str,
-      property_type: str,
-      full_decl_name: str,
+    self,
+    name: str,
+    property_type: str,
+    full_decl_name: str,
   ) -> BoundProperty:
     """
     Gets the BoundProperty version of this Property. Requires a name.
     """
     return BoundProperty(
-      self._default, self._from_environ, self.help, self.kind, name,
-      property_type, full_decl_name, self.param_name)
+      self._default,
+      self._from_environ,
+      self.help,
+      self.kind,
+      name,
+      property_type,
+      full_decl_name,
+      self.param_name,
+    )
+
 
 class UndefinedPropertyException(TypeError):
   pass

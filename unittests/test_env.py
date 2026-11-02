@@ -86,7 +86,6 @@ if LEAK:
 
 
 class RecipeEngineUnitTest(unittest.TestCase):
-
   def setUp(self) -> None:
     self.maxDiff = None
     self.nuke_dirs: list[str] = []
@@ -120,25 +119,25 @@ class RecipeEngineUnitTest(unittest.TestCase):
     return path
 
   def assertDictEqual(
-      self, d1: Mapping[Any, Any], d2: Mapping[Any, Any], msg: Any = None
+    self, d1: Mapping[Any, Any], d2: Mapping[Any, Any], msg: Any = None
   ) -> None:
     """Override the parent's assertDictEqual to strip out unicode objects.
 
     This leads to much more readable diffs when debugging tests.
     """
     super().assertDictEqual(
-        util.fix_json_object(d1), util.fix_json_object(d2), msg
+      util.fix_json_object(d1), util.fix_json_object(d2), msg
     )
 
   def assertListEqual(
-      self, d1: list[Any], d2: list[Any], msg: Any = None
+    self, d1: list[Any], d2: list[Any], msg: Any = None
   ) -> None:
     """Override the parent's assertListEqual to strip out unicode objects.
 
     This leads to much more readable diffs when debugging tests.
     """
     super().assertListEqual(
-        util.fix_json_object(d1), util.fix_json_object(d2), msg
+      util.fix_json_object(d1), util.fix_json_object(d2), msg
     )
 
   def FakeRecipeDeps(self) -> fake_recipe_deps.FakeRecipeDeps:
@@ -150,8 +149,8 @@ class RecipeEngineUnitTest(unittest.TestCase):
 
   @staticmethod
   def MockRecipeDeps(
-      modules_to_DEPS: Mapping[str, mock_recipe_deps.DepsSpec] | None = None,
-      recipes_to_DEPS: Mapping[str, mock_recipe_deps.DepsSpec] | None = None,
+    modules_to_DEPS: Mapping[str, mock_recipe_deps.DepsSpec] | None = None,
+    recipes_to_DEPS: Mapping[str, mock_recipe_deps.DepsSpec] | None = None,
   ) -> mock_recipe_deps.MockRecipeDeps:
     """Creates a MockRecipeDeps.
 

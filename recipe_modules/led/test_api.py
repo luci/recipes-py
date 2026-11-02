@@ -40,19 +40,17 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
     # recipe_engine's limitations around ModuleTestData make this difficult.
     self._mock_edit_key = 0
 
-  def _singleton_mod_data(
-      self, key: str, val: Any
-  ) -> recipe_test_api.TestData:
+  def _singleton_mod_data(self, key: str, val: Any) -> recipe_test_api.TestData:
     ret = recipe_test_api.TestData(None)
     ret.mod_data['led'][key] = val
     return ret
 
   def mock_get_builder(
-      self,
-      job_def: job.Definition | None,
-      project: str | None = None,
-      bucket: str | None = None,
-      builder: str | None = None,
+    self,
+    job_def: job.Definition | None,
+    project: str | None = None,
+    bucket: str | None = None,
+    builder: str | None = None,
   ) -> recipe_test_api.TestData:
     """Mocks the initial job.Definition for the given `led get-builder` call.
 
@@ -95,28 +93,29 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
     assert isinstance(job_def, (job.Definition, type(None)))
     ret = None
 
-    if not project and (bucket or builder): # pragma: no cover
+    if not project and (bucket or builder):  # pragma: no cover
       raise ValueError(
-          "`project` is empty, but bucket or builder are set: %r/%r" %
-          (bucket, builder))
+        "`project` is empty, but bucket or builder are set: %r/%r"
+        % (bucket, builder)
+      )
 
-    if not bucket and builder: # pragma: no cover
-      raise ValueError(
-          "`bucket` is empty, but builder is set: %r" % (builder,))
+    if not bucket and builder:  # pragma: no cover
+      raise ValueError("`bucket` is empty, but builder is set: %r" % (builder,))
 
     if job_def is not None:
       ret = job.Definition()
       ret.CopyFrom(job_def)
 
     key = '/'.join(
-        token for token in
-        ['get:buildbucket/builder', project, bucket, builder]
-        if token)
+      token
+      for token in ['get:buildbucket/builder', project, bucket, builder]
+      if token
+    )
 
     return self._singleton_mod_data(key, ret)
 
   def mock_get_build(
-      self, job_def: job.Definition | None, build_id: int | None = None
+    self, job_def: job.Definition | None, build_id: int | None = None
   ) -> recipe_test_api.TestData:
     """Mocks the initial job.Definition for the given `led get-build` call.
 
@@ -140,9 +139,8 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
       key += '/%d' % (build_id,)
     return self._singleton_mod_data(key, ret)
 
-
   def mock_get_swarm(
-      self, job_def: job.Definition | None, task_id: str | None = None
+    self, job_def: job.Definition | None, task_id: str | None = None
   ) -> recipe_test_api.TestData:
     """Mocks the initial job.Definition for the given `led get-swarm` call.
 
@@ -184,10 +182,10 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
     cmd_filter = attr.ib(default=None)  # Union[None, Tok, Sequence[Tok]]
 
   def mock_edit(
-      self,
-      mutate_function: Callable[[job.Definition, Sequence[str], str], Any],
-      build_id: str | None = None,
-      cmd_filter: Any = None,
+    self,
+    mutate_function: Callable[[job.Definition, Sequence[str], str], Any],
+    build_id: str | None = None,
+    cmd_filter: Any = None,
   ) -> recipe_test_api.TestData:
     """Mock allows you to provide a transformation function for led
     invocations.
@@ -250,7 +248,8 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
     key = 'edit:%d' % (self._mock_edit_key,)
     self._mock_edit_key += 1
     return self._singleton_mod_data(
-        key, LedTestApi._MockEditData(mutate_function, build_id, cmd_filter))
+      key, LedTestApi._MockEditData(mutate_function, build_id, cmd_filter)
+    )
 
   @staticmethod
   def _derive_build_ids(build: job.Definition) -> set[str]:
@@ -261,24 +260,29 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
       ret.add('swarming/' + build.swarming.task.request_uuid)
 
     if build.buildbucket.bbagent_args.build.id:
-      ret.add('buildbucket/build/%s'
-              % (build.buildbucket.bbagent_args.build.id,))
+      ret.add(
+        'buildbucket/build/%s' % (build.buildbucket.bbagent_args.build.id,)
+      )
 
     if build.buildbucket.bbagent_args.build.builder.bucket:
-      ret.add('buildbucket/builder/%s/%s/%s' % (
-        build.buildbucket.bbagent_args.build.builder.project,
-        build.buildbucket.bbagent_args.build.builder.bucket,
-        build.buildbucket.bbagent_args.build.builder.builder))
+      ret.add(
+        'buildbucket/builder/%s/%s/%s'
+        % (
+          build.buildbucket.bbagent_args.build.builder.project,
+          build.buildbucket.bbagent_args.build.builder.bucket,
+          build.buildbucket.bbagent_args.build.builder.builder,
+        )
+      )
 
     return ret
 
   @classmethod
   def _transform_build(
-      cls,
-      build: job.Definition,
-      cmd: Sequence[str],
-      mock_edit_data: Sequence[_MockEditData],
-      cwd: str,
+    cls,
+    build: job.Definition,
+    cmd: Sequence[str],
+    mock_edit_data: Sequence[_MockEditData],
+    cwd: str,
   ) -> job.Definition:
     ret = job.Definition()
     ret.CopyFrom(build)
@@ -318,12 +322,12 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
     Returns the list of values found, in the order they were found. If no values
     were found, returns an empty list.
     """
-    flag = flag.lstrip('-')   # strip down to just the letters
-    flag_prefixes = ('-'+flag, '--'+flag)
+    flag = flag.lstrip('-')  # strip down to just the letters
+    flag_prefixes = ('-' + flag, '--' + flag)
 
     # Trim the command to exclude '--' and anything after it, if present.
     try:
-      cmd = cmd[:cmd.index('--')]
+      cmd = cmd[: cmd.index('--')]
     except ValueError:
       pass
 
@@ -337,7 +341,7 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
     ret = []
     while i < len(cmd):
       tok = cmd[i]
-      next_tok = cmd[i+1] if i+1 < len(cmd) else None
+      next_tok = cmd[i + 1] if i + 1 < len(cmd) else None
 
       i += 1
       if tok in flag_prefixes:
@@ -360,8 +364,9 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
     for the led module in simulation mode (i.e. they are always applied
     automatically).
     """
+
     def _apply_properties(
-        build: job.Definition, cmd: Sequence[str], _cwd: str
+      build: job.Definition, cmd: Sequence[str], _cwd: str
     ) -> None:
       to_set = {}
       vals = [(val, False) for val in cls.get_arg_values(cmd, 'p')]
@@ -369,25 +374,26 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
       for arg_value, sloppy_parse in vals:
         if '=' not in arg_value:  # pragma: no cover
           raise ValueError(
-              "led edit -p mock: value %r missing '='" % (
-                arg_value))
+            "led edit -p mock: value %r missing '='" % (arg_value)
+          )
 
         prop_name, prop_value = arg_value.split('=', 1)
         try:
           to_set[prop_name] = json.loads(prop_value)
-        except Exception as ex: # pylint: disable=broad-except
+        except Exception as ex:  # pylint: disable=broad-except
           if sloppy_parse:
             to_set[prop_name] = prop_value
-          else: # pragma: no cover
+          else:  # pragma: no cover
             raise ValueError(
-                "led edit -p mock: could not decode %r as JSON value: %s" % (
-                  prop_value, ex))
+              "led edit -p mock: could not decode %r as JSON value: %s"
+              % (prop_value, ex)
+            )
 
       for k, val in to_set.items():
         build.buildbucket.bbagent_args.build.input.properties[k] = val
 
     def _edit_input_recipes(
-        build: job.Definition, cmd: Sequence[str], _cwd: str
+      build: job.Definition, cmd: Sequence[str], _cwd: str
     ) -> None:
       payloads = cls.get_arg_values(cmd, 'cas-ref')
       if payloads:
@@ -412,30 +418,30 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
         build.buildbucket.bbagent_args.build.exe.cipd_version = rver[-1]
 
     def _edit_name(
-        build: job.Definition, cmd: Sequence[str], _cwd: str
+      build: job.Definition, cmd: Sequence[str], _cwd: str
     ) -> None:
       build.buildbucket.name = cls.get_arg_values(cmd, 'name')[-1]
 
     def _edit_recipe_bundle(
-        build: job.Definition, _cmd: Sequence[str], cwd: str
+      build: job.Definition, _cmd: Sequence[str], cwd: str
     ) -> None:
       # We use the cwd path as a proxy for the recipes contained in that path.
       _set_cas_user_payload(
-          build, hashlib.sha256(cwd.encode()).hexdigest(), 1337)
-
+        build, hashlib.sha256(cwd.encode()).hexdigest(), 1337
+      )
 
     def _set_cas_user_payload(
-        build: job.Definition, hash: str, size_bytes: int
+      build: job.Definition, hash: str, size_bytes: int
     ) -> None:
       agent = build.buildbucket.bbagent_args.build.infra.buildbucket.agent
       agent.purposes['kitchen-checkout'] = (
-          build_pb.BuildInfra.Buildbucket.Agent.PURPOSE_EXE_PAYLOAD)
+        build_pb.BuildInfra.Buildbucket.Agent.PURPOSE_EXE_PAYLOAD
+      )
       agent.input.data['kitchen-checkout'].cas.digest.hash = hash
       agent.input.data['kitchen-checkout'].cas.digest.size_bytes = size_bytes
 
-
     def _edit_gerrit_cl(
-        build: job.Definition, cmd: Sequence[str], _cwd: str
+      build: job.Definition, cmd: Sequence[str], _cwd: str
     ) -> None:
       # This mimics the implementation in `led`.
       #
@@ -451,11 +457,11 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
       toks = [x for x in parsed.path.split('/') if x]
       if not toks or toks[0] != 'c':  # pragma: no cover
         raise ValueError("%r: empty/old/bad gerrit URL" % (raw,))
-      toks = toks[1:] # remove "c"
+      toks = toks[1:]  # remove "c"
 
       try:
         idx = toks.index('+')
-        project_toks, change_patch_toks = toks[:idx], toks[idx+1:]
+        project_toks, change_patch_toks = toks[:idx], toks[idx + 1 :]
       except ValueError:  # pragma: no cover
         raise ValueError("%r: could not split on `+`" % (raw,))
 
@@ -463,10 +469,12 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
         raise ValueError("%r: missing project" % (raw))
 
       gerrit_change = common.GerritChange(
-          host=parsed.netloc, project='/'.join(project_toks))
+        host=parsed.netloc, project='/'.join(project_toks)
+      )
       gerrit_change.change = int(change_patch_toks[0])
       gerrit_change.patchset = (
-        int(change_patch_toks[1]) if len(change_patch_toks) > 1 else 1337)
+        int(change_patch_toks[1]) if len(change_patch_toks) > 1 else 1337
+      )
 
       bp = build.buildbucket.bbagent_args.build
       if '-remove' in cmd:
@@ -482,38 +490,52 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
         bp.input.gerrit_changes.add().CopyFrom(gerrit_change)
 
     return [
-        cls._MockEditData(
-            _apply_properties,
-            cmd_filter=[
-                'edit',
-                Ellipsis,
-                re.compile(r"--?pa?(=.*)?"),
-            ]),
-        cls._MockEditData(
-            _edit_input_recipes,
-            cmd_filter=[
-                'edit',
-                Ellipsis,
-                re.compile(r"--?r(bh|pkg|ver)(=.*)?"),
-            ]),
-        cls._MockEditData(
-            _edit_name,
-            cmd_filter=[
-                'edit',
-                Ellipsis,
-                re.compile(r"--?name(=.*)?"),
-            ]),
-        cls._MockEditData(
-            _edit_recipe_bundle, cmd_filter=[
-                'edit-recipe-bundle',
-            ]),
-        cls._MockEditData(_edit_gerrit_cl, cmd_filter=[
-            'edit-cr-cl',
-        ]),
-        cls._MockEditData(_edit_gerrit_cl, cmd_filter=[
-            'edit-gerrit-cl',
-        ]),
-        cls._MockEditData(_edit_input_recipes, cmd_filter=[
-            'edit-payload',
-        ]),
+      cls._MockEditData(
+        _apply_properties,
+        cmd_filter=[
+          'edit',
+          Ellipsis,
+          re.compile(r"--?pa?(=.*)?"),
+        ],
+      ),
+      cls._MockEditData(
+        _edit_input_recipes,
+        cmd_filter=[
+          'edit',
+          Ellipsis,
+          re.compile(r"--?r(bh|pkg|ver)(=.*)?"),
+        ],
+      ),
+      cls._MockEditData(
+        _edit_name,
+        cmd_filter=[
+          'edit',
+          Ellipsis,
+          re.compile(r"--?name(=.*)?"),
+        ],
+      ),
+      cls._MockEditData(
+        _edit_recipe_bundle,
+        cmd_filter=[
+          'edit-recipe-bundle',
+        ],
+      ),
+      cls._MockEditData(
+        _edit_gerrit_cl,
+        cmd_filter=[
+          'edit-cr-cl',
+        ],
+      ),
+      cls._MockEditData(
+        _edit_gerrit_cl,
+        cmd_filter=[
+          'edit-gerrit-cl',
+        ],
+      ),
+      cls._MockEditData(
+        _edit_input_recipes,
+        cmd_filter=[
+          'edit-payload',
+        ],
+      ),
     ]

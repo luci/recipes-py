@@ -8,13 +8,12 @@ from recipe_engine import recipe_test_api
 
 
 class RuntimeTestApi(recipe_test_api.RecipeTestApi):
-
-  def __call__(
-      self, is_experimental: bool = False
-  ) -> recipe_test_api.TestData:
+  def __call__(self, is_experimental: bool = False) -> recipe_test_api.TestData:
     """Simulate runtime state of a build."""
     assert isinstance(is_experimental, bool), '%r (%s)' % (
-        is_experimental, type(is_experimental))
+      is_experimental,
+      type(is_experimental),
+    )
     ret = self.test(None)
     ret.properties = {
       '$recipe_engine/runtime': {
@@ -24,7 +23,7 @@ class RuntimeTestApi(recipe_test_api.RecipeTestApi):
     return ret
 
   def global_shutdown_on_step(
-      self, step_name: str, event: str = 'after'
+    self, step_name: str, event: str = 'after'
   ) -> recipe_test_api.TestData:
     """Simulates an incoming SIGTERM/Ctrl-Break to the recipe execution.
 
@@ -43,4 +42,4 @@ class RuntimeTestApi(recipe_test_api.RecipeTestApi):
         `step_name` (meaning that `step_name` will not run).
     """
     assert event in ('before', 'after'), 'bad shutdown_on_step event'
-    return self.step_data(step_name, global_shutdown_event = event)
+    return self.step_data(step_name, global_shutdown_event=event)

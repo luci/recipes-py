@@ -16,7 +16,7 @@ import fake_recipe_deps
 
 
 def add_repo_with_basic_upstream_dependency(
-    deps: fake_recipe_deps.FakeRecipeDeps,
+  deps: fake_recipe_deps.FakeRecipeDeps,
 ) -> None:
   """Does:
 
@@ -53,15 +53,14 @@ def add_repo_with_basic_upstream_dependency(
 
 class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
   def run_roll(
-      self, deps: fake_recipe_deps.FakeRecipeDeps, *args: str
+    self, deps: fake_recipe_deps.FakeRecipeDeps, *args: str
   ) -> dict[str, Any]:
     """Runs the autoroll command and returns JSON.
     Does not commit the resulting roll.
     """
     outfile = self.tempfile()
     output, retcode = deps.main_repo.recipes_py(
-      '-v', '-v', 'autoroll', '--verbose-json', '--output-json',
-      outfile, *args
+      '-v', '-v', 'autoroll', '--verbose-json', '--output-json', outfile, *args
     )
     if retcode != 0:
       print(output, file=sys.stdout)
@@ -79,8 +78,7 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
     self.assertEqual([], roll_result['rejected_candidate_specs'])
 
   def test_trivial(self) -> None:
-    """Tests the simplest trivial (i.e. no expectation changes) roll scenario.
-    """
+    """Tests the simplest trivial (i.e. no expectation changes) roll scenario."""
     # prep
     deps = self.FakeRecipeDeps()
     upstream = deps.add_repo('upstream')
@@ -106,16 +104,19 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
       'spec': jsonpb.MessageToDict(spec, preserving_proto_field_name=True),
     }
 
-    self.assertEqual(expected_picked_roll['commit_infos'],
-                     roll_result['picked_roll_details']['commit_infos'])
-    self.assertEqual(expected_picked_roll['spec'],
-                     roll_result['picked_roll_details']['spec'])
     self.assertEqual(
-        0, roll_result['picked_roll_details']['recipes_simulation_test']['rc'])
+      expected_picked_roll['commit_infos'],
+      roll_result['picked_roll_details']['commit_infos'],
+    )
+    self.assertEqual(
+      expected_picked_roll['spec'], roll_result['picked_roll_details']['spec']
+    )
+    self.assertEqual(
+      0, roll_result['picked_roll_details']['recipes_simulation_test']['rc']
+    )
 
   def test_nontrivial(self) -> None:
-    """Tests the simplest nontrivial (i.e. expectation changes) roll scenario.
-    """
+    """Tests the simplest nontrivial (i.e. expectation changes) roll scenario."""
     deps = self.FakeRecipeDeps()
     add_repo_with_basic_upstream_dependency(deps)
     upstream = deps.repos['upstream']
@@ -140,22 +141,18 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
 
     expected_picked_roll = {
       'commit_infos': {
-        'upstream': [
-          up_commit.as_roll_info()
-        ],
+        'upstream': [up_commit.as_roll_info()],
       },
       'spec': jsonpb.MessageToDict(spec, preserving_proto_field_name=True),
     }
 
     picked_roll = roll_result['picked_roll_details']
-    self.assertEqual(expected_picked_roll['commit_infos'],
-                     picked_roll['commit_infos'])
-    self.assertEqual(expected_picked_roll['spec'],
-                     picked_roll['spec'])
     self.assertEqual(
-        1, picked_roll['recipes_simulation_test']['rc'])
-    self.assertEqual(
-        0, picked_roll['recipes_simulation_test_train']['rc'])
+      expected_picked_roll['commit_infos'], picked_roll['commit_infos']
+    )
+    self.assertEqual(expected_picked_roll['spec'], picked_roll['spec'])
+    self.assertEqual(1, picked_roll['recipes_simulation_test']['rc'])
+    self.assertEqual(0, picked_roll['recipes_simulation_test_train']['rc'])
 
   def test_failure(self) -> None:
     """Tests the simplest scenario where an automated roll is not possible
@@ -221,14 +218,12 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
     }
 
     picked_roll = roll_result['picked_roll_details']
-    self.assertEqual(expected_picked_roll['commit_infos'],
-                     picked_roll['commit_infos'])
-    self.assertEqual(expected_picked_roll['spec'],
-                     picked_roll['spec'])
     self.assertEqual(
-        1, picked_roll['recipes_simulation_test']['rc'])
-    self.assertEqual(
-        0, picked_roll['recipes_simulation_test_train']['rc'])
+      expected_picked_roll['commit_infos'], picked_roll['commit_infos']
+    )
+    self.assertEqual(expected_picked_roll['spec'], picked_roll['spec'])
+    self.assertEqual(1, picked_roll['recipes_simulation_test']['rc'])
+    self.assertEqual(0, picked_roll['recipes_simulation_test_train']['rc'])
 
   def test_pick_smallest_nontrivial_roll(self) -> None:
     """Test that with several nontrivial rolls possible, the minimal one
@@ -282,14 +277,12 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
     }
 
     picked_roll = roll_result['picked_roll_details']
-    self.assertEqual(expected_picked_roll['commit_infos'],
-                     picked_roll['commit_infos'])
-    self.assertEqual(expected_picked_roll['spec'],
-                     picked_roll['spec'])
     self.assertEqual(
-        1, picked_roll['recipes_simulation_test']['rc'])
-    self.assertEqual(
-        0, picked_roll['recipes_simulation_test_train']['rc'])
+      expected_picked_roll['commit_infos'], picked_roll['commit_infos']
+    )
+    self.assertEqual(expected_picked_roll['spec'], picked_roll['spec'])
+    self.assertEqual(1, picked_roll['recipes_simulation_test']['rc'])
+    self.assertEqual(0, picked_roll['recipes_simulation_test_train']['rc'])
 
   def test_pick_largest_trivial_roll(self) -> None:
     """Test that with several trivial rolls possible, the largest one is picked.
@@ -354,12 +347,11 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
     }
 
     picked_roll = roll_result['picked_roll_details']
-    self.assertEqual(expected_picked_roll['commit_infos'],
-                     picked_roll['commit_infos'])
-    self.assertEqual(expected_picked_roll['spec'],
-                     picked_roll['spec'])
     self.assertEqual(
-        0, picked_roll['recipes_simulation_test']['rc'])
+      expected_picked_roll['commit_infos'], picked_roll['commit_infos']
+    )
+    self.assertEqual(expected_picked_roll['spec'], picked_roll['spec'])
+    self.assertEqual(0, picked_roll['recipes_simulation_test']['rc'])
 
   def test_find_minimal_candidate(self) -> None:
     """Tests that the roller can automatically find a viable minimal
@@ -422,20 +414,19 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
     spec.deps['upstream'].revision = super_roll.revision
 
     expected_picked_roll = {
-        'commit_infos': {
-            'upstream': [super_roll.as_roll_info()],
-            'super_upstream': [super_commit.as_roll_info()],
-        },
+      'commit_infos': {
+        'upstream': [super_roll.as_roll_info()],
+        'super_upstream': [super_commit.as_roll_info()],
+      },
       'spec': jsonpb.MessageToDict(spec, preserving_proto_field_name=True),
     }
 
     picked_roll = roll_result['picked_roll_details']
-    self.assertEqual(expected_picked_roll['commit_infos'],
-                     picked_roll['commit_infos'])
-    self.assertEqual(expected_picked_roll['spec'],
-                     picked_roll['spec'])
     self.assertEqual(
-        0, picked_roll['recipes_simulation_test']['rc'])
+      expected_picked_roll['commit_infos'], picked_roll['commit_infos']
+    )
+    self.assertEqual(expected_picked_roll['spec'], picked_roll['spec'])
+    self.assertEqual(0, picked_roll['recipes_simulation_test']['rc'])
 
   def test_no_backwards_roll(self) -> None:
     """Tests that we never roll backwards."""
@@ -551,15 +542,18 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
 
     spec = deps.main_repo.recipes_cfg_pb2
     expected_picked_roll = {
-        'commit_infos': {
-            'upstream': [upstream_commit.as_roll_info(),],
-        },
-        'spec': jsonpb.MessageToDict(spec, preserving_proto_field_name=True),
+      'commit_infos': {
+        'upstream': [
+          upstream_commit.as_roll_info(),
+        ],
+      },
+      'spec': jsonpb.MessageToDict(spec, preserving_proto_field_name=True),
     }
 
     picked_roll = roll_result['picked_roll_details']
-    self.assertEqual(expected_picked_roll['commit_infos'],
-                     picked_roll['commit_infos'])
+    self.assertEqual(
+      expected_picked_roll['commit_infos'], picked_roll['commit_infos']
+    )
     self.assertEqual(expected_picked_roll['spec'], picked_roll['spec'])
 
   def non_candidate_commits_are_not_considered(self) -> None:
@@ -591,18 +585,19 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
 
     spec = deps.main_repo.recipes_cfg_pb2
     expected_picked_roll = {
-        'commit_infos': {
-            'upstream': [
-                non_candidate_commit.as_roll_info(),
-                candidate_commit.as_roll_info(),
-            ],
-        },
-        'spec': jsonpb.MessageToDict(spec, preserving_proto_field_name=True),
+      'commit_infos': {
+        'upstream': [
+          non_candidate_commit.as_roll_info(),
+          candidate_commit.as_roll_info(),
+        ],
+      },
+      'spec': jsonpb.MessageToDict(spec, preserving_proto_field_name=True),
     }
 
     picked_roll = roll_result['picked_roll_details']
-    self.assertEqual(expected_picked_roll['commit_infos'],
-                     picked_roll['commit_infos'])
+    self.assertEqual(
+      expected_picked_roll['commit_infos'], picked_roll['commit_infos']
+    )
     self.assertEqual(expected_picked_roll['spec'], picked_roll['spec'])
     self.assertEqual(len(roll_result['roll_details']), 1)
 
@@ -633,8 +628,9 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
     # Roll everything so far into main
     with deps.main_repo.edit_recipes_cfg_pb2() as recipes_cfg:
       recipes_cfg.deps['upstream'].revision = upstream_commit.revision
-      recipes_cfg.deps['upstream_deeper'].revision = (
-          original_deeper_commit.revision)
+      recipes_cfg.deps[
+        'upstream_deeper'
+      ].revision = original_deeper_commit.revision
     deps.main_repo.commit('initial roll into main')
 
     # Create a commit in upstream that someone might manually roll into main
@@ -654,15 +650,16 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
 
     spec = deps.main_repo.recipes_cfg_pb2
     expected_picked_roll = {
-        'commit_infos': {
-            'upstream_deeper': [deeper_commit.as_roll_info()],
-        },
-        'spec': jsonpb.MessageToDict(spec, preserving_proto_field_name=True),
+      'commit_infos': {
+        'upstream_deeper': [deeper_commit.as_roll_info()],
+      },
+      'spec': jsonpb.MessageToDict(spec, preserving_proto_field_name=True),
     }
 
     picked_roll = roll_result['picked_roll_details']
-    self.assertEqual(expected_picked_roll['commit_infos'],
-                     picked_roll['commit_infos'])
+    self.assertEqual(
+      expected_picked_roll['commit_infos'], picked_roll['commit_infos']
+    )
     self.assertEqual(expected_picked_roll['spec'], picked_roll['spec'])
     self.assertEqual(len(roll_result['roll_details']), 1)
 
@@ -711,8 +708,9 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
     with deps.main_repo.edit_recipes_cfg_pb2() as recipes_cfg:
       recipes_cfg.deps['upstream_a'].revision = upstream_a_commit.revision
       recipes_cfg.deps['upstream_b'].revision = upstream_b_commit.revision
-      recipes_cfg.deps['upstream_deeper'].revision = (
-          original_deeper_commit.revision)
+      recipes_cfg.deps[
+        'upstream_deeper'
+      ].revision = original_deeper_commit.revision
     deps.main_repo.commit('initial roll into main')
 
     # Create a new commit in upstream_deeper and roll it into upstream_a
@@ -739,17 +737,18 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
 
     spec = deps.main_repo.recipes_cfg_pb2
     expected_picked_roll = {
-        'commit_infos': {
-            'upstream_a': [upstream_a_commit.as_roll_info()],
-            'upstream_b': [upstream_b_commit.as_roll_info()],
-            'upstream_deeper': [deeper_commit.as_roll_info()],
-        },
-        'spec': jsonpb.MessageToDict(spec, preserving_proto_field_name=True),
+      'commit_infos': {
+        'upstream_a': [upstream_a_commit.as_roll_info()],
+        'upstream_b': [upstream_b_commit.as_roll_info()],
+        'upstream_deeper': [deeper_commit.as_roll_info()],
+      },
+      'spec': jsonpb.MessageToDict(spec, preserving_proto_field_name=True),
     }
 
     picked_roll = roll_result['picked_roll_details']
-    self.assertEqual(expected_picked_roll['commit_infos'],
-                     picked_roll['commit_infos'])
+    self.assertEqual(
+      expected_picked_roll['commit_infos'], picked_roll['commit_infos']
+    )
     self.assertEqual(expected_picked_roll['spec'], picked_roll['spec'])
     self.assertEqual(len(roll_result['roll_details']), 1)
 

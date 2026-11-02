@@ -18,7 +18,6 @@ lieu of the real RecipeDeps, please try not to add too many APIs here which
 don't exist on the real objects (i.e. "path helpers" or things of that nature).
 """
 
-
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
@@ -34,9 +33,9 @@ class MockRecipeDeps:
   """A mock version of recipe_deps.RecipeDeps."""
 
   def __init__(
-      self,
-      modules_to_deps: Mapping[str, DepsSpec] | None = None,
-      recipes_to_deps: Mapping[str, DepsSpec] | None = None,
+    self,
+    modules_to_deps: Mapping[str, DepsSpec] | None = None,
+    recipes_to_deps: Mapping[str, DepsSpec] | None = None,
   ) -> None:
     """Creates a MockRecipeDeps with a single 'main' repo containing the modules
     and recipes specified by modules_to_deps and recipes_to_deps.
@@ -51,15 +50,15 @@ class MockRecipeDeps:
     """
     self.main_repo_id = 'main'
     self.main_repo = MockRecipeRepo(
-        self, 'main', modules_to_deps or {}, recipes_to_deps or {}
+      self, 'main', modules_to_deps or {}, recipes_to_deps or {}
     )
     self.repos = {'main': self.main_repo}
 
   def add_repo(
-      self,
-      name: str,
-      modules_to_deps: Mapping[str, DepsSpec] | None = None,
-      recipes_to_deps: Mapping[str, DepsSpec] | None = None,
+    self,
+    name: str,
+    modules_to_deps: Mapping[str, DepsSpec] | None = None,
+    recipes_to_deps: Mapping[str, DepsSpec] | None = None,
   ) -> None:
     """Creates and adds an additional repo to the MockRecipeDeps.
 
@@ -76,10 +75,10 @@ class MockRecipeDeps:
         to their DEPS specification.
     """
     self.repos[name] = MockRecipeRepo(
-        self,
-        name,
-        modules_to_deps or {},
-        recipes_to_deps or {},
+      self,
+      name,
+      modules_to_deps or {},
+      recipes_to_deps or {},
     )
 
 
@@ -87,11 +86,11 @@ class MockRecipeRepo:
   """A mock version of recipe_deps.RecipeRepo."""
 
   def __init__(
-      self,
-      rdeps: MockRecipeDeps,
-      name: str,
-      modules_to_deps: Mapping[str, DepsSpec],
-      recipes_to_deps: Mapping[str, DepsSpec],
+    self,
+    rdeps: MockRecipeDeps,
+    name: str,
+    modules_to_deps: Mapping[str, DepsSpec],
+    recipes_to_deps: Mapping[str, DepsSpec],
   ) -> None:
     """Creates a MockRecipeRepo with the name `name` containing the
     modules and recipes specified by modules_to_deps and recipes_to_deps.
@@ -114,12 +113,12 @@ class MockRecipeRepo:
     else:
       self.path = '/%s_ROOT/' % name.upper()
     self.modules = {
-        module_name: MockRecipeModule(self, module_name, DEPS)
-        for module_name, DEPS in modules_to_deps.items()
+      module_name: MockRecipeModule(self, module_name, DEPS)
+      for module_name, DEPS in modules_to_deps.items()
     }
     self.recipes = {
-        recipe_name: MockRecipe(self, recipe_name, DEPS)
-        for recipe_name, DEPS in recipes_to_deps.items()
+      recipe_name: MockRecipe(self, recipe_name, DEPS)
+      for recipe_name, DEPS in recipes_to_deps.items()
     }
 
 
@@ -140,7 +139,7 @@ class MockRecipeModule:
     self.path = os.path.join(repo.path, 'recipe_modules', name)
     # pylint: disable=invalid-name
     self.normalized_DEPS = recipe_deps.parse_deps_spec(
-        repo.name, DEPS, source=__file__
+      repo.name, DEPS, source=__file__
     )
 
 
@@ -162,5 +161,5 @@ class MockRecipe:
     self.resources_dir = os.path.join(repo.path, 'recipes', name) + '.resources'
     # pylint: disable=invalid-name
     self.normalized_DEPS = recipe_deps.parse_deps_spec(
-        repo.name, DEPS, source=__file__
+      repo.name, DEPS, source=__file__
     )

@@ -14,8 +14,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    swarming,
+  assertions,
+  swarming,
 )
 
 
@@ -35,14 +35,17 @@ def RunSteps(api: DEPS) -> None:
   def basic_request() -> swarming_api.TaskRequest:
     request = api.swarming.task_request()
     return request.with_slice(
-        0, request[0].with_command(['echo', 'hi']).with_dimensions(
-            pool='example.pool', os='Debian'))
+      0,
+      request[0]
+      .with_command(['echo', 'hi'])
+      .with_dimensions(pool='example.pool', os='Debian'),
+    )
 
   req1 = basic_request()
   slice1 = req1[0]
   req2 = req1.with_slice(
-      0,
-      slice1.with_command(slice1.command + ['-h']).with_env_vars(FOO='42'))
+    0, slice1.with_command(slice1.command + ['-h']).with_env_vars(FOO='42')
+  )
   # Made for crbug.com/1131821
   api.assertions.assertNotEqual(id(req1[0]), id(req2[0]))
   api.assertions.assertListEqual(req1[0].command, ['echo', 'hi'])

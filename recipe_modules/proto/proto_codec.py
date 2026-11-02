@@ -14,32 +14,37 @@ from recipe_engine.util import sentinel
 
 
 BINARY = sentinel(
-    'BINARY', ext='pb',
-    enc=(lambda _self, msg, **extra: msg.SerializeToString(**extra)),
-    enc_default_extra={
-      'deterministic': True,
-    },
-    dec=(lambda _self, data, msg, **_extra: msg.ParseFromString(data)),
-    dec_default_extra={})
+  'BINARY',
+  ext='pb',
+  enc=(lambda _self, msg, **extra: msg.SerializeToString(**extra)),
+  enc_default_extra={
+    'deterministic': True,
+  },
+  dec=(lambda _self, data, msg, **_extra: msg.ParseFromString(data)),
+  dec_default_extra={},
+)
 
 TEXTPB = sentinel(
-    'TEXTPB', ext='tpb',
-    enc=staticmethod(text_format.MessageToString),
-    enc_default_extra={},
-    dec=staticmethod(text_format.Parse),
-    dec_default_extra={})
+  'TEXTPB',
+  ext='tpb',
+  enc=staticmethod(text_format.MessageToString),
+  enc_default_extra={},
+  dec=staticmethod(text_format.Parse),
+  dec_default_extra={},
+)
 
 JSONPB = sentinel(
-    'JSONPB',
-    ext='json',
-    enc=staticmethod(json_format.MessageToJson),
-    enc_default_extra={
-        'preserving_proto_field_name': True,
-        'sort_keys': True,
-        'indent': 2,
-    },
-    dec=staticmethod(json_format.Parse),
-    dec_default_extra={'ignore_unknown_fields': True})
+  'JSONPB',
+  ext='json',
+  enc=staticmethod(json_format.MessageToJson),
+  enc_default_extra={
+    'preserving_proto_field_name': True,
+    'sort_keys': True,
+    'indent': 2,
+  },
+  dec=staticmethod(json_format.Parse),
+  dec_default_extra={'ignore_unknown_fields': True},
+)
 
 
 ALL_ENCODINGS = (BINARY, JSONPB, TEXTPB)
@@ -56,13 +61,13 @@ def resolve(codec: Any) -> Any:
   """
   if isinstance(codec, basestring):
     codec = ENC_MAP.get(codec, codec)
-  if codec not in ALL_ENCODINGS: # pragma: no cover
+  if codec not in ALL_ENCODINGS:  # pragma: no cover
     raise ValueError('Must specify a valid codec, got %r' % (codec,))
   return codec
 
 
 def do_enc(
-    codec: Any, proto_msg: message.Message, **extra_args: Any
+  codec: Any, proto_msg: message.Message, **extra_args: Any
 ) -> str | bytes:
   """Does a proto encoding operation.
 
@@ -80,11 +85,12 @@ def do_enc(
   extras.update(extra_args)
   return codec.enc(proto_msg, **extras)
 
+
 def do_dec(
-    data: str | bytes,
-    msg_class: type[message.Message],
-    codec: Any,
-    **extra_args: Any,
+  data: str | bytes,
+  msg_class: type[message.Message],
+  codec: Any,
+  **extra_args: Any,
 ) -> message.Message:
   """Does a proto decoding operation.
 

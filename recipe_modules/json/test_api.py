@@ -14,7 +14,6 @@ from .api import dumps, loads
 
 
 class JsonTestApi(recipe_test_api.RecipeTestApi):
-
   @staticmethod
   def dumps(*args: Any, **kwargs: Any) -> str:
     """Works like `json.dumps`."""
@@ -29,7 +28,7 @@ class JsonTestApi(recipe_test_api.RecipeTestApi):
   @recipe_test_api.placeholder_step_data
   @staticmethod
   def output(
-      data: Any, retcode: int | None = None, name: str | None = None
+    data: Any, retcode: int | None = None, name: str | None = None
   ) -> tuple[str, int | None, str | None]:
     """Supplies placeholder data for a json.output. `data` should be a jsonish
     python object (e.g. dict, list, str, bool, int, etc). It will be dumped out
@@ -40,18 +39,18 @@ class JsonTestApi(recipe_test_api.RecipeTestApi):
   @recipe_test_api.placeholder_step_data('output')
   @staticmethod
   def invalid(
-      raw_data_str: str, retcode: int | None = None, name: str | None = None
+    raw_data_str: str, retcode: int | None = None, name: str | None = None
   ) -> tuple[str, int | None, str | None]:
     """Can be used to supply data for a json.output, except that it takes a raw
     string rather than a json object."""
     return raw_data_str, retcode, name
 
   def output_stream(
-      self,
-      data: Any,
-      stream: Literal['stdout', 'stderr'] = 'stdout',
-      retcode: int | None = None,
-      name: str | None = None,
+    self,
+    data: Any,
+    stream: Literal['stdout', 'stderr'] = 'stdout',
+    retcode: int | None = None,
+    name: str | None = None,
   ) -> recipe_test_api.StepTestData:
     assert stream in ('stdout', 'stderr')
     ret = recipe_test_api.StepTestData()
@@ -62,7 +61,7 @@ class JsonTestApi(recipe_test_api.RecipeTestApi):
   @recipe_test_api.placeholder_step_data('output')
   @staticmethod
   def backing_file_missing(
-      retcode: int | None = None, name: str | None = None
+    retcode: int | None = None, name: str | None = None
   ) -> tuple[None, int | None, str | None]:
     """Simulates a missing backing file.
 

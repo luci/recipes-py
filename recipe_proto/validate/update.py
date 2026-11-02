@@ -16,8 +16,8 @@ import sys
 import requests
 
 BASE_URL = 'https://chromium.googlesource.com/infra/luci/luci-go'
-LOG_URL = BASE_URL+'/+log/main/%s?format=JSON&n=1'
-GO_MOD_URL = BASE_URL+'/+/%s/go.mod?format=TEXT'
+LOG_URL = BASE_URL + '/+log/main/%s?format=JSON&n=1'
+GO_MOD_URL = BASE_URL + '/+/%s/go.mod?format=TEXT'
 PKG_URL = 'github.com/envoyproxy/protoc-gen-validate'
 
 

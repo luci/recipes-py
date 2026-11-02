@@ -13,8 +13,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    buildbucket,
-    cv,
+  buildbucket,
+  cv,
 )
 
 
@@ -36,11 +36,11 @@ def RunSteps(api: DEPS) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'simple',
-      api.cv(run_mode=api.cv.DRY_RUN),
-      api.buildbucket.try_build(
-          change_number=123,
-          tags=api.buildbucket.tags(cq_attempt_key='attempt-key'),
-      ),
-      api.post_process(post_process.DropExpectation),
+    'simple',
+    api.cv(run_mode=api.cv.DRY_RUN),
+    api.buildbucket.try_build(
+      change_number=123,
+      tags=api.buildbucket.tags(cq_attempt_key='attempt-key'),
+    ),
+    api.post_process(post_process.DropExpectation),
   )

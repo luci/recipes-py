@@ -2,8 +2,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-"""Tests that placeholders can't wreck the world by exhausting the step stack.
-"""
+"""Tests that placeholders can't wreck the world by exhausting the step stack."""
 
 from __future__ import annotations
 
@@ -30,6 +29,7 @@ class DEPS(RecipeScriptApi):
 class TEST_DEPS(RecipeTestApi):
   pass
 
+
 class BadPlaceholder(InputPlaceholder):
   def render(self, test: Any) -> list[str]:
     raise Exception("EXPLOSION")
@@ -45,15 +45,16 @@ def RunSteps(api: DEPS) -> None:
   ph.namespaces = ('fake', 'namespace')
 
   api.step('bad step', ['echo', ph])
-  raise ValueError('Never reached')   # pragma: no cover
+  raise ValueError('Never reached')  # pragma: no cover
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (
-    api.test('basic') +
-    api.expect_exception('Exception') +
-    api.post_process(post_process.StatusException) +
-    api.post_process(post_process.SummaryMarkdown,
-                     "Uncaught Exception: Exception('EXPLOSION')") +
-    api.post_process(post_process.DropExpectation)
+    api.test('basic')
+    + api.expect_exception('Exception')
+    + api.post_process(post_process.StatusException)
+    + api.post_process(
+      post_process.SummaryMarkdown, "Uncaught Exception: Exception('EXPLOSION')"
+    )
+    + api.post_process(post_process.DropExpectation)
   )

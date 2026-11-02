@@ -73,7 +73,7 @@ class CheckoutBasePath:
     checkout_dir = self.maybe_resolve()
     if checkout_dir is None:
       raise ValueError(
-          f'Cannot resolve CheckoutBasePath() - api.path.checkout_dir is unset.'
+        f'Cannot resolve CheckoutBasePath() - api.path.checkout_dir is unset.'
       )
     return checkout_dir
 
@@ -102,13 +102,14 @@ class ResolvedBasePath:
   In non-tests, this will contain an actual absolute filesystem path as a
   string.
   """
+
   resolved: str
 
   @classmethod
   def for_recipe_module(
-      cls,
-      test_enabled: bool,
-      module: recipe_deps.RecipeModule,
+    cls,
+    test_enabled: bool,
+    module: recipe_deps.RecipeModule,
   ) -> ResolvedBasePath:
     if not test_enabled:
       return cls(module.path)
@@ -119,9 +120,9 @@ class ResolvedBasePath:
 
   @classmethod
   def for_recipe_script_resources(
-      cls,
-      test_enabled: bool,
-      recipe: recipe_deps.Recipe,
+    cls,
+    test_enabled: bool,
+    recipe: recipe_deps.Recipe,
   ) -> ResolvedBasePath:
     if not test_enabled:
       return cls(recipe.resources_dir)
@@ -129,9 +130,9 @@ class ResolvedBasePath:
 
   @classmethod
   def for_bundled_repo(
-      cls,
-      test_enabled: bool,
-      repo: recipe_deps.RecipeRepo,
+    cls,
+    test_enabled: bool,
+    repo: recipe_deps.RecipeRepo,
   ) -> ResolvedBasePath:
     if not test_enabled:
       return cls(repo.path)
@@ -151,6 +152,7 @@ class Path:
   __init__ method of the recipe_engine/path module, which assigns to this
   class's _OS_SEP variable.
   """
+
   base: CheckoutBasePath | ResolvedBasePath
   pieces: tuple[str, ...]
 
@@ -172,13 +174,13 @@ class Path:
   # I don't think introducing the extra global variable is necessary or
   # desirable here, especially since we know that Path is immutable.
   _str: str | None = dataclasses.field(
-      default=None, repr=False, hash=False, compare=False
+    default=None, repr=False, hash=False, compare=False
   )
 
   def __init__(
-      self,
-      base: CheckoutBasePath | ResolvedBasePath,
-      *pieces: str,
+    self,
+    base: CheckoutBasePath | ResolvedBasePath,
+    *pieces: str,
   ) -> None:
     """Creates a Path.
 
@@ -202,8 +204,9 @@ class Path:
     super().__init__()
     if not isinstance(base, (CheckoutBasePath, ResolvedBasePath)):
       raise ValueError(
-          'First argument to Path must be CheckoutBasePath or ResolvedBasePath, '
-          f'got {base!r} ({type(base)!r})')
+        'First argument to Path must be CheckoutBasePath or ResolvedBasePath, '
+        f'got {base!r} ({type(base)!r})'
+      )
 
     # If they gave us a CheckoutBasePath, but it's already resolvable,
     # immediately transmute it into a ResolvedBasePath.
@@ -215,8 +218,10 @@ class Path:
     has_backslashes: bool = False
     for i, piece in enumerate(pieces):
       if not isinstance(piece, str):
-        raise ValueError('Variadic arguments to Path must only be `str`, '
-                         f'argument {i} was {piece!r} ({type(piece)!r})')
+        raise ValueError(
+          'Variadic arguments to Path must only be `str`, '
+          f'argument {i} was {piece!r} ({type(piece)!r})'
+        )
       has_backslashes = has_backslashes or '\\' in piece
 
     # NOTE: we always separate on '/', regardless of _OS_SEP, as users like to
@@ -227,10 +232,11 @@ class Path:
     # we can't tell if these should be separated or not and so raise a ValueError.
     if self._OS_SEP is None and has_backslashes:
       raise ValueError(
-          f'Cannot instantiate Path({base!r}, {pieces!r}) - Pieces contain'
-          ' backslash and recipe_engine/path has not been initialized yet.'
-          ' Please use "/" (even for windows) or pass the pieces to join'
-          ' separately.')
+        f'Cannot instantiate Path({base!r}, {pieces!r}) - Pieces contain'
+        ' backslash and recipe_engine/path has not been initialized yet.'
+        ' Please use "/" (even for windows) or pass the pieces to join'
+        ' separately.'
+      )
     need_backslash_split = has_backslashes and self._OS_SEP == '\\'
 
     normalized_pieces = []
@@ -270,7 +276,7 @@ class Path:
         #
         # Which means that we need to decrement i by one to evaluate 'other',
         # which is the next item to analyze.
-        normalized_pieces[i - 1:i + 1] = []
+        normalized_pieces[i - 1 : i + 1] = []
         i -= 1
       else:
         i += 1
@@ -278,7 +284,7 @@ class Path:
     # Finally, check to see if any '..' was left over and raise.
     if normalized_pieces and normalized_pieces[0] == '..':
       raise ValueError(
-          f'Unable to compute {base!r} / {pieces!r} without going above the base.'
+        f'Unable to compute {base!r} / {pieces!r} without going above the base.'
       )
 
     # This is a frozen dataclass, so we have to assign using object.__setattr__.
@@ -344,8 +350,9 @@ class Path:
 
     # first, if both bases are checkout, just compare pieces, since we know that
     # CheckoutBasePath, once assigned, will always match.
-    if (isinstance(self.base, CheckoutBasePath) and
-        isinstance(other.base, CheckoutBasePath)):
+    if isinstance(self.base, CheckoutBasePath) and isinstance(
+      other.base, CheckoutBasePath
+    ):
       return self.pieces == other.pieces
 
     try:
@@ -353,9 +360,11 @@ class Path:
       opath = other._resolve()
       return spath.base == opath.base and spath.pieces == opath.pieces
     except Exception as ex:
-      raise ValueError('Path.__eq__ invalid for mismatched bases '
-                       '(CheckoutBasePath vs ResolvedBasePath) '
-                       'before checkout_dir is set') from ex
+      raise ValueError(
+        'Path.__eq__ invalid for mismatched bases '
+        '(CheckoutBasePath vs ResolvedBasePath) '
+        'before checkout_dir is set'
+      ) from ex
 
   def __lt__(self, other: object) -> bool:
     if isinstance(other, str):
@@ -365,17 +374,20 @@ class Path:
 
     # first, if both bases are checkout, just compare pieces, since we know that
     # CheckoutBasePath, once assigned, will always match.
-    if (isinstance(self.base, CheckoutBasePath) and
-        isinstance(other.base, CheckoutBasePath)):
+    if isinstance(self.base, CheckoutBasePath) and isinstance(
+      other.base, CheckoutBasePath
+    ):
       return self.pieces < other.pieces
     try:
       spath = self._resolve()
       opath = other._resolve()
       return (spath.base, spath.pieces) < (opath.base, opath.pieces)
     except Exception as ex:
-      raise ValueError('Path.__lt__ invalid for mismatched bases '
-                       '(CheckoutBasePath vs ResolvedBasePath) '
-                       'before checkout_dir is set') from ex
+      raise ValueError(
+        'Path.__lt__ invalid for mismatched bases '
+        '(CheckoutBasePath vs ResolvedBasePath) '
+        'before checkout_dir is set'
+      ) from ex
 
   def __truediv__(self, piece: str | Path) -> Path:
     """Adds the shorthand '/'-operator for .joinpath(), returning a new path."""
@@ -397,22 +409,25 @@ class Path:
     """
     if not pieces:
       return self
-    for (i, p) in enumerate(pieces):
+    for i, p in enumerate(pieces):
       if isinstance(p, Path):
-        return p.joinpath(*pieces[i+1:])
+        return p.joinpath(*pieces[i + 1 :])
     return Path(
-        self.base,
-        # Propagate None here so that accidental joins with None raise an error
-        # rather than getting silently ignored
-        *[p for p in itertools.chain(self.pieces, pieces) if p or p is None])
+      self.base,
+      # Propagate None here so that accidental joins with None raise an error
+      # rather than getting silently ignored
+      *[p for p in itertools.chain(self.pieces, pieces) if p or p is None],
+    )
 
   def __str__(self) -> str:
     if self._str is None:
       if not self._OS_SEP:
-        raise ValueError('Unable to render Path to string - '
-                         'recipe_engine/path has not been initialized yet.')
+        raise ValueError(
+          'Unable to render Path to string - '
+          'recipe_engine/path has not been initialized yet.'
+        )
       str_val = self._OS_SEP.join(
-          itertools.chain((str(self.base),), self.pieces)
+        itertools.chain((str(self.base),), self.pieces)
       )
       object.__setattr__(self, '_str', str_val)
       return str_val
@@ -463,11 +478,13 @@ class Path:
     """
     if self.base != other.base:
       raise RelativeToDifferentBases(
-          f'{self!r} and {other!r} have different bases')
+        f'{self!r} and {other!r} have different bases'
+      )
 
     if not walk_up and other not in self.parents:
       raise RelativeToNotParent(
-          f'{other!r} not in parents of {self!r} and walk_up=False')
+        f'{other!r} not in parents of {self!r} and walk_up=False'
+      )
 
     result = []
 

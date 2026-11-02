@@ -2,6 +2,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 """Tests for generate_stability_response."""
+
 from __future__ import annotations
 
 from collections.abc import Iterator
@@ -13,10 +14,10 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    json,
-    luci_analysis,
-    raw_io,
-    step,
+  json,
+  luci_analysis,
+  raw_io,
+  step,
 )
 
 
@@ -43,26 +44,31 @@ def RunSteps(api: DEPS) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'basic',
-      api.step_data(
-          'step',
-          stdout=api.raw_io.output_text(
-              api.json.dumps(
-                  api.luci_analysis.generate_stability_response([
-                      api.luci_analysis.generate_stability_analysis(
-                          test_id='ninja://failed_test/testA',
-                          failure_rate_is_met=False,
-                          flake_rate_is_met=False,
-                          run_flaky_verdicts_1wd=0,
-                          run_flaky_verdicts_12h=0,
-                      ),
-                      api.luci_analysis.generate_stability_analysis(
-                          test_id='ninja://failed_test/testB',
-                          failure_rate_is_met=False,
-                          flake_rate_is_met=False,
-                          run_flaky_verdicts_1wd=0,
-                          run_flaky_verdicts_12h=0,
-                      ),
-                  ])))),
-      api.post_process(post_process.DropExpectation),
+    'basic',
+    api.step_data(
+      'step',
+      stdout=api.raw_io.output_text(
+        api.json.dumps(
+          api.luci_analysis.generate_stability_response(
+            [
+              api.luci_analysis.generate_stability_analysis(
+                test_id='ninja://failed_test/testA',
+                failure_rate_is_met=False,
+                flake_rate_is_met=False,
+                run_flaky_verdicts_1wd=0,
+                run_flaky_verdicts_12h=0,
+              ),
+              api.luci_analysis.generate_stability_analysis(
+                test_id='ninja://failed_test/testB',
+                failure_rate_is_met=False,
+                flake_rate_is_met=False,
+                run_flaky_verdicts_1wd=0,
+                run_flaky_verdicts_12h=0,
+              ),
+            ]
+          )
+        )
+      ),
+    ),
+    api.post_process(post_process.DropExpectation),
   )

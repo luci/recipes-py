@@ -51,8 +51,9 @@ class TestOverride(test_env.RecipeEngineUnitTest):
     deps.main_repo.commit('add my_recipe')
 
     # Using upstream no-op override should also work.
-    deps.main_repo.recipes_py('-O', 'upstream='+upstream.path,
-                              'test', 'train')
+    deps.main_repo.recipes_py(
+      '-O', 'upstream=' + upstream.path, 'test', 'train'
+    )
 
     # Make another repo, then remove our dependency on it.
     other_upstream = deps.add_repo('other_upstream')
@@ -61,12 +62,12 @@ class TestOverride(test_env.RecipeEngineUnitTest):
 
     # Then using an override pointing to a repo without up_mod should fail.
     output, retcode = deps.main_repo.recipes_py(
-        '-O', 'upstream=' + other_upstream.path, 'test', 'train'
+      '-O', 'upstream=' + other_upstream.path, 'test', 'train'
     )
     self.assertEqual(retcode, 1)
     self.assertIn(
-        ('"No module named \'up_mod\' in repo \'other_upstream\'."'),
-        output)
+      ('"No module named \'up_mod\' in repo \'other_upstream\'."'), output
+    )
 
   def test_bundle(self) -> None:
     deps = self.FakeRecipeDeps()
@@ -76,31 +77,30 @@ class TestOverride(test_env.RecipeEngineUnitTest):
       # Training the recipes, overriding just 'upstream' should fail because
       # it will try to fetch the engine.
       output, retcode = deps.main_repo.recipes_py(
-          # Provide --package to bypass all git calls in recipes.py
-          '--package',
-          os.path.join(
-              deps.main_repo.path, simple_cfg.RECIPES_CFG_LOCATION_REL),
-          '-O', 'upstream='+upstream.path,
-          'test', 'train'
+        # Provide --package to bypass all git calls in recipes.py
+        '--package',
+        os.path.join(deps.main_repo.path, simple_cfg.RECIPES_CFG_LOCATION_REL),
+        '-O',
+        'upstream=' + upstream.path,
+        'test',
+        'train',
       )
       self.assertEqual(retcode, 1)
       self.assertIn('Git "init" failed', output)
 
       output, retcode = deps.main_repo.recipes_py(
-          '--package',
-          os.path.join(
-              deps.main_repo.path, simple_cfg.RECIPES_CFG_LOCATION_REL
-          ),
-          '--proto-override',
-          os.path.join(
-              test_env.ROOT_DIR, '.recipe_deps', '_pb%s' % sys.version[0]
-          ),
-          '-O',
-          'upstream=' + upstream.path,
-          '-O',
-          'recipe_engine=' + test_env.ROOT_DIR,
-          'test',
-          'train',
+        '--package',
+        os.path.join(deps.main_repo.path, simple_cfg.RECIPES_CFG_LOCATION_REL),
+        '--proto-override',
+        os.path.join(
+          test_env.ROOT_DIR, '.recipe_deps', '_pb%s' % sys.version[0]
+        ),
+        '-O',
+        'upstream=' + upstream.path,
+        '-O',
+        'recipe_engine=' + test_env.ROOT_DIR,
+        'test',
+        'train',
       )
       self.assertEqual(retcode, 0, output)
 

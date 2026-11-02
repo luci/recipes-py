@@ -10,13 +10,14 @@ from builtins import str as text
 
 from recipe_engine import recipe_test_api
 
-class RawIOTestApi(recipe_test_api.RecipeTestApi): # pragma: no cover
+
+class RawIOTestApi(recipe_test_api.RecipeTestApi):  # pragma: no cover
   @recipe_test_api.placeholder_step_data
   @staticmethod
   def output(
-      data: bytes | str | None,
-      retcode: int | None = None,
-      name: str | None = None,
+    data: bytes | str | None,
+    retcode: int | None = None,
+    name: str | None = None,
   ) -> tuple[bytes | None, int | None, str | None]:
     """Returns an output Placeholder for the provided data.
 
@@ -34,16 +35,15 @@ class RawIOTestApi(recipe_test_api.RecipeTestApi): # pragma: no cover
       # consider raise ValueError instead for non-bytes data.
       data = data.encode('utf-8')
     if not isinstance(data, (type(None), bytes)):
-      raise ValueError(
-          'expected bytes, got %s: %r' % (type(data), data))
+      raise ValueError('expected bytes, got %s: %r' % (type(data), data))
     return data, retcode, name
 
   @recipe_test_api.placeholder_step_data
   @staticmethod
   def output_text(
-      data: str | bytes | None,
-      retcode: int | None = None,
-      name: str | None = None,
+    data: str | bytes | None,
+    retcode: int | None = None,
+    name: str | None = None,
   ) -> tuple[str | None, int | None, str | None]:
     """Returns an output Placeholder for the provided text data.
 
@@ -54,15 +54,16 @@ class RawIOTestApi(recipe_test_api.RecipeTestApi): # pragma: no cover
       data = data.decode('utf-8')
     if not isinstance(data, (type(None), text)):
       raise ValueError(
-          'expected None or utf-8 text, got %s: %r' % (type(data), data))
+        'expected None or utf-8 text, got %s: %r' % (type(data), data)
+      )
     return data, retcode, name
 
   @recipe_test_api.placeholder_step_data
   @staticmethod
   def output_dir(
-      files_dict: Mapping[str, bytes],
-      retcode: int | None = None,
-      name: str | None = None,
+    files_dict: Mapping[str, bytes],
+    retcode: int | None = None,
+    name: str | None = None,
   ) -> tuple[Mapping[str, bytes], int | None, str | None]:
     """Use to mock an `output_dir` placeholder.
 
@@ -81,36 +82,34 @@ class RawIOTestApi(recipe_test_api.RecipeTestApi): # pragma: no cover
     return files_dict, retcode, name
 
   def stream_output(
-      self,
-      data: bytes | str | None,
-      stream: str = 'stdout',
-      retcode: int | None = None,
-      name: str | None = None,
+    self,
+    data: bytes | str | None,
+    stream: str = 'stdout',
+    retcode: int | None = None,
+    name: str | None = None,
   ) -> recipe_test_api.StepTestData:
-    return self._stream_output(data, self.output,
-                               stream=stream,
-                               retcode=retcode,
-                               name=name)
+    return self._stream_output(
+      data, self.output, stream=stream, retcode=retcode, name=name
+    )
 
   def stream_output_text(
-      self,
-      data: str | bytes | None,
-      stream: str = 'stdout',
-      retcode: int | None = None,
-      name: str | None = None,
+    self,
+    data: str | bytes | None,
+    stream: str = 'stdout',
+    retcode: int | None = None,
+    name: str | None = None,
   ) -> recipe_test_api.StepTestData:
-    return self._stream_output(data, self.output_text,
-                               stream=stream,
-                               retcode=retcode,
-                               name=name)
+    return self._stream_output(
+      data, self.output_text, stream=stream, retcode=retcode, name=name
+    )
 
   def _stream_output(
-      self,
-      data: Any,
-      to_step_data_fn: Callable[..., recipe_test_api.StepTestData],
-      stream: str = 'stdout',
-      retcode: int | None = None,
-      name: str | None = None,
+    self,
+    data: Any,
+    to_step_data_fn: Callable[..., recipe_test_api.StepTestData],
+    stream: str = 'stdout',
+    retcode: int | None = None,
+    name: str | None = None,
   ) -> recipe_test_api.StepTestData:
     ret = recipe_test_api.StepTestData()
     assert stream in ('stdout', 'stderr')
@@ -123,7 +122,7 @@ class RawIOTestApi(recipe_test_api.RecipeTestApi): # pragma: no cover
   @recipe_test_api.placeholder_step_data('output')
   @staticmethod
   def backing_file_missing(
-      retcode: int | None = None, name: str | None = None
+    retcode: int | None = None, name: str | None = None
   ) -> tuple[None, int | None, str | None]:
     """Simulates a missing backing file.
 

@@ -10,18 +10,18 @@ from recipe_engine.recipe_api import Property
 from recipe_engine.config import ConfigGroup, List, Single
 
 from PB.recipe_modules.recipe_engine.scheduler import (
-    properties as properties_pb,
+  properties as properties_pb,
 )
 
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from RECIPE_MODULES.recipe_engine import (
-    buildbucket,
-    json,
-    platform,
-    raw_io,
-    step,
-    time,
+  buildbucket,
+  json,
+  platform,
+  raw_io,
+  step,
+  time,
 )
 
 
@@ -33,6 +33,7 @@ class DEPS(RecipeScriptApi):
   raw_io: raw_io.API
   step: step.API
   time: time.API
+
 
 PROPERTIES = properties_pb.InputProperties
 

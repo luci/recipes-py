@@ -12,14 +12,15 @@ RPCExplorer available at
   https://luci-scheduler.appspot.com/rpcexplorer/services/scheduler.Scheduler
 """
 
-
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Mapping
 from typing import Any, TYPE_CHECKING
 from recipe_engine import recipe_test_api
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb
-from PB.recipe_modules.recipe_engine.scheduler import properties as properties_pb
+from PB.recipe_modules.recipe_engine.scheduler import (
+  properties as properties_pb,
+)
 
 import copy
 import uuid
@@ -29,7 +30,8 @@ from google.protobuf import json_format
 from recipe_engine import recipe_api
 
 from PB.go.chromium.org.luci.scheduler.api.scheduler.v1 import (
-    triggers as triggers_pb2)
+  triggers as triggers_pb2,
+)
 
 if TYPE_CHECKING:  # pragma: no cover
   from RECIPE_MODULES.recipe_engine import findings
@@ -41,7 +43,7 @@ class SchedulerApi(recipe_api.RecipeApi):
   m: scheduler.DEPS
 
   def __init__(
-      self, props: properties_pb.InputProperties, **kwargs: Any
+    self, props: properties_pb.InputProperties, **kwargs: Any
   ) -> None:
     super().__init__(**kwargs)
     self._host = props.hostname or 'luci-scheduler.appspot.com'
@@ -97,15 +99,16 @@ class SchedulerApi(recipe_api.RecipeApi):
     All supported triggers are documented here:
       https://chromium.googlesource.com/infra/luci/luci-go/+/main/scheduler/api/scheduler/v1/triggers.proto
     """
+
     def __init__(
-        self,
-        id: str | None = None,
-        title: str | None = None,
-        url: str | None = None,
-        properties: Mapping[str, Any] | None = None,
-        tags: Mapping[str, str | None] | None = None,
-        inherit_tags: bool = True,
-        add_parent_tags: bool = True,
+      self,
+      id: str | None = None,
+      title: str | None = None,
+      url: str | None = None,
+      properties: Mapping[str, Any] | None = None,
+      tags: Mapping[str, str | None] | None = None,
+      inherit_tags: bool = True,
+      add_parent_tags: bool = True,
     ) -> None:
       self._id = id
       self._title = title
@@ -118,22 +121,26 @@ class SchedulerApi(recipe_api.RecipeApi):
     def _serialize(self, api_self: SchedulerApi) -> dict[str, Any]:
       t = {}
       t['id'] = self._id or api_self._next_uuid()
-      t['title'] = self._title or ('%s/%s' % (
+      t['title'] = self._title or (
+        '%s/%s'
+        % (
           api_self.m.buildbucket.builder_name,
-          api_self.m.buildbucket.build.number))
+          api_self.m.buildbucket.build.number,
+        )
+      )
       t['url'] = self._url if self._url else api_self.m.buildbucket.build_url()
 
       tags = {}
       if self._inherit_tags:
         tags = self._tags_for_child_build(
-            api_self.m.buildbucket.build,
-            add_parent_tags=self._add_parent_tags).copy()
+          api_self.m.buildbucket.build, add_parent_tags=self._add_parent_tags
+        ).copy()
       if self._tags:
         tags.update(self._tags)
       self._cleanup_tags(tags)
       tags = list(
-          map(':'.join,
-              sorted((k, v) for k, v in tags.items() if v is not None)))
+        map(':'.join, sorted((k, v) for k, v in tags.items() if v is not None))
+      )
 
       base = {}
       if self._properties:
@@ -145,26 +152,29 @@ class SchedulerApi(recipe_api.RecipeApi):
       return t
 
     def _tags_for_child_build(
-        self, build: build_pb.Build, add_parent_tags: bool = True
+      self, build: build_pb.Build, add_parent_tags: bool = True
     ) -> dict[str, str]:  # pragma: no cover
       """A dict of tags (key -> value) derived from current (parent) build for a
       child build."""
-      original_tags = {
-        t.key: t.value for t in build.tags
-      }
+      original_tags = {t.key: t.value for t in build.tags}
       new_tags = {'user_agent': 'recipe'}
       commit = build.input.gitiles_commit
       if build.input.gerrit_changes:
         cl = build.input.gerrit_changes[0]
         new_tags['buildset'] = 'patch/gerrit/%s/%d/%d' % (
-            cl.host, cl.change, cl.patchset)
+          cl.host,
+          cl.change,
+          cl.patchset,
+        )
 
       # Note: an input gitiles commit with ref without id is valid
       # but such commit cannot be used to construct a valid commit buildset.
       elif commit.host and commit.project and commit.id:
-        new_tags['buildset'] = (
-            'commit/gitiles/%s/%s/+/%s' % (
-                commit.host, commit.project, commit.id))
+        new_tags['buildset'] = 'commit/gitiles/%s/%s/+/%s' % (
+          commit.host,
+          commit.project,
+          commit.id,
+        )
         if commit.ref:
           new_tags['gitiles_ref'] = commit.ref
       else:
@@ -185,7 +195,6 @@ class SchedulerApi(recipe_api.RecipeApi):
     def _serialize_payload(self, base: dict[str, Any]) -> dict[str, Any]:
       raise NotImplementedError()  # pragma: no cover
 
-
   class BuildbucketTrigger(Trigger):
     """Trigger with buildbucket payload for buildbucket jobs.
 
@@ -198,9 +207,9 @@ class SchedulerApi(recipe_api.RecipeApi):
       inherit_tags (bool): if true (default), auto-adds tags using
         `api.buildbucket.tags_for_child_build` api.
     """
+
     def _serialize_payload(self, base: dict[str, Any]) -> dict[str, Any]:
       return {'buildbucket': base}
-
 
   class GitilesTrigger(Trigger):
     """Trigger with new Gitiles commit payload, typically for buildbucket jobs.
@@ -217,8 +226,9 @@ class SchedulerApi(recipe_api.RecipeApi):
       inherit_tags (bool): if true (default), auto-adds extra tags using
         `api.buildbucket.tags_for_child_build` api.
     """
+
     def __init__(
-        self, repo: str, ref: str, revision: str, **kwargs: Any
+      self, repo: str, ref: str, revision: str, **kwargs: Any
     ) -> None:
       super().__init__(**kwargs)
       self._repo = repo
@@ -233,20 +243,21 @@ class SchedulerApi(recipe_api.RecipeApi):
       tags.pop('gitiles_ref', None)
 
     def _serialize_payload(self, base: dict[str, Any]) -> dict[str, Any]:
-      base.update({
-        'repo': self._repo,
-        'ref': self._ref,
-        'revision': self._revision,
-      })
+      base.update(
+        {
+          'repo': self._repo,
+          'ref': self._ref,
+          'revision': self._revision,
+        }
+      )
       return {'gitiles': base}
 
-
   def emit_trigger(
-      self,
-      trigger: Trigger,
-      project: str,
-      jobs: Iterable[str],
-      step_name: str | None = None,
+    self,
+    trigger: Trigger,
+    project: str,
+    jobs: Iterable[str],
+    step_name: str | None = None,
   ) -> None:
     """Emits trigger to one or more jobs of a given project.
 
@@ -260,10 +271,10 @@ class SchedulerApi(recipe_api.RecipeApi):
     return self.emit_triggers([(trigger, project, jobs)], step_name=step_name)
 
   def emit_triggers(
-      self,
-      trigger_project_jobs: Iterable[tuple[Trigger, str, Iterable[str]]],
-      timestamp_usec: int | None = None,
-      step_name: str | None = None,
+    self,
+    trigger_project_jobs: Iterable[tuple[Trigger, str, Iterable[str]]],
+    timestamp_usec: int | None = None,
+    step_name: str | None = None,
   ) -> None:
     """Emits a batch of triggers spanning one or more projects.
 
@@ -294,34 +305,44 @@ class SchedulerApi(recipe_api.RecipeApi):
 
     # There is no output from EmitTriggers API.
     self._run(
-        'EmitTriggers', req, step_name=step_name,
-        step_test_data=lambda: self.m.json.test_api.output_stream({}))
+      'EmitTriggers',
+      req,
+      step_name=step_name,
+      step_test_data=lambda: self.m.json.test_api.output_stream({}),
+    )
 
   def _run(
-      self,
-      method: str,
-      input_data: Mapping[str, Any],
-      step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
-      step_name: str | None = None,
+    self,
+    method: str,
+    input_data: Mapping[str, Any],
+    step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
+    step_name: str | None = None,
   ) -> Any:
     # TODO(tandrii): encapsulate running prpc command in a standalone module.
     step_name = step_name or ('luci-scheduler.' + method)
-    args = ['prpc', 'call', '-format=json', self._host,
-            'scheduler.Scheduler.' + method]
+    args = [
+      'prpc',
+      'call',
+      '-format=json',
+      self._host,
+      'scheduler.Scheduler.' + method,
+    ]
     step_result = None
     try:
       step_result = self.m.step(
-          step_name,
-          args,
-          stdin=self.m.json.input(input_data),
-          stdout=self.m.json.output(add_json_log='on_failure'),
-          infra_step=True,
-          step_test_data=step_test_data)
+        step_name,
+        args,
+        stdin=self.m.json.input(input_data),
+        stdout=self.m.json.output(add_json_log='on_failure'),
+        infra_step=True,
+        step_test_data=step_test_data,
+      )
       # TODO(tandrii): add hostname to step presentation's links.
       # TODO(tandrii): handle errors nicely.
     finally:
       self.m.step.active_result.presentation.logs['input'] = self.m.json.dumps(
-          input_data, indent=4).splitlines()
+        input_data, indent=4
+      ).splitlines()
 
     return step_result.stdout
 
@@ -329,6 +350,7 @@ class SchedulerApi(recipe_api.RecipeApi):
     if self._test_data.enabled:
       self._fake_uuid_count += 1
       return '6a0a73b0-070b-492b-9135-9f26a2a' + '%05d' % (
-          self._fake_uuid_count,)
+        self._fake_uuid_count,
+      )
     else:  # pragma: no cover
       return str(uuid.uuid4())

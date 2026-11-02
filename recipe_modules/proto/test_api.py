@@ -17,17 +17,17 @@ from .api import ProtoApi
 class ProtoTestApi(recipe_test_api.RecipeTestApi):
   @staticmethod
   def encode(
-      proto_msg: message.Message, codec: Codec, **encoding_kwargs: Any
+    proto_msg: message.Message, codec: Codec, **encoding_kwargs: Any
   ) -> str | bytes:  # pragma: no cover
     """Same as `ProtoApi.encode`"""
     return ProtoApi.encode(proto_msg, codec, **encoding_kwargs)
 
   @staticmethod
   def decode(
-      data: str | bytes,
-      msg_class: type[message.Message],
-      codec: Codec,
-      **decoding_kwargs: Any,
+    data: str | bytes,
+    msg_class: type[message.Message],
+    codec: Codec,
+    **decoding_kwargs: Any,
   ) -> message.Message:  # pragma: no cover
     """Same as `ProtoApi.decode`"""
     return ProtoApi.decode(data, msg_class, codec, **decoding_kwargs)
@@ -35,9 +35,9 @@ class ProtoTestApi(recipe_test_api.RecipeTestApi):
   @recipe_test_api.placeholder_step_data
   @staticmethod
   def output(
-      proto_msg: message.Message,
-      retcode: int | None = None,
-      name: str | None = None,
+    proto_msg: message.Message,
+    retcode: int | None = None,
+    name: str | None = None,
   ) -> tuple[message.Message, int | None, str | None]:
     """Supplies placeholder data for a proto.output.
 
@@ -47,16 +47,16 @@ class ProtoTestApi(recipe_test_api.RecipeTestApi):
       * retcode - The returncode of the step.
       * name - The name of the placeholder you're mocking.
     """
-    if not isinstance(proto_msg, message.Message): # pragma: no cover
+    if not isinstance(proto_msg, message.Message):  # pragma: no cover
       raise ValueError("expected proto Message, got: %r" % (type(proto_msg),))
     return proto_msg, retcode, name
 
   def output_stream(
-      self,
-      proto_msg: message.Message,
-      stream: Literal['stdout', 'stderr'] = 'stdout',
-      retcode: int | None = None,
-      name: str | None = None,
+    self,
+    proto_msg: message.Message,
+    stream: Literal['stdout', 'stderr'] = 'stdout',
+    retcode: int | None = None,
+    name: str | None = None,
   ) -> recipe_test_api.StepTestData:
     """Supplies placeholder data for a step using proto.output for stdout
     or stderr.
@@ -75,7 +75,7 @@ class ProtoTestApi(recipe_test_api.RecipeTestApi):
   @recipe_test_api.placeholder_step_data('output')
   @staticmethod
   def backing_file_missing(
-      retcode: int | None = None, name: str | None = None
+    retcode: int | None = None, name: str | None = None
   ) -> tuple[None, int | None, str | None]:
     """Simulates a missing backing file.
 
@@ -88,7 +88,7 @@ class ProtoTestApi(recipe_test_api.RecipeTestApi):
   @recipe_test_api.placeholder_step_data('output')
   @staticmethod
   def invalid_contents(
-      retcode: int | None = None, name: str | None = None
+    retcode: int | None = None, name: str | None = None
   ) -> tuple[str, int | None, str | None]:
     """Simulates a file with invalid contents."""
     # Passing None as the data of a placeholder causes the placeholder to

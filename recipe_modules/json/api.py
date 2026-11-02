@@ -75,15 +75,17 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
 
   See the example recipe (./examples/full.py) for some more uses.
   """
+
   def __init__(
-      self,
-      api: JsonApi,
-      add_json_log: bool | Literal['on_failure'],
-      name: str | None = None,
-      leak_to: config_types.Path | str | None = None,
+    self,
+    api: JsonApi,
+    add_json_log: bool | Literal['on_failure'],
+    name: str | None = None,
+    leak_to: config_types.Path | str | None = None,
   ) -> None:
     assert add_json_log in (True, False, 'on_failure'), (
-        'add_json_log=%r' % add_json_log)
+      'add_json_log=%r' % add_json_log
+    )
     self.raw = api.m.raw_io.output_text('.json', leak_to=leak_to)
     self.add_json_log = add_json_log
     super().__init__(name=name)
@@ -96,9 +98,9 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
     return self.raw.render(test)
 
   def result(
-      self,
-      presentation: engine_types.StepPresentation,
-      test: recipe_test_api.PlaceholderTestData,
+    self,
+    presentation: engine_types.StepPresentation,
+    test: recipe_test_api.PlaceholderTestData,
   ) -> Any:
     # Save name before self.raw.result() deletes it.
     backing_file = self.backing_file
@@ -121,25 +123,27 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
       invalid_error = str(ex)
 
     if self.add_json_log is True or (
-        self.add_json_log == 'on_failure' and presentation.status != 'SUCCESS'):
+      self.add_json_log == 'on_failure' and presentation.status != 'SUCCESS'
+    ):
       if valid:
         with contextlib.closing(recipe_util.StringListIO()) as listio:
           json.dump(
-              ret,
-              listio,
-              indent=2,
-              # In python3 dictionaries are defined to use insertion
-              # order, and so we don't need to sort keys for determinism.
-              #
-              # By not sorting, it means that the output on the UI will
-              # reflect ~exactly what the program output.
-              # sort_keys = True
+            ret,
+            listio,
+            indent=2,
+            # In python3 dictionaries are defined to use insertion
+            # order, and so we don't need to sort keys for determinism.
+            #
+            # By not sorting, it means that the output on the UI will
+            # reflect ~exactly what the program output.
+            # sort_keys = True
           )
         presentation.logs[self.label] = listio.lines
       else:
         presentation.logs[self.label + ' (invalid)'] = raw_data.splitlines()
         presentation.logs[self.label + ' (exception)'] = (
-          invalid_error.splitlines())
+          invalid_error.splitlines()
+        )
 
     return ret
 
@@ -159,10 +163,10 @@ class JsonApi(recipe_api.RecipeApi):
   @staticmethod
   def loads(data: str | bytes, **kwargs: Any) -> Any:
     """Works like `json.loads`, but:
-      * strips out unicode objects (replacing them with utf8-encoded str
-        objects).
-      * replaces 'int-like' floats with ints. These are floats whose magnitude
-        is less than (2**53-1) and which don't have a decimal component.
+    * strips out unicode objects (replacing them with utf8-encoded str
+      objects).
+    * replaces 'int-like' floats with ints. These are floats whose magnitude
+      is less than (2**53-1) and which don't have a decimal component.
     """
     return loads(data, **kwargs)
 
@@ -176,7 +180,7 @@ class JsonApi(recipe_api.RecipeApi):
 
   @recipe_util.returns_placeholder
   def input(
-      self, data: Any, sort_keys: bool = True
+    self, data: Any, sort_keys: bool = True
   ) -> recipe_util.InputPlaceholder:
     """A placeholder which will expand to a file path containing <data>.
 
@@ -186,14 +190,16 @@ class JsonApi(recipe_api.RecipeApi):
     SPDX), the 'pretty' output is in non-alphabetical order. The default remains
     `True`, however, to avoid breaking all downstream tests.
     """
-    return self.m.raw_io.input_text(self.dumps(data, sort_keys=sort_keys), '.json')
+    return self.m.raw_io.input_text(
+      self.dumps(data, sort_keys=sort_keys), '.json'
+    )
 
   @recipe_util.returns_placeholder
   def output(
-      self,
-      add_json_log: bool | Literal['on_failure'] = True,
-      name: str | None = None,
-      leak_to: config_types.Path | str | None = None,
+    self,
+    add_json_log: bool | Literal['on_failure'] = True,
+    name: str | None = None,
+    leak_to: config_types.Path | str | None = None,
   ) -> JsonOutputPlaceholder:
     """A placeholder which will expand to '/tmp/file'.
 
@@ -209,12 +215,12 @@ class JsonApi(recipe_api.RecipeApi):
     return JsonOutputPlaceholder(self, add_json_log, name=name, leak_to=leak_to)
 
   def read(
-      self,
-      name: str,
-      path: config_types.Path | str,
-      add_json_log: bool | Literal['on_failure'] = True,
-      output_name: str | None = None,
-      **kwargs: Any,
+    self,
+    name: str,
+    path: config_types.Path | str,
+    add_json_log: bool | Literal['on_failure'] = True,
+    output_name: str | None = None,
+    **kwargs: Any,
   ) -> step_data.StepData:
     """Returns a step that reads a JSON file.
 
@@ -223,9 +229,13 @@ class JsonApi(recipe_api.RecipeApi):
     self.m.warning.issue('JSON_READ_DEPRECATED')
 
     return self.m.step(
-        name, [
-          'python3', '-u', self.resource('read.py'),
-          path,
-          self.output(add_json_log=add_json_log, name=output_name),
-        ],
-        **kwargs)
+      name,
+      [
+        'python3',
+        '-u',
+        self.resource('read.py'),
+        path,
+        self.output(add_json_log=add_json_log, name=output_name),
+      ],
+      **kwargs,
+    )

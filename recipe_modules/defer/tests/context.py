@@ -10,7 +10,7 @@ import contextlib
 from collections.abc import Iterator
 
 from PB.recipe_modules.recipe_engine.defer.tests import (
-    properties as properties_pb2
+  properties as properties_pb2,
 )
 from recipe_engine import post_process, recipe_test_api, step_data
 
@@ -18,10 +18,10 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    context,
-    defer,
-    properties,
-    step,
+  context,
+  defer,
+  properties,
+  step,
 )
 
 
@@ -36,6 +36,7 @@ class DEPS(RecipeScriptApi):
 @dataclass
 class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
+
 
 PROPERTIES = properties_pb2.ContextInputProps
 
@@ -61,16 +62,17 @@ def RunSteps(api: DEPS, props: properties_pb2.ContextInputProps) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   def test(
-      name: str,
-      *args: recipe_test_api.TestData,
-      status: str,
-      exception: bool = False,
-      step_name: str | None = 'collect',
-      **kwargs: Any,
+    name: str,
+    *args: recipe_test_api.TestData,
+    status: str,
+    exception: bool = False,
+    step_name: str | None = 'collect',
+    **kwargs: Any,
   ) -> recipe_test_api.TestData:
     res = api.test(name, *args, status=status, **kwargs)
-    res += api.properties(properties_pb2.CollectInputProps(step_name=step_name,
-                                                           exception=exception))
+    res += api.properties(
+      properties_pb2.CollectInputProps(step_name=step_name, exception=exception)
+    )
 
     res += api.post_process(post_process.MustRun, 'done running steps')
 
@@ -90,7 +92,6 @@ def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
 
   def failure(n: int) -> recipe_test_api.TestData:
     return api.step_data(f'step {n}', retcode=1)
-
 
   yield test('success', status='SUCCESS')
 

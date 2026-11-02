@@ -140,7 +140,7 @@ class TaskRequest:
     return ret
 
   def with_slice(
-      self, idx: int, slice_obj: TaskRequest.TaskSlice
+    self, idx: int, slice_obj: TaskRequest.TaskSlice
   ) -> TaskRequest:
     """Returns the request with the given slice set at the given index.
 
@@ -291,7 +291,7 @@ class TaskRequest:
         with_name(d.get('name', '')).
         with_priority(int(d.get('priority', 0))).
         with_service_account(d.get('service_account', '')).
-        with_tags(tags)) # yapf: disable
+        with_tags(tags))  # yapf: disable
     if 'user' in d:
       ret = ret.with_user(d['user'])
     if 'resultdb' in d:
@@ -299,8 +299,8 @@ class TaskRequest:
     if 'realm' in d:
       ret = ret.with_realm(d['realm'])
     ret._slices = [
-        self.TaskSlice(self._api)._from_jsonish(ts)
-        for ts in d.get('task_slices', [])
+      self.TaskSlice(self._api)._from_jsonish(ts)
+      for ts in d.get('task_slices', [])
     ]
     return ret
 
@@ -319,10 +319,10 @@ class TaskRequest:
       # TODO(crbug.com/1122808): Remove this fallback.
       realm = self._api.buildbucket.builder_realm
     ret = {
-        'name': self.name,
-        'priority': str(self.priority),
-        'service_account': self.service_account,
-        'task_slices': [task_slice.to_jsonish() for task_slice in self._slices],
+      'name': self.name,
+      'priority': str(self.priority),
+      'service_account': self.service_account,
+      'task_slices': [task_slice.to_jsonish() for task_slice in self._slices],
     }
     # Omit resultdb, if disabled.
     if self.resultdb.enable:
@@ -335,7 +335,6 @@ class TaskRequest:
     if realm:
       ret['realm'] = realm
     return ret
-
 
   class TaskSlice:
     """Describes a specification of a Swarming task slice.
@@ -409,9 +408,7 @@ class TaskRequest:
       "The working directory relative to the task root where `command` runs."
       return self._relative_cwd
 
-    def with_relative_cwd(
-        self, relative_cwd: str
-    ) -> TaskRequest.TaskSlice:
+    def with_relative_cwd(self, relative_cwd: str) -> TaskRequest.TaskSlice:
       """Returns the slice with the given relative_cwd set.
 
       Args:
@@ -452,9 +449,7 @@ class TaskRequest:
       """
       return copy.deepcopy(self._dimensions)
 
-    def with_dimensions(
-        self, **kwargs: str | None
-    ) -> TaskRequest.TaskSlice:
+    def with_dimensions(self, **kwargs: str | None) -> TaskRequest.TaskSlice:
       """Returns the slice with the given dimensions set.
 
       A key with a value of None will be interpreted as a directive to unset the
@@ -476,8 +471,9 @@ class TaskRequest:
       # Make a copy.
       ret._dimensions = self.dimensions
       for k, v in kwargs.items():
-        assert isinstance(k, basestring) and (isinstance(v, basestring) or
-                                              v is None)
+        assert isinstance(k, basestring) and (
+          isinstance(v, basestring) or v is None
+        )
         if v is None:
           ret._dimensions.pop(k, None)
         else:
@@ -491,9 +487,7 @@ class TaskRequest:
       """
       return copy.deepcopy(self._cipd_ensure_file)
 
-    def with_cipd_ensure_file(
-        self, ensure_file: Any
-    ) -> TaskRequest.TaskSlice:
+    def with_cipd_ensure_file(self, ensure_file: Any) -> TaskRequest.TaskSlice:
       """Returns the slice with the given CIPD packages set.
 
       Args:
@@ -510,9 +504,7 @@ class TaskRequest:
       """Returns the list of files to be isolated on task exit."""
       return copy.copy(self._outputs)
 
-    def with_outputs(
-        self, outputs: Sequence[str]
-    ) -> TaskRequest.TaskSlice:
+    def with_outputs(self, outputs: Sequence[str]) -> TaskRequest.TaskSlice:
       """Returns the slice with given outputs set.
 
       Args:
@@ -531,9 +523,7 @@ class TaskRequest:
       """Returns the mapping (dict) of an environment variable to its value."""
       return copy.deepcopy(self._env_vars)
 
-    def with_env_vars(
-        self, **kwargs: str | None
-    ) -> TaskRequest.TaskSlice:
+    def with_env_vars(self, **kwargs: str | None) -> TaskRequest.TaskSlice:
       """Returns the slice with the given environment variables set.
 
       A key with a value of None will be interpreted as a directive to unset the
@@ -550,8 +540,9 @@ class TaskRequest:
       # Make a copy.
       ret._env_vars = self.env_vars
       for k, v in kwargs.items():
-        assert (isinstance(k, basestring) and
-                (isinstance(v, basestring) or v is None))
+        assert isinstance(k, basestring) and (
+          isinstance(v, basestring) or v is None
+        )
         if v is None:
           ret._env_vars.pop(k, None)
         else:
@@ -565,7 +556,7 @@ class TaskRequest:
       return copy.deepcopy(self._env_prefixes)
 
     def with_env_prefixes(
-        self, **kwargs: Sequence[str] | None
+      self, **kwargs: Sequence[str] | None
     ) -> TaskRequest.TaskSlice:
       """Returns the slice with the given environment prefixes set.
 
@@ -589,10 +580,9 @@ class TaskRequest:
       # Make a copy.
       ret._env_prefixes = self.env_prefixes
       for k, v in kwargs.items():
-        assert (isinstance(k, basestring) and
-                (isinstance(v, list) or v is None)), (
-                    '%r must be a string and %r None or a list of strings' %
-                    (k, v))
+        assert isinstance(k, basestring) and (
+          isinstance(v, list) or v is None
+        ), '%r must be a string and %r None or a list of strings' % (k, v)
         if v is None:
           ret._env_prefixes.pop(k, None)
         else:
@@ -653,9 +643,7 @@ class TaskRequest:
       """Returns the seconds before Swarming should kill the task."""
       return self._execution_timeout_secs
 
-    def with_execution_timeout_secs(
-        self, secs: int
-    ) -> TaskRequest.TaskSlice:
+    def with_execution_timeout_secs(self, secs: int) -> TaskRequest.TaskSlice:
       """Returns the slice with the given hard timeout set.
 
       Args:
@@ -697,9 +685,7 @@ class TaskRequest:
       """
       return self._idempotent
 
-    def with_idempotent(
-        self, idempotent: bool
-    ) -> TaskRequest.TaskSlice:
+    def with_idempotent(self, idempotent: bool) -> TaskRequest.TaskSlice:
       """Returns the slice with the given idempotency set.
 
       Args:
@@ -736,7 +722,7 @@ class TaskRequest:
       return self._containment_type
 
     def with_containment_type(
-        self, containment_type: str
+      self, containment_type: str
     ) -> TaskRequest.TaskSlice:
       """Returns the slice with the given containment_type set.
 
@@ -754,7 +740,7 @@ class TaskRequest:
       return self._named_caches
 
     def with_named_caches(
-        self, named_caches: Mapping[str, str]
+      self, named_caches: Mapping[str, str]
     ) -> TaskRequest.TaskSlice:
       """Returns the slice with the given named caches added.
 
@@ -776,7 +762,7 @@ class TaskRequest:
       containment = p.get('containment', {})
 
       def kv_list_to_dict(
-          kv_list: Sequence[Mapping[str, Any]],
+        kv_list: Sequence[Mapping[str, Any]],
       ) -> dict[str, Any]:
         ret = {}
         for kv in kv_list:
@@ -784,31 +770,33 @@ class TaskRequest:
         return ret
 
       ret = (
-          self.with_command(p.get('command', [])).with_relative_cwd(
-              p.get('relative_cwd', '')).with_dimensions(
-                  **kv_list_to_dict(p.get('dimensions', []))).with_outputs(
-                      p.get('outputs', [])).with_env_vars(**kv_list_to_dict(
-                          p.get('env', []))).with_env_prefixes(
-                              **kv_list_to_dict(p.get('env_prefixes', [])))
-          .with_execution_timeout_secs(int(p.get(
-              'execution_timeout_secs', 0))).with_grace_period_secs(
-                  int(p.get('grace_period_secs', 0))).with_idempotent(
-                      p.get('idempotent', False)).with_io_timeout_secs(
-                          int(p.get('io_timeout_secs',
-                                    0))).with_containment_type(
-                                        containment.get('containment_type',
-                                                        self.containment_type)))
+        self.with_command(p.get('command', []))
+        .with_relative_cwd(p.get('relative_cwd', ''))
+        .with_dimensions(**kv_list_to_dict(p.get('dimensions', [])))
+        .with_outputs(p.get('outputs', []))
+        .with_env_vars(**kv_list_to_dict(p.get('env', [])))
+        .with_env_prefixes(**kv_list_to_dict(p.get('env_prefixes', [])))
+        .with_execution_timeout_secs(int(p.get('execution_timeout_secs', 0)))
+        .with_grace_period_secs(int(p.get('grace_period_secs', 0)))
+        .with_idempotent(p.get('idempotent', False))
+        .with_io_timeout_secs(int(p.get('io_timeout_secs', 0)))
+        .with_containment_type(
+          containment.get('containment_type', self.containment_type)
+        )
+      )
       if 'cas_input_root' in p:
         digest = p['cas_input_root']['digest']
-        ret = ret.with_cas_input_root(digest['hash'] + '/' +
-                                      digest.get('size_bytes', '0'))
+        ret = ret.with_cas_input_root(
+          digest['hash'] + '/' + digest.get('size_bytes', '0')
+        )
       if 'secret_bytes' in p:
         ret = ret.with_secret_bytes(base64.b64decode(p['secret_bytes']))
       if 'cipd_input' in p:
         ensure_file = self._api.cipd.EnsureFile()
         for pkg in p['cipd_input']['packages']:
           ensure_file.add_package(
-              pkg['package_name'], pkg['version'], subdir=pkg['path'])
+            pkg['package_name'], pkg['version'], subdir=pkg['path']
+          )
         ret = ret.with_cipd_ensure_file(ensure_file)
       if 'caches' in p:
         ret = ret.with_named_caches({c['name']: c['path'] for c in p['caches']})
@@ -827,64 +815,61 @@ class TaskRequest:
       assert len(dims) >= 1 and dims['pool']
 
       properties = {
-          'command': self.command,
-          'relative_cwd': self.relative_cwd,
-          'dimensions': [{
-              'key': k,
-              'value': v
-          } for k, v in sorted(dims.items())],
-          'outputs': self.outputs,
-          'env': [{
-              'key': k,
-              'value': v
-          } for k, v in sorted(self.env_vars.items())],
-          'env_prefixes': [{
-              'key': k,
-              'value': v
-          } for k, v in sorted(self.env_prefixes.items())],
-          'execution_timeout_secs': str(self.execution_timeout_secs),
-          'grace_period_secs': str(self.grace_period_secs),
-          'idempotent': self.idempotent,
-          'io_timeout_secs': str(self.io_timeout_secs),
-          'containment': {
-              'containment_type':
-                  self.containment_type,
-          },
+        'command': self.command,
+        'relative_cwd': self.relative_cwd,
+        'dimensions': [{'key': k, 'value': v} for k, v in sorted(dims.items())],
+        'outputs': self.outputs,
+        'env': [
+          {'key': k, 'value': v} for k, v in sorted(self.env_vars.items())
+        ],
+        'env_prefixes': [
+          {'key': k, 'value': v} for k, v in sorted(self.env_prefixes.items())
+        ],
+        'execution_timeout_secs': str(self.execution_timeout_secs),
+        'grace_period_secs': str(self.grace_period_secs),
+        'idempotent': self.idempotent,
+        'io_timeout_secs': str(self.io_timeout_secs),
+        'containment': {
+          'containment_type': self.containment_type,
+        },
       }
 
       if self.cas_input_root:
         h, b = self.cas_input_root.split('/')
         properties['cas_input_root'] = {
-            'cas_instance': self._api.cas.instance,
-            'digest': {
-                'hash': h,
-                'size_bytes': b,
-            },
+          'cas_instance': self._api.cas.instance,
+          'digest': {
+            'hash': h,
+            'size_bytes': b,
+          },
         }
 
       if self.secret_bytes:
         properties['secret_bytes'] = base64.b64encode(
-            self.secret_bytes).decode()
+          self.secret_bytes
+        ).decode()
       if self.cipd_ensure_file.packages:
         properties['cipd_input'] = {
-            'packages': [{
-                'package_name': pkg.name,
-                'path': path or '.',
-                'version': pkg.version,
+          'packages': [
+            {
+              'package_name': pkg.name,
+              'path': path or '.',
+              'version': pkg.version,
             }
-                         for path in sorted(self.cipd_ensure_file.packages)
-                         for pkg in self.cipd_ensure_file.packages[path]]
+            for path in sorted(self.cipd_ensure_file.packages)
+            for pkg in self.cipd_ensure_file.packages[path]
+          ]
         }
       if self._named_caches:
-        properties['caches'] = [{
-            'name': name,
-            'path': path
-        } for name, path in sorted(self.named_caches.items())]
+        properties['caches'] = [
+          {'name': name, 'path': path}
+          for name, path in sorted(self.named_caches.items())
+        ]
 
       return {
-          'expiration_secs': str(self.expiration_secs),
-          'wait_for_capacity': self.wait_for_capacity,
-          'properties': properties,
+        'expiration_secs': str(self.expiration_secs),
+        'wait_for_capacity': self.wait_for_capacity,
+        'properties': properties,
       }
 
 
@@ -892,7 +877,7 @@ class TaskRequestMetadata:
   """Metadata of a requested task."""
 
   def __init__(
-      self, swarming_server: str, task_json: Mapping[str, Any]
+    self, swarming_server: str, task_json: Mapping[str, Any]
   ) -> None:
     self._task_json = task_json
     self._swarming_server = swarming_server
@@ -915,8 +900,11 @@ class TaskRequestMetadata:
   @property
   def invocation(self) -> str | None:
     """Returns the invocation name of the associated task."""
-    return self._task_json.get('task_result', {}).get('resultdb_info',
-                                                      {}).get('invocation')
+    return (
+      self._task_json.get('task_result', {})
+      .get('resultdb_info', {})
+      .get('invocation')
+    )
 
 
 class TaskResult:
@@ -943,18 +931,18 @@ class TaskResult:
     def url(self) -> str:
       """The URL of the associated CAS UI page."""
       return 'https://cas-viewer.appspot.com/{0}/blobs/{1}/tree'.format(
-          self.instance,
-          self.digest,
+        self.instance,
+        self.digest,
       )
 
   def __init__(
-      self,
-      api: Any,
-      task_slice: TaskRequest.TaskSlice | None,
-      id: str,
-      raw_results: Mapping[str, Any],
-      output_dir: config_types.Path | None = None,
-      text_output_file: config_types.Path | None = None,
+    self,
+    api: Any,
+    task_slice: TaskRequest.TaskSlice | None,
+    id: str,
+    raw_results: Mapping[str, Any],
+    output_dir: config_types.Path | None = None,
+    text_output_file: config_types.Path | None = None,
   ) -> None:
     """
     Args:
@@ -1001,7 +989,7 @@ class TaskResult:
 
       def parse_datetime(
         datetime_str: str | None,
-    ) -> datetime.datetime | None:
+      ) -> datetime.datetime | None:
         try:
           return datetime.datetime.fromisoformat(datetime_str)
         except (TypeError, ValueError):  # pragma: no cover
@@ -1017,23 +1005,22 @@ class TaskResult:
       if cas_output_root:
         d = cas_output_root['digest']
         self._cas_outputs = self.CasOutputs(
-            digest=d['hash'] + '/' + d['size_bytes'],
-            instance=cas_output_root['cas_instance'],
+          digest=d['hash'] + '/' + d['size_bytes'],
+          instance=cas_output_root['cas_instance'],
         )
 
       self._output = raw_results.get('output')
       if self._output_dir and raw_results.get('outputs'):
         self._outputs = {
-            output: self._output_dir / output
-            for output in raw_results['outputs']
+          output: self._output_dir / output for output in raw_results['outputs']
         }
 
   @property
   def finalized(self) -> bool:
     """True if state is not PENDING or RUNNING."""
     return self._state not in [
-        TaskState.PENDING,
-        TaskState.RUNNING,
+      TaskState.PENDING,
+      TaskState.RUNNING,
     ]
 
   @property
@@ -1178,7 +1165,8 @@ class TaskResult:
     """Raises a step failure if the task was unsuccessful."""
     if self.state is None:
       raise recipe_api.InfraFailure(
-          'Failed to collect:\n%s' % self._trimmed_output)
+        'Failed to collect:\n%s' % self._trimmed_output
+      )
     elif self.state == TaskState.EXPIRED:
       raise recipe_api.InfraFailure('Timed out waiting for a bot to run on')
     elif self.state == TaskState.TIMED_OUT:
@@ -1190,13 +1178,13 @@ class TaskResult:
         # TODO(crbug.com/916556): Stop guessing.
         if duration >= self._task_slice.execution_timeout_secs:
           failure_lines = [
-              'Execution timeout: exceeded %s seconds.' %
-              self._task_slice.execution_timeout_secs
+            'Execution timeout: exceeded %s seconds.'
+            % self._task_slice.execution_timeout_secs
           ]
         else:
           failure_lines = [
-              'I/O timeout: exceeded %s seconds.' %
-              self._task_slice.io_timeout_secs
+            'I/O timeout: exceeded %s seconds.'
+            % self._task_slice.io_timeout_secs
           ]
 
       failure_lines.extend(['Output:', self._trimmed_output])
@@ -1206,20 +1194,22 @@ class TaskResult:
       raise recipe_api.InfraFailure('The bot running this task died')
     elif self.state == TaskState.CLIENT_ERROR:
       raise recipe_api.InfraFailure(
-          'The task encountered an error caused by the client')
+        'The task encountered an error caused by the client'
+      )
     elif self.state == TaskState.CANCELED:
       raise recipe_api.InfraFailure('The task was canceled before it could run')
     elif self.state == TaskState.COMPLETED:
       if not self.success:
         raise recipe_api.InfraFailure(
-            'Swarming task failed:\n%s' % self._trimmed_output)
+          'Swarming task failed:\n%s' % self._trimmed_output
+        )
     elif self.state == TaskState.KILLED:
       raise recipe_api.InfraFailure('The task was killed mid-execution')
     elif self.state == TaskState.NO_RESOURCE:
       raise recipe_api.InfraFailure('Found no bots to run this task')
     else:
       assert False, 'unknown state %s; a case needs to be added above' % (
-          self.state.name  # pragma: no cover
+        self.state.name  # pragma: no cover
       )
 
 
@@ -1227,7 +1217,7 @@ class BotMetadata:
   """Metadata of a bot."""
 
   def __init__(
-      self, swarming_server: str, bot_id: str, bot_json: Mapping[str, Any]
+    self, swarming_server: str, bot_id: str, bot_json: Mapping[str, Any]
   ) -> None:
     self._bot_id = bot_id
     self._bot_json = bot_json
@@ -1302,10 +1292,10 @@ class SwarmingApi(recipe_api.RecipeApi):
   TaskResult = TaskResult
 
   def __init__(
-      self,
-      env_properties: properties_pb.EnvProperties,
-      *args: Any,
-      **kwargs: Any,
+    self,
+    env_properties: properties_pb.EnvProperties,
+    *args: Any,
+    **kwargs: Any,
   ) -> None:
     super().__init__(*args, **kwargs)
     self._server = env_properties.SWARMING_SERVER
@@ -1335,9 +1325,11 @@ class SwarmingApi(recipe_api.RecipeApi):
         self._env_properties.SWARMING_SERVER = self._server
       # Recipes always run on top of swarming task now.
       self._env_properties.SWARMING_TASK_ID = (
-          self._env_properties.SWARMING_TASK_ID or 'fake-task-id')
+        self._env_properties.SWARMING_TASK_ID or 'fake-task-id'
+      )
       self._env_properties.SWARMING_BOT_ID = (
-              self._env_properties.SWARMING_BOT_ID or 'fake-bot-id')
+        self._env_properties.SWARMING_BOT_ID or 'fake-bot-id'
+      )
 
   @property
   def _version(self) -> str:
@@ -1347,18 +1339,19 @@ class SwarmingApi(recipe_api.RecipeApi):
 
   @property
   def _client(self) -> config_types.Path:
-    return self.m.cipd.ensure_tool('infra/tools/luci/swarming/${platform}',
-                                   self._version)
+    return self.m.cipd.ensure_tool(
+      'infra/tools/luci/swarming/${platform}', self._version
+    )
 
   def ensure_client(self) -> None:
     self._client
 
   def _run(
-      self,
-      name: str,
-      cmd: Sequence[str | config_types.Path | recipe_api.Placeholder],
-      step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
-      **kwargs: Any,
+    self,
+    name: str,
+    cmd: Sequence[str | config_types.Path | recipe_api.Placeholder],
+    step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
+    **kwargs: Any,
   ) -> step_data.StepData:
     """Return an swarming command step.
 
@@ -1367,10 +1360,12 @@ class SwarmingApi(recipe_api.RecipeApi):
       cmd (list(str|Path)): swarming client subcommand to run.
     """
     return self.m.step(
-        name, [self._client] + list(cmd),
-        step_test_data=step_test_data,
-        infra_step=True,
-        **kwargs)
+      name,
+      [self._client] + list(cmd),
+      step_test_data=step_test_data,
+      infra_step=True,
+      **kwargs,
+    )
 
   @contextlib.contextmanager
   def on_path(self) -> Iterator[None]:
@@ -1397,9 +1392,7 @@ class SwarmingApi(recipe_api.RecipeApi):
     """
     return TaskRequest(self.m)
 
-  def task_request_from_jsonish(
-      self, json_d: Mapping[str, Any]
-  ) -> TaskRequest:
+  def task_request_from_jsonish(self, json_d: Mapping[str, Any]) -> TaskRequest:
     """Creates a new TaskRequest object from a JSON-serializable dict.
 
     The input argument should match the schema as the output of
@@ -1408,11 +1401,11 @@ class SwarmingApi(recipe_api.RecipeApi):
     return TaskRequest(self.m)._from_jsonish(json_d)
 
   def trigger(
-      self,
-      step_name: str,
-      requests: Sequence[TaskRequest],
-      verbose: bool = False,
-      server: str | None = None,
+    self,
+    step_name: str,
+    requests: Sequence[TaskRequest],
+    verbose: bool = False,
+    server: str | None = None,
   ) -> list[TaskRequestMetadata]:
     """Triggers a set of Swarming tasks.
 
@@ -1436,23 +1429,25 @@ class SwarmingApi(recipe_api.RecipeApi):
 
     requests_dict = {'requests': [req.to_jsonish() for req in requests]}
     cmd = [
-        'spawn-tasks',
-        '-server',
-        server,
-        '-json-input',
-        self.m.json.input(requests_dict),
-        '-json-output',
-        self.m.json.output(),
+      'spawn-tasks',
+      '-server',
+      server,
+      '-json-input',
+      self.m.json.input(requests_dict),
+      '-json-output',
+      self.m.json.output(),
     ]
     if verbose:
       cmd.append('-verbose')
 
     step = self._run(
-        step_name,
-        cmd,
-        step_test_data=lambda: self.test_api.trigger(
-            task_names=tuple(req.name for req in requests),
-            resultdb=tuple(req.resultdb.enable for req in requests)))
+      step_name,
+      cmd,
+      step_test_data=lambda: self.test_api.trigger(
+        task_names=tuple(req.name for req in requests),
+        resultdb=tuple(req.resultdb.enable for req in requests),
+      ),
+    )
     trigger_resp = step.json.output
 
     metadata_objs = []
@@ -1466,21 +1461,22 @@ class SwarmingApi(recipe_api.RecipeApi):
     for obj in metadata_objs:
       step.presentation.links['task UI: %s' % obj.name] = obj.task_ui_link
     step.presentation.logs['json.input'] = self.m.json.dumps(
-        requests_dict, indent=2)
+      requests_dict, indent=2
+    )
 
     return metadata_objs
 
   def collect(
-      self,
-      name: str,
-      tasks: Sequence[str | TaskRequestMetadata],
-      output_dir: config_types.Path | None = None,
-      task_output_stdout: (
-          str | config_types.Path | Sequence[str | config_types.Path]
-      ) = 'json',
-      timeout: str | None = None,
-      eager: bool = False,
-      verbose: bool = False,
+    self,
+    name: str,
+    tasks: Sequence[str | TaskRequestMetadata],
+    output_dir: config_types.Path | None = None,
+    task_output_stdout: (
+      str | config_types.Path | Sequence[str | config_types.Path]
+    ) = 'json',
+    timeout: str | None = None,
+    eager: bool = False,
+    verbose: bool = False,
   ) -> list[TaskResult]:
     """Waits on a set of Swarming tasks.
 
@@ -1510,11 +1506,11 @@ class SwarmingApi(recipe_api.RecipeApi):
     assert isinstance(tasks, (list, tuple))
 
     cmd = [
-        'collect',
-        '-server',
-        self._server,
-        '-task-summary-json',
-        self.m.json.output(),
+      'collect',
+      '-server',
+      self._server,
+      '-task-summary-json',
+      self.m.json.output(),
     ]
 
     if isinstance(task_output_stdout, (basestring, config_types.Path)):
@@ -1544,13 +1540,15 @@ class SwarmingApi(recipe_api.RecipeApi):
       if isinstance(task, basestring):
         cmd.append(task)
         test_data.append(
-            self.test_api.task_result(id=task, name='my_task_%d' % idx))
+          self.test_api.task_result(id=task, name='my_task_%d' % idx)
+        )
       elif isinstance(task, TaskRequestMetadata):
         cmd.append(task.id)
         test_data.append(self.test_api.task_result(id=task.id, name=task.name))
       else:
-        raise ValueError("%s must be a string or TaskRequestMetadata object" %
-                         task.__repr__())  # pragma: no cover
+        raise ValueError(
+          "%s must be a string or TaskRequestMetadata object" % task.__repr__()
+        )  # pragma: no cover
 
     # Assume we only need to reserve 10% of a CPU core (rather than 50%) for
     # collect.
@@ -1558,20 +1556,25 @@ class SwarmingApi(recipe_api.RecipeApi):
     cost = self.m.step.ResourceCost(cpu=cpu_tenth)
 
     step = self._run(
-        name,
-        cmd,
-        step_test_data=lambda: self.test_api.collect(test_data),
-        cost=cost,
+      name,
+      cmd,
+      step_test_data=lambda: self.test_api.collect(test_data),
+      cost=cost,
     )
 
     parsed_results = []
     for task_id, task in step.json.output.items():
       task_request = self._task_requests.get((task_id, self._server), [None])[0]
       parsed_results.append(
-          TaskResult(self.m, task_request, task_id, task,
-                     output_dir / task_id if output_dir else None,
-                     text_output_dir / f'{task_id}.txt'
-                        if text_output_dir else None))
+        TaskResult(
+          self.m,
+          task_request,
+          task_id,
+          task,
+          output_dir / task_id if output_dir else None,
+          text_output_dir / f'{task_id}.txt' if text_output_dir else None,
+        )
+      )
 
     parsed_results.sort(key=lambda result: result.name or '')
 
@@ -1587,7 +1590,7 @@ class SwarmingApi(recipe_api.RecipeApi):
     return parsed_results
 
   def show_request(
-      self, name: str, task: str | TaskRequestMetadata
+    self, name: str, task: str | TaskRequestMetadata
   ) -> TaskRequest:
     """Retrieve the TaskRequest for a Swarming task.
 
@@ -1602,9 +1605,9 @@ class SwarmingApi(recipe_api.RecipeApi):
     assert self._server
     assert isinstance(task, (basestring, TaskRequestMetadata))
     cmd = [
-        'request-show',
-        '-server',
-        self._server,
+      'request-show',
+      '-server',
+      self._server,
     ]
 
     if isinstance(task, basestring):
@@ -1612,24 +1615,25 @@ class SwarmingApi(recipe_api.RecipeApi):
     elif isinstance(task, TaskRequestMetadata):
       cmd.append(task.id)
     else:
-      raise ValueError("%s must be a string or TaskRequestMetadata object" %
-                       task.__repr__())  # pragma: no cover
+      raise ValueError(
+        "%s must be a string or TaskRequestMetadata object" % task.__repr__()
+      )  # pragma: no cover
 
     step = self._run(
-        name,
-        cmd,
-        step_test_data=lambda: self.test_api.show_request(),
-        stdout=self.m.json.output(),
+      name,
+      cmd,
+      step_test_data=lambda: self.test_api.show_request(),
+      stdout=self.m.json.output(),
     )
     json_result = step.stdout
 
     return self.task_request_from_jsonish(json_result)
 
   def list_bots(
-      self,
-      step_name: str,
-      dimensions: Mapping[str, str] | None = None,
-      fields: Sequence[str] | None = None,
+    self,
+    step_name: str,
+    dimensions: Mapping[str, str] | None = None,
+    fields: Sequence[str] | None = None,
   ) -> list[BotMetadata]:
     """List bots matching the given options.
 
@@ -1645,11 +1649,11 @@ class SwarmingApi(recipe_api.RecipeApi):
     """
     assert self._server
     cmd = [
-        'bots',
-        '-server',
-        self._server,
-        '-json',
-        self.m.json.output(),
+      'bots',
+      '-server',
+      self._server,
+      '-json',
+      self.m.json.output(),
     ]
     if dimensions:
       for key, value in dimensions.items():
@@ -1659,33 +1663,34 @@ class SwarmingApi(recipe_api.RecipeApi):
       for field in fields:
         cmd.extend(['-field', field])
     step = self._run(
-        step_name,
-        cmd,
-        step_test_data=lambda: self.test_api.list_bots(dimensions))
+      step_name, cmd, step_test_data=lambda: self.test_api.list_bots(dimensions)
+    )
     resp = step.json.output
 
     metadata_objs = []
     for bot_json in resp:
       assert 'bot_id' in bot_json, '"bot_id" not found in the response.'
       metadata_objs.append(
-          BotMetadata(self._server, bot_json['bot_id'], bot_json))
+        BotMetadata(self._server, bot_json['bot_id'], bot_json)
+      )
 
     metadata_objs.sort(key=lambda obj: obj.bot_id)
 
     if dimensions:
       step.presentation.logs['Dimensions to lookup'] = self.m.json.dumps(
-          dimensions, indent=2)
+        dimensions, indent=2
+      )
     if fields:
       step.presentation.logs['Fields to include'] = ', '.join(fields)
 
     return metadata_objs
 
   def list_tasks(
-      self,
-      step_name: str,
-      start: float | None = None,
-      tags: Sequence[str] | None = None,
-      server: str | None = None,
+    self,
+    step_name: str,
+    start: float | None = None,
+    tags: Sequence[str] | None = None,
+    server: str | None = None,
   ) -> list[dict[str, Any]]:
     """List tasks matching the given options.
 
@@ -1706,11 +1711,11 @@ class SwarmingApi(recipe_api.RecipeApi):
       server = self._server
 
     cmd = [
-        'tasks',
-        '-server',
-        server,
-        '-json',
-        self.m.json.output(),
+      'tasks',
+      '-server',
+      server,
+      '-json',
+      self.m.json.output(),
     ]
 
     if tags:
@@ -1719,13 +1724,17 @@ class SwarmingApi(recipe_api.RecipeApi):
     if start:
       cmd.extend(['-start', str(start)])
     step = self._run(
-        step_name,
-        cmd,
-        step_test_data=lambda: self.m.json.test_api.output([{
+      step_name,
+      cmd,
+      step_test_data=lambda: self.m.json.test_api.output(
+        [
+          {
             'task_id': 12341234,
             'tags': tags,
             'completed_ts': '2025-04-21T18:47:23.324102Z',
             'started_ts': '2025-04-21T18:45:44.426350Z',
-        }]),
+          }
+        ]
+      ),
     )
     return step.json.output

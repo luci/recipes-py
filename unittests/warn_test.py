@@ -25,73 +25,74 @@ from recipe_engine.internal.warn import record
 
 
 def create_definition(
-    name: str,
-    description: Sequence[str] | None = None,
-    deadline: str | None = None,
-    monorail_bug: warning_pb.MonorailBug | None = None,
-    google_issue: warning_pb.GoogleIssue | None = None,
+  name: str,
+  description: Sequence[str] | None = None,
+  deadline: str | None = None,
+  monorail_bug: warning_pb.MonorailBug | None = None,
+  google_issue: warning_pb.GoogleIssue | None = None,
 ) -> warning_pb.Definition:
   """Shorthand to create a warning definition proto message based on the
   given input"""
   return warning_pb.Definition(
-      name=name,
-      description=description,
-      deadline=deadline,
-      monorail_bug=[monorail_bug] if monorail_bug else None,
-      google_issue=[google_issue] if google_issue else None,
+    name=name,
+    description=description,
+    deadline=deadline,
+    monorail_bug=[monorail_bug] if monorail_bug else None,
+    google_issue=[google_issue] if google_issue else None,
   )
 
 
 class TestWarningDefinition(test_env.RecipeEngineUnitTest):
-
   def test_populate_google_issue_default_fields(self) -> None:
     # No Default fields specified
     definition = create_definition(
-        'WARNING_NAME',
-        monorail_bug=warning_pb.MonorailBug(id=123),
-        google_issue=warning_pb.GoogleIssue(id=123),
+      'WARNING_NAME',
+      monorail_bug=warning_pb.MonorailBug(id=123),
+      google_issue=warning_pb.GoogleIssue(id=123),
     )
     expected_definition = warning_pb.Definition()
     expected_definition.CopyFrom(definition)
     warn_def._populate_bug_issue_fields(
-        [definition],
-        warning_pb.MonorailBugDefault(),
-        warning_pb.GoogleIssueDefault())
+      [definition],
+      warning_pb.MonorailBugDefault(),
+      warning_pb.GoogleIssueDefault(),
+    )
     self.assertEqual(expected_definition, definition)
 
     # All Default fields specified
     definition = create_definition(
-        'WARNING_NAME',
-        monorail_bug=warning_pb.MonorailBug(project='two', id=123),
-        google_issue=warning_pb.GoogleIssue(id=123))
+      'WARNING_NAME',
+      monorail_bug=warning_pb.MonorailBug(project='two', id=123),
+      google_issue=warning_pb.GoogleIssue(id=123),
+    )
     warn_def._populate_bug_issue_fields(
-        [definition],
-        warning_pb.MonorailBugDefault(host='m.com', project='one'),
-        warning_pb.GoogleIssueDefault(host='g.com'),
+      [definition],
+      warning_pb.MonorailBugDefault(host='m.com', project='one'),
+      warning_pb.GoogleIssueDefault(host='g.com'),
     )
     expected_definition = create_definition(
-        'WARNING_NAME',
-        # default project should not override the existing one
-        monorail_bug=warning_pb.MonorailBug(
-            host='m.com', project='two', id=123),
-        google_issue=warning_pb.GoogleIssue(host='g.com', id=123))
+      'WARNING_NAME',
+      # default project should not override the existing one
+      monorail_bug=warning_pb.MonorailBug(host='m.com', project='two', id=123),
+      google_issue=warning_pb.GoogleIssue(host='g.com', id=123),
+    )
     self.assertEqual(expected_definition, definition)
 
     # Partial fields specified
     definition = create_definition(
-        'WARNING_NAME',
-        monorail_bug=warning_pb.MonorailBug(id=123),
-        google_issue=warning_pb.GoogleIssue(id=123),
+      'WARNING_NAME',
+      monorail_bug=warning_pb.MonorailBug(id=123),
+      google_issue=warning_pb.GoogleIssue(id=123),
     )
     warn_def._populate_bug_issue_fields(
-        [definition],
-        warning_pb.MonorailBugDefault(host='m.com'),
-        warning_pb.GoogleIssueDefault(host='g.com'),
+      [definition],
+      warning_pb.MonorailBugDefault(host='m.com'),
+      warning_pb.GoogleIssueDefault(host='g.com'),
     )
     expected_definition = create_definition(
-        'WARNING_NAME',
-        monorail_bug=warning_pb.MonorailBug(host='m.com', id=123),
-        google_issue=warning_pb.GoogleIssue(host='g.com', id=123),
+      'WARNING_NAME',
+      monorail_bug=warning_pb.MonorailBug(host='m.com', id=123),
+      google_issue=warning_pb.GoogleIssue(host='g.com', id=123),
     )
     self.assertEqual(expected_definition, definition)
 
@@ -99,15 +100,15 @@ class TestWarningDefinition(test_env.RecipeEngineUnitTest):
     simple_definition = create_definition('SIMPLE_WARNING_NAME')
     warn_def._validate(simple_definition)
     full_definition = create_definition(
-        'FULL_WARNING_NAME',
-        description=[
-            'this is a description',
-        ],
-        deadline='2020-12-31',
-        monorail_bug=warning_pb.MonorailBug(
-            host='bugs.chromium.org', project='chromium', id=123456),
-        google_issue=warning_pb.GoogleIssue(
-            host='crbug.com', id=123456),
+      'FULL_WARNING_NAME',
+      description=[
+        'this is a description',
+      ],
+      deadline='2020-12-31',
+      monorail_bug=warning_pb.MonorailBug(
+        host='bugs.chromium.org', project='chromium', id=123456
+      ),
+      google_issue=warning_pb.GoogleIssue(host='crbug.com', id=123456),
     )
     warn_def._validate(full_definition)
 
@@ -120,22 +121,22 @@ class TestWarningDefinition(test_env.RecipeEngineUnitTest):
     definition = create_definition(
       'WARNING_NAME',
       monorail_bug=warning_pb.MonorailBug(project='chromium', id=123456),
-      )
+    )
     with self.assertRaises(ValueError):
       warn_def._validate(definition)
     # No project specified
     definition = create_definition(
-        'WARNING_NAME',
-        monorail_bug=warning_pb.MonorailBug(
-            host='bugs.chromium.org', id=123456),
+      'WARNING_NAME',
+      monorail_bug=warning_pb.MonorailBug(host='bugs.chromium.org', id=123456),
     )
     with self.assertRaises(ValueError):
       warn_def._validate(definition)
     # No id specified
     definition = create_definition(
-        'WARNING_NAME',
-        monorail_bug=warning_pb.MonorailBug(
-            host='bugs.chromium.org', project='chromium'),
+      'WARNING_NAME',
+      monorail_bug=warning_pb.MonorailBug(
+        host='bugs.chromium.org', project='chromium'
+      ),
     )
     with self.assertRaises(ValueError):
       warn_def._validate(definition)
@@ -145,26 +146,27 @@ class TestWarningDefinition(test_env.RecipeEngineUnitTest):
     definition = create_definition(
       'WARNING_NAME',
       google_issue=warning_pb.GoogleIssue(id=123456),
-      )
+    )
     with self.assertRaises(ValueError):
       warn_def._validate(definition)
     # No id specified
     definition = create_definition(
-        'WARNING_NAME',
-        google_issue=warning_pb.GoogleIssue(
-            host='crbug.com'),
+      'WARNING_NAME',
+      google_issue=warning_pb.GoogleIssue(host='crbug.com'),
     )
     with self.assertRaises(ValueError):
       warn_def._validate(definition)
 
   def test_invalid_deadline(self) -> None:
     with self.assertRaises(ValueError):
-      warn_def._validate(create_definition(
-        'WARNING_NAME', deadline='12-31-2020'))
+      warn_def._validate(
+        create_definition('WARNING_NAME', deadline='12-31-2020')
+      )
 
     with self.assertRaises(ValueError):
-      warn_def._validate(create_definition(
-        'WARNING_NAME', deadline='2020-12-31T23:59:59'))
+      warn_def._validate(
+        create_definition('WARNING_NAME', deadline='2020-12-31T23:59:59')
+      )
 
 
 class TestWarningRecorder(test_env.RecipeEngineUnitTest):
@@ -191,8 +193,7 @@ class TestWarningRecorder(test_env.RecipeEngineUnitTest):
 
   def test_record_execution_warning(self) -> None:
     with create_test_frames(self.test_file_path):
-      self.recorder.record_execution_warning(
-        'recipe_engine/SOME_WARNING')
+      self.recorder.record_execution_warning('recipe_engine/SOME_WARNING')
 
     expected_cause = warning_pb.Cause()
     expected_cause.call_site.site.file = self.test_file_path
@@ -202,21 +203,21 @@ class TestWarningRecorder(test_env.RecipeEngineUnitTest):
   def test_record_execution_warning_filter(self) -> None:
     self.recorder.call_site_filter = lambda name, cause: False
     with create_test_frames(self.test_file_path):
-      self.recorder.record_execution_warning(
-        'recipe_engine/SOME_WARNING')
+      self.recorder.record_execution_warning('recipe_engine/SOME_WARNING')
 
     self.assertFalse(
-      self.recorder.recorded_warnings['recipe_engine/SOME_WARNING'])
+      self.recorder.recorded_warnings['recipe_engine/SOME_WARNING']
+    )
 
   def test_record_execution_warning_skip_frame(self) -> None:
     def line_number_less_than_4(
-        _name: str, frame: types.FrameType
+      _name: str, frame: types.FrameType
     ) -> str | None:
       return 'line number is less then 4' if frame.f_lineno < 4 else None
+
     self._override_skip_frame_predicates((line_number_less_than_4,))
     with create_test_frames(self.test_file_path):
-      self.recorder.record_execution_warning(
-        'recipe_engine/SOME_WARNING')
+      self.recorder.record_execution_warning('recipe_engine/SOME_WARNING')
 
     # attribute to frame on line 4
     expected_cause = warning_pb.Cause()
@@ -225,11 +226,11 @@ class TestWarningRecorder(test_env.RecipeEngineUnitTest):
     self.assert_has_warning('recipe_engine/SOME_WARNING', expected_cause)
 
   def test_record_empty_site_for_execution_warning(self) -> None:
-    self._override_skip_frame_predicates((
-      lambda _name, _frame: 'skip all frames', ))
+    self._override_skip_frame_predicates(
+      (lambda _name, _frame: 'skip all frames',)
+    )
     with create_test_frames(self.test_file_path):
-      self.recorder.record_execution_warning(
-        'recipe_engine/SOME_WARNING')
+      self.recorder.record_execution_warning('recipe_engine/SOME_WARNING')
     self.assertIn('recipe_engine/SOME_WARNING', self.recorder.recorded_warnings)
     cause = self.recorder.recorded_warnings['recipe_engine/SOME_WARNING'][0]
     self.assertEqual(cause.call_site.site.file, '')
@@ -238,13 +239,12 @@ class TestWarningRecorder(test_env.RecipeEngineUnitTest):
 
   def test_no_duplicate_execution_warning(self) -> None:
     with create_test_frames(self.test_file_path):
-      self.recorder.record_execution_warning(
-        'recipe_engine/SOME_WARNING')
-      self.recorder.record_execution_warning(
-        'recipe_engine/SOME_WARNING')
+      self.recorder.record_execution_warning('recipe_engine/SOME_WARNING')
+      self.recorder.record_execution_warning('recipe_engine/SOME_WARNING')
 
-    self.assertEqual(1, len(
-      self.recorder.recorded_warnings['recipe_engine/SOME_WARNING']))
+    self.assertEqual(
+      1, len(self.recorder.recorded_warnings['recipe_engine/SOME_WARNING'])
+    )
 
   def test_record_import_warning(self) -> None:
     self.recorder.record_import_warning(
@@ -271,8 +271,8 @@ class TestWarningRecorder(test_env.RecipeEngineUnitTest):
   def test_record_import_warning_raise_for_invalid_type(self) -> None:
     with self.assertRaises(ValueError):
       self.recorder.record_import_warning(
-          'recipe_engine/SOME_WARNING',
-          'I am a str type',  # type: ignore[arg-type]
+        'recipe_engine/SOME_WARNING',
+        'I am a str type',  # type: ignore[arg-type]
       )
 
   def test_record_import_warning_filter(self) -> None:
@@ -286,37 +286,41 @@ class TestWarningRecorder(test_env.RecipeEngineUnitTest):
       self._create_mock_recipe_module('test_module', self.repo_name),
     )
     self.assertFalse(
-      self.recorder.recorded_warnings['recipe_engine/SOME_WARNING'])
+      self.recorder.recorded_warnings['recipe_engine/SOME_WARNING']
+    )
 
   def test_no_duplicate_import_warning(self) -> None:
     mock_recipe = self._create_mock_recipe(
-      'test_module:path/to/recipe', self.repo_name)
+      'test_module:path/to/recipe', self.repo_name
+    )
     self.recorder.record_import_warning(
-      'recipe_engine/SOME_WARNING', mock_recipe)
+      'recipe_engine/SOME_WARNING', mock_recipe
+    )
     self.recorder.record_import_warning(
-      'recipe_engine/SOME_WARNING', mock_recipe)
-    self.assertEqual(1, len(
-      self.recorder.recorded_warnings['recipe_engine/SOME_WARNING']))
+      'recipe_engine/SOME_WARNING', mock_recipe
+    )
+    self.assertEqual(
+      1, len(self.recorder.recorded_warnings['recipe_engine/SOME_WARNING'])
+    )
 
   def test_record_not_defined_execution_warning(self) -> None:
     # execution warning
     with create_test_frames(self.test_file_path):
       with self.assertRaisesRegex(
-          ValueError,
-          'warning "COOL_WARNING" is not defined in recipe repo infra'):
+        ValueError, 'warning "COOL_WARNING" is not defined in recipe repo infra'
+      ):
         self.recorder.record_execution_warning('infra/COOL_WARNING')
     # import warning
     with self.assertRaisesRegex(
-        ValueError,
-        'warning "COOL_WARNING" is not defined in recipe repo infra'):
+      ValueError, 'warning "COOL_WARNING" is not defined in recipe repo infra'
+    ):
       self.recorder.record_import_warning(
-          'infra/COOL_WARNING',
-          self._create_mock_recipe(
-              'test_module:path/to/recipe', self.repo_name),
+        'infra/COOL_WARNING',
+        self._create_mock_recipe('test_module:path/to/recipe', self.repo_name),
       )
 
   def assert_has_warning(
-      self, warning_name: str, *causes: warning_pb.Cause
+    self, warning_name: str, *causes: warning_pb.Cause
   ) -> None:
     recorded_warnings = self.recorder.recorded_warnings
     self.assertIn(warning_name, recorded_warnings)
@@ -324,14 +328,14 @@ class TestWarningRecorder(test_env.RecipeEngineUnitTest):
       self.assertIn(cause, recorded_warnings.get(warning_name))
 
   def _override_skip_frame_predicates(
-      self,
-      new_predicates: Sequence[Callable[[str, types.FrameType], Any]],
+    self,
+    new_predicates: Sequence[Callable[[str, types.FrameType], Any]],
   ) -> None:
     self.recorder.__dict__['_skip_frame_predicates'] = new_predicates
 
   @staticmethod
   def _create_mock_recipe(
-      recipe_name: str, repo_name: str
+    recipe_name: str, repo_name: str
   ) -> recipe_deps.Recipe:
     mock_repo = mock.Mock()
     mock_repo.name = repo_name
@@ -343,7 +347,7 @@ class TestWarningRecorder(test_env.RecipeEngineUnitTest):
 
   @staticmethod
   def _create_mock_recipe_module(
-      module_name: str, repo_name: str
+    module_name: str, repo_name: str
   ) -> recipe_deps.RecipeModule:
     mock_repo = mock.Mock()
     mock_repo.name = repo_name
@@ -386,25 +390,26 @@ class EscapeWarningPredicateTest(test_env.RecipeEngineUnitTest):
   def test_issue_SOME_WARN(self) -> None:
     warning_name = 'SOME_WARN'
     self.assertIsNone(
-      self.apply_predicate(warning_name, self.non_escaped_frame()))
-    self.assertRegex(
-        str(self.apply_predicate(warning_name, self.escaped_frame())),
-        '^escaped function at .+#L[0-9]+$',
+      self.apply_predicate(warning_name, self.non_escaped_frame())
     )
     self.assertRegex(
-        str(self.apply_predicate(warning_name, self.escaped_all_frame())),
-        '^escaped function at .+#L[0-9]+$',
+      str(self.apply_predicate(warning_name, self.escaped_frame())),
+      '^escaped function at .+#L[0-9]+$',
+    )
+    self.assertRegex(
+      str(self.apply_predicate(warning_name, self.escaped_all_frame())),
+      '^escaped function at .+#L[0-9]+$',
     )
 
   def test_issue_ANOTHER_WARN(self) -> None:
     warning_name = 'ANOTHER_WARN'
     self.assertIsNone(
-      self.apply_predicate(warning_name, self.non_escaped_frame()))
-    self.assertIsNone(
-      self.apply_predicate(warning_name, self.escaped_frame()))
+      self.apply_predicate(warning_name, self.non_escaped_frame())
+    )
+    self.assertIsNone(self.apply_predicate(warning_name, self.escaped_frame()))
     self.assertRegex(
-        str(self.apply_predicate(warning_name, self.escaped_all_frame())),
-        '^escaped function at .+#L[0-9]+$',
+      str(self.apply_predicate(warning_name, self.escaped_all_frame())),
+      '^escaped function at .+#L[0-9]+$',
     )
 
   def non_escaped_frame(self) -> types.FrameType:
@@ -426,7 +431,7 @@ class EscapeWarningPredicateTest(test_env.RecipeEngineUnitTest):
 
   @staticmethod
   def apply_predicate(
-      warning_name: str, frame: types.FrameType
+    warning_name: str, frame: types.FrameType
   ) -> str | object | None:
     return escape.escape_warning_predicate(warning_name, frame)
 
@@ -436,7 +441,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     super().setUp()
     self.deps = self.FakeRecipeDeps()
     with self.deps.main_repo.write_file(
-        warn_def.RECIPE_WARNING_DEFINITIONS_REL
+      warn_def.RECIPE_WARNING_DEFINITIONS_REL
     ) as d:
       d.write('''
       google_issue_default {
@@ -482,23 +487,29 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
             self.m.warning.issue('MYMODULE_SWIZZLE_BADARG_USAGE')
       ''')
     with self.deps.main_repo.write_file(
-        'recipe_modules/my_mod/tests/bad.py') as bad:
-      bad.write('''
+      'recipe_modules/my_mod/tests/bad.py'
+    ) as bad:
+      bad.write(
+        '''
         DEPS = ['my_mod']
         def RunSteps(api):
           api.my_mod.swizzle('bad')
         def GenTests(api):
           yield api.test('basic')
-      '''.lstrip('\n'))
+      '''.lstrip('\n')
+      )
     with self.deps.main_repo.write_file(
-        'recipe_modules/my_mod/tests/good.py') as good:
-      good.write('''
+      'recipe_modules/my_mod/tests/good.py'
+    ) as good:
+      good.write(
+        '''
         DEPS = ['my_mod']
         def RunSteps(api):
           api.my_mod.swizzle()
         def GenTests(api):
           yield api.test('basic')
-      '''.lstrip('\n'))
+      '''.lstrip('\n')
+      )
     with self.deps.main_repo.write_module('cool_mod') as mod:
       mod.DEPS.append('my_mod')
       mod.api.write('''
@@ -506,17 +517,21 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
           self.m.my_mod.swizzle('badbadbad')
       ''')
     with self.deps.main_repo.write_file(
-        'recipe_modules/cool_mod/tests/full.py') as recipe:
-      recipe.write('''
+      'recipe_modules/cool_mod/tests/full.py'
+    ) as recipe:
+      recipe.write(
+        '''
         DEPS = ['cool_mod']
         def RunSteps(api):
           api.cool_mod.call_my_mod_swizzle()
         def GenTests(api):
           yield api.test('basic')
-      '''.lstrip('\n'))
+      '''.lstrip('\n')
+      )
     output, retcode = self.deps.main_repo.recipes_py('test', 'train')
     self.assertEqual(retcode, 0)
-    expected_regexp = textwrap.dedent(r'''
+    expected_regexp = textwrap.dedent(
+      r'''
     [\*]{70}
     \s*WARNING: main/MYMODULE_SWIZZLE_BADARG_USAGE\s*
     \s*Found 2 call sites and 0 import sites\s*
@@ -531,35 +546,43 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     Call Sites:
       recipe_modules/cool_mod/api\.py:\d+
       recipe_modules/my_mod/tests/bad\.py:3
-    '''.strip('\n'))
+    '''.strip('\n')
+    )
     self.assertRegex(output, expected_regexp)
 
   def test_import_warning(self) -> None:
     with self.deps.main_repo.write_module('my_mod') as mod:
       mod.WARNINGS.append('MYMODULE_DEPRECATION')
     with self.deps.main_repo.write_file(
-        'recipe_modules/my_mod/tests/full.py') as recipe:
-      recipe.write('''
+      'recipe_modules/my_mod/tests/full.py'
+    ) as recipe:
+      recipe.write(
+        '''
         DEPS = ['my_mod']
         def RunSteps(api):
           pass
         def GenTests(api):
           yield api.test('basic')
-      '''.lstrip('\n'))
+      '''.lstrip('\n')
+      )
     with self.deps.main_repo.write_module('cool_mod') as cool_mod:
       cool_mod.DEPS.append('my_mod')
     with self.deps.main_repo.write_file(
-        'recipe_modules/cool_mod/tests/full.py') as recipe:
-      recipe.write('''
+      'recipe_modules/cool_mod/tests/full.py'
+    ) as recipe:
+      recipe.write(
+        '''
         DEPS = ['cool_mod']
         def RunSteps(api):
           pass
         def GenTests(api):
           yield api.test('basic')
-      '''.lstrip('\n'))
+      '''.lstrip('\n')
+      )
     output, retcode = self.deps.main_repo.recipes_py('test', 'train')
     self.assertEqual(retcode, 0)
-    expected_regexp = textwrap.dedent(r'''
+    expected_regexp = textwrap.dedent(
+      r'''
     [\*]{70}
     \s*WARNING: main/MYMODULE_DEPRECATION\s*
     \s*Found 0 call sites and 2 import sites\s*
@@ -575,7 +598,8 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     Import Sites:
       recipe_modules/my_mod/tests/full\.py
       recipe_modules/cool_mod/__init__\.py
-    '''.strip('\n'))
+    '''.strip('\n')
+    )
     self.assertRegex(output, expected_regexp)
 
   def test_issue_both_warnings(self) -> None:
@@ -587,17 +611,21 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
           self.m.warning.issue('MYMODULE_DEPRECATION')
       ''')
     with self.deps.main_repo.write_file(
-        'recipe_modules/my_mod/tests/full.py') as recipe:
-      recipe.write('''
+      'recipe_modules/my_mod/tests/full.py'
+    ) as recipe:
+      recipe.write(
+        '''
         DEPS = ['my_mod']
         def RunSteps(api):
           api.my_mod.swizzle()
         def GenTests(api):
           yield api.test('basic')
-      '''.lstrip('\n'))
+      '''.lstrip('\n')
+      )
     output, retcode = self.deps.main_repo.recipes_py('test', 'train')
     self.assertEqual(retcode, 0)
-    expected_regexp = textwrap.dedent(r'''
+    expected_regexp = textwrap.dedent(
+      r'''
     [\*]{70}
     \s*WARNING: main/MYMODULE_DEPRECATION\s*
     \s*Found 1 call sites and 1 import sites\s*
@@ -614,7 +642,8 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
       recipe_modules/my_mod/tests/full\.py:3
     Import Sites:
       recipe_modules/my_mod/tests/full\.py
-    '''.strip('\n'))
+    '''.strip('\n')
+    )
     self.assertRegex(output, expected_regexp)
 
   def test_issue_not_defined_execution_warning(self) -> None:
@@ -625,14 +654,17 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
           self.m.warning.issue('NOT_DEFINED_WARNING')
       ''')
     with self.deps.main_repo.write_file(
-        'recipe_modules/my_mod/tests/full.py') as recipe:
-      recipe.write('''
+      'recipe_modules/my_mod/tests/full.py'
+    ) as recipe:
+      recipe.write(
+        '''
         DEPS = ['my_mod']
         def RunSteps(api):
           api.my_mod.swizzle()
         def GenTests(api):
           yield api.test('basic')
-      '''.lstrip('\n'))
+      '''.lstrip('\n')
+      )
     _, retcode = self.deps.main_repo.recipes_py('test', 'train')
     self.assertEqual(retcode, 1)
 
@@ -640,14 +672,17 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     with self.deps.main_repo.write_module('my_mod') as mod:
       mod.WARNINGS.append('NOT_DEFINED_WARNING')
     with self.deps.main_repo.write_file(
-        'recipe_modules/my_mod/tests/full.py') as recipe:
-      recipe.write('''
+      'recipe_modules/my_mod/tests/full.py'
+    ) as recipe:
+      recipe.write(
+        '''
         DEPS = ['my_mod']
         def RunSteps(api):
           pass
         def GenTests(api):
           yield api.test('basic')
-      '''.lstrip('\n'))
+      '''.lstrip('\n')
+      )
     _, retcode = self.deps.main_repo.recipes_py('test', 'train')
     self.assertEqual(retcode, 1)
 
@@ -660,8 +695,10 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
             self.m.warning.issue('MYMODULE_SWIZZLE_BADARG_USAGE')
       ''')
     with self.deps.main_repo.write_file(
-        'recipe_modules/my_mod/tests/bad.py') as bad:
-      bad.write('''
+      'recipe_modules/my_mod/tests/bad.py'
+    ) as bad:
+      bad.write(
+        '''
         DEPS = ['my_mod']
         def RunSteps(api):
           api.my_mod.swizzle('bad')
@@ -669,7 +706,8 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
           api.my_mod.swizzle('extremely bad')
         def GenTests(api):
           yield api.test('basic')
-      '''.lstrip('\n'))
+      '''.lstrip('\n')
+      )
     output, _ = self.deps.main_repo.recipes_py('test', 'train')
     self.assertIn('recipe_modules/my_mod/tests/bad.py:3 (and 4, 5)', output)
 
@@ -682,8 +720,10 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
             self.m.warning.issue('MYMODULE_SWIZZLE_BADARG_USAGE')
       ''')
     with self.deps.main_repo.write_file(
-        'recipe_modules/my_mod/tests/bad.py') as bad:
-      bad.write('''
+      'recipe_modules/my_mod/tests/bad.py'
+    ) as bad:
+      bad.write(
+        '''
         DEPS = ['my_mod']
         def RunSteps(api):
           api.my_mod.swizzle('bad')
@@ -691,7 +731,8 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
           yield api.test('basic')
           yield api.test('again')
           yield api.test('one more time')
-      '''.lstrip('\n'))
+      '''.lstrip('\n')
+      )
     output, _ = self.deps.main_repo.recipes_py('test', 'train')
     self.assertIn('Found 1 call sites and 0 import sites', output)
 
@@ -704,14 +745,17 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
             self.m.warning.issue('MYMODULE_SWIZZLE_BADARG_USAGE')
       ''')
     with self.deps.main_repo.write_file(
-        'recipe_modules/my_mod/tests/full.py') as recipe:
-      recipe.write('''
+      'recipe_modules/my_mod/tests/full.py'
+    ) as recipe:
+      recipe.write(
+        '''
         DEPS = ['my_mod']
         def RunSteps(api):
           api.my_mod.swizzle('bad')
         def GenTests(api):
           yield api.test('basic')
-      '''.lstrip('\n'))
+      '''.lstrip('\n')
+      )
     with self.deps.main_repo.write_module('cool_mod') as mod:
       mod.DEPS.append('my_mod')
       mod.imports.append('from recipe_engine import recipe_api')
@@ -721,14 +765,17 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
           self.m.my_mod.swizzle(**kwargs)
       ''')
     with self.deps.main_repo.write_file(
-        'recipe_modules/cool_mod/tests/full.py') as bad:
-      bad.write('''
+      'recipe_modules/cool_mod/tests/full.py'
+    ) as bad:
+      bad.write(
+        '''
         DEPS = ['cool_mod']
         def RunSteps(api):
           api.cool_mod.pass_through_to_my_mod(bad_arg='bad')
         def GenTests(api):
           yield api.test('basic')
-      '''.lstrip('\n'))
+      '''.lstrip('\n')
+      )
     output, _ = self.deps.main_repo.recipes_py('test', 'train')
     self.assertNotIn('recipe_modules/cool_mod/api.py', output)
     self.assertIn('recipe_modules/cool_mod/tests/full.py', output)
@@ -773,31 +820,35 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
           if bad_arg is not None:
             self.m.warning.issue('MYMODULE_SWIZZLE_BADARG_USAGE')
       ''')
-    with upstream.write_file(
-        'recipe_modules/my_mod/tests/full.py') as recipe:
-      recipe.write('''
+    with upstream.write_file('recipe_modules/my_mod/tests/full.py') as recipe:
+      recipe.write(
+        '''
         DEPS = ['my_mod']
         def RunSteps(api):
           api.my_mod.swizzle('badbad')
         def GenTests(api):
           yield api.test('basic')
-      '''.lstrip('\n'))
+      '''.lstrip('\n')
+      )
     upstream.commit('add my_mod module')
 
     with self.deps.main_repo.write_file('recipes/bad.py') as recipe:
-      recipe.write('''
+      recipe.write(
+        '''
         DEPS = ['upstream/my_mod']
         def RunSteps(api):
           api.my_mod.swizzle('bad')
         def GenTests(api):
           yield api.test('basic')
-      '''.lstrip('\n'))
+      '''.lstrip('\n')
+      )
     self.deps.main_repo.add_dep('upstream')
     self.deps.main_repo.commit('add recipe and upgrade upstream dep')
 
     output, retcode = self.deps.main_repo.recipes_py('test', 'train')
     self.assertEqual(retcode, 0)
-    expected_regexp = textwrap.dedent(r'''
+    expected_regexp = textwrap.dedent(
+      r'''
     [\*]{70}
     \s*WARNING: upstream/MYMODULE_DEPRECATION\s*
     \s*Found 0 call sites and 1 import sites\s*
@@ -821,7 +872,8 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     Bug Link: https://crbug.com/123456
     Call Sites:
       recipes/bad\.py:3
-    '''.strip('\n'))
+    '''.strip('\n')
+    )
     self.assertRegex(output, expected_regexp)
 
   def test_cross_repo_forbid(self) -> None:
@@ -851,13 +903,15 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     upstream.commit('add my_mod module')
 
     with self.deps.main_repo.write_file('recipes/bad.py') as recipe:
-      recipe.write('''
+      recipe.write(
+        '''
         DEPS = ['upstream/my_mod']
         def RunSteps(api):
           api.my_mod.nop()
         def GenTests(api):
           yield api.test('basic')
-      '''.lstrip('\n'))
+      '''.lstrip('\n')
+      )
     self.deps.main_repo.add_dep('upstream')
     with self.deps.main_repo.edit_recipes_cfg_pb2() as pb:
       pb.forbidden_warnings.append('upstream/DEMO_WARNING')
@@ -896,13 +950,15 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     upstream.commit('add my_mod module')
 
     with self.deps.main_repo.write_file('recipes/bad.py') as recipe:
-      recipe.write('''
+      recipe.write(
+        '''
         DEPS = ['upstream/my_mod']
         def RunSteps(api):
           api.my_mod.nop()
         def GenTests(api):
           yield api.test('basic')
-      '''.lstrip('\n'))
+      '''.lstrip('\n')
+      )
     self.deps.main_repo.add_dep('upstream')
     with self.deps.main_repo.edit_recipes_cfg_pb2() as pb:
       pb.forbidden_warnings.append('upstream/FAKE_WARNING')
@@ -910,12 +966,16 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
 
     output, retcode = self.deps.main_repo.recipes_py('test', 'train')
     self.assertEqual(retcode, 0)
-    msg = textwrap.dedent(r'''
+    msg = (
+      textwrap.dedent(r'''
     These warnings were listed in //infra/config/recipes.cfg
     as forbidden_warnings, but the upstream repos no longer
     generate them. They are safe to remove from recipes.cfg:
     \t* upstream/FAKE_WARNING
-    ''').strip('\n').replace(r'\t', '\t')
+    ''')
+      .strip('\n')
+      .replace(r'\t', '\t')
+    )
     self.assertIn(msg, output)
 
 

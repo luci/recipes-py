@@ -28,29 +28,32 @@ class EnvAffix:
 
   This is used as StepConfig's "env_prefixes" and "env_suffixes" value.
   """
+
   mapping: engine_types.FrozenDict[str, tuple[str, ...]] = attr.ib(
-      factory=dict,
-      validator=attr_util.attr_dict_type(str, str, value_seq=True))
+    factory=dict, validator=attr_util.attr_dict_type(str, str, value_seq=True)
+  )
   pathsep: str | None = attr.ib(
-      default=None, validator=attr_util.attr_type((str, type(None))))
+    default=None, validator=attr_util.attr_type((str, type(None)))
+  )
 
   def __attrs_post_init__(self) -> None:
     object.__setattr__(self, 'mapping', engine_types.freeze(self.mapping))
 
 
 def _file_placeholder(
-    base_placeholder_type: type[util.Placeholder],
+  base_placeholder_type: type[util.Placeholder],
 ) -> list[Callable[[Any, Any, Any], None]]:
   """Returns a attr validator for StepConfig.stdin/stdout/stderr."""
   return [
     attr_util.attr_type((str, base_placeholder_type, type(None))),
     attr_util.attr_value_is(
-        'backed by a file',
-        lambda value: (
-          value is None or isinstance(value, str) or
-          value.backing_file is not util.Placeholder.backing_file
-        )
-    )
+      'backed by a file',
+      lambda value: (
+        value is None
+        or isinstance(value, str)
+        or value.backing_file is not util.Placeholder.backing_file
+      ),
+    ),
   ]
 
 
@@ -62,6 +65,7 @@ class StepConfig:
   would need to worry about this object is if you're modifying the step module
   itself.
   """
+
   # The name of the step to run within the current namespace.
   #
   # This will be deduplicated by the recipe engine.
@@ -70,22 +74,25 @@ class StepConfig:
   # List of args of the command to run. Acceptable types: Placeholder or any
   # str()'able type.
   cmd: tuple[str | util.Placeholder, ...] = attr.ib(
-      default=(),
-      converter=(lambda value: [
-        itm if isinstance(itm, util.Placeholder) else str(itm)
-        for itm in value
-      ]),
-      validator=attr_util.attr_seq_type((str, util.Placeholder)))
+    default=(),
+    converter=(
+      lambda value: [
+        itm if isinstance(itm, util.Placeholder) else str(itm) for itm in value
+      ]
+    ),
+    validator=attr_util.attr_seq_type((str, util.Placeholder)),
+  )
 
   # Absolute path to working directory for the command.
   cwd: str | None = attr.ib(
-      default=None,
-      validator=attr_util.attr_type((str, type(None))))
+    default=None, validator=attr_util.attr_type((str, type(None)))
+  )
 
   # Step resource cost.
   cost: engine_types.ResourceCost | None = attr.ib(
-      default=None,
-      validator=attr_util.attr_type(engine_types.ResourceCost, type(None)))
+    default=None,
+    validator=attr_util.attr_type(engine_types.ResourceCost, type(None)),
+  )
 
   # Overrides for environment variables
   #
@@ -112,12 +119,14 @@ class StepConfig:
   # NOTE: Always prefer env_prefixes and env_suffixes to manually substituting
   # variables with %(envvar)s.
   env: engine_types.FrozenDict[str, str | None] = attr.ib(
-      factory=dict,
-      validator=attr_util.attr_dict_type(str, (str, type(None))))
+    factory=dict, validator=attr_util.attr_dict_type(str, (str, type(None)))
+  )
   env_prefixes: EnvAffix = attr.ib(
-      factory=EnvAffix, validator=attr_util.attr_type(EnvAffix))
+    factory=EnvAffix, validator=attr_util.attr_type(EnvAffix)
+  )
   env_suffixes: EnvAffix = attr.ib(
-      factory=EnvAffix, validator=attr_util.attr_type(EnvAffix))
+    factory=EnvAffix, validator=attr_util.attr_type(EnvAffix)
+  )
 
   # If True, lets the step emit its own @@@annotations@@@.
   #
@@ -127,7 +136,8 @@ class StepConfig:
   # step_result.presentation instead. If you have questions, please contact
   # infra-dev@chromium.org.
   allow_subannotations: bool = attr.ib(
-      default=False, validator=attr_util.attr_type(bool))
+    default=False, validator=attr_util.attr_type(bool)
+  )
 
   # The time, in seconds, that this step is allowed to run for before timing
   # out. This is calculated by adjusting the
@@ -140,10 +150,14 @@ class StepConfig:
   # available to it. If the recipe engine userspace merely adjusts
   # LUCI_CONTEXT['deadline'] then it would include the time waiting for `cost`.
   timeout: float | None = attr.ib(
-      default=None,
-      converter=(lambda val: val.total_seconds() if isinstance(
-          val, datetime.timedelta) else val),
-      validator=attr_util.attr_type((int, float, type(None))))
+    default=None,
+    converter=(
+      lambda val: (
+        val.total_seconds() if isinstance(val, datetime.timedelta) else val
+      )
+    ),
+    validator=attr_util.attr_type((int, float, type(None))),
+  )
 
   # luci_context is the mapping of modified LUCI_CONTEXT sections to their
   # respective section proto message.
@@ -151,7 +165,8 @@ class StepConfig:
   # The engine will write this delta to disk and adjust the step's LUCI_CONTEXT
   # environment variable pror to submitting it to the StepRunner for execution.
   luci_context: Mapping[str, message.Message] | None = attr.ib(
-      default=None, validator=attr_util.attr_dict_type(str, message.Message))
+    default=None, validator=attr_util.attr_dict_type(str, message.Message)
+  )
 
   # Set of return codes allowed. If the step process returns something not on
   # this list, it will raise a StepFailure (or InfraFailure if infra_step is
@@ -160,6 +175,7 @@ class StepConfig:
   # Alternatively, the sentinel StepConfig.ALL_OK can be used to allow any
   # return code.
   ok_ret: frozenset[int] | Any = attr.ib(default=(0,))
+
   @ok_ret.validator
   def _ok_ret_validator(self, attrib: Any, value: Any) -> None:
     if value is self.ALL_OK:
@@ -175,30 +191,35 @@ class StepConfig:
   # exception will be raised in the case of a canceled step regardless of the
   # value of this attribute).
   raise_on_failure: bool = attr.ib(
-      default=True, validator=attr_util.attr_type(bool))
+    default=True, validator=attr_util.attr_type(bool)
+  )
 
   # If True, this step will be created as `merge step` and run a LUCI
   # executable.
   # If "legacy" then legacy_global_namespace will also be set.
   # See: [luciexe recursive invocation](https://pkg.go.dev/go.chromium.org/luci/luciexe?tab=doc#hdr-Recursive-Invocation)
   merge_step: bool | Literal['legacy'] = attr.ib(
-      default=False,
-      validator=attr.validators.in_((True, False, "legacy")))
+    default=False, validator=attr.validators.in_((True, False, "legacy"))
+  )
 
   # If set with `merge_step`, this populates the merge_output_properties_to
   # field.
   merge_output_properties_to: list[str] | None = attr.ib(
-      default=None, validator=attr_util.attr_type((type(None), list)))
+    default=None, validator=attr_util.attr_type((type(None), list))
+  )
 
   # Standard handle redirection.
   # If None, stdin is closed and stdout/stderr are routed to the UI.
   # These placeholders require a non-default implementation of `backing_file`.
   stdin: str | util.InputPlaceholder | None = attr.ib(
-      default=None, validator=_file_placeholder(util.InputPlaceholder))
+    default=None, validator=_file_placeholder(util.InputPlaceholder)
+  )
   stdout: str | util.OutputPlaceholder | None = attr.ib(
-      default=None, validator=_file_placeholder(util.OutputPlaceholder))
+    default=None, validator=_file_placeholder(util.OutputPlaceholder)
+  )
   stderr: str | util.OutputPlaceholder | None = attr.ib(
-      default=None, validator=_file_placeholder(util.OutputPlaceholder))
+    default=None, validator=_file_placeholder(util.OutputPlaceholder)
+  )
 
   # A function returning recipe_test_api.StepTestData.
   #
@@ -206,11 +227,11 @@ class StepConfig:
   # default test data for this step. The recipe author can override/augment this
   # object in the GenTests function.
   step_test_data: Callable[[], Any] | None = attr.ib(
-      default=None,
-      validator=attr_util.attr_value_is(
-          'None or callable',
-          lambda value: value is None or callable(value)))
-
+    default=None,
+    validator=attr_util.attr_value_is(
+      'None or callable', lambda value: value is None or callable(value)
+    ),
+  )
 
   def __attrs_post_init__(self) -> None:
     object.__setattr__(self, 'cmd', tuple(self.cmd))
@@ -260,10 +281,11 @@ class StepConfig:
 
     if collisions:
       raise ValueError(
-          'Found conflicting Placeholders: {!r}. Please give these placeholders'
-          ' unique "name"s and access them like `step_result.{}s[name]`.'
-          .format(list(collisions), ns_str))
-
+        'Found conflicting Placeholders: {!r}. Please give these placeholders'
+        ' unique "name"s and access them like `step_result.{}s[name]`.'.format(
+          list(collisions), ns_str
+        )
+      )
 
   # Used with to indicate that all retcodes values are acceptable.
   ALL_OK = util.sentinel('ALL_OK')

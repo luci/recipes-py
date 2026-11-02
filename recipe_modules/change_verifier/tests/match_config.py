@@ -13,9 +13,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    buildbucket,
-    change_verifier,
-    step,
+  buildbucket,
+  change_verifier,
+  step,
 )
 
 
@@ -33,8 +33,8 @@ class TEST_DEPS(RecipeTestApi):
 
 def RunSteps(api: DEPS) -> None:
   group = api.change_verifier.match_config(
-      'chromium-review.googlesource.com',
-      123456)
+    'chromium-review.googlesource.com', 123456
+  )
 
   if group:
     api.step.empty('group found')
@@ -46,17 +46,17 @@ def RunSteps(api: DEPS) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'pass',
-      api.buildbucket.ci_build(),
-      api.post_process(post_process.MustRun, 'group found'),
-      api.post_process(post_process.MustRun, 'chromium-src'),
-      api.post_process(post_process.DropExpectation),
+    'pass',
+    api.buildbucket.ci_build(),
+    api.post_process(post_process.MustRun, 'group found'),
+    api.post_process(post_process.MustRun, 'chromium-src'),
+    api.post_process(post_process.DropExpectation),
   )
 
   yield api.test(
-      'not-found',
-      api.buildbucket.ci_build(),
-      api.step_data('match-config', retcode=1),
-      api.post_process(post_process.MustRun, 'group not found'),
-      api.post_process(post_process.DropExpectation),
+    'not-found',
+    api.buildbucket.ci_build(),
+    api.step_data('match-config', retcode=1),
+    api.post_process(post_process.MustRun, 'group not found'),
+    api.post_process(post_process.DropExpectation),
   )

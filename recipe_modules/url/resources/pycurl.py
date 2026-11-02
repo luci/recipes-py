@@ -34,13 +34,13 @@ def _download(url, outfile, headers, transient_retry, strip_prefix):
   if transient_retry > 0:
     # See http://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html
     retry = Retry(
-        total=transient_retry,
-        connect=5,
-        read=5,
-        redirect=5,
-        status_forcelist=range(500, 600),
-        backoff_factor=0.2,
-        raise_on_status=False,
+      total=transient_retry,
+      connect=5,
+      read=5,
+      redirect=5,
+      status_forcelist=range(500, 600),
+      backoff_factor=0.2,
+      raise_on_status=False,
     )
     print(retry)
     s.mount(url, requests.adapters.HTTPAdapter(max_retries=retry))
@@ -63,13 +63,15 @@ def _download(url, outfile, headers, transient_retry, strip_prefix):
       total += len(chunk)
 
       if strip_prefix:
-        remaining_prefix = strip_prefix[len(loaded_prefix):]
-        round_prefix = chunk[:len(remaining_prefix)].decode()
+        remaining_prefix = strip_prefix[len(loaded_prefix) :]
+        round_prefix = chunk[: len(remaining_prefix)].decode()
         loaded_prefix += round_prefix
-        if round_prefix != remaining_prefix[:len(round_prefix)]:
-          raise ValueError('Expected prefix was not observed: %r != %r...' %
-                           (loaded_prefix, strip_prefix))
-        chunk = chunk[len(round_prefix):]
+        if round_prefix != remaining_prefix[: len(round_prefix)]:
+          raise ValueError(
+            'Expected prefix was not observed: %r != %r...'
+            % (loaded_prefix, strip_prefix)
+          )
+        chunk = chunk[len(round_prefix) :]
         if not chunk:
           continue
 
@@ -80,40 +82,45 @@ def _download(url, outfile, headers, transient_retry, strip_prefix):
   # See https://github.com/psf/requests/issues/4956
   length_str = r.headers.get('Content-Length')
   if length_str and int(length_str) != r.raw.tell():
-    raise ValueError('Expected content length: %s, downloaded: %d' %
-                     (length_str, r.raw.tell()))
+    raise ValueError(
+      'Expected content length: %s, downloaded: %d' % (length_str, r.raw.tell())
+    )
 
   return r.status_code, total
 
 
 def main():
   parser = argparse.ArgumentParser(
-      description='Get a url and print its document.',
-      prog='./runit.py pycurl.py')
+    description='Get a url and print its document.', prog='./runit.py pycurl.py'
+  )
   parser.add_argument('--url', required=True, help='the url to fetch')
   parser.add_argument(
-      '--status-json',
-      metavar='PATH',
-      required=True,
-      help='Write HTTP status result JSON. If set, all complete HTTP '
-      'responses will exit with 0, regardless of their status code.')
+    '--status-json',
+    metavar='PATH',
+    required=True,
+    help='Write HTTP status result JSON. If set, all complete HTTP '
+    'responses will exit with 0, regardless of their status code.',
+  )
 
   parser.add_argument(
-      '--transient-retry',
-      type=int,
-      default=10,
-      help='Number of retry attempts (with exponential backoff) to make on '
-      'transient failure (default is %(default)s).')
+    '--transient-retry',
+    type=int,
+    default=10,
+    help='Number of retry attempts (with exponential backoff) to make on '
+    'transient failure (default is %(default)s).',
+  )
   parser.add_argument(
-      '--headers-json',
-      type=argparse.FileType('r'),
-      help='A json file containing any headers to include with the request.')
+    '--headers-json',
+    type=argparse.FileType('r'),
+    help='A json file containing any headers to include with the request.',
+  )
   parser.add_argument('--outfile', help='write output to this file')
   parser.add_argument(
-      '--strip-prefix',
-      action='store',
-      type=json.loads,
-      help='Expect this string at the beginning of the response, and strip it.')
+    '--strip-prefix',
+    action='store',
+    type=json.loads,
+    help='Expect this string at the beginning of the response, and strip it.',
+  )
 
   args = parser.parse_args()
 
@@ -122,26 +129,29 @@ def main():
     headers = json.load(args.headers_json)
 
   if args.strip_prefix and len(args.strip_prefix) > CHUNK_SIZE:
-    raise ValueError('Prefix length (%d) must be <= chunk size (%d)' %
-                     (len(args.strip_prefix), CHUNK_SIZE))
+    raise ValueError(
+      'Prefix length (%d) must be <= chunk size (%d)'
+      % (len(args.strip_prefix), CHUNK_SIZE)
+    )
 
   status = {}
   try:
-    status_code, size = _download(args.url, args.outfile, headers,
-                                  args.transient_retry, args.strip_prefix)
+    status_code, size = _download(
+      args.url, args.outfile, headers, args.transient_retry, args.strip_prefix
+    )
     status = {
-        'status_code': status_code,
-        'success': True,
-        'size': size,
-        'error_body': None,
+      'status_code': status_code,
+      'success': True,
+      'size': size,
+      'error_body': None,
     }
   except requests.HTTPError as e:
     body = e.response.text
     status = {
-        'status_code': e.response.status_code,
-        'success': False,
-        'size': len(body),
-        'error_body': body,
+      'status_code': e.response.status_code,
+      'success': False,
+      'size': len(body),
+      'error_body': body,
     }
 
   with open(args.status_json, 'w') as fd:

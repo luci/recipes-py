@@ -35,46 +35,57 @@ from typing import Any
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
   parser.add_argument(
-      '--include-test-recipes',
-      action='store_true',
-      help=(
-        'If set along with --include-dependants, will also include recipes '
-        'under the examples/ and tests/ folders of recipe modules.'))
+    '--include-test-recipes',
+    action='store_true',
+    help=(
+      'If set along with --include-dependants, will also include recipes '
+      'under the examples/ and tests/ folders of recipe modules.'
+    ),
+  )
 
   parser.add_argument(
-      '--include-dependants',
-      action='store_true',
-      help=(
-        'If set, finds all recipes which transitively depend on the given '
-        'module before walking all dependencies. No-op when specifying a '
-        'recipe rather than a module.'))
+    '--include-dependants',
+    action='store_true',
+    help=(
+      'If set, finds all recipes which transitively depend on the given '
+      'module before walking all dependencies. No-op when specifying a '
+      'recipe rather than a module.'
+    ),
+  )
 
   parser.add_argument(
-      '--json-output',
-      help=('Writes the Deps proto message as JSONPB to this `file`. '
-            'If this is "-", then it writes to stdout.'))
+    '--json-output',
+    help=(
+      'Writes the Deps proto message as JSONPB to this `file`. '
+      'If this is "-", then it writes to stdout.'
+    ),
+  )
 
   parser.add_argument(
-      'recipe_or_module',
-      help=('The fully-qualified recipe (`$repo::recipe`, '
-            '`$repo::module:path/recipe`) or module (`$repo/module`).'
-            'As a shorthand, the current repo can be indicated with an '
-            'empty `$repo` (i.e. `::recipe`, `/module`). Use `*` to include'
-            ' everything.'))
+    'recipe_or_module',
+    help=(
+      'The fully-qualified recipe (`$repo::recipe`, '
+      '`$repo::module:path/recipe`) or module (`$repo/module`).'
+      'As a shorthand, the current repo can be indicated with an '
+      'empty `$repo` (i.e. `::recipe`, `/module`). Use `*` to include'
+      ' everything.'
+    ),
+  )
 
   def _launch(args: argparse.Namespace) -> int | None:
     from . import cmd
+
     return cmd.main(args)
 
   def _postprocess_func(
-      error: Callable[[str], Any],
-      args: argparse.Namespace,
+    error: Callable[[str], Any],
+    args: argparse.Namespace,
   ) -> None:
     rom = args.recipe_or_module
     if not (rom == '*' or '/' in rom or '::' in rom):
       error('recipe_or_module must be fully qualified (or `*`).')
 
   parser.set_defaults(
-      func=_launch,
-      postprocess_func=_postprocess_func,
+    func=_launch,
+    postprocess_func=_postprocess_func,
   )

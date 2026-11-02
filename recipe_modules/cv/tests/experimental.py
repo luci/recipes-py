@@ -13,10 +13,10 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    cv,
-    properties,
-    step,
+  assertions,
+  cv,
+  properties,
+  step,
 )
 
 
@@ -42,19 +42,29 @@ def RunSteps(api: DEPS) -> None:
       api.cv.top_level
     return
 
-  api.assertions.assertEqual(api.cv.experimental, 'expected_experimental'
-                             in api.properties)
-  api.assertions.assertEqual(api.cv.top_level, 'expected_top_level'
-                             in api.properties)
+  api.assertions.assertEqual(
+    api.cv.experimental, 'expected_experimental' in api.properties
+  )
+  api.assertions.assertEqual(
+    api.cv.top_level, 'expected_top_level' in api.properties
+  )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
-  yield (api.test('default') + api.cv(run_mode=api.cv.FULL_RUN) +
-         api.properties(expected_top_level=True) +
-         api.post_process(post_process.DropExpectation))
-  yield (api.test('indirect and experimental') +
-         api.cv(run_mode=api.cv.FULL_RUN, top_level=False, experimental=True) +
-         api.properties(expected_experimental=True) +
-         api.post_process(post_process.DropExpectation))
-  yield (api.test('not a CQ run') + api.properties(raises=True) +
-         api.post_process(post_process.DropExpectation))
+  yield (
+    api.test('default')
+    + api.cv(run_mode=api.cv.FULL_RUN)
+    + api.properties(expected_top_level=True)
+    + api.post_process(post_process.DropExpectation)
+  )
+  yield (
+    api.test('indirect and experimental')
+    + api.cv(run_mode=api.cv.FULL_RUN, top_level=False, experimental=True)
+    + api.properties(expected_experimental=True)
+    + api.post_process(post_process.DropExpectation)
+  )
+  yield (
+    api.test('not a CQ run')
+    + api.properties(raises=True)
+    + api.post_process(post_process.DropExpectation)
+  )

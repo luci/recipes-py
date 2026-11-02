@@ -9,14 +9,14 @@ from PB.recipe_modules.recipe_engine.cas import properties
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from RECIPE_MODULES.recipe_engine import (
-    cipd,
-    context,
-    file,
-    json,
-    path,
-    raw_io,
-    runtime,
-    step,
+  cipd,
+  context,
+  file,
+  json,
+  path,
+  raw_io,
+  runtime,
+  step,
 )
 
 
@@ -30,6 +30,7 @@ class DEPS(RecipeScriptApi):
   raw_io: raw_io.API
   runtime: runtime.API
   step: step.API
+
 
 ENV_PROPERTIES = properties.EnvProperties
 

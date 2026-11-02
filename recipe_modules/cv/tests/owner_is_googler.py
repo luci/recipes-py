@@ -13,10 +13,10 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    buildbucket,
-    cv,
-    properties,
+  assertions,
+  buildbucket,
+  cv,
+  properties,
 )
 
 
@@ -36,25 +36,37 @@ class TEST_DEPS(RecipeTestApi):
 
 
 def RunSteps(api: DEPS) -> None:
-  api.assertions.assertEqual(api.cv.owner_is_googler,
-                             api.properties['expected_owner_is_googler'])
+  api.assertions.assertEqual(
+    api.cv.owner_is_googler, api.properties['expected_owner_is_googler']
+  )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
-  yield (api.test('default') + api.cv(run_mode=api.cv.FULL_RUN) +
-         api.buildbucket.try_build(project='chrome') +
-         api.properties(expected_owner_is_googler=False) +
-         api.post_process(post_process.DropExpectation))
-  yield (api.test('is googler') +
-         api.cv(run_mode=api.cv.FULL_RUN, owner_is_googler=True) +
-         api.buildbucket.try_build(project='chrome') +
-         api.properties(expected_owner_is_googler=True) +
-         api.post_process(post_process.DropExpectation))
-  yield (api.test('chrome-branch-project') + api.cv(run_mode=api.cv.FULL_RUN) +
-         api.buildbucket.try_build(project='chrome-m100') +
-         api.properties(expected_owner_is_googler=False) +
-         api.post_process(post_process.DropExpectation))
-  yield (api.test('raise if not Chrome') + api.cv(run_mode=api.cv.FULL_RUN) +
-         api.buildbucket.try_build(project='infra') +
-         api.expect_exception('ValueError') +
-         api.post_process(post_process.DropExpectation))
+  yield (
+    api.test('default')
+    + api.cv(run_mode=api.cv.FULL_RUN)
+    + api.buildbucket.try_build(project='chrome')
+    + api.properties(expected_owner_is_googler=False)
+    + api.post_process(post_process.DropExpectation)
+  )
+  yield (
+    api.test('is googler')
+    + api.cv(run_mode=api.cv.FULL_RUN, owner_is_googler=True)
+    + api.buildbucket.try_build(project='chrome')
+    + api.properties(expected_owner_is_googler=True)
+    + api.post_process(post_process.DropExpectation)
+  )
+  yield (
+    api.test('chrome-branch-project')
+    + api.cv(run_mode=api.cv.FULL_RUN)
+    + api.buildbucket.try_build(project='chrome-m100')
+    + api.properties(expected_owner_is_googler=False)
+    + api.post_process(post_process.DropExpectation)
+  )
+  yield (
+    api.test('raise if not Chrome')
+    + api.cv(run_mode=api.cv.FULL_RUN)
+    + api.buildbucket.try_build(project='infra')
+    + api.expect_exception('ValueError')
+    + api.post_process(post_process.DropExpectation)
+  )

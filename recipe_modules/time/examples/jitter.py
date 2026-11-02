@@ -14,10 +14,10 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    properties,
-    step,
-    time,
+  assertions,
+  properties,
+  step,
+  time,
 )
 
 
@@ -33,6 +33,7 @@ class DEPS(RecipeScriptApi):
 class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
 
+
 INLINE_PROPERTIES_PROTO = """
 message JitterProps {
   float random_output = 1;
@@ -45,30 +46,33 @@ PROPERTIES = jitter_pb2.JitterProps
 
 def RunSteps(api: DEPS, properties: jitter_pb2.JitterProps) -> None:
   random_func = lambda: properties.random_output
-  jittered_time = api.time._jitter(100, .10, random_func)
+  jittered_time = api.time._jitter(100, 0.10, random_func)
   api.assertions.assertEqual(
     properties.expected_outcome,
     # Rounded because integer math is hard (it was returning 99.999999).
-    round(jittered_time)
+    round(jittered_time),
   )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'low-end',
-      api.properties(
-          jitter_pb2.JitterProps(random_output=0, expected_outcome=90)),
-      api.post_process(post_process.DropExpectation),
+    'low-end',
+    api.properties(
+      jitter_pb2.JitterProps(random_output=0, expected_outcome=90)
+    ),
+    api.post_process(post_process.DropExpectation),
   )
   yield api.test(
-      'middle',
-      api.properties(
-          jitter_pb2.JitterProps(random_output=.5, expected_outcome=100)),
-      api.post_process(post_process.DropExpectation),
+    'middle',
+    api.properties(
+      jitter_pb2.JitterProps(random_output=0.5, expected_outcome=100)
+    ),
+    api.post_process(post_process.DropExpectation),
   )
   yield api.test(
-      'high-end',
-      api.properties(
-          jitter_pb2.JitterProps(random_output=1, expected_outcome=110)),
-      api.post_process(post_process.DropExpectation),
+    'high-end',
+    api.properties(
+      jitter_pb2.JitterProps(random_output=1, expected_outcome=110)
+    ),
+    api.post_process(post_process.DropExpectation),
   )

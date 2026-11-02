@@ -33,37 +33,53 @@ def RunSteps(api: DEPS) -> None:
   api.step('zero step', ['echo', 'hi'], cost=None)
 
   api.step('default step', ['echo', 'hi'])
-  api.step('max cpu step', ['echo', 'hi'],
-           cost=api.step.ResourceCost(cpu=api.step.MAX_CPU))
-  api.step('max memory step', ['echo', 'hi'],
-           cost=api.step.ResourceCost(memory=api.step.MAX_MEMORY))
-  api.step('over-max step', ['echo', 'hi'],
-           cost=api.step.ResourceCost(
-               cpu=api.step.MAX_CPU*2, memory=api.step.MAX_MEMORY*2))
+  api.step(
+    'max cpu step',
+    ['echo', 'hi'],
+    cost=api.step.ResourceCost(cpu=api.step.MAX_CPU),
+  )
+  api.step(
+    'max memory step',
+    ['echo', 'hi'],
+    cost=api.step.ResourceCost(memory=api.step.MAX_MEMORY),
+  )
+  api.step(
+    'over-max step',
+    ['echo', 'hi'],
+    cost=api.step.ResourceCost(
+      cpu=api.step.MAX_CPU * 2, memory=api.step.MAX_MEMORY * 2
+    ),
+  )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (
     api.test('basic')
-    + api.post_check(lambda check, steps: check(
-        steps['parent step'].cost is None
-    ))
-    + api.post_check(lambda check, steps: check(
-        steps['null step'].cost is None
-    ))
-    + api.post_check(lambda check, steps: check(
-        steps['zero step'].cost == ResourceCost.zero()
-    ))
-    + api.post_check(lambda check, steps: check(
-        steps['default step'].cost == ResourceCost()
-    ))
-    + api.post_check(lambda check, steps: check(
+    + api.post_check(
+      lambda check, steps: check(steps['parent step'].cost is None)
+    )
+    + api.post_check(
+      lambda check, steps: check(steps['null step'].cost is None)
+    )
+    + api.post_check(
+      lambda check, steps: check(steps['zero step'].cost == ResourceCost.zero())
+    )
+    + api.post_check(
+      lambda check, steps: check(steps['default step'].cost == ResourceCost())
+    )
+    + api.post_check(
+      lambda check, steps: check(
         steps['max cpu step'].cost == ResourceCost(cpu=8 * 1000)
-    ))
-    + api.post_check(lambda check, steps: check(
+      )
+    )
+    + api.post_check(
+      lambda check, steps: check(
         steps['max memory step'].cost == ResourceCost(memory=16384)
-    ))
-    + api.post_check(lambda check, steps: check(
+      )
+    )
+    + api.post_check(
+      lambda check, steps: check(
         steps['over-max step'].cost == ResourceCost(cpu=8 * 1000, memory=16384)
-    ))
+      )
+    )
   )

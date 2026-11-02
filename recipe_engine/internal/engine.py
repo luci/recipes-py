@@ -57,12 +57,14 @@ MAX_SUMMARY_MARKDOWN_SIZE = engine_types.MAX_SUMMARY_MARKDOWN_SIZE
 @attr.s(frozen=True, slots=True, repr=False)
 class _ActiveStep:
   """The object type that we keep in RecipeEngine._step_stack."""
+
   step_data: step_data_mod.StepData | None = attr.ib()
   step_stream: stream_mod.StepStream | None = attr.ib()
   is_parent: bool = attr.ib()
 
   children_presentations: list[engine_types.StepPresentation] = attr.ib(
-      factory=list)
+    factory=list
+  )
   greenlets: list[gevent.Greenlet] = attr.ib(factory=list)
 
   def close(self) -> None:
@@ -84,6 +86,7 @@ class _MemoryProfiler:
   execute steps in parallel, the implementation needs to be re-evaluated to
   ensure the atomicity of snapshot operation
   """
+
   def __init__(self, initial_snapshot_name: str = 'Bootstrap') -> None:
     self._current_snapshot_name = initial_snapshot_name
     self._diff_snapshot = False
@@ -101,14 +104,22 @@ class _MemoryProfiler:
     last_snapshot_name = self._current_snapshot_name
     self._current_snapshot_name = snapshot_name
     if self._diff_snapshot:
-      yield ((
-        '-------- Diff between current snapshot (%s) and last snapshot (%s) '
-        'Starts --------') % (snapshot_name, last_snapshot_name))
+      yield (
+        (
+          '-------- Diff between current snapshot (%s) and last snapshot (%s) '
+          'Starts --------'
+        )
+        % (snapshot_name, last_snapshot_name)
+      )
       diff = self._tracker.diff(summary1=memsum)
       yield from summary.format_(diff)
-      yield ((
-        '-------- Diff between current snapshot (%s) and last snapshot (%s) '
-        'Ends --------') % (snapshot_name, last_snapshot_name))
+      yield (
+        (
+          '-------- Diff between current snapshot (%s) and last snapshot (%s) '
+          'Ends --------'
+        )
+        % (snapshot_name, last_snapshot_name)
+      )
     else:
       # create_summary() won't make the return value latest summary in the
       # underlying tracker. Manually moving it forward
@@ -147,16 +158,16 @@ class RecipeEngine:
   """
 
   def __init__(
-      self,
-      recipe_deps: recipe_deps_mod.RecipeDeps,
-      step_runner: step_runner_mod.StepRunner,
-      stream_engine: stream_mod.StreamEngine,
-      properties: Mapping[str, Any],
-      environ: Mapping[str, str] | engine_env.FakeEnviron,
-      start_dir: str,
-      initial_luci_context: Mapping[str, Any],
-      num_logical_cores: int,
-      memory_mb: int,
+    self,
+    recipe_deps: recipe_deps_mod.RecipeDeps,
+    step_runner: step_runner_mod.StepRunner,
+    stream_engine: stream_mod.StreamEngine,
+    properties: Mapping[str, Any],
+    environ: Mapping[str, str] | engine_env.FakeEnviron,
+    start_dir: str,
+    initial_luci_context: Mapping[str, Any],
+    num_logical_cores: int,
+    memory_mb: int,
   ) -> None:
     """See run_steps() for parameter meanings."""
     self._recipe_deps = recipe_deps
@@ -166,20 +177,27 @@ class RecipeEngine:
     self._engine_properties = _get_engine_properties(properties)
     self._environ = environ
     self._start_dir = start_dir
-    self._clients: dict[str, Any] = {client.IDENT: client for client in (
+    self._clients: dict[str, Any] = {
+      client.IDENT: client
+      for client in (
         recipe_api.ConcurrencyClient(
-            stream_engine.supports_concurrency,
-            self.spawn_greenlet),
+          stream_engine.supports_concurrency, self.spawn_greenlet
+        ),
         recipe_api.LUCIContextClient(initial_luci_context),
         recipe_api.PathsClient(start_dir),
         recipe_api.PropertiesClient(properties),
         recipe_api.StepClient(self),
-    )}
+      )
+    }
 
     self._resource = resource_semaphore.ResourceWaiter(
-        num_logical_cores * 1000, memory_mb)
-    self._memory_profiler = _MemoryProfiler() if (
-        self._engine_properties.memory_profiler.enable_snapshot) else None
+      num_logical_cores * 1000, memory_mb
+    )
+    self._memory_profiler = (
+      _MemoryProfiler()
+      if (self._engine_properties.memory_profiler.enable_snapshot)
+      else None
+    )
 
     # A greenlet-local store which holds a stack of _ActiveStep objects, holding
     # the most recently executed step at each nest level (objects deeper in the
@@ -195,8 +213,10 @@ class RecipeEngine:
 
       def _get_setter_on_spawn(self) -> Callable[[], None]:
         tip_step = self.steps[-1]
+
         def _inner() -> None:
           self.steps = [tip_step]
+
         return _inner
 
     self._step_stack_storage = StepStack()
@@ -234,7 +254,7 @@ class RecipeEngine:
     raise ValueError('Unknown requirement type [%s]' % (req._typ,))
 
   def initialize_path_client_HACK(
-      self, root_api: recipe_api.RecipeScriptApi
+    self, root_api: recipe_api.RecipeScriptApi
   ) -> None:
     """This is a hack; the "PathsClient" currently works to provide a reverse
     string->Path lookup by walking down the recipe's `api` object and calling
@@ -272,11 +292,11 @@ class RecipeEngine:
     return self._step_stack[-1].step_data
 
   def spawn_greenlet(
-      self,
-      func: Callable[..., Any],
-      args: Sequence[Any],
-      kwargs: Mapping[str, Any],
-      greenlet_name: str | None,
+    self,
+    func: Callable[..., Any],
+    args: Sequence[Any],
+    kwargs: Mapping[str, Any],
+    greenlet_name: str | None,
   ) -> gevent.Greenlet:
     """Returns a gevent.Greenlet which has been initialized with the correct
     greenlet-local-storage state.
@@ -288,11 +308,12 @@ class RecipeEngine:
     self.close_non_parent_step()
 
     to_run = [
-        pgs._get_setter_on_spawn()
-        for pgs in engine_types.PerGreentletStateRegistry
+      pgs._get_setter_on_spawn()
+      for pgs in engine_types.PerGreentletStateRegistry
     ]
 
     current_step = self._step_stack[-1]
+
     def _runner() -> Any:
       for fn in to_run:
         fn()
@@ -300,6 +321,7 @@ class RecipeEngine:
         return func(*args, **kwargs)
       finally:
         self.close_non_parent_step()
+
     ret = gevent.spawn(_runner)
     if greenlet_name is not None:
       ret.name = greenlet_name
@@ -342,12 +364,13 @@ class RecipeEngine:
     except:
       _log_crash(self._stream_engine, "_record_step_name(%r)" % (name,))
       raise exceptions.CrashEngine(
-          "Getting name tokens for %r failed." % (name,))
+        "Getting name tokens for %r failed." % (name,)
+      )
 
   def _write_memory_snapshot(
-      self,
-      log_stream: stream_mod.StreamEngine.Stream | None,
-      snapshot_name: str,
+    self,
+    log_stream: stream_mod.StreamEngine.Stream | None,
+    snapshot_name: str,
   ) -> None:
     """Snapshot the memory and write the result to the supplied log stream if
     the memory snapshot is enabled.
@@ -369,9 +392,9 @@ class RecipeEngine:
 
   @contextlib.contextmanager
   def parent_step(
-      self, name: str
+    self, name: str
   ) -> Iterator[
-      tuple[engine_types.StepPresentation, list[engine_types.StepPresentation]]
+    tuple[engine_types.StepPresentation, list[engine_types.StepPresentation]]
   ]:
     """Opens a parent step with the given name in the current namespace.
 
@@ -386,7 +409,8 @@ class RecipeEngine:
 
     try:
       step_data = step_data_mod.StepData(
-          name_tokens, step_data_mod.ExecutionResult(retcode=0))
+        name_tokens, step_data_mod.ExecutionResult(retcode=0)
+      )
       # TODO(iannucci): Use '|' instead of '.'
       presentation = engine_types.StepPresentation('.'.join(name_tokens))
       self._step_stack[-1].children_presentations.append(presentation)
@@ -394,14 +418,15 @@ class RecipeEngine:
       step_data.finalize()
 
       active_step = _ActiveStep(
-          step_data,
-          self._stream_engine.new_step_stream(name_tokens, False), True)
+        step_data, self._stream_engine.new_step_stream(name_tokens, False), True
+      )
       active_step.step_stream.mark_running()
       self._step_stack.append(active_step)
     except:
       _log_crash(self._stream_engine, "parent_step(%r)" % (name_tokens))
       raise exceptions.CrashEngine(
-          "Prepping parent step %r failed." % (name_tokens))
+        "Prepping parent step %r failed." % (name_tokens)
+      )
 
     try:
       yield presentation, active_step.children_presentations
@@ -411,12 +436,14 @@ class RecipeEngine:
         self._step_stack.pop().close()
       except:
         _log_crash(
-            self._stream_engine, "parent_step.close(%r)" % (name_tokens,))
+          self._stream_engine, "parent_step.close(%r)" % (name_tokens,)
+        )
         raise exceptions.CrashEngine(
-            "Closing parent step %r failed." % (name_tokens,))
+          "Closing parent step %r failed." % (name_tokens,)
+        )
 
   def run_step(
-      self, step_config: engine_step.StepConfig
+    self, step_config: engine_step.StepConfig
   ) -> step_data_mod.StepData:
     """Runs a step.
 
@@ -440,16 +467,19 @@ class RecipeEngine:
     except Exception as exc:
       # Test data functions are not allowed to raise exceptions. Instead of
       # letting user code catch these, we crash the test immediately.
-      _log_crash(self._stream_engine,
-                 f"register_step_config({ret.name}): {exc}")
+      _log_crash(
+        self._stream_engine, f"register_step_config({ret.name}): {exc}"
+      )
       raise exceptions.CrashEngine(
-          f"Registering step_config failed for {ret.name}: {exc}")
+        f"Registering step_config failed for {ret.name}: {exc}"
+      )
 
     step_stream = self._stream_engine.new_step_stream(
-        name_tokens,
-        step_config.allow_subannotations,
-        merge_step=step_config.merge_step,
-        merge_output_properties_to=step_config.merge_output_properties_to)
+      name_tokens,
+      step_config.allow_subannotations,
+      merge_step=step_config.merge_step,
+      merge_output_properties_to=step_config.merge_output_properties_to,
+    )
     caught = None
     try:
       # initialize presentation to show an exception.
@@ -472,21 +502,30 @@ class RecipeEngine:
         if global_shutdown.GLOBAL_SHUTDOWN.ready():
           debug_log = step_stream.new_log_stream('$debug')
           debug_log.write_line('GLOBAL_SHUTDOWN already active, skipping step.')
-          step_stream.mark_running()   # to set start time, etc.
+          step_stream.mark_running()  # to set start time, etc.
           raise gevent.GreenletExit()
 
         def _if_blocking() -> None:
           step_stream.set_summary_markdown(
-              'Waiting for resources: `%s`' % (step_config.cost,))
+            'Waiting for resources: `%s`' % (step_config.cost,)
+          )
+
         with self._resource.wait_for(step_config.cost, _if_blocking):
           debug_log = step_stream.new_log_stream('$debug')
           step_stream.mark_running()
           try:
             self._write_memory_snapshot(
-              debug_log, 'Step: %s' % '.'.join(name_tokens))
+              debug_log, 'Step: %s' % '.'.join(name_tokens)
+            )
             caught = _run_step(
-                debug_log, ret, step_stream, self._step_runner, step_config,
-                self._environ, self._start_dir)
+              debug_log,
+              ret,
+              step_stream,
+              self._step_runner,
+              step_config,
+              self._environ,
+              self._start_dir,
+            )
           finally:
             # NOTE: See the accompanying note in stream.py.
             step_stream.reset_subannotation_state()
@@ -499,10 +538,12 @@ class RecipeEngine:
       ret.finalize()
 
       if step_config.merge_step:
-        _update_merge_step_presentation(ret.presentation,
-                                        ret.step.sub_build,
-                                        step_stream.user_namespace,
-                                        step_config.infra_step)
+        _update_merge_step_presentation(
+          ret.presentation,
+          ret.step.sub_build,
+          step_stream.user_namespace,
+          step_config.infra_step,
+        )
 
       # If there's a buffered exception, we raise it now.
       if caught:
@@ -516,32 +557,38 @@ class RecipeEngine:
       del caught
 
   def _setup_build_step(
-      self, recipe: str, emit_initial_properties: bool
+    self, recipe: str, emit_initial_properties: bool
   ) -> None:
     with self._stream_engine.new_step_stream(('setup_build',), False) as step:
       step.mark_running()
       if emit_initial_properties:
         for key in sorted(self.properties):
           step.set_build_property(
-              key, json.dumps(self.properties[key], sort_keys=True))
+            key, json.dumps(self.properties[key], sort_keys=True)
+          )
 
       run_recipe_help_lines = [
-          'To repro this locally, run the following line from the root of a %r'
-            ' checkout:' % (self._recipe_deps.main_repo.name),
-          '',
-          '%s run --properties-file - %s <<EOF' % (
-              os.path.join(
-                  '.', self._recipe_deps.main_repo.simple_cfg.recipes_path,
-                  'recipes.py'),
-              recipe),
+        'To repro this locally, run the following line from the root of a %r'
+        ' checkout:' % (self._recipe_deps.main_repo.name),
+        '',
+        '%s run --properties-file - %s <<EOF'
+        % (
+          os.path.join(
+            '.',
+            self._recipe_deps.main_repo.simple_cfg.recipes_path,
+            'recipes.py',
+          ),
+          recipe,
+        ),
       ]
       run_recipe_help_lines.extend(
-          json.dumps(self.properties, indent=2).splitlines())
+        json.dumps(self.properties, indent=2).splitlines()
+      )
       run_recipe_help_lines += [
-          'EOF',
-          '',
-          'To run on Windows, you can put the JSON in a file and redirect the',
-          'contents of the file into run_recipe.py, with the < operator.',
+        'EOF',
+        '',
+        'To run on Windows, you can put the JSON in a file and redirect the',
+        'contents of the file into run_recipe.py, with the < operator.',
       ]
 
       with step.new_log_stream('run_recipe') as log:
@@ -553,35 +600,37 @@ class RecipeEngine:
 
       step.write_line('Running recipe with %s' % (self.properties,))
       py_ver = '%d.%d.%d' % (
-          sys.version_info.major,
-          sys.version_info.minor,
-          sys.version_info.micro,
+        sys.version_info.major,
+        sys.version_info.minor,
+        sys.version_info.micro,
       )
-      step.add_step_text('running recipe: "%s" with Python %s' % (
-          recipe, py_ver))
+      step.add_step_text(
+        'running recipe: "%s" with Python %s' % (recipe, py_ver)
+      )
 
   @classmethod
   def run_steps(
-      cls,
-      recipe_deps: recipe_deps_mod.RecipeDeps,
-      properties: Mapping[str, Any],
-      stream_engine: stream_mod.StreamEngine,
-      step_runner: step_runner_mod.StepRunner,
-      environ: Mapping[str, str] | engine_env.FakeEnviron,
-      cwd: str,
-      initial_luci_context: Mapping[str, Any],
-      num_logical_cores: int,
-      memory_mb: int,
-      emit_initial_properties: bool = False,
-      test_data: recipe_test_api.BaseTestData | None = None,
-      skip_setup_build: bool = False,
+    cls,
+    recipe_deps: recipe_deps_mod.RecipeDeps,
+    properties: Mapping[str, Any],
+    stream_engine: stream_mod.StreamEngine,
+    step_runner: step_runner_mod.StepRunner,
+    environ: Mapping[str, str] | engine_env.FakeEnviron,
+    cwd: str,
+    initial_luci_context: Mapping[str, Any],
+    num_logical_cores: int,
+    memory_mb: int,
+    emit_initial_properties: bool = False,
+    test_data: recipe_test_api.BaseTestData | None = None,
+    skip_setup_build: bool = False,
   ) -> tuple[
-      result_pb.RawResult,
-      tuple[
-          type[BaseException] | None,
-          BaseException | None,
-          types.TracebackType | None,
-      ] | None,
+    result_pb.RawResult,
+    tuple[
+      type[BaseException] | None,
+      BaseException | None,
+      types.TracebackType | None,
+    ]
+    | None,
   ]:
     """Runs a recipe (given by the 'recipe' property). Used by all
     implementations including the simulator.
@@ -628,9 +677,16 @@ class RecipeEngine:
       _ = recipe_obj.global_symbols
 
       engine = cls(
-          recipe_deps, step_runner, stream_engine,
-          properties, environ, cwd, initial_luci_context, num_logical_cores,
-          memory_mb)
+        recipe_deps,
+        step_runner,
+        stream_engine,
+        properties,
+        environ,
+        cwd,
+        initial_luci_context,
+        num_logical_cores,
+        memory_mb,
+      )
       api = recipe_obj.mk_api(engine, test_data)
       engine.initialize_path_client_HACK(api)
     except (exceptions.RecipeUsageError, ImportError, AssertionError) as ex:
@@ -661,25 +717,29 @@ class RecipeEngine:
           # Notify user that they used the wrong recipe return type.
           elif not isinstance(raw_result, result_pb.RawResult):
             result.status = common_pb.FAILURE
-            result.summary_markdown = ('"%r" is not a valid return type for '
-            'recipes. Did you mean to use "RawResult"?' % (type(raw_result), ))
-          elif len(raw_result.summary_markdown.encode(
-              'utf-8')) > MAX_SUMMARY_MARKDOWN_SIZE:
+            result.summary_markdown = (
+              '"%r" is not a valid return type for '
+              'recipes. Did you mean to use "RawResult"?' % (type(raw_result),)
+            )
+          elif (
+            len(raw_result.summary_markdown.encode('utf-8'))
+            > MAX_SUMMARY_MARKDOWN_SIZE
+          ):
             result.status = common_pb.FAILURE
             result.summary_markdown = (
-                f'summary_markdown is greater than {MAX_SUMMARY_MARKDOWN_SIZE} '
-                f'bytes ({len(raw_result.summary_markdown.encode("utf-8"))} > '
-                f'{MAX_SUMMARY_MARKDOWN_SIZE})')
+              f'summary_markdown is greater than {MAX_SUMMARY_MARKDOWN_SIZE} '
+              f'bytes ({len(raw_result.summary_markdown.encode("utf-8"))} > '
+              f'{MAX_SUMMARY_MARKDOWN_SIZE})'
+            )
           else:
             result.CopyFrom(raw_result)
         finally:
           # TODO(iannucci): give this more symmetry with parent_step
           engine.close_non_parent_step()
-          engine._step_stack[-1].close()   # pylint: disable=protected-access
+          engine._step_stack[-1].close()  # pylint: disable=protected-access
 
-      except * (recipe_api.StepFailure, exceptions.CancelledBuild) as ex:
+      except* (recipe_api.StepFailure, exceptions.CancelledBuild) as ex:
         if debugger.should_set_implicit_breakpoints():
-
           # =========================================================
           # DEBUG: RunSteps just exited with a StepFailure exception.
           # =========================================================
@@ -713,16 +773,14 @@ class RecipeEngine:
           # Always include the first exception.
           if i == 0:
             if len(reason.encode('utf-8')) > max_size:
-              reason = reason[:max_size - 15] + '...\n(truncated)'
+              reason = reason[: max_size - 15] + '...\n(truncated)'
             parts.append(reason)
           elif len('\n'.join([*parts, reason]).encode('utf-8')) < max_size:
             parts.append(reason)
 
           else:
             num_hidden = len(reasons) - len(parts)
-            parts.append(
-                f'\n({num_hidden}/{len(reasons)} errors truncated)'
-            )
+            parts.append(f'\n({num_hidden}/{len(reasons)} errors truncated)')
             break
 
         result.summary_markdown = '\n'.join(parts)
@@ -733,7 +791,6 @@ class RecipeEngine:
     # All other exceptions are reported to the user and are fatal.
     except Exception as ex:  # pylint: disable=broad-except
       if debugger.should_set_implicit_breakpoints():
-
         # =============================================================
         # DEBUG: RunSteps just exited with a non-StepFailure exception.
         # =============================================================
@@ -753,9 +810,9 @@ class RecipeEngine:
 
 
 def _set_initial_status(
-    presentation: engine_types.StepPresentation,
-    step_config: engine_step.StepConfig,
-    exc_result: step_data_mod.ExecutionResult,
+  presentation: engine_types.StepPresentation,
+  step_config: engine_step.StepConfig,
+  exc_result: step_data_mod.ExecutionResult,
 ) -> None:
   """Calculates and returns a StepPresentation.status value from a StepConfig
   and an ExecutionResult.
@@ -775,8 +832,10 @@ def _set_initial_status(
     presentation.status = 'EXCEPTION'
     return
 
-  if (step_config.ok_ret is step_config.ALL_OK or
-      exc_result.retcode in step_config.ok_ret):
+  if (
+    step_config.ok_ret is step_config.ALL_OK
+    or exc_result.retcode in step_config.ok_ret
+  ):
     presentation.status = 'SUCCESS'
     return
 
@@ -784,10 +843,10 @@ def _set_initial_status(
 
 
 def _update_merge_step_presentation(
-    presentation: engine_types.StepPresentation,
-    sub_build: build_pb.Build | None,
-    user_namespace: Sequence[str],
-    infra_step: bool,
+  presentation: engine_types.StepPresentation,
+  sub_build: build_pb.Build | None,
+  user_namespace: Sequence[str],
+  infra_step: bool,
 ) -> None:
   """Update the step presentation for merge step based on the result sub build.
 
@@ -807,10 +866,12 @@ def _update_merge_step_presentation(
       build proto to the provided output location.
     * The final build proto reports a non-terminal status.
   """
+
   def append_step_text(text: str) -> None:
     if presentation.step_text:
       presentation.step_text += '\n'
     presentation.step_text += text
+
   if presentation.status != 'SUCCESS':
     # Something went wrong already before we check the sub build proto.
     # Return immediately so that error is not masked.
@@ -818,12 +879,14 @@ def _update_merge_step_presentation(
   elif sub_build is None:
     presentation.status = 'EXCEPTION'
     append_step_text(
-      "Merge Step Error: Can't find the final build output for luciexe.")
+      "Merge Step Error: Can't find the final build output for luciexe."
+    )
   elif not (sub_build.status & common_pb.ENDED_MASK):
     presentation.status = 'EXCEPTION'
     append_step_text(
       'Merge Step Error: expected terminal build status of sub build; '
-      'got status: %s.' % common_pb.Status.Name(sub_build.status))
+      'got status: %s.' % common_pb.Status.Name(sub_build.status)
+    )
   else:
     presentation.status = {
       common_pb.SUCCESS: 'SUCCESS',
@@ -843,7 +906,7 @@ def _update_merge_step_presentation(
 
 
 def _get_engine_properties(
-    properties: Mapping[str, Any]
+  properties: Mapping[str, Any],
 ) -> engine_properties_pb.EngineProperties:
   """Retrieve and resurrect JSON serialized engine properties from all
   properties passed to recipe.
@@ -859,11 +922,12 @@ def _get_engine_properties(
   return jsonpb.ParseDict(
     properties.get('$recipe_engine', {}),
     engine_properties_pb.EngineProperties(),
-    ignore_unknown_fields=True)
+    ignore_unknown_fields=True,
+  )
 
 
 def _prepopulate_placeholders(
-    step_config: engine_step.StepConfig, step_data: step_data_mod.StepData
+  step_config: engine_step.StepConfig, step_data: step_data_mod.StepData
 ) -> None:
   """Pre-fills the StepData with None for every placeholder available in
   `step_config`. This is so that users don't have to worry about various
@@ -874,11 +938,11 @@ def _prepopulate_placeholders(
 
 
 def _resolve_output_placeholders(
-    debug: stream_mod.StreamEngine.Stream,
-    name_tokens: tuple[str, ...],
-    step_config: engine_step.StepConfig,
-    step_data: step_data_mod.StepData,
-    step_runner: step_runner_mod.StepRunner,
+  debug: stream_mod.StreamEngine.Stream,
+  name_tokens: tuple[str, ...],
+  step_config: engine_step.StepConfig,
+  step_data: step_data_mod.StepData,
+  step_runner: step_runner_mod.StepRunner,
 ) -> None:
   """Takes the original (unmodified by _render_placeholders) step_config and
   invokes the '.result()' method on every placeholder. This will update
@@ -895,31 +959,34 @@ def _resolve_output_placeholders(
         itm.cleanup(test_data.enabled)
       else:
         debug.write_line('  finding result of %r' % (itm,))
-        step_data.assign_placeholder(itm, itm.result(
-            step_data.presentation, test_data))
+        step_data.assign_placeholder(
+          itm, itm.result(step_data.presentation, test_data)
+        )
 
   if step_config.stdin:
     debug.write_line('  cleaning stdin: %r' % (step_config.stdin,))
     step_config.stdin.cleanup(
-        step_runner.handle_placeholder(name_tokens, 'stdin').enabled)
+      step_runner.handle_placeholder(name_tokens, 'stdin').enabled
+    )
 
   for handle in ('stdout', 'stderr'):
     placeholder = getattr(step_config, handle)
     if placeholder:
       debug.write_line('  finding result of %s: %r' % (handle, placeholder))
       test_data = step_runner.handle_placeholder(name_tokens, handle)
-      setattr(step_data, handle, placeholder.result(
-          step_data.presentation, test_data))
+      setattr(
+        step_data, handle, placeholder.result(step_data.presentation, test_data)
+      )
 
 
 def _render_config(
-    debug: stream_mod.StreamEngine.Stream,
-    name_tokens: tuple[str, ...],
-    step_config: engine_step.StepConfig,
-    step_runner: step_runner_mod.StepRunner,
-    step_stream: stream_mod.StepStream,
-    environ: Mapping[str, str] | engine_env.FakeEnviron,
-    start_dir: str,
+  debug: stream_mod.StreamEngine.Stream,
+  name_tokens: tuple[str, ...],
+  step_config: engine_step.StepConfig,
+  step_runner: step_runner_mod.StepRunner,
+  step_stream: stream_mod.StepStream,
+  environ: Mapping[str, str] | engine_env.FakeEnviron,
+  start_dir: str,
 ) -> tuple[step_runner_mod.Step | None, str | None]:
   """Returns
     * a step_runner.Step which is ready for consumption by
@@ -962,11 +1029,12 @@ def _render_config(
   # TODO(iannucci): remove second return value from merge_envs, it's not needed
   # any more.
   env, _ = engine_env.merge_envs(
-      environ,
-      step_config.env,
-      step_config.env_prefixes.mapping,
-      step_config.env_suffixes.mapping,
-      pathsep)
+    environ,
+    step_config.env,
+    step_config.env_prefixes.mapping,
+    step_config.env_suffixes.mapping,
+    pathsep,
+  )
   env.update(step_stream.env_vars)
 
   step_luci_context = step_config.luci_context
@@ -986,7 +1054,8 @@ def _render_config(
           d.soft_deadline = ideal_soft_deadline
       else:
         d = sections_pb.Deadline(
-            soft_deadline=ideal_soft_deadline, grace_period=30)
+          soft_deadline=ideal_soft_deadline, grace_period=30
+        )
       step_luci_context['deadline'] = d
 
     section_values = {
@@ -996,8 +1065,9 @@ def _render_config(
 
     if step_config.timeout:
       # the json serialization is nicer to print here
-      debug.write_line('  adjusted deadline: %r' % (
-        section_values['deadline'],))
+      debug.write_line(
+        '  adjusted deadline: %r' % (section_values['deadline'],)
+      )
 
     lctx_file = step_runner.write_luci_context(section_values)
     debug.write_line('  done: %r' % (lctx_file,))
@@ -1023,29 +1093,31 @@ def _render_config(
   if cmd0 is None:
     debug.write_line('failed to resolve cmd0')
     return step_runner_mod.Step(
-        cmd=tuple(cmd),
-        cwd=cwd,
-        env=env,
-        luci_context=step_luci_context,
-        **handles), 'cmd0 %r not found' % (cmd[0],)
-  debug.write_line('resolved cmd0: %r' % (cmd0,))
-
-  return step_runner_mod.Step(
-      cmd=(cmd0,) + tuple(cmd[1:]),
+      cmd=tuple(cmd),
       cwd=cwd,
       env=env,
       luci_context=step_luci_context,
-      **handles), None
+      **handles,
+    ), 'cmd0 %r not found' % (cmd[0],)
+  debug.write_line('resolved cmd0: %r' % (cmd0,))
+
+  return step_runner_mod.Step(
+    cmd=(cmd0,) + tuple(cmd[1:]),
+    cwd=cwd,
+    env=env,
+    luci_context=step_luci_context,
+    **handles,
+  ), None
 
 
 def _run_step(
-    debug_log: stream_mod.StreamEngine.Stream,
-    step_data: step_data_mod.StepData,
-    step_stream: stream_mod.StepStream,
-    step_runner: step_runner_mod.StepRunner,
-    step_config: engine_step.StepConfig,
-    base_environ: Mapping[str, str] | engine_env.FakeEnviron,
-    start_dir: str,
+  debug_log: stream_mod.StreamEngine.Stream,
+  step_data: step_data_mod.StepData,
+  step_stream: stream_mod.StepStream,
+  step_runner: step_runner_mod.StepRunner,
+  step_config: engine_step.StepConfig,
+  base_environ: Mapping[str, str] | engine_env.FakeEnviron,
+  start_dir: str,
 ) -> Exception | None:
   """Does all the logic to actually execute the step.
 
@@ -1074,9 +1146,11 @@ def _run_step(
   if not step_config.cmd:
     debug_log.write_line('Noop step.')
     step_data.exc_result = step_runner.run_noop(
-        step_data.name_tokens, debug_log)
-    _set_initial_status(step_data.presentation, step_config,
-                        step_data.exc_result)
+      step_data.name_tokens, debug_log
+    )
+    _set_initial_status(
+      step_data.presentation, step_config, step_data.exc_result
+    )
     return None
 
   caught = None
@@ -1095,8 +1169,14 @@ def _run_step(
 
     debug_log.write_line('Rendering input placeholders')
     rendered_step, render_err = _render_config(
-        debug_log, step_data.name_tokens, step_config, step_runner, step_stream,
-        base_environ, start_dir)
+      debug_log,
+      step_data.name_tokens,
+      step_config,
+      step_runner,
+      step_stream,
+      base_environ,
+      start_dir,
+    )
     if rendered_step is not None:
       _print_step(exc_details, rendered_step)
 
@@ -1107,29 +1187,34 @@ def _run_step(
       debug_log.write_line('Executing step')
       try:
         step_data.exc_result = step_runner.run(
-            step_data.name_tokens, debug_log, rendered_step)
+          step_data.name_tokens, debug_log, rendered_step
+        )
       except gevent.GreenletExit:
         # Greenlet was killed while running the step
-        step_data.exc_result = step_data_mod.ExecutionResult(
-            was_cancelled=True)
+        step_data.exc_result = step_data_mod.ExecutionResult(was_cancelled=True)
       if step_data.exc_result.retcode is not None:
         # Windows error codes such as 0xC0000005 and 0xC0000409 are much
         # easier to recognize and differentiate in hex.
         exc_details.write_line(
-            'Step had exit code: %s (a.k.a. 0x%08X)' % (
-              step_data.exc_result.retcode,
-              step_data.exc_result.retcode & 0xffffffff))
+          'Step had exit code: %s (a.k.a. 0x%08X)'
+          % (
+            step_data.exc_result.retcode,
+            step_data.exc_result.retcode & 0xFFFFFFFF,
+          )
+        )
 
     # Have to render presentation.status once here for the placeholders to
     # observe.
-    _set_initial_status(step_data.presentation, step_config,
-                        step_data.exc_result)
+    _set_initial_status(
+      step_data.presentation, step_config, step_data.exc_result
+    )
 
     if not render_err:
       debug_log.write_line('Resolving output placeholders')
       _resolve_output_placeholders(
-          debug_log, step_data.name_tokens, step_config, step_data, step_runner)
-  except Exception as exc:   # pylint: disable=broad-except
+        debug_log, step_data.name_tokens, step_config, step_data, step_runner
+      )
+  except Exception as exc:  # pylint: disable=broad-except
     caught = exc
     debug_log.write_line('Unhandled exception:')
     for line in traceback.format_exc().splitlines():
@@ -1174,15 +1259,16 @@ def _shell_quote(arg: str) -> str:
 
 
 def _print_step(
-    execution_log: stream_mod.StreamEngine.Stream, step: step_runner_mod.Step
+  execution_log: stream_mod.StreamEngine.Stream, step: step_runner_mod.Step
 ) -> None:
   """Prints the step command and relevant metadata.
 
   Intended to be similar to the information that Buildbot prints at the
   beginning of each non-annotator step.
   """
-  assert isinstance(step, step_runner_mod.Step), (
-      'expected Step, got {}'.format(step))
+  assert isinstance(step, step_runner_mod.Step), 'expected Step, got {}'.format(
+    step
+  )
 
   execution_log.write_line('Executing command [')
   for arg in step.cmd:
@@ -1194,8 +1280,9 @@ def _print_step(
   #
   # TODO(iannucci): Make this illegal?
   execution_log.write_line(
-      'escaped for shell: %s'
-      % ' '.join(_shell_quote(arg) for arg in step.cmd).replace('\n', '\\n'))
+    'escaped for shell: %s'
+    % ' '.join(_shell_quote(arg) for arg in step.cmd).replace('\n', '\\n')
+  )
 
   execution_log.write_line('in dir ' + step.cwd)
 
@@ -1217,7 +1304,8 @@ def _print_step(
         luci_context_header_printed = True
         execution_log.write_line('LUCI_CONTEXT:')
       execution_log.write_line(
-          '  %r: %r' % (section, jsonpb.MessageToDict(data)))
+        '  %r: %r' % (section, jsonpb.MessageToDict(data))
+      )
 
   # TODO(iannucci): print the DIFF against the original environment
   execution_log.write_line('full environment:')
@@ -1228,7 +1316,7 @@ def _print_step(
 
 
 def _log_crash(
-    stream_engine: stream_mod.StreamEngine, crash_location: str
+  stream_engine: stream_mod.StreamEngine, crash_location: str
 ) -> None:
   # Pipe is reserved for step names, but can show up when crashing in internal
   # recipe engine functions which take the step names. Replace it with "<PIPE>"
@@ -1243,4 +1331,3 @@ def _log_crash(
     for line in traceback.format_exception(exc):
       for part in line.splitlines():
         stream.write_line(part)
-

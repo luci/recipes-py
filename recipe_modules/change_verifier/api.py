@@ -30,8 +30,8 @@ _MsgT = TypeVar('_MsgT', bound=message.Message)
 from google.protobuf import json_format
 
 from PB.go.chromium.org.luci.cv.api.v0 import (
-    run as run_pb,
-    service_runs as service_runs_pb,
+  run as run_pb,
+  service_runs as service_runs_pb,
 )
 
 from recipe_engine import recipe_api
@@ -53,13 +53,17 @@ class ChangeVerifierApi(recipe_api.RecipeApi):
   GerritChangeTuple = tuple[str, int]
 
   def search_runs(
-      self,
-      project: str,
-      cls: (Sequence[GerritChangeTuple | run_pb.GerritChange]
-            | GerritChangeTuple | run_pb.GerritChange | None) = None,
-      limit: int | None = None,
-      step_name: str | None = None,
-      dev: bool = False,
+    self,
+    project: str,
+    cls: (
+      Sequence[GerritChangeTuple | run_pb.GerritChange]
+      | GerritChangeTuple
+      | run_pb.GerritChange
+      | None
+    ) = None,
+    limit: int | None = None,
+    step_name: str | None = None,
+    dev: bool = False,
   ) -> list[run_pb.Run]:
     """Searches for Runs.
 
@@ -94,14 +98,17 @@ class ChangeVerifierApi(recipe_api.RecipeApi):
         else:
           assert isinstance(cl, run_pb.GerritChange)
           gerrit_change = cl
-        assert gerrit_change.host.endswith(
-            '-review.googlesource.com'), gerrit_change.host
+        assert gerrit_change.host.endswith('-review.googlesource.com'), (
+          gerrit_change.host
+        )
         gerrit_changes.append(gerrit_change)
 
     runs = []
     input_data = service_runs_pb.SearchRunsRequest(
-        predicate=service_runs_pb.RunPredicate(
-            project=project, gerrit_changes=gerrit_changes))
+      predicate=service_runs_pb.RunPredicate(
+        project=project, gerrit_changes=gerrit_changes
+      )
+    )
 
     with self.m.step.nest(step_name or 'luci-change-verifier.SearchRuns'):
       page = 0
@@ -110,12 +117,13 @@ class ChangeVerifierApi(recipe_api.RecipeApi):
         # which includes runs and next_page_token.
         page += 1
         response = self._rpc(
-            host=self.DEV_HOST if dev else self.PROD_HOST,
-            service='cv.v0.Runs',
-            method='SearchRuns',
-            input_message=input_data,
-            output_class=service_runs_pb.SearchRunsResponse,
-            step_name="request page %d" % page)
+          host=self.DEV_HOST if dev else self.PROD_HOST,
+          service='cv.v0.Runs',
+          method='SearchRuns',
+          input_message=input_data,
+          output_class=service_runs_pb.SearchRunsResponse,
+          step_name="request page %d" % page,
+        )
         runs.extend(response.runs)
         page_token = response.next_page_token
         if not response.next_page_token:
@@ -125,13 +133,13 @@ class ChangeVerifierApi(recipe_api.RecipeApi):
     return runs[:limit]
 
   def _rpc(
-      self,
-      host: str,
-      service: str,
-      method: str,
-      input_message: message.Message,
-      output_class: type[_MsgT],
-      step_name: str | None = None,
+    self,
+    host: str,
+    service: str,
+    method: str,
+    input_message: message.Message,
+    output_class: type[_MsgT],
+    step_name: str | None = None,
   ) -> _MsgT:
     """Makes a RPC to the Change Verifier service.
 
@@ -154,11 +162,12 @@ class ChangeVerifierApi(recipe_api.RecipeApi):
     step_name = step_name or ('luci-change-verifier.' + method)
     args = ['prpc', 'call', '-format=json', host, service + '.' + method]
     step_result = self.m.step(
-        step_name,
-        args,
-        stdin=self.m.proto.input(input_message, 'JSONPB'),
-        stdout=self.m.proto.output(output_class, 'JSONPB'),
-        infra_step=True)
+      step_name,
+      args,
+      stdin=self.m.proto.input(input_message, 'JSONPB'),
+      stdout=self.m.proto.output(output_class, 'JSONPB'),
+      infra_step=True,
+    )
     return step_result.stdout
 
   @property
@@ -169,14 +178,17 @@ class ChangeVerifierApi(recipe_api.RecipeApi):
 
   @property
   def _luci_cv(self) -> config_types.Path:
-    return self.m.cipd.ensure_tool('infra/tools/luci-cv/${platform}',
-                                   self._version)
+    return self.m.cipd.ensure_tool(
+      'infra/tools/luci-cv/${platform}', self._version
+    )
 
-  def match_config(self,
-                   host: str,
-                   change: int,
-                   project: str | None = None,
-                   config_name: str = cv_api.CONFIG_FILE) -> str | None:
+  def match_config(
+    self,
+    host: str,
+    change: int,
+    project: str | None = None,
+    config_name: str = cv_api.CONFIG_FILE,
+  ) -> str | None:
     """Retrieve the applicable CV group for a given change."""
     assert host.endswith('-review.googlesource.com'), host
     assert isinstance(change, int), change
@@ -187,19 +199,19 @@ class ChangeVerifierApi(recipe_api.RecipeApi):
       change_url = f'https://{change_url}'
 
     cmd = [
-        self._luci_cv,
-        'match-config',
-        self.m.raw_io.input_text(config),
-        change_url,
+      self._luci_cv,
+      'match-config',
+      self.m.raw_io.input_text(config),
+      change_url,
     ]
 
     try:
       # TODO: b/369924790 - Switch to a JSON output option.
       step = self.m.step(
-          'match-config',
-          cmd,
-          stdout=self.m.raw_io.output_text(),
-          step_test_data=lambda: self.m.raw_io.test_api.stream_output_text('''
+        'match-config',
+        cmd,
+        stdout=self.m.raw_io.output_text(),
+        step_test_data=lambda: self.m.raw_io.test_api.stream_output_text('''
 https://chromium-review.googlesource.com/123456:
   Location: Host: chromium-review.googlesource.com, Repo: chromium/src, Ref: refs/heads/main
   Matched: chromium-src

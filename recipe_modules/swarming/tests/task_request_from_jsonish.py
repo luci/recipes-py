@@ -13,8 +13,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    swarming,
+  assertions,
+  swarming,
 )
 
 
@@ -41,24 +41,26 @@ def RunSteps(api: DEPS) -> None:
 
   # TaskSlice._from_jsonish should accept empty task properties.
   task = api.swarming.task_request_from_jsonish(
-      {'task_slices': [{
-          'properties': {}
-      }]})
+    {'task_slices': [{'properties': {}}]}
+  )
   api.assertions.assertEqual(len(task), 1)
 
   # cas_input_root.digest.size_bytes could be 0
-  task = api.swarming.task_request_from_jsonish({
-      'task_slices': [{
+  task = api.swarming.task_request_from_jsonish(
+    {
+      'task_slices': [
+        {
           'properties': {
-              'cas_input_root': {
-                  'digest': {
-                      'hash':
-                          'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
-                  }
+            'cas_input_root': {
+              'digest': {
+                'hash': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
               }
+            }
           }
-      }]
-  })
+        }
+      ]
+    }
+  )
   api.assertions.assertEqual(len(task), 1)
 
 

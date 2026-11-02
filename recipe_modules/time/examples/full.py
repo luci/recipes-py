@@ -13,12 +13,12 @@ import datetime
 
 from recipe_engine import recipe_api
 from recipe_engine.post_process import (
-    StepSuccess,
-    StepFailure,
-    StepWarning,
-    StepException,
-    DoesNotRun,
-    DropExpectation,
+  StepSuccess,
+  StepFailure,
+  StepWarning,
+  StepException,
+  DoesNotRun,
+  DropExpectation,
 )
 from RECIPE_MODULES.recipe_engine.time.api import exponential_retry
 
@@ -26,11 +26,11 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    properties,
-    runtime,
-    step,
-    time,
+  assertions,
+  properties,
+  runtime,
+  step,
+  time,
 )
 
 
@@ -51,7 +51,6 @@ class TEST_DEPS(RecipeTestApi):
 
 
 class TestClass:
-
   def __init__(self, api: DEPS) -> None:
     self.m = api
 
@@ -89,7 +88,8 @@ def RunSteps(api: DEPS) -> None:
   if api.properties.get('use_exponential_retry_from_api_no_raise_failure'):
     # Delay doesn't matter since this is a test.
     @api.time.exponential_retry(
-        5, datetime.timedelta(seconds=1), raise_on_failure=False)
+      5, datetime.timedelta(seconds=1), raise_on_failure=False
+    )
     def test_retries() -> None:
       api.step('running', None)
       raise recipe_api.StepFailure('')
@@ -99,7 +99,8 @@ def RunSteps(api: DEPS) -> None:
   if api.properties.get('use_exponential_retry_from_api_no_raise_warning'):
     # Delay doesn't matter since this is a test.
     @api.time.exponential_retry(
-        5, datetime.timedelta(seconds=1), raise_on_failure=False)
+      5, datetime.timedelta(seconds=1), raise_on_failure=False
+    )
     def test_retries() -> None:
       api.step('running', None)
       raise recipe_api.StepWarning('')
@@ -109,7 +110,8 @@ def RunSteps(api: DEPS) -> None:
   if api.properties.get('use_exponential_retry_from_api_no_raise_infra'):
     # Delay doesn't matter since this is a test.
     @api.time.exponential_retry(
-        5, datetime.timedelta(seconds=1), raise_on_failure=False)
+      5, datetime.timedelta(seconds=1), raise_on_failure=False
+    )
     def test_retries() -> None:
       api.step('running', None)
       raise recipe_api.InfraFailure('')
@@ -119,7 +121,8 @@ def RunSteps(api: DEPS) -> None:
   if api.properties.get('use_exponential_retry_from_api_no_raise_other'):
     # Delay doesn't matter since this is a test.
     @api.time.exponential_retry(
-        5, datetime.timedelta(seconds=1), raise_on_failure=False)
+      5, datetime.timedelta(seconds=1), raise_on_failure=False
+    )
     def test_retries() -> None:
       api.step('running', None)
       raise ValueError('other exception')
@@ -143,7 +146,8 @@ def RunSteps(api: DEPS) -> None:
       pass
 
   if api.properties.get(
-      "use_exponential_retry_from_import_on_helper_fn_no_api"):
+    "use_exponential_retry_from_import_on_helper_fn_no_api"
+  ):
     try:
       helper_fn_that_needs_retries("")
     except:
@@ -156,7 +160,7 @@ def RunSteps(api: DEPS) -> None:
     api.step('timeout step', ['echo', '"hello"'])
 
   with api.assertions.assertRaises(recipe_api.StepFailure):
-    api.time.timeout(seconds=-1.)
+    api.time.timeout(seconds=-1.0)
 
   # This does not actually have the intended effect of extending the timeout,
   # but it should be allowed to nest a higher timeout within a lower timeout,
@@ -172,94 +176,96 @@ def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('defaults')
 
   yield api.test(
-      'seed_and_step',
-      api.time.seed(123),
-      api.time.step(2),
+    'seed_and_step',
+    api.time.seed(123),
+    api.time.step(2),
   )
 
   yield api.test(
-      'cancel_sleep',
-      api.time.seed(123),
-      api.time.step(2),
-      api.runtime.global_shutdown_on_step('sleep 5', 'after'),
-      status='CANCELED',
+    'cancel_sleep',
+    api.time.seed(123),
+    api.time.step(2),
+    api.runtime.global_shutdown_on_step('sleep 5', 'after'),
+    status='CANCELED',
   )
 
   yield api.test(
-      'exponential_retry_from_api',
-      api.properties(use_exponential_retry_from_api=True),
-      api.post_process(StepSuccess, 'running'),
-      api.post_process(StepSuccess, 'running (2)'),
-      api.post_process(StepSuccess, 'running (3)'),
-      api.post_process(StepSuccess, 'running (4)'),
-      api.post_process(StepSuccess, 'running (5)'),
-      api.post_process(StepSuccess, 'running (6)'),
-      api.post_process(DoesNotRun, 'running (7)'),
-      api.post_process(DropExpectation),
+    'exponential_retry_from_api',
+    api.properties(use_exponential_retry_from_api=True),
+    api.post_process(StepSuccess, 'running'),
+    api.post_process(StepSuccess, 'running (2)'),
+    api.post_process(StepSuccess, 'running (3)'),
+    api.post_process(StepSuccess, 'running (4)'),
+    api.post_process(StepSuccess, 'running (5)'),
+    api.post_process(StepSuccess, 'running (6)'),
+    api.post_process(DoesNotRun, 'running (7)'),
+    api.post_process(DropExpectation),
   )
 
   yield api.test(
-      'exponential_retry_from_api_no_raise_failure',
-      api.properties(use_exponential_retry_from_api_no_raise_failure=True),
-      api.post_process(StepSuccess, 'running'),
-      api.post_process(StepSuccess, 'running (2)'),
-      api.post_process(StepSuccess, 'running (3)'),
-      api.post_process(StepSuccess, 'running (4)'),
-      api.post_process(StepSuccess, 'running (5)'),
-      api.post_process(StepFailure, 'running (6)'),
-      api.post_process(DoesNotRun, 'running (7)'),
+    'exponential_retry_from_api_no_raise_failure',
+    api.properties(use_exponential_retry_from_api_no_raise_failure=True),
+    api.post_process(StepSuccess, 'running'),
+    api.post_process(StepSuccess, 'running (2)'),
+    api.post_process(StepSuccess, 'running (3)'),
+    api.post_process(StepSuccess, 'running (4)'),
+    api.post_process(StepSuccess, 'running (5)'),
+    api.post_process(StepFailure, 'running (6)'),
+    api.post_process(DoesNotRun, 'running (7)'),
   )
 
   yield api.test(
-      'exponential_retry_from_api_no_raise_warning',
-      api.properties(use_exponential_retry_from_api_no_raise_warning=True),
-      api.post_process(StepWarning, 'running (6)'),
-      api.post_process(DoesNotRun, 'running (7)'),
+    'exponential_retry_from_api_no_raise_warning',
+    api.properties(use_exponential_retry_from_api_no_raise_warning=True),
+    api.post_process(StepWarning, 'running (6)'),
+    api.post_process(DoesNotRun, 'running (7)'),
   )
 
   yield api.test(
-      'exponential_retry_from_api_no_raise_infra',
-      api.properties(use_exponential_retry_from_api_no_raise_infra=True),
-      api.post_process(StepException, 'running (6)'),
-      api.post_process(DoesNotRun, 'running (7)'),
+    'exponential_retry_from_api_no_raise_infra',
+    api.properties(use_exponential_retry_from_api_no_raise_infra=True),
+    api.post_process(StepException, 'running (6)'),
+    api.post_process(DoesNotRun, 'running (7)'),
   )
 
   yield api.test(
-      'exponential_retry_from_api_no_raise_other',
-      api.properties(use_exponential_retry_from_api_no_raise_other=True),
-      api.post_process(StepSuccess, 'running (6)'), # Exception is raised, not caught by suppressor
-      api.post_process(DoesNotRun, 'running (7)'),
-      api.post_process(DropExpectation),
+    'exponential_retry_from_api_no_raise_other',
+    api.properties(use_exponential_retry_from_api_no_raise_other=True),
+    api.post_process(
+      StepSuccess, 'running (6)'
+    ),  # Exception is raised, not caught by suppressor
+    api.post_process(DoesNotRun, 'running (7)'),
+    api.post_process(DropExpectation),
   )
 
   yield api.test(
-      'exponential_retry_from_import_on_class_method',
-      api.properties(use_exponential_retry_from_import_on_class_method=True),
-      api.post_process(StepSuccess, 'step inside class method'),
-      api.post_process(StepSuccess, 'step inside class method (2)'),
-      api.post_process(StepSuccess, 'step inside class method (3)'),
-      api.post_process(StepSuccess, 'step inside class method (4)'),
-      api.post_process(StepSuccess, 'step inside class method (5)'),
-      api.post_process(StepSuccess, 'step inside class method (6)'),
-      api.post_process(DoesNotRun, 'step inside class method (7)'),
-      api.post_process(DropExpectation),
+    'exponential_retry_from_import_on_class_method',
+    api.properties(use_exponential_retry_from_import_on_class_method=True),
+    api.post_process(StepSuccess, 'step inside class method'),
+    api.post_process(StepSuccess, 'step inside class method (2)'),
+    api.post_process(StepSuccess, 'step inside class method (3)'),
+    api.post_process(StepSuccess, 'step inside class method (4)'),
+    api.post_process(StepSuccess, 'step inside class method (5)'),
+    api.post_process(StepSuccess, 'step inside class method (6)'),
+    api.post_process(DoesNotRun, 'step inside class method (7)'),
+    api.post_process(DropExpectation),
   )
 
   yield api.test(
-      'exponential_retry_from_import_on_helper_fn',
-      api.properties(use_exponential_retry_from_import_on_helper_fn=True),
-      api.post_process(StepSuccess, 'helper step'),
-      api.post_process(StepSuccess, 'helper step (2)'),
-      api.post_process(StepSuccess, 'helper step (3)'),
-      api.post_process(StepSuccess, 'helper step (4)'),
-      api.post_process(StepSuccess, 'helper step (5)'),
-      api.post_process(StepSuccess, 'helper step (6)'),
-      api.post_process(DoesNotRun, 'helper step (7)'),
-      api.post_process(DropExpectation),
+    'exponential_retry_from_import_on_helper_fn',
+    api.properties(use_exponential_retry_from_import_on_helper_fn=True),
+    api.post_process(StepSuccess, 'helper step'),
+    api.post_process(StepSuccess, 'helper step (2)'),
+    api.post_process(StepSuccess, 'helper step (3)'),
+    api.post_process(StepSuccess, 'helper step (4)'),
+    api.post_process(StepSuccess, 'helper step (5)'),
+    api.post_process(StepSuccess, 'helper step (6)'),
+    api.post_process(DoesNotRun, 'helper step (7)'),
+    api.post_process(DropExpectation),
   )
 
   yield api.test(
-      'exponential_retry_from_import_on_helper_fn_no_api',
-      api.properties(
-          use_exponential_retry_from_import_on_helper_fn_no_api=True),
-      api.expect_exception("AttributeError"))
+    'exponential_retry_from_import_on_helper_fn_no_api',
+    api.properties(use_exponential_retry_from_import_on_helper_fn_no_api=True),
+    api.expect_exception("AttributeError"),
+  )

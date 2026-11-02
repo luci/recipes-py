@@ -15,11 +15,11 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    json,
-    path,
-    platform,
-    properties,
-    step,
+  json,
+  path,
+  platform,
+  properties,
+  step,
 )
 
 
@@ -36,6 +36,7 @@ class DEPS(RecipeScriptApi):
 class TEST_DEPS(RecipeTestApi):
   platform: platform.TEST_API
 
+
 from builtins import range, zip
 
 
@@ -44,12 +45,12 @@ def RunSteps(api: DEPS) -> None:
   api.step('step1', ['/bin/echo', str(api.path.tmp_base_dir / 'foo')])
 
   # module.resource(...) demo.
-  api.step('print resource',
-           ['echo', api.path.resource('dir', 'file.py')])
+  api.step('print resource', ['echo', api.path.resource('dir', 'file.py')])
 
   # module.repo_resource() demo.
-  api.step('print package dir',
-           ['echo', api.path.repo_resource('dir', 'file.py')])
+  api.step(
+    'print package dir', ['echo', api.path.repo_resource('dir', 'file.py')]
+  )
 
   assert 'start_dir' in api.path
   assert api.path.start_dir / '.' == api.path.start_dir
@@ -123,7 +124,7 @@ def RunSteps(api: DEPS) -> None:
   assert api.path.exists(file_path)
 
   # Assert that we can mock filesystem paths.
-  root_path = ('C:\\Windows' if api.platform.is_win else '/bin')
+  root_path = 'C:\\Windows' if api.platform.is_win else '/bin'
   api.path.mock_add_paths(root_path)
   assert api.path.exists(root_path)
 
@@ -183,7 +184,7 @@ def RunSteps(api: DEPS) -> None:
 
   # We can mock remove paths. See the file module to do this for real.
   api.step('rm copy2/foo', ['rm', '-rf', copy2 / 'foo'])
-  api.path.mock_remove_paths(str(copy2)+api.path.sep)
+  api.path.mock_remove_paths(str(copy2) + api.path.sep)
   assert not api.path.exists(copy2 / 'foo' / 'bar')
   assert not api.path.exists(copy2 / 'foo')
   assert api.path.exists(copy2)
@@ -198,15 +199,16 @@ def RunSteps(api: DEPS) -> None:
   # Convert strings to Paths.
   def _mk_paths() -> list[config_types.Path]:
     return [
-        api.path.start_dir / 'some' / 'thing',
-        api.path.start_dir,
-        api.path.cache_dir / 'a file',
-        api.path.home_dir / 'another file',
-        api.path.resource("module_resource.py"),
-        api.path.resource(),
-        api.resource("recipe_resource.py"),
-        api.resource(),
+      api.path.start_dir / 'some' / 'thing',
+      api.path.start_dir,
+      api.path.cache_dir / 'a file',
+      api.path.home_dir / 'another file',
+      api.path.resource("module_resource.py"),
+      api.path.resource(),
+      api.resource("recipe_resource.py"),
+      api.resource(),
     ]
+
   static_paths = _mk_paths()
   for p in static_paths:
     after = api.path.abs_to_path(str(p))
@@ -256,17 +258,18 @@ def RunSteps(api: DEPS) -> None:
   assert slashy_path == separated_path
 
   slashy_file = api.path.start_dir.joinpath(
-      f'foo{api.path.sep}bar{api.path.sep}baz.txt')
+    f'foo{api.path.sep}bar{api.path.sep}baz.txt'
+  )
   assert list(slashy_file.parents) == [
-      separated_path,
-      separated_path.parent,
-      api.path.start_dir,
+    separated_path,
+    separated_path.parent,
+    api.path.start_dir,
   ]
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   for platform in ('linux', 'win'):
     yield api.test(
-        platform,
-        api.platform.name(platform),
+      platform,
+      api.platform.name(platform),
     )

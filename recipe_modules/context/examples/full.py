@@ -15,11 +15,11 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    context,
-    path,
-    raw_io,
-    step,
-    time,
+  context,
+  path,
+  raw_io,
+  step,
+  time,
 )
 
 
@@ -58,8 +58,9 @@ def RunSteps(api: DEPS) -> None:
 
   # Path prefix won't append empty environment variables.
   with api.context(env={'FOO': ''}, env_prefixes={'FOO': [pants, shirt]}):
-    result = api.step('env prefixes with empty value',
-                      ['bash', '-c', 'echo $FOO'])
+    result = api.step(
+      'env prefixes with empty value', ['bash', '-c', 'echo $FOO']
+    )
 
   # %-formats are errors (for now). Double-% escape them.
   bad_examples = ['%format', '%s']
@@ -79,21 +80,27 @@ def RunSteps(api: DEPS) -> None:
 
   # low-level method
   now = api.time.time()
-  with api.context(deadline=Deadline(soft_deadline=now+20, grace_period=30)):
+  with api.context(deadline=Deadline(soft_deadline=now + 20, grace_period=30)):
     api.step('20 sec deadline', ['bash', '-c', 'echo default!'])
 
     try:
-      with api.context(deadline=Deadline(soft_deadline=now+30, grace_period=30)):
+      with api.context(
+        deadline=Deadline(soft_deadline=now + 30, grace_period=30)
+      ):
         assert False  # pragma: no cover
     except ValueError:
       # cannot increase grace_period
       pass
 
-    with api.context(deadline=Deadline(soft_deadline=now+20, grace_period=10)):
+    with api.context(
+      deadline=Deadline(soft_deadline=now + 20, grace_period=10)
+    ):
       api.step('and 10 sec grace_period', ['bash', '-c', 'echo default!'])
 
       try:
-        with api.context(deadline=Deadline(soft_deadline=now+20, grace_period=30)):
+        with api.context(
+          deadline=Deadline(soft_deadline=now + 20, grace_period=30)
+        ):
           assert False  # pragma: no cover
       except ValueError:
         # cannot increase grace_period

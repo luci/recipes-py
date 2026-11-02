@@ -18,8 +18,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    json,
-    step,
+  json,
+  step,
 )
 
 
@@ -64,75 +64,86 @@ def RunSteps(api: DEPS) -> result_pb2.RawResult:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'successful_result',
-      api.step_data('step_result', api.json.output(
-          {'summary': 'This test should be successful'})),
-      api.post_process(post_process.DropExpectation),
+    'successful_result',
+    api.step_data(
+      'step_result',
+      api.json.output({'summary': 'This test should be successful'}),
+    ),
+    api.post_process(post_process.DropExpectation),
   )
 
   yield api.test(
-      'successful_result_no_json',
-      api.step_data('step_result', api.json.output({})),
-      api.post_process(post_process.SummaryMarkdown, "No json output."),
-      api.post_process(post_process.DropExpectation),
-      status='FAILURE',
+    'successful_result_no_json',
+    api.step_data('step_result', api.json.output({})),
+    api.post_process(post_process.SummaryMarkdown, "No json output."),
+    api.post_process(post_process.DropExpectation),
+    status='FAILURE',
   )
 
   yield api.test(
-      'failure_result',
-      api.step_data('step_result', api.json.output(
-          {'summary': 'Failure: step failed at line 90'}, retcode=1)),
-      api.post_process(post_process.SummaryMarkdown,
-                       "Failure: step failed at line 90"),
-      api.post_process(post_process.DropExpectation),
-      status='FAILURE',
-  )
-
-  yield api.test(
-      'infra_failure_result',
-      api.step_data('step_result', api.json.output(
-          {'summary': 'Infra Failure: no memory'}, retcode=2)),
-      api.post_process(post_process.SummaryMarkdown,
-                       "Infra Failure: no memory"),
-      api.post_process(post_process.DropExpectation),
-      status='INFRA_FAILURE',
-  )
-
-  yield api.test(
-      'failure_result_no_json',
-      api.step_data('step_result', api.json.output(None, retcode=1)),
-      api.post_process(post_process.SummaryMarkdown,
-                       "Step('step_result') (retcode: 1)"),
-      api.post_process(post_process.DropExpectation),
-      status='FAILURE',
-  )
-
-  yield api.test(
-      'infra_failure_result_no_json',
-      api.step_data('step_result', api.json.output(None, retcode=2)),
-      api.post_process(post_process.SummaryMarkdown,
-                       "Step('step_result') (retcode: 2)"),
-      api.post_process(post_process.DropExpectation),
-      status='FAILURE',
-  )
-
-  yield api.test(
-      'timeout_result',
-      api.step_data('step_result', api.json.output({'summary': ''}),
-                    times_out_after=60*20),
-      api.post_process(post_process.StatusFailure),
-      api.post_process(post_process.SummaryMarkdown, "Failure : Timeout"),
-      api.post_process(post_process.DropExpectation),
-      status='FAILURE',
-  )
-
-  yield api.test(
-      'summary_markdown_too_long',
-      api.step_data('step_result', api.json.output({'summary': 'a' * 4001})),
-      api.post_process(
-          post_process.SummaryMarkdownRE,
-          r'^summary_markdown is greater than 4000 bytes \(4001 > 4000\)',
+    'failure_result',
+    api.step_data(
+      'step_result',
+      api.json.output(
+        {'summary': 'Failure: step failed at line 90'}, retcode=1
       ),
-      api.post_process(post_process.DropExpectation),
-      status='FAILURE',
+    ),
+    api.post_process(
+      post_process.SummaryMarkdown, "Failure: step failed at line 90"
+    ),
+    api.post_process(post_process.DropExpectation),
+    status='FAILURE',
+  )
+
+  yield api.test(
+    'infra_failure_result',
+    api.step_data(
+      'step_result',
+      api.json.output({'summary': 'Infra Failure: no memory'}, retcode=2),
+    ),
+    api.post_process(post_process.SummaryMarkdown, "Infra Failure: no memory"),
+    api.post_process(post_process.DropExpectation),
+    status='INFRA_FAILURE',
+  )
+
+  yield api.test(
+    'failure_result_no_json',
+    api.step_data('step_result', api.json.output(None, retcode=1)),
+    api.post_process(
+      post_process.SummaryMarkdown, "Step('step_result') (retcode: 1)"
+    ),
+    api.post_process(post_process.DropExpectation),
+    status='FAILURE',
+  )
+
+  yield api.test(
+    'infra_failure_result_no_json',
+    api.step_data('step_result', api.json.output(None, retcode=2)),
+    api.post_process(
+      post_process.SummaryMarkdown, "Step('step_result') (retcode: 2)"
+    ),
+    api.post_process(post_process.DropExpectation),
+    status='FAILURE',
+  )
+
+  yield api.test(
+    'timeout_result',
+    api.step_data(
+      'step_result', api.json.output({'summary': ''}), times_out_after=60 * 20
+    ),
+    api.post_process(post_process.StatusFailure),
+    api.post_process(post_process.SummaryMarkdown, "Failure : Timeout"),
+    api.post_process(post_process.DropExpectation),
+    status='FAILURE',
+  )
+
+  yield api.test(
+    'summary_markdown_too_long',
+    api.step_data('step_result', api.json.output({'summary': 'a' * 4001})),
+    api.post_process(
+      post_process.SummaryMarkdownRE,
+      r'^summary_markdown is greater than 4000 bytes \(4001 > 4000\)',
+    ),
+    api.post_process(post_process.DropExpectation),
+    status='FAILURE',
   )

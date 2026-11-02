@@ -13,16 +13,17 @@ from google.protobuf import json_format
 from recipe_engine import recipe_test_api
 
 from PB.go.chromium.org.luci.scheduler.api.scheduler.v1 import (
-    triggers as triggers_pb2)
+  triggers as triggers_pb2,
+)
 
 
 class SchedulerTestApi(recipe_test_api.RecipeTestApi):
   def __call__(
-      self,
-      hostname: str | None = None,
-      job_id: str | None = None,
-      invocation_id: int | None = None,
-      triggers: Sequence[triggers_pb2.Trigger] | None = None,
+    self,
+    hostname: str | None = None,
+    job_id: str | None = None,
+    invocation_id: int | None = None,
+    triggers: Sequence[triggers_pb2.Trigger] | None = None,
   ) -> recipe_test_api.TestData:
     """Emulates scheduler module state.
 
@@ -32,7 +33,8 @@ class SchedulerTestApi(recipe_test_api.RecipeTestApi):
     assert job_id is None or isinstance(job_id, basestring)
     assert invocation_id is None or isinstance(invocation_id, int)
     assert not triggers or all(
-        isinstance(t, triggers_pb2.Trigger) for t in triggers)
+      isinstance(t, triggers_pb2.Trigger) for t in triggers
+    )
 
     prop = {}
     if hostname is not None:

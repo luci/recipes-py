@@ -3,7 +3,6 @@
 # that can be found in the LICENSE file.
 """Recipe API for LUCI CV, the pre-commit testing system."""
 
-
 from __future__ import annotations
 from collections.abc import Sequence
 from typing import Any
@@ -50,13 +49,15 @@ class CVApi(recipe_api.RecipeApi):
 
   def initialize(self) -> None:
     if self._input.active or (
-        # legacy style
-        'dry_run' in self.m.properties.get('$recipe_engine/cq', {})):
+      # legacy style
+      'dry_run' in self.m.properties.get('$recipe_engine/cq', {})
+    ):
       self._active = True
     if self._active and not self._input.run_mode:
       # backfill
       self._input.run_mode = (
-          self.DRY_RUN if self._input.dry_run else self.FULL_RUN)
+        self.DRY_RUN if self._input.dry_run else self.FULL_RUN
+      )
 
   @property
   def active(self) -> bool:
@@ -108,8 +109,9 @@ class CVApi(recipe_api.RecipeApi):
     """
     self._enforce_active()
     assert self.m.buildbucket.build.input.gerrit_changes, (
-        'you must simulate buildbucket.input.gerrit_changes in your test '
-        'in order to use api.cv.ordered_gerrit_changes')
+      'you must simulate buildbucket.input.gerrit_changes in your test '
+      'in order to use api.cv.ordered_gerrit_changes'
+    )
     return self.m.buildbucket.build.input.gerrit_changes
 
   @property
@@ -139,11 +141,13 @@ class CVApi(recipe_api.RecipeApi):
     msg.CopyFrom(self._input)
     msg.top_level = False
     return {
-        '$recipe_engine/cv':
-            json_pb.MessageToDict(msg, preserving_proto_field_name=True),
-        # TODO(crbug.com/333811087) Remove the cq recipe module props.
-        '$recipe_engine/cq':
-            json_pb.MessageToDict(msg, preserving_proto_field_name=True),
+      '$recipe_engine/cv': json_pb.MessageToDict(
+        msg, preserving_proto_field_name=True
+      ),
+      # TODO(crbug.com/333811087) Remove the cq recipe module props.
+      '$recipe_engine/cq': json_pb.MessageToDict(
+        msg, preserving_proto_field_name=True
+      ),
     }
 
   @property
@@ -235,9 +239,10 @@ class CVApi(recipe_api.RecipeApi):
       return
     self._output.triggered_build_ids.extend(int(bid) for bid in build_ids)
     self._write_output_props(
-        triggered_build_ids=[
-            str(bid) for bid in self._output.triggered_build_ids
-        ],)
+      triggered_build_ids=[
+        str(bid) for bid in self._output.triggered_build_ids
+      ],
+    )
 
   @property
   def do_not_retry_build(self) -> bool:
@@ -253,8 +258,8 @@ class CVApi(recipe_api.RecipeApi):
       return
     self._output.retry = cq_pb2.Output.OUTPUT_RETRY_DENIED
     self._write_output_props(
-        cur_step=self.m.step('TRYJOB DO NOT RETRY', cmd=None),
-        do_not_retry=True,
+      cur_step=self.m.step('TRYJOB DO NOT RETRY', cmd=None),
+      do_not_retry=True,
     )
 
   @property
@@ -290,8 +295,10 @@ class CVApi(recipe_api.RecipeApi):
       ValueError if the builder is not in Chrome project.
     """
     self._enforce_active()
-    if (self.m.buildbucket.build.builder.project != 'chrome' and
-        not self.m.buildbucket.build.builder.project.startswith('chrome-m')):
+    if (
+      self.m.buildbucket.build.builder.project != 'chrome'
+      and not self.m.buildbucket.build.builder.project.startswith('chrome-m')
+    ):
       raise ValueError('owner_is_googler can only be called for chrome project')
     return self._input.owner_is_googler
 
@@ -304,9 +311,9 @@ class CVApi(recipe_api.RecipeApi):
     raise ValueError('Can\'t find tag with key %r' % key)  # pragma: nocover
 
   def _write_output_props(
-      self,
-      cur_step: step_data.StepData | None = None,
-      **addition_props: Any,
+    self,
+    cur_step: step_data.StepData | None = None,
+    **addition_props: Any,
   ) -> None:
     # TODO(iannucci): add API to set properties regardless of the current step.
     if not cur_step:

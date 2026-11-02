@@ -11,9 +11,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    cas_input,
-    path,
-    properties,
+  cas_input,
+  path,
+  properties,
 )
 
 
@@ -28,9 +28,17 @@ class DEPS(RecipeScriptApi):
 class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
 
-from PB.recipe_modules.recipe_engine.cas_input.properties import InputProperties, CasCache
 
-from recipe_engine.post_process import StepSuccess, StepCommandContains, DropExpectation
+from PB.recipe_modules.recipe_engine.cas_input.properties import (
+  InputProperties,
+  CasCache,
+)
+
+from recipe_engine.post_process import (
+  StepSuccess,
+  StepCommandContains,
+  DropExpectation,
+)
 
 
 def RunSteps(api: DEPS) -> None:
@@ -44,34 +52,41 @@ def RunSteps(api: DEPS) -> None:
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
 
   def cas_props(
-      input_properties: CasInputProperties,
-      download_dir: str | None = None,
+    input_properties: CasInputProperties,
+    download_dir: str | None = None,
   ) -> recipe_test_api.TestData:
     props = {
-        '$recipe_engine/cas_input': input_properties,
+      '$recipe_engine/cas_input': input_properties,
     }
     if download_dir:
       props['download_dir'] = download_dir
     return api.properties(**props)
 
   yield api.test(
-      'basic', cas_props(InputProperties(caches=[CasCache(digest='deadbeef')])))
+    'basic', cas_props(InputProperties(caches=[CasCache(digest='deadbeef')]))
+  )
 
   yield api.test(
-      'download_to_directory',
-      cas_props(
-          InputProperties(caches=[CasCache(digest='deadbeef')]),
-          download_dir='[TMP_BASE]'),
-      api.post_process(StepSuccess, 'download cache'),
-      api.post_process(StepCommandContains, 'download cache', '[TMP_BASE]'),
-      api.post_process(DropExpectation))
+    'download_to_directory',
+    cas_props(
+      InputProperties(caches=[CasCache(digest='deadbeef')]),
+      download_dir='[TMP_BASE]',
+    ),
+    api.post_process(StepSuccess, 'download cache'),
+    api.post_process(StepCommandContains, 'download cache', '[TMP_BASE]'),
+    api.post_process(DropExpectation),
+  )
 
   yield api.test(
-      'rel_path',
-      cas_props(
-          InputProperties(
-              caches=[CasCache(digest='deadbeef', local_relpath='some_path')])),
-      api.post_process(StepSuccess, 'download cache'),
-      api.post_process(StepCommandContains, 'download cache',
-                       '[START_DIR]/some_path'),
-      api.post_process(DropExpectation))
+    'rel_path',
+    cas_props(
+      InputProperties(
+        caches=[CasCache(digest='deadbeef', local_relpath='some_path')]
+      )
+    ),
+    api.post_process(StepSuccess, 'download cache'),
+    api.post_process(
+      StepCommandContains, 'download cache', '[START_DIR]/some_path'
+    ),
+    api.post_process(DropExpectation),
+  )

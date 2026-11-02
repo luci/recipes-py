@@ -3,4 +3,5 @@
 # that can be found in the LICENSE file.
 
 """Package which encapsulates all logic for 'warnings' in recipes."""
+
 from __future__ import annotations

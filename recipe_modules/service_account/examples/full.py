@@ -9,17 +9,19 @@ from collections.abc import Sequence
 from collections.abc import Iterator
 from recipe_engine import recipe_test_api
 
-from PB.recipe_modules.recipe_engine.service_account.examples import full as full_pb
+from PB.recipe_modules.recipe_engine.service_account.examples import (
+  full as full_pb,
+)
 
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    path,
-    platform,
-    properties,
-    raw_io,
-    service_account,
+  path,
+  platform,
+  properties,
+  raw_io,
+  service_account,
 )
 
 
@@ -36,6 +38,7 @@ class DEPS(RecipeScriptApi):
 class TEST_DEPS(RecipeTestApi):
   platform: platform.TEST_API
   properties: properties.TEST_API
+
 
 INLINE_PROPERTIES_PROTO = """
 message InputProperties {
@@ -59,40 +62,40 @@ def RunSteps(api: DEPS, props: full_pb.InputProperties) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   def props(
-      key_path: str = '', scopes: Sequence[str] | None = None
+    key_path: str = '', scopes: Sequence[str] | None = None
   ) -> recipe_test_api.TestData:
-    return api.properties(full_pb.InputProperties(
-        key_path=key_path,
-        scopes=scopes))
+    return api.properties(
+      full_pb.InputProperties(key_path=key_path, scopes=scopes)
+    )
 
   yield api.test(
-      'default',
-      api.platform('linux', 64),
-      props(),
+    'default',
+    api.platform('linux', 64),
+    props(),
   )
 
   yield api.test(
-      'windows',
-      api.platform('win', 64),
-      props(),
+    'windows',
+    api.platform('win', 64),
+    props(),
   )
 
   yield api.test(
-      'json_key',
-      api.platform('linux', 64),
-      props(key_path='[START_DIR]/key_name.json'),
+    'json_key',
+    api.platform('linux', 64),
+    props(key_path='[START_DIR]/key_name.json'),
   )
 
   yield api.test(
-      'custom_scopes',
-      api.platform('linux', 64),
-      props(scopes=['B', 'A']),
+    'custom_scopes',
+    api.platform('linux', 64),
+    props(scopes=['B', 'A']),
   )
 
   yield api.test(
-      'no_authutil',
-      api.platform('linux', 64),
-      props(),
-      api.step_data('get access token for default account', retcode=1),
-      status='INFRA_FAILURE',
+    'no_authutil',
+    api.platform('linux', 64),
+    props(),
+    api.step_data('get access token for default account', retcode=1),
+    status='INFRA_FAILURE',
   )

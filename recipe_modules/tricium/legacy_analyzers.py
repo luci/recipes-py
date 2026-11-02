@@ -4,7 +4,6 @@
 
 """Legacy analyzers which may be used by multiple projects."""
 
-
 from __future__ import annotations
 
 import attr
@@ -54,92 +53,105 @@ class Analyzers:
   infra.git repo in go/src/infra/tricium/functions/; check there for
   documentation and features.
   """
+
   COMMITCHECK = LegacyAnalyzer(
-      name='Commitcheck',
-      package='infra/tricium/legacy_functions/commitcheck/linux-amd64',
-      version='latest',
-      executable='commitcheck')
+    name='Commitcheck',
+    package='infra/tricium/legacy_functions/commitcheck/linux-amd64',
+    version='latest',
+    executable='commitcheck',
+  )
 
   COPYRIGHT = LegacyAnalyzer(
-      name='Copyright',
-      package='infra/tricium/legacy_functions/copyright/linux-amd64',
-      executable='copyright',
-      version='latest',
-      path_filters=[
-          '*.c',
-          '*.cc',
-          '*.cpp',
-          '*.go',
-          '*.h',
-          '*.java',
-          '*.js',
-          '*.py',
-          '*.sh',
-      ])
+    name='Copyright',
+    package='infra/tricium/legacy_functions/copyright/linux-amd64',
+    executable='copyright',
+    version='latest',
+    path_filters=[
+      '*.c',
+      '*.cc',
+      '*.cpp',
+      '*.go',
+      '*.h',
+      '*.java',
+      '*.js',
+      '*.py',
+      '*.sh',
+    ],
+  )
 
   CPPLINT = LegacyAnalyzer(
-      name='Cpplint',
-      package='infra/tricium/legacy_functions/cpplint/linux-amd64',
-      executable='cpplint',
-      version='latest',
-      path_filters=['*.cc', '*.cpp', '*.cu', '*.cuh', '*.h'],
-      extra_args=['-filter=-whitespace,-build/header_guard', '-verbose=4'])
+    name='Cpplint',
+    package='infra/tricium/legacy_functions/cpplint/linux-amd64',
+    executable='cpplint',
+    version='latest',
+    path_filters=['*.cc', '*.cpp', '*.cu', '*.cuh', '*.h'],
+    extra_args=['-filter=-whitespace,-build/header_guard', '-verbose=4'],
+  )
 
   ESLINT = LegacyAnalyzer(
-      name='Eslint',
-      package='infra/tricium/function/eslint',
-      executable='eslint_parser',
-      path_filters=['*.js'])
+    name='Eslint',
+    package='infra/tricium/function/eslint',
+    executable='eslint_parser',
+    path_filters=['*.js'],
+  )
 
   GOSEC = LegacyAnalyzer(
-      name='Gosec',
-      package='infra/tricium/function/gosec',
-      executable='gosec_wrapper',
-      path_filters=['*.go'])
+    name='Gosec',
+    package='infra/tricium/function/gosec',
+    executable='gosec_wrapper',
+    path_filters=['*.go'],
+  )
 
   HTTPS_CHECK = LegacyAnalyzer(
-      name='HttpsCheck',
-      package='infra/tricium/legacy_functions/https-check/linux-amd64',
-      version='latest',
-      executable='https-check')
+    name='HttpsCheck',
+    package='infra/tricium/legacy_functions/https-check/linux-amd64',
+    version='latest',
+    executable='https-check',
+  )
 
   INCLUSIVE_LANGUAGE_CHECK = LegacyAnalyzer(
-      name='InclusiveLanguageCheck',
-      package='infra/tricium/legacy_functions/inclusive/linux-amd64',
-      version='latest',
-      executable='inclusive')
+    name='InclusiveLanguageCheck',
+    package='infra/tricium/legacy_functions/inclusive/linux-amd64',
+    version='latest',
+    executable='inclusive',
+  )
 
   MOJOM_COMMENTATOR = LegacyAnalyzer(
-      name='MojomCommentator',
-      package='infra/tricium/legacy_functions/mojom-commentator/linux-amd64',
-      version='latest',
-      executable='mojom-commentator',
-      path_filters=['*.mojom'])
+    name='MojomCommentator',
+    package='infra/tricium/legacy_functions/mojom-commentator/linux-amd64',
+    version='latest',
+    executable='mojom-commentator',
+    path_filters=['*.mojom'],
+  )
 
   OBJECTIVE_C_STYLE = LegacyAnalyzer(
-      name='ObjectiveCStyle',
-      package='infra/tricium/legacy_functions/objective-c-style/linux-amd64',
-      version='latest',
-      executable='objective-c-style',
-      path_filters=['*.m', '*.mm'])
+    name='ObjectiveCStyle',
+    package='infra/tricium/legacy_functions/objective-c-style/linux-amd64',
+    version='latest',
+    executable='objective-c-style',
+    path_filters=['*.m', '*.mm'],
+  )
 
   PYLINT = LegacyAnalyzer(
-      name='Pylint',
-      package='infra/tricium/function/pylint',
-      executable='pylint_parser',
-      path_filters=['*.py'])
+    name='Pylint',
+    package='infra/tricium/function/pylint',
+    executable='pylint_parser',
+    path_filters=['*.py'],
+  )
 
   SPELLCHECKER = LegacyAnalyzer(
-      name='Spellchecker',
-      package='infra/tricium/legacy_functions/spellchecker/linux-amd64',
-      version='latest',
-      executable='spellchecker')
+    name='Spellchecker',
+    package='infra/tricium/legacy_functions/spellchecker/linux-amd64',
+    version='latest',
+    executable='spellchecker',
+  )
 
   SPACEY = LegacyAnalyzer(
-      name='Spacey',
-      package='infra/tricium/legacy_functions/spacey/linux-amd64',
-      version='latest',
-      executable='spacey')
+    name='Spacey',
+    package='infra/tricium/legacy_functions/spacey/linux-amd64',
+    version='latest',
+    executable='spacey',
+  )
 
   @classmethod
   def by_name(cls) -> dict[str, LegacyAnalyzer]:

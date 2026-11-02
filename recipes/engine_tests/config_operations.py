@@ -3,6 +3,7 @@
 # that can be found in the LICENSE file.
 
 """Tests that recipes can modify configuration options in various ways."""
+
 from __future__ import annotations
 
 from collections.abc import Iterator
@@ -14,30 +15,42 @@ from past.builtins import basestring
 # This code is typically located inside a module/config.py file, but we inline
 # it here for the testing purposes.
 from recipe_engine.config import (
-    config_item_context, ConfigGroup, ConfigList, Dict, List, Single, Static)
+  config_item_context,
+  ConfigGroup,
+  ConfigList,
+  Dict,
+  List,
+  Single,
+  Static,
+)
+
 
 def BaseConfig(**_kwargs: Any) -> ConfigGroup:
   return ConfigGroup(
     # Various config options to be exercised in tests.
-    thedict    = Dict(value_type=tuple),
-    thelist    = List(basestring),
-    thestring  = Single(basestring, required=True),
-    thebool    = Single(bool, required=False, empty_val=False),
-    thesubconfig  = ConfigGroup(
-      thefloat = Single(float),
-      thestaticint = Static(42, hidden=False),
+    thedict=Dict(value_type=tuple),
+    thelist=List(basestring),
+    thestring=Single(basestring, required=True),
+    thebool=Single(bool, required=False, empty_val=False),
+    thesubconfig=ConfigGroup(
+      thefloat=Single(float),
+      thestaticint=Static(42, hidden=False),
     ),
   )
 
+
 config_ctx = config_item_context(BaseConfig)
+
 
 @config_ctx()
 def test1(c: ConfigGroup) -> None:  # pragma: no cover
   c.thedict['a'] = (1, 2)
 
+
 @config_ctx()
 def test2a(c: ConfigGroup) -> None:  # pragma: no cover
   c.thelist.append('foo')
+
 
 @config_ctx(includes=['test2a'])
 def test2(c: ConfigGroup) -> None:  # pragma: no cover
@@ -49,8 +62,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    json,
-    step,
+  json,
+  step,
 )
 
 
@@ -64,13 +77,15 @@ class DEPS(RecipeScriptApi):
 class TEST_DEPS(RecipeTestApi):
   pass
 
+
 def DumpRecipeEngineTestConfig(api: DEPS, config: ConfigGroup) -> None:
   api.step('config', cmd=None).presentation.logs['config'] = api.json.dumps(
-      config.as_jsonish(), indent=2).splitlines()
+    config.as_jsonish(), indent=2
+  ).splitlines()
 
 
 def RunSteps(api: DEPS) -> None:
-  config = test1()        # api.module.set_config('test1')
+  config = test1()  # api.module.set_config('test1')
   config = test2(config)  # api.module.apply_config('test2')
 
   DumpRecipeEngineTestConfig(api, config)
@@ -88,8 +103,7 @@ def RunSteps(api: DEPS) -> None:
 
   config.thebool = True
   config.thestring = 'cookoo'
-  config.thesubconfig.thefloat = float(
-      config.thesubconfig.thestaticint)
+  config.thesubconfig.thefloat = float(config.thesubconfig.thestaticint)
 
   DumpRecipeEngineTestConfig(api, config)
 

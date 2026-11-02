@@ -12,9 +12,15 @@ import json
 
 from google.protobuf import json_format
 
-from PB.go.chromium.org.luci.resultdb.proto.v1 import invocation as invocation_pb2
-from PB.go.chromium.org.luci.resultdb.proto.v1 import test_exoneration as test_exoneration_pb2
-from PB.go.chromium.org.luci.resultdb.proto.v1 import test_result as test_result_pb2
+from PB.go.chromium.org.luci.resultdb.proto.v1 import (
+  invocation as invocation_pb2,
+)
+from PB.go.chromium.org.luci.resultdb.proto.v1 import (
+  test_exoneration as test_exoneration_pb2,
+)
+from PB.go.chromium.org.luci.resultdb.proto.v1 import (
+  test_result as test_result_pb2,
+)
 
 
 class Invocation:
@@ -28,31 +34,34 @@ class Invocation:
   # - protobuf_type is the collection element type
   # - serialization_key: a dict key used in serialization format.
   _COLLECTIONS = (
-      ('test_results', test_result_pb2.TestResult, 'testResult'),
-      ('test_exonerations', test_exoneration_pb2.TestExoneration,
-       'testExoneration'),
+    ('test_results', test_result_pb2.TestResult, 'testResult'),
+    (
+      'test_exonerations',
+      test_exoneration_pb2.TestExoneration,
+      'testExoneration',
+    ),
   )
 
   def __init__(
-      self,
-      proto: invocation_pb2.Invocation | None = None,
-      test_results: Sequence[test_result_pb2.TestResult] | None = None,
-      test_exonerations: (
-          Sequence[test_exoneration_pb2.TestExoneration] | None
-      ) = None,
+    self,
+    proto: invocation_pb2.Invocation | None = None,
+    test_results: Sequence[test_result_pb2.TestResult] | None = None,
+    test_exonerations: (
+      Sequence[test_exoneration_pb2.TestExoneration] | None
+    ) = None,
   ) -> None:
     assert proto is None or isinstance(proto, invocation_pb2.Invocation), proto
     assert _all_of_type(test_results, test_result_pb2.TestResult), test_results
-    assert _all_of_type(test_exonerations,
-                        test_exoneration_pb2.TestExoneration), (
-                            test_exonerations)
+    assert _all_of_type(
+      test_exonerations, test_exoneration_pb2.TestExoneration
+    ), test_exonerations
     self.proto = proto or invocation_pb2.Invocation()
     self.test_results = test_results or []
     self.test_exonerations = test_exonerations or []
 
 
 def serialize(
-    inv_bundle: Mapping[str, Invocation], pretty: bool = False
+  inv_bundle: Mapping[str, Invocation], pretty: bool = False
 ) -> str:
   """Serializes invocations to a string.
 
@@ -71,7 +80,7 @@ def serialize(
       key: json_format.MessageToDict(msg),
     }
     lines.append(
-        json.dumps(jsonish, sort_keys=True, indent=2 if pretty else None)
+      json.dumps(jsonish, sort_keys=True, indent=2 if pretty else None)
     )
 
   for inv_id, inv in sorted(inv_bundle.items()):
@@ -95,9 +104,10 @@ def deserialize(data: str) -> dict[str, Invocation]:
 
   def parse_msg(msg: _M, body: Mapping[str, Any]) -> _M:
     return json_format.ParseDict(
-        body, msg,
-        # Do not fail the build because recipe's proto copy is stale.
-        ignore_unknown_fields=True
+      body,
+      msg,
+      # Do not fail the build because recipe's proto copy is stale.
+      ignore_unknown_fields=True,
     )
 
   # Use an explicit \n split instead of .splitlines() since .splitlines() can
@@ -135,7 +145,5 @@ def deserialize(data: str) -> dict[str, Invocation]:
   return ret
 
 
-def _all_of_type(
-    lst: Sequence[Any] | None, type: type[Any]
-) -> bool:
+def _all_of_type(lst: Sequence[Any] | None, type: type[Any]) -> bool:
   return not lst or all(isinstance(el, type) for el in lst)

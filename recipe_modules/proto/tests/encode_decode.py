@@ -11,10 +11,10 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    path,
-    proto,
-    step,
+  assertions,
+  path,
+  proto,
+  step,
 )
 
 
@@ -30,6 +30,7 @@ class DEPS(RecipeScriptApi):
 class TEST_DEPS(RecipeTestApi):
   pass
 
+
 from PB.recipe_modules.recipe_engine.proto.tests.placeholders import SomeMessage
 
 
@@ -37,22 +38,19 @@ def RunSteps(api: DEPS) -> None:
   text = api.proto.encode(SomeMessage(field='text'), 'TEXTPB')
   api.assertions.assertEqual(text, 'field: "text"\n')
   api.assertions.assertEqual(
-    api.proto.decode(text, SomeMessage, 'TEXTPB'),
-    SomeMessage(field="text")
+    api.proto.decode(text, SomeMessage, 'TEXTPB'), SomeMessage(field="text")
   )
 
   json = api.proto.encode(SomeMessage(field='json'), 'JSONPB')
   api.assertions.assertEqual(json, '{\n  "field": "json"\n}')
   api.assertions.assertEqual(
-    api.proto.decode(json, SomeMessage, 'JSONPB'),
-    SomeMessage(field="json")
+    api.proto.decode(json, SomeMessage, 'JSONPB'), SomeMessage(field="json")
   )
 
   binary = api.proto.encode(SomeMessage(field='binary'), 'BINARY')
   api.assertions.assertEqual(binary, b'\n\x06binary')
   api.assertions.assertEqual(
-    api.proto.decode(binary, SomeMessage, 'BINARY'),
-    SomeMessage(field="binary")
+    api.proto.decode(binary, SomeMessage, 'BINARY'), SomeMessage(field="binary")
   )
 
 

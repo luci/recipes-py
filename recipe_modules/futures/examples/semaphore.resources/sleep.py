@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import time
 import sys
+
 amt = int(sys.argv[1])
 print("taking a %d sec nap" % amt)
 time.sleep(amt)

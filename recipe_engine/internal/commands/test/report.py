@@ -42,13 +42,11 @@ def _type_checking_import_lines(text: str) -> set[int]:
     if not isinstance(node, ast.If):
       continue
     test = node.test
-    is_tc = (
-        isinstance(test, ast.Name) and test.id == 'TYPE_CHECKING'
-    ) or (
-        isinstance(test, ast.Attribute)
-        and isinstance(test.value, ast.Name)
-        and test.value.id == 'typing'
-        and test.attr == 'TYPE_CHECKING'
+    is_tc = (isinstance(test, ast.Name) and test.id == 'TYPE_CHECKING') or (
+      isinstance(test, ast.Attribute)
+      and isinstance(test.value, ast.Name)
+      and test.value.id == 'typing'
+      and test.attr == 'TYPE_CHECKING'
     )
     if is_tc:
       for stmt in node.body:
@@ -93,12 +91,14 @@ class Reporter:
   # This allows nice presentation on the bots (i.e. 80 columns), while also
   # allowing full-width display with correct wrapping on terminals/cmd.exe.
   _column_max: int = attr.ib()
+
   @_column_max.default
   def _column_max_default(self) -> int:
     # 1 == stdout
     return -1 if os.isatty(1) else 80
 
   _verbose: bool = attr.ib()
+
   @_verbose.default
   def _verbose_default(self) -> bool:
     return logging.getLogger().level < logging.WARNING
@@ -119,7 +119,7 @@ class Reporter:
       print()
 
   def short_report(
-      self, outcome_msg: runner_pb.Outcome, can_abort: bool = True
+    self, outcome_msg: runner_pb.Outcome, can_abort: bool = True
   ) -> bool:
     """Prints all test results from `outcome_msg` to stdout.
 
@@ -156,18 +156,25 @@ class Reporter:
     has_fail = False
     for test_name, test_result in outcome_msg.test_results.items():
       _print_summary_info(
-          self._recipe_deps, self._verbose, self._use_emoji, test_name,
-          test_result, self._space_for_columns)
+        self._recipe_deps,
+        self._verbose,
+        self._use_emoji,
+        test_name,
+        test_result,
+        self._space_for_columns,
+      )
 
       _print_detail_info(self._error_buf, test_name, test_result)
 
-      has_fail = self._fail_tracker.cache_recent_fails(test_name,
-                                                       test_result) or has_fail
+      has_fail = (
+        self._fail_tracker.cache_recent_fails(test_name, test_result)
+        or has_fail
+      )
 
     return has_fail
 
   def final_report(
-      self, cov: coverage.Coverage | None, outcome_msg: runner_pb.Outcome
+    self, cov: coverage.Coverage | None, outcome_msg: runner_pb.Outcome
   ) -> None:
     """Prints all final information about the test run to stdout.
     Raises SystemExit if the tests have failed.
@@ -191,8 +198,7 @@ class Reporter:
     fail = False
     if self._error_buf.tell() > 0:
       fail = True
-      sys.stdout.write(
-        'Errors in %s\n' % (self._error_buf.getvalue()))
+      sys.stdout.write('Errors in %s\n' % (self._error_buf.getvalue()))
 
     # For some integration tests we have repos which don't actually have any
     # recipe files at all. We skip coverage measurement if cov has no data.
@@ -212,8 +218,7 @@ class Reporter:
 
     duration = (datetime.datetime.now() - self._start_time).total_seconds()
     print('-' * 70)
-    print('Ran %d tests in %0.3fs' % (len(outcome_msg.test_results),
-                                      duration))
+    print('Ran %d tests in %0.3fs' % (len(outcome_msg.test_results), duration))
     print()
 
     if outcome_msg.uncovered_modules:
@@ -236,9 +241,11 @@ class Reporter:
       print()
 
     err_warnings = set(
-        self._recipe_deps.main_repo.recipes_cfg_pb2.forbidden_warnings)
-    unused_err_warnings = (
-      err_warnings - set(self._recipe_deps.warning_definitions.keys()))
+      self._recipe_deps.main_repo.recipes_cfg_pb2.forbidden_warnings
+    )
+    unused_err_warnings = err_warnings - set(
+      self._recipe_deps.warning_definitions.keys()
+    )
     err_warnings = err_warnings - unused_err_warnings
     warnings_fatal = False
 
@@ -252,7 +259,8 @@ class Reporter:
       print()
       if self._enable_warning_details or not fail:
         warnings_fatal = _print_warnings(
-            warning_result, self._recipe_deps, err_warnings)
+          warning_result, self._recipe_deps, err_warnings
+        )
       else:
         print('Fix test failures or pass --show-warnings for details.')
       print()
@@ -316,23 +324,25 @@ class Reporter:
 #   (success, verbose message, emoji icon, text icon)
 #
 # _check_field will scan for the first entry which has fields set.
-FIELD_TO_DISPLAY = collections.OrderedDict([
-  ('internal_error', (False, 'internal testrunner error',           '🆘', '!')),
-
-  ('bad_test',       (False, 'test specification was bad/invalid',  '🛑', 'S')),
-  ('crash_mismatch', (False, 'recipe crashed in an unexpected way', '🔥', 'E')),
-  ('check',          (False, 'failed post_process check(s)',        '❌', 'X')),
-  ('diff',           (False, 'expectation file has diff',           '⚡', 'D')),
-
-  ('removed',        (True,  'removed expectation file',            '🌟', 'R')),
-  ('written',        (True,  'updated expectation file',            '💾', 'D')),
-
-  ('global_warnings', (True, 'warning emitted',                     '❗', 'W')),
-])
+FIELD_TO_DISPLAY = collections.OrderedDict(
+  [
+    ('internal_error', (False, 'internal testrunner error', '🆘', '!')),
+    ('bad_test', (False, 'test specification was bad/invalid', '🛑', 'S')),
+    (
+      'crash_mismatch',
+      (False, 'recipe crashed in an unexpected way', '🔥', 'E'),
+    ),
+    ('check', (False, 'failed post_process check(s)', '❌', 'X')),
+    ('diff', (False, 'expectation file has diff', '⚡', 'D')),
+    ('removed', (True, 'removed expectation file', '🌟', 'R')),
+    ('written', (True, 'updated expectation file', '💾', 'D')),
+    ('global_warnings', (True, 'warning emitted', '❗', 'W')),
+  ]
+)
 
 
 def _check_field(
-    test_result: runner_pb.Outcome.Results, field_name: str
+  test_result: runner_pb.Outcome.Results, field_name: str
 ) -> tuple[tuple[bool | None, str | None, str | None, str | None], Any]:
   for descriptor, value in test_result.ListFields():
     if descriptor.name == field_name:
@@ -342,12 +352,12 @@ def _check_field(
 
 
 def _print_summary_info(
-    recipe_deps: recipe_deps_mod.RecipeDeps,
-    verbose: bool,
-    use_emoji: bool,
-    test_name: str,
-    test_result: runner_pb.Outcome.Results,
-    space_for_columns: Callable[[int], None],
+  recipe_deps: recipe_deps_mod.RecipeDeps,
+  verbose: bool,
+  use_emoji: bool,
+  test_name: str,
+  test_result: runner_pb.Outcome.Results,
+  space_for_columns: Callable[[int], None],
 ) -> None:
   # Pick the first populated field in the TestResults.Results
   icon = None
@@ -382,9 +392,9 @@ def _print_summary_info(
 
 
 def _print_detail_info(
-    err_buf: io.StringIO,
-    test_name: str,
-    test_result: runner_pb.Outcome.Results,
+  err_buf: io.StringIO,
+  test_name: str,
+  test_result: runner_pb.Outcome.Results,
 ) -> None:
   verbose_msg = None
 
@@ -424,13 +434,13 @@ class PerWarningResult:
 
 
 def _collect_warning_result(
-    outcome_msg: runner_pb.Outcome,
+  outcome_msg: runner_pb.Outcome,
 ) -> dict[str, PerWarningResult]:
   """Collects issued warnings from all test outcomes and dedupes causes for
   each warning.
   """
   result: dict[str, PerWarningResult] = collections.defaultdict(
-      PerWarningResult
+    PerWarningResult
   )
   for name, causes in outcome_msg.warnings.items():
     for cause in causes.causes:
@@ -442,7 +452,7 @@ def _collect_warning_result(
 
 
 def _collect_global_warnings_result(
-    outcome_msg: runner_pb.Outcome,
+  outcome_msg: runner_pb.Outcome,
 ) -> list[tuple[str, str]]:
   result: list[tuple[str, str]] = []
   for test_name, test_result in outcome_msg.test_results.items():
@@ -454,20 +464,19 @@ def _collect_global_warnings_result(
 
 
 def _print_warnings(
-    warning_result: Mapping[str, PerWarningResult],
-    recipe_deps: recipe_deps_mod.RecipeDeps,
-    err_warnings: set[str]) -> bool:
+  warning_result: Mapping[str, PerWarningResult],
+  recipe_deps: recipe_deps_mod.RecipeDeps,
+  err_warnings: set[str],
+) -> bool:
   """Prints the warnings in warning_result.
 
   Returns True if one of the warnings was in `err_warnings`."""
+
   def print_bug_links(definition: warning_pb.Definition) -> None:
     bug_links = [
       f'https://{bug.host}/p/{bug.project}/issues/detail?id={bug.id}'
       for bug in definition.monorail_bug
-    ] + [
-      f'https://{iss.host}/{iss.id}'
-      for iss in definition.google_issue
-    ]
+    ] + [f'https://{iss.host}/{iss.id}' for iss in definition.google_issue]
 
     if bug_links:
       print()
@@ -478,45 +487,45 @@ def _print_warnings(
         for link in bug_links:
           print(f'  {link}')
 
-
   def print_call_sites(call_sites: Iterable[cause_mod.CallSite]) -> None:
     def stringify_frame(frame: cause_mod.Frame) -> str:
       path = os.path.relpath(
-          os.path.normpath(frame.file), recipe_deps.main_repo.path)
+        os.path.normpath(frame.file), recipe_deps.main_repo.path
+      )
       return ':'.join((path, str(frame.line)))
 
     if not call_sites:
       return
     print('Call Sites:')
-    sorted_sites = sorted(call_sites,
-                          key=lambda s: (s.site.file, s.site.line))
+    sorted_sites = sorted(call_sites, key=lambda s: (s.site.file, s.site.line))
     if sorted_sites[0].call_stack:
       # call site contains the full stack.
       for call_site in sorted_sites:
         print('  site: %s' % stringify_frame(call_site.site))
         print('  stack:')
         for f in call_site.call_stack:
-          print('    ' +stringify_frame(f))
+          print('    ' + stringify_frame(f))
         print()
     else:
       for file_name, sites in itertools.groupby(
-          sorted_sites, key=lambda s: s.site.file):
+        sorted_sites, key=lambda s: s.site.file
+      ):
         # Print sites that have the same file in a single line.
         # E.g. /path/to/site:123 (and 456, 789)
         site_iter = iter(sites)
         line = stringify_frame(next(site_iter).site)
         additional_lines = ', '.join(str(s.site.line) for s in site_iter)
         if additional_lines:
-          line =  '%s (and %s)' % (line, additional_lines)
+          line = '%s (and %s)' % (line, additional_lines)
         print('  ' + line)
 
   def print_import_sites(import_sites: Iterable[cause_mod.ImportSite]) -> None:
     if not import_sites:
       return
     print('Import Sites:')
-    for import_site in sorted(import_sites,
-                              key=lambda s: (
-                                s.repo or "", s.module or "", s.recipe or "")):
+    for import_site in sorted(
+      import_sites, key=lambda s: (s.repo or "", s.module or "", s.recipe or "")
+    ):
       repo = recipe_deps.repos[import_site.repo]
       if import_site.module:
         mod_path = repo.modules[import_site.module].relpath
@@ -536,8 +545,15 @@ def _print_warnings(
     causes = warning_result[warning_name]
     print('*' * 70)
     print('{:^70}'.format(f'{prefix}: {warning_name}'))
-    print('{:^70}'.format('Found %d call sites and %d import sites' % (
-        len(causes.call_sites), len(causes.import_sites),)))
+    print(
+      '{:^70}'.format(
+        'Found %d call sites and %d import sites'
+        % (
+          len(causes.call_sites),
+          len(causes.import_sites),
+        )
+      )
+    )
     print('*' * 70)
     definition = recipe_deps.warning_definitions[warning_name]
     if definition.description:
@@ -562,12 +578,13 @@ LONG_DURATION_THRESHOLD = datetime.timedelta(seconds=5)
 
 
 def _collect_duration_result(
-    outcome_msg: runner_pb.Outcome) -> dict[str, datetime.timedelta]:
+  outcome_msg: runner_pb.Outcome,
+) -> dict[str, datetime.timedelta]:
   """Collects durations from all test outcomes saves the long ones."""
   result: dict[str, datetime.timedelta] = {}
   for name, test_result in outcome_msg.test_results.items():
     duration = datetime.timedelta(
-        milliseconds=test_result.duration.ToMilliseconds()
+      milliseconds=test_result.duration.ToMilliseconds()
     )
     if duration >= LONG_DURATION_THRESHOLD:
       result[name] = duration
@@ -579,8 +596,9 @@ SOFT_MAX_DURATIONS = 8
 HARD_MAX_DURATIONS = 12
 
 
-def _print_durations(duration_result: Mapping[str, datetime.timedelta],
-                     full: bool) -> None:
+def _print_durations(
+  duration_result: Mapping[str, datetime.timedelta], full: bool
+) -> None:
   durations = list(duration_result.items())
   durations.sort(key=lambda x: (x[1], x[0]))
 
@@ -592,7 +610,9 @@ def _print_durations(duration_result: Mapping[str, datetime.timedelta],
 
   for i, (name, duration) in enumerate(reversed(durations)):
     if exit_early and i >= SOFT_MAX_DURATIONS:
-      print(f'{len(durations)-i} long-running tests hidden, use '
-            '--show-durations to show all')
+      print(
+        f'{len(durations) - i} long-running tests hidden, use '
+        '--show-durations to show all'
+      )
       break
     print(f'{duration.total_seconds():8.3f}s  {name}')

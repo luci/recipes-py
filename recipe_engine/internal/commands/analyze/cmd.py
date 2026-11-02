@@ -29,17 +29,22 @@ def get_git_attribute_files(repo_root: str) -> list[str]:
     * repo_root: The path to the root of a repo.
   """
   args = [
-    GIT, '-C', repo_root, 'ls-files', '--',
+    GIT,
+    '-C',
+    repo_root,
+    'ls-files',
+    '--',
     ':(attr:recipes)',
   ]
   return [
-      os.path.join(repo_root, path) for path in
-      subprocess.check_output(args, text=True).splitlines()]
+    os.path.join(repo_root, path)
+    for path in subprocess.check_output(args, text=True).splitlines()
+  ]
 
 
 def analyze(
-    recipe_deps: recipe_deps_mod.RecipeDeps,
-    in_data: analyze_pb.Input,
+  recipe_deps: recipe_deps_mod.RecipeDeps,
+  in_data: analyze_pb.Input,
 ) -> analyze_pb.Output:
   """Determine which recipes are affected by a list of files.
 
@@ -80,20 +85,25 @@ def analyze(
     isect = set(in_data.files).intersection([recipe.path])
     if isect:
       print(
-          'Adding %r to output set; recipe is directly modified: %r'
-          % (recipe_name, sorted(isect)), file=sys.stderr)
+        'Adding %r to output set; recipe is directly modified: %r'
+        % (recipe_name, sorted(isect)),
+        file=sys.stderr,
+      )
       output.recipes.append(recipe_name)
       continue
 
     # 2: The recipes' resource files.
     affected_resources = sorted(
-        fname for fname in in_data.files
-        if fname.startswith(recipe.resources_dir + os.path.sep)
+      fname
+      for fname in in_data.files
+      if fname.startswith(recipe.resources_dir + os.path.sep)
     )
     if affected_resources:
       print(
-          'Adding %r to output set; resource files modified: %r'
-          % (recipe_name, affected_resources), file=sys.stderr)
+        'Adding %r to output set; resource files modified: %r'
+        % (recipe_name, affected_resources),
+        file=sys.stderr,
+      )
       output.recipes.append(recipe_name)
       continue
 
@@ -115,8 +125,10 @@ def analyze(
           isect.add(fname)
       if isect:
         print(
-            'Adding %r to output set; recipe module dep %r is modified: %r'
-            % (recipe_name, mod.name, sorted(isect)), file=sys.stderr)
+          'Adding %r to output set; recipe module dep %r is modified: %r'
+          % (recipe_name, mod.name, sorted(isect)),
+          file=sys.stderr,
+        )
         output.recipes.append(recipe_name)
         break
 
@@ -124,12 +136,15 @@ def analyze(
       # repo.
       if repo_name not in git_attr_file_map:
         git_attr_file_map[repo_name] = set(
-          get_git_attribute_files(recipe_deps.repos[repo_name].path))
+          get_git_attribute_files(recipe_deps.repos[repo_name].path)
+        )
       isect = set(in_data.files).intersection(git_attr_file_map[repo_name])
       if isect:
         print(
-            'Adding %r to output set; gitattrs overlaps with input files: %r'
-            % (recipe_name, sorted(isect)), file=sys.stderr)
+          'Adding %r to output set; gitattrs overlaps with input files: %r'
+          % (recipe_name, sorted(isect)),
+          file=sys.stderr,
+        )
         output.recipes.append(recipe_name)
         break
 
@@ -150,5 +165,6 @@ def main(args: argparse.Namespace) -> int:
 
   data = analyze(args.recipe_deps, in_data)
   args.output.write(
-      jsonpb.MessageToJson(data, always_print_fields_with_no_presence=True))
+    jsonpb.MessageToJson(data, always_print_fields_with_no_presence=True)
+  )
   return int(bool(data.error))

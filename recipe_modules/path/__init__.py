@@ -11,8 +11,8 @@ PROPERTIES = properties_pb.InputProperties
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from RECIPE_MODULES.recipe_engine import (
-    context,
-    warning,
+  context,
+  warning,
 )
 
 
@@ -20,6 +20,7 @@ from RECIPE_MODULES.recipe_engine import (
 class DEPS(RecipeScriptApi):
   context: context.API
   warning: warning.API
+
 
 from .api import PathApi as API
 from .test_api import PathTestApi as TEST_API

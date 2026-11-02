@@ -8,7 +8,7 @@ import contextlib
 from collections.abc import Iterator
 
 from PB.recipe_modules.recipe_engine.defer.tests import (
-    properties as properties_pb2
+  properties as properties_pb2,
 )
 from recipe_engine import post_process, recipe_api, recipe_test_api
 
@@ -16,9 +16,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    defer,
-    properties,
-    step,
+  defer,
+  properties,
+  step,
 )
 
 
@@ -32,6 +32,7 @@ class DEPS(RecipeScriptApi):
 @dataclass
 class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
+
 
 PROPERTIES = properties_pb2.SuppressedInputProps
 
@@ -62,17 +63,17 @@ def RunSteps(api: DEPS, props: properties_pb2.SuppressedInputProps) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'not-suppressed',
-      api.properties(properties_pb2.SuppressedInputProps(fail=False)),
-      api.post_process(post_process.DoesNotRun, 'all steps succeeded'),
-      api.expect_exception('SuppressedFailure'),
-      api.post_process(post_process.DropExpectation),
+    'not-suppressed',
+    api.properties(properties_pb2.SuppressedInputProps(fail=False)),
+    api.post_process(post_process.DoesNotRun, 'all steps succeeded'),
+    api.expect_exception('SuppressedFailure'),
+    api.post_process(post_process.DropExpectation),
   )
 
   yield api.test(
-      'suppressed',
-      api.properties(properties_pb2.SuppressedInputProps(fail=True)),
-      api.post_process(post_process.DoesNotRun, 'all steps succeeded'),
-      api.expect_exception('NormalFailure'),
-      api.post_process(post_process.DropExpectation),
+    'suppressed',
+    api.properties(properties_pb2.SuppressedInputProps(fail=True)),
+    api.post_process(post_process.DoesNotRun, 'all steps succeeded'),
+    api.expect_exception('NormalFailure'),
+    api.post_process(post_process.DropExpectation),
   )

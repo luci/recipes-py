@@ -48,6 +48,6 @@ class PlatformTestApi(recipe_test_api.RecipeTestApi):
     return arch
 
   def __call__(
-      self, name: str, bits: int, arch: str = 'intel'
+    self, name: str, bits: int, arch: str = 'intel'
   ) -> recipe_test_api.TestData:
     return self.name(name) + self.bits(bits) + self.arch(arch)

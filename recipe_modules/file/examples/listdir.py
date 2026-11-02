@@ -11,8 +11,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    file,
-    path,
+  file,
+  path,
 )
 
 
@@ -42,14 +42,18 @@ def RunSteps(api: DEPS) -> None:
   api.file.ensure_directory('mkdir', sub_dir)
   api.file.write_text('write another file', in_subdir, 'some data')
 
-  result = api.file.listdir('listdir root_dir', root_dir,
-                            test_data=['some file', 'sub'])
+  result = api.file.listdir(
+    'listdir root_dir', root_dir, test_data=['some file', 'sub']
+  )
   expected = [some_file, sub_dir]
   assert result == expected, (result, expected)
 
-  result = api.file.listdir('listdir root_dir', root_dir,
-                            recursive=True,
-                            test_data=['some file', 'sub/f'])
+  result = api.file.listdir(
+    'listdir root_dir',
+    root_dir,
+    recursive=True,
+    test_data=['some file', 'sub/f'],
+  )
   expected = [some_file, in_subdir]
   assert result == expected, (result, expected)
 

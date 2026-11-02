@@ -6,15 +6,17 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 
-from PB.recipe_modules.recipe_engine.step.tests import raise_on_failure as raise_on_failure_pb
+from PB.recipe_modules.recipe_engine.step.tests import (
+  raise_on_failure as raise_on_failure_pb,
+)
 from recipe_engine import recipe_test_api, post_process
 
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    properties,
-    step,
+  properties,
+  step,
 )
 
 
@@ -27,6 +29,7 @@ class DEPS(RecipeScriptApi):
 @dataclass
 class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
+
 
 INLINE_PROPERTIES_PROTO = """
 message InputProperties {
@@ -45,11 +48,12 @@ def RunSteps(api: DEPS, props: raise_on_failure_pb.InputProperties) -> None:
     return test_data
 
   result = api.step(
-      'non-raising step',
-      ['bash', '-c', 'exit 1'],
-      infra_step=props.infra_step,
-      raise_on_failure=False,
-      step_test_data=failure_step_test_data)
+    'non-raising step',
+    ['bash', '-c', 'exit 1'],
+    infra_step=props.infra_step,
+    raise_on_failure=False,
+    step_test_data=failure_step_test_data,
+  )
 
   status = None
   if props.set_status_to_exception:
@@ -63,30 +67,32 @@ def RunSteps(api: DEPS, props: raise_on_failure_pb.InputProperties) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'basic',
-      api.post_process(post_process.MustRun, 'in-between step'),
-      api.post_process(post_process.StepFailure, 'non-raising step'),
-      api.post_process(post_process.StatusFailure),
-      api.post_process(post_process.DropExpectation),
-      status='FAILURE',
+    'basic',
+    api.post_process(post_process.MustRun, 'in-between step'),
+    api.post_process(post_process.StepFailure, 'non-raising step'),
+    api.post_process(post_process.StatusFailure),
+    api.post_process(post_process.DropExpectation),
+    status='FAILURE',
   )
 
   yield api.test(
-      'infra-step',
-      api.properties(raise_on_failure_pb.InputProperties(infra_step=True)),
-      api.post_process(post_process.MustRun, 'in-between step'),
-      api.post_process(post_process.StepException, 'non-raising step'),
-      api.post_process(post_process.StatusException),
-      api.post_process(post_process.DropExpectation),
-      status='INFRA_FAILURE',
+    'infra-step',
+    api.properties(raise_on_failure_pb.InputProperties(infra_step=True)),
+    api.post_process(post_process.MustRun, 'in-between step'),
+    api.post_process(post_process.StepException, 'non-raising step'),
+    api.post_process(post_process.StatusException),
+    api.post_process(post_process.DropExpectation),
+    status='INFRA_FAILURE',
   )
 
   yield api.test(
-      'changed-status',
-      api.properties(raise_on_failure_pb.InputProperties(set_status_to_exception=True)),
-      api.post_process(post_process.MustRun, 'in-between step'),
-      api.post_process(post_process.StepException, 'non-raising step'),
-      api.post_process(post_process.StatusFailure),
-      api.post_process(post_process.DropExpectation),
-      status='FAILURE',
+    'changed-status',
+    api.properties(
+      raise_on_failure_pb.InputProperties(set_status_to_exception=True)
+    ),
+    api.post_process(post_process.MustRun, 'in-between step'),
+    api.post_process(post_process.StepException, 'non-raising step'),
+    api.post_process(post_process.StatusFailure),
+    api.post_process(post_process.DropExpectation),
+    status='FAILURE',
   )

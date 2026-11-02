@@ -11,10 +11,10 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    context,
-    path,
-    raw_io,
-    step,
+  context,
+  path,
+  raw_io,
+  step,
 )
 
 
@@ -47,13 +47,15 @@ def RunSteps(api: DEPS) -> None:
   # match expectations.
   def expect_step(name: str, exp: str) -> None:
     result = api.step(
-        name,
-        ['bash', '-c', 'echo -n $'+_KEY],
-        stdout=api.raw_io.output_text(),
-        step_test_data=lambda: api.raw_io.test_api.stream_output_text(exp),
+      name,
+      ['bash', '-c', 'echo -n $' + _KEY],
+      stdout=api.raw_io.output_text(),
+      step_test_data=lambda: api.raw_io.test_api.stream_output_text(exp),
     )
-    assert result.stdout == exp, (
-        '%r did not equal expected %r' % (result.stdout, exp))
+    assert result.stdout == exp, '%r did not equal expected %r' % (
+      result.stdout,
+      exp,
+    )
 
   expect_step('default', 'default')
 
@@ -68,36 +70,55 @@ def RunSteps(api: DEPS) -> None:
   with api.context(env={_KEY: 'bar'}):
     expect_step('env step', 'bar')
 
-    base_path = api.path.pathsep.join(['foo', '%('+_KEY+')s', 'bar'])
+    base_path = api.path.pathsep.join(['foo', '%(' + _KEY + ')s', 'bar'])
     with api.context(env={_KEY: base_path}):
-      expect_step('env step augmented',
-          api.path.pathsep.join(['foo', 'default', 'bar']))
+      expect_step(
+        'env step augmented', api.path.pathsep.join(['foo', 'default', 'bar'])
+      )
 
       with api.context(env_prefixes={_KEY: [pants, shirt]}):
-        expect_step('env step with prefix',
-            api.path.pathsep.join([str(pants), str(shirt), 'foo',
-                                   'default', 'bar']))
+        expect_step(
+          'env step with prefix',
+          api.path.pathsep.join(
+            [str(pants), str(shirt), 'foo', 'default', 'bar']
+          ),
+        )
 
         with api.context(env_suffixes={_KEY: [good_hat], 'OTHER': []}):
-          expect_step('env step with prefix and suffix',
-              api.path.pathsep.join([str(pants), str(shirt), 'foo',
-                                     'default', 'bar', str(good_hat)]))
+          expect_step(
+            'env step with prefix and suffix',
+            api.path.pathsep.join(
+              [str(pants), str(shirt), 'foo', 'default', 'bar', str(good_hat)]
+            ),
+          )
 
           with api.context(env_suffixes={_KEY: [bad_hat]}):
-            expect_step('env step with 2 suffixes',
-                api.path.pathsep.join([str(pants), str(shirt), 'foo',
-                                       'default', 'bar', str(good_hat),
-                                       str(bad_hat)]))
+            expect_step(
+              'env step with 2 suffixes',
+              api.path.pathsep.join(
+                [
+                  str(pants),
+                  str(shirt),
+                  'foo',
+                  'default',
+                  'bar',
+                  str(good_hat),
+                  str(bad_hat),
+                ]
+              ),
+            )
 
   # Can set the path of default environment variables.
   with api.context(env_prefixes={_KEY: [shirt]}):
-    expect_step('env with default value',
-        api.path.pathsep.join([str(shirt), 'default']))
+    expect_step(
+      'env with default value', api.path.pathsep.join([str(shirt), 'default'])
+    )
 
     # When 'env' is also defined, appends it.
     with api.context(env={_KEY: 'foo'}):
-      expect_step('env with override value',
-            api.path.pathsep.join([str(shirt), 'foo']))
+      expect_step(
+        'env with override value', api.path.pathsep.join([str(shirt), 'foo'])
+      )
 
     # When "env" is explicitly cleared, does not append.
     with api.context(env={_KEY: None}):

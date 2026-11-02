@@ -74,9 +74,11 @@ class FakeRecipeRepo:
   path: str = attr.ib()
 
   # The GitBackend for this FakeRecipeRepo.
-  backend: fetch.GitBackend = attr.ib(default=attr.Factory(
-      lambda self: fetch.GitBackend(self.path, None),
-      takes_self=True))
+  backend: fetch.GitBackend = attr.ib(
+    default=attr.Factory(
+      lambda self: fetch.GitBackend(self.path, None), takes_self=True
+    )
+  )
 
   @contextlib.contextmanager
   def edit_recipes_cfg_pb2(self) -> Iterator[recipes_cfg_pb.RepoSpec]:
@@ -223,6 +225,7 @@ class FakeRecipeRepo:
     final result (i.e. the RunSteps function returned None without running
     steps).
     """
+
     base_path: str = attr.ib()
 
     imports: list[str] = attr.ib(factory=list)
@@ -230,12 +233,15 @@ class FakeRecipeRepo:
     RunSteps_args: list[str] = attr.ib(factory=lambda: ['api'])
     GenTests: io.StringIO = attr.ib(factory=io.StringIO)
     DEPS: list[str] | dict[str, str] = attr.ib(
-        factory=lambda: ['recipe_engine/step'])
+      factory=lambda: ['recipe_engine/step']
+    )
     PROPERTIES: str = attr.ib(default='{}')
     ENV_PROPERTIES: str = attr.ib(default='None')
-    expectation: dict[str, Any] = attr.ib(factory=lambda: {
-      'basic': [{'name': '$result'}],
-    })
+    expectation: dict[str, Any] = attr.ib(
+      factory=lambda: {
+        'basic': [{'name': '$result'}],
+      }
+    )
 
     @property
     def path(self) -> str:
@@ -249,7 +255,7 @@ class FakeRecipeRepo:
 
   @contextlib.contextmanager
   def write_recipe(
-      self, name_or_module: str, name: str | None = None
+    self, name_or_module: str, name: str | None = None
   ) -> Iterator[WriteableRecipe]:
     """Context manager for writing a recipe to the disk in this testing repo.
 
@@ -292,7 +298,8 @@ class FakeRecipeRepo:
     dump = self.fake_recipe_deps._ambient_toplevel_code_dump()
 
     with self.write_file(base_path + '.py') as buf:
-      buf.write(textwrap.dedent('''
+      buf.write(
+        textwrap.dedent('''
         {imports}
 
         {ambient_toplevel_code}
@@ -315,8 +322,9 @@ class FakeRecipeRepo:
           ENV_PROPERTIES=recipe.ENV_PROPERTIES,
           RunSteps_args=', '.join(recipe.RunSteps_args),
           RunSteps=_get_suite(recipe.RunSteps, 'pass'),
-          GenTests=_get_suite(
-              recipe.GenTests, "yield api.test('basic')")))
+          GenTests=_get_suite(recipe.GenTests, "yield api.test('basic')"),
+        )
+      )
 
     for test_name, expectation in recipe.expectation.items():
       test_name = test_util.filesystem_safe(test_name)
@@ -357,6 +365,7 @@ class FakeRecipeRepo:
     The DISABLE_STRICT_COVERAGE maps directly to the same-named option in
     `__init__.py`.
     """
+
     path: str = attr.ib()  # base path of the module folder
 
     api: io.StringIO = attr.ib(factory=io.StringIO)
@@ -364,7 +373,8 @@ class FakeRecipeRepo:
     config: io.StringIO = attr.ib(factory=io.StringIO)
     imports: list[str] = attr.ib(factory=list)
     DEPS: list[str] | dict[str, str] = attr.ib(
-        factory=lambda: ['recipe_engine/step'])
+      factory=lambda: ['recipe_engine/step']
+    )
     PROPERTIES: str = attr.ib(default='{}')
     GLOBAL_PROPERTIES: str = attr.ib(default='None')
     ENV_PROPERTIES: str = attr.ib(default='None')
@@ -399,7 +409,8 @@ class FakeRecipeRepo:
       shutil.rmtree(os.path.join(self.path, base))
 
     with self.write_file(os.path.join(base, '__init__.py')) as buf:
-      buf.write('''
+      buf.write(
+        '''
       {imports}
 
       DEPS = {DEPS!r}
@@ -414,17 +425,19 @@ class FakeRecipeRepo:
       '''.format(
           imports='\n'.join(mod.imports),
           DEPS=mod.DEPS,
-          WARNINGS = mod.WARNINGS,
+          WARNINGS=mod.WARNINGS,
           DISABLE_STRICT_COVERAGE=mod.DISABLE_STRICT_COVERAGE,
           PROPERTIES=mod.PROPERTIES,
           GLOBAL_PROPERTIES=mod.GLOBAL_PROPERTIES,
           ENV_PROPERTIES=mod.ENV_PROPERTIES,
-      ))
+        )
+      )
 
     dump = self.fake_recipe_deps._ambient_toplevel_code_dump()
 
     with self.write_file(os.path.join(base, 'api.py')) as buf:
-      buf.write(textwrap.dedent('''
+      buf.write(
+        textwrap.dedent('''
         from recipe_engine.recipe_api import RecipeApi
 
         {imports}
@@ -437,10 +450,13 @@ class FakeRecipeRepo:
           imports='\n'.join(mod.imports),
           ambient_toplevel_code=dump,
           mod_name=mod_name.title().replace(' ', ''),
-          api=_get_suite(mod.api, 'pass')))
+          api=_get_suite(mod.api, 'pass'),
+        )
+      )
 
     with self.write_file(os.path.join(base, 'test_api.py')) as buf:
-      buf.write(textwrap.dedent('''
+      buf.write(
+        textwrap.dedent('''
         from recipe_engine.recipe_test_api import RecipeTestApi
 
         {imports}
@@ -453,12 +469,15 @@ class FakeRecipeRepo:
           imports='\n'.join(mod.imports),
           ambient_toplevel_code=dump,
           mod_name=mod_name.title().replace(' ', ''),
-          test_api=_get_suite(mod.test_api, 'pass')))
+          test_api=_get_suite(mod.test_api, 'pass'),
+        )
+      )
 
     config_body = _get_suite(mod.config, '', indent='')
     if config_body:
       with self.write_file(os.path.join(base, 'config.py')) as buf:
-        buf.write(textwrap.dedent('''
+        buf.write(
+          textwrap.dedent('''
           from recipe_engine.config import ConfigGroup, ConfigList, Dict, List
           from recipe_engine.config import Set, Single, config_item_context
 
@@ -468,7 +487,8 @@ class FakeRecipeRepo:
         ''').format(
             imports='\n'.join(mod.imports),
             config_body=config_body,
-        ))
+          )
+        )
 
   def add_dep(self, *depnames: str) -> None:
     """Adds new repo-level dependencies to this repo.
@@ -506,12 +526,13 @@ class FakeRecipeRepo:
     env = os.environ.copy()
     env.update(kwargs.pop('env', {}))
     proc = subprocess.Popen(
-        ('python3', 'recipes.py') + args,
-        cwd=self.path,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        env=env,
-        text=True)
+      ('python3', 'recipes.py') + args,
+      cwd=self.path,
+      stdout=subprocess.PIPE,
+      stderr=subprocess.STDOUT,
+      env=env,
+      text=True,
+    )
     output, _ = proc.communicate()
     return output, proc.returncode
 
@@ -521,6 +542,7 @@ class FakeRecipeRepo:
     Identical to `fetch.CommitMetadata`, except that it has a helper function
     to make writing autoroller tests less tedious.
     """
+
     def as_roll_info(self) -> dict[str, Any]:
       """Returns a dict of author_email, message_lines and revision which
       is JSON serializable.
@@ -534,10 +556,10 @@ class FakeRecipeRepo:
       }
 
   def commit(
-      self,
-      msg: str,
-      author_name: str = 'Phinley Pfeiffer',
-      author_email: str = 'ph.pf@example.com',
+    self,
+    msg: str,
+    author_name: str = 'Phinley Pfeiffer',
+    author_email: str = 'ph.pf@example.com',
   ) -> TestCommitMetadata:
     """Adds all files in the repo, then commits it with the given message.
 
@@ -546,12 +568,19 @@ class FakeRecipeRepo:
     # pylint: disable=protected-access
     self.backend._git('add', '.')
     self.backend._git(
-      '-c', 'user.name='+author_name,
-      '-c', 'user.email='+author_email,
-      'commit', '--allow-empty', '-m', msg)
+      '-c',
+      'user.name=' + author_name,
+      '-c',
+      'user.email=' + author_email,
+      'commit',
+      '--allow-empty',
+      '-m',
+      msg,
+    )
 
     return self.TestCommitMetadata(
-      **self.backend.commit_metadata('HEAD')._asdict())
+      **self.backend.commit_metadata('HEAD')._asdict()
+    )
 
 
 @attr.s
@@ -591,23 +620,29 @@ class FakeRecipeDeps:
     return '\n'.join(map(textwrap.dedent, self.ambient_toplevel_code))
 
   ENGINE_REVISION: str | None = None
+
   @classmethod
   def _get_engine_revision(cls) -> str:
     if not cls.ENGINE_REVISION:
       if subprocess.call(['git', 'diff-index', '--quiet', 'HEAD', '--']):
         print('*' * 6, file=REAL_STDERR)
-        print(textwrap.dedent('''
+        print(
+          textwrap.dedent('''
         WARNING: Tests may rely on current recipe engine repo, but you have
         un-committed changes. If you see unexpected behavior in the tests please
         try committing your changes to the engine repo first and then running
         the tests again.
-        ''').lstrip(), end=' ', file=REAL_STDERR)
+        ''').lstrip(),
+          end=' ',
+          file=REAL_STDERR,
+        )
         print('*' * 6, file=REAL_STDERR)
         print(file=REAL_STDERR)
         REAL_STDERR.flush()
 
       cls.ENGINE_REVISION = subprocess.check_output(
-          ['git', 'rev-parse', 'HEAD'], text=True).strip()
+        ['git', 'rev-parse', 'HEAD'], text=True
+      ).strip()
     return cls.ENGINE_REVISION
 
   def _create_repo(self, name: str, path: str) -> bytes:
@@ -619,38 +654,44 @@ class FakeRecipeDeps:
     Returns the commit of the created repo.
     """
     assert isinstance(name, str)
-    assert name not in self.repos, (
-      'duplicate repo_name: %r' % (name,))
+    assert name not in self.repos, 'duplicate repo_name: %r' % (name,)
     os.makedirs(path)
     subprocess.check_call(
-        ['git', 'init', '-b', 'main'], cwd=path, stdout=DEVNULL)
+      ['git', 'init', '-b', 'main'], cwd=path, stdout=DEVNULL
+    )
     cfg_path = os.path.join(path, simple_cfg.RECIPES_CFG_LOCATION_REL)
     os.makedirs(os.path.dirname(cfg_path))
     with open(cfg_path, 'w') as fil:
       json.dump(
-          {
-              'api_version': 2,
-              'repo_name': name,
-              'deps': {
-                  'recipe_engine': {
-                      'url': 'file://' + ROOT_DIR,
-                      'branch': 'HEAD',
-                      'revision': self._get_engine_revision(),
-                  },
-              },
-          }, fil)
+        {
+          'api_version': 2,
+          'repo_name': name,
+          'deps': {
+            'recipe_engine': {
+              'url': 'file://' + ROOT_DIR,
+              'branch': 'HEAD',
+              'revision': self._get_engine_revision(),
+            },
+          },
+        },
+        fil,
+      )
     readme_path = os.path.join(path, 'README.recipes.md')
-    readme_str = ('<!--- AUTOGENERATED BY `./recipes.py test train` -->\n'
-                 '# Repo documentation for [main]()\n## Table of Contents')
+    readme_str = (
+      '<!--- AUTOGENERATED BY `./recipes.py test train` -->\n'
+      '# Repo documentation for [main]()\n## Table of Contents'
+    )
     with open(readme_path, 'w') as f:
       f.write(readme_str)
     shutil.copy(os.path.join(ROOT_DIR, 'recipes.py'), path)
     subprocess.check_call(['git', 'add', '.'], cwd=path, stdout=DEVNULL)
-    subprocess.check_call(['git', 'commit', '-m', 'init '+name], cwd=path,
-                          stdout=DEVNULL)
+    subprocess.check_call(
+      ['git', 'commit', '-m', 'init ' + name], cwd=path, stdout=DEVNULL
+    )
     self.repos[name] = FakeRecipeRepo(self, name, path)
     return subprocess.check_output(
-      ['git', 'rev-parse', 'HEAD'], cwd=path).strip()
+      ['git', 'rev-parse', 'HEAD'], cwd=path
+    ).strip()
 
   def __attrs_post_init__(self) -> None:
     """Makes a new RecipeDeps temp folder on disk with a single (main) repo
@@ -659,8 +700,7 @@ class FakeRecipeDeps:
 
   @property
   def recipe_deps_path(self) -> str:
-    """Returns the absolute path to the `.recipe_deps` folder of the main repo.
-    """
+    """Returns the absolute path to the `.recipe_deps` folder of the main repo."""
     return os.path.join(self.main_repo.path, '.recipe_deps')
 
   def add_repo(self, name: str, detached: bool = False) -> FakeRecipeRepo:
@@ -685,4 +725,3 @@ class FakeRecipeDeps:
   def main_repo(self) -> FakeRecipeRepo:
     """Returns the main FakeRecipeRepo for this FakeRecipeDeps."""
     return self.repos['main']
-

@@ -15,11 +15,12 @@ from recipe_engine import recipe_test_api
 
 from recipe_engine import post_process
 
+
 def RunSteps(api: recipe_api.RecipeScriptApi) -> None:
   del api
 
 
 def GenTests(
-    api: recipe_test_api.RecipeTestApi,
+  api: recipe_test_api.RecipeTestApi,
 ) -> Iterator[recipe_test_api.TestData]:
   yield api.test('basic') + api.post_process(post_process.DropExpectation)

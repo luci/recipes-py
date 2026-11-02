@@ -31,9 +31,11 @@ from .. import attr_util
 @attr.s(frozen=True, slots=True)
 class FuncLoc:
   """An immutable class that describes the location of a function."""
+
   # Absolute path to the file containing this function's source
   file_path: str = attr.ib(
-      validator=attr_util.attr_type(str), converter=os.path.abspath)
+    validator=attr_util.attr_type(str), converter=os.path.abspath
+  )
   # First line number of this function
   first_line_no: int = attr.ib(validator=attr_util.attr_type(int))
 
@@ -59,7 +61,7 @@ IGNORE = object()
 
 
 def escape_warning_predicate(
-    name: str, frame: types.FrameType
+  name: str, frame: types.FrameType
 ) -> str | object | None:
   """A predicate used in warning recorder that returns True when the function
   that the given frame is currently executing is escaped from the given warning
@@ -70,7 +72,9 @@ def escape_warning_predicate(
     return IGNORE
   if any(r.match(name) for r in WARNING_ESCAPE_REGISTRY.get(func_loc, tuple())):
     return 'escaped function at %s#L%d' % (
-      func_loc.file_path, func_loc.first_line_no)
+      func_loc.file_path,
+      func_loc.first_line_no,
+    )
   return None
 
 
@@ -78,17 +82,20 @@ _FuncT = TypeVar('_FuncT', bound=Callable[..., Any])
 
 
 def escape_warnings(
-    *warning_name_regexps: str,
+  *warning_name_regexps: str,
 ) -> Callable[[_FuncT], _FuncT]:
   """A function decorator which will cause warnings matching any of the given
   regexps to be attributed to the decorated function's caller instead of the
   decorated function itself.
   """
+
   def _escape_warnings(func: _FuncT) -> _FuncT:
     func_loc = FuncLoc.from_code_obj(func.__code__)
-    WARNING_ESCAPE_REGISTRY[func_loc] = (
-      tuple(re.compile(r) for r in warning_name_regexps))
+    WARNING_ESCAPE_REGISTRY[func_loc] = tuple(
+      re.compile(r) for r in warning_name_regexps
+    )
     return func
+
   return _escape_warnings
 
 
@@ -98,14 +105,17 @@ def escape_all_warnings(func: _FuncT) -> _FuncT:
 
 
 def ignore_warnings(
-    *warning_name_regexps: str,
+  *warning_name_regexps: str,
 ) -> Callable[[_FuncT], _FuncT]:
   """A function decorator which will cause warnings matching any of the given
   regexps to be ignored.
   """
+
   def _ignore_warnings(func: _FuncT) -> _FuncT:
     func_loc = FuncLoc.from_code_obj(func.__code__)
-    WARNING_IGNORE_REGISTRY[func_loc] = (
-      tuple(re.compile(r) for r in warning_name_regexps))
+    WARNING_IGNORE_REGISTRY[func_loc] = tuple(
+      re.compile(r) for r in warning_name_regexps
+    )
     return func
+
   return _ignore_warnings

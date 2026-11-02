@@ -7,13 +7,18 @@
 Requires `rdb` command in `$PATH`:
 https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 """
+
 from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from datetime import timedelta
 from recipe_engine import config_types, recipe_test_api, step_data
 from recipe_engine.util import Placeholder
-from PB.go.chromium.org.luci.resultdb.proto.v1 import instruction as instruction_pb
-from PB.go.chromium.org.luci.resultdb.proto.v1 import test_exoneration as test_exoneration_pb
+from PB.go.chromium.org.luci.resultdb.proto.v1 import (
+  instruction as instruction_pb,
+)
+from PB.go.chromium.org.luci.resultdb.proto.v1 import (
+  test_exoneration as test_exoneration_pb,
+)
 
 from RECIPE_MODULES.recipe_engine import resultdb as resultdb_mod
 
@@ -27,7 +32,9 @@ from recipe_engine import recipe_api
 
 from PB.go.chromium.org.luci.resultdb.proto.v1 import artifact
 from PB.go.chromium.org.luci.resultdb.proto.v1 import common as common_v1
-from PB.go.chromium.org.luci.resultdb.proto.v1 import invocation as invocation_pb2
+from PB.go.chromium.org.luci.resultdb.proto.v1 import (
+  invocation as invocation_pb2,
+)
 from PB.go.chromium.org.luci.resultdb.proto.v1 import predicate
 from PB.go.chromium.org.luci.resultdb.proto.v1 import recorder
 from PB.go.chromium.org.luci.resultdb.proto.v1 import resultdb
@@ -47,7 +54,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
   _BATCH_SIZE = 500
 
   # Prefix of an invocation name.
-  _INVOCATION_NAME_PREFIX  = 'invocations/'
+  _INVOCATION_NAME_PREFIX = 'invocations/'
 
   # Expose serialize and deserialize functions.
   serialize = staticmethod(common.serialize)
@@ -69,24 +76,26 @@ class ResultDBAPI(recipe_api.RecipeApi):
     )
 
   def include_invocations(
-      self, invocations: Sequence[str], step_name: str | None = None
+    self, invocations: Sequence[str], step_name: str | None = None
   ) -> None:
     """Shortcut for resultdb.update_included_invocations()."""
     return self.update_included_invocations(
-        add_invocations=invocations, step_name=step_name)
+      add_invocations=invocations, step_name=step_name
+    )
 
   def exclude_invocations(
-      self, invocations: Sequence[str], step_name: str | None = None
+    self, invocations: Sequence[str], step_name: str | None = None
   ) -> None:
     """Shortcut for resultdb.update_included_invocations()."""
     return self.update_included_invocations(
-        remove_invocations=invocations, step_name=step_name)
+      remove_invocations=invocations, step_name=step_name
+    )
 
   def update_included_invocations(
-      self,
-      add_invocations: Sequence[str] | None = None,
-      remove_invocations: Sequence[str] | None = None,
-      step_name: str | None = None,
+    self,
+    add_invocations: Sequence[str] | None = None,
+    remove_invocations: Sequence[str] | None = None,
+    step_name: str | None = None,
   ) -> None:
     """Add and/or remove included invocations to/from the current invocation.
 
@@ -107,21 +116,22 @@ class ResultDBAPI(recipe_api.RecipeApi):
 
     names = lambda ids: ['invocations/%s' % id for id in ids or []]
     req = recorder.UpdateIncludedInvocationsRequest(
-        including_invocation=self.current_invocation,
-        add_invocations=names(add_invocations),
-        remove_invocations=names(remove_invocations),
+      including_invocation=self.current_invocation,
+      add_invocations=names(add_invocations),
+      remove_invocations=names(remove_invocations),
     )
 
     self._rpc(
-        step_name or 'resultdb.update_included_invocations',
-        'luci.resultdb.v1.Recorder',
-        'UpdateIncludedInvocations',
-        json_format.MessageToDict(req),
-        include_update_token=True,
-        step_test_data=lambda: self.m.json.test_api.output_stream({}))
+      step_name or 'resultdb.update_included_invocations',
+      'luci.resultdb.v1.Recorder',
+      'UpdateIncludedInvocations',
+      json_format.MessageToDict(req),
+      include_update_token=True,
+      step_test_data=lambda: self.m.json.test_api.output_stream({}),
+    )
 
   def get_included_invocations(
-      self, inv_name: str | None = None, step_name: str | None = None
+    self, inv_name: str | None = None, step_name: str | None = None
   ) -> Sequence[str]:
     """Returns names of included invocations of the input invocation.
 
@@ -134,21 +144,24 @@ class ResultDBAPI(recipe_api.RecipeApi):
       A list of invocation name strs.
     """
     req = resultdb.GetInvocationRequest(
-        name=inv_name or self.current_invocation)
+      name=inv_name or self.current_invocation
+    )
     res = self._rpc(
-        step_name or 'get_included_invocations',
-        'luci.resultdb.v1.ResultDB',
-        'GetInvocation',
-        json_format.MessageToDict(req),
-        include_update_token=True,
-        step_test_data=lambda: self.m.json.test_api.output_stream({}))
+      step_name or 'get_included_invocations',
+      'luci.resultdb.v1.ResultDB',
+      'GetInvocation',
+      json_format.MessageToDict(req),
+      include_update_token=True,
+      step_test_data=lambda: self.m.json.test_api.output_stream({}),
+    )
 
     inv_msg = json_format.ParseDict(
-        res, invocation_pb2.Invocation(), ignore_unknown_fields=True)
+      res, invocation_pb2.Invocation(), ignore_unknown_fields=True
+    )
     return inv_msg.included_invocations or []
 
   def get_invocation_instructions(
-      self, inv_name: str | None = None, step_name: str | None = None
+    self, inv_name: str | None = None, step_name: str | None = None
   ) -> instruction_pb.Instructions:
     """Returns instructions from the input invocation.
 
@@ -161,23 +174,26 @@ class ResultDBAPI(recipe_api.RecipeApi):
       instruction_pb2.Instructions of the invocation requested.
     """
     req = resultdb.GetInvocationRequest(
-        name=inv_name or self.current_invocation)
+      name=inv_name or self.current_invocation
+    )
     res = self._rpc(
-        step_name or 'get_invocation_instructions',
-        'luci.resultdb.v1.ResultDB',
-        'GetInvocation',
-        json_format.MessageToDict(req),
-        include_update_token=True,
-        step_test_data=lambda: self.m.json.test_api.output_stream({}))
+      step_name or 'get_invocation_instructions',
+      'luci.resultdb.v1.ResultDB',
+      'GetInvocation',
+      json_format.MessageToDict(req),
+      include_update_token=True,
+      step_test_data=lambda: self.m.json.test_api.output_stream({}),
+    )
 
     inv_msg = json_format.ParseDict(
-        res, invocation_pb2.Invocation(), ignore_unknown_fields=True)
+      res, invocation_pb2.Invocation(), ignore_unknown_fields=True
+    )
     return inv_msg.instructions
 
   def exonerate(
-      self,
-      test_exonerations: Sequence[test_exoneration_pb.TestExoneration],
-      step_name: str | None = None,
+    self,
+    test_exonerations: Sequence[test_exoneration_pb.TestExoneration],
+    step_name: str | None = None,
   ) -> None:
     """Exonerates test variants in the current invocation.
 
@@ -187,20 +203,23 @@ class ResultDBAPI(recipe_api.RecipeApi):
     """
 
     def args(
-        test_exonerations: Sequence[test_exoneration_pb.TestExoneration],
-        step_name: str,
+      test_exonerations: Sequence[test_exoneration_pb.TestExoneration],
+      step_name: str,
     ) -> list[Any]:
       req = recorder.BatchCreateTestExonerationsRequest(
-          invocation=self.current_invocation,
-          request_id=self.m.uuid.random(),
+        invocation=self.current_invocation,
+        request_id=self.m.uuid.random(),
       )
       for te in test_exonerations:
         req.requests.add(test_exoneration=te)
 
       return [
-          step_name, 'luci.resultdb.v1.Recorder', 'BatchCreateTestExonerations',
-          json_format.MessageToDict(req),
-          True, lambda: self.m.json.test_api.output_stream({})
+        step_name,
+        'luci.resultdb.v1.Recorder',
+        'BatchCreateTestExonerations',
+        json_format.MessageToDict(req),
+        True,
+        lambda: self.m.json.test_api.output_stream({}),
       ]
 
     if not test_exonerations:
@@ -218,8 +237,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
     i = 0
     with self.m.step.nest(step_name):
       while remaining:
-        batch = remaining[:self._BATCH_SIZE]
-        remaining = remaining[self._BATCH_SIZE:]
+        batch = remaining[: self._BATCH_SIZE]
+        remaining = remaining[self._BATCH_SIZE :]
         self.m.futures.spawn(self._rpc, *args(batch, 'batch (%d)' % i))
         i += 1
 
@@ -233,21 +252,22 @@ class ResultDBAPI(recipe_api.RecipeApi):
       A list of invocation_ids.
     """
     assert all(isinstance(name, str) for name in inv_names), inv_names
-    assert all(name.startswith(
-        self._INVOCATION_NAME_PREFIX) for name in inv_names), inv_names
+    assert all(
+      name.startswith(self._INVOCATION_NAME_PREFIX) for name in inv_names
+    ), inv_names
 
-    return [name[len(self._INVOCATION_NAME_PREFIX):] for name in inv_names]
+    return [name[len(self._INVOCATION_NAME_PREFIX) :] for name in inv_names]
 
   def query(
-      self,
-      inv_ids: Sequence[str],
-      variants_with_unexpected_results: bool = False,
-      merge: bool = False,
-      limit: int | None = None,
-      step_name: str | None = None,
-      tr_fields: Sequence[str] | None = None,
-      test_invocations: Mapping[str, common.Invocation] | None = None,
-      test_regex: str | None = None,
+    self,
+    inv_ids: Sequence[str],
+    variants_with_unexpected_results: bool = False,
+    merge: bool = False,
+    limit: int | None = None,
+    step_name: str | None = None,
+    tr_fields: Sequence[str] | None = None,
+    test_invocations: Mapping[str, common.Invocation] | None = None,
+    test_regex: str | None = None,
   ) -> dict[str, common.Invocation]:
     """Returns test results in the invocations.
 
@@ -291,13 +311,15 @@ class ResultDBAPI(recipe_api.RecipeApi):
     assert all(isinstance(id, str) for id in inv_ids), inv_ids
     assert limit is None or limit >= 0
     assert tr_fields is None or all(
-        isinstance(field, str) for field in tr_fields), tr_fields
+      isinstance(field, str) for field in tr_fields
+    ), tr_fields
     assert test_regex is None or isinstance(test_regex, str)
     limit = 1000 if limit is None else limit
 
     args = [
       '-json',
-      '-n', str(limit),
+      '-n',
+      str(limit),
     ]
     if variants_with_unexpected_results:
       args += ['-u']
@@ -311,19 +333,20 @@ class ResultDBAPI(recipe_api.RecipeApi):
     args += list(inv_ids)
 
     step_res = self._run_rdb(
-        subcommand='query',
-        args=args,
-        step_name=step_name,
-        stdout=self.m.raw_io.output_text(add_output_log=True),
-        step_test_data=lambda: self.m.raw_io.test_api.stream_output_text(
-            common.serialize(test_invocations or {})),
+      subcommand='query',
+      args=args,
+      step_name=step_name,
+      stdout=self.m.raw_io.output_text(add_output_log=True),
+      step_test_data=lambda: self.m.raw_io.test_api.stream_output_text(
+        common.serialize(test_invocations or {})
+      ),
     )
     return common.deserialize(step_res.stdout)
 
   def query_test_result_statistics(
-      self,
-      invocations: Sequence[str] | None = None,
-      step_name: str | None = None,
+    self,
+    invocations: Sequence[str] | None = None,
+    step_name: str | None = None,
   ) -> resultdb.QueryTestResultStatisticsResponse:
     """Retrieve stats of test results for the given invocations.
 
@@ -346,22 +369,24 @@ class ResultDBAPI(recipe_api.RecipeApi):
     req = resultdb.QueryTestResultStatisticsRequest(invocations=invocations)
 
     res = self._rpc(
-        step_name or 'query_test_result_statistics',
-        'luci.resultdb.v1.ResultDB',
-        'QueryTestResultStatistics',
-        req=json_format.MessageToDict(req),
-        step_test_data=lambda: self.m.json.test_api.output_stream({}))
+      step_name or 'query_test_result_statistics',
+      'luci.resultdb.v1.ResultDB',
+      'QueryTestResultStatistics',
+      req=json_format.MessageToDict(req),
+      step_test_data=lambda: self.m.json.test_api.output_stream({}),
+    )
 
     return json_format.ParseDict(
-        res,
-        resultdb.QueryTestResultStatisticsResponse(),
-        ignore_unknown_fields=True)
+      res,
+      resultdb.QueryTestResultStatisticsResponse(),
+      ignore_unknown_fields=True,
+    )
 
   def upload_invocation_artifacts(
-      self,
-      artifacts: Mapping[str, Mapping[str, str | bytes]],
-      parent_inv: str | None = None,
-      step_name: str | None = None,
+    self,
+    artifacts: Mapping[str, Mapping[str, str | bytes]],
+    parent_inv: str | None = None,
+    step_name: str | None = None,
   ) -> recorder.BatchCreateArtifactsResponse:
     """Create artifacts with the given content type and contents or gcs_uri.
 
@@ -390,40 +415,43 @@ class ResultDBAPI(recipe_api.RecipeApi):
         return s
       return s.encode()
 
-    req = recorder.BatchCreateArtifactsRequest(requests=[
+    req = recorder.BatchCreateArtifactsRequest(
+      requests=[
         recorder.CreateArtifactRequest(
-            parent=parent_inv or self.current_invocation,
-            artifact=artifact.Artifact(
-                artifact_id=art_id,
-                content_type=art.get('content_type', ''),
-                contents=ensure_bytes(art.get('contents', b'')),
-                gcs_uri=art.get('gcs_uri', ''),
-            ),
-        ) for art_id, art in artifacts.items()
-    ])
+          parent=parent_inv or self.current_invocation,
+          artifact=artifact.Artifact(
+            artifact_id=art_id,
+            content_type=art.get('content_type', ''),
+            contents=ensure_bytes(art.get('contents', b'')),
+            gcs_uri=art.get('gcs_uri', ''),
+          ),
+        )
+        for art_id, art in artifacts.items()
+      ]
+    )
 
     res = self._rpc(
-        step_name or 'upload_invocation_artifacts',
-        'luci.resultdb.v1.Recorder',
-        'BatchCreateArtifacts',
-        req=json_format.MessageToDict(req),
-        include_update_token=True,
-        step_test_data=lambda: self.m.json.test_api.output_stream({}))
+      step_name or 'upload_invocation_artifacts',
+      'luci.resultdb.v1.Recorder',
+      'BatchCreateArtifacts',
+      req=json_format.MessageToDict(req),
+      include_update_token=True,
+      step_test_data=lambda: self.m.json.test_api.output_stream({}),
+    )
 
     return json_format.ParseDict(
-        res,
-        recorder.BatchCreateArtifactsResponse(),
-        ignore_unknown_fields=True)
+      res, recorder.BatchCreateArtifactsResponse(), ignore_unknown_fields=True
+    )
 
   def query_test_results(
-      self,
-      invocations: Sequence[str],
-      test_id_regexp: str | None = None,
-      variant_predicate: predicate.VariantPredicate | None = None,
-      field_mask_paths: Sequence[str] | None = None,
-      page_size: int = 100,
-      page_token: str | None = None,
-      step_name: str | None = None,
+    self,
+    invocations: Sequence[str],
+    test_id_regexp: str | None = None,
+    variant_predicate: predicate.VariantPredicate | None = None,
+    field_mask_paths: Sequence[str] | None = None,
+    page_size: int = 100,
+    page_token: str | None = None,
+    step_name: str | None = None,
   ) -> resultdb.QueryTestResultsResponse:
     """Retrieve test results from an invocation, recursively.
 
@@ -458,35 +486,38 @@ class ResultDBAPI(recipe_api.RecipeApi):
     """
 
     req = resultdb.QueryTestResultsRequest(
-        invocations=invocations,
-        predicate=predicate.TestResultPredicate(
-            test_id_regexp=test_id_regexp,
-            variant=variant_predicate,
-        ),
-        page_size=page_size,
-        page_token=page_token,
-        read_mask=field_mask_pb2.FieldMask(paths=field_mask_paths),
+      invocations=invocations,
+      predicate=predicate.TestResultPredicate(
+        test_id_regexp=test_id_regexp,
+        variant=variant_predicate,
+      ),
+      page_size=page_size,
+      page_token=page_token,
+      read_mask=field_mask_pb2.FieldMask(paths=field_mask_paths),
     )
 
-    res = self._rpc(step_name or 'query_test_results',
-                    'luci.resultdb.v1.ResultDB',
-                    'QueryTestResults',
-                    req=json_format.MessageToDict(req))
+    res = self._rpc(
+      step_name or 'query_test_results',
+      'luci.resultdb.v1.ResultDB',
+      'QueryTestResults',
+      req=json_format.MessageToDict(req),
+    )
 
     return json_format.ParseDict(
-        res,
-        resultdb.QueryTestResultsResponse(),
-        # Do not fail the build because recipe's proto copy is stale.
-        ignore_unknown_fields=True)
+      res,
+      resultdb.QueryTestResultsResponse(),
+      # Do not fail the build because recipe's proto copy is stale.
+      ignore_unknown_fields=True,
+    )
 
   def query_test_variants(
-      self,
-      invocations: Sequence[str],
-      test_variant_status: str | None = None,
-      field_mask_paths: Sequence[str] | None = None,
-      page_size: int = 100,
-      page_token: str | None = None,
-      step_name: str | None = None,
+    self,
+    invocations: Sequence[str],
+    test_variant_status: str | None = None,
+    field_mask_paths: Sequence[str] | None = None,
+    page_size: int = 100,
+    page_token: str | None = None,
+    step_name: str | None = None,
   ) -> resultdb.QueryTestVariantsResponse:
     """Retrieve test variants from an invocation, recursively.
 
@@ -523,33 +554,36 @@ class ResultDBAPI(recipe_api.RecipeApi):
     predicate = None
     if test_variant_status:
       predicate = test_variant.TestVariantPredicate(
-          status=test_variant.TestVariantStatus.Value(test_variant_status))
+        status=test_variant.TestVariantStatus.Value(test_variant_status)
+      )
     req = resultdb.QueryTestVariantsRequest(
-        invocations=invocations,
-        predicate=predicate,
-        page_size=page_size,
-        page_token=page_token,
-        read_mask=field_mask_pb2.FieldMask(paths=field_mask_paths),
+      invocations=invocations,
+      predicate=predicate,
+      page_size=page_size,
+      page_token=page_token,
+      read_mask=field_mask_pb2.FieldMask(paths=field_mask_paths),
     )
 
     res = self._rpc(
-        step_name or 'query_test_variants',
-        'luci.resultdb.v1.ResultDB',
-        'QueryTestVariants',
-        req=json_format.MessageToDict(req))
+      step_name or 'query_test_variants',
+      'luci.resultdb.v1.ResultDB',
+      'QueryTestVariants',
+      req=json_format.MessageToDict(req),
+    )
 
     return json_format.ParseDict(
-        res,
-        resultdb.QueryTestVariantsResponse(),
-        # Do not fail the build because recipe's proto copy is stale.
-        ignore_unknown_fields=True)
+      res,
+      resultdb.QueryTestVariantsResponse(),
+      # Do not fail the build because recipe's proto copy is stale.
+      ignore_unknown_fields=True,
+    )
 
   def query_new_test_variants(
-      self,
-      invocation: str,
-      baseline: str,
-      step_name: str | None = None,
-      step_test_data: Mapping[str, Any] | None = None,
+    self,
+    invocation: str,
+    baseline: str,
+    step_name: str | None = None,
+    step_test_data: Mapping[str, Any] | None = None,
   ) -> resultdb.QueryNewTestVariantsResponse:
     """Query ResultDB for new tests.
 
@@ -565,33 +599,35 @@ class ResultDBAPI(recipe_api.RecipeApi):
      new_test_variants.
     """
     req = resultdb.QueryNewTestVariantsRequest(
-        invocation=invocation,
-        baseline=baseline,
+      invocation=invocation,
+      baseline=baseline,
     )
 
     res = self._rpc(
-        step_name or 'query_new_test_variants',
-        'luci.resultdb.v1.ResultDB',
-        'QueryNewTestVariants',
-        req=json_format.MessageToDict(req),
-        step_test_data=(
-            lambda: self.m.json.test_api.output_stream(step_test_data or {})),
+      step_name or 'query_new_test_variants',
+      'luci.resultdb.v1.ResultDB',
+      'QueryNewTestVariants',
+      req=json_format.MessageToDict(req),
+      step_test_data=(
+        lambda: self.m.json.test_api.output_stream(step_test_data or {})
+      ),
     )
     return json_format.ParseDict(
-        res,
-        resultdb.QueryNewTestVariantsResponse(),
-        # Do not fail the build because recipe's proto copy is stale.
-        ignore_unknown_fields=True)
+      res,
+      resultdb.QueryNewTestVariantsResponse(),
+      # Do not fail the build because recipe's proto copy is stale.
+      ignore_unknown_fields=True,
+    )
 
   def update_invocation(
-      self,
-      parent_inv: str = '',
-      step_name: str | None = None,
-      source_spec: invocation_pb2.SourceSpec | None = None,
-      is_source_spec_final: bool | None = None,
-      baseline_id: str | None = None,
-      instructions: instruction_pb.Instructions | None = None,
-      raise_on_failure: bool = True,
+    self,
+    parent_inv: str = '',
+    step_name: str | None = None,
+    source_spec: invocation_pb2.SourceSpec | None = None,
+    is_source_spec_final: bool | None = None,
+    baseline_id: str | None = None,
+    instructions: instruction_pb.Instructions | None = None,
+    raise_on_failure: bool = True,
   ) -> None:
     """Makes a call to the UpdateInvocation API to update the invocation
 
@@ -623,36 +659,37 @@ class ResultDBAPI(recipe_api.RecipeApi):
       field_mask_paths.append('instructions')
 
     req = recorder.UpdateInvocationRequest(
-        invocation=invocation_pb2.Invocation(
-            name=parent_inv or self.current_invocation,
-            source_spec=source_spec,
-            is_source_spec_final=is_source_spec_final,
-            baseline_id=baseline_id,
-            instructions=instructions),
-        update_mask=field_mask_pb2.FieldMask(paths=field_mask_paths),
+      invocation=invocation_pb2.Invocation(
+        name=parent_inv or self.current_invocation,
+        source_spec=source_spec,
+        is_source_spec_final=is_source_spec_final,
+        baseline_id=baseline_id,
+        instructions=instructions,
+      ),
+      update_mask=field_mask_pb2.FieldMask(paths=field_mask_paths),
     )
     self._rpc(
-        step_name or 'update_invocations',
-        'luci.resultdb.v1.Recorder',
-        'UpdateInvocation',
-        req=json_format.MessageToDict(req),
-        include_update_token=True,
-        step_test_data=lambda: self.m.json.test_api.output_stream({}),
-        raise_on_failure=raise_on_failure)
-
+      step_name or 'update_invocations',
+      'luci.resultdb.v1.Recorder',
+      'UpdateInvocation',
+      req=json_format.MessageToDict(req),
+      include_update_token=True,
+      step_test_data=lambda: self.m.json.test_api.output_stream({}),
+      raise_on_failure=raise_on_failure,
+    )
 
   ##############################################################################
   # Implementation details.
 
   def _rpc(
-      self,
-      step_name: str | None,
-      service: str,
-      method: str,
-      req: Mapping[str, Any],
-      include_update_token: bool = False,
-      step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
-      raise_on_failure: bool = True,
+    self,
+    step_name: str | None,
+    service: str,
+    method: str,
+    req: Mapping[str, Any],
+    include_update_token: bool = False,
+    step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
+    raise_on_failure: bool = True,
   ) -> dict[str, Any]:
     """Makes a ResultDB RPC.
 
@@ -675,67 +712,67 @@ class ResultDBAPI(recipe_api.RecipeApi):
       args.append('-include-update-token')
 
     step_res = self._run_rdb(
-        subcommand='rpc',
-        step_name=step_name,
-        args=args,
-        stdin=self.m.json.input(req),
-        stdout=self.m.json.output(),
-        step_test_data=step_test_data,
-        raise_on_failure=raise_on_failure,
+      subcommand='rpc',
+      step_name=step_name,
+      args=args,
+      stdin=self.m.json.input(req),
+      stdout=self.m.json.output(),
+      step_test_data=step_test_data,
+      raise_on_failure=raise_on_failure,
     )
     step_res.presentation.logs['json.input'] = self.m.json.dumps(req, indent=2)
 
     return step_res.stdout
 
   def _run_rdb(
-      self,
-      subcommand: str,
-      step_name: str | None = None,
-      args: Sequence[str] | None = None,
-      stdin: Placeholder | None = None,
-      stdout: Placeholder | None = None,
-      step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
-      timeout: int | float | timedelta | None = None,
-      raise_on_failure: bool = True,
+    self,
+    subcommand: str,
+    step_name: str | None = None,
+    args: Sequence[str] | None = None,
+    stdin: Placeholder | None = None,
+    stdout: Placeholder | None = None,
+    step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
+    timeout: int | float | timedelta | None = None,
+    raise_on_failure: bool = True,
   ) -> step_data.StepData:
     """Runs rdb tool."""
     cmdline = ['rdb', subcommand] + (args or [])
 
     return self.m.step(
-        step_name or ('rdb ' + subcommand),
-        cmdline,
-        infra_step=True,
-        stdin=stdin,
-        stdout=stdout,
-        step_test_data=step_test_data,
-        timeout=timeout,
-        raise_on_failure=raise_on_failure,
+      step_name or ('rdb ' + subcommand),
+      cmdline,
+      infra_step=True,
+      stdin=stdin,
+      stdout=stdout,
+      step_test_data=step_test_data,
+      timeout=timeout,
+      raise_on_failure=raise_on_failure,
     )
 
   def wrap(
-      self,
-      cmd: Sequence[str | config_types.Path | Placeholder],
-      module_name: str = '',
-      module_scheme: str = '',
-      base_variant: Mapping[str, str] | None = None,
-      test_location_base: str = '',
-      base_tags: Sequence[tuple[str, str]] | None = None,
-      coerce_negative_duration: bool = False,
-      include: bool = False,
-      realm: str = '',
-      location_tags_file: str = '',
-      require_build_inv: bool = True,
-      exonerate_unexpected_pass: bool = False,
-      inv_properties: str = '',
-      inv_properties_file: str = '',
-      inherit_sources: bool = False,
-      sources: str = '',
-      sources_file: str = '',
-      baseline_id: str = '',
-      inv_extended_properties_dir: str = '',
-      previous_test_id_prefix: str | None = None,
-      test_id_prefix: str = '',
-      shorten_ids: bool = False,
+    self,
+    cmd: Sequence[str | config_types.Path | Placeholder],
+    module_name: str = '',
+    module_scheme: str = '',
+    base_variant: Mapping[str, str] | None = None,
+    test_location_base: str = '',
+    base_tags: Sequence[tuple[str, str]] | None = None,
+    coerce_negative_duration: bool = False,
+    include: bool = False,
+    realm: str = '',
+    location_tags_file: str = '',
+    require_build_inv: bool = True,
+    exonerate_unexpected_pass: bool = False,
+    inv_properties: str = '',
+    inv_properties_file: str = '',
+    inherit_sources: bool = False,
+    sources: str = '',
+    sources_file: str = '',
+    baseline_id: str = '',
+    inv_extended_properties_dir: str = '',
+    previous_test_id_prefix: str | None = None,
+    test_id_prefix: str = '',
+    shorten_ids: bool = False,
   ) -> list[str | config_types.Path | Placeholder]:
     """Wraps the command with ResultSink.
 
@@ -820,28 +857,33 @@ class ResultDBAPI(recipe_api.RecipeApi):
     assert isinstance(base_variant, (type(None), dict)), base_variant
     assert isinstance(cmd, (tuple, list)), cmd
     assert isinstance(test_location_base, (type(None), str)), test_location_base
-    assert not test_location_base or test_location_base.startswith(
-        '//'), test_location_base
+    assert not test_location_base or test_location_base.startswith('//'), (
+      test_location_base
+    )
     assert isinstance(base_tags, (type(None), list)), base_tags
     assert isinstance(coerce_negative_duration, bool), coerce_negative_duration
     assert isinstance(include, bool), include
     assert isinstance(realm, (type(None), str)), realm
     assert isinstance(location_tags_file, (type(None), str)), location_tags_file
-    assert isinstance(
-        exonerate_unexpected_pass, bool), exonerate_unexpected_pass
+    assert isinstance(exonerate_unexpected_pass, bool), (
+      exonerate_unexpected_pass
+    )
     assert isinstance(inv_properties, (type(None), str)), inv_properties
-    assert isinstance(inv_properties_file,
-                      (type(None), str)), inv_properties_file
+    assert isinstance(inv_properties_file, (type(None), str)), (
+      inv_properties_file
+    )
     assert not (inv_properties and inv_properties_file), inv_properties_file
     assert isinstance(inherit_sources, bool), inherit_sources
     assert isinstance(sources, (type(None), str)), sources
     assert isinstance(sources_file, (type(None), str)), sources_file
     assert isinstance(baseline_id, (type(None), str)), baseline_id
-    assert isinstance(inv_extended_properties_dir,
-                      (type(None), str)), inv_extended_properties_dir
+    assert isinstance(inv_extended_properties_dir, (type(None), str)), (
+      inv_extended_properties_dir
+    )
     assert isinstance(test_id_prefix, (type(None), str)), test_id_prefix
-    assert isinstance(previous_test_id_prefix,
-                      (type(None), str)), previous_test_id_prefix
+    assert isinstance(previous_test_id_prefix, (type(None), str)), (
+      previous_test_id_prefix
+    )
     assert isinstance(shorten_ids, bool), shorten_ids
 
     ret = ['rdb', 'stream']
@@ -868,10 +910,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
       ret += ['-coerce-negative-duration']
 
     if include:
-      ret += [
-          '-new', '-realm', realm or self.m.context.realm,
-          '-include'
-      ]
+      ret += ['-new', '-realm', realm or self.m.context.realm, '-include']
 
     if location_tags_file:
       ret += ['-location-tags-file', location_tags_file]
@@ -921,12 +960,12 @@ class ResultDBAPI(recipe_api.RecipeApi):
 
     if len(cmd) < 1 or cmd[0] != 'rdb' or '--' not in cmd:
       return cmd
-    return cmd[cmd.index('--') + 1:]
+    return cmd[cmd.index('--') + 1 :]
 
   def config_test_presentation(
-      self,
-      column_keys: Sequence[str] = (),
-      grouping_keys: Sequence[str] = ('status',),
+    self,
+    column_keys: Sequence[str] = (),
+    grouping_keys: Sequence[str] = ('status',),
   ) -> None:
     """Specifies how the test results should be rendered.
 

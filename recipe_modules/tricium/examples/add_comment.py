@@ -12,18 +12,22 @@ from recipe_engine import recipe_test_api
 
 import json
 
-from PB.recipe_modules.recipe_engine.tricium.examples import add_comment as add_comment_pb
-from PB.go.chromium.org.luci.common.proto.findings import findings as findings_pb
+from PB.recipe_modules.recipe_engine.tricium.examples import (
+  add_comment as add_comment_pb,
+)
+from PB.go.chromium.org.luci.common.proto.findings import (
+  findings as findings_pb,
+)
 from recipe_engine import post_process
 
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    buildbucket,
-    properties,
-    proto,
-    tricium,
+  buildbucket,
+  properties,
+  proto,
+  tricium,
 )
 
 
@@ -40,6 +44,7 @@ class TEST_DEPS(RecipeTestApi):
   buildbucket: buildbucket.TEST_API
   properties: properties.TEST_API
 
+
 INLINE_PROPERTIES_PROTO = """
 message InputProperties {
   bool trigger_type_error = 1;
@@ -49,96 +54,94 @@ message InputProperties {
 PROPERTIES = add_comment_pb.InputProperties
 
 COMMENT_1 = {
-    'category': 'test category',
-    'message': 'test message',
-    'path': 'path/to/file',
+  'category': 'test category',
+  'message': 'test message',
+  'path': 'path/to/file',
 }
 
 COMMENT_2 = {
-    'category':
-        'another category',
-    'message':
-        'another test message',
-    'path':
-        'path/to/file/2',
-    'start_line':
-        1,
-    'start_char':
-        10,
-    'end_line':
-        1,
-    'end_char':
-        20,
-    'suggestions': [
+  'category': 'another category',
+  'message': 'another test message',
+  'path': 'path/to/file/2',
+  'start_line': 1,
+  'start_char': 10,
+  'end_line': 1,
+  'end_char': 20,
+  'suggestions': [
+    {
+      'replacements': [
         {
-            'replacements': [{
-                'path': 'hello.cc',
-                'replacement': 'hello()',
-                'start_line': 123,
-                'start_char': 10,
-                'end_line': 441,
-                'end_char': 20,
-            }],
-        },
+          'path': 'hello.cc',
+          'replacement': 'hello()',
+          'start_line': 123,
+          'start_char': 10,
+          'end_line': 441,
+          'end_char': 20,
+        }
+      ],
+    },
+    {
+      'description': 'commit message typo',
+      'replacements': [
         {
-            'description':
-                'commit message typo',
-            'replacements': [{
-                'path': '',
-                'replacement': 's/tyop/typo',
-                'start_line': 1,
-                'start_char': 1,
-                'end_line': 1,
-                'end_char': 20,
-            }],
-        },
-    ],
+          'path': '',
+          'replacement': 's/tyop/typo',
+          'start_line': 1,
+          'start_char': 1,
+          'end_line': 1,
+          'end_char': 20,
+        }
+      ],
+    },
+  ],
 }
 
 
 def CreateExpectedFinding(
-    api: DEPS, input_comment: Mapping[str, Any]
+  api: DEPS, input_comment: Mapping[str, Any]
 ) -> dict[str, Any]:
   cl = api.buildbucket.build.input.gerrit_changes[0]
   gerrit_ref = {
-      'host': cl.host,
-      'project': cl.project,
-      'change': cl.change,
-      'patchset': cl.patchset,
+    'host': cl.host,
+    'project': cl.project,
+    'change': cl.change,
+    'patchset': cl.patchset,
   }
   expected = {
-      'category': input_comment['category'],
-      'location': {
-          'gerrit_change_ref': gerrit_ref,
-          'file_path': input_comment['path'] or '/COMMIT_MSG',
-      },
-      'severity_level': 'SEVERITY_LEVEL_WARNING',
-      'message': input_comment['message'],
+    'category': input_comment['category'],
+    'location': {
+      'gerrit_change_ref': gerrit_ref,
+      'file_path': input_comment['path'] or '/COMMIT_MSG',
+    },
+    'severity_level': 'SEVERITY_LEVEL_WARNING',
+    'message': input_comment['message'],
   }
   if input_comment.get('start_line', 0) > 0:
     expected['location']['range'] = {
-        'start_line': input_comment['start_line'],
-        'start_column': input_comment['start_char'],
-        'end_line': input_comment['end_line'],
-        'end_column': input_comment['end_char'],
+      'start_line': input_comment['start_line'],
+      'start_column': input_comment['start_char'],
+      'end_line': input_comment['end_line'],
+      'end_column': input_comment['end_char'],
     }
 
   for s in input_comment.get('suggestions', []):
     fix = {'description': s.get('description', ''), 'replacements': []}
     for r in s['replacements']:
-      fix['replacements'].append({
+      fix['replacements'].append(
+        {
           'location': {
-              'gerrit_change_ref': gerrit_ref,
-              'file_path': r['path'] or '/COMMIT_MSG',
+            'gerrit_change_ref': gerrit_ref,
+            'file_path': r['path'] or '/COMMIT_MSG',
           },
           'new_content': r['replacement'],
-      })
+        }
+      )
       if r.get('start_line', 0) > 0:
         fix['replacements'][-1]['location']['range'] = {
-            'start_line': r['start_line'],
-            'start_column': r['start_char'],
-            'end_line': r['end_line'],
-            'end_column': r['end_char'],
+          'start_line': r['start_line'],
+          'start_column': r['start_char'],
+          'end_line': r['end_line'],
+          'end_column': r['end_char'],
         }
 
     expected.setdefault('fixes', []).append(fix)
@@ -161,24 +164,30 @@ def RunSteps(api: DEPS, props: add_comment_pb.InputProperties) -> None:
   expected_finding1 = CreateExpectedFinding(api, COMMENT_1)
   expected_finding2 = CreateExpectedFinding(api, COMMENT_2)
   expected_findings = [
-      api.proto.decode(
-          json.dumps(expected_finding1), findings_pb.Finding, 'JSONPB'),
-      api.proto.decode(
-          json.dumps(expected_finding2), findings_pb.Finding, 'JSONPB'),
+    api.proto.decode(
+      json.dumps(expected_finding1), findings_pb.Finding, 'JSONPB'
+    ),
+    api.proto.decode(
+      json.dumps(expected_finding2), findings_pb.Finding, 'JSONPB'
+    ),
   ]
   assert api.tricium._findings == expected_findings, (
-      'findings: %s\nexpected: %s' %
-      (api.tricium._findings, expected_findings))
+    'findings: %s\nexpected: %s' % (api.tricium._findings, expected_findings)
+  )
 
   api.tricium.write_comments()
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('basic', api.buildbucket.try_build(project='chrome'))
-  yield (api.test('type_error', api.buildbucket.try_build(project='chrome')) +
-         api.properties(add_comment_pb.InputProperties(trigger_type_error=True)) +
-         api.expect_exception('TypeError') +
-         api.post_process(post_process.DropExpectation))
-  yield (api.test('no_gerrit_change') +
-         api.expect_exception('ValueError') +
-         api.post_process(post_process.DropExpectation))
+  yield (
+    api.test('type_error', api.buildbucket.try_build(project='chrome'))
+    + api.properties(add_comment_pb.InputProperties(trigger_type_error=True))
+    + api.expect_exception('TypeError')
+    + api.post_process(post_process.DropExpectation)
+  )
+  yield (
+    api.test('no_gerrit_change')
+    + api.expect_exception('ValueError')
+    + api.post_process(post_process.DropExpectation)
+  )

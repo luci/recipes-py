@@ -12,8 +12,7 @@ from recipe_engine import recipe_api
 class CommitPositionApi(recipe_api.RecipeApi):
   """Recipe module providing commit position parsing and formatting."""
 
-  RE_COMMIT_POSITION = re.compile(
-      r'(?P<ref>refs/[^@]+)@{#(?P<revision>\d+)}')
+  RE_COMMIT_POSITION = re.compile(r'(?P<ref>refs/[^@]+)@{#(?P<revision>\d+)}')
 
   @classmethod
   def parse(cls, value: str) -> tuple[str, int]:
@@ -21,8 +20,9 @@ class CommitPositionApi(recipe_api.RecipeApi):
     match = cls.RE_COMMIT_POSITION.match(value)
     if not match:
       raise ValueError(
-        'Commit position "%s" does not match r"%s"' %
-        (value, cls.RE_COMMIT_POSITION.pattern))
+        'Commit position "%s" does not match r"%s"'
+        % (value, cls.RE_COMMIT_POSITION.pattern)
+      )
     return match.group('ref'), int(match.group('revision'))
 
   @classmethod

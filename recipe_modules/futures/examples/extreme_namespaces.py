@@ -11,10 +11,10 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    context,
-    futures,
-    path,
-    step,
+  context,
+  futures,
+  path,
+  step,
 )
 
 
@@ -35,8 +35,9 @@ def Level2(api: DEPS, i: int) -> None:
   work = []
   with api.step.nest('Level2 [%d]' % i):
     with api.context(cwd=api.path.start_dir / 'deep'):
-      work.append(api.futures.spawn(
-          api.step, 'cool step', cmd=['echo', 'cool']))
+      work.append(
+        api.futures.spawn(api.step, 'cool step', cmd=['echo', 'cool'])
+      )
 
   # Specifically wait outside all the contexts; if they have a bug w.r.t. global
   # state vs. greenlet-local state, we'll see it here with bad context.

@@ -9,7 +9,7 @@
 # ]
 # ///
 
-#py3Only
+# py3Only
 
 """Standalone Python script to extract an archive. Intended to be used by
 the 'archive' recipe module internally. Should not be used elsewhere.
@@ -31,6 +31,7 @@ import zipfile
 import zstandard
 
 if os.name == 'nt':
+
   def unc_path(path):
     prefix = '\\\\?\\'
     if path.startswith(prefix):
@@ -38,6 +39,7 @@ if os.name == 'nt':
       return path
     return prefix + os.path.abspath(path)
 else:
+
   def unc_path(path):
     return path
 
@@ -115,8 +117,9 @@ def unzip(zip_file, output, stats, include_filter):
   with zipfile.ZipFile(zip_file) as zf:
     for zipinfo in zf.infolist():
       if not include_filter(zipinfo.filename):
-        print('Skipping %r (does not match include_files)' %
-              (zipinfo.filename,))
+        print(
+          'Skipping %r (does not match include_files)' % (zipinfo.filename,)
+        )
         continue
 
       print('Extracting %s' % zipinfo.filename)
@@ -145,8 +148,10 @@ def unzip(zip_file, output, stats, include_filter):
           new = old | perms
           new_short = new & 0o777
           if old_short < new_short:
-            print('Updating %s permissions (0%o -> 0%o)' %
-                  (zipinfo.filename, old_short, new_short))
+            print(
+              'Updating %s permissions (0%o -> 0%o)'
+              % (zipinfo.filename, old_short, new_short)
+            )
             os.chmod(fullpath, new)
 
 
@@ -160,8 +165,9 @@ def main():
   data = json.load(opts.json_input)
   output = data['output']
   archive_file = data['archive_file']
-  file_type = data.get('archive_type',
-                       'zip' if archive_file.endswith('.zip') else 'tar')
+  file_type = data.get(
+    'archive_type', 'zip' if archive_file.endswith('.zip') else 'tar'
+  )
   safe_mode = data['safe_mode']
   include_files = data['include_files']
 
@@ -193,6 +199,7 @@ def main():
 
     include_filter = lambda _path: True
     if include_files:
+
       def include_filter(path):
         path = posixpath.normpath(path)
         if path.startswith('./'):

@@ -11,8 +11,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    json,
-    step,
+  json,
+  step,
 )
 
 
@@ -31,7 +31,8 @@ def RunSteps(api: DEPS) -> None:
   example_dict = {'x': 1, 'y': 2}
 
   # not add a log for success
-  step_result = api.step('no log on success',
+  step_result = api.step(
+    'no log on success',
     ['cat', '{"x":1,"y":2}'],
     stdout=api.json.output(add_json_log='on_failure', name='log1'),
   )
@@ -40,37 +41,39 @@ def RunSteps(api: DEPS) -> None:
 
   # add a log for failure
   try:
-    api.step('add log on failure',
+    api.step(
+      'add log on failure',
       ['cat', '{"x":1,"y":2}'],
       stdout=api.json.output(add_json_log='on_failure', name='log2'),
     )
   except api.step.StepFailure:
-    pass # This step is expected to fail.
+    pass  # This step is expected to fail.
   finally:
     step_result = api.step.active_result
     assert step_result.stdout == example_dict
     assert 'json.output[log2]' in step_result.presentation.logs
     actual_log_dict = api.json.loads(
-        '\n'.join(step_result.presentation.logs['json.output[log2]']))
+      '\n'.join(step_result.presentation.logs['json.output[log2]'])
+    )
     assert actual_log_dict == example_dict
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
-  yield (api.test('add_json_log') + api.step_data(
+  yield (
+    api.test('add_json_log')
+    + api.step_data(
       'no log on success',
-      stdout=api.json.output({
-          'x': 1,
-          'y': 2
-      }, name='log1'),
-  ) + api.step_data(
+      stdout=api.json.output({'x': 1, 'y': 2}, name='log1'),
+    )
+    + api.step_data(
       'add log on failure',
-      stdout=api.json.output({
-          'x': 1,
-          'y': 2
-      }, name='log2'),
+      stdout=api.json.output({'x': 1, 'y': 2}, name='log2'),
       retcode=1,
-  ) + api.post_check(lambda check, steps: check(
-      api.json.loads(steps['add log on failure'].logs['json.output[log2]']) == {
-          'x': 1,
-          'y': 2
-      })))
+    )
+    + api.post_check(
+      lambda check, steps: check(
+        api.json.loads(steps['add log on failure'].logs['json.output[log2]'])
+        == {'x': 1, 'y': 2}
+      )
+    )
+  )

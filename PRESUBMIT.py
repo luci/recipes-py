@@ -19,7 +19,7 @@ def header(input_api):
   license_header = (
     r'.*? Copyright %(year)s The LUCI Authors\n'
     r'.*? Use of this source code is governed under the Apache License, '
-      r'Version 2\.0\n'
+    r'Version 2\.0\n'
     r'.*? that can be found in the LICENSE file\.(?: \*/)?\n'
   ) % {
     'year': years_re,
@@ -29,17 +29,20 @@ def header(input_api):
 
 def CheckCommon(input_api, output_api):
   return input_api.canned_checks.PanProjectChecks(
-      input_api, output_api, license_header=header(input_api),
-      excluded_paths=[
-          r'.+_pb2\.py',
-          r'turboci/.*',
-      ],
+    input_api,
+    output_api,
+    license_header=header(input_api),
+    excluded_paths=[
+      r'.+_pb2\.py',
+      r'turboci/.*',
+    ],
   )
 
 
 def CheckPatchFormatted(input_api, output_api):
   return input_api.canned_checks.CheckPatchFormatted(
-      input_api, output_api, check_clang_format=False)
+    input_api, output_api, check_clang_format=False
+  )
 
 
 def CheckVPythonSpec(input_api, output_api):
@@ -48,11 +51,14 @@ def CheckVPythonSpec(input_api, output_api):
   def vpython_spec_filter(f):
     base = input_api.os_path.basename(f.LocalPath())
     return base.endswith(
-        ('vpython.toml', 'vpython.toml.uv.lock', '.vpython', '.vpython3'))
+      ('vpython.toml', 'vpython.toml.uv.lock', '.vpython', '.vpython3')
+    )
 
   return input_api.RunTests(
-      input_api.canned_checks.CheckVPythonSpec(
-          input_api, output_api, file_filter=vpython_spec_filter))
+    input_api.canned_checks.CheckVPythonSpec(
+      input_api, output_api, file_filter=vpython_spec_filter
+    )
+  )
 
 
 def CheckIntegrationTests(input_api, output_api):
@@ -61,14 +67,15 @@ def CheckIntegrationTests(input_api, output_api):
   # called implicitly with the other tests. Updating the protos, etc. of
   # recipes.py is not locked.
   recipes_py = input_api.os_path.join(
-      input_api.PresubmitLocalPath(), 'recipes.py')
+    input_api.PresubmitLocalPath(), 'recipes.py'
+  )
   run_first = [
-      input_api.Command(
-          'Compile recipe protos',
-          ['python3', recipes_py, 'fetch'],
-          {},
-          output_api.PresubmitError,
-      ),
+    input_api.Command(
+      'Compile recipe protos',
+      ['python3', recipes_py, 'fetch'],
+      {},
+      output_api.PresubmitError,
+    ),
   ]
 
   for cmd in run_first:
@@ -80,25 +87,29 @@ def CheckIntegrationTests(input_api, output_api):
   # separately. The reason is that run_test depends on the wall clock on the
   # host and if the host gets busy, the tests are likely to be flaky.
   results.extend(
-      input_api.RunTests(
-          input_api.canned_checks.GetUnitTestsInDirectory(
-              input_api,
-              output_api,
-              'unittests',
-              files_to_check=[r'.+_test\.py'],
-              files_to_skip=[r'run_test\.py'],
-              run_on_python2=False,
-              run_on_python3=True,
-          )))
+    input_api.RunTests(
+      input_api.canned_checks.GetUnitTestsInDirectory(
+        input_api,
+        output_api,
+        'unittests',
+        files_to_check=[r'.+_test\.py'],
+        files_to_skip=[r'run_test\.py'],
+        run_on_python2=False,
+        run_on_python3=True,
+      )
+    )
+  )
 
   results.extend(
-      input_api.RunTests(
-          input_api.canned_checks.GetUnitTestsInDirectory(
-              input_api,
-              output_api,
-              'unittests',
-              files_to_check=[r'run_test\.py'],
-              run_on_python2=False,
-              run_on_python3=True,
-          )))
+    input_api.RunTests(
+      input_api.canned_checks.GetUnitTestsInDirectory(
+        input_api,
+        output_api,
+        'unittests',
+        files_to_check=[r'run_test\.py'],
+        run_on_python2=False,
+        run_on_python3=True,
+      )
+    )
+  )
   return results

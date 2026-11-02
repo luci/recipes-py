@@ -7,16 +7,18 @@ from __future__ import annotations
 from collections.abc import Iterator
 from recipe_engine import recipe_test_api
 
-from PB.recipe_modules.recipe_engine.tricium.tests import add_comment_validation as add_comment_validation_pb
+from PB.recipe_modules.recipe_engine.tricium.tests import (
+  add_comment_validation as add_comment_validation_pb,
+)
 from recipe_engine import post_process
 
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    buildbucket,
-    properties,
-    tricium,
+  buildbucket,
+  properties,
+  tricium,
 )
 
 
@@ -32,6 +34,7 @@ class TEST_DEPS(RecipeTestApi):
   buildbucket: buildbucket.TEST_API
   properties: properties.TEST_API
 
+
 INLINE_PROPERTIES_PROTO = """
 message InputProperties {
   string case = 1;
@@ -41,42 +44,35 @@ message InputProperties {
 PROPERTIES = add_comment_validation_pb.InputProperties
 
 _BAD_CASES = {
-    'bad start_line':
-        dict(start_line=-1),
-    'file level comment: end_line':
-        dict(start_line=0, end_line=1),
-    'file level comment: start_char':
-        dict(start_line=0, start_char=1),
-    'file level comment: end_char':
-        dict(start_line=0, end_char=1),
-    'end_line':
-        dict(start_line=2, end_line=1),
-    'start_char':
-        dict(start_line=1, start_char=-1, end_line=2),
-    'end_char':
-        dict(start_line=1, start_char=1, end_line=2, end_char=-1),
-    'wrong-range':
-        dict(start_line=5, start_char=5, end_line=5, end_char=5),
-    'absolute path':
-        dict(start_line=3, end_line=3, path="/usr/home/me/checkout/foo.txt"),
+  'bad start_line': dict(start_line=-1),
+  'file level comment: end_line': dict(start_line=0, end_line=1),
+  'file level comment: start_char': dict(start_line=0, start_char=1),
+  'file level comment: end_char': dict(start_line=0, end_char=1),
+  'end_line': dict(start_line=2, end_line=1),
+  'start_char': dict(start_line=1, start_char=-1, end_line=2),
+  'end_char': dict(start_line=1, start_char=1, end_line=2, end_char=-1),
+  'wrong-range': dict(start_line=5, start_char=5, end_line=5, end_char=5),
+  'absolute path': dict(
+    start_line=3, end_line=3, path="/usr/home/me/checkout/foo.txt"
+  ),
 }
 _OK_CASES = {
-    'exactly 1 char': dict(start_line=5, start_char=5, end_line=5, end_char=6),
-    'end of 1 line': dict(start_line=5, start_char=5, end_line=6, end_char=1),
-    'just 1 entire line': dict(start_line=3, end_line=3),
-    'several entire lines': dict(start_line=3, end_line=5),
+  'exactly 1 char': dict(start_line=5, start_char=5, end_line=5, end_char=6),
+  'end of 1 line': dict(start_line=5, start_char=5, end_line=6, end_char=1),
+  'just 1 entire line': dict(start_line=3, end_line=3),
+  'several entire lines': dict(start_line=3, end_line=5),
 }
 
 
 def RunSteps(
-    api: DEPS,
-    props: add_comment_validation_pb.InputProperties,
+  api: DEPS,
+  props: add_comment_validation_pb.InputProperties,
 ) -> None:
   # Set valid default.
   kwargs = dict(
-      category='test',
-      message='msg',
-      path='path/to/file',
+    category='test',
+    message='msg',
+    path='path/to/file',
   )
   if props.case in _BAD_CASES:
     kwargs.update(_BAD_CASES[props.case])
@@ -94,14 +90,16 @@ def RunSteps(
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   for name in _BAD_CASES:
     yield api.test(
-        name,
-        api.properties(add_comment_validation_pb.InputProperties(case=name)),
-        api.expect_exception(ValueError.__name__),
-        api.post_process(post_process.DropExpectation),
-        api.buildbucket.try_build(project='chrome'))
+      name,
+      api.properties(add_comment_validation_pb.InputProperties(case=name)),
+      api.expect_exception(ValueError.__name__),
+      api.post_process(post_process.DropExpectation),
+      api.buildbucket.try_build(project='chrome'),
+    )
   for name in _OK_CASES:
     yield api.test(
-        name,
-        api.properties(add_comment_validation_pb.InputProperties(case=name)),
-        api.post_process(post_process.DropExpectation),
-        api.buildbucket.try_build(project='chrome'))
+      name,
+      api.properties(add_comment_validation_pb.InputProperties(case=name)),
+      api.post_process(post_process.DropExpectation),
+      api.buildbucket.try_build(project='chrome'),
+    )

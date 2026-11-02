@@ -14,9 +14,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    futures,
-    properties,
-    step,
+  futures,
+  properties,
+  step,
 )
 
 
@@ -30,6 +30,7 @@ class DEPS(RecipeScriptApi):
 @dataclass
 class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
+
 
 from recipe_engine import recipe_api
 from recipe_engine.post_process import DropExpectation
@@ -49,7 +50,6 @@ def RunSteps(api: DEPS, props: long_sleep.InputProperties) -> None:
 
   fut = api.futures.spawn_immediate(_inner)
   try:
-
     try:
       api.step('sleep forever', ['sleep', '360'])
     except (api.step.StepFailure, exceptions.CancelledBuild) as ex:
@@ -57,8 +57,8 @@ def RunSteps(api: DEPS, props: long_sleep.InputProperties) -> None:
       if props.HasField('check_retcode'):
         check_retcode = props.check_retcode
         expected = (
-            check_retcode.retcode
-            if check_retcode.HasField('retcode') else None)
+          check_retcode.retcode if check_retcode.HasField('retcode') else None
+        )
         assert ex.retcode == expected, f'expected {expected}, got {ex.retcode}'
       if not props.recover:
         raise
@@ -68,18 +68,18 @@ def RunSteps(api: DEPS, props: long_sleep.InputProperties) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'basic',
-      api.properties(check_retcode={}),
-      api.step_data('sleep a bit', times_out_after=10),
-      api.step_data('sleep forever', cancel=True),
-      api.post_process(DropExpectation),
-      status='INFRA_FAILURE',
+    'basic',
+    api.properties(check_retcode={}),
+    api.step_data('sleep a bit', times_out_after=10),
+    api.step_data('sleep forever', cancel=True),
+    api.post_process(DropExpectation),
+    status='INFRA_FAILURE',
   )
 
   yield api.test(
-      'recover',
-      api.properties(recover=True, check_retcode={'retcode': 1}),
-      api.step_data('sleep a bit', times_out_after=10),
-      api.step_data('sleep forever', cancel=True, retcode=1),
-      api.post_process(DropExpectation),
+    'recover',
+    api.properties(recover=True, check_retcode={'retcode': 1}),
+    api.step_data('sleep a bit', times_out_after=10),
+    api.step_data('sleep forever', cancel=True, retcode=1),
+    api.post_process(DropExpectation),
   )

@@ -42,8 +42,9 @@ class DeferredResult(Generic[T]):
     """
     if self._exc:
       if step_name:
-        step = self._api.step.empty(step_name, status='FAILURE',
-                                    raise_on_failure=False)
+        step = self._api.step.empty(
+          step_name, status='FAILURE', raise_on_failure=False
+        )
         step.presentation.logs['traceback'] = self._traceback()
         self._api.step.close_non_nest_step()
       raise self._exc
@@ -54,7 +55,7 @@ class DeferredResult(Generic[T]):
 
 class DeferContext:
   def __init__(
-      self, api: recipe_api.RecipeApi, *args: Any, **kwargs: Any
+    self, api: recipe_api.RecipeApi, *args: Any, **kwargs: Any
   ) -> None:
     super().__init__(*args, **kwargs)
     self.api = api
@@ -62,7 +63,7 @@ class DeferContext:
     self.suppressed_results: list[DeferredResult[T]] = []
 
   def __call__(
-      self, callable: Callable[..., T], *args: Any, **kwargs: Any
+    self, callable: Callable[..., T], *args: Any, **kwargs: Any
   ) -> DeferredResult[T]:
     """Call callable(*args, **kwargs) and save the result."""
     result = self.api.defer(callable, *args, **kwargs)
@@ -103,8 +104,8 @@ class DeferContext:
     """
     self.api.defer.collect(self.results, step_name=step_name)
     self.api.defer.collect(
-        self.suppressed_results,
-        step_name=f'{step_name} suppressed' if step_name else None,
+      self.suppressed_results,
+      step_name=f'{step_name} suppressed' if step_name else None,
     )
 
 
@@ -136,8 +137,8 @@ class DeferApi(recipe_api.RecipeApi):
 
   @contextlib.contextmanager
   def context(
-      self,
-      collect_step_name: str | None = None,
+    self,
+    collect_step_name: str | None = None,
   ) -> Generator[DeferContext, None, None]:
     """Creates a context that tracks deferred calls.
 
@@ -167,8 +168,8 @@ class DeferApi(recipe_api.RecipeApi):
       # exception and the deferred ExceptionGroup.
       except ExceptionGroup as deferred_exc:
         raise ExceptionGroup(
-            'deferred and non-deferred exceptions',
-            [exc, deferred_exc],
+          'deferred and non-deferred exceptions',
+          [exc, deferred_exc],
         )
 
     # If the try block didn't produce any exceptions, there are no non-deferred
@@ -177,7 +178,7 @@ class DeferApi(recipe_api.RecipeApi):
       ctx.collect(step_name=collect_step_name)
 
   def __call__(
-      self, func: Callable[..., T], *args: Any, **kwargs: Any
+    self, func: Callable[..., T], *args: Any, **kwargs: Any
   ) -> DeferredResult[T]:
     """Calls func(*args, **kwargs) but catches all exceptions.
 
@@ -194,9 +195,9 @@ class DeferApi(recipe_api.RecipeApi):
       return DeferredResult(_api=self.m, _exc=exc)
 
   def collect(
-      self,
-      results: Sequence[DeferredResult],
-      step_name: str | None = None,
+    self,
+    results: Sequence[DeferredResult],
+    step_name: str | None = None,
   ) -> list[Any]:
     """Raise any exceptions in the given list of DeferredResults.
 
@@ -220,12 +221,15 @@ class DeferApi(recipe_api.RecipeApi):
         traces_by_name.setdefault(name, [])
         traces_by_name[name].append(result._traceback())
 
-      step = self.m.step.empty(step_name, status='FAILURE',
-                               step_text=f'{len(failures)} deferred failures',
-                               raise_on_failure=False)
+      step = self.m.step.empty(
+        step_name,
+        status='FAILURE',
+        step_text=f'{len(failures)} deferred failures',
+        raise_on_failure=False,
+      )
       for name, traces in traces_by_name.items():
         for i, trace in enumerate(traces):
-          number_part = f' ({i+1})' if i else ''
+          number_part = f' ({i + 1})' if i else ''
           step.presentation.logs[f'{name}{number_part}'] = trace
 
     raise ExceptionGroup('deferred failures', [x._exc for x in failures])

@@ -34,13 +34,13 @@ class LegacyAnnotationApi(recipe_api.RecipeApi):
   step_client = recipe_api.RequireClient('step')
 
   def __call__(
-      self,
-      name: str,
-      cmd: Sequence[str | config_types.Path | Placeholder],
-      timeout: int | float | None = None,
-      step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
-      cost: _ResourceCost | None = _ResourceCost(),
-      legacy_global_namespace: bool = False,
+    self,
+    name: str,
+    cmd: Sequence[str | config_types.Path | Placeholder],
+    timeout: int | float | None = None,
+    step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
+    cost: _ResourceCost | None = _ResourceCost(),
+    legacy_global_namespace: bool = False,
   ) -> step_data.StepData:
     """Runs cmd that is emitting legacy @@@annotation@@@.
 
@@ -61,7 +61,8 @@ class LegacyAnnotationApi(recipe_api.RecipeApi):
       self.m.step._validate_cmd_list(cmd)
       with self.m.context(env_prefixes={'PATH': self.m.step._prefix_path}):
         env_prefixes = self.m.context.env_prefixes
-      return self.m.step._run_or_raise_step(self.step_client.StepConfig(
+      return self.m.step._run_or_raise_step(
+        self.step_client.StepConfig(
           name=name,
           cmd=cmd,
           cost=self.m.step._normalize_cost(cost),
@@ -74,26 +75,29 @@ class LegacyAnnotationApi(recipe_api.RecipeApi):
           luci_context=self.m.context.luci_context,
           infra_step=self.m.context.infra_step,
           step_test_data=step_test_data,
-      ))
+        )
+      )
 
     run_annotations_luciexe = self.m.cipd.ensure_tool(
-      'infra/tools/run_annotations/${platform}', 'latest')
+      'infra/tools/run_annotations/${platform}', 'latest'
+    )
     cmd = [run_annotations_luciexe, '--'] + list(cmd)
     if step_test_data:
       _step_test_data = step_test_data
       step_test_data = lambda: self.test_api.success_step + _step_test_data()
-    else: # pragma: no cover
+    else:  # pragma: no cover
       step_test_data = lambda: self.test_api.success_step
     ret = self.m.step.sub_build(
-        name,
-        cmd,
-        build_pb2.Build(),
-        timeout=timeout,
-        step_test_data=step_test_data,
-        cost=cost,
-        legacy_global_namespace=legacy_global_namespace,
+      name,
+      cmd,
+      build_pb2.Build(),
+      timeout=timeout,
+      step_test_data=step_test_data,
+      cost=cost,
+      legacy_global_namespace=legacy_global_namespace,
     )
     if not legacy_global_namespace:
       ret.presentation.properties.update(
-        jsonpb.MessageToDict(ret.step.sub_build.output.properties))
+        jsonpb.MessageToDict(ret.step.sub_build.output.properties)
+      )
     return ret

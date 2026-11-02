@@ -13,9 +13,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    properties,
-    step,
-    url,
+  properties,
+  step,
+  url,
 )
 
 
@@ -36,35 +36,42 @@ def RunSteps(api: DEPS) -> None:
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
-  yield (api.test('basic') +
-      api.properties(url_to_validate='https://example.com'))
+  yield (
+    api.test('basic') + api.properties(url_to_validate='https://example.com')
+  )
 
-  yield (api.test('no_scheme') +
-      api.properties(url_to_validate='example.com') +
-      api.expect_exception('ValueError') +
-      api.post_process(post_process.StatusException) +
-      api.post_process(
-          post_process.SummaryMarkdownRE,
-          r"URL scheme must be either http:// or https://",
-      ) +
-      api.post_process(post_process.DropExpectation))
+  yield (
+    api.test('no_scheme')
+    + api.properties(url_to_validate='example.com')
+    + api.expect_exception('ValueError')
+    + api.post_process(post_process.StatusException)
+    + api.post_process(
+      post_process.SummaryMarkdownRE,
+      r"URL scheme must be either http:// or https://",
+    )
+    + api.post_process(post_process.DropExpectation)
+  )
 
-  yield (api.test('invalid_scheme') +
-      api.properties(url_to_validate='ftp://example.com') +
-      api.expect_exception('ValueError') +
-      api.post_process(post_process.StatusException) +
-      api.post_process(
-          post_process.SummaryMarkdownRE,
-          r"URL scheme must be either http:// or https://",
-      ) +
-      api.post_process(post_process.DropExpectation))
+  yield (
+    api.test('invalid_scheme')
+    + api.properties(url_to_validate='ftp://example.com')
+    + api.expect_exception('ValueError')
+    + api.post_process(post_process.StatusException)
+    + api.post_process(
+      post_process.SummaryMarkdownRE,
+      r"URL scheme must be either http:// or https://",
+    )
+    + api.post_process(post_process.DropExpectation)
+  )
 
-  yield (api.test('no_host') +
-      api.properties(url_to_validate='https://') +
-      api.expect_exception('ValueError') +
-      api.post_process(post_process.StatusException) +
-      api.post_process(
-          post_process.SummaryMarkdownRE,
-          r"URL must specify a network location.",
-      ) +
-      api.post_process(post_process.DropExpectation))
+  yield (
+    api.test('no_host')
+    + api.properties(url_to_validate='https://')
+    + api.expect_exception('ValueError')
+    + api.post_process(post_process.StatusException)
+    + api.post_process(
+      post_process.SummaryMarkdownRE,
+      r"URL must specify a network location.",
+    )
+    + api.post_process(post_process.DropExpectation)
+  )

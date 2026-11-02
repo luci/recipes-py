@@ -26,12 +26,13 @@ class DEPS(RecipeScriptApi):
 class TEST_DEPS(RecipeTestApi):
   path: path.TEST_API
 
+
 GETATTR_NAMES = [
-    'cache_dir',
-    'cleanup_dir',
-    'home_dir',
-    'start_dir',
-    'tmp_base_dir',
+  'cache_dir',
+  'cleanup_dir',
+  'home_dir',
+  'start_dir',
+  'tmp_base_dir',
 ]
 
 
@@ -50,7 +51,7 @@ def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   paths.append(api.path.checkout_dir / 'file')
 
   yield api.test(
-      'basic',
-      api.path.exists(*paths),
-      api.post_process(DropExpectation),
+    'basic',
+    api.path.exists(*paths),
+    api.post_process(DropExpectation),
   )

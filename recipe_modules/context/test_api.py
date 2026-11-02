@@ -9,9 +9,10 @@ from google.protobuf import json_format as jsonpb
 
 from recipe_engine import recipe_test_api
 
+
 class ContextTestApi(recipe_test_api.RecipeTestApi):
   def luci_context(
-      self, **section_pb_values: message.Message
+    self, **section_pb_values: message.Message
   ) -> recipe_test_api.TestData:
     """Sets the LUCI_CONTEXT for this test case.
 
@@ -21,10 +22,11 @@ class ContextTestApi(recipe_test_api.RecipeTestApi):
     """
     ret = self.test(None)
     for section_key, pb_val in section_pb_values.items():
-      if not isinstance(pb_val, message.Message): # pragma: no cover
-          raise ValueError(
-              'Expected section value in LUCI_CONTEXT to be proto message;'
-              'Got: %r=%r (type %r)' % (section_key, pb_val, type(pb_val)))
+      if not isinstance(pb_val, message.Message):  # pragma: no cover
+        raise ValueError(
+          'Expected section value in LUCI_CONTEXT to be proto message;'
+          'Got: %r=%r (type %r)' % (section_key, pb_val, type(pb_val))
+        )
       ret.luci_context[section_key] = jsonpb.MessageToDict(pb_val)
     return ret
 

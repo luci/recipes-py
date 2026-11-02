@@ -22,7 +22,6 @@ Example:
       # my_list is now random!
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -32,8 +31,11 @@ import random
 
 from recipe_engine import recipe_api
 
+
 class RandomApi(recipe_api.RecipeApi):
-  def __init__(self, props: properties_pb.InputProperties, **kwargs: Any) -> None:
+  def __init__(
+    self, props: properties_pb.InputProperties, **kwargs: Any
+  ) -> None:
     super().__init__(**kwargs)
 
     seed: int | None = None

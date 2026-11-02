@@ -32,7 +32,8 @@ def _RmGlob(file_wildcard, root, include_hidden):
   An exception is thrown if root doesn't exist."""
   wildcard = os.path.join(os.path.realpath(root), file_wildcard)
   for item in glob.glob(
-      wildcard, recursive=True, include_hidden=include_hidden):
+    wildcard, recursive=True, include_hidden=include_hidden
+  ):
     try:
       os.remove(item)
     except OSError as e:
@@ -135,8 +136,10 @@ def _RmTree(path):
     for name in files:
       remove_with_retry(os.remove, os.path.join(root, name))
     for name in dirs:
-      remove_with_retry(lambda p: shutil.rmtree(p, onerror=RmTreeOnError),
-                        os.path.join(root, name))
+      remove_with_retry(
+        lambda p: shutil.rmtree(p, onerror=RmTreeOnError),
+        os.path.join(root, name),
+      )
 
   remove_with_retry(os.rmdir, path)
 
@@ -151,9 +154,8 @@ def _EnsureDir(mode, dest):
 def _Glob(base, pattern, include_hidden):
   base = os.path.realpath(base)
   hits = glob.glob(
-      os.path.join(base, pattern),
-      recursive=True,
-      include_hidden=include_hidden)
+    os.path.join(base, pattern), recursive=True, include_hidden=include_hidden
+  )
   if hits:
     print('\n'.join(sorted((os.path.relpath(hit, start=base) for hit in hits))))
 
@@ -181,6 +183,7 @@ def _Remove(path):
 
 def _IsExecutable(path):
   print(os.access(path, os.X_OK))
+
 
 def _Truncate(path, size_mb):
   with open(path, 'w') as f:
@@ -212,8 +215,10 @@ def _FlattenSingleDirectories(path):
     # first move the first_single_dir out of the way, in case there's
     # a file/folder we need to move that has a conflicting name.
     tmpname = tempfile.mktemp(dir=path)
-    print('moving root folder out of the way: %r -> %r' %
-          (first_single_dir, tmpname))
+    print(
+      'moving root folder out of the way: %r -> %r'
+      % (first_single_dir, tmpname)
+    )
     os.rename(first_single_dir, tmpname)
 
     for name in itertools.chain(dirs, files):
@@ -226,6 +231,7 @@ def _FlattenSingleDirectories(path):
     shutil.rmtree(tmpname)
     return 0
 
+
 def _FileHash(sha, rel_path, base_path):
   path = os.path.join(base_path, rel_path)
   with open(path, 'rb') as f:
@@ -237,6 +243,7 @@ def _FileHash(sha, rel_path, base_path):
         break
       sha.update(str(len(f_stream)).encode())
       sha.update(f_stream)
+
 
 def _ComputeHashPaths(base_path, *rel_paths):
   sha = hashlib.sha256()
@@ -255,6 +262,7 @@ def _ComputeHashPaths(base_path, *rel_paths):
   print(sha.hexdigest())
   return 0
 
+
 def _CalculateHash(path):
   sha = hashlib.sha256()
   with open(path, 'rb') as f:
@@ -265,6 +273,7 @@ def _CalculateHash(path):
       sha.update(f_stream)
   print(sha.hexdigest())
   return 0
+
 
 def _Chmod(path, mode, recursive):
   if not recursive:
@@ -291,17 +300,22 @@ def _CopyForCopytree(src, dest, hardlink):
   else:
     shutil.copy2(src, dest)
 
+
 def main(args):
   parser = argparse.ArgumentParser()
-  parser.add_argument('--json-output', required=True,
-                      type=argparse.FileType('w'),
-                      help="path to JSON output file")
+  parser.add_argument(
+    '--json-output',
+    required=True,
+    type=argparse.FileType('w'),
+    help="path to JSON output file",
+  )
 
   subparsers = parser.add_subparsers()
 
   # Subcommand: rmtree
-  subparser = subparsers.add_parser('rmtree',
-      help='Recursively remove a directory.')
+  subparser = subparsers.add_parser(
+    'rmtree', help='Recursively remove a directory.'
+  )
   subparser.add_argument('source', help='A path to remove.')
   subparser.set_defaults(func=lambda opts: _RmTree(opts.source))
 
@@ -309,157 +323,192 @@ def main(args):
   subparser = subparsers.add_parser('chmod', help='Run chmod on a file.')
   subparser.add_argument('path', help='A path to run chmod on.')
   subparser.add_argument(
-      '--mode',
-      help='The octal mode of the file or directory.',
-      type=lambda s: int(s, 8))
+    '--mode',
+    help='The octal mode of the file or directory.',
+    type=lambda s: int(s, 8),
+  )
   subparser.add_argument(
-      '--recursive',
-      help='Modify permissions recursively.',
-      action='store_true')
-  subparser.set_defaults(func=lambda opts: _Chmod(opts.path, opts.mode,
-                                                  opts.recursive))
+    '--recursive', help='Modify permissions recursively.', action='store_true'
+  )
+  subparser.set_defaults(
+    func=lambda opts: _Chmod(opts.path, opts.mode, opts.recursive)
+  )
 
   # Subcommand: rmcontents
-  subparser = subparsers.add_parser('rmcontents',
-      help='Recursively remove the contents of a directory.')
+  subparser = subparsers.add_parser(
+    'rmcontents', help='Recursively remove the contents of a directory.'
+  )
   subparser.add_argument('source', help='The target directory.')
   subparser.set_defaults(func=lambda opts: _RmContents(opts.source))
 
   # Subcommand: rmwildcard
-  subparser = subparsers.add_parser('rmglob',
-      help='Recursively remove the contents of a directory.')
+  subparser = subparsers.add_parser(
+    'rmglob', help='Recursively remove the contents of a directory.'
+  )
   subparser.add_argument('root', help='The directory to search through.')
   subparser.add_argument('wildcard', help='The wildcard expression to remove.')
-  subparser.add_argument('--hidden', action='store_true',
-                         help='Include hidden files.')
-  subparser.set_defaults(func=lambda opts:
-      _RmGlob(opts.wildcard, opts.root, opts.hidden))
+  subparser.add_argument(
+    '--hidden', action='store_true', help='Include hidden files.'
+  )
+  subparser.set_defaults(
+    func=lambda opts: _RmGlob(opts.wildcard, opts.root, opts.hidden)
+  )
 
   # Subcommand: copy
-  subparser = subparsers.add_parser('copy',
-      help='Copy one file to another. Behaves like shutil.copy().')
+  subparser = subparsers.add_parser(
+    'copy', help='Copy one file to another. Behaves like shutil.copy().'
+  )
   subparser.add_argument('source', help='The file to copy.')
   subparser.add_argument('dest', help='The destination to copy to.')
   subparser.set_defaults(func=lambda opts: shutil.copy(opts.source, opts.dest))
 
   # Subcommand: copytree
-  subparser = subparsers.add_parser('copytree',
-      help='Recursively copy a file tree. Behaves like shutil.copytree().')
-  subparser.add_argument('--symlinks', action='store_true',
-                         help='Copy symlinks as symlinks.')
+  subparser = subparsers.add_parser(
+    'copytree',
+    help='Recursively copy a file tree. Behaves like shutil.copytree().',
+  )
   subparser.add_argument(
-      '--hardlink',
-      action='store_true',
-      help='Create hardlinks instead of copying files.')
+    '--symlinks', action='store_true', help='Copy symlinks as symlinks.'
+  )
   subparser.add_argument(
-      '--allow-override',
-      action='store_true',
-      help='Does not stop copying when the file exists in the destination.')
+    '--hardlink',
+    action='store_true',
+    help='Create hardlinks instead of copying files.',
+  )
+  subparser.add_argument(
+    '--allow-override',
+    action='store_true',
+    help='Does not stop copying when the file exists in the destination.',
+  )
   subparser.add_argument('source', help='The directory to copy.')
   subparser.add_argument('dest', help='The destination directory to copy to.')
-  subparser.set_defaults(func=lambda opts: shutil.copytree(
+  subparser.set_defaults(
+    func=lambda opts: shutil.copytree(
       opts.source,
       opts.dest,
       symlinks=opts.symlinks,
       dirs_exist_ok=opts.allow_override,
       # shutil.copy2() for default copy, or _Link() for optional hardlink.
-      copy_function=(lambda src, dest: _CopyForCopytree(
-          src, dest, hardlink=opts.hardlink))))
+      copy_function=(
+        lambda src, dest: _CopyForCopytree(src, dest, hardlink=opts.hardlink)
+      ),
+    )
+  )
 
   # Subcommand: move
-  subparser = subparsers.add_parser('move',
-      help='Moves/renames a file. Behaves like shutil.move().')
+  subparser = subparsers.add_parser(
+    'move', help='Moves/renames a file. Behaves like shutil.move().'
+  )
   subparser.add_argument('source', help='The item to move.')
   subparser.add_argument('dest', help='The destination name.')
-  subparser.set_defaults(
-      func=lambda opts: shutil.move(opts.source, opts.dest))
+  subparser.set_defaults(func=lambda opts: shutil.move(opts.source, opts.dest))
 
   # Subcommand: glob
-  subparser = subparsers.add_parser('glob',
-      help='Prints a list of absolute paths with match the pattern.')
+  subparser = subparsers.add_parser(
+    'glob', help='Prints a list of absolute paths with match the pattern.'
+  )
   subparser.add_argument('base', help='The directory to glob in.')
   subparser.add_argument('pattern', help='The glob pattern to expand.')
-  subparser.add_argument('--hidden', action='store_true',
-                         help='Include hidden files.')
-  subparser.set_defaults(func=lambda opts:
-      _Glob(opts.base, opts.pattern, opts.hidden))
+  subparser.add_argument(
+    '--hidden', action='store_true', help='Include hidden files.'
+  )
+  subparser.set_defaults(
+    func=lambda opts: _Glob(opts.base, opts.pattern, opts.hidden)
+  )
 
   # Subcommand: remove
-  subparser = subparsers.add_parser('remove',
-      help='Remove a file')
+  subparser = subparsers.add_parser('remove', help='Remove a file')
   subparser.add_argument('source', help='The file to remove.')
   subparser.set_defaults(func=lambda opts: _Remove(opts.source))
 
   # Subcommand: is_executable
-  subparser = subparsers.add_parser('is_executable',
-      help='Check if a file is executable.')
+  subparser = subparsers.add_parser(
+    'is_executable', help='Check if a file is executable.'
+  )
   subparser.add_argument('path', help='The file to check.')
   subparser.set_defaults(func=lambda opts: _IsExecutable(opts.path))
 
   # Subcommand: listdir
-  subparser = subparsers.add_parser('listdir',
-      help='Print all entries in the given folder to stdout.')
+  subparser = subparsers.add_parser(
+    'listdir', help='Print all entries in the given folder to stdout.'
+  )
   subparser.add_argument('source', help='The dir to list.')
-  subparser.add_argument('--recursive', action='store_true',
-                         help='Recurse into subdirectories.')
+  subparser.add_argument(
+    '--recursive', action='store_true', help='Recurse into subdirectories.'
+  )
   subparser.set_defaults(
-      func=lambda opts: _ListDir(opts.source, opts.recursive))
+    func=lambda opts: _ListDir(opts.source, opts.recursive)
+  )
 
   # Subcommand: ensure-directory
-  subparser = subparsers.add_parser('ensure-directory',
-      help='Ensures that the given path is a directory.')
-  subparser.add_argument('--mode', help='The octal mode of the directory.',
-                         type=lambda s: int(s, 8))
+  subparser = subparsers.add_parser(
+    'ensure-directory', help='Ensures that the given path is a directory.'
+  )
+  subparser.add_argument(
+    '--mode', help='The octal mode of the directory.', type=lambda s: int(s, 8)
+  )
   subparser.add_argument('dest', help='The dir to ensure.')
   subparser.set_defaults(func=lambda opts: _EnsureDir(opts.mode, opts.dest))
 
   # Subcommand: filesizes
-  subparser = subparsers.add_parser('filesizes',
-      help='Prints a list for sizes in bytes (1 per line) for each given file')
+  subparser = subparsers.add_parser(
+    'filesizes',
+    help='Prints a list for sizes in bytes (1 per line) for each given file',
+  )
   subparser.add_argument('file', nargs='+', help='Path to a file')
   subparser.set_defaults(
-      func=lambda opts: print('\n'.join(str(os.stat(f).st_size)
-                                            for f in opts.file)))
+    func=lambda opts: print(
+      '\n'.join(str(os.stat(f).st_size) for f in opts.file)
+    )
+  )
 
   # Subcommand: filesizes
-  subparser = subparsers.add_parser('symlink',
-      help='Creates a symlink. Behaves like os.symlink.')
+  subparser = subparsers.add_parser(
+    'symlink', help='Creates a symlink. Behaves like os.symlink.'
+  )
   subparser.add_argument('source', help='The thing to link to.')
   subparser.add_argument('link', help='The link to create.')
-  subparser.set_defaults(
-      func=lambda opts: os.symlink(opts.source, opts.link))
+  subparser.set_defaults(func=lambda opts: os.symlink(opts.source, opts.link))
 
   # Subcommand: truncate
   subparser = subparsers.add_parser(
-      'truncate', help='Creates an empty file with specified size.')
+    'truncate', help='Creates an empty file with specified size.'
+  )
   subparser.add_argument('path', help='The path to the file.')
-  subparser.add_argument('size_mb', help='The size of the file in megabytes.',
-                         type=int)
+  subparser.add_argument(
+    'size_mb', help='The size of the file in megabytes.', type=int
+  )
   subparser.set_defaults(func=lambda opts: _Truncate(opts.path, opts.size_mb))
 
   # Subcommand: flatten_single_directories
   subparser = subparsers.add_parser(
-      'flatten_single_directories',
-      help=('Moves contents of single/dir/with/contents to the top level '
-            'directory.'))
+    'flatten_single_directories',
+    help=(
+      'Moves contents of single/dir/with/contents to the top level directory.'
+    ),
+  )
   subparser.add_argument('path', help='The path to flatten from.')
   subparser.set_defaults(func=lambda opts: _FlattenSingleDirectories(opts.path))
 
   # Subcommand: compute_hash
   subparser = subparsers.add_parser(
-      'compute_hash',
-      help='Computes hash of provided absolute directories and/or files.')
+    'compute_hash',
+    help='Computes hash of provided absolute directories and/or files.',
+  )
   subparser.add_argument('base_path', help='Base path to normalize all files.')
-  subparser.add_argument('rel_paths', nargs='+',
-                         help='List of relative paths of directories '
-                              'and/or files.')
-  subparser.set_defaults(func=lambda opts: _ComputeHashPaths(opts.base_path,
-                                                             *opts.rel_paths))
+  subparser.add_argument(
+    'rel_paths',
+    nargs='+',
+    help='List of relative paths of directories and/or files.',
+  )
+  subparser.set_defaults(
+    func=lambda opts: _ComputeHashPaths(opts.base_path, *opts.rel_paths)
+  )
 
   # Subcommand: file_hash
   subparser = subparsers.add_parser(
-      'file_hash',
-      help='Computes hash of a file in provided absolute path.')
+    'file_hash', help='Computes hash of a file in provided absolute path.'
+  )
   subparser.add_argument('file_path', help='Absolute path for the file.')
   subparser.set_defaults(func=lambda opts: _CalculateHash(opts.file_path))
 

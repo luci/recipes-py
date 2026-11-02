@@ -10,7 +10,9 @@ from collections.abc import Iterator
 from recipe_engine import recipe_test_api
 
 from PB.recipes.recipe_engine.engine_tests.proto_output_properties import (
-  Output, Msg)
+  Output,
+  Msg,
+)
 
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
@@ -33,10 +35,10 @@ def RunSteps(api: DEPS) -> None:
   output = Output(
     str='foo',
     strs=['bar', 'baz'],
-    msg = Msg(
+    msg=Msg(
       num=1,
       nums=[10, 11, 12],
-    )
+    ),
   )
   step_result.presentation.properties['$mod/proto_out'] = output
 

@@ -8,10 +8,10 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 
 from RECIPE_MODULES.recipe_engine import (
-    context,
-    json,
-    path,
-    step,
+  context,
+  json,
+  path,
+  step,
 )
 
 
@@ -21,6 +21,7 @@ class DEPS(RecipeScriptApi):
   json: json.API
   path: path.API
   step: step.API
+
 
 from .api import GeneratorScriptApi as API
 from .test_api import GeneratorScriptTestApi as TEST_API

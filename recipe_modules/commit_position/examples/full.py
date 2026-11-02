@@ -11,8 +11,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    commit_position,
-    step,
+  commit_position,
+  step,
 )
 
 

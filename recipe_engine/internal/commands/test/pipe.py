@@ -32,6 +32,7 @@ def read_message(in_file: BinaryIO, msg_class: type[_M]) -> _M | None:
   Raises EOFError on EOF/partial read from in_file
   Raises any error that msg_class.ParseFromString could raise.
   """
+
   def _read(size: int) -> bytes:
     """Reads size bytes from in_file.
 
@@ -43,7 +44,7 @@ def read_message(in_file: BinaryIO, msg_class: type[_M]) -> _M | None:
     """
     data = in_file.read(size)
     while len(data) < size:
-      new_data = in_file.read(size-len(data))
+      new_data = in_file.read(size - len(data))
       if not new_data:
         break
       data += new_data
@@ -55,7 +56,7 @@ def read_message(in_file: BinaryIO, msg_class: type[_M]) -> _M | None:
 
   raw_size = _read(4)
 
-  size, = struct.unpack('!L', raw_size)
+  (size,) = struct.unpack('!L', raw_size)
   if size == 0:
     return None
 

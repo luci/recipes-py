@@ -41,7 +41,7 @@ def _toPBDict(spec: message.Message) -> dict[str, Any]:
 
 
 def write_global_files_to_main_repo(
-    recipe_deps: recipe_deps_module.RecipeDeps, spec: Any
+  recipe_deps: recipe_deps_module.RecipeDeps, spec: Any
 ) -> None:
   """Writes the recipes.cfg and recipes.py scripts to the main repo on disk.
 
@@ -57,11 +57,14 @@ def write_global_files_to_main_repo(
   if spec.project_id:
     spec.repo_name = spec.project_id
   # Format recipes.cfg nicely and make it deterministic.
-  out = json.dumps(
+  out = (
+    json.dumps(
       _toPBDict(spec),
       indent=2,
       sort_keys=True,
-  ).replace(' \n', '\n') + '\n'
+    ).replace(' \n', '\n')
+    + '\n'
+  )
   LOGGER.info('writing: %s', out)
 
   cfg_path = os.path.join(main_repo.path, simple_cfg.RECIPES_CFG_LOCATION_REL)
@@ -72,24 +75,26 @@ def write_global_files_to_main_repo(
   assert engine.backend is not None
   recipes_py_path = os.path.join(main_repo.recipes_root_path, 'recipes.py')
   with open(recipes_py_path, 'w') as recipes_py:
-    recipes_py.write(engine.backend.cat_file(
-        spec.deps['recipe_engine'].revision, 'recipes.py'))
+    recipes_py.write(
+      engine.backend.cat_file(spec.deps['recipe_engine'].revision, 'recipes.py')
+    )
 
 
 def run_simulation_test(
-    repo: recipe_deps_module.RecipeRepo, *additional_args: str
+  repo: recipe_deps_module.RecipeRepo, *additional_args: str
 ) -> tuple[int, str]:
   """Runs the recipe simulation test for given repo.
 
   Returns a tuple of exit code and output.
   """
   args = [
-      VPYTHON3,
-      os.path.join(repo.recipes_root_path, 'recipes.py'),
-      'test',
+    VPYTHON3,
+    os.path.join(repo.recipes_root_path, 'recipes.py'),
+    'test',
   ] + list(additional_args)
   proc = subprocess.Popen(
-      args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+  )
   output, _ = proc.communicate()
   retcode = proc.returncode
   return retcode, output
@@ -100,17 +105,22 @@ def regen_docs(repo: recipe_deps_module.RecipeRepo) -> None:
 
   Raises a CalledProcessError on failure.
   """
-  subprocess.check_call([
-    VPYTHON3, os.path.join(repo.recipes_root_path, 'recipes.py'), 'doc',
-    '--kind', 'gen',
-  ])
+  subprocess.check_call(
+    [
+      VPYTHON3,
+      os.path.join(repo.recipes_root_path, 'recipes.py'),
+      'doc',
+      '--kind',
+      'gen',
+    ]
+  )
 
 
 def process_candidates(
-    recipe_deps: recipe_deps_module.RecipeDeps,
-    candidates: list[roll_candidate.RollCandidate],
-    repos: Mapping[str, commit_list.CommitList],
-    verbose_json: bool,
+  recipe_deps: recipe_deps_module.RecipeDeps,
+  candidates: list[roll_candidate.RollCandidate],
+  repos: Mapping[str, commit_list.CommitList],
+  verbose_json: bool,
 ) -> tuple[bool | None, dict[str, Any] | None, list[dict[str, Any]]]:
   """This processes a list of candidates by running simulation tests to find the
   'best' roll.
@@ -172,18 +182,24 @@ def process_candidates(
   # Fill basic information about all the candidates. In later loops
   # we exit early depending on test results.
   for candidate in candidates:
-    roll_details.append({
+    roll_details.append(
+      {
         'spec': _toPBDict(candidate.repo_spec),
         'commit_infos': {
-            repo_name: [{
-                'author_email': c.author_email,
-                'message_lines':
-                    (c.message_lines if verbose_json else c.message_lines[:1]),
-                'revision': c.revision,
-            } for c in clist]
-            for repo_name, clist in candidate.changelist(repos).items()
+          repo_name: [
+            {
+              'author_email': c.author_email,
+              'message_lines': (
+                c.message_lines if verbose_json else c.message_lines[:1]
+              ),
+              'revision': c.revision,
+            }
+            for c in clist
+          ]
+          for repo_name, clist in candidate.changelist(repos).items()
         },
-    })
+      }
+    )
 
   # Process candidates biggest first. If the roll is trivial, we want
   # the maximal one, e.g. to jump over some reverts, or include fixes
@@ -194,7 +210,8 @@ def process_candidates(
     write_global_files_to_main_repo(recipe_deps, candidate.repo_spec)
 
     retcode, output = run_simulation_test(
-        recipe_deps.main_repo, 'run', '--no-docs')
+      recipe_deps.main_repo, 'run', '--no-docs'
+    )
 
     if verbose_json:
       roll_details[i]['recipes_simulation_test'] = {
@@ -223,7 +240,8 @@ def process_candidates(
       write_global_files_to_main_repo(recipe_deps, candidate.repo_spec)
 
       retcode, output = run_simulation_test(
-          recipe_deps.main_repo, 'train', '--no-docs')
+        recipe_deps.main_repo, 'train', '--no-docs'
+      )
       if verbose_json:
         roll_details[i]['recipes_simulation_test_train'] = {
           'output': output,
@@ -243,10 +261,10 @@ def process_candidates(
 
 
 def test_rolls(
-    recipe_deps: recipe_deps_module.RecipeDeps, verbose_json: bool
+  recipe_deps: recipe_deps_module.RecipeDeps, verbose_json: bool
 ) -> dict[str, Any]:
   candidates, rejected_candidates, repos = (
-      candidate_algorithm.get_roll_candidates(recipe_deps)
+    candidate_algorithm.get_roll_candidates(recipe_deps)
   )
 
   roll_details: list[dict[str, Any]] = []
@@ -254,7 +272,8 @@ def test_rolls(
   trivial: bool | None = True
   if candidates:
     trivial, picked_roll_details, roll_details = process_candidates(
-        recipe_deps, candidates, repos, verbose_json)
+      recipe_deps, candidates, repos, verbose_json
+    )
 
   ret: dict[str, Any] = {
     # it counts as success if there are no candidates at all :)
@@ -266,7 +285,7 @@ def test_rolls(
   }
   if verbose_json:
     ret['rejected_candidate_specs'] = [
-        _toPBDict(c.repo_spec) for c in rejected_candidates
+      _toPBDict(c.repo_spec) for c in rejected_candidates
     ]
   return ret
 

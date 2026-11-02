@@ -14,7 +14,7 @@ from PB.recipe_engine import result as result_pb
 
 
 def to_legacy_result(
-    result: result_pb.RawResult | None,
+  result: result_pb.RawResult | None,
 ) -> result_pb.Result | None:
   """Convert from result_pb.RawResult to result_pb.Result."""
   if not result:

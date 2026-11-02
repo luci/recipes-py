@@ -11,8 +11,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    step,
-    url,
+  step,
+  url,
 )
 
 
@@ -28,14 +28,10 @@ class TEST_DEPS(RecipeTestApi):
 
 
 def RunSteps(api: DEPS) -> None:
-  api.step('step1',
-           ['/bin/echo', api.url.join('foo', 'bar', 'baz')])
-  api.step('step2',
-           ['/bin/echo', api.url.join('foo/', '/bar/', '/baz')])
-  api.step('step3',
-           ['/bin/echo', api.url.join('//foo/', '//bar//', '//baz//')])
-  api.step('step4',
-           ['/bin/echo', api.url.join('//foo/bar//', '//baz//')])
+  api.step('step1', ['/bin/echo', api.url.join('foo', 'bar', 'baz')])
+  api.step('step2', ['/bin/echo', api.url.join('foo/', '/bar/', '/baz')])
+  api.step('step3', ['/bin/echo', api.url.join('//foo/', '//bar//', '//baz//')])
+  api.step('step4', ['/bin/echo', api.url.join('//foo/bar//', '//baz//')])
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:

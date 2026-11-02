@@ -12,9 +12,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    cipd,
-    path,
+  assertions,
+  cipd,
+  path,
 )
 
 
@@ -28,41 +28,40 @@ class DEPS(RecipeScriptApi):
 def RunSteps(api: DEPS) -> None:
   ef_default = api.cipd.EnsureFile()
   api.assertions.assertEqual(
-      ef_default.paranoid_mode,
-      None,
+    ef_default.paranoid_mode,
+    None,
   )
   ef_default.add_package('pkg/default', 'latest')
   api.assertions.assertEqual(
-      ef_default.render(),
-      'pkg/default latest',
+    ef_default.render(),
+    'pkg/default latest',
   )
 
   ef_presence = (
-      api.cipd.EnsureFile()
-      .add_package('pkg/foo', 'latest')
-      .with_paranoid_mode(api.cipd.ParanoidMode.CHECK_PRESENCE)
+    api.cipd.EnsureFile()
+    .add_package('pkg/foo', 'latest')
+    .with_paranoid_mode(api.cipd.ParanoidMode.CHECK_PRESENCE)
   )
   api.assertions.assertEqual(
-      ef_presence.paranoid_mode,
-      api.cipd.ParanoidMode.CHECK_PRESENCE,
+    ef_presence.paranoid_mode,
+    api.cipd.ParanoidMode.CHECK_PRESENCE,
   )
   api.assertions.assertEqual(
-      ef_presence.render(),
-      '$ParanoidMode CheckPresence\npkg/foo latest'
+    ef_presence.render(), '$ParanoidMode CheckPresence\npkg/foo latest'
   )
 
   ef_integrity = (
-      api.cipd.EnsureFile()
-      .add_package('pkg/baz', 'latest')
-      .with_paranoid_mode(api.cipd.ParanoidMode.CHECK_INTEGRITY)
+    api.cipd.EnsureFile()
+    .add_package('pkg/baz', 'latest')
+    .with_paranoid_mode(api.cipd.ParanoidMode.CHECK_INTEGRITY)
   )
   api.assertions.assertEqual(
-      ef_integrity.paranoid_mode,
-      api.cipd.ParanoidMode.CHECK_INTEGRITY,
+    ef_integrity.paranoid_mode,
+    api.cipd.ParanoidMode.CHECK_INTEGRITY,
   )
   api.assertions.assertEqual(
-      ef_integrity.render(),
-      '$ParanoidMode CheckIntegrity\npkg/baz latest',
+    ef_integrity.render(),
+    '$ParanoidMode CheckIntegrity\npkg/baz latest',
   )
 
   cipd_root = api.path.start_dir / 'packages'

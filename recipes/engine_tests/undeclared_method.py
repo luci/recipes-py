@@ -8,7 +8,7 @@ from collections.abc import Iterator
 from recipe_engine import recipe_test_api
 
 from PB.recipes.recipe_engine.engine_tests import (
-    undeclared_method as undeclared_method_pb,
+  undeclared_method as undeclared_method_pb,
 )
 
 from recipe_engine import post_process
@@ -18,9 +18,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    cipd,
-    properties,
-    step,
+  cipd,
+  properties,
+  step,
 )
 
 
@@ -34,6 +34,7 @@ class DEPS(RecipeScriptApi):
 @dataclass
 class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
+
 
 INLINE_PROPERTIES_PROTO = """
 message InputProperties {
@@ -57,38 +58,41 @@ def RunSteps(api: DEPS, props: undeclared_method_pb.InputProperties) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (
-      api.test('from_recipe') +
-      api.properties(from_recipe=True) +
-      api.expect_exception('ModuleInjectionError') +
-      api.post_process(post_process.StatusException) +
-      api.post_process(
-          post_process.SummaryMarkdown,
-          "Uncaught Exception: ModuleInjectionError(\"Recipe has no "
-          "dependency 'missing_module'. (Add it to DEPS?)\")",
-      ) +
-      api.post_process(post_process.DropExpectation))
+    api.test('from_recipe')
+    + api.properties(from_recipe=True)
+    + api.expect_exception('ModuleInjectionError')
+    + api.post_process(post_process.StatusException)
+    + api.post_process(
+      post_process.SummaryMarkdown,
+      "Uncaught Exception: ModuleInjectionError(\"Recipe has no "
+      "dependency 'missing_module'. (Add it to DEPS?)\")",
+    )
+    + api.post_process(post_process.DropExpectation)
+  )
 
   yield (
-      api.test('attribute') +
-      api.properties(attribute=True) +
-      api.expect_exception('AttributeError') +
-      api.post_process(post_process.StatusException) +
-      api.post_process(
-          post_process.SummaryMarkdown,
-          "Uncaught Exception: AttributeError(\"'CIPDApi' object has no "
-          "attribute 'missing_method'\")",
-      ) +
-      api.post_process(post_process.DropExpectation))
+    api.test('attribute')
+    + api.properties(attribute=True)
+    + api.expect_exception('AttributeError')
+    + api.post_process(post_process.StatusException)
+    + api.post_process(
+      post_process.SummaryMarkdown,
+      "Uncaught Exception: AttributeError(\"'CIPDApi' object has no "
+      "attribute 'missing_method'\")",
+    )
+    + api.post_process(post_process.DropExpectation)
+  )
 
   yield (
-      api.test('module') +
-      api.properties(module=True) +
-      api.expect_exception('ModuleInjectionError') +
-      api.post_process(post_process.StatusException) +
-      api.post_process(
-          post_process.SummaryMarkdown,
-          "Uncaught Exception: ModuleInjectionError(\"Recipe Module "
-          "'cipd' has no dependency 'missing_module'. (Add it to "
-          "__init__.py:DEPS?)\")",
-      ) +
-      api.post_process(post_process.DropExpectation))
+    api.test('module')
+    + api.properties(module=True)
+    + api.expect_exception('ModuleInjectionError')
+    + api.post_process(post_process.StatusException)
+    + api.post_process(
+      post_process.SummaryMarkdown,
+      "Uncaught Exception: ModuleInjectionError(\"Recipe Module "
+      "'cipd' has no dependency 'missing_module'. (Add it to "
+      "__init__.py:DEPS?)\")",
+    )
+    + api.post_process(post_process.DropExpectation)
+  )

@@ -39,7 +39,8 @@ class TestPathsPreGlobalInit(unittest.TestCase):
   def test_path_construction_error_pieces(self) -> None:
     with self.assertRaisesRegex(ValueError, 'must only be `str`'):
       config_types.Path(
-          config_types.ResolvedBasePath('[CACHE]'), 100  # type: ignore
+        config_types.ResolvedBasePath('[CACHE]'),
+        100,  # type: ignore
       )
 
   def test_path_construction_error_backslash(self) -> None:
@@ -48,12 +49,12 @@ class TestPathsPreGlobalInit(unittest.TestCase):
 
   def test_path_construction_resolved_pieces(self) -> None:
     a = config_types.Path(
-        config_types.ResolvedBasePath('[CACHE]'), 'hello', 'world'
+      config_types.ResolvedBasePath('[CACHE]'), 'hello', 'world'
     )
     self.assertEqual(a.pieces, ('hello', 'world'))
 
     b = config_types.Path(
-        config_types.ResolvedBasePath('[CACHE]'), 'hello/world'
+      config_types.ResolvedBasePath('[CACHE]'), 'hello/world'
     )
     self.assertEqual(b.pieces, ('hello', 'world'))
 
@@ -72,7 +73,7 @@ class TestPathsPreGlobalInit(unittest.TestCase):
 
   def test_path_equality_non_path_type(self) -> None:
     a = config_types.Path(
-        config_types.ResolvedBasePath('[CACHE]'), 'hello', 'world'
+      config_types.ResolvedBasePath('[CACHE]'), 'hello', 'world'
     )
     self.assertNotEqual(a, None)
 
@@ -90,7 +91,7 @@ class TestPathsPreGlobalInit(unittest.TestCase):
 
   def test_path_inequality_non_path_type(self) -> None:
     a = config_types.Path(
-        config_types.ResolvedBasePath('[CACHE]'), 'hello', 'world'
+      config_types.ResolvedBasePath('[CACHE]'), 'hello', 'world'
     )
     with self.assertRaisesRegex(TypeError, "'<' not supported"):
       a < None  # type: ignore[operator]
@@ -115,15 +116,17 @@ class TestPathsPreGlobalInit(unittest.TestCase):
     self.assertEqual(p, p / '.')
 
     self.assertEqual(
-        p / 'some/hello',
-        # Note that no one would ever construct a path with all these styles,
-        # however it's important that all the various joinery/embedded slash
-        # styles result in the same Path because recipe code passes Paths around
-        # and joins to them in multiple methods, so while we would never see
-        # such a construction all in one line like this, it's possible that
-        # a Path is logically constructed in multiple places in this fashion.
-        (p / 'some/path/to/stuff' / '../..').joinpath('etc', '..////.', '..',
-                                                      'hello'))
+      p / 'some/hello',
+      # Note that no one would ever construct a path with all these styles,
+      # however it's important that all the various joinery/embedded slash
+      # styles result in the same Path because recipe code passes Paths around
+      # and joins to them in multiple methods, so while we would never see
+      # such a construction all in one line like this, it's possible that
+      # a Path is logically constructed in multiple places in this fashion.
+      (p / 'some/path/to/stuff' / '../..').joinpath(
+        'etc', '..////.', '..', 'hello'
+      ),
+    )
 
   def test_path_dots_removal_error(self) -> None:
     p = config_types.Path(config_types.ResolvedBasePath('[CACHE]'))
@@ -144,13 +147,14 @@ class TestPathsPreGlobalInit(unittest.TestCase):
     start_path = config_types.Path(config_types.ResolvedBasePath('[START_DIR]'))
     cache_path = config_types.Path(config_types.ResolvedBasePath('[CACHE]'))
     self.assertEqual(
-        start_path.joinpath('foo', cache_path, 'bar'), cache_path / 'bar'
+      start_path.joinpath('foo', cache_path, 'bar'), cache_path / 'bar'
     )
 
   def test_path_joinpath_with_none(self) -> None:
     base_path = config_types.Path(config_types.ResolvedBasePath('[START_DIR]'))
     with self.assertRaisesRegex(
-        ValueError, 'Variadic arguments to Path must only be `str`'):
+      ValueError, 'Variadic arguments to Path must only be `str`'
+    ):
       base_path.joinpath(None)  # type: ignore[arg-type]
 
   def test_is_parent_of(self) -> None:
@@ -170,11 +174,11 @@ class TestPathsPreGlobalInit(unittest.TestCase):
   def test_is_parent_of_checkout(self) -> None:
     p1 = config_types.Path(config_types.CheckoutBasePath(), 'some')
     p2 = config_types.Path(
-        config_types.ResolvedBasePath('[CACHE]'),
-        'builder',
-        'src',
-        'some',
-        'thing',
+      config_types.ResolvedBasePath('[CACHE]'),
+      'builder',
+      'src',
+      'some',
+      'thing',
     )
 
     with self.assertRaisesRegex(ValueError, 'before checkout_dir is set'):
@@ -183,7 +187,7 @@ class TestPathsPreGlobalInit(unittest.TestCase):
       p2 in p1.parents
 
     config_types.CheckoutBasePath._resolved = config_types.Path(
-        config_types.ResolvedBasePath('[CACHE]'), 'builder', 'src'
+      config_types.ResolvedBasePath('[CACHE]'), 'builder', 'src'
     )
 
     self.assertTrue(p1 in p2.parents)
@@ -192,11 +196,11 @@ class TestPathsPreGlobalInit(unittest.TestCase):
   def test_is_parent_of_checkout_mismatch(self) -> None:
     p1 = config_types.Path(config_types.CheckoutBasePath(), 'some')
     p2 = config_types.Path(
-        config_types.ResolvedBasePath('[CLEANUP]'), 'unrelated'
+      config_types.ResolvedBasePath('[CLEANUP]'), 'unrelated'
     )
 
     config_types.CheckoutBasePath._resolved = config_types.Path(
-        config_types.ResolvedBasePath('[CACHE]'), 'builder', 'src'
+      config_types.ResolvedBasePath('[CACHE]'), 'builder', 'src'
     )
 
     self.assertFalse(p1 in p2.parents)
@@ -209,7 +213,7 @@ class TestPathsPreGlobalInit(unittest.TestCase):
 
   def test_relative_to_parent(self) -> None:
     p1 = config_types.Path(
-        config_types.ResolvedBasePath('[CLEANUP]'), 'foo', 'bar', 'baz'
+      config_types.ResolvedBasePath('[CLEANUP]'), 'foo', 'bar', 'baz'
     )
     p2 = config_types.Path(config_types.ResolvedBasePath('[CLEANUP]'), 'foo')
     self.assertEqual(p1.relative_to(p2), 'bar/baz')
@@ -226,7 +230,7 @@ class TestPathsPreGlobalInit(unittest.TestCase):
 
   def test_relative_to_walk_up_parent(self) -> None:
     p1 = config_types.Path(
-        config_types.ResolvedBasePath('[CLEANUP]'), 'foo', 'bar', 'baz'
+      config_types.ResolvedBasePath('[CLEANUP]'), 'foo', 'bar', 'baz'
     )
     p2 = config_types.Path(config_types.ResolvedBasePath('[CLEANUP]'), 'foo')
     self.assertEqual(p1.relative_to(p2, walk_up=True), 'bar/baz')
@@ -234,10 +238,10 @@ class TestPathsPreGlobalInit(unittest.TestCase):
 
   def test_relative_to_walk_up_sibling(self) -> None:
     p1 = config_types.Path(
-        config_types.ResolvedBasePath('[CLEANUP]'), 'foo', 'bar'
+      config_types.ResolvedBasePath('[CLEANUP]'), 'foo', 'bar'
     )
     p2 = config_types.Path(
-        config_types.ResolvedBasePath('[CLEANUP]'), 'foo', 'baz'
+      config_types.ResolvedBasePath('[CLEANUP]'), 'foo', 'baz'
     )
     self.assertEqual(p1.relative_to(p2, walk_up=True), '../bar')
     self.assertEqual(p2.relative_to(p1, walk_up=True), '../baz')

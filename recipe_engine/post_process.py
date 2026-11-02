@@ -20,7 +20,7 @@ from recipe_engine.internal.test import magic_check_fn
 StepODict = Mapping[str, post_process_inputs.Step | dict[str, Any]]
 
 _filterRegexEntry = collections.namedtuple(
-    '_filterRegexEntry', 'at_most at_least fields'
+  '_filterRegexEntry', 'at_most at_least fields'
 )
 
 
@@ -42,12 +42,12 @@ class Filter:
       yield TEST + api.post_process(Filter('step_a', 'step_b', 'other_step'))
     """
     self.data: dict[str, frozenset[str] | tuple[()]] = {
-        name: () for name in steps
+      name: () for name in steps
     }
     self.re_data: dict[re.Pattern, _filterRegexEntry] = {}
 
   def __call__(
-      self, check: magic_check_fn.Checker, step_odict: StepODict
+    self, check: magic_check_fn.Checker, step_odict: StepODict
   ) -> collections.OrderedDict[str, Any]:
     unused_includes = self.data.copy()
     re_data = self.re_data.copy()
@@ -69,9 +69,9 @@ class Filter:
         to_ret[name] = step
       else:
         to_ret[name] = {
-            k: v
-            for k, v in step.to_step_dict().items()
-            if k in field_set or k == 'name'
+          k: v
+          for k, v in step.to_step_dict().items()
+          if k in field_set or k == 'name'
         }
 
     check(len(unused_includes) == 0)
@@ -105,11 +105,13 @@ class Filter:
     ret.re_data = self.re_data
     return ret
 
-  def include_re(self,
-                 step_name_re: str | re.Pattern,
-                 fields: Iterable[str] = (),
-                 at_least: int = 1,
-                 at_most: int | None = None) -> Filter:
+  def include_re(
+    self,
+    step_name_re: str | re.Pattern,
+    fields: Iterable[str] = (),
+    at_least: int = 1,
+    at_most: int | None = None,
+  ) -> Filter:
     """This includes all steps which match the given regular expression.
 
     If a step matches both an include() directive as well as include_re(), the
@@ -131,7 +133,8 @@ class Filter:
       raise ValueError('Expected fields to be a non-string iterable')
     new_re_data = self.re_data.copy()
     new_re_data[re.compile(step_name_re)] = _filterRegexEntry(
-        at_least, at_most, frozenset(fields))
+      at_least, at_most, frozenset(fields)
+    )
 
     ret = Filter()
     ret.data = self.data
@@ -156,8 +159,9 @@ def attach_recipe_warning(*warnings: str) -> Callable[[Callable], Callable]:
   return decorator
 
 
-def DoesNotRun(check: magic_check_fn.Checker, step_odict: StepODict, *steps:
-               str) -> None:
+def DoesNotRun(
+  check: magic_check_fn.Checker, step_odict: StepODict, *steps: str
+) -> None:
   """Asserts that the given steps don't run.
 
   Usage:
@@ -168,8 +172,9 @@ def DoesNotRun(check: magic_check_fn.Checker, step_odict: StepODict, *steps:
     check(step_name not in banSet)
 
 
-def DoesNotRunRE(check: magic_check_fn.Checker, step_odict: StepODict,
-                 *step_regexes: str) -> None:
+def DoesNotRunRE(
+  check: magic_check_fn.Checker, step_odict: StepODict, *step_regexes: str
+) -> None:
   """Asserts that no steps matching any of the regexes have run.
 
   Args:
@@ -187,8 +192,9 @@ def DoesNotRunRE(check: magic_check_fn.Checker, step_odict: StepODict,
       check(not r.match(step_name))
 
 
-def MustRun(check: magic_check_fn.Checker, step_odict: StepODict, *steps:
-            str) -> None:
+def MustRun(
+  check: magic_check_fn.Checker, step_odict: StepODict, *steps: str
+) -> None:
   """Asserts that steps with the given names are in the expectations.
 
   Args:
@@ -201,11 +207,13 @@ def MustRun(check: magic_check_fn.Checker, step_odict: StepODict, *steps:
     check(step_name in step_odict)
 
 
-def MustRunRE(check: magic_check_fn.Checker,
-              step_odict: StepODict,
-              step_regex: str | re.Pattern,
-              at_least: int = 1,
-              at_most: int | None = None) -> None:
+def MustRunRE(
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  step_regex: str | re.Pattern,
+  at_least: int = 1,
+  at_most: int | None = None,
+) -> None:
   """Assert that steps matching the given regex completely are in the
   expectations.
 
@@ -233,8 +241,8 @@ def MustRunRE(check: magic_check_fn.Checker,
 def _adjacent_indices(step_odict: StepODict) -> list[tuple[int, ...]]:
   """Returns the indices of the steps that can immediately follow each step."""
   levels = [
-      step.nest_level if isinstance(step, post_process_inputs.Step) else 0
-      for step in step_odict.values()
+    step.nest_level if isinstance(step, post_process_inputs.Step) else 0
+    for step in step_odict.values()
   ]
   ret = []
   for i, level in enumerate(levels):
@@ -245,10 +253,12 @@ def _adjacent_indices(step_odict: StepODict) -> list[tuple[int, ...]]:
   return ret
 
 
-def MustRunInOrder(check: magic_check_fn.Checker,
-                   step_odict: StepODict,
-                   *steps: str,
-                   adjacent: bool = False) -> None:
+def MustRunInOrder(
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  *steps: str,
+  adjacent: bool = False,
+) -> None:
   """Asserts that the given steps all ran, in the given order.
 
   Order is by when steps started, so this isn't meaningful for steps that run
@@ -283,10 +293,12 @@ def MustRunInOrder(check: magic_check_fn.Checker,
       check(hint, index > prev_index)
 
 
-def MustRunInOrderRE(check: magic_check_fn.Checker,
-                     step_odict: StepODict,
-                     *step_regexes: str | re.Pattern,
-                     adjacent: bool = False) -> None:
+def MustRunInOrderRE(
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  *step_regexes: str | re.Pattern,
+  adjacent: bool = False,
+) -> None:
   """Asserts that steps fully matching the given regexes ran, in order.
 
   Each regex must match a distinct step. See MustRunInOrder for details.
@@ -313,8 +325,9 @@ def MustRunInOrderRE(check: magic_check_fn.Checker,
     for regex in rest:
       candidates = {j for i in ends for j in adjacent_indices[i]}
       ends = {
-          j for j in candidates
-          if j < len(step_names) and regex.fullmatch(step_names[j])
+        j
+        for j in candidates
+        if j < len(step_names) and regex.fullmatch(step_names[j])
       }
     patterns = [r.pattern for r in compiled_regexes]
     hint = 'adjacent steps fully match %r' % (patterns,)
@@ -324,9 +337,10 @@ def MustRunInOrderRE(check: magic_check_fn.Checker,
   pos = 0
   for regex in compiled_regexes:
     match_index = next(
-        (i for i in range(pos, len(step_names))
-         if regex.fullmatch(step_names[i])),
-        None,
+      (
+        i for i in range(pos, len(step_names)) if regex.fullmatch(step_names[i])
+      ),
+      None,
     )
     hint = 'a step fully matching %r runs' % regex.pattern
     if pos:
@@ -336,8 +350,9 @@ def MustRunInOrderRE(check: magic_check_fn.Checker,
     pos = match_index + 1
 
 
-def StepSuccess(check: magic_check_fn.Checker, step_odict: StepODict,
-                step: str) -> None:
+def StepSuccess(
+  check: magic_check_fn.Checker, step_odict: StepODict, step: str
+) -> None:
   """Assert that a step succeeded.
 
   Args:
@@ -349,8 +364,9 @@ def StepSuccess(check: magic_check_fn.Checker, step_odict: StepODict,
   check(step_odict[step].status == 'SUCCESS')
 
 
-def StepWarning(check: magic_check_fn.Checker, step_odict: StepODict,
-                step: str) -> None:
+def StepWarning(
+  check: magic_check_fn.Checker, step_odict: StepODict, step: str
+) -> None:
   """Assert that a step has the warning status.
 
   Args:
@@ -362,8 +378,9 @@ def StepWarning(check: magic_check_fn.Checker, step_odict: StepODict,
   check(step_odict[step].status == 'WARNING')
 
 
-def StepFailure(check: magic_check_fn.Checker, step_odict: StepODict,
-                step: str) -> None:
+def StepFailure(
+  check: magic_check_fn.Checker, step_odict: StepODict, step: str
+) -> None:
   """Assert that a step failed.
 
   Args:
@@ -375,8 +392,9 @@ def StepFailure(check: magic_check_fn.Checker, step_odict: StepODict,
   check(step_odict[step].status == 'FAILURE')
 
 
-def StepException(check: magic_check_fn.Checker, step_odict: StepODict,
-                  step: str) -> None:
+def StepException(
+  check: magic_check_fn.Checker, step_odict: StepODict, step: str
+) -> None:
   """Assert that a step had an exception.
 
   Args:
@@ -388,8 +406,9 @@ def StepException(check: magic_check_fn.Checker, step_odict: StepODict,
   check(step_odict[step].status == 'EXCEPTION')
 
 
-def StepCanceled(check: magic_check_fn.Checker, step_odict: StepODict,
-                 step: str) -> None:
+def StepCanceled(
+  check: magic_check_fn.Checker, step_odict: StepODict, step: str
+) -> None:
   """Assert that a step had an exception.
 
   Args:
@@ -401,8 +420,12 @@ def StepCanceled(check: magic_check_fn.Checker, step_odict: StepODict,
   check(step_odict[step].status == 'CANCELED')
 
 
-def StepCwdEquals(check: magic_check_fn.Checker, step_odict: StepODict,
-                  step: str, expected_cwd: str | config_types.Path) -> None:
+def StepCwdEquals(
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  step: str,
+  expected_cwd: str | config_types.Path,
+) -> None:
   """Assert that a step ran in the given directory.
 
   Args:
@@ -415,8 +438,10 @@ def StepCwdEquals(check: magic_check_fn.Checker, step_odict: StepODict,
   step_obj = step_odict.get(step)
   if check('step %s exists' % step, step_obj is not None):
     actual_cwd = step_obj.cwd
-    check('step %s cwd is %s (actual: %s)' % (step, expected_cwd, actual_cwd),
-          expected_cwd == actual_cwd)
+    check(
+      'step %s cwd is %s (actual: %s)' % (step, expected_cwd, actual_cwd),
+      expected_cwd == actual_cwd,
+    )
 
 
 def _fullmatch(pattern: str | re.Pattern, string: str) -> bool:
@@ -424,8 +449,12 @@ def _fullmatch(pattern: str | re.Pattern, string: str) -> bool:
   return bool(m and m.span()[1] == len(string))
 
 
-def StepCommandEquals(check: magic_check_fn.Checker, step_odict: StepODict,
-                      step: str, expected_cmd: Sequence[str]) -> None:
+def StepCommandEquals(
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  step: str,
+  expected_cmd: Sequence[str],
+) -> None:
   """Assert that a step's command matches a given list of strings.
 
   Args:
@@ -438,15 +467,19 @@ def StepCommandEquals(check: magic_check_fn.Checker, step_odict: StepODict,
                    api.post_process(StepCommandEquals, 'step-name',
                                     ['my', 'command']))
   """
-  assert all((isinstance(elem, str) for elem in expected_cmd)), \
-      'expected_cmd must be an iterable of strings'
+  assert all((isinstance(elem, str) for elem in expected_cmd)), (
+    'expected_cmd must be an iterable of strings'
+  )
   cmd = step_odict[step].cmd
   check(expected_cmd == cmd)
 
 
-def StepCommandRE(check: magic_check_fn.Checker, step_odict: StepODict,
-                  step: str, expected_patterns: Sequence[str
-                                                         | re.Pattern]) -> None:
+def StepCommandRE(
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  step: str,
+  expected_patterns: Sequence[str | re.Pattern],
+) -> None:
   """Assert that a step's command matches a given list of regular expressions.
 
   Args:
@@ -464,15 +497,18 @@ def StepCommandRE(check: magic_check_fn.Checker, step_odict: StepODict,
   cmd = step_odict[step].cmd
   for expected, actual in zip(expected_patterns, cmd):
     check(_fullmatch(expected, actual))
-  unmatched = cmd[len(expected_patterns):]
+  unmatched = cmd[len(expected_patterns) :]
   check('all arguments matched', not unmatched)
-  unused = expected_patterns[len(cmd):]
+  unused = expected_patterns[len(cmd) :]
   check('all patterns used', not unused)
 
 
-def StepCommandContains(check: magic_check_fn.Checker, step_odict: StepODict,
-                        step: str,
-                        argument_sequence: Sequence[str | re.Pattern]) -> None:
+def StepCommandContains(
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  step: str,
+  argument_sequence: Sequence[str | re.Pattern],
+) -> None:
   """Assert that a step's command contained the given sequence of arguments.
 
   Args:
@@ -486,13 +522,18 @@ def StepCommandContains(check: magic_check_fn.Checker, step_odict: StepODict,
   Usage:
     yield api.test(..., StepCommandContains, 'step-name', ['--force'])
   """
-  check('command line for step %s contained %s' % (step, argument_sequence),
-        argument_sequence in step_odict[step].cmd)
+  check(
+    'command line for step %s contained %s' % (step, argument_sequence),
+    argument_sequence in step_odict[step].cmd,
+  )
 
 
 def StepCommandDoesNotContain(
-    check: magic_check_fn.Checker, step_odict: StepODict, step: str,
-    argument_sequence: Sequence[str | re.Pattern]) -> None:
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  step: str,
+  argument_sequence: Sequence[str | re.Pattern],
+) -> None:
   """Assert that a step's command does not contain the given sequence of
   arguments.
 
@@ -507,12 +548,14 @@ def StepCommandDoesNotContain(
     yield api.test(..., StepCommandDoesNotContain, 'step-name', ['--force'])
   """
   check(
-      'command line for step %s does not contain  %s' %
-      (step, argument_sequence), argument_sequence not in step_odict[step].cmd)
+    'command line for step %s does not contain  %s' % (step, argument_sequence),
+    argument_sequence not in step_odict[step].cmd,
+  )
 
 
-def StepCommandEmpty(check: magic_check_fn.Checker, step_odict: StepODict,
-                     step: str) -> None:
+def StepCommandEmpty(
+  check: magic_check_fn.Checker, step_odict: StepODict, step: str
+) -> None:
   """Assert that a step ran no command.
 
   Args:
@@ -524,8 +567,9 @@ def StepCommandEmpty(check: magic_check_fn.Checker, step_odict: StepODict,
   check(not step_odict[step].cmd)
 
 
-def StepTextEquals(check: magic_check_fn.Checker, step_odict: StepODict,
-                   step: str, expected: str) -> None:
+def StepTextEquals(
+  check: magic_check_fn.Checker, step_odict: StepODict, step: str, expected: str
+) -> None:
   """Assert that a step's step_text is equal to a given string.
 
   Args:
@@ -539,8 +583,12 @@ def StepTextEquals(check: magic_check_fn.Checker, step_odict: StepODict,
   check(step_odict[step].step_text == expected)
 
 
-def StepTextContains(check: magic_check_fn.Checker, step_odict: StepODict,
-                     step: str, expected_substrs: Sequence[str]) -> None:
+def StepTextContains(
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  step: str,
+  expected_substrs: Sequence[str],
+) -> None:
   """Assert that a step's step_text contains given substrings.
 
   Args:
@@ -553,14 +601,16 @@ def StepTextContains(check: magic_check_fn.Checker, step_odict: StepODict,
                    api.post_process(StepTextContains, 'step-name',
                                     ['substr1', 'substr2']))
   """
-  assert not isinstance(expected_substrs, basestring), \
-      'expected_substrs must be an iterable of strings and must not be a string'
+  assert not isinstance(expected_substrs, basestring), (
+    'expected_substrs must be an iterable of strings and must not be a string'
+  )
   for expected in expected_substrs:
     check(expected in step_odict[step].step_text)
 
 
-def StepSummaryEquals(check: magic_check_fn.Checker, step_odict: StepODict,
-                      step: str, expected: str) -> None:
+def StepSummaryEquals(
+  check: magic_check_fn.Checker, step_odict: StepODict, step: str, expected: str
+) -> None:
   """Check that the step's step_summary_text equals given value.
 
   Args:
@@ -574,8 +624,12 @@ def StepSummaryEquals(check: magic_check_fn.Checker, step_odict: StepODict,
   check(step_odict[step].step_summary_text == expected)
 
 
-def StepSummaryContains(check: magic_check_fn.Checker, step_odict: StepODict,
-                        step: str, expected_substrs: Sequence[str]) -> None:
+def StepSummaryContains(
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  step: str,
+  expected_substrs: Sequence[str],
+) -> None:
   """Check that the step's step_summary_text contains given substrings.
 
   Args:
@@ -588,14 +642,19 @@ def StepSummaryContains(check: magic_check_fn.Checker, step_odict: StepODict,
         ..., api.post_process(StepSummaryContains, 'step-name',
                               ['substr1', 'substr2']))
   """
-  assert not isinstance(expected_substrs, basestring), \
-      'expected_substrs must be an iterable of strings and must not be a string'
+  assert not isinstance(expected_substrs, basestring), (
+    'expected_substrs must be an iterable of strings and must not be a string'
+  )
   for expected in expected_substrs:
     check(expected in step_odict[step].step_summary_text)
 
 
-def StepEnvContains(check: magic_check_fn.Checker, step_odict: StepODict,
-                    step: str, env_dict: Mapping[str, str]) -> None:
+def StepEnvContains(
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  step: str,
+  env_dict: Mapping[str, str],
+) -> None:
   """Assert that a step's env contains the given key/value pairs.
 
   Args:
@@ -609,12 +668,18 @@ def StepEnvContains(check: magic_check_fn.Checker, step_odict: StepODict,
         ..., api.post_process(StepEnvContains, 'step-name', {'FOO': 'BAR'}))
   """
   for k, v in env_dict.items():
-    check('env for step %s contained %s: %s' % (step, k, v),
-          (k, v) in step_odict[step].env.items())
+    check(
+      'env for step %s contained %s: %s' % (step, k, v),
+      (k, v) in step_odict[step].env.items(),
+    )
 
 
-def StepEnvDoesNotContain(check: magic_check_fn.Checker, step_odict: StepODict,
-                          step: str, env_dict: Mapping[str, str]) -> None:
+def StepEnvDoesNotContain(
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  step: str,
+  env_dict: Mapping[str, str],
+) -> None:
   """Assert that a step's env does not contain the given key/value pairs.
 
   Args:
@@ -629,12 +694,18 @@ def StepEnvDoesNotContain(check: magic_check_fn.Checker, step_odict: StepODict,
         api.post_process(StepEnvDoesNotContain, 'step-name', {'FOO': 'BAR'}))
   """
   for k, v in env_dict.items():
-    check('env for step %s did not contain %s: %s' % (step, k, v),
-          (k, v) not in step_odict[step].env.items())
+    check(
+      'env for step %s did not contain %s: %s' % (step, k, v),
+      (k, v) not in step_odict[step].env.items(),
+    )
 
 
-def StepEnvEquals(check: magic_check_fn.Checker, step_odict: StepODict,
-                  step: str, env_dict: Mapping[str, str]) -> None:
+def StepEnvEquals(
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  step: str,
+  env_dict: Mapping[str, str],
+) -> None:
   """Assert that a step's env equals the given dict.
 
   Args:
@@ -646,12 +717,15 @@ def StepEnvEquals(check: magic_check_fn.Checker, step_odict: StepODict,
     yield api.test(
         ..., api.post_process(StepEnvEquals, 'step-name', {'FOO': 'BAR'}))
   """
-  check('env for step %s equaled %s' % (step, env_dict),
-        step_odict[step].env == env_dict)
+  check(
+    'env for step %s equaled %s' % (step, env_dict),
+    step_odict[step].env == env_dict,
+  )
 
 
-def HasLog(check: magic_check_fn.Checker, step_odict: StepODict, step: str,
-           log: str) -> None:
+def HasLog(
+  check: magic_check_fn.Checker, step_odict: StepODict, step: str, log: str
+) -> None:
   """Assert that a step contains a specific named log.
 
   Args:
@@ -664,8 +738,9 @@ def HasLog(check: magic_check_fn.Checker, step_odict: StepODict, step: str,
   check(log in step_odict[step].logs)
 
 
-def DoesNotHaveLog(check: magic_check_fn.Checker, step_odict: StepODict,
-                   step: str, log: str) -> None:
+def DoesNotHaveLog(
+  check: magic_check_fn.Checker, step_odict: StepODict, step: str, log: str
+) -> None:
   """Assert that a step does not contain a specific named log.
 
   Args:
@@ -679,8 +754,13 @@ def DoesNotHaveLog(check: magic_check_fn.Checker, step_odict: StepODict,
   check(log not in step_odict[step].logs)
 
 
-def LogEquals(check: magic_check_fn.Checker, step_odict: StepODict, step: str,
-              log: str, expected: str) -> None:
+def LogEquals(
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  step: str,
+  log: str,
+  expected: str,
+) -> None:
   """Assert that a step's log is equal to a given string.
 
   Args:
@@ -696,8 +776,13 @@ def LogEquals(check: magic_check_fn.Checker, step_odict: StepODict, step: str,
   check(step_odict[step].logs[log] == expected)
 
 
-def LogContains(check: magic_check_fn.Checker, step_odict: StepODict, step: str,
-                log: str, expected_substrs: Sequence[str]) -> None:
+def LogContains(
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  step: str,
+  log: str,
+  expected_substrs: Sequence[str],
+) -> None:
   """Assert that a step's log contains given substrings.
 
   Args:
@@ -711,15 +796,20 @@ def LogContains(check: magic_check_fn.Checker, step_odict: StepODict, step: str,
                    api.post_process(LogEquals, 'step-name', 'log-name',
                                     ['substr1', 'substr2']))
   """
-  assert not isinstance(expected_substrs, basestring), \
-      'expected_substrs must be an iterable of strings and must not be a string'
+  assert not isinstance(expected_substrs, basestring), (
+    'expected_substrs must be an iterable of strings and must not be a string'
+  )
   for expected in expected_substrs:
     check(expected in step_odict[step].logs[log])
 
 
-def LogDoesNotContain(check: magic_check_fn.Checker, step_odict: StepODict,
-                      step: str, log: str,
-                      unexpected_substrs: Sequence[str]) -> None:
+def LogDoesNotContain(
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  step: str,
+  log: str,
+  unexpected_substrs: Sequence[str],
+) -> None:
   """Assert that a step's log does not contain given substrings.
 
   Args:
@@ -735,14 +825,15 @@ def LogDoesNotContain(check: magic_check_fn.Checker, step_odict: StepODict,
                          ['substr1', 'substr2']))
   """
   assert not isinstance(unexpected_substrs, basestring), (
-      'unexpected_substrs must be an iterable of strings and must not be a '
-      'string')
+    'unexpected_substrs must be an iterable of strings and must not be a string'
+  )
   for unexpected in unexpected_substrs:
     check(unexpected not in step_odict[step].logs[log])
 
 
-def HasLink(check: magic_check_fn.Checker, step_odict: StepODict, step: str,
-            link: str) -> None:
+def HasLink(
+  check: magic_check_fn.Checker, step_odict: StepODict, step: str, link: str
+) -> None:
   """Check that the step has a link with the given name.
 
   Args:
@@ -757,8 +848,9 @@ def HasLink(check: magic_check_fn.Checker, step_odict: StepODict, step: str,
   check(link in step_odict[step].links)
 
 
-def DoesNotHaveLink(check: magic_check_fn.Checker, step_odict: StepODict,
-                    step: str, link: str) -> None:
+def DoesNotHaveLink(
+  check: magic_check_fn.Checker, step_odict: StepODict, step: str, link: str
+) -> None:
   """Check that the step does not have a link with the given name.
 
   Args:
@@ -773,8 +865,12 @@ def DoesNotHaveLink(check: magic_check_fn.Checker, step_odict: StepODict,
   check(link not in step_odict[step].links)
 
 
-def HasLinkRE(check: magic_check_fn.Checker, step_odict: StepODict, step: str,
-              link: re.Pattern | str) -> None:
+def HasLinkRE(
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  step: str,
+  link: re.Pattern | str,
+) -> None:
   """Check that the step has a link with the given name.
 
   Args:
@@ -789,8 +885,12 @@ def HasLinkRE(check: magic_check_fn.Checker, step_odict: StepODict, step: str,
   check(any(_fullmatch(link, x) for x in step_odict[step].links))
 
 
-def DoesNotHaveLinkRE(check: magic_check_fn.Checker, step_odict: StepODict,
-                      step: str, link: re.Pattern | str) -> None:
+def DoesNotHaveLinkRE(
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  step: str,
+  link: re.Pattern | str,
+) -> None:
   """Check that the step link does not have a matching link name.
 
   Args:
@@ -805,8 +905,13 @@ def DoesNotHaveLinkRE(check: magic_check_fn.Checker, step_odict: StepODict,
   check(not any(_fullmatch(link, x) for x in step_odict[step].links))
 
 
-def LinkEquals(check: magic_check_fn.Checker, step_odict: StepODict, step: str,
-               link: str, expected: str) -> None:
+def LinkEquals(
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  step: str,
+  link: str,
+  expected: str,
+) -> None:
   """Check that the step link has the given value.
 
   Args:
@@ -830,8 +935,13 @@ def LinkEquals(check: magic_check_fn.Checker, step_odict: StepODict, step: str,
   check(step_odict[step].links[link] == expected)
 
 
-def LinkEqualsRE(check: magic_check_fn.Checker, step_odict: StepODict,
-                 step: str, link: str, expected: str | re.Pattern) -> None:
+def LinkEqualsRE(
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  step: str,
+  link: str,
+  expected: str | re.Pattern,
+) -> None:
   """Check that the step link has a matching value.
 
   Args:
@@ -866,8 +976,9 @@ def GetBuildProperties(step_odict: StepODict) -> dict[str, Any]:
   return build_properties
 
 
-def PropertyEquals(check: magic_check_fn.Checker, step_odict: StepODict,
-                   key: str, value: Any) -> None:
+def PropertyEquals(
+  check: magic_check_fn.Checker, step_odict: StepODict, key: str, value: Any
+) -> None:
   """Assert that a recipe's output property `key` equals `value`.
 
   Args:
@@ -886,10 +997,10 @@ def PropertyEquals(check: magic_check_fn.Checker, step_odict: StepODict,
 
 
 def PropertyMatchesRE(
-    check: magic_check_fn.Checker,
-    step_odict: StepODict,
-    key: str,
-    pattern: str | re.Pattern,
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  key: str,
+  pattern: str | re.Pattern,
 ) -> None:
   """Assert that a recipe's output property `key` value matches `pattern`.
 
@@ -911,10 +1022,10 @@ def PropertyMatchesRE(
 
 
 def PropertyMatchesCallable(
-    check: magic_check_fn.Checker,
-    step_odict: StepODict,
-    key: str,
-    matcher: Callable[[magic_check_fn.Checker, Any], bool],
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  key: str,
+  matcher: Callable[[magic_check_fn.Checker, Any], bool],
 ) -> None:
   """Assert that a recipe's output property `key` meets conditions of `matcher`.
 
@@ -938,8 +1049,9 @@ def PropertyMatchesCallable(
     check(matcher(check, build_properties[key]))
 
 
-def PropertiesContain(check: magic_check_fn.Checker, step_odict: StepODict,
-                      key: str) -> None:
+def PropertiesContain(
+  check: magic_check_fn.Checker, step_odict: StepODict, key: str
+) -> None:
   """Assert that a recipe's output properties contain `key`.
 
   Args:
@@ -952,8 +1064,9 @@ def PropertiesContain(check: magic_check_fn.Checker, step_odict: StepODict,
   check(key in build_properties)
 
 
-def PropertiesDoNotContain(check: magic_check_fn.Checker, step_odict: StepODict,
-                           key: str) -> None:
+def PropertiesDoNotContain(
+  check: magic_check_fn.Checker, step_odict: StepODict, key: str
+) -> None:
   """Assert that a recipe's output properties do not contain `key`.
 
   Args:
@@ -968,10 +1081,10 @@ def PropertiesDoNotContain(check: magic_check_fn.Checker, step_odict: StepODict,
 
 
 def NumTagsEquals(
-    check: magic_check_fn.Checker,
-    step_odict: StepODict,
-    step_name: str,
-    count: int,
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  step_name: str,
+  count: int,
 ) -> None:
   """Asserts that the given step has count tags.
 
@@ -988,10 +1101,10 @@ def NumTagsEquals(
 
 
 def HasTag(
-    check: magic_check_fn.Checker,
-    step_odict: StepODict,
-    step_name: str,
-    *tag: str,
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  step_name: str,
+  *tag: str,
 ) -> None:
   """Asserts that tags with the given names are attached to the given step.
 
@@ -1009,10 +1122,10 @@ def HasTag(
 
 
 def LacksTag(
-    check: magic_check_fn.Checker,
-    step_odict: StepODict,
-    step_name: str,
-    *tag: str,
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  step_name: str,
+  *tag: str,
 ) -> None:
   """Asserts that tags with the given names are not attached to the given step.
 
@@ -1030,11 +1143,11 @@ def LacksTag(
 
 
 def TagEquals(
-    check: magic_check_fn.Checker,
-    step_odict: StepODict,
-    step_name: str,
-    tag: str,
-    value: str,
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  step_name: str,
+  tag: str,
+  value: str,
 ) -> None:
   """Asserts that a tag on the given step has the given value.
 
@@ -1053,11 +1166,11 @@ def TagEquals(
 
 
 def TagMatchesRE(
-    check: magic_check_fn.Checker,
-    step_odict: StepODict,
-    step_name: str,
-    tag: str,
-    pattern: str | re.Pattern,
+  check: magic_check_fn.Checker,
+  step_odict: StepODict,
+  step_name: str,
+  tag: str,
+  pattern: str | re.Pattern,
 ) -> None:
   """Asserts that a tag on the given step matches the pattern.
 
@@ -1081,11 +1194,13 @@ def StatusSuccess(check: magic_check_fn.Checker, step_odict: StepODict) -> None:
   check('recipe succeeded (found failure instead)', failure is None)
 
 
-def StatusAnyFailure(check: magic_check_fn.Checker,
-                     step_odict: StepODict) -> None:
+def StatusAnyFailure(
+  check: magic_check_fn.Checker, step_odict: StepODict
+) -> None:
   """Assert that the recipe failed."""
-  check('recipe failed (found success instead)',
-        'failure' in step_odict['$result'])
+  check(
+    'recipe failed (found success instead)', 'failure' in step_odict['$result']
+  )
 
 
 def StatusFailure(check: magic_check_fn.Checker, step_odict: StepODict) -> None:
@@ -1093,23 +1208,30 @@ def StatusFailure(check: magic_check_fn.Checker, step_odict: StepODict) -> None:
   result = step_odict['$result']
   if not check('recipe failed (found success instead)', 'failure' in result):
     return
-  check('expected failure but recipe had infra failure',
-        'failure' in result['failure'])
+  check(
+    'expected failure but recipe had infra failure',
+    'failure' in result['failure'],
+  )
 
 
-def StatusException(check: magic_check_fn.Checker,
-                    step_odict: StepODict) -> None:
+def StatusException(
+  check: magic_check_fn.Checker, step_odict: StepODict
+) -> None:
   """Assert that the recipe had an infra failure."""
   result = step_odict['$result']
-  if not check('recipe had infra failure (found success instead)',
-               'failure' in result):
+  if not check(
+    'recipe had infra failure (found success instead)', 'failure' in result
+  ):
     return
-  check('recipe had infra failure (found non-infra failure instead)',
-        'failure' not in result['failure'])
+  check(
+    'recipe had infra failure (found non-infra failure instead)',
+    'failure' not in result['failure'],
+  )
 
 
-def SummaryMarkdown(check: magic_check_fn.Checker, step_odict: StepODict,
-                    summary: str) -> None:
+def SummaryMarkdown(
+  check: magic_check_fn.Checker, step_odict: StepODict, summary: str
+) -> None:
   """Assert that recipe output summary is the same as the given summary.
 
   Args:
@@ -1119,17 +1241,21 @@ def SummaryMarkdown(check: magic_check_fn.Checker, step_odict: StepODict,
     yield api.test(..., api.post_process(SummaryMarkdown, 'summary'))
   """
   result = step_odict['$result']
-  actual_summary = result.get(
-      'failure', {}).get('humanReason') or result.get('summaryMarkdown')
+  actual_summary = result.get('failure', {}).get('humanReason') or result.get(
+    'summaryMarkdown'
+  )
   if not check('recipe doesn\'t output any summary', actual_summary):
     return
   check(
-      'expected recipe output summary %r (found summary %r instead)' %
-      (summary, actual_summary), summary == actual_summary)
+    'expected recipe output summary %r (found summary %r instead)'
+    % (summary, actual_summary),
+    summary == actual_summary,
+  )
 
 
-def SummaryMarkdownRE(check: magic_check_fn.Checker, step_odict: StepODict,
-                      summary_regex: str) -> None:
+def SummaryMarkdownRE(
+  check: magic_check_fn.Checker, step_odict: StepODict, summary_regex: str
+) -> None:
   """Assert that recipe output summary matches given regex.
 
   Args:
@@ -1139,17 +1265,20 @@ def SummaryMarkdownRE(check: magic_check_fn.Checker, step_odict: StepODict,
     yield api.test(..., api.post_process(SummaryMarkdownRE, 'summary: .*'))
   """
   result = step_odict['$result']
-  actual_summary = result.get(
-      'failure', {}).get('humanReason') or result.get('summaryMarkdown')
+  actual_summary = result.get('failure', {}).get('humanReason') or result.get(
+    'summaryMarkdown'
+  )
   if not check('recipe doesn\'t output any summary', actual_summary):
     return
   check(
-      'expected recipe output summary matches %r (found summary %r instead)' %
-      (summary_regex, actual_summary), re.search(summary_regex, actual_summary))
+    'expected recipe output summary matches %r (found summary %r instead)'
+    % (summary_regex, actual_summary),
+    re.search(summary_regex, actual_summary),
+  )
 
 
 def DropExpectation(
-    _check: magic_check_fn.Checker, step_odict: StepODict, *prefixes: str
+  _check: magic_check_fn.Checker, step_odict: StepODict, *prefixes: str
 ) -> collections.OrderedDict[str, Any] | dict[Any, Any]:
   """Using this post-process hook will drop expectations for this test.
 
@@ -1179,7 +1308,7 @@ def DropExpectation(
       result_steps[name] = step
       continue
 
-    step_stack = step_stack[0:step.nest_level]
+    step_stack = step_stack[0 : step.nest_level]
     step_stack.append(name)
 
     for prefix in prefixes:

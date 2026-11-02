@@ -25,7 +25,11 @@ from past.builtins import basestring
 
 from recipe_engine import recipe_api, recipe_test_api, step_data, util
 from recipe_engine.config_types import Path
-from recipe_engine.recipe_utils import check_type, check_list_type, check_dict_type
+from recipe_engine.recipe_utils import (
+  check_type,
+  check_list_type,
+  check_dict_type,
+)
 
 CIPD_SERVER_URL = 'https://chrome-infra-packages.appspot.com'
 
@@ -39,6 +43,7 @@ class ParanoidMode(enum.StrEnum):
   Corresponds to the constants from
   https://source.chromium.org/chromium/infra/infra_superproject/+/main:infra/go/src/go.chromium.org/luci/cipd/client/cipd/deployer/paranoia.go
   """
+
   NOT_PARANOID = 'NotParanoid'
   CHECK_PRESENCE = 'CheckPresence'
   CHECK_INTEGRITY = 'CheckIntegrity'
@@ -48,12 +53,12 @@ class PackageDefinition:
   DIR = namedtuple('DIR', ['path', 'exclusions'])
 
   def __init__(
-      self,
-      package_name: str,
-      package_root: Path,
-      install_mode: InstallMode | None = None,
-      preserve_mtime: bool = False,
-      preserve_writable: bool = False,
+    self,
+    package_name: str,
+    package_root: Path,
+    install_mode: InstallMode | None = None,
+    preserve_mtime: bool = False,
+    preserve_writable: bool = False,
   ) -> None:
     """Build a new PackageDefinition.
 
@@ -91,13 +96,14 @@ class PackageDefinition:
       return '.'
     if not self.package_root in path.parents:
       raise ValueError(
-          'path %r is not the package root %r and not a child thereof' %
-          (path, self.package_root))
+        'path %r is not the package root %r and not a child thereof'
+        % (path, self.package_root)
+      )
     # we know that root has the same base and some prefix of path
-    return '/'.join(path.pieces[len(self.package_root.pieces):])
+    return '/'.join(path.pieces[len(self.package_root.pieces) :])
 
   def add_dir(
-      self, dir_path: Path, exclusions: Sequence[str] | None = None
+    self, dir_path: Path, exclusions: Sequence[str] | None = None
   ) -> None:
     """Recursively add a directory to the package.
 
@@ -162,14 +168,14 @@ class PackageDefinition:
   def to_jsonish(self) -> dict:
     """Returns a JSON representation of this PackageDefinition."""
     output = {
-        'package': self.package_name,
-        'root': str(self.package_root),
-        'install_mode': self.install_mode or '',
-        'data': (
-            [{'file': str(f)} for f in self.files]
-            + [{'dir': str(d.path), 'exclude': d.exclusions} for d in self.dirs]
-            + ([{'version_file': self.version_file}] if self.version_file else [])
-        )
+      'package': self.package_name,
+      'root': str(self.package_root),
+      'install_mode': self.install_mode or '',
+      'data': (
+        [{'file': str(f)} for f in self.files]
+        + [{'dir': str(d.path), 'exclude': d.exclusions} for d in self.dirs]
+        + ([{'version_file': self.version_file}] if self.version_file else [])
+      ),
     }
     if self.preserve_mtime:
       output['preserve_mtime'] = self.preserve_mtime
@@ -185,7 +191,9 @@ class EnsureFile:
     self.packages: dict[Path, list[Package]] = defaultdict(list)
     self.paranoid_mode = None
 
-  def add_package(self, name: str, version: str, subdir: str = '') -> EnsureFile:
+  def add_package(
+    self, name: str, version: str, subdir: str = ''
+  ) -> EnsureFile:
     """Add a package to the ensure file.
 
     Args:
@@ -220,11 +228,11 @@ class EnsureFile:
 
 class Metadata:
   def __init__(
-      self,
-      key: str,
-      value: str | None = None,
-      value_from_file: Path | None = None,
-      content_type: str | None = None,
+    self,
+    key: str,
+    value: str | None = None,
+    value_from_file: Path | None = None,
+    content_type: str | None = None,
   ) -> None:
     """Constructs a metadata entry to attach to a package instance.
 
@@ -252,7 +260,8 @@ class Metadata:
       raise ValueError('Either "value" or "value_from_file" should be given')
     if value and value_from_file:  # pragma: no cover
       raise ValueError(
-          'Only one of "value" or "value_from_file" should be given, not both')
+        'Only one of "value" or "value_from_file" should be given, not both'
+      )
     self._key = key
     self._value = value
     self._value_from_file = value_from_file
@@ -294,48 +303,62 @@ class CIPDApi(recipe_api.RecipeApi):
   UnrecognizedArchitecture = UnrecognizedArchitecture
 
   # A CIPD pin.
-  Pin = namedtuple('Pin', [
+  Pin = namedtuple(
+    'Pin',
+    [
       'package',
       'instance_id',
-  ])
+    ],
+  )
 
   # A CIPD ref.
-  Ref = namedtuple('Ref', [
+  Ref = namedtuple(
+    'Ref',
+    [
       'ref',
       'modified_by',
       'modified_ts',
       'instance_id',
-  ])
+    ],
+  )
 
   # A CIPD tag.
-  Tag = namedtuple('Tag', [
+  Tag = namedtuple(
+    'Tag',
+    [
       'tag',
       'registered_by',
       'registered_ts',
-  ])
+    ],
+  )
 
   # A CIPD package description.
-  Description = namedtuple('Description', [
+  Description = namedtuple(
+    'Description',
+    [
       'pin',
       'registered_by',
       'registered_ts',
       'refs',
       'tags',
-  ])
+    ],
+  )
 
   # A CIPD package instance.
-  Instance = namedtuple('Instance', [
+  Instance = namedtuple(
+    'Instance',
+    [
       'pin',
       'registered_by',
       'registered_ts',
       'refs',
-  ])
+    ],
+  )
 
   CompressionLevel = CompressionLevel
   InstallMode = InstallMode
 
   class Error(recipe_api.InfraFailure):
-
     def __init__(self, step_name: str, message: str) -> None:
       reason = 'CIPD(%r) failed with: %s' % (step_name, message)
       super().__init__(reason)
@@ -365,17 +388,18 @@ class CIPDApi(recipe_api.RecipeApi):
     return 'cipd' + ('.bat' if self.m.platform.is_win else '')
 
   def _run(
-      self,
-      name: str,
-      args: Sequence[str | Path | util.Placeholder],
-      step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
+    self,
+    name: str,
+    args: Sequence[str | Path | util.Placeholder],
+    step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
   ) -> step_data.StepData:
     cmd: list[str | Path | util.Placeholder] = (
-        [self.executable] + args + ['-json-output', self.m.json.output()]
+      [self.executable] + args + ['-json-output', self.m.json.output()]
     )
     try:
       return self.m.step(
-          name, cmd, step_test_data=step_test_data, infra_step=True)
+        name, cmd, step_test_data=step_test_data, infra_step=True
+      )
     except self.m.step.StepFailure:
       step_result = self.m.step.active_result
       if step_result.json.output and 'error' in step_result.json.output:
@@ -384,11 +408,11 @@ class CIPDApi(recipe_api.RecipeApi):
         raise
 
   def acl_check(
-      self,
-      pkg_path: str,
-      reader: bool = True,
-      writer: bool = False,
-      owner: bool = False,
+    self,
+    pkg_path: str,
+    reader: bool = True,
+    writer: bool = False,
+    owner: bool = False,
   ) -> bool:
     """Checks whether the caller has a given roles in a package.
 
@@ -408,44 +432,46 @@ class CIPDApi(recipe_api.RecipeApi):
     if owner:
       cmd.append('-owner')
     step_result = self._run(
-        'acl-check %s' % pkg_path,
-        cmd,
-        step_test_data=lambda: self.test_api.example_acl_check(pkg_path))
+      'acl-check %s' % pkg_path,
+      cmd,
+      step_test_data=lambda: self.test_api.example_acl_check(pkg_path),
+    )
     return step_result.json.output['result']
 
   def _build(
-      self,
-      pkg_name: str,
-      pkg_def_file_or_placeholder: Path | util.Placeholder,
-      output_package: Path | str,
-      pkg_vars: Mapping[str, str] | None = None,
-      compression_level: CompressionLevel | None = None,
+    self,
+    pkg_name: str,
+    pkg_def_file_or_placeholder: Path | util.Placeholder,
+    output_package: Path | str,
+    pkg_vars: Mapping[str, str] | None = None,
+    compression_level: CompressionLevel | None = None,
   ) -> Pin:
     cmd: list[str | Path | util.Placeholder] = [
-        'pkg-build',
-        '-pkg-def',
-        pkg_def_file_or_placeholder,
-        '-out',
-        output_package,
-        '-hash-algo',
-        'sha256',
+      'pkg-build',
+      '-pkg-def',
+      pkg_def_file_or_placeholder,
+      '-out',
+      output_package,
+      '-hash-algo',
+      'sha256',
     ]
     cmd.extend(self._metadata_opts(pkg_vars=pkg_vars))
     cmd.extend(self._compression_level_opts(compression_level))
 
     step_result = self._run(
-        'build %s' % pkg_name,
-        cmd,
-        step_test_data=lambda: self.test_api.example_build(pkg_name))
+      'build %s' % pkg_name,
+      cmd,
+      step_test_data=lambda: self.test_api.example_build(pkg_name),
+    )
     result = step_result.json.output['result']
     return self.Pin(**result)
 
   def build_from_yaml(
-      self,
-      pkg_def: Path,
-      output_package: Path,
-      pkg_vars: Mapping[str, str] | None = None,
-      compression_level: CompressionLevel | None = None,
+    self,
+    pkg_def: Path,
+    output_package: Path,
+    pkg_vars: Mapping[str, str] | None = None,
+    compression_level: CompressionLevel | None = None,
   ) -> Pin:
     """Builds a package based on on-disk YAML package definition file.
 
@@ -461,18 +487,18 @@ class CIPDApi(recipe_api.RecipeApi):
     """
     check_type('pkg_def', pkg_def, Path)
     return self._build(
-        self.m.path.basename(pkg_def),
-        pkg_def,
-        output_package,
-        pkg_vars,
-        compression_level,
+      self.m.path.basename(pkg_def),
+      pkg_def,
+      output_package,
+      pkg_vars,
+      compression_level,
     )
 
   def build_from_pkg(
-      self,
-      pkg_def: PackageDefinition,
-      output_package: Path,
-      compression_level: CompressionLevel | None = None,
+    self,
+    pkg_def: PackageDefinition,
+    output_package: Path,
+    compression_level: CompressionLevel | None = None,
   ) -> Pin:
     """Builds a package based on a PackageDefinition object.
 
@@ -486,21 +512,21 @@ class CIPDApi(recipe_api.RecipeApi):
     """
     check_type('pkg_def', pkg_def, PackageDefinition)
     return self._build(
-        pkg_def.package_name,
-        self.m.json.input(pkg_def.to_jsonish()),
-        output_package,
-        compression_level=compression_level,
+      pkg_def.package_name,
+      self.m.json.input(pkg_def.to_jsonish()),
+      output_package,
+      compression_level=compression_level,
     )
 
   def build(
-      self,
-      input_dir: Path,
-      output_package: Path,
-      package_name: str,
-      compression_level: CompressionLevel | None = None,
-      install_mode: InstallMode | None = None,
-      preserve_mtime: bool = False,
-      preserve_writable: bool = False,
+    self,
+    input_dir: Path,
+    output_package: Path,
+    package_name: str,
+    compression_level: CompressionLevel | None = None,
+    install_mode: InstallMode | None = None,
+    preserve_mtime: bool = False,
+    preserve_writable: bool = False,
   ) -> Pin:
     """Builds, but does not upload, a cipd package from a directory.
 
@@ -522,15 +548,15 @@ class CIPDApi(recipe_api.RecipeApi):
     assert not install_mode or install_mode in ['copy', 'symlink']
 
     cmd: list[str | Path | util.Placeholder] = [
-        'pkg-build',
-        '-in',
-        input_dir,
-        '-name',
-        package_name,
-        '-out',
-        output_package,
-        '-hash-algo',
-        'sha256',
+      'pkg-build',
+      '-in',
+      input_dir,
+      '-name',
+      package_name,
+      '-out',
+      output_package,
+      '-hash-algo',
+      'sha256',
     ]
     cmd.extend(self._compression_level_opts(compression_level))
     if install_mode:
@@ -541,19 +567,20 @@ class CIPDApi(recipe_api.RecipeApi):
       cmd.append('-preserve-writable')
 
     step_result = self._run(
-        'build %s' % self.m.path.basename(package_name),
-        cmd,
-        step_test_data=lambda: self.test_api.example_build(package_name))
+      'build %s' % self.m.path.basename(package_name),
+      cmd,
+      step_test_data=lambda: self.test_api.example_build(package_name),
+    )
     result = step_result.json.output['result']
     return self.Pin(**result)
 
   def _metadata_opts(
-      self,
-      refs: Sequence[str] | None = None,
-      tags: Mapping[str, str] | None = None,
-      metadata: Sequence[Metadata] | None = None,
-      pkg_vars: Mapping[str, str] | None = None,
-      add_build_id_metadata: bool = False,
+    self,
+    refs: Sequence[str] | None = None,
+    tags: Mapping[str, str] | None = None,
+    metadata: Sequence[Metadata] | None = None,
+    pkg_vars: Mapping[str, str] | None = None,
+    add_build_id_metadata: bool = False,
   ) -> list[str]:
     """Computes a list of -ref, -tag, -metadata and -pkg-var CLI flags."""
     refs = [] if refs is None else refs
@@ -588,20 +615,22 @@ class CIPDApi(recipe_api.RecipeApi):
     check_type('verification_timeout', verification_timeout, basestring)
     if not verification_timeout.endswith(('s', 'm', 'h')):  # pragma: no cover
       raise ValueError(
-          'verification_timeout must end with s, m or h, got %r' %
-          verification_timeout)
+        'verification_timeout must end with s, m or h, got %r'
+        % verification_timeout
+      )
     return ['-verification-timeout', verification_timeout]
 
   @staticmethod
   def _compression_level_opts(
-      compression_level: CompressionLevel | None,
+    compression_level: CompressionLevel | None,
   ) -> list[str]:
     if compression_level is None:
       return []
     check_type('compression_level', compression_level, int)
     if compression_level < 0 or compression_level > 9:  # pragma: no cover
       raise ValueError(
-          'compression_level must be >=0 and <=9, got %d' % compression_level)
+        'compression_level must be >=0 and <=9, got %d' % compression_level
+      )
     return ['-compression-level', str(compression_level)]
 
   @staticmethod
@@ -612,14 +641,14 @@ class CIPDApi(recipe_api.RecipeApi):
     return ['-attestation', attestation]
 
   def register(
-      self,
-      package_name: str,
-      package_path: Path,
-      refs: Sequence[str] | None = None,
-      tags: Mapping[str, str] | None = None,
-      metadata: Sequence[Metadata] | None = None,
-      verification_timeout: str | None = None,
-      attestation: Path | None = None,
+    self,
+    package_name: str,
+    package_path: Path,
+    refs: Sequence[str] | None = None,
+    tags: Mapping[str, str] | None = None,
+    metadata: Sequence[Metadata] | None = None,
+    verification_timeout: str | None = None,
+    attestation: Path | None = None,
   ) -> Pin:
     """Uploads and registers package instance in the package repository.
 
@@ -639,50 +668,59 @@ class CIPDApi(recipe_api.RecipeApi):
       The CIPDApi.Pin instance.
     """
     cmd: list[str | Path | util.Placeholder] = ['pkg-register', package_path]
-    cmd.extend(self._metadata_opts(refs, tags, metadata, add_build_id_metadata=True))
+    cmd.extend(
+      self._metadata_opts(refs, tags, metadata, add_build_id_metadata=True)
+    )
     cmd.extend(self._verification_timeout_opts(verification_timeout))
     cmd.extend(self._attestation_opts(attestation))
 
     step_result = self._run(
-        'register %s' % package_name,
-        cmd,
-        step_test_data=lambda: self.test_api.example_register(package_name))
+      'register %s' % package_name,
+      cmd,
+      step_test_data=lambda: self.test_api.example_register(package_name),
+    )
     pin = self.Pin(**step_result.json.output['result'])
     instance_link = self.make_link(pin.package, pin.instance_id)
     step_result.presentation.links[pin.package] = instance_link
     return pin
 
   def _create(
-      self,
-      pkg_name: str,
-      pkg_def_file_or_placeholder: Path | util.Placeholder,
-      refs: Sequence[str] | None = None,
-      tags: Mapping[str, str] | None = None,
-      metadata: Sequence[Metadata] | None = None,
-      pkg_vars: Mapping[str, str] | None = None,
-      compression_level: CompressionLevel | None = None,
-      verification_timeout: str | None = None,
-      attestation: Path | None = None,
+    self,
+    pkg_name: str,
+    pkg_def_file_or_placeholder: Path | util.Placeholder,
+    refs: Sequence[str] | None = None,
+    tags: Mapping[str, str] | None = None,
+    metadata: Sequence[Metadata] | None = None,
+    pkg_vars: Mapping[str, str] | None = None,
+    compression_level: CompressionLevel | None = None,
+    verification_timeout: str | None = None,
+    attestation: Path | None = None,
   ) -> Pin:
     cmd: list[str | Path | util.Placeholder] = [
-        'create',
-        '-pkg-def',
-        pkg_def_file_or_placeholder,
-        '-hash-algo',
-        'sha256',
+      'create',
+      '-pkg-def',
+      pkg_def_file_or_placeholder,
+      '-hash-algo',
+      'sha256',
     ]
-    cmd.extend(self._metadata_opts(refs, tags, metadata, pkg_vars,
-                                   add_build_id_metadata=True))
+    cmd.extend(
+      self._metadata_opts(
+        refs, tags, metadata, pkg_vars, add_build_id_metadata=True
+      )
+    )
     cmd.extend(self._compression_level_opts(compression_level))
     cmd.extend(self._verification_timeout_opts(verification_timeout))
     cmd.extend(self._attestation_opts(attestation))
 
     step_result = self._run(
-        'create %s' % pkg_name,
-        cmd,
-        step_test_data=lambda: self.test_api.m.json.output({
-            'result': self.test_api.make_pin(pkg_name),
-        }))
+      'create %s' % pkg_name,
+      cmd,
+      step_test_data=lambda: self.test_api.m.json.output(
+        {
+          'result': self.test_api.make_pin(pkg_name),
+        }
+      ),
+    )
     self.add_instance_link(step_result)
     result = step_result.json.output['result']
     return self.Pin(**result)
@@ -694,18 +732,19 @@ class CIPDApi(recipe_api.RecipeApi):
   def add_instance_link(self, step_result: step_data.StepData) -> None:
     result = step_result.json.output['result']
     step_result.presentation.links[result['instance_id']] = self.make_link(
-        package=result['package'], version=result['instance_id'])
+      package=result['package'], version=result['instance_id']
+    )
 
   def create_from_yaml(
-      self,
-      pkg_def: Path,
-      refs: Sequence[str] | None = None,
-      tags: Mapping[str, str] | None = None,
-      metadata: Sequence[Metadata] | None = None,
-      pkg_vars: Mapping[str, str] | None = None,
-      compression_level: CompressionLevel | None = None,
-      verification_timeout: str | None = None,
-      attestation: Path | None = None,
+    self,
+    pkg_def: Path,
+    refs: Sequence[str] | None = None,
+    tags: Mapping[str, str] | None = None,
+    metadata: Sequence[Metadata] | None = None,
+    pkg_vars: Mapping[str, str] | None = None,
+    compression_level: CompressionLevel | None = None,
+    verification_timeout: str | None = None,
+    attestation: Path | None = None,
   ) -> Pin:
     """Builds and uploads a package based on on-disk YAML package definition
     file.
@@ -730,23 +769,26 @@ class CIPDApi(recipe_api.RecipeApi):
     """
     check_type('pkg_def', pkg_def, Path)
     return self._create(
-        self.m.path.basename(pkg_def),
-        pkg_def,
-        refs, tags, metadata,
-        pkg_vars,
-        compression_level,
-        verification_timeout,
-        attestation)
+      self.m.path.basename(pkg_def),
+      pkg_def,
+      refs,
+      tags,
+      metadata,
+      pkg_vars,
+      compression_level,
+      verification_timeout,
+      attestation,
+    )
 
   def create_from_pkg(
-      self,
-      pkg_def: PackageDefinition,
-      refs: Sequence[str] | None = None,
-      tags: Mapping[str, str] | None = None,
-      metadata: Sequence[Metadata] | None = None,
-      compression_level: CompressionLevel | None = None,
-      verification_timeout: str | None = None,
-      attestation: Path | None = None,
+    self,
+    pkg_def: PackageDefinition,
+    refs: Sequence[str] | None = None,
+    tags: Mapping[str, str] | None = None,
+    metadata: Sequence[Metadata] | None = None,
+    compression_level: CompressionLevel | None = None,
+    verification_timeout: str | None = None,
+    attestation: Path | None = None,
   ) -> Pin:
     """Builds and uploads a package based on a PackageDefinition object.
 
@@ -768,19 +810,22 @@ class CIPDApi(recipe_api.RecipeApi):
     """
     check_type('pkg_def', pkg_def, PackageDefinition)
     return self._create(
-        pkg_def.package_name,
-        self.m.json.input(pkg_def.to_jsonish()),
-        refs, tags, metadata,
-        None,
-        compression_level,
-        verification_timeout,
-        attestation)
+      pkg_def.package_name,
+      self.m.json.input(pkg_def.to_jsonish()),
+      refs,
+      tags,
+      metadata,
+      None,
+      compression_level,
+      verification_timeout,
+      attestation,
+    )
 
   def ensure(
-      self,
-      root: Path,
-      ensure_file: EnsureFile | Path,
-      name: str = 'ensure_installed',
+    self,
+    root: Path,
+    ensure_file: EnsureFile | Path,
+    name: str = 'ensure_installed',
   ) -> Pin:
     """Ensures that packages are installed in a given root dir.
 
@@ -804,29 +849,29 @@ class CIPDApi(recipe_api.RecipeApi):
       ensure_file_path = ensure_file
 
     cmd: list[str | Path | util.Placeholder] = [
-        'ensure',
-        '-root',
-        root,
-        '-ensure-file',
-        ensure_file_path,
+      'ensure',
+      '-root',
+      root,
+      '-ensure-file',
+      ensure_file_path,
     ]
     if self.max_threads is not None:
       cmd.extend(('-max-threads', str(self.max_threads)))
 
     step_result = self._run(
-        name,
-        cmd,
-        step_test_data=step_test_data,
+      name,
+      cmd,
+      step_test_data=step_test_data,
     )
     return {
-        subdir: [self.Pin(**pin) for pin in pins]
-        for subdir, pins in step_result.json.output['result'].items()
+      subdir: [self.Pin(**pin) for pin in pins]
+      for subdir, pins in step_result.json.output['result'].items()
     }
 
   def ensure_file_resolve(
-      self,
-      ensure_file: EnsureFile | Path,
-      name: str = 'cipd ensure-file-resolve',
+    self,
+    ensure_file: EnsureFile | Path,
+    name: str = 'cipd ensure-file-resolve',
   ) -> step_data.StepData:
     """Resolves versions of all packages for all verified platforms in an
     ensure file.
@@ -838,30 +883,32 @@ class CIPDApi(recipe_api.RecipeApi):
 
     if isinstance(ensure_file, EnsureFile):
       step_test_data = lambda: self.test_api.example_ensure_file_resolve(
-          ensure_file)
+        ensure_file
+      )
       ensure_file_path = self.m.raw_io.input(ensure_file.render())
     else:
       step_test_data = lambda: self.test_api.example_ensure_file_resolve(
-          self.EnsureFile())
+        self.EnsureFile()
+      )
       ensure_file_path = ensure_file
 
     cmd: list[str | Path | util.Placeholder] = [
-        'ensure-file-resolve',
-        '-ensure-file',
-        ensure_file_path,
+      'ensure-file-resolve',
+      '-ensure-file',
+      ensure_file_path,
     ]
 
     return self._run(
-        name,
-        cmd,
-        step_test_data=step_test_data,
+      name,
+      cmd,
+      step_test_data=step_test_data,
     )
 
   def set_tag(
-      self,
-      package_name: str,
-      version: str,
-      tags: Mapping[str, str],
+    self,
+    package_name: str,
+    version: str,
+    tags: Mapping[str, str],
   ) -> Pin:
     """Tags package of a specific version.
 
@@ -874,26 +921,28 @@ class CIPDApi(recipe_api.RecipeApi):
     Returns the CIPDApi.Pin instance.
     """
     cmd: list[str | Path | util.Placeholder] = [
-        'set-tag',
-        package_name,
-        '-version',
-        version,
+      'set-tag',
+      package_name,
+      '-version',
+      version,
     ]
     cmd.extend(self._metadata_opts(tags=tags))
 
     step_result = self._run(
-        'cipd set-tag %s' % package_name,
-        cmd,
-        step_test_data=lambda: self.test_api.example_set_tag(
-            package_name, version))
+      'cipd set-tag %s' % package_name,
+      cmd,
+      step_test_data=lambda: self.test_api.example_set_tag(
+        package_name, version
+      ),
+    )
     result = step_result.json.output['result']
     return self.Pin(**result[0]['pin'])
 
   def set_metadata(
-      self,
-      package_name: str,
-      version: str,
-      metadata: Sequence[Metadata],
+    self,
+    package_name: str,
+    version: str,
+    metadata: Sequence[Metadata],
   ) -> Pin:
     """Attaches metadata to a package instance.
 
@@ -905,26 +954,28 @@ class CIPDApi(recipe_api.RecipeApi):
     Returns the CIPDApi.Pin instance.
     """
     cmd: list[str | Path | util.Placeholder] = [
-        'set-metadata',
-        package_name,
-        '-version',
-        version,
+      'set-metadata',
+      package_name,
+      '-version',
+      version,
     ]
     cmd.extend(self._metadata_opts(metadata=metadata))
 
     step_result = self._run(
-        'cipd set-metadata %s' % package_name,
-        cmd,
-        step_test_data=lambda: self.test_api.example_set_metadata(
-            package_name, version))
+      'cipd set-metadata %s' % package_name,
+      cmd,
+      step_test_data=lambda: self.test_api.example_set_metadata(
+        package_name, version
+      ),
+    )
     result = step_result.json.output['result']
     return self.Pin(**result[0]['pin'])
 
   def set_ref(
-      self,
-      package_name: str,
-      version: str,
-      refs: Sequence[str],
+    self,
+    package_name: str,
+    version: str,
+    refs: Sequence[str],
   ) -> Pin:
     """Moves a ref to point to a given version.
 
@@ -936,26 +987,28 @@ class CIPDApi(recipe_api.RecipeApi):
     Returns the CIPDApi.Pin instance.
     """
     cmd: list[str | Path | util.Placeholder] = [
-        'set-ref',
-        package_name,
-        '-version',
-        version,
+      'set-ref',
+      package_name,
+      '-version',
+      version,
     ]
     cmd.extend(self._metadata_opts(refs=refs))
 
     step_result = self._run(
-        'cipd set-ref %s' % package_name,
-        cmd,
-        step_test_data=lambda: self.test_api.example_set_ref(
-            package_name, version))
+      'cipd set-ref %s' % package_name,
+      cmd,
+      step_test_data=lambda: self.test_api.example_set_ref(
+        package_name, version
+      ),
+    )
     result = step_result.json.output['result']
     return self.Pin(**result[''][0]['pin'])
 
   def search(
-      self,
-      package_name: str,
-      tag: str,
-      test_instances: Sequence[str] | int | None = None,
+    self,
+    package_name: str,
+    tag: str,
+    test_instances: Sequence[str] | int | None = None,
   ) -> list[Pin]:
     """Searches for package instances by tag, optionally constrained by package
     name.
@@ -974,25 +1027,26 @@ class CIPDApi(recipe_api.RecipeApi):
     assert ':' in tag, 'tag must be in a form "k:v"'
 
     cmd: list[str | Path | util.Placeholder] = [
-        'search',
-        package_name,
-        '-tag',
-        tag,
+      'search',
+      package_name,
+      '-tag',
+      tag,
     ]
 
     step_result = self._run(
-        'cipd search %s %s' % (package_name, tag),
-        cmd,
-        step_test_data=lambda: self.test_api.example_search(
-            package_name, test_instances)
+      'cipd search %s %s' % (package_name, tag),
+      cmd,
+      step_test_data=lambda: self.test_api.example_search(
+        package_name, test_instances
+      ),
     )
     return [self.Pin(**pin) for pin in step_result.json.output['result'] or []]
 
   def resolve(
-      self,
-      package: str,
-      version: str,
-      test_data_instance_id: str | None = None,
+    self,
+    package: str,
+    version: str,
+    test_data_instance_id: str | None = None,
   ) -> list[Pin]:
     """Returns concrete package instance ID(s) given a version.
 
@@ -1006,30 +1060,34 @@ class CIPDApi(recipe_api.RecipeApi):
     """
     check_type('package', package, basestring)
     check_type('version', version, basestring)
-    check_type('test_data_instance_id', test_data_instance_id,
-               (type(None), basestring))
+    check_type(
+      'test_data_instance_id', test_data_instance_id, (type(None), basestring)
+    )
 
     cmd: list[str | Path | util.Placeholder] = [
-        'resolve',
-        package,
-        '-version',
-        version,
+      'resolve',
+      package,
+      '-version',
+      version,
     ]
 
     step_result = self._run(
-        'cipd resolve %s' % package,
-        cmd,
-        step_test_data=lambda: self.test_api.example_resolve(
-            package, test_data_instance_id or version))
+      'cipd resolve %s' % package,
+      cmd,
+      step_test_data=lambda: self.test_api.example_resolve(
+        package, test_data_instance_id or version
+      ),
+    )
     result = step_result.json.output.get('result') or {}
     return [self.Pin(**p['pin']) for p in result.get('', []) if p.get('pin')]
 
-
-  def describe(self,
-               package_name: str,
-               version: str,
-               test_data_refs: Sequence[str] | None = None,
-               test_data_tags: Sequence[str] | None = None) -> Description:
+  def describe(
+    self,
+    package_name: str,
+    version: str,
+    test_data_refs: Sequence[str] | None = None,
+    test_data_tags: Sequence[str] | None = None,
+  ) -> Description:
     """Returns information about a package instance given its version:
     who uploaded the instance and when and a list of attached tags.
 
@@ -1044,26 +1102,28 @@ class CIPDApi(recipe_api.RecipeApi):
     Returns the CIPDApi.Description instance describing the package.
     """
     step_result = self._run(
-        'cipd describe %s' % package_name,
-        ['describe', package_name, '-version', version],
-        step_test_data=lambda: self.test_api.example_describe(
-            package_name,
-            version,
-            test_data_refs=test_data_refs,
-            test_data_tags=test_data_tags))
+      'cipd describe %s' % package_name,
+      ['describe', package_name, '-version', version],
+      step_test_data=lambda: self.test_api.example_describe(
+        package_name,
+        version,
+        test_data_refs=test_data_refs,
+        test_data_tags=test_data_tags,
+      ),
+    )
     result = step_result.json.output['result']
     return self.Description(
-        pin=self.Pin(**result['pin']),
-        registered_by=result['registered_by'],
-        registered_ts=result['registered_ts'],
-        refs=[self.Ref(**ref) for ref in result.get('refs', ())],
-        tags=[self.Tag(**tag) for tag in result.get('tags', ())],
+      pin=self.Pin(**result['pin']),
+      registered_by=result['registered_by'],
+      registered_ts=result['registered_ts'],
+      refs=[self.Ref(**ref) for ref in result.get('refs', ())],
+      tags=[self.Tag(**tag) for tag in result.get('tags', ())],
     )
 
   def instances(
-      self,
-      package_name: str,
-      limit: int | None = None,
+    self,
+    package_name: str,
+    limit: int | None = None,
   ) -> list[Instance]:
     """Lists instances of a package, most recently uploaded first.
 
@@ -1077,33 +1137,37 @@ class CIPDApi(recipe_api.RecipeApi):
     check_type('package_name', package_name, basestring)
     check_type('limit', limit, (type(None), int))
     cmd: list[str | Path | util.Placeholder] = [
-        'instances',
-        package_name,
+      'instances',
+      package_name,
     ]
     if limit is not None:
       cmd += ['-limit', limit]
 
     step_result = self._run(
-        'cipd instances %s' % package_name, cmd,
-        step_test_data=lambda: self.test_api.example_instances(
-            package_name,
-            limit=limit))
+      'cipd instances %s' % package_name,
+      cmd,
+      step_test_data=lambda: self.test_api.example_instances(
+        package_name, limit=limit
+      ),
+    )
     result = step_result.json.output['result'] or {}
     instances: list[Instance] = []
     for instance in result.get('instances', []):
-      instances.append(self.Instance(
-        pin=self.Pin(**instance['pin']),
-        registered_by=instance['registered_by'],
-        registered_ts=instance['registered_ts'],
-        refs=instance.get('refs'),
-      ))
+      instances.append(
+        self.Instance(
+          pin=self.Pin(**instance['pin']),
+          registered_by=instance['registered_by'],
+          registered_ts=instance['registered_ts'],
+          refs=instance.get('refs'),
+        )
+      )
     return instances
 
   def pkg_fetch(
-      self,
-      destination: Path,
-      package_name: str,
-      version: str,
+    self,
+    destination: Path,
+    package_name: str,
+    version: str,
   ) -> Pin:
     """Downloads the specified package to destination.
 
@@ -1124,13 +1188,17 @@ class CIPDApi(recipe_api.RecipeApi):
     check_type('version', version, basestring)
 
     step_result = self._run(
-        'cipd pkg-fetch %s' % package_name,
-        ['pkg-fetch', package_name, '-version', version, '-out', destination],
-        step_test_data=lambda: self.test_api.example_pkg_fetch(
-            package_name, version))
+      'cipd pkg-fetch %s' % package_name,
+      ['pkg-fetch', package_name, '-version', version, '-out', destination],
+      step_test_data=lambda: self.test_api.example_pkg_fetch(
+        package_name, version
+      ),
+    )
     ret = self.Pin(**step_result.json.output['result'])
-    step_result.presentation.step_text = '%s %s' % (ret.package,
-                                                    ret.instance_id)
+    step_result.presentation.step_text = '%s %s' % (
+      ret.package,
+      ret.instance_id,
+    )
     return ret
 
   def pkg_deploy(self, root: Path, package_file: Path) -> Pin:
@@ -1150,17 +1218,18 @@ class CIPDApi(recipe_api.RecipeApi):
     check_type('package_file', package_file, Path)
 
     step_result = self._run(
-        'cipd pkg-deploy %s' % package_file,
-        ['pkg-deploy', package_file, '-root', root],
-        step_test_data=lambda: self.test_api.example_pkg_deploy(
-            'pkg/name/of/' + package_file.pieces[-1], 'version/of/' +
-            package_file.pieces[-1]))
+      'cipd pkg-deploy %s' % package_file,
+      ['pkg-deploy', package_file, '-root', root],
+      step_test_data=lambda: self.test_api.example_pkg_deploy(
+        'pkg/name/of/' + package_file.pieces[-1],
+        'version/of/' + package_file.pieces[-1],
+      ),
+    )
     return self.Pin(**step_result.json.output['result'])
 
-  def ensure_tool(self,
-                  package: str,
-                  version: str,
-                  executable_path: str | None = None) -> Path:
+  def ensure_tool(
+    self, package: str, version: str, executable_path: str | None = None
+  ) -> Path:
     """Downloads an executable from CIPD.
 
     Given a package named "name/of/some_exe/${platform}" and version
@@ -1196,7 +1265,8 @@ class CIPDApi(recipe_api.RecipeApi):
     # Hashing the version is the easiest way to produce a string with no special
     # characters e.g. removing colons which don't work on Windows.
     package_dir = package_dir.joinpath(
-        hashlib.sha256(version.encode('utf-8')).hexdigest())
+      hashlib.sha256(version.encode('utf-8')).hexdigest()
+    )
     basename = package_parts[-1]
 
     if cache_key not in self._installed_tool_package_futures:
@@ -1205,14 +1275,16 @@ class CIPDApi(recipe_api.RecipeApi):
       def _install_package_thread() -> None:
         with self.m.step.nest(name):
           with self.m.context(infra_steps=True):
-            self.m.file.ensure_directory('ensure package directory',
-                                         package_dir)
+            self.m.file.ensure_directory(
+              'ensure package directory', package_dir
+            )
             self.ensure(
-                package_dir,
-                self.EnsureFile().add_package(package, version))
+              package_dir, self.EnsureFile().add_package(package, version)
+            )
 
       self._installed_tool_package_futures[cache_key] = self.m.futures.spawn(
-          _install_package_thread, __name='recipe_engine/cipd: '+name)
+        _install_package_thread, __name='recipe_engine/cipd: ' + name
+      )
 
     self._installed_tool_package_futures[cache_key].result()
 

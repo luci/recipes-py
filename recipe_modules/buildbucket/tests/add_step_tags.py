@@ -13,8 +13,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    buildbucket,
-    step,
+  buildbucket,
+  step,
 )
 
 
@@ -26,14 +26,14 @@ class DEPS(RecipeScriptApi):
 
 def RunSteps(api: DEPS) -> None:
   step = api.step('hostname', ['echo', api.buildbucket.host])
-  step.presentation.tags[u'k1'] = u'v1'
-  step.presentation.tags[u'k2'] = u'v2'
+  step.presentation.tags['k1'] = 'v1'
+  step.presentation.tags['k2'] = 'v2'
 
 
 def GenTests(api: RecipeTestApi) -> Iterator[recipe_test_api.TestData]:
   def assert_pairs(
-      check: Callable[..., bool],
-      steps: Mapping[str, post_process_inputs.Step],
+    check: Callable[..., bool],
+    steps: Mapping[str, post_process_inputs.Step],
   ) -> None:
     check(steps["hostname"].tags["k1"] == "v1")
     check(steps["hostname"].tags["k2"] == "v2")

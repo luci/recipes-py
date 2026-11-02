@@ -25,6 +25,7 @@ class DEPS(RecipeScriptApi):
 class TEST_DEPS(RecipeTestApi):
   pass
 
+
 def my_function() -> None:  # pragma: no cover
   exceptions = []
   for exc_type in (ValueError, TypeError):
@@ -43,11 +44,13 @@ def RunSteps(api: DEPS) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'basic',
-      api.expect_exception('TypeError'),
-      api.expect_exception('ValueError'),
-      api.post_process(post_process.StatusException),
-      api.post_process(
-          post_process.SummaryMarkdown,
-          "Uncaught Exception: ExceptionGroup('multiple exceptions', "
-          "[ValueError('BAD DOGE'), TypeError('BAD DOGE')])"))
+    'basic',
+    api.expect_exception('TypeError'),
+    api.expect_exception('ValueError'),
+    api.post_process(post_process.StatusException),
+    api.post_process(
+      post_process.SummaryMarkdown,
+      "Uncaught Exception: ExceptionGroup('multiple exceptions', "
+      "[ValueError('BAD DOGE'), TypeError('BAD DOGE')])",
+    ),
+  )

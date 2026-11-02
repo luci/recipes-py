@@ -13,10 +13,10 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    bcid_verifier,
-    properties,
-    step,
+  assertions,
+  bcid_verifier,
+  properties,
+  step,
 )
 
 
@@ -35,54 +35,57 @@ class TEST_DEPS(RecipeTestApi):
 
 def RunSteps(api: DEPS) -> None:
   api.bcid_verifier.verify_provenance(
-      'bcid_policy://default',
-      '/archive_dir/artifact',
-      '/archive_dir/attestation.intoto.jsonl',
-      log_only_mode=api.properties.get('log_only', False))
+    'bcid_policy://default',
+    '/archive_dir/artifact',
+    '/archive_dir/attestation.intoto.jsonl',
+    log_only_mode=api.properties.get('log_only', False),
+  )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'enforce-verify',
-      api.post_check(
-          post_process.MustRun,
-          'install infra/tools/security/bcid_verifier.ensure_installed'),
-      api.post_check(
-          post_process.StepCommandContains,
-          'bcid_verifier: verify provenance',
-          [
-              "-bcid-policy",
-              "bcid_policy://default",
-              "-artifact-path",
-              "/archive_dir/artifact",
-              "-attestation-path",
-              "/archive_dir/attestation.intoto.jsonl",
-              "verification-mode",
-              "VERIFY_FOR_ENFORCEMENT",
-          ],
-      ),
-      api.post_process(post_process.DropExpectation),
+    'enforce-verify',
+    api.post_check(
+      post_process.MustRun,
+      'install infra/tools/security/bcid_verifier.ensure_installed',
+    ),
+    api.post_check(
+      post_process.StepCommandContains,
+      'bcid_verifier: verify provenance',
+      [
+        "-bcid-policy",
+        "bcid_policy://default",
+        "-artifact-path",
+        "/archive_dir/artifact",
+        "-attestation-path",
+        "/archive_dir/attestation.intoto.jsonl",
+        "verification-mode",
+        "VERIFY_FOR_ENFORCEMENT",
+      ],
+    ),
+    api.post_process(post_process.DropExpectation),
   )
 
   yield api.test(
-      'logging-verify',
-      api.properties(log_only=True),
-      api.post_check(
-          post_process.MustRun,
-          'install infra/tools/security/bcid_verifier.ensure_installed'),
-      api.post_check(
-          post_process.StepCommandContains,
-          'bcid_verifier: verify provenance',
-          [
-              "-bcid-policy",
-              "bcid_policy://default",
-              "-artifact-path",
-              "/archive_dir/artifact",
-              "-attestation-path",
-              "/archive_dir/attestation.intoto.jsonl",
-              "verification-mode",
-              "VERIFY_FOR_LOGGING",
-          ],
-      ),
-      api.post_process(post_process.DropExpectation),
+    'logging-verify',
+    api.properties(log_only=True),
+    api.post_check(
+      post_process.MustRun,
+      'install infra/tools/security/bcid_verifier.ensure_installed',
+    ),
+    api.post_check(
+      post_process.StepCommandContains,
+      'bcid_verifier: verify provenance',
+      [
+        "-bcid-policy",
+        "bcid_policy://default",
+        "-artifact-path",
+        "/archive_dir/artifact",
+        "-attestation-path",
+        "/archive_dir/attestation.intoto.jsonl",
+        "verification-mode",
+        "VERIFY_FOR_LOGGING",
+      ],
+    ),
+    api.post_process(post_process.DropExpectation),
   )

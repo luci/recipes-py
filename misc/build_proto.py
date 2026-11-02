@@ -15,8 +15,10 @@ sys.stdin.reconfigure(encoding='utf-8')
 ROOT = os.path.dirname(os.path.dirname(__file__))
 
 sys.path.append(
-    os.path.join(ROOT, '.recipe_deps', '_pb%d' % sys.version_info[0]))
+  os.path.join(ROOT, '.recipe_deps', '_pb%d' % sys.version_info[0])
+)
 from PB.go.chromium.org.luci.buildbucket.proto.build import Build
 
 sys.stdout.buffer.write(
-    jsonpb.Parse(sys.stdin.read(), Build()).SerializeToString())
+  jsonpb.Parse(sys.stdin.read(), Build()).SerializeToString()
+)

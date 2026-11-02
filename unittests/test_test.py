@@ -37,7 +37,8 @@ class Common(test_env.RecipeEngineUnitTest):
   def _run_test(self, *args: str, **kwargs: Any) -> Common.JsonResult:
     should_fail = kwargs.pop('should_fail', False)
     self.assertDictEqual(
-        kwargs, {}, 'got additional unexpected kwargs: {!r}'.format(kwargs))
+      kwargs, {}, 'got additional unexpected kwargs: {!r}'.format(kwargs)
+    )
 
     json_out = self.tempfile()
     full_args = ['test'] + list(args) + ['--json', json_out]
@@ -45,15 +46,17 @@ class Common(test_env.RecipeEngineUnitTest):
     output, retcode = self.main.recipes_py(*full_args)
     expected_retcode = 1 if should_fail else 0
     self.assertEqual(
-        retcode, expected_retcode,
-        (
-          '`recipes.py test {args}` had retcode '
-          '{actual} != {expected}:\n{output}'
-        ).format(
-            args=' '.join(args),
-            actual=retcode,
-            expected=expected_retcode,
-            output=output))
+      retcode,
+      expected_retcode,
+      (
+        '`recipes.py test {args}` had retcode {actual} != {expected}:\n{output}'
+      ).format(
+        args=' '.join(args),
+        actual=retcode,
+        expected=expected_retcode,
+        output=output,
+      ),
+    )
     with open(json_out, 'rb') as json_file:
       try:
         data = None
@@ -87,8 +90,8 @@ class Common(test_env.RecipeEngineUnitTest):
       except Exception as ex:  # pylint: disable=broad-except
         if should_fail != 'crash':
           raise Exception(
-              'failed to decode test json: {!r}\noutput:\n{}'.format(
-                  ex, output))
+            'failed to decode test json: {!r}\noutput:\n{}'.format(ex, output)
+          )
         data = None
       return self.JsonResult(output, data)
 
@@ -103,11 +106,11 @@ class Common(test_env.RecipeEngineUnitTest):
     needs_infra_fail = 12
 
   def _outcome_json(
-      self,
-      per_test: Mapping[str, Iterable[Common.OutcomeType]] | None = None,
-      coverage: float = 100,
-      uncovered_mods: Sequence[str] = (),
-      unused_expects: Sequence[str] = (),
+    self,
+    per_test: Mapping[str, Iterable[Common.OutcomeType]] | None = None,
+    coverage: float = 100,
+    uncovered_mods: Sequence[str] = (),
+    unused_expects: Sequence[str] = (),
   ) -> dict[str, Any]:
     """Generates a JSON dict representing a runner.Outcome message.
 
@@ -167,8 +170,8 @@ class TestList(Common):
       pass
 
     self.assertDictEqual(
-        self._run_test('list').data,
-        {'format': 1, 'tests': ['foo.basic']})
+      self._run_test('list').data, {'format': 1, 'tests': ['foo.basic']}
+    )
 
 
 class TestRun(Common):
@@ -176,18 +179,21 @@ class TestRun(Common):
     with self.main.write_recipe('foo'):
       pass
 
-    self.assertDictEqual(
-        self._run_test('run').data,
-        self._outcome_json())
+    self.assertDictEqual(self._run_test('run').data, self._outcome_json())
 
   def test_expectation_failure_empty(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       del recipe.expectation['basic']
 
     result = self._run_test('run', should_fail=True)
-    self.assertDictEqual(result.data, self._outcome_json(per_test={
-      'foo.basic': [self.OutcomeType.diff],
-    }))
+    self.assertDictEqual(
+      result.data,
+      self._outcome_json(
+        per_test={
+          'foo.basic': [self.OutcomeType.diff],
+        }
+      ),
+    )
 
   def test_expectation_failure_stop(self) -> None:
     """Test the failfast flag '--stop'
@@ -212,25 +218,32 @@ class TestRun(Common):
       ''')
 
     self.assertDictEqual(
-        self._run_test(
-            'run', '--filter', 'foo.second', should_fail=True).data,
-        self._outcome_json(per_test={
+      self._run_test('run', '--filter', 'foo.second', should_fail=True).data,
+      self._outcome_json(
+        per_test={
           'foo.second': [self.OutcomeType.diff],
-        }, coverage=0))
+        },
+        coverage=0,
+      ),
+    )
 
     self.assertDictEqual(
-        self._run_test('run', '--filter', 'foo.basic').data,
-        self._outcome_json(coverage=0))
+      self._run_test('run', '--filter', 'foo.basic').data,
+      self._outcome_json(coverage=0),
+    )
 
   def test_expectation_failure_different(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.RunSteps.write('api.step("test", ["echo", "bar"])')
 
     self.assertDictEqual(
-        self._run_test('run', should_fail=True).data,
-        self._outcome_json(per_test={
+      self._run_test('run', should_fail=True).data,
+      self._outcome_json(
+        per_test={
           'foo.basic': [self.OutcomeType.diff],
-        }))
+        }
+      ),
+    )
 
   def test_expectation_pass(self) -> None:
     with self.main.write_recipe('foo') as recipe:
@@ -240,9 +253,7 @@ class TestRun(Common):
         {'name': '$result'},
       ]
 
-    self.assertDictEqual(
-        self._run_test('run').data,
-        self._outcome_json())
+    self.assertDictEqual(self._run_test('run').data, self._outcome_json())
 
   def test_recipe_not_covered(self) -> None:
     with self.main.write_recipe('foo') as recipe:
@@ -253,9 +264,7 @@ class TestRun(Common):
       ''')
 
     result = self._run_test('run', should_fail=True)
-    self.assertDictEqual(
-        result.data,
-        self._outcome_json(coverage=88.9))
+    self.assertDictEqual(result.data, self._outcome_json(coverage=88.9))
 
   def test_recipe_not_covered_filter(self) -> None:
     with self.main.write_recipe('foo') as recipe:
@@ -265,40 +274,37 @@ class TestRun(Common):
       ''')
 
     self.assertDictEqual(
-        self._run_test('run', '--filter', 'foo.*').data,
-        self._outcome_json(coverage=0))
+      self._run_test('run', '--filter', 'foo.*').data,
+      self._outcome_json(coverage=0),
+    )
 
   def test_recipe_type_checking_imports_covered(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.imports = [
-          'import typing',
-          'from typing import TYPE_CHECKING',
-          'if TYPE_CHECKING:',
-          '  import os',
-          '  from collections.abc import (',
-          '      Sequence,',
-          '  )',
-          'if typing.TYPE_CHECKING:',
-          '  import sys',
+        'import typing',
+        'from typing import TYPE_CHECKING',
+        'if TYPE_CHECKING:',
+        '  import os',
+        '  from collections.abc import (',
+        '      Sequence,',
+        '  )',
+        'if typing.TYPE_CHECKING:',
+        '  import sys',
       ]
 
-    self.assertDictEqual(
-        self._run_test('run').data,
-        self._outcome_json())
+    self.assertDictEqual(self._run_test('run').data, self._outcome_json())
 
   def test_recipe_type_checking_non_import_not_covered(self) -> None:
     with self.main.write_recipe('foo') as recipe:
       recipe.imports = [
-          'from typing import TYPE_CHECKING',
-          'if TYPE_CHECKING:',
-          '  import os',
-          '  a = 1',
+        'from typing import TYPE_CHECKING',
+        'if TYPE_CHECKING:',
+        '  import os',
+        '  a = 1',
       ]
 
     result = self._run_test('run', should_fail=True)
-    self.assertDictEqual(
-        result.data,
-        self._outcome_json(coverage=90.0))
+    self.assertDictEqual(result.data, self._outcome_json(coverage=90.0))
 
   def test_recipe_type_checking_non_global_not_covered(self) -> None:
     with self.main.write_recipe('foo') as recipe:
@@ -309,9 +315,7 @@ class TestRun(Common):
       ''')
 
     result = self._run_test('run', should_fail=True)
-    self.assertDictEqual(
-        result.data,
-        self._outcome_json(coverage=88.9))
+    self.assertDictEqual(result.data, self._outcome_json(coverage=88.9))
 
   def test_check_failure(self) -> None:
     with self.main.write_recipe('foo') as recipe:
@@ -325,19 +329,21 @@ class TestRun(Common):
     result = self._run_test('run', should_fail=True)
     self.assertIn('CHECK(FAIL)', result.text_output)
     self.assertDictEqual(
-        result.data,
-        self._outcome_json(per_test={
+      result.data,
+      self._outcome_json(
+        per_test={
           'foo.basic': [self.OutcomeType.check],
-        }))
+        }
+      ),
+    )
 
-  @mock.patch('recipe_engine.internal.commands.test.'
-              'fail_tracker.FailTracker.recent_fails')
+  @mock.patch(
+    'recipe_engine.internal.commands.test.fail_tracker.FailTracker.recent_fails'
+  )
   def test_check_failure_test_no_longer_exists(
-      self, recent_fails_mock: mock.MagicMock
+    self, recent_fails_mock: mock.MagicMock
   ) -> None:
-    recent_fails_mock.return_value = [
-        'foo.nonexistent'
-    ]
+    recent_fails_mock.return_value = ['foo.nonexistent']
     with self.main.write_recipe('foo') as recipe:
       recipe.GenTests.write('''
         yield api.test('first')
@@ -347,12 +353,14 @@ class TestRun(Common):
 
     result = self._run_test('train', should_fail=False)
     self.assertDictEqual(
-        result.data,
-        self._outcome_json(per_test={
+      result.data,
+      self._outcome_json(
+        per_test={
           'foo.first': [self.OutcomeType.written],
           'foo.second': [self.OutcomeType.written],
           'foo.third': [self.OutcomeType.written],
-        })
+        }
+      ),
     )
 
   def test_check_failure_stop(self) -> None:
@@ -366,9 +374,11 @@ class TestRun(Common):
 
     result = self._run_test('train', '--stop', should_fail=True)
     self.assertEqual(
-        1,
-        str(result.text_output).count(
-            'FAIL (recipe crashed in an unexpected way)'))
+      1,
+      str(result.text_output).count(
+        'FAIL (recipe crashed in an unexpected way)'
+      ),
+    )
 
   def test_check_failure_filter(self) -> None:
     with self.main.write_recipe('foo') as recipe:
@@ -379,14 +389,17 @@ class TestRun(Common):
         )
       ''')
 
-    result = self._run_test(
-        'run', '--filter', 'foo.*', should_fail=True)
+    result = self._run_test('run', '--filter', 'foo.*', should_fail=True)
     self.assertIn('CHECK(FAIL)', result.text_output)
     self.assertDictEqual(
-        result.data,
-        self._outcome_json(per_test={
+      result.data,
+      self._outcome_json(
+        per_test={
           'foo.basic': [self.OutcomeType.check],
-        }, coverage=0))
+        },
+        coverage=0,
+      ),
+    )
 
   def test_check_success(self) -> None:
     with self.main.write_recipe('foo') as recipe:
@@ -397,9 +410,7 @@ class TestRun(Common):
         )
       ''')
 
-    self.assertDictEqual(
-        self._run_test('run').data,
-        self._outcome_json())
+    self.assertDictEqual(self._run_test('run').data, self._outcome_json())
 
   def test_docs_change(self) -> None:
     with self.main.write_recipe('foo'):
@@ -411,9 +422,7 @@ class TestRun(Common):
 
     self._run_test('run', should_fail=True)
     self.main.recipes_py('doc')
-    self.assertDictEqual(
-        self._run_test('run').data,
-        self._outcome_json())
+    self.assertDictEqual(self._run_test('run').data, self._outcome_json())
 
   def test_docs_skipped_if_no_docs_in_config(self) -> None:
     with self.main.write_recipe('foo'):
@@ -442,11 +451,17 @@ class TestRun(Common):
     result = self._run_test('run', should_fail=True)
     self.assertIn("NameError: name 'baz' is not defined", result.text_output)
     self.assertDictEqual(
-        result.data,
-        self._outcome_json(per_test={
-          'foo.basic': [self.OutcomeType.crash, self.OutcomeType.diff,
-                        self.OutcomeType.needs_infra_fail],
-        }))
+      result.data,
+      self._outcome_json(
+        per_test={
+          'foo.basic': [
+            self.OutcomeType.crash,
+            self.OutcomeType.diff,
+            self.OutcomeType.needs_infra_fail,
+          ],
+        }
+      ),
+    )
 
   def test_recipe_module_uncovered(self) -> None:
     with self.main.write_module('foo') as mod:
@@ -457,12 +472,13 @@ class TestRun(Common):
 
     result = self._run_test('run', should_fail=True)
     self.assertDictEqual(
-        result.data,
-        self._outcome_json(
-            per_test={},
-            coverage=92.3,
-            uncovered_mods=['foo'],
-        ))
+      result.data,
+      self._outcome_json(
+        per_test={},
+        coverage=92.3,
+        uncovered_mods=['foo'],
+      ),
+    )
 
   def test_recipe_module_syntax_error(self) -> None:
     with self.main.write_module('foo_module') as mod:
@@ -482,11 +498,16 @@ class TestRun(Common):
     result = self._run_test('run', should_fail=True)
     self.assertIn('NameError: name \'baz\' is not defined', result.text_output)
     self.assertDictEqual(
-        result.data,
-        self._outcome_json(per_test={
-          'foo_module:examples/full.basic': [self.OutcomeType.crash,
-                                             self.OutcomeType.needs_infra_fail],
-        }))
+      result.data,
+      self._outcome_json(
+        per_test={
+          'foo_module:examples/full.basic': [
+            self.OutcomeType.crash,
+            self.OutcomeType.needs_infra_fail,
+          ],
+        }
+      ),
+    )
 
   def test_recipe_module_syntax_error_in_example(self) -> None:
     with self.main.write_module('foo_module') as mod:
@@ -507,11 +528,17 @@ class TestRun(Common):
     self.assertIn('NameError: name \'baz\' is not defined', result.text_output)
     self.assertIn('FATAL: Insufficient total coverage', result.text_output)
     self.assertDictEqual(
-        result.data,
-        self._outcome_json(per_test={
-          'foo_module:examples/full.basic': [self.OutcomeType.crash,
-                                             self.OutcomeType.needs_infra_fail]
-        }, coverage=95.0))
+      result.data,
+      self._outcome_json(
+        per_test={
+          'foo_module:examples/full.basic': [
+            self.OutcomeType.crash,
+            self.OutcomeType.needs_infra_fail,
+          ]
+        },
+        coverage=95.0,
+      ),
+    )
 
   def test_recipe_module_example_not_covered(self) -> None:
     with self.main.write_module('foo_module') as mod:
@@ -531,11 +558,14 @@ class TestRun(Common):
     result = self._run_test('run', should_fail=True)
     self.assertIn('FATAL: Insufficient total coverage', result.text_output)
     self.assertDictEqual(
-        result.data,
-        self._outcome_json(per_test={
-          'foo_module:examples/full.basic':
-              [self.OutcomeType.diff],
-        }, coverage=90.9))
+      result.data,
+      self._outcome_json(
+        per_test={
+          'foo_module:examples/full.basic': [self.OutcomeType.diff],
+        },
+        coverage=90.9,
+      ),
+    )
 
   def test_recipe_module_uncovered_not_strict(self) -> None:
     with self.main.write_module('foo_module') as mod:
@@ -546,8 +576,9 @@ class TestRun(Common):
       ''')
 
     self.assertDictEqual(
-        self._run_test('run', should_fail=True).data,
-        self._outcome_json(coverage=92.3, per_test={}))
+      self._run_test('run', should_fail=True).data,
+      self._outcome_json(coverage=92.3, per_test={}),
+    )
 
   def test_recipe_module_covered_by_recipe_not_strict(self) -> None:
     with self.main.write_module('foo_module') as mod:
@@ -562,10 +593,9 @@ class TestRun(Common):
       recipe.RunSteps.write('api.foo_module.bar()')
 
     self.assertDictEqual(
-        self._run_test('run').data,
-        self._outcome_json(per_test={
-          'my_recipe.basic': []
-        }))
+      self._run_test('run').data,
+      self._outcome_json(per_test={'my_recipe.basic': []}),
+    )
 
   def test_recipe_module_covered_by_recipe(self) -> None:
     with self.main.write_module('foo_module') as mod:
@@ -580,14 +610,15 @@ class TestRun(Common):
 
     result = self._run_test('run', should_fail=True)
     self.assertDictEqual(
-        result.data,
-        self._outcome_json(
-            per_test={
-              'my_recipe.basic': [],
-            },
-            uncovered_mods=['foo_module'],
-            coverage=95.0,
-        ))
+      result.data,
+      self._outcome_json(
+        per_test={
+          'my_recipe.basic': [],
+        },
+        uncovered_mods=['foo_module'],
+        coverage=95.0,
+      ),
+    )
 
   def test_recipe_module_partially_covered_by_recipe_not_strict(self) -> None:
     with self.main.write_module('foo_module') as mod:
@@ -609,11 +640,14 @@ class TestRun(Common):
       recipe.RunSteps.write('api.foo_module.foo()')
 
     self.assertDictEqual(
-        self._run_test('run').data,
-        self._outcome_json(per_test={
+      self._run_test('run').data,
+      self._outcome_json(
+        per_test={
           'foo_module:examples/full.basic': [],
           'foo_recipe.basic': [],
-        }))
+        }
+      ),
+    )
 
   def test_recipe_module_partially_covered_by_recipe(self) -> None:
     with self.main.write_module('foo_module') as mod:
@@ -635,11 +669,15 @@ class TestRun(Common):
 
     result = self._run_test('run', should_fail=True)
     self.assertDictEqual(
-        result.data,
-        self._outcome_json(per_test={
+      result.data,
+      self._outcome_json(
+        per_test={
           'foo_module:examples/full.basic': [],
           'foo_recipe.basic': [],
-        }, coverage=96.6))
+        },
+        coverage=96.6,
+      ),
+    )
 
   def test_recipe_module_test_expectation_failure_empty(self) -> None:
     with self.main.write_module('foo_module'):
@@ -650,10 +688,13 @@ class TestRun(Common):
 
     result = self._run_test('run', should_fail=True)
     self.assertDictEqual(
-        result.data,
-        self._outcome_json(per_test={
+      result.data,
+      self._outcome_json(
+        per_test={
           'foo_module:tests/foo.basic': [self.OutcomeType.diff],
-        }))
+        }
+      ),
+    )
 
   def test_module_tests_unused_expectation_file_test(self) -> None:
     with self.main.write_module('foo_module'):
@@ -663,12 +704,14 @@ class TestRun(Common):
       recipe.expectation['unused'] = [{'name': '$result'}]
 
     self.assertDictEqual(
-        self._run_test('run', should_fail=True).data,
-        self._outcome_json(
-            per_test={'foo_module:tests/foo.basic': {}},
-            unused_expects=[
-              'recipe_modules/foo_module/tests/foo.expected/unused.json'
-            ]))
+      self._run_test('run', should_fail=True).data,
+      self._outcome_json(
+        per_test={'foo_module:tests/foo.basic': {}},
+        unused_expects=[
+          'recipe_modules/foo_module/tests/foo.expected/unused.json'
+        ],
+      ),
+    )
 
   def test_slash_in_name(self) -> None:
     with self.main.write_recipe('foo') as recipe:
@@ -677,10 +720,13 @@ class TestRun(Common):
       recipe.expectation['bar/baz'] = [{'name': '$result'}]
 
     self.assertDictEqual(
-        self._run_test('run').data,
-        self._outcome_json(per_test={
+      self._run_test('run').data,
+      self._outcome_json(
+        per_test={
           'foo.bar/baz': [],
-        }))
+        }
+      ),
+    )
 
   def test_api_uncovered(self) -> None:
     with self.main.write_module('foo_module') as mod:
@@ -691,11 +737,12 @@ class TestRun(Common):
       ''')
 
     self.assertDictEqual(
-        self._run_test('run', should_fail=True).data,
-        self._outcome_json(
-            coverage=92.3,
-            per_test={},
-        ))
+      self._run_test('run', should_fail=True).data,
+      self._outcome_json(
+        coverage=92.3,
+        per_test={},
+      ),
+    )
 
   def test_api_uncovered_strict(self) -> None:
     with self.main.write_module('foo_module') as mod:
@@ -704,12 +751,13 @@ class TestRun(Common):
           pass
       ''')
     self.assertDictEqual(
-        self._run_test('run', should_fail=True).data,
-        self._outcome_json(
-            uncovered_mods=['foo_module'],
-            coverage=92.3,
-            per_test={},
-        ))
+      self._run_test('run', should_fail=True).data,
+      self._outcome_json(
+        uncovered_mods=['foo_module'],
+        coverage=92.3,
+        per_test={},
+      ),
+    )
 
   def test_api_covered_by_recipe(self) -> None:
     with self.main.write_module('foo_module') as mod:
@@ -726,9 +774,7 @@ class TestRun(Common):
         yield api.test('basic')
       ''')
 
-    self.assertDictEqual(
-        self._run_test('run').data,
-        self._outcome_json())
+    self.assertDictEqual(self._run_test('run').data, self._outcome_json())
 
   def test_api_uncovered_by_recipe_strict(self) -> None:
     with self.main.write_module('foo_module') as mod:
@@ -745,11 +791,12 @@ class TestRun(Common):
       ''')
 
     self.assertDictEqual(
-        self._run_test('run', should_fail=True).data,
-        self._outcome_json(
-            uncovered_mods=['foo_module'],
-            coverage=95.2,
-        ))
+      self._run_test('run', should_fail=True).data,
+      self._outcome_json(
+        uncovered_mods=['foo_module'],
+        coverage=95.2,
+      ),
+    )
 
   def test_api_covered_by_example(self) -> None:
     with self.main.write_module('foo_module') as mod:
@@ -766,10 +813,13 @@ class TestRun(Common):
       ''')
 
     self.assertDictEqual(
-        self._run_test('run').data,
-        self._outcome_json(per_test={
+      self._run_test('run').data,
+      self._outcome_json(
+        per_test={
           'foo_module:examples/full.basic': [],
-        }))
+        }
+      ),
+    )
 
   def test_duplicate(self) -> None:
     with self.main.write_recipe('foo') as recipe:
@@ -779,8 +829,9 @@ class TestRun(Common):
       ''')
 
     self.assertIn(
-        "Emitted test with duplicate name 'basic'",
-        self._run_test('run', should_fail='crash').text_output)
+      "Emitted test with duplicate name 'basic'",
+      self._run_test('run', should_fail='crash').text_output,
+    )
 
   def test_duplicate_filename(self) -> None:
     with self.main.write_recipe('foo') as recipe:
@@ -790,8 +841,9 @@ class TestRun(Common):
       ''')
 
     self.assertIn(
-        "Emitted test 'bas/ic' which maps to the same JSON file as 'bas_ic'",
-        self._run_test('run', should_fail='crash').text_output)
+      "Emitted test 'bas/ic' which maps to the same JSON file as 'bas_ic'",
+      self._run_test('run', should_fail='crash').text_output,
+    )
 
   def test_unused_expectation_file(self) -> None:
     with self.main.write_recipe('foo') as recipe:
@@ -799,9 +851,9 @@ class TestRun(Common):
       expectation_file = os.path.join(recipe.expect_path, 'unused.json')
     self.assertTrue(self.main.is_file(expectation_file))
     self.assertDictEqual(
-        self._run_test('run', should_fail=True).data,
-        self._outcome_json(
-            unused_expects=['recipes/foo.expected/unused.json']))
+      self._run_test('run', should_fail=True).data,
+      self._outcome_json(unused_expects=['recipes/foo.expected/unused.json']),
+    )
 
   def test_unused_expectation_file_from_deleted_recipe(self) -> None:
     expectation_file = 'recipes/deleted.expected/stale.json'
@@ -809,9 +861,11 @@ class TestRun(Common):
       pass
     self.assertTrue(self.main.is_file(expectation_file))
     self.assertDictEqual(
-        self._run_test('run', should_fail=True).data,
-        self._outcome_json(
-            per_test={}, coverage=0, unused_expects=[expectation_file]))
+      self._run_test('run', should_fail=True).data,
+      self._outcome_json(
+        per_test={}, coverage=0, unused_expects=[expectation_file]
+      ),
+    )
 
   def test_ignores_expectation_files_in_invalid_directories(self) -> None:
     with self.main.write_recipe('foo') as recipe:
@@ -846,10 +900,11 @@ class TestRun(Common):
     result = self._run_test('run', should_fail=True)
     self.assertTrue(self.main.is_file(expectation_file))
     self.assertDictEqual(
-        result.data,
-        self._outcome_json(
-            per_test={'foo.basic': [self.OutcomeType.diff]},
-        ))
+      result.data,
+      self._outcome_json(
+        per_test={'foo.basic': [self.OutcomeType.diff]},
+      ),
+    )
 
   def test_unused_expectation_preserves_owners(self) -> None:
     with self.main.write_recipe('foo') as recipe:
@@ -889,11 +944,12 @@ class TestRun(Common):
       recipe.DEPS = ['foo_module']
       recipe.RunSteps.write('api.foo_module.set_config("bar_config")')
     self.assertDictEqual(
-        self._run_test('run', should_fail=True).data,
-        self._outcome_json(
-            coverage=92.6,
-            uncovered_mods=['foo_module'],
-        ))
+      self._run_test('run', should_fail=True).data,
+      self._outcome_json(
+        coverage=92.6,
+        uncovered_mods=['foo_module'],
+      ),
+    )
 
   def test_config_covered_by_example(self) -> None:
     with self.main.write_module('foo_module') as mod:
@@ -909,10 +965,13 @@ class TestRun(Common):
       recipe.DEPS = ['foo_module']
       recipe.RunSteps.write('api.foo_module.set_config("bar_config")')
     self.assertDictEqual(
-        self._run_test('run').data,
-        self._outcome_json(per_test={
+      self._run_test('run').data,
+      self._outcome_json(
+        per_test={
           'foo_module:examples/full.basic': [],
-        }))
+        }
+      ),
+    )
 
 
 class TestTrain(Common):
@@ -927,13 +986,16 @@ class TestTrain(Common):
     result = self._run_test('train')
     self.assertFalse(os.path.exists(expectation_file))
     self.assertDictEqual(
-        result.data,
-        self._outcome_json(per_test={
+      result.data,
+      self._outcome_json(
+        per_test={
           'foo_module:examples/foo.basic': [],
-        }))
+        }
+      ),
+    )
 
   def test_module_tests_unused_expectation_file_deleted_even_on_failure(
-      self,
+    self,
   ) -> None:
     with self.main.write_module('foo_module'):
       pass
@@ -946,14 +1008,17 @@ class TestTrain(Common):
     result = self._run_test('train', should_fail=True)
     self.assertFalse(self.main.is_file(expectation_file))
     self.assertDictEqual(
-        result.data,
-        self._outcome_json(per_test={
+      result.data,
+      self._outcome_json(
+        per_test={
           'foo_module:tests/foo.basic': [
             self.OutcomeType.written,
             self.OutcomeType.crash,
-            self.OutcomeType.needs_infra_fail
+            self.OutcomeType.needs_infra_fail,
           ],
-        }))
+        }
+      ),
+    )
 
   def test_basic(self) -> None:
     with self.main.write_recipe('foo'):
@@ -967,15 +1032,18 @@ class TestTrain(Common):
 
     self.assertFalse(self.main.exists(expect_dir))
     self.assertDictEqual(
-        self._run_test('train').data,
-        self._outcome_json(per_test={
+      self._run_test('train').data,
+      self._outcome_json(
+        per_test={
           'foo.basic': [self.OutcomeType.written],
-        }))
+        }
+      ),
+    )
     expect_path = os.path.join(expect_dir, 'basic.json')
     self.assertTrue(self.main.is_file(expect_path))
     self.assertListEqual(
-        json.loads(self.main.read_file(expect_path)),
-        [{'name': '$result'}])
+      json.loads(self.main.read_file(expect_path)), [{'name': '$result'}]
+    )
 
   def test_diff(self) -> None:
     # 1. Initial state: recipe expectations are passing.
@@ -988,25 +1056,28 @@ class TestTrain(Common):
       recipe.RunSteps.write('api.step("test", ["echo", "bar"])')
 
     self.assertDictEqual(
-        self._run_test('run', should_fail=True).data,
-        self._outcome_json(per_test={
+      self._run_test('run', should_fail=True).data,
+      self._outcome_json(
+        per_test={
           'foo.basic': [self.OutcomeType.diff],
-        }))
+        }
+      ),
+    )
 
     # 3. Make sure training the recipe succeeds and produces correct results.
     result = self._run_test('train')
     self.assertListEqual(
-        json.loads(self.main.read_file(expect_path)), [{
-            'cmd': ['echo', 'bar'],
-            'name': 'test'
-        }, {
-            'name': '$result'
-        }])
+      json.loads(self.main.read_file(expect_path)),
+      [{'cmd': ['echo', 'bar'], 'name': 'test'}, {'name': '$result'}],
+    )
     self.assertDictEqual(
-        result.data,
-        self._outcome_json(per_test={
+      result.data,
+      self._outcome_json(
+        per_test={
           'foo.basic': [self.OutcomeType.written],
-        }))
+        }
+      ),
+    )
 
   def test_invalid_json(self) -> None:
     # 1. Initial state: recipe expectations are passing.
@@ -1023,22 +1094,27 @@ class TestTrain(Common):
         >>>>>
       ''')
     self.assertDictEqual(
-        self._run_test('run', should_fail=True).data,
-        self._outcome_json(per_test={
+      self._run_test('run', should_fail=True).data,
+      self._outcome_json(
+        per_test={
           'foo.basic': [self.OutcomeType.diff],
-        }))
+        }
+      ),
+    )
 
     # 3. Make sure training the recipe succeeds and produces correct results.
     result = self._run_test('train')
     self.assertListEqual(
-        json.loads(self.main.read_file(expect_path)), [{
-            'name': '$result'
-        }])
+      json.loads(self.main.read_file(expect_path)), [{'name': '$result'}]
+    )
     self.assertDictEqual(
-        result.data,
-        self._outcome_json(per_test={
+      result.data,
+      self._outcome_json(
+        per_test={
           'foo.basic': [self.OutcomeType.written],
-        }))
+        }
+      ),
+    )
 
   def test_checks_coverage_without_any_label(self) -> None:
     with self.main.write_recipe('foo') as recipe:
@@ -1060,10 +1136,13 @@ class TestTrain(Common):
       ''')
     result = self._run_test('train', should_fail=True)
     self.assertDictEqual(
-        result.data,
-        self._outcome_json(per_test={
+      result.data,
+      self._outcome_json(
+        per_test={
           'foo.basic': [self.OutcomeType.check],
-        }))
+        }
+      ),
+    )
 
   def test_unused_expectation_file(self) -> None:
     with self.main.write_recipe('foo') as recipe:
@@ -1093,8 +1172,9 @@ class TestTrain(Common):
     self.assertTrue(self.main.is_file(expectation_file))
     result = self._run_test('train')
     self.assertFalse(self.main.exists(expectation_file))
-    self.assertDictEqual(result.data,
-                         self._outcome_json(per_test={}, coverage=0))
+    self.assertDictEqual(
+      result.data, self._outcome_json(per_test={}, coverage=0)
+    )
 
   def test_drop_expectation(self) -> None:
     with self.main.write_recipe('foo') as recipe:
@@ -1107,10 +1187,13 @@ class TestTrain(Common):
     result = self._run_test('train')
     self.assertFalse(self.main.exists(expectation_file))
     self.assertDictEqual(
-        result.data,
-        self._outcome_json(per_test={
+      result.data,
+      self._outcome_json(
+        per_test={
           'foo.basic': [self.OutcomeType.removed],
-        }))
+        }
+      ),
+    )
 
   def test_unused_expectation_preserves_owners(self) -> None:
     with self.main.write_recipe('foo') as recipe:
@@ -1130,8 +1213,9 @@ class TestTrain(Common):
         config_ctx = config_item_context(BaseConfig)
       ''')
     self.assertDictEqual(
-        self._run_test('run', should_fail=True).data,
-        self._outcome_json(coverage=94.1, per_test={}))
+      self._run_test('run', should_fail=True).data,
+      self._outcome_json(coverage=94.1, per_test={}),
+    )
 
   def test_config_uncovered_strict(self) -> None:
     with self.main.write_module('foo_module') as mod:
@@ -1141,12 +1225,13 @@ class TestTrain(Common):
         config_ctx = config_item_context(BaseConfig)
       ''')
     self.assertDictEqual(
-        self._run_test('run', should_fail=True).data,
-        self._outcome_json(
-            coverage=94.1,
-            per_test={},
-            uncovered_mods=['foo_module'],
-        ))
+      self._run_test('run', should_fail=True).data,
+      self._outcome_json(
+        coverage=94.1,
+        per_test={},
+        uncovered_mods=['foo_module'],
+      ),
+    )
 
 
 class TestFilter(test_env.RecipeEngineUnitTest):

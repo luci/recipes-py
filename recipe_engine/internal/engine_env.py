@@ -22,6 +22,7 @@ class FakeEnviron:
 
   The 'formatted' result can be obtained by looking at .data.
   """
+
   def __init__(self) -> None:
     self.data: dict[str, str | None] = {}
 
@@ -56,11 +57,11 @@ class FakeEnviron:
 
 
 def merge_envs(
-    original: Mapping[str, str] | FakeEnviron,
-    overrides: Mapping[str, str | None],
-    prefixes: Mapping[str, Sequence[str]],
-    suffixes: Mapping[str, Sequence[str]],
-    pathsep: str,
+  original: Mapping[str, str] | FakeEnviron,
+  overrides: Mapping[str, str | None],
+  prefixes: Mapping[str, Sequence[str]],
+  suffixes: Mapping[str, Sequence[str]],
+  pathsep: str,
 ) -> tuple[dict[str, str | None], set[str]]:
   """Merges two environments.
 
@@ -95,8 +96,11 @@ def merge_envs(
   if not any((prefixes, suffixes, overrides)):
     return result, removed
 
-  subst = (original if isinstance(original, FakeEnviron)
-           else collections.defaultdict(lambda: '', **original))
+  subst = (
+    original
+    if isinstance(original, FakeEnviron)
+    else collections.defaultdict(lambda: '', **original)
+  )
 
   merged = set()
   for k in set(suffixes).union(prefixes):

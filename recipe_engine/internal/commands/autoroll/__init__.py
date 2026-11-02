@@ -15,25 +15,27 @@ from typing import NoReturn
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
   parser.add_argument(
-      '--output-json',
-      type=argparse.FileType('w', encoding='utf-8'),
-      help='A json file to output information about the roll to.')
+    '--output-json',
+    type=argparse.FileType('w', encoding='utf-8'),
+    help='A json file to output information about the roll to.',
+  )
   parser.add_argument(
-      '--verbose-json',
-      action='store_true',
-      help=(
-        'Emit even more data in the output-json file. Requires --output-json.'
-      ))
+    '--verbose-json',
+    action='store_true',
+    help=(
+      'Emit even more data in the output-json file. Requires --output-json.'
+    ),
+  )
 
   def _launch(args: argparse.Namespace) -> int:
     from . import cmd
+
     return cmd.main(args)
 
   def _postprocess_func(
-      error: Callable[[str], NoReturn], args: argparse.Namespace
+    error: Callable[[str], NoReturn], args: argparse.Namespace
   ) -> None:
     if args.verbose_json and not args.output_json:
       error('--verbose-json passed without --output-json')
 
-  parser.set_defaults(
-      func=_launch, postprocess_func=_postprocess_func)
+  parser.set_defaults(func=_launch, postprocess_func=_postprocess_func)

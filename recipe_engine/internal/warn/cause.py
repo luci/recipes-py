@@ -27,12 +27,15 @@ from .. import attr_util
 @attr.s(frozen=True)
 class Frame:
   """Equivalent to warning_pb.Frame."""
+
   # Absolute file path that contains the code object frame is executing.
   file: str = attr.ib(
     validator=[
       attr_util.attr_type(str),
-      attr_util.attr_value_is('an absolute path or empty string',
-                              lambda val: os.path.isabs(val) or val == ''),
+      attr_util.attr_value_is(
+        'an absolute path or empty string',
+        lambda val: os.path.isabs(val) or val == '',
+      ),
     ],
     default='',
   )
@@ -65,6 +68,7 @@ class Frame:
 @attr.s(frozen=True)
 class CallSite:
   """Equivalent to warning_pb.CallSite."""
+
   # The frame of the call site. The frame will have empty value for all its
   # attributes if call site can't be attributed.
   site: Frame = attr.ib(validator=attr_util.attr_type(Frame))
@@ -90,30 +94,33 @@ class CallSite:
   def from_cause_pb(cls, cause: Any) -> CallSite:
     """Create a new instance from a warning_pb.Cause proto message."""
     return cls(
-        site=Frame.from_frame_pb(cause.call_site.site),
-        call_stack=[
-            Frame.from_frame_pb(f) for f in cause.call_site.call_stack],
+      site=Frame.from_frame_pb(cause.call_site.site),
+      call_stack=[Frame.from_frame_pb(f) for f in cause.call_site.call_stack],
     )
 
 
 @attr.s(frozen=True)
 class ImportSite:
   """Equivalent to warning_pb.ImportSite"""
+
   # Name of the repo that recipe or recipe module is in
   repo: str = attr.ib(validator=attr_util.attr_type(str))
   # Name of recipe module
   module: str | None = attr.ib(
-      validator=attr.validators.optional(attr_util.attr_type(str)))
+    validator=attr.validators.optional(attr_util.attr_type(str))
+  )
   # Name of recipe
   recipe: str | None = attr.ib(
-      validator=attr.validators.optional(attr_util.attr_type(str)))
+    validator=attr.validators.optional(attr_util.attr_type(str))
+  )
 
   def __attrs_post_init__(self) -> None:
     """Check that exactly one of recipe or recipe module is present"""
     if bool(self.module) == bool(self.recipe):
       raise ValueError(
         'Expect exactly one of recipe or recipe module presents. '
-        'Got module:%s, recipe:%s' % (self.module, self.recipe))
+        'Got module:%s, recipe:%s' % (self.module, self.recipe)
+      )
 
   @functools.cached_property
   def cause_pb(self) -> Any:
@@ -133,7 +140,7 @@ class ImportSite:
     """Create a new instance from a warning_pb.Cause proto message."""
     import_site = cause.import_site
     return cls(
-        repo=str(import_site.repo),
-        module=str(import_site.module) if import_site.module else None,
-        recipe=str(import_site.recipe) if import_site.recipe else None,
+      repo=str(import_site.repo),
+      module=str(import_site.module) if import_site.module else None,
+      recipe=str(import_site.recipe) if import_site.recipe else None,
     )

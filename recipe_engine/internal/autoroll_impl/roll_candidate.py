@@ -41,7 +41,7 @@ class RollCandidate:
     self.repo_spec = copy.deepcopy(repo_spec)
 
   def changelist(
-      self, repos: Mapping[str, commit_list.CommitList]
+    self, repos: Mapping[str, commit_list.CommitList]
   ) -> dict[str, list[fetch.CommitMetadata]]:
     """Returns changelist for this RollCandidate.
 
@@ -61,10 +61,11 @@ class RollCandidate:
       rolled = [
         # The [1:] is to skip the very first commit, which is the commit value
         # that the autoroller started with.
-        meta for meta in repos[pid].changelist(dep.revision)[1:]
+        meta
+        for meta in repos[pid].changelist(dep.revision)[1:]
         if not (
-            meta.message_lines and
-            meta.message_lines[0].startswith(_AUTOROLLER_PREFIX)
+          meta.message_lines
+          and meta.message_lines[0].startswith(_AUTOROLLER_PREFIX)
         )
       ]
       if rolled:

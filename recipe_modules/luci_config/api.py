@@ -15,9 +15,12 @@ from google.protobuf import text_format as textpb
 from PB.go.chromium.org.luci.buildbucket.proto import project_config as bb_pb2
 from PB.go.chromium.org.luci.cv.api.config.v2 import config as cv_config_pb2
 from PB.go.chromium.org.luci.milo.proto.projectconfig import project as milo_pb2
-from PB.go.chromium.org.luci.scheduler.appengine.messages import config as scheduler_pb2
+from PB.go.chromium.org.luci.scheduler.appengine.messages import (
+  config as scheduler_pb2,
+)
 from PB.go.chromium.org.luci.config_service.proto import (
-    config_service as config_service_pb2,)
+  config_service as config_service_pb2,
+)
 from recipe_engine import config_types, recipe_api, recipe_test_api, step_data
 
 
@@ -38,11 +41,11 @@ class LuciConfigApi(recipe_api.RecipeApi):
     self._config_cache = {}
 
   def fetch_config_raw(
-      self,
-      config_name: str,
-      project: str | None = None,
-      local_dir: config_types.Path | None = None,
-      allow_cache: bool = True,
+    self,
+    config_name: str,
+    project: str | None = None,
+    local_dir: config_types.Path | None = None,
+    allow_cache: bool = True,
   ) -> str:
     """Fetch and parse config file from the luci-config API as a proto.
 
@@ -76,28 +79,28 @@ class LuciConfigApi(recipe_api.RecipeApi):
 
     if local_dir:
       self._config_cache[key] = self.m.file.read_text(
-          f"read {project} {config_name}",
-          local_dir / config_name,
+        f"read {project} {config_name}",
+        local_dir / config_name,
       )
       return self._config_cache[key]
 
     with self.m.step.nest(f"fetch {project} {config_name}"):
       self._config_cache[key] = self._fetch_config_textproto(
-          project,
-          config_name,
+        project,
+        config_name,
       ).decode()
       return self._config_cache[key]
 
   MessageType = TypeVar('MessageType')
 
   def fetch_config(
-      self,
-      config_name: str,
-      message_type: MessageType,
-      project: str | None = None,
-      local_dir: config_types.Path | None = None,
-      allow_unknown_fields: bool = False,
-      allow_cache: bool = True,
+    self,
+    config_name: str,
+    message_type: MessageType,
+    project: str | None = None,
+    local_dir: config_types.Path | None = None,
+    allow_unknown_fields: bool = False,
+    allow_cache: bool = True,
   ) -> MessageType:
     """Fetch and parse config file from the luci-config API as a proto.
 
@@ -125,56 +128,62 @@ class LuciConfigApi(recipe_api.RecipeApi):
             this config before.
     """
     text = self.fetch_config_raw(
-        config_name=config_name,
-        project=project,
-        local_dir=local_dir,
-        allow_cache=allow_cache,
+      config_name=config_name,
+      project=project,
+      local_dir=local_dir,
+      allow_cache=allow_cache,
     )
 
     cfg = message_type()
     textpb.Parse(
-        text,
-        cfg,
-        allow_unknown_field=allow_unknown_fields,
+      text,
+      cfg,
+      allow_unknown_field=allow_unknown_fields,
     )
     return cfg
 
   def _fetch_config_textproto(self, project: str, config_name: str) -> bytes:
     req = config_service_pb2.GetConfigRequest(
-        config_set=f"projects/{project}", path=config_name)
+      config_set=f"projects/{project}", path=config_name
+    )
     resp = self.m.step(
-        name="get",
-        cmd=[
-            "prpc",
-            "call",
-            "-format=binary",
-            "config.luci.app",
-            "config.service.v2.Configs.GetConfig",
-        ],
-        stdin=self.m.proto.input(req, "BINARY"),
-        stdout=self.m.proto.output(config_service_pb2.Config, "BINARY"),
-        infra_step=True,
-        step_test_data=lambda: self.m.proto.test_api.output_stream(
-            config_service_pb2.Config(raw_content=b"")),
+      name="get",
+      cmd=[
+        "prpc",
+        "call",
+        "-format=binary",
+        "config.luci.app",
+        "config.service.v2.Configs.GetConfig",
+      ],
+      stdin=self.m.proto.input(req, "BINARY"),
+      stdout=self.m.proto.output(config_service_pb2.Config, "BINARY"),
+      infra_step=True,
+      step_test_data=lambda: self.m.proto.test_api.output_stream(
+        config_service_pb2.Config(raw_content=b"")
+      ),
     ).stdout
 
     if resp.WhichOneof("content") == "raw_content":
       return resp.raw_content
     elif resp.WhichOneof("content") == "signed_url":
       return self.m.url.get_raw(
-          resp.signed_url,
-          step_name=f"fetch {config_name} via signed URL",
+        resp.signed_url,
+        step_name=f"fetch {config_name} via signed URL",
       ).output
     else:  # pragma: no cover
-      raise Exception(f"Unexpected content type for {config_name}: "
-                      f"{resp.WhichOneof('content')}")
+      raise Exception(
+        f"Unexpected content type for {config_name}: "
+        f"{resp.WhichOneof('content')}"
+      )
 
   def buildbucket(self, **kwargs: Any) -> bb_pb2.BuildbucketCfg:
-    return self.fetch_config("cr-buildbucket.cfg", bb_pb2.BuildbucketCfg,
-                             **kwargs)
+    return self.fetch_config(
+      "cr-buildbucket.cfg", bb_pb2.BuildbucketCfg, **kwargs
+    )
 
-  def commit_queue(self, config_name: str | None = None,
-                   **kwargs: Any) -> cv_config_pb2.Config:
+  def commit_queue(
+    self, config_name: str | None = None, **kwargs: Any
+  ) -> cv_config_pb2.Config:
     # Support loading a CQ config file with a non-default name to support
     # projects that don't want a dedicated CQ instance but for which we
     # still want to know which tryjobs exist.
@@ -185,5 +194,6 @@ class LuciConfigApi(recipe_api.RecipeApi):
     return self.fetch_config("luci-milo.cfg", milo_pb2.Project, **kwargs)
 
   def scheduler(self, **kwargs: Any) -> scheduler_pb2.ProjectConfig:
-    return self.fetch_config("luci-scheduler.cfg", scheduler_pb2.ProjectConfig,
-                             **kwargs)
+    return self.fetch_config(
+      "luci-scheduler.cfg", scheduler_pb2.ProjectConfig, **kwargs
+    )

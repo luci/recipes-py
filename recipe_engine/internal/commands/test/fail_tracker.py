@@ -11,11 +11,13 @@ import attr
 
 class ClosedFailFile:
   """Sentinel class that replaced the fail file after it's been closed."""
+
   pass
 
 
 class FailFileAlreadyClosedException(Exception):
   """An exception that is raised when FailTracker.cleanup() is called twice."""
+
   pass
 
 
@@ -28,6 +30,7 @@ class FailTracker:
   flowing in, so if a run is canceled early, the fail cache will remain
   unharmed.
   """
+
   _fail_file_path: str = attr.ib()
 
   _fail_file: TextIO | ClosedFailFile | None = attr.ib(default=None)
@@ -90,8 +93,10 @@ class FailTracker:
   @staticmethod
   def test_failed(test_result: Any) -> set[str]:
     """Returns whether a test failed."""
-    error_fields = set(('internal_error', 'bad_test', 'crash_mismatch', 'check',
-                        'diff'))
+    error_fields = set(
+      ('internal_error', 'bad_test', 'crash_mismatch', 'check', 'diff')
+    )
     result_fields = set(
-        descriptor.name for descriptor, value in test_result.ListFields())
+      descriptor.name for descriptor, value in test_result.ListFields()
+    )
     return error_fields & result_fields

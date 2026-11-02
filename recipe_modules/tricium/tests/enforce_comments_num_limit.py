@@ -10,17 +10,19 @@ from recipe_engine import recipe_test_api
 from recipe_engine import post_process
 
 from PB.tricium.data import Data
-from PB.recipe_modules.recipe_engine.tricium.tests.enforce_comments_num_limit import InputProps
+from PB.recipe_modules.recipe_engine.tricium.tests.enforce_comments_num_limit import (
+  InputProps,
+)
 
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    buildbucket,
-    properties,
-    proto,
-    tricium,
+  assertions,
+  buildbucket,
+  properties,
+  proto,
+  tricium,
 )
 
 
@@ -38,6 +40,7 @@ class TEST_DEPS(RecipeTestApi):
   buildbucket: buildbucket.TEST_API
   properties: properties.TEST_API
 
+
 PROPERTIES = InputProps
 
 
@@ -49,20 +52,30 @@ def RunSteps(api: DEPS, props: InputProps) -> None:
   step = api.tricium.write_comments()
   result = step.presentation.properties.get('tricium')
   expected = api.proto.encode(
-      props.expected_results,
-      'JSONPB',
-      indent=0,
-      preserving_proto_field_name=False)
+    props.expected_results,
+    'JSONPB',
+    indent=0,
+    preserving_proto_field_name=False,
+  )
   api.assertions.assertEqual(result, expected)
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
-  yield (api.test('basic', api.buildbucket.try_build(project='chrome')) +
-         api.properties(
-             InputProps(
-                 expected_results=Data.Results(comments=[
-                     Data.Comment(
-                         category='test',
-                         message='test message',
-                         path='path/to/file_%d' % i) for i in range(5)
-                 ]))) + api.post_process(post_process.DropExpectation))
+  yield (
+    api.test('basic', api.buildbucket.try_build(project='chrome'))
+    + api.properties(
+      InputProps(
+        expected_results=Data.Results(
+          comments=[
+            Data.Comment(
+              category='test',
+              message='test message',
+              path='path/to/file_%d' % i,
+            )
+            for i in range(5)
+          ]
+        )
+      )
+    )
+    + api.post_process(post_process.DropExpectation)
+  )

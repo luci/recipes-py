@@ -19,11 +19,11 @@ class CVTestApi(recipe_test_api.RecipeTestApi):
   FULL_RUN = 'FULL_RUN'
 
   def input_props(
-      self,
-      run_mode: str | None = None,
-      top_level: bool = True,
-      experimental: bool = False,
-      owner_is_googler: bool = False,
+    self,
+    run_mode: str | None = None,
+    top_level: bool = True,
+    experimental: bool = False,
+    owner_is_googler: bool = False,
   ) -> cq_pb2.Input:
     """Simulate a build triggered by CV."""
     assert isinstance(run_mode, str), '%r (%s)' % (run_mode, type(run_mode))
@@ -32,28 +32,30 @@ class CVTestApi(recipe_test_api.RecipeTestApi):
     assert isinstance(top_level, bool), '%r (%s)' % (top_level, type(top_level))
     input_props.top_level = top_level
 
-    assert isinstance(experimental,
-                      bool), '%r (%s)' % (experimental, type(experimental))
+    assert isinstance(experimental, bool), '%r (%s)' % (
+      experimental,
+      type(experimental),
+    )
     input_props.experimental = experimental
 
-    assert isinstance(
-        owner_is_googler,
-        bool), '%r (%s)' % (owner_is_googler, type(owner_is_googler))
+    assert isinstance(owner_is_googler, bool), '%r (%s)' % (
+      owner_is_googler,
+      type(owner_is_googler),
+    )
     input_props.owner_is_googler = owner_is_googler
 
     return input_props
 
-  def __call__(
-      self, *args: Any, **kwargs: Any
-  ) -> recipe_test_api.TestData:
+  def __call__(self, *args: Any, **kwargs: Any) -> recipe_test_api.TestData:
     return self.m.properties(
-        **{f'$recipe_engine/cv': self.input_props(*args, **kwargs)})
+      **{f'$recipe_engine/cv': self.input_props(*args, **kwargs)}
+    )
 
   def check_triggered_build_ids(
-      self,
-      *args: Any,
-      step_name: str | None = None,
-      **kwargs: Any,
+    self,
+    *args: Any,
+    step_name: str | None = None,
+    **kwargs: Any,
   ) -> recipe_test_api.TestData | None:
     """Checks that record_triggered_build_ids recorded expected build IDs.
 
@@ -69,14 +71,15 @@ class CVTestApi(recipe_test_api.RecipeTestApi):
     Returns:
       TestData if called directly, or None if called within post_process.
     """
-    if (len(args) >= 2 and callable(args[0]) and
-        isinstance(args[1], Mapping)):
+    if len(args) >= 2 and callable(args[0]) and isinstance(args[1], Mapping):
       check = args[0]
       step_odict = args[1]
       expected_ids = args[2:]
-      if (len(expected_ids) == 1 and
-          isinstance(expected_ids[0], (list, tuple, Sequence)) and
-          not isinstance(expected_ids[0], (str, bytes))):
+      if (
+        len(expected_ids) == 1
+        and isinstance(expected_ids[0], (list, tuple, Sequence))
+        and not isinstance(expected_ids[0], (str, bytes))
+      ):
         expected_ids = expected_ids[0]
       expected = [str(getattr(bid, 'id', bid)) for bid in expected_ids]
 
@@ -91,25 +94,27 @@ class CVTestApi(recipe_test_api.RecipeTestApi):
 
       cv_output = props.get('$recipe_engine/cv/output') or {}
       cv_bids = [
-          str(x)
-          for x in cv_output.get(
-              'triggeredBuildIds', cv_output.get('triggered_build_ids', []))
+        str(x)
+        for x in cv_output.get(
+          'triggeredBuildIds', cv_output.get('triggered_build_ids', [])
+        )
       ]
       check(cv_bids == expected)
 
       cq_output = props.get('$recipe_engine/cq/output') or {}
       cq_bids = [
-          str(x)
-          for x in cq_output.get(
-              'triggeredBuildIds', cq_output.get('triggered_build_ids', []))
+        str(x)
+        for x in cq_output.get(
+          'triggeredBuildIds', cq_output.get('triggered_build_ids', [])
+        )
       ]
       check(cq_bids == expected)
 
       return None
 
     return self.post_process(
-        self.check_triggered_build_ids,
-        *args,
-        step_name=step_name,
-        **kwargs,
+      self.check_triggered_build_ids,
+      *args,
+      step_name=step_name,
+      **kwargs,
     )

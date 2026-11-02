@@ -30,11 +30,11 @@ from . import test_name
 
 # TODO(crbug.com/1147793): Remove the second return value after migration.
 def _push_tests(
-    test_filter: test_name.Filter,
-    is_train: bool,
-    main_repo: recipe_deps_mod.RecipeRepo,
-    description_queue: gevent.queue.UnboundQueue,
-    recent_fails: Collection[str],
+  test_filter: test_name.Filter,
+  is_train: bool,
+  main_repo: recipe_deps_mod.RecipeRepo,
+  description_queue: gevent.queue.UnboundQueue,
+  recent_fails: Collection[str],
 ) -> list[str] | set[str]:
   """
   Returns:
@@ -43,11 +43,11 @@ def _push_tests(
   unused_expectation_files: set[str] = set()
   used_expectation_files: set[str] = set()
   test_filenames: dict[recipe_deps_mod.Recipe, dict[str, str]] = (
-      collections.defaultdict(dict)
+    collections.defaultdict(dict)
   )
 
   def push_test(
-      recipe: recipe_deps_mod.Recipe, test_case: recipe_test_api.TestData
+    recipe: recipe_deps_mod.Recipe, test_case: recipe_test_api.TestData
   ) -> None:
     recipe_filenames = test_filenames[recipe]
     expect_file = test_case.expect_file
@@ -56,12 +56,12 @@ def _push_tests(
     if expect_file in recipe_filenames:
       og_name = recipe_filenames[expect_file]
       if og_name == test_case.name:
-        raise ValueError(
-            f'Emitted test with duplicate name {test_case.name!r}')
+        raise ValueError(f'Emitted test with duplicate name {test_case.name!r}')
 
       raise ValueError(
-          'Emitted test %r which maps to the same JSON file as %r: %r' %
-          (test_case.name, og_name, expect_file))
+        'Emitted test %r which maps to the same JSON file as %r: %r'
+        % (test_case.name, og_name, expect_file)
+      )
 
     assert test_case.name is not None
     recipe_filenames[expect_file] = test_case.name
@@ -69,9 +69,8 @@ def _push_tests(
       return
 
     description_queue.put(
-        runner_pb.Description(
-            recipe_name=recipe.name,
-            test_name=test_case.name))
+      runner_pb.Description(recipe_name=recipe.name, test_name=test_case.name)
+    )
 
     gevent.sleep()  # let any blocking threads pick this up
 
@@ -82,7 +81,7 @@ def _push_tests(
 
   # Handle recent fails first
   deferred_tests: list[
-      tuple[recipe_deps_mod.Recipe, recipe_test_api.TestData]
+    tuple[recipe_deps_mod.Recipe, recipe_test_api.TestData]
   ] = []
   for recipe in main_repo.recipes.values():
     if not test_filter.recipe_name(recipe.name):
@@ -121,18 +120,17 @@ def _push_tests(
 
 
 def _run(
-    test_results: runner_pb.Outcome,
-    recipe_deps: recipe_deps_mod.RecipeDeps,
-    use_emoji: bool,
-    test_filter: test_name.Filter,
-    is_train: bool,
-    stop: bool,
-    jobs: int,
-    show_warnings: bool,
-    show_durations: bool,
+  test_results: runner_pb.Outcome,
+  recipe_deps: recipe_deps_mod.RecipeDeps,
+  use_emoji: bool,
+  test_filter: test_name.Filter,
+  is_train: bool,
+  stop: bool,
+  jobs: int,
+  show_warnings: bool,
+  show_durations: bool,
 ) -> None:
-  """Run tests in py3 subprocess pools.
-  """
+  """Run tests in py3 subprocess pools."""
   main_repo = recipe_deps.main_repo
 
   description_queue = gevent.queue.UnboundQueue()
@@ -142,46 +140,62 @@ def _run(
   # to our main thread here that the RunnerThread is done).
   outcome_queue = gevent.queue.UnboundQueue()
 
-  test_results.uncovered_modules.extend(sorted(
+  test_results.uncovered_modules.extend(
+    sorted(
       set(
-          module.name
-          for module in main_repo.modules.values()
-          if not (
-            module.recipes or module.uses_sloppy_coverage or module.warnings)
+        module.name
+        for module in main_repo.modules.values()
+        if not (
+          module.recipes or module.uses_sloppy_coverage or module.warnings
+        )
       )
-  ))
+    )
+  )
 
   fail_tracker = fail_tracker_mod.FailTracker(
-      recipe_deps.previous_test_failures_path
+    recipe_deps.previous_test_failures_path
   )
-  reporter = report.Reporter(recipe_deps, use_emoji, is_train, fail_tracker,
-                             show_warnings, show_durations)
+  reporter = report.Reporter(
+    recipe_deps,
+    use_emoji,
+    is_train,
+    fail_tracker,
+    show_warnings,
+    show_durations,
+  )
 
   cov_dir = None
   # We use a non-suffixed file in a temp directory to avoid polluting the
   # checkout and avoid sharing issues.
   total_cov_file = tempfile.NamedTemporaryFile(
-      prefix='total_coverage', delete=False)
+    prefix='total_coverage', delete=False
+  )
   total_cov_file.close()
   total_cov = coverage.Coverage(
-      config_file=False, data_file=total_cov_file.name, data_suffix=False)
+    config_file=False, data_file=total_cov_file.name, data_suffix=False
+  )
   total_cov.save()  # Force to ensure the coverage data file is created.
   try:
     # in case of crash; don't want this undefined in finally clause.
     live_threads: list[runner_mod.RunnerThread] = []
 
     cov_dir, all_threads = runner_mod.RunnerThread.make_pool(
-        recipe_deps,
-        description_queue,
-        outcome_queue,
-        is_train,
-        collect_coverage=not test_filter,
-        jobs=jobs)
+      recipe_deps,
+      description_queue,
+      outcome_queue,
+      is_train,
+      collect_coverage=not test_filter,
+      jobs=jobs,
+    )
     live_threads[:] = all_threads
 
     unused_expectation_files = _push_tests(
-        test_filter, is_train, main_repo, description_queue,
-        fail_tracker.recent_fails)
+      test_filter,
+      is_train,
+      main_repo,
+      description_queue,
+      fail_tracker.recent_fails,
+    )
     test_results.unused_expectation_files.extend(unused_expectation_files)
 
     def execute_queue() -> bool:
@@ -224,9 +238,9 @@ def _run(
       # If we don't have any filters, collect coverage data.
       if (test_filter or (stop and has_fail)) is False:
         data_paths = [
-            t.cov_file
-            for t in all_threads
-            if t.cov_file and os.path.isfile(t.cov_file)
+          t.cov_file
+          for t in all_threads
+          if t.cov_file and os.path.isfile(t.cov_file)
         ]
         if data_paths:
           total_cov.combine(data_paths)
@@ -281,17 +295,30 @@ def main(args: argparse.Namespace) -> int:
     if args.dump_timing_info:
       for testname, result in ret.test_results.items():
         as_string = json_format.MessageToJson(result.duration)
-        args.dump_timing_info.write('%s\t%s\n' % (
+        args.dump_timing_info.write(
+          '%s\t%s\n'
+          % (
             testname,
             # Durations are encoded like "0.23s". We just want the raw number
             # to be put into the file, so skip the first and last quote, and
             # the 's'.
-            as_string[1:-2]))
+            as_string[1:-2],
+          )
+        )
 
   repo = args.recipe_deps.main_repo
   try:
-    _run(ret, args.recipe_deps, args.use_emoji, args.test_filter, is_train,
-         args.stop, args.jobs, args.show_warnings, args.show_durations)
+    _run(
+      ret,
+      args.recipe_deps,
+      args.use_emoji,
+      args.test_filter,
+      is_train,
+      args.stop,
+      args.jobs,
+      args.show_warnings,
+      args.show_durations,
+    )
     _dump()
   except KeyboardInterrupt:
     args.docs = False  # skip docs

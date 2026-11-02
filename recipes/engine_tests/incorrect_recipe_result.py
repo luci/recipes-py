@@ -10,7 +10,9 @@ from collections.abc import Iterator
 from recipe_engine import recipe_test_api
 
 from PB.recipe_engine import result as result_pb2
-from PB.recipes.recipe_engine.engine_tests.incorrect_recipe_result import InputProps
+from PB.recipes.recipe_engine.engine_tests.incorrect_recipe_result import (
+  InputProps,
+)
 
 from recipe_engine import post_process
 
@@ -18,9 +20,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    json,
-    properties,
-    step,
+  json,
+  properties,
+  step,
 )
 
 
@@ -35,12 +37,13 @@ class DEPS(RecipeScriptApi):
 class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
 
+
 PROPERTIES = InputProps
 
 
 def RunSteps(
-    api: DEPS,
-    props: InputProps,
+  api: DEPS,
+  props: InputProps,
 ) -> result_pb2.Result | dict[str, str]:
   if props.use_result_type:
     return result_pb2.Result()
@@ -50,23 +53,30 @@ def RunSteps(
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'incorrect_object_returned',
-      api.properties(InputProps(use_result_type=False)),
-      api.post_process(
-          post_process.SummaryMarkdownRE,
-          ('"<(class|type) \'dict\'>" is not a valid return type for recipes\.'
-           ' Did you mean to use "RawResult"\?')),
-      api.post_process(post_process.DropExpectation),
-      status='FAILURE',
+    'incorrect_object_returned',
+    api.properties(InputProps(use_result_type=False)),
+    api.post_process(
+      post_process.SummaryMarkdownRE,
+      (
+        '"<(class|type) \'dict\'>" is not a valid return type for recipes\.'
+        ' Did you mean to use "RawResult"\?'
+      ),
+    ),
+    api.post_process(post_process.DropExpectation),
+    status='FAILURE',
   )
 
   yield api.test(
-      'result_object_returned',
-      api.properties(InputProps(use_result_type=True)),
-      api.post_process(post_process.SummaryMarkdown,
-                       ('"<class \'recipe_engine.result_pb2.Result\'>"'
-                        ' is not a valid return type for recipes.'
-                        ' Did you mean to use "RawResult"?')),
-      api.post_process(post_process.DropExpectation),
-      status='FAILURE',
+    'result_object_returned',
+    api.properties(InputProps(use_result_type=True)),
+    api.post_process(
+      post_process.SummaryMarkdown,
+      (
+        '"<class \'recipe_engine.result_pb2.Result\'>"'
+        ' is not a valid return type for recipes.'
+        ' Did you mean to use "RawResult"?'
+      ),
+    ),
+    api.post_process(post_process.DropExpectation),
+    status='FAILURE',
   )

@@ -45,8 +45,9 @@ class RunTest(test_env.RecipeEngineUnitTest):
       recipe.GenTests.write('pass')
 
     output, retcode = deps.main_repo.recipes_py('-v', '-v', 'run', 'my_recipe')
-    self.assertEqual(retcode, 0,
-                     'ret code is not zero. Recipe output\n%s' % output)
+    self.assertEqual(
+      retcode, 0, 'ret code is not zero. Recipe output\n%s' % output
+    )
 
   def test_summary_markdown_too_long(self) -> None:
     deps = self.FakeRecipeDeps()
@@ -99,16 +100,17 @@ class RunTest(test_env.RecipeEngineUnitTest):
     output, retcode = deps.main_repo.recipes_py('fetch')
     self.assertEqual(retcode, 1)
     self.assertIn(
-        'Dependency \'a\' has circular dependency on \'main\'', output)
+      'Dependency \'a\' has circular dependency on \'main\'', output
+    )
 
 
 class RunSmokeTest(test_env.RecipeEngineUnitTest):
   def _run_cmd(
-      self,
-      recipe: str,
-      workdir: str,
-      properties: Mapping[str, Any] | None = None,
-      engine_args: Sequence[str] = (),
+    self,
+    recipe: str,
+    workdir: str,
+    properties: Mapping[str, Any] | None = None,
+    engine_args: Sequence[str] = (),
   ) -> list[str]:
     script_path = os.path.join(test_env.ROOT_DIR, 'recipes.py')
 
@@ -117,42 +119,48 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
     ]
 
     return (
-      ['python3', script_path] +
-      list(engine_args) +
-      ['run', '--workdir', workdir, recipe] +
-      proplist
+      ['python3', script_path]
+      + list(engine_args)
+      + ['run', '--workdir', workdir, recipe]
+      + proplist
     )
 
   def _test_recipe(
-      self,
-      recipe: str,
-      properties: Mapping[str, Any] | None = None,
-      env: Mapping[str, str] | None = None,
+    self,
+    recipe: str,
+    properties: Mapping[str, Any] | None = None,
+    env: Mapping[str, str] | None = None,
   ) -> None:
     workdir = tempfile.mkdtemp(prefix='recipe_engine_run_test-')
     try:
       proc = subprocess.Popen(
-          self._run_cmd(recipe, workdir, properties),
-          stdout=subprocess.PIPE,
-          stderr=subprocess.STDOUT,
-          env=env,
-          text=True)
+        self._run_cmd(recipe, workdir, properties),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        env=env,
+        text=True,
+      )
       stdout = proc.communicate()
-      self.assertEqual(0, proc.returncode, '%d != %d when testing %s:\n%s' % (
-          0, proc.returncode, recipe, stdout))
+      self.assertEqual(
+        0,
+        proc.returncode,
+        '%d != %d when testing %s:\n%s' % (0, proc.returncode, recipe, stdout),
+      )
     finally:
       shutil.rmtree(workdir, ignore_errors=True)
 
-  @parameterized.parameterized.expand([
+  @parameterized.parameterized.expand(
+    [
       ('context:examples/full',),
       (
-          'context:tests/env',
-          {
-              # Set the "RECIPE_ENGINE_CONTEXT_TEST" environment variable to a
-              # known value, "default". This is used by the "context:tests/env"
-              # recipe module as a basis for runtime tests.
-              'RECIPE_ENGINE_CONTEXT_TEST': 'default',
-          }),
+        'context:tests/env',
+        {
+          # Set the "RECIPE_ENGINE_CONTEXT_TEST" environment variable to a
+          # known value, "default". This is used by the "context:tests/env"
+          # recipe module as a basis for runtime tests.
+          'RECIPE_ENGINE_CONTEXT_TEST': 'default',
+        },
+      ),
       ('file:examples/copy',),
       ('file:examples/copytree',),
       ('file:examples/glob',),
@@ -162,11 +170,12 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
       ('raw_io:examples/full',),
       ('step:examples/full',),
       ('engine_tests/functools_partial',),
-  ])
+    ]
+  )
   def test_examples(
-      self,
-      recipe_name: str,
-      env_overrides: Mapping[str, str] | None = None,
+    self,
+    recipe_name: str,
+    env_overrides: Mapping[str, str] | None = None,
   ) -> None:
     env = None
     if env_overrides:
@@ -203,16 +212,17 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
   def test_shell_quote(self) -> None:
     # For regular-looking commands we shouldn't need any specialness.
     self.assertEqual(
-        engine._shell_quote('/usr/bin/python-wrapper.bin'),
-        '/usr/bin/python-wrapper.bin')
+      engine._shell_quote('/usr/bin/python-wrapper.bin'),
+      '/usr/bin/python-wrapper.bin',
+    )
 
     STRINGS = [
-        'Simple.Command123/run',
-        'Command with spaces',
-        'Command with "quotes"',
-        "I have 'single quotes'",
-        'Some \\Esc\ape Seque\nces/',
-        'Unicode makes me \u2609\u203f\u2299',
+      'Simple.Command123/run',
+      'Command with spaces',
+      'Command with "quotes"',
+      "I have 'single quotes'",
+      'Some \\Esc\ape Seque\nces/',
+      'Unicode makes me \u2609\u203f\u2299',
     ]
 
     for s in STRINGS:
@@ -225,7 +235,8 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
       # We should be able to paste any argument into bash & zsh and get
       # exactly what subprocess did.
       bash_output = subprocess.check_output(
-          ['bash', '-c', '/bin/echo %s' % quoted], text=True)
+        ['bash', '-c', '/bin/echo %s' % quoted], text=True
+      )
       self.assertEqual(bash_output, s + '\n')
 
       # zsh is untested because zsh isn't provisioned on our bots.
@@ -238,19 +249,20 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
   def _wait_for_file(self, filename: str, duration: float) -> str:
     begin = time.time()
     while True:
-      self.assertLessEqual(time.time() - begin, duration,
-                           'took too long to find ' + filename)
+      self.assertLessEqual(
+        time.time() - begin, duration, 'took too long to find ' + filename
+      )
       try:
         with open(filename, 'r') as f:
           return f.read()
       except IOError:
-        time.sleep(.5)
+        time.sleep(0.5)
 
   @contextlib.contextmanager
   def _run_bbagent(
-      self,
-      properties: Mapping[str, Any],
-      grace_period: int = 30,
+    self,
+    properties: Mapping[str, Any],
+    grace_period: int = 30,
   ) -> Iterator[tuple[subprocess.Popen[str], int]]:
     workdir = tempfile.mkdtemp(prefix='recipe_engine_run_test-')
     proc = None
@@ -263,16 +275,21 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
       env['WD'] = workdir
       env['LUCI_GRACE_PERIOD'] = str(grace_period)
 
-      proc = subprocess.Popen([fake_bbagent, "--pid-file", pidfile],
-                              stdin=subprocess.PIPE,
-                              env=env,
-                              text=True)
+      proc = subprocess.Popen(
+        [fake_bbagent, "--pid-file", pidfile],
+        stdin=subprocess.PIPE,
+        env=env,
+        text=True,
+      )
       assert proc.stdin is not None
-      json.dump({
+      json.dump(
+        {
           "input": {
-              "properties": properties,
+            "properties": properties,
           },
-      }, proc.stdin)
+        },
+        proc.stdin,
+      )
       proc.stdin.close()
 
       engine_pid = int(self._wait_for_file(pidfile, 30).strip())
@@ -284,10 +301,10 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
       shutil.rmtree(workdir, ignore_errors=True)
 
   def _test_bbagent(
-      self,
-      properties: Mapping[str, Any],
-      grace_period: int = 30,
-      timeout: int = 30,
+    self,
+    properties: Mapping[str, Any],
+    grace_period: int = 30,
+    timeout: int = 30,
   ) -> dict[str, Any]:
     scrap = tempfile.mkdtemp(prefix='recipe_engine_run_test-')
     try:
@@ -306,17 +323,22 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
       env['LUCI_GRACE_PERIOD'] = str(grace_period)
       env['LUCI_SOFT_DEADLINE'] = str(deadline)
       env['FAKE_BBAGENT_OUTFILE'] = outfile
-      proc = subprocess.Popen([fake_bbagent, "--pid-file", pidfile],
-                              stdin=subprocess.PIPE,
-                              env=env,
-                              text=True)
+      proc = subprocess.Popen(
+        [fake_bbagent, "--pid-file", pidfile],
+        stdin=subprocess.PIPE,
+        env=env,
+        text=True,
+      )
 
       assert proc.stdin is not None
-      json.dump({
+      json.dump(
+        {
           "input": {
-              "properties": properties,
+            "properties": properties,
           },
-      }, proc.stdin)
+        },
+        proc.stdin,
+      )
       proc.stdin.close()
 
       engine_pid = int(self._wait_for_file(pidfile, 30).strip())
@@ -388,7 +410,7 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
 
   def test_add_build_tags(self) -> None:
     final_build = self._test_bbagent(
-        {'recipe': 'buildbucket:tests/add_build_tags'},
+      {'recipe': 'buildbucket:tests/add_build_tags'},
     )
     self.assertListEqual(
       sorted(final_build['tags'], key=lambda tag: (tag['key'], tag['value'])),
@@ -402,7 +424,7 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
 
   def test_add_step_tags(self) -> None:
     final_build = self._test_bbagent(
-        {'recipe': 'buildbucket:tests/add_step_tags'},
+      {'recipe': 'buildbucket:tests/add_step_tags'},
     )
     for step in final_build['steps']:
       if step["name"] == "hostname":
@@ -416,34 +438,40 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
 
   def test_output_gitiles(self) -> None:
     final_build = self._test_bbagent(
-        {'recipe': 'buildbucket:tests/output_commit'},
+      {'recipe': 'buildbucket:tests/output_commit'},
     )
-    self.assertDictEqual(final_build['output']['gitiles_commit'], {
-      'host': 'chromium.googlesource.com',
-      'id': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-      'position': 42,
-      'project': 'infra/infra',
-      'ref': 'refs/heads/main',
-    })
+    self.assertDictEqual(
+      final_build['output']['gitiles_commit'],
+      {
+        'host': 'chromium.googlesource.com',
+        'id': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        'position': 42,
+        'project': 'infra/infra',
+        'ref': 'refs/heads/main',
+      },
+    )
 
   def test_proto_output_properties(self) -> None:
     final_build = self._test_bbagent(
-        {'recipe': 'engine_tests/proto_output_properties'},
+      {'recipe': 'engine_tests/proto_output_properties'},
     )
     output_props = final_build['output']['properties']
-    self.assertDictEqual(output_props['$mod/proto_out'], {
-      'str': 'foo',
-      'strs': ['bar', 'baz'],
-      'msg' : {
-        'num': 1,
-        'nums': [10, 11, 12],
+    self.assertDictEqual(
+      output_props['$mod/proto_out'],
+      {
+        'str': 'foo',
+        'strs': ['bar', 'baz'],
+        'msg': {
+          'num': 1,
+          'nums': [10, 11, 12],
+        },
       },
-    })
+    )
 
   def test_external_timeout(self) -> None:
     final_build = self._test_bbagent(
-        {'recipe': 'engine_tests/long_sleep'},
-        timeout=15,
+      {'recipe': 'engine_tests/long_sleep'},
+      timeout=15,
     )
     for step in final_build['steps']:
       del step['end_time']
@@ -452,36 +480,28 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
       if step['name'] == 'setup_build':
         del step['summary_markdown']
     self.assertDictEqual(
-        final_build, {
-            'status': 'CANCELED',
-            'summary_markdown': "The build was cancelled: "
-                                "Step('sleep forever')\n",
-            'steps': [
-                {
-                    'name': 'setup_build',
-                    'status': 'SUCCESS'
-                },
-                {
-                    'name': 'sleep a bit',
-                    'status': 'FAILURE'
-                },
-                {
-                    'name': 'sleep forever',
-                    'status': 'CANCELED'
-                },
-            ],
-            'output': {
-                'status': 'CANCELED',
-            },
-        })
+      final_build,
+      {
+        'status': 'CANCELED',
+        'summary_markdown': "The build was cancelled: Step('sleep forever')\n",
+        'steps': [
+          {'name': 'setup_build', 'status': 'SUCCESS'},
+          {'name': 'sleep a bit', 'status': 'FAILURE'},
+          {'name': 'sleep forever', 'status': 'CANCELED'},
+        ],
+        'output': {
+          'status': 'CANCELED',
+        },
+      },
+    )
 
   def test_external_timeout_recovery(self) -> None:
     final_build = self._test_bbagent(
-        {
-          'recipe': 'engine_tests/long_sleep',
-          'recover': True,
-        },
-        timeout=10,
+      {
+        'recipe': 'engine_tests/long_sleep',
+        'recover': True,
+      },
+      timeout=10,
     )
     self.assertEqual(final_build['status'], 'SUCCESS')
 

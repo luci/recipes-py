@@ -7,18 +7,19 @@ from __future__ import annotations
 from collections.abc import Iterator
 from recipe_engine import recipe_test_api
 
-from recipe_engine.post_process import (DropExpectation,
-  DoesNotRunRE)
+from recipe_engine.post_process import DropExpectation, DoesNotRunRE
 
 from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
-from PB.go.chromium.org.luci.resultdb.proto.v1 import invocation as invocation_pb2
+from PB.go.chromium.org.luci.resultdb.proto.v1 import (
+  invocation as invocation_pb2,
+)
 
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    context,
-    resultdb,
+  context,
+  resultdb,
 )
 
 
@@ -47,41 +48,40 @@ def RunSteps(api: DEPS) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   rdb_luci_context = sections_pb2.ResultDB(
-      current_invocation=sections_pb2.ResultDBInvocation(
-          name='invocations/build:8945511751514863184',
-          update_token='token',
-      ),
-      hostname='rdbhost',
+    current_invocation=sections_pb2.ResultDBInvocation(
+      name='invocations/build:8945511751514863184',
+      update_token='token',
+    ),
+    hostname='rdbhost',
   )
   yield (
-    api.test('noop') +
-    api.context.luci_context(
-        realm=sections_pb2.Realm(name='chromium:ci'),
-        resultdb=rdb_luci_context,
-    ) +
-    api.resultdb.query({}, step_name='rdb query') +
-    api.post_process(
-        DoesNotRunRE, 'rdb include', 'rdb exclude') +
-    api.post_process(DropExpectation)
+    api.test('noop')
+    + api.context.luci_context(
+      realm=sections_pb2.Realm(name='chromium:ci'),
+      resultdb=rdb_luci_context,
+    )
+    + api.resultdb.query({}, step_name='rdb query')
+    + api.post_process(DoesNotRunRE, 'rdb include', 'rdb exclude')
+    + api.post_process(DropExpectation)
   )
   inv_bundle = {
-      'invid': api.resultdb.Invocation(
-          proto=invocation_pb2.Invocation(
-              state=invocation_pb2.Invocation.FINALIZED),
+    'invid': api.resultdb.Invocation(
+      proto=invocation_pb2.Invocation(
+        state=invocation_pb2.Invocation.FINALIZED
       ),
-      'invid2': api.resultdb.Invocation(
-          proto=invocation_pb2.Invocation(
-              state=invocation_pb2.Invocation.FINALIZED),
+    ),
+    'invid2': api.resultdb.Invocation(
+      proto=invocation_pb2.Invocation(
+        state=invocation_pb2.Invocation.FINALIZED
       ),
+    ),
   }
 
   yield (
-    api.test('basic') +
-    api.context.luci_context(
-        realm=sections_pb2.Realm(name='chromium:ci'),
-        resultdb=rdb_luci_context,
-    ) +
-    api.resultdb.query(
-        inv_bundle,
-        step_name='rdb query')
+    api.test('basic')
+    + api.context.luci_context(
+      realm=sections_pb2.Realm(name='chromium:ci'),
+      resultdb=rdb_luci_context,
+    )
+    + api.resultdb.query(inv_bundle, step_name='rdb query')
   )

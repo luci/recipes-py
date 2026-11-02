@@ -13,9 +13,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    led,
-    properties,
-    step,
+  led,
+  properties,
+  step,
 )
 
 
@@ -32,15 +32,16 @@ class TEST_DEPS(RecipeTestApi):
 
 
 def RunSteps(api: DEPS) -> None:
-  api.led.trigger_builder('chromium', 'ci', 'Foo Tester',
-                          {'swarm_hashes': {
-                              'bar': 'deadbeef'
-                          }})
+  api.led.trigger_builder(
+    'chromium', 'ci', 'Foo Tester', {'swarm_hashes': {'bar': 'deadbeef'}}
+  )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   led_run_id = 'led/user_example.com/deadbeef'
   yield api.test(
-      'trigger',
-      api.properties(
-          **{'$recipe_engine/led': InputProperties(led_run_id=led_run_id)}))
+    'trigger',
+    api.properties(
+      **{'$recipe_engine/led': InputProperties(led_run_id=led_run_id)}
+    ),
+  )

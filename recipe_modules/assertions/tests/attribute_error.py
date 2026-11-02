@@ -13,9 +13,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    properties,
-    step,
+  assertions,
+  properties,
+  step,
 )
 
 
@@ -35,8 +35,8 @@ def RunSteps(api: DEPS) -> None:
 
 def GenTests(api: RecipeTestApi) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'basic',
-      api.post_process(post_process.MustRun, 'AttributeError'),
-      api.post_process(post_process.StatusSuccess),
-      api.post_process(post_process.DropExpectation),
+    'basic',
+    api.post_process(post_process.MustRun, 'AttributeError'),
+    api.post_process(post_process.StatusSuccess),
+    api.post_process(post_process.DropExpectation),
   )

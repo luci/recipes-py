@@ -14,8 +14,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    runtime,
-    step,
+  runtime,
+  step,
 )
 
 
@@ -47,19 +47,19 @@ def RunSteps(api: DEPS) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'basic',
-      api.runtime(is_experimental=False),
-      api.runtime.global_shutdown_on_step('compile'),
-      api.post_process(post_process.StepSuccess, 'compile'),
-      api.post_process(post_process.StepException, 'should_skip'),
-      status='CANCELED',
+    'basic',
+    api.runtime(is_experimental=False),
+    api.runtime.global_shutdown_on_step('compile'),
+    api.post_process(post_process.StepSuccess, 'compile'),
+    api.post_process(post_process.StepException, 'should_skip'),
+    status='CANCELED',
   )
 
   yield api.test(
-      'shutdown-before',
-      api.runtime(is_experimental=False),
-      api.runtime.global_shutdown_on_step('compile', 'before'),
-      api.post_process(post_process.StepException, 'compile'),
-      api.post_process(post_process.DoesNotRun, 'should_skip'),
-      status='CANCELED',
+    'shutdown-before',
+    api.runtime(is_experimental=False),
+    api.runtime.global_shutdown_on_step('compile', 'before'),
+    api.post_process(post_process.StepException, 'compile'),
+    api.post_process(post_process.DoesNotRun, 'should_skip'),
+    status='CANCELED',
   )

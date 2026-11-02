@@ -43,7 +43,8 @@ _WRITE_LOCK = threading.RLock()
 @contextlib.contextmanager
 def _tf(data, data_raw=False, leak=False, workdir=None):
   tf = tempfile.NamedTemporaryFile(
-      mode='w', prefix='luci_ctx.', suffix='.json', delete=False, dir=workdir)
+    mode='w', prefix='luci_ctx.', suffix='.json', delete=False, dir=workdir
+  )
   _LOGGER.debug('Writing LUCI_CONTEXT file %r', tf.name)
   try:
     if not data_raw:
@@ -58,14 +59,15 @@ def _tf(data, data_raw=False, leak=False, workdir=None):
       try:
         os.unlink(tf.name)
       except OSError as ex:
-        _LOGGER.error('Failed to delete written LUCI_CONTEXT file %r: %s',
-                      tf.name, ex)
+        _LOGGER.error(
+          'Failed to delete written LUCI_CONTEXT file %r: %s', tf.name, ex
+        )
 
 
 def _to_encodable(obj):
   if isinstance(obj, dict):
     return {
-        _to_encodable(key): _to_encodable(value) for key, value in obj.items()
+      _to_encodable(key): _to_encodable(value) for key, value in obj.items()
     }
   if isinstance(obj, list):
     return [_to_encodable(item) for item in obj]
@@ -77,21 +79,22 @@ def _to_encodable(obj):
 class MultipleLUCIContextException(Exception):
   def __init__(self):
     super(MultipleLUCIContextException, self).__init__(
-      'Attempted to write LUCI_CONTEXT in multiple threads')
+      'Attempted to write LUCI_CONTEXT in multiple threads'
+    )
 
 
 def _check_ok(data):
   if not isinstance(data, dict):
     _LOGGER.error(
-      'LUCI_CONTEXT does not contain a dict: %s', type(data).__name__)
+      'LUCI_CONTEXT does not contain a dict: %s', type(data).__name__
+    )
     return False
 
   bad = False
   for k, v in data.items():
     if not isinstance(v, dict):
       bad = True
-      _LOGGER.error(
-        'LUCI_CONTEXT[%r] is not a dict: %s', k, type(v).__name__)
+      _LOGGER.error('LUCI_CONTEXT[%r] is not a dict: %s', k, type(v).__name__)
 
   return not bad
 
@@ -138,8 +141,9 @@ def _mutate(section_values):
         changed = True
       new_val[section] = value
     else:
-      raise ValueError('Bad type for LUCI_CONTEXT[%r]: %s' %
-                       (section, type(value).__name__))
+      raise ValueError(
+        'Bad type for LUCI_CONTEXT[%r]: %s' % (section, type(value).__name__)
+      )
   return new_val, changed
 
 

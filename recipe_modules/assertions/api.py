@@ -17,10 +17,12 @@ from recipe_engine import recipe_api
 # Change the value of the message for when a diff is omitted to refer to
 # assertions.maxDiff instead of self.maxDiff.
 unittest.case.DIFF_OMITTED = unittest.case.DIFF_OMITTED.replace(
-    'self.maxDiff', 'assertions.maxDiff')
+  'self.maxDiff', 'assertions.maxDiff'
+)
+
 
 def make_assertion(
-    assertion_method: str, **test_case_attrs: Any
+  assertion_method: str, **test_case_attrs: Any
 ) -> Callable[..., Any]:
   def assertion_wrapper(*args: Any, **kwargs: Any) -> Any:
     class Asserter(unittest.TestCase):
@@ -38,8 +40,9 @@ def make_assertion(
           # {'first': 0, 'second': 1} because the name of assertEqual's
           # arguments are named first and second
           call_args = inspect.getcallargs(assertion, *args, **kwargs)
-          format_args = {k: v for k, v in call_args.items()
-                         if k not in ('self', 'msg')}
+          format_args = {
+            k: v for k, v in call_args.items() if k not in ('self', 'msg')
+          }
           msg = msg.format(**format_args)
         return super()._formatMessage(msg, standardMsg)
 
@@ -109,36 +112,36 @@ class AssertionsApi(recipe_api.RecipeApi):
   # Not included: assertLogs, all of the deprecated assertion methods, all
   # non-methods
   _TEST_CASE_PASSTHROUGH_ATTRS = [
-      'assertAlmostEqual',
-      'assertDictContainsSubset',
-      'assertDictEqual',
-      'assertEqual',
-      'assertFalse',
-      'assertGreater',
-      'assertGreaterEqual',
-      'assertIn',
-      'assertIs',
-      'assertIsInstance',
-      'assertIsNone',
-      'assertIsNot',
-      'assertIsNotNone',
-      'assertLess',
-      'assertLessEqual',
-      'assertListEqual',
-      'assertMultiLineEqual',
-      'assertNotAlmostEqual',
-      'assertNotEqual',
-      'assertNotIn',
-      'assertNotIsInstance',
-      'assertNotRegexpMatches',
-      'assertRaises',
-      'assertRaisesRegexp',
-      'assertRegexpMatches',
-      'assertSequenceEqual',
-      'assertSetEqual',
-      'assertTrue',
-      'assertTupleEqual',
-      'fail',
+    'assertAlmostEqual',
+    'assertDictContainsSubset',
+    'assertDictEqual',
+    'assertEqual',
+    'assertFalse',
+    'assertGreater',
+    'assertGreaterEqual',
+    'assertIn',
+    'assertIs',
+    'assertIsInstance',
+    'assertIsNone',
+    'assertIsNot',
+    'assertIsNotNone',
+    'assertLess',
+    'assertLessEqual',
+    'assertListEqual',
+    'assertMultiLineEqual',
+    'assertNotAlmostEqual',
+    'assertNotEqual',
+    'assertNotIn',
+    'assertNotIsInstance',
+    'assertNotRegexpMatches',
+    'assertRaises',
+    'assertRaisesRegexp',
+    'assertRegexpMatches',
+    'assertSequenceEqual',
+    'assertSetEqual',
+    'assertTrue',
+    'assertTupleEqual',
+    'fail',
   ]
 
   def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -156,7 +159,8 @@ class AssertionsApi(recipe_api.RecipeApi):
   def __getattr__(self, attr: str) -> Callable[..., Any]:
     if attr in self._TEST_CASE_PASSTHROUGH_ATTRS:
       return make_assertion(
-          attr, longMessage=self.longMessage, maxDiff=self.maxDiff)
+        attr, longMessage=self.longMessage, maxDiff=self.maxDiff
+      )
     # TODO(crbug/1147793) When python2 support is removed (and all uses are
     # switch to call assertCountEqual), just add assertCountEqual to
     # _TEST_CASE_PASSTHROUGH_ATTRS
@@ -164,6 +168,8 @@ class AssertionsApi(recipe_api.RecipeApi):
       for a in ('assertCountEqual', 'assertItemsEqual'):
         if hasattr(unittest.TestCase, a):
           return make_assertion(
-              a, longMessage=self.longMessage, maxDiff=self.maxDiff)
-    raise AttributeError("'%s' object has no attribute '%s'"
-                         % (type(self).__name__, attr))
+            a, longMessage=self.longMessage, maxDiff=self.maxDiff
+          )
+    raise AttributeError(
+      "'%s' object has no attribute '%s'" % (type(self).__name__, attr)
+    )

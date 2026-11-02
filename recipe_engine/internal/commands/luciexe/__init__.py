@@ -34,26 +34,36 @@ def _valid_output(output: str) -> str:
   _, ext = os.path.splitext(output)
   allowed_exts = ('.pb', '.json', '.textpb')
   if ext not in allowed_exts:
-    raise argparse.ArgumentTypeError('Extension of output path must be one of '
-      'one of %s; Got %s' % (allowed_exts, ext))
+    raise argparse.ArgumentTypeError(
+      'Extension of output path must be one of '
+      'one of %s; Got %s' % (allowed_exts, ext)
+    )
   return output
+
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
   parser.add_argument(
-      '--output', action='store', type=_valid_output, help=(
-        'Path to write the final build.proto state to. The path extension MUST '
-        'be one of (.pb, .json, .textpb). This will decide the encoding of the '
-        'final build proto state.'
-      ))
+    '--output',
+    action='store',
+    type=_valid_output,
+    help=(
+      'Path to write the final build.proto state to. The path extension MUST '
+      'be one of (.pb, .json, .textpb). This will decide the encoding of the '
+      'final build proto state.'
+    ),
+  )
   parser.add_argument(
-      '--build-proto-stream-jsonpb', action='store_true',
-      help=(
-        'If specified, output build.proto datagrams stream as JSONPB instead '
-        'of PB. Only for debugging.'
-      ))
+    '--build-proto-stream-jsonpb',
+    action='store_true',
+    help=(
+      'If specified, output build.proto datagrams stream as JSONPB instead '
+      'of PB. Only for debugging.'
+    ),
+  )
 
   def _launch(args: argparse.Namespace) -> int:
     from . import cmd
+
     try:
       return cmd.main(args)
     except RunBuildContractViolation as ex:
@@ -61,8 +71,8 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
       return 1
 
   def _post(
-      _error: Callable[[str], Any],
-      _args: argparse.Namespace,
+    _error: Callable[[str], Any],
+    _args: argparse.Namespace,
   ) -> None:
     logging.getLogger().setLevel(logging.INFO)
 

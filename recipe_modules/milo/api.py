@@ -50,8 +50,8 @@ class MiloApi(recipe_api.RecipeApi):
     return f'{self.host}/ui/inv/{inv_name}'
 
   def show_blamelist_for(
-      self,
-      gitiles_commits: Sequence[common_pb2.GitilesCommit | Mapping[str, Any]],
+    self,
+    gitiles_commits: Sequence[common_pb2.GitilesCommit | Mapping[str, Any]],
   ) -> None:
     """Specifies which commits and repos Milo should show a blamelist for.
 
@@ -64,8 +64,9 @@ class MiloApi(recipe_api.RecipeApi):
         Each commit must have host, project and id.
         ID must match r'^[0-9a-f]{40}$' (git revision).
     """
-    gitiles_commits = [_as_msg(c, common_pb2.GitilesCommit)
-                       for c in gitiles_commits]
+    gitiles_commits = [
+      _as_msg(c, common_pb2.GitilesCommit) for c in gitiles_commits
+    ]
     # Validate commit object.
     for c in gitiles_commits:
       assert isinstance(c, common_pb2.GitilesCommit), c
@@ -87,7 +88,9 @@ class MiloApi(recipe_api.RecipeApi):
     res = self.m.step('set blamelist pins', cmd=None)
     prop_name = '$recipe_engine/milo/blamelist_pins'
     res.presentation.properties[prop_name] = [
-        json_format.MessageToDict(c) for c in gitiles_commits]
+      json_format.MessageToDict(c) for c in gitiles_commits
+    ]
+
 
 def _as_msg(value: _MsgT | Mapping[str, Any], typ: type[_MsgT]) -> _MsgT:
   """Converts a dict to the specified proto type if necessary.

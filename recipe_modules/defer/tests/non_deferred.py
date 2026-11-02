@@ -7,18 +7,19 @@ from __future__ import annotations
 import contextlib
 from collections.abc import Iterator
 
-from PB.recipe_modules.recipe_engine.defer.tests import (properties as
-                                                         properties_pb2)
+from PB.recipe_modules.recipe_engine.defer.tests import (
+  properties as properties_pb2,
+)
 from recipe_engine import post_process, recipe_test_api, step_data
 
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    context,
-    defer,
-    properties,
-    step,
+  context,
+  defer,
+  properties,
+  step,
 )
 
 
@@ -33,6 +34,7 @@ class DEPS(RecipeScriptApi):
 @dataclass
 class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
+
 
 PROPERTIES = properties_pb2.NonDeferredInputProps
 
@@ -58,17 +60,17 @@ def RunSteps(api: DEPS, props: properties_pb2.NonDeferredInputProps) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'pass',
-      api.properties(properties_pb2.NonDeferredInputProps(fail=False)),
-      api.expect_exception('OSError'),
-      api.post_process(post_process.DropExpectation),
+    'pass',
+    api.properties(properties_pb2.NonDeferredInputProps(fail=False)),
+    api.expect_exception('OSError'),
+    api.post_process(post_process.DropExpectation),
   )
 
   yield api.test(
-      'fail',
-      api.properties(properties_pb2.NonDeferredInputProps(fail=True)),
-      api.expect_exception('KeyError'),
-      api.expect_exception('OSError'),
-      api.expect_exception('ValueError'),
-      api.post_process(post_process.DropExpectation),
+    'fail',
+    api.properties(properties_pb2.NonDeferredInputProps(fail=True)),
+    api.expect_exception('KeyError'),
+    api.expect_exception('OSError'),
+    api.expect_exception('ValueError'),
+    api.post_process(post_process.DropExpectation),
   )

@@ -60,12 +60,13 @@ def archive(out, root, entries):
   Returns:
     Exit code (0 on success).
   """
+
   def add(path):
     assert path.startswith(root), path
     # Do not add itself to archive.
     if path == out.name:
       return
-    archive_name = path[len(root):]
+    archive_name = path[len(root) :]
     print('Adding %s' % archive_name)
     out.add(path, archive_name)
 
@@ -83,11 +84,11 @@ def archive(out, root, entries):
 
 
 OPENER_FUNCS = {
-    'tar': lambda path: tarfile.open(path, 'w'),
-    'tgz': lambda path: tarfile.open(path, 'w|gz'),
-    'tbz': lambda path: tarfile.open(path, 'w|bz2'),
-    'tzst': tar_zstandard_opener,
-    'zip': zip_opener,
+  'tar': lambda path: tarfile.open(path, 'w'),
+  'tgz': lambda path: tarfile.open(path, 'w|gz'),
+  'tbz': lambda path: tarfile.open(path, 'w|bz2'),
+  'tzst': tar_zstandard_opener,
+  'zip': zip_opener,
 }
 
 

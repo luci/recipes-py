@@ -16,9 +16,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    context,
-    path,
-    step,
+  context,
+  path,
+  step,
 )
 
 
@@ -37,10 +37,10 @@ class TEST_DEPS(RecipeTestApi):
 def RunSteps(api: DEPS) -> None:
 
   def assert_raises(
-      exc_type: type[Exception],
-      func: Callable[..., Any],
-      *args: Any,
-      **kwargs: Any,
+    exc_type: type[Exception],
+    func: Callable[..., Any],
+    *args: Any,
+    **kwargs: Any,
   ) -> None:
     try:
       func(*args, **kwargs)
@@ -58,10 +58,10 @@ def RunSteps(api: DEPS) -> None:
   assert api.path.expanduser('~/foo/bar') == str(api.path.home_dir / 'foo/bar')
 
   def testexpandvars(
-      variable: str,
-      value: str,
-      unexpanded_path: str,
-      expected_path: config_types.Path,
+    variable: str,
+    value: str,
+    unexpanded_path: str,
+    expected_path: config_types.Path,
   ) -> None:
     with api.context(env={variable: str(value)}):
       with api.step.nest(unexpanded_path):

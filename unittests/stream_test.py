@@ -30,7 +30,7 @@ class StreamTest(test_env.RecipeEngineUnitTest):
       bar.add_step_text('*blushing*')
       poem.write_line('thoust goest thumpitypump..est')
 
-    foo.add_step_link(u'read it online!', u'https://foospoemtobar.com/')
+    foo.add_step_link('read it online!', 'https://foospoemtobar.com/')
     foo.add_step_summary_text('read a killer poem and took a bow')
     foo.close()
 
@@ -38,7 +38,7 @@ class StreamTest(test_env.RecipeEngineUnitTest):
     bar.write_line('bar tries to kiss foo, but foo already left')
     bar.write_line('@@@KISS@foo@@@')
     bar.set_step_status('EXCEPTION', had_timeout=False)
-    bar.set_step_tag(u'tag_key', u'tag_value')
+    bar.set_step_tag('tag_key', 'tag_value')
     bar.close()
 
   def _example_annotations(self) -> str:
@@ -84,13 +84,14 @@ bar tries to kiss foo, but foo already left
   def test_example(self) -> None:
     stringio = io.StringIO()
     engine = annotator.AnnotatorStreamEngine(
-        stringio, emit_timestamps=True, time_fn=self.fake_time)
+      stringio, emit_timestamps=True, time_fn=self.fake_time
+    )
     with engine:
       self._example(engine)
       # Split lines for good diffs.
     self.assertEqual(
-        stringio.getvalue().splitlines(),
-        self._example_annotations().splitlines())
+      stringio.getvalue().splitlines(), self._example_annotations().splitlines()
+    )
 
   def test_example_wellformed(self) -> None:
     with invariants.StreamEngineInvariants() as engine:
@@ -99,8 +100,10 @@ bar tries to kiss foo, but foo already left
   def test_product_with_invariants_on_example(self) -> None:
     stringio = io.StringIO()
     engine = invariants.StreamEngineInvariants.wrap(
-        annotator.AnnotatorStreamEngine(
-            stringio, emit_timestamps=True, time_fn=self.fake_time))
+      annotator.AnnotatorStreamEngine(
+        stringio, emit_timestamps=True, time_fn=self.fake_time
+      )
+    )
     with engine:
       self._example(engine)
     self.assertEqual(

@@ -11,8 +11,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    futures,
-    step,
+  futures,
+  step,
 )
 
 
@@ -36,7 +36,8 @@ def RunSteps(api: DEPS) -> None:
   fut = api.futures.spawn(api.step, 'do work', cmd=['something'])
   if fut.exception():
     assert isinstance(fut.exception(), api.step.StepFailure), (
-      'Some other exception?')
+      'Some other exception?'
+    )
   fut.result()
 
   assert fut.done, 'What? The future must be done after getting its result.'
@@ -46,20 +47,16 @@ def RunSteps(api: DEPS) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'success',
-      api.post_check(lambda check, steps: check(
-          'run if success' in steps
-      )),
+    'success',
+    api.post_check(lambda check, steps: check('run if success' in steps)),
   )
 
   yield api.test(
-      'failure',
-      api.step_data('do work', retcode=1),
-      api.post_check(lambda check, steps: check(
-          steps['do work'].status == 'FAILURE'
-      )),
-      api.post_check(lambda check, steps: check(
-          'run if success' not in steps
-      )),
-      status='FAILURE',
+    'failure',
+    api.step_data('do work', retcode=1),
+    api.post_check(
+      lambda check, steps: check(steps['do work'].status == 'FAILURE')
+    ),
+    api.post_check(lambda check, steps: check('run if success' not in steps)),
+    status='FAILURE',
   )

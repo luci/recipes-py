@@ -16,9 +16,9 @@ from recipe_engine import recipe_test_api
 
 class FileTestApi(recipe_test_api.RecipeTestApi):
   def listdir(
-      self,
-      paths: Iterable[str | config_types.Path] = (),
-      errno_name: str | int = 0,
+    self,
+    paths: Iterable[str | config_types.Path] = (),
+    errno_name: str | int = 0,
   ) -> recipe_test_api.StepTestData:
     """Provides test mock for the `listdir` method.
 
@@ -31,17 +31,19 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
       yield (api.test('my_test')
         + api.step_data('listdir step name', api.file.listdir(['a', 'b', 'c']))
     """
+
     def _check(p: str | config_types.Path) -> str:
       p = str(p)
       if p.startswith('../') or p.startswith('..\\'):  # pragma: no cover
         raise ValueError('path is outside of listdir root directory: %r' % p)
       return p
-    return (
-        self.m.raw_io.stream_output_text('\n'.join(sorted(map(_check, paths))))
-        + self.errno(errno_name))
+
+    return self.m.raw_io.stream_output_text(
+      '\n'.join(sorted(map(_check, paths)))
+    ) + self.errno(errno_name)
 
   def filesizes(
-      self, sizes: Iterable[int] = (), errno_name: str | int = 0
+    self, sizes: Iterable[int] = (), errno_name: str | int = 0
   ) -> recipe_test_api.StepTestData:
     """Provides test mock for the `filesizes` method.
 
@@ -53,11 +55,12 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
       yield (api.test('my_test')
         + api.step_data('filesize step name', api.file.filesizes([1674, 5714]))
     """
-    return (self.m.raw_io.stream_output_text('\n'.join(map(str, sizes)))
-            + self.errno(errno_name))
+    return self.m.raw_io.stream_output_text(
+      '\n'.join(map(str, sizes))
+    ) + self.errno(errno_name)
 
   def compute_hash(
-      self, hash: str = '', errno_name: str | int = 0
+    self, hash: str = '', errno_name: str | int = 0
   ) -> recipe_test_api.StepTestData:
     """Provides test mock for the `compute_hash` method.
 
@@ -71,11 +74,10 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
             api.file.compute_hash('deadbeef'))
       )
     """
-    return (self.m.raw_io.stream_output_text(hash)
-            + self.errno(errno_name))
+    return self.m.raw_io.stream_output_text(hash) + self.errno(errno_name)
 
   def file_hash(
-      self, hash: str = '', errno_name: str | int = 0
+    self, hash: str = '', errno_name: str | int = 0
   ) -> recipe_test_api.StepTestData:
     """Provides test mock for the `file_hash` method.
 
@@ -89,11 +91,10 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
             api.file.file_hash('deadbeef'))
       )
     """
-    return (self.m.raw_io.stream_output_text(hash)
-            + self.errno(errno_name))
+    return self.m.raw_io.stream_output_text(hash) + self.errno(errno_name)
 
   def read_raw(
-      self, content: bytes | str = b'', errno_name: str | int = 0
+    self, content: bytes | str = b'', errno_name: str | int = 0
   ) -> recipe_test_api.StepTestData:
     """Provides test mock for the `read_raw` method.
 
@@ -107,12 +108,10 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
             api.file.read_raw('some\0file\0content'))
       )
     """
-    return (self.m.raw_io.output(content)
-            + self.errno(errno_name))
-
+    return self.m.raw_io.output(content) + self.errno(errno_name)
 
   def read_text(
-      self, text_content: str = '', errno_name: str | int = 0
+    self, text_content: str = '', errno_name: str | int = 0
   ) -> recipe_test_api.StepTestData:
     """Provides test mock for the `read_text` method.
 
@@ -126,11 +125,10 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
             api.file.read_text('some\nfile\ncontent'))
       )
     """
-    return (self.m.raw_io.output_text(text_content)
-            + self.errno(errno_name))
+    return self.m.raw_io.output_text(text_content) + self.errno(errno_name)
 
   def read_json(
-      self, json_content: Any = '', errno_name: str | int = 0
+    self, json_content: Any = '', errno_name: str | int = 0
   ) -> recipe_test_api.StepTestData:
     """Provides test mock for the `read_json` method.
 
@@ -149,7 +147,7 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
     return self.m.raw_io.output_text(text) + self.errno(errno_name)
 
   def read_proto(
-      self, proto_msg: message.Message, errno_name: str | int = 0
+    self, proto_msg: message.Message, errno_name: str | int = 0
   ) -> recipe_test_api.StepTestData:
     """Provides a test mock for the `read_proto` method.
 
@@ -157,11 +155,10 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
       proto_msg (protobuf Message) - The proto message to be returned.
       errno_name (str|None) - The error name for this step to return, if any.
     """
-    return (self.m.proto.output(proto_msg)
-            + self.errno(errno_name))
+    return self.m.proto.output(proto_msg) + self.errno(errno_name)
 
   def glob_paths(
-      self, names: Iterable[str] = (), errno_name: str | int = 0
+    self, names: Iterable[str] = (), errno_name: str | int = 0
   ) -> recipe_test_api.StepTestData:
     """Provides test mock for the `glob_paths` method.
 
@@ -175,11 +172,12 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
           'pattern_path', 'pattern_other_thing'
       ]))
     """
-    return (self.m.raw_io.stream_output_text('\n'.join(sorted(map(str, names))))
-            + self.errno(errno_name))
+    return self.m.raw_io.stream_output_text(
+      '\n'.join(sorted(map(str, names)))
+    ) + self.errno(errno_name)
 
   def is_executable(
-      self, result: bool = True, errno_name: str | int = 0
+    self, result: bool = True, errno_name: str | int = 0
   ) -> recipe_test_api.StepTestData:
     """Provides test mock for the `is_executable` method.
 
@@ -187,11 +185,12 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
       result: The result to return.
       errno_name: The error name for this step to return, if any.
     """
-    return (self.m.raw_io.stream_output_text(str(result))
-            + self.errno(errno_name))
+    return self.m.raw_io.stream_output_text(str(result)) + self.errno(
+      errno_name
+    )
 
   def errno(
-      self, errno_name: str | int | None = None
+    self, errno_name: str | int | None = None
   ) -> recipe_test_api.StepTestData:
     """Provides test mock for any file module method, causing the step to raise
     a file.Error exception.
@@ -206,5 +205,5 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
       data['errno_name'] = errno_name
       # in real operation, this message will come from the underlying OS and
       # will potentially have descriptive detail.
-      data['message'] = 'file command encountered system error '+errno_name
+      data['message'] = 'file command encountered system error ' + errno_name
     return self.m.json.output(data)

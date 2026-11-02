@@ -66,6 +66,7 @@ LOG = logging.getLogger(__name__)
 
 
 if MSWINDOWS:
+
   def _kill_proc_group(proc: Any) -> None:
     try:
       proc.send_signal(signal.CTRL_BREAK_EVENT)
@@ -77,6 +78,7 @@ if MSWINDOWS:
     except OSError as ex:
       LOG.warning('TerminateProcess(%r): %s' % (proc.pid, ex))
 else:
+
   def _kill_proc_group(pgid: int) -> None:
     try:
       os.killpg(pgid, signal.SIGKILL)
@@ -99,6 +101,7 @@ def install_signal_handlers() -> Iterator[None]:
   """
   # late importing since recipe_engine/util is imported before protos are set up
   from PB.go.chromium.org.luci.lucictx import sections as sections_pb
+
   d = sections_pb.Deadline()
   deadline_raw = luci_context.read('deadline')
   if deadline_raw:
@@ -132,8 +135,7 @@ def install_signal_handlers() -> Iterator[None]:
     GLOBAL_SHUTDOWN.set()
 
   old_handlers = [
-    signal.signal(signum, _set_shutdown)
-    for signum in _INTERRUPT_SIGNALS
+    signal.signal(signum, _set_shutdown) for signum in _INTERRUPT_SIGNALS
   ]
 
   try:

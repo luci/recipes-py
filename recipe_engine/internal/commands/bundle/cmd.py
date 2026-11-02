@@ -16,7 +16,9 @@ from ... import recipe_deps as recipe_deps_mod
 LOGGER = logging.getLogger(__name__)
 CIPD = 'cipd.bat' if sys.platform == 'win32' else 'cipd'
 BUNDLE_RECIPE_PKG_NAME = 'infra/tools/luci/bundle_recipe'
-BUNDLE_RECIPE_VERSION = '	git_revision:e995ce992ce5c615c6a25f63b7e33b6467ee92c3'
+BUNDLE_RECIPE_VERSION = (
+  '	git_revision:e995ce992ce5c615c6a25f63b7e33b6467ee92c3'
+)
 
 
 def _bundle_recipe(recipe_deps: recipe_deps_mod.RecipeDeps, dest: str) -> None:
@@ -27,27 +29,35 @@ def _bundle_recipe(recipe_deps: recipe_deps_mod.RecipeDeps, dest: str) -> None:
     * dest (str) - destination path to bundle recipe to.
   """
   LOGGER.info(f'installing {BUNDLE_RECIPE_PKG_NAME}')
-  install_root = os.path.join(recipe_deps.recipe_deps_path, 'cipd_pkgs',
-                              'bundle_recipe')
+  install_root = os.path.join(
+    recipe_deps.recipe_deps_path, 'cipd_pkgs', 'bundle_recipe'
+  )
   cipd_proc = subprocess.Popen(
     [CIPD, 'ensure', '-root', install_root, '-ensure-file', '-'],
-    stdin=subprocess.PIPE, text=True)
+    stdin=subprocess.PIPE,
+    text=True,
+  )
   cipd_proc.communicate(
-    f'{BUNDLE_RECIPE_PKG_NAME}/${{platform}} {BUNDLE_RECIPE_VERSION}')
+    f'{BUNDLE_RECIPE_PKG_NAME}/${{platform}} {BUNDLE_RECIPE_VERSION}'
+  )
   if cipd_proc.returncode != 0:
     raise ValueError(
-        f'failed to install bundle_recipe: retcode: {cipd_proc.returncode}')
+      f'failed to install bundle_recipe: retcode: {cipd_proc.returncode}'
+    )
 
   bundle_cmd = [
-      os.path.join(install_root, 'bundle_recipe'),
-      '-repo-root', recipe_deps.main_repo.path,
-      '-dest', dest]
+    os.path.join(install_root, 'bundle_recipe'),
+    '-repo-root',
+    recipe_deps.main_repo.path,
+    '-dest',
+    dest,
+  ]
   for repo_name, repo in recipe_deps.repos.items():
     if repo_name != recipe_deps.main_repo_id:
       bundle_cmd.extend(['-overrides', f'{repo_name}={repo.path}'])
 
   LOGGER.debug('running %s' % bundle_cmd)
-  subprocess.run(bundle_cmd,check=True)
+  subprocess.run(bundle_cmd, check=True)
   LOGGER.info('done!')
 
 

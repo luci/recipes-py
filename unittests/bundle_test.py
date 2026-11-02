@@ -25,15 +25,17 @@ class TestBundle(test_env.RecipeEngineUnitTest):
 
     dest = self.tempdir()
     output, retcode = deps.main_repo.recipes_py('bundle', '--destination', dest)
-    self.assertEqual(retcode, 0, 'bundling failed!\noutput:\n'+output)
+    self.assertEqual(retcode, 0, 'bundling failed!\noutput:\n' + output)
 
     bat = '.bat' if sys.platform.startswith('win') else ''
-    proc = subprocess.Popen([os.path.join(dest, 'recipes' + bat), 'run', 'foo'],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT,
-                            text=True)
+    proc = subprocess.Popen(
+      [os.path.join(dest, 'recipes' + bat), 'run', 'foo'],
+      stdout=subprocess.PIPE,
+      stderr=subprocess.STDOUT,
+      text=True,
+    )
     output, _ = proc.communicate()
-    self.assertEqual(proc.returncode, 0, 'running failed!\noutput:\n'+output)
+    self.assertEqual(proc.returncode, 0, 'running failed!\noutput:\n' + output)
     self.assertIn('narwhals', output)
 
 

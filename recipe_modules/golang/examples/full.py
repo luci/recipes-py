@@ -11,9 +11,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    golang,
-    platform,
-    step,
+  golang,
+  platform,
+  step,
 )
 
 
@@ -36,6 +36,4 @@ def RunSteps(api: DEPS) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   for platform in ('linux', 'mac', 'win'):
-    yield (
-        api.test(platform) +
-        api.platform.name(platform))
+    yield (api.test(platform) + api.platform.name(platform))

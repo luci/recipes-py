@@ -11,8 +11,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    file,
-    path,
+  file,
+  path,
 )
 
 
@@ -31,8 +31,12 @@ def RunSteps(api: DEPS) -> None:
   api.file.write_text('Writing text to file.txt', 'file.txt', 'abcd')
   api.file.chmod('Changing file permissions for file.txt', 'file.txt', '777')
 
-  api.file.chmod('Changing file permissions for start dir', api.path.start_dir,
-                 '777', recursive=True)
+  api.file.chmod(
+    'Changing file permissions for start dir',
+    api.path.start_dir,
+    '777',
+    recursive=True,
+  )
 
   try:
     api.file.chmod('File does not exist', 'non-existent-file.txt', '777')
@@ -41,5 +45,7 @@ def RunSteps(api: DEPS) -> None:
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
-  yield (api.test('basic') +
-         api.step_data('File does not exist', api.file.errno('ENOENT')))
+  yield (
+    api.test('basic')
+    + api.step_data('File does not exist', api.file.errno('ENOENT'))
+  )

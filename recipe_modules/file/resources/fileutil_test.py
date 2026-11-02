@@ -24,7 +24,6 @@ def _win_normpath(path: str) -> str:
 
 
 class RmTreeTest(unittest.TestCase):
-
   @mock.patch('os.path.normpath', side_effect=_win_normpath)
   @mock.patch('os.path.normcase', side_effect=_win_normpath)
   @mock.patch('sys.platform', 'win32')
@@ -32,9 +31,10 @@ class RmTreeTest(unittest.TestCase):
   @mock.patch('subprocess.call', return_value=0)
   def test_rmtree_win32_trailing_backslash(self, mock_call, mock_exists, _, __):
     fileutil._RmTree(
-        'C:\\b\\s\\w\\ir\\cache\\builder\\src\\out\\5f91-win-build-perf-\\')
+      'C:\\b\\s\\w\\ir\\cache\\builder\\src\\out\\5f91-win-build-perf-\\'
+    )
     mock_call.assert_called_once_with(
-        'cmd.exe /c rd /q /s "c:\\b\\s\\w\\ir\\cache\\builder\\src\\out\\5f91-win-build-perf-"'
+      'cmd.exe /c rd /q /s "c:\\b\\s\\w\\ir\\cache\\builder\\src\\out\\5f91-win-build-perf-"'
     )
 
   @mock.patch('os.path.normpath', side_effect=_win_normpath)
@@ -45,7 +45,7 @@ class RmTreeTest(unittest.TestCase):
   def test_rmtree_win32_trailing_slash(self, mock_call, mock_exists, _, __):
     fileutil._RmTree('C:/b/s/w/ir/cache/builder/src/out/5f91-win-build-perf-/')
     mock_call.assert_called_once_with(
-        'cmd.exe /c rd /q /s "c:\\b\\s\\w\\ir\\cache\\builder\\src\\out\\5f91-win-build-perf-"'
+      'cmd.exe /c rd /q /s "c:\\b\\s\\w\\ir\\cache\\builder\\src\\out\\5f91-win-build-perf-"'
     )
 
   @mock.patch('os.path.normpath', side_effect=_win_normpath)
@@ -55,9 +55,10 @@ class RmTreeTest(unittest.TestCase):
   @mock.patch('subprocess.call', return_value=0)
   def test_rmtree_win32_no_trailing_slash(self, mock_call, mock_exists, _, __):
     fileutil._RmTree(
-        'C:\\b\\s\\w\\ir\\cache\\builder\\src\\out\\5f91-win-build-perf-')
+      'C:\\b\\s\\w\\ir\\cache\\builder\\src\\out\\5f91-win-build-perf-'
+    )
     mock_call.assert_called_once_with(
-        'cmd.exe /c rd /q /s "c:\\b\\s\\w\\ir\\cache\\builder\\src\\out\\5f91-win-build-perf-"'
+      'cmd.exe /c rd /q /s "c:\\b\\s\\w\\ir\\cache\\builder\\src\\out\\5f91-win-build-perf-"'
     )
 
   @mock.patch('os.path.normpath', side_effect=_win_normpath)
@@ -66,10 +67,10 @@ class RmTreeTest(unittest.TestCase):
   @mock.patch('os.path.exists', return_value=True)
   def test_rmtree_win32_invalid_chars_raise(self, mock_exists, _, __):
     for invalid_path in (
-        'C:\\path\\"with"\\quotes',
-        'C:\\path\\%var%\\dir',
-        'C:\\path\n\\dir',
-        'C:\\path\r\\dir',
+      'C:\\path\\"with"\\quotes',
+      'C:\\path\\%var%\\dir',
+      'C:\\path\n\\dir',
+      'C:\\path\r\\dir',
     ):
       with self.subTest(invalid_path=invalid_path):
         with self.assertRaises(ValueError):

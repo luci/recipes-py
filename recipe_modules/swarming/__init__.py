@@ -9,15 +9,15 @@ from PB.recipe_modules.recipe_engine.swarming import properties
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from RECIPE_MODULES.recipe_engine import (
-    buildbucket,
-    cas,
-    cipd,
-    context,
-    json,
-    path,
-    properties as properties_rm,
-    raw_io,
-    step,
+  buildbucket,
+  cas,
+  cipd,
+  context,
+  json,
+  path,
+  properties as properties_rm,
+  raw_io,
+  step,
 )
 
 
@@ -32,6 +32,7 @@ class DEPS(RecipeScriptApi):
   properties: properties_rm.API
   raw_io: raw_io.API
   step: step.API
+
 
 ENV_PROPERTIES = properties.EnvProperties
 

@@ -26,8 +26,9 @@ def check_type(name: str, var: T, expect: Any) -> T:
       expect_type = ' or '.join('a ' + t.__name__ for t in expect)
     else:
       expect_type = 'a ' + expect.__name__
-    raise TypeError('%s is not %s: %r (%s)' %
-                    (name, expect_type, var, type(var).__name__))
+    raise TypeError(
+      '%s is not %s: %r (%s)' % (name, expect_type, var, type(var).__name__)
+    )
   return var
 
 
@@ -37,8 +38,10 @@ def check_list_type(name: str, var: T, expect_inner: Any) -> T:
   """
   assert isinstance(name, str), f'name has bad type {type(name).__name__}'
   if isinstance(var, (str, bytes)):  # pragma: no cover
-    raise TypeError('%s must be a non-string sequence: %s (%r)' %
-                    (name, type(var).__name__, var))
+    raise TypeError(
+      '%s must be a non-string sequence: %s (%r)'
+      % (name, type(var).__name__, var)
+    )
   # Allow all non-string sequences, not just tuple and list, because proto
   # object repeated fields use a special Sequence type.
   check_type(name, var, Sequence)

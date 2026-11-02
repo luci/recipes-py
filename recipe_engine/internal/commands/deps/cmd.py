@@ -19,17 +19,17 @@ from ... import recipe_deps as recipe_deps_mod
 
 
 def extract_module_names(
-    obj: recipe_deps_mod.Recipe | recipe_deps_mod.RecipeModule,
+  obj: recipe_deps_mod.Recipe | recipe_deps_mod.RecipeModule,
 ) -> Iterator[str]:
   for repo, name in obj.normalized_DEPS.values():
     yield '%s/%s' % (repo, name)
 
 
 def load_recipes_modules(
-    rd: recipe_deps_mod.RecipeDeps,
-    target: str,
-    include_test_recipes: bool,
-    include_dependants: bool,
+  rd: recipe_deps_mod.RecipeDeps,
+  target: str,
+  include_test_recipes: bool,
+  include_dependants: bool,
 ) -> tuple[list[recipe_deps_mod.Recipe], set[str]]:
   recipes: list[recipe_deps_mod.Recipe] = []
   mod_names: set[str] = set()
@@ -66,9 +66,9 @@ def load_recipes_modules(
         for repo in rd.repos.values():
           if repo.name == target_repo or target_repo in repo.simple_cfg.deps:
             for recipe in repo.recipes.values():
-              if (not include_test_recipes and (
-                  ':examples/' in recipe.name
-                  or ':tests/' in recipe.name)):
+              if not include_test_recipes and (
+                ':examples/' in recipe.name or ':tests/' in recipe.name
+              ):
                 continue
 
               if mod_key in recipe.normalized_DEPS.values():
@@ -81,9 +81,9 @@ def load_recipes_modules(
 
 
 def process_modules(
-    ret: deps_pb.Deps,
-    rd: recipe_deps_mod.RecipeDeps,
-    mod_names: set[str],
+  ret: deps_pb.Deps,
+  rd: recipe_deps_mod.RecipeDeps,
+  mod_names: set[str],
 ) -> None:
   processed_mod_names: set[str] = set()
   while mod_names:
@@ -110,8 +110,8 @@ def process_modules(
 
 
 def process_recipes(
-    ret: deps_pb.Deps,
-    recipes: Iterable[recipe_deps_mod.Recipe],
+  ret: deps_pb.Deps,
+  recipes: Iterable[recipe_deps_mod.Recipe],
 ) -> None:
   for recipe in recipes:
     rRecord = ret.recipes[recipe.full_name]
@@ -140,11 +140,14 @@ def output_cli(ret: deps_pb.Deps) -> None:
 
 
 def output_json(fd: TextIO, ret: deps_pb.Deps) -> None:
-  fd.write(jsonpb.MessageToJson(
+  fd.write(
+    jsonpb.MessageToJson(
       ret,
       preserving_proto_field_name=True,
-      indent=2, sort_keys=True,
-  ))
+      indent=2,
+      sort_keys=True,
+    )
+  )
   fd.write('\n')
 
 
@@ -153,8 +156,11 @@ def main(args: argparse.Namespace) -> int | None:
 
   try:
     recipes, mod_names = load_recipes_modules(
-        rd, args.recipe_or_module, args.include_test_recipes,
-        args.include_dependants)
+      rd,
+      args.recipe_or_module,
+      args.include_test_recipes,
+      args.include_dependants,
+    )
   except exceptions.RecipeUsageError as ex:
     print('{}: {}'.format(type(ex).__name__, ex), file=sys.stderr)
     return 1

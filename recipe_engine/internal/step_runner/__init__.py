@@ -23,6 +23,7 @@ from .. import stream
 @attr.s(frozen=True)
 class Step:
   """Step is the full definition of a step to run for a StepRunner."""
+
   # The full command line as a list of strings. cmd0 will be an absolute path to
   # an executable.
   cmd: list[str] = attr.ib(validator=attr_util.attr_list_type(str))
@@ -39,16 +40,19 @@ class Step:
   # redirection. Otherwise the step runner implementation is expected to read
   # the output from the step and then write it into the Stream.
   stdout: str | stream.StreamEngine.Stream = attr.ib(
-      validator=attr_util.attr_type((str, stream.StreamEngine.Stream)))
+    validator=attr_util.attr_type((str, stream.StreamEngine.Stream))
+  )
   stderr: str | stream.StreamEngine.Stream = attr.ib(
-      validator=attr_util.attr_type((str, stream.StreamEngine.Stream)))
+    validator=attr_util.attr_type((str, stream.StreamEngine.Stream))
+  )
 
   # The full environment that this step should execute with.
   env: dict[str, str] = attr.ib(validator=attr_util.attr_dict_type(str, str))
 
   # The sectionname->Message mapping of LUCI_CONTEXT modifications.
   luci_context: dict[str, message.Message] = attr.ib(
-      validator=attr_util.attr_dict_type(str, message.Message))
+    validator=attr_util.attr_dict_type(str, message.Message)
+  )
 
 
 class StepRunner:
@@ -59,11 +63,12 @@ class StepRunner:
   be treated as an Engine Crash and the whole recipe will be aborted (with
   appropriate logging, of course).
   """
+
   # pylint: disable=no-self-use
   # pylint: disable=unused-argument
 
   def register_step_config(
-      self, name_token: Sequence[str], step_config: engine_step.StepConfig
+    self, name_token: Sequence[str], step_config: engine_step.StepConfig
   ) -> None:
     """Called to register the precursor of the step (the StepConfig).
 
@@ -82,7 +87,7 @@ class StepRunner:
     pass
 
   def placeholder(
-      self, name_tokens: Sequence[str], placeholder: util.Placeholder
+    self, name_tokens: Sequence[str], placeholder: util.Placeholder
   ) -> recipe_test_api.BaseTestData:
     """Returns PlaceholderTestData for the given step and placeholder
     combination.
@@ -101,7 +106,7 @@ class StepRunner:
     return recipe_test_api.BaseTestData(False)
 
   def handle_placeholder(
-      self, name_tokens: Sequence[str], handle_name: str
+    self, name_tokens: Sequence[str], handle_name: str
   ) -> recipe_test_api.BaseTestData:
     """Returns PlaceholderTestData for the given step and handle name
     combination.
@@ -131,12 +136,12 @@ class StepRunner:
     return True
 
   def resolve_cmd0(
-      self,
-      name_tokens: Sequence[str],
-      debug_log: stream.StreamEngine.Stream,
-      cmd0: str,
-      cwd: str,
-      paths: Sequence[str],
+    self,
+    name_tokens: Sequence[str],
+    debug_log: stream.StreamEngine.Stream,
+    cmd0: str,
+    cwd: str,
+    paths: Sequence[str],
   ) -> str | None:
     """Should resolve the 0th argument of the command (`cmd0`) to an absolute
     path to the intended executable.
@@ -173,10 +178,10 @@ class StepRunner:
     raise NotImplementedError()
 
   def run(
-      self,
-      name_tokens: Sequence[str],
-      debug_log: stream.StreamEngine.Stream,
-      step: Step,
+    self,
+    name_tokens: Sequence[str],
+    debug_log: stream.StreamEngine.Stream,
+    step: Step,
   ) -> step_data.ExecutionResult:
     """Runs the step defined by step_config.
 
@@ -191,9 +196,9 @@ class StepRunner:
     raise NotImplementedError()
 
   def run_noop(
-      self,
-      name_tokens: Sequence[str],
-      debug_log: stream.StreamEngine.Stream,
+    self,
+    name_tokens: Sequence[str],
+    debug_log: stream.StreamEngine.Stream,
   ) -> step_data.ExecutionResult:
     """Runs a no-op step.
 

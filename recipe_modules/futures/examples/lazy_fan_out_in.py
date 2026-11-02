@@ -11,8 +11,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    futures,
-    step,
+  futures,
+  step,
 )
 
 
@@ -33,11 +33,12 @@ def RunSteps(api: DEPS) -> None:
 
     def _runner(i: int) -> int:
       api.step(
-          'sleep loop [%d]' % (i+1),
-          ['python3', '-u', api.resource('sleep_loop.py'), i],
-          cost=api.step.ResourceCost(),
+        'sleep loop [%d]' % (i + 1),
+        ['python3', '-u', api.resource('sleep_loop.py'), i],
+        cost=api.step.ResourceCost(),
       )
       return i + 1
+
     futures.append(api.futures.spawn(_runner, i))
 
   for helper in api.futures.iwait(futures):

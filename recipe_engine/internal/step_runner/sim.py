@@ -42,12 +42,12 @@ class SimulationStepRunner(step_runner.StepRunner):
 
     # (dot-name, namespace, name) -> PlaceholderTestData
     self._used_placeholders: dict[
-        tuple[str, ...], recipe_test_api.PlaceholderTestData
+      tuple[str, ...], recipe_test_api.PlaceholderTestData
     ] = {}
 
     # (dot-name, handle_name) -> PlaceholderTestData
     self._used_handle_placeholders: dict[
-        tuple[str, str], recipe_test_api.PlaceholderTestData
+      tuple[str, str], recipe_test_api.PlaceholderTestData
     ] = {}
 
     # dot-name -> {
@@ -71,15 +71,15 @@ class SimulationStepRunner(step_runner.StepRunner):
     self._step_history: dict[str, dict[str, Any]] = {}
 
   def register_step_config(
-      self, name_tokens: Sequence[str], step_config: engine_step.StepConfig
+    self, name_tokens: Sequence[str], step_config: engine_step.StepConfig
   ) -> None:
     dot_name = '.'.join(name_tokens)
 
     # This moves the test data from _test_data to _used_steps. This will return
     # StepData() if `dot_name` isn't in self._test_data.
     self._used_steps[dot_name] = self._test_data.pop_step_test_data(
-        dot_name,
-        step_config.step_test_data or recipe_test_api.StepTestData,
+      dot_name,
+      step_config.step_test_data or recipe_test_api.StepTestData,
     )
 
     if self._used_steps[dot_name].global_shutdown_event == 'before':
@@ -89,7 +89,8 @@ class SimulationStepRunner(step_runner.StepRunner):
       'env_prefixes': step_config.env_prefixes.mapping,
       'env_suffixes': step_config.env_suffixes.mapping,
       'env': {
-        k: v for k, v in step_config.env.items()
+        k: v
+        for k, v in step_config.env.items()
         # Trim out LUCI_CONTEXT because it's useless information in tests, since
         # the entire luci_context data is included in the test output.
         if k.upper() != luci_context.ENV_KEY
@@ -103,7 +104,7 @@ class SimulationStepRunner(step_runner.StepRunner):
       self._step_precursor_data[dot_name]['cost'] = step_config.cost
 
   def placeholder(
-      self, name_tokens: Sequence[str], placeholder: util.Placeholder
+    self, name_tokens: Sequence[str], placeholder: util.Placeholder
   ) -> recipe_test_api.PlaceholderTestData:
     dot_name = '.'.join(name_tokens)
     # TODO(iannucci): this is janky; simplify all the placeholder naming stuff.
@@ -114,19 +115,21 @@ class SimulationStepRunner(step_runner.StepRunner):
     key = (dot_name, module_name, method_name, name)
     if key not in self._used_placeholders:
       self._used_placeholders[key] = self._used_steps[dot_name].pop_placeholder(
-          module_name, method_name, name)
+        module_name, method_name, name
+      )
     ret = self._used_placeholders[key]
     return ret
 
   def handle_placeholder(
-      self, name_tokens: Sequence[str], handle_name: str
+    self, name_tokens: Sequence[str], handle_name: str
   ) -> recipe_test_api.PlaceholderTestData:
     dot_name = '.'.join(name_tokens)
 
     key = (dot_name, handle_name)
     if key not in self._used_placeholders:
       self._used_placeholders[key] = getattr(
-          self._used_steps[dot_name], handle_name)
+        self._used_steps[dot_name], handle_name
+      )
     return self._used_placeholders[key]
 
   def now(self) -> float:
@@ -141,10 +144,10 @@ class SimulationStepRunner(step_runner.StepRunner):
     return ""
 
   def run(
-      self,
-      name_tokens: Sequence[str],
-      debug_log: stream.StreamEngine.Stream,
-      step: step_runner.Step,
+    self,
+    name_tokens: Sequence[str],
+    debug_log: stream.StreamEngine.Stream,
+    step: step_runner.Step,
   ) -> step_data.ExecutionResult:
     del debug_log  # unused
 
@@ -154,8 +157,7 @@ class SimulationStepRunner(step_runner.StepRunner):
     # TODO(iannucci): Rationalize these:
     #   * use step.env instead of precursor
     #   * Always omit empty fields (right now cmd is kept)
-    step_obj = attr.asdict(
-        step, filter=lambda attr, value: bool(value))
+    step_obj = attr.asdict(step, filter=lambda attr, value: bool(value))
     step_obj['name'] = dot_name
     if 'cmd' not in step_obj:
       step_obj['cmd'] = []
@@ -170,8 +172,8 @@ class SimulationStepRunner(step_runner.StepRunner):
           # `timeout` parameter below. To avoid blowing out expectations, we
           # omit the section.
           default_deadline = sections_pb.Deadline(
-              soft_deadline=precursor['timeout'],
-              grace_period=30,
+            soft_deadline=precursor['timeout'],
+            grace_period=30,
           )
           if section == default_deadline:
             continue
@@ -225,10 +227,11 @@ class SimulationStepRunner(step_runner.StepRunner):
       #
       # See CL https://chromium-review.googlesource.com/c/4972935.
       raise ValueError(
-          f'Cannot simulate no-op step {"|".join(name_tokens)!r} with a retcode'
-          ' other than 0. To simulate a step with a retcode, make it real'
-          ' (e.g. give it a command). To just have a step which displays with'
-          ' an error, use `api.step.empty()`.')
+        f'Cannot simulate no-op step {"|".join(name_tokens)!r} with a retcode'
+        ' other than 0. To simulate a step with a retcode, make it real'
+        ' (e.g. give it a command). To just have a step which displays with'
+        ' an error, use `api.step.empty()`.'
+      )
 
     if tdata.global_shutdown_event == 'after':
       global_shutdown.GLOBAL_SHUTDOWN.set()
@@ -238,16 +241,21 @@ class SimulationStepRunner(step_runner.StepRunner):
         return step_data.ExecutionResult(had_timeout=True)
 
     if tdata.cancel:
-      return step_data.ExecutionResult(was_cancelled=True, retcode=tdata.retcode)
+      return step_data.ExecutionResult(
+        was_cancelled=True, retcode=tdata.retcode
+      )
 
     return step_data.ExecutionResult(retcode=tdata.retcode or 0)
 
   def run_noop(
-      self,
-      name_tokens: Sequence[str],
-      debug_log: stream.StreamEngine.Stream,
+    self,
+    name_tokens: Sequence[str],
+    debug_log: stream.StreamEngine.Stream,
   ) -> step_data.ExecutionResult:
-    return self.run(name_tokens, debug_log, step_runner.Step(
+    return self.run(
+      name_tokens,
+      debug_log,
+      step_runner.Step(
         cmd=[],
         cwd='',
         stdin=None,
@@ -255,7 +263,8 @@ class SimulationStepRunner(step_runner.StepRunner):
         stderr='',
         env={},
         luci_context={},
-    ))
+      ),
+    )
 
   def export_steps_ran(self) -> dict[str, dict[str, Any]]:
     """Returns a dictionary of all steps run.

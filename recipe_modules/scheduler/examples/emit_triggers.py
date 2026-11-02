@@ -13,11 +13,11 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    buildbucket,
-    json,
-    runtime,
-    scheduler,
-    time,
+  buildbucket,
+  json,
+  runtime,
+  scheduler,
+  time,
 )
 
 
@@ -41,39 +41,39 @@ def RunSteps(api: DEPS) -> None:
   if api.runtime.is_experimental:
     api.scheduler.set_host('https://luci-scheduler-dev.appspot.com')
   api.scheduler.emit_trigger(
-      api.scheduler.BuildbucketTrigger(
-        properties={'some': 'none'},
-        tags={'this': 'test'},
-        inherit_tags=False,
-        url='https://example.com',
-      ),
-      project='proj',
-      jobs=['job1', 'job2'],
+    api.scheduler.BuildbucketTrigger(
+      properties={'some': 'none'},
+      tags={'this': 'test'},
+      inherit_tags=False,
+      url='https://example.com',
+    ),
+    project='proj',
+    jobs=['job1', 'job2'],
   )
 
   api.scheduler.emit_triggers(
-      [
-        (
-          api.scheduler.BuildbucketTrigger(
-            properties={'some': 'none'},
-            tags={'this': 'test'},
-          ),
-          'proj',
-          ['job1', 'job2']
+    [
+      (
+        api.scheduler.BuildbucketTrigger(
+          properties={'some': 'none'},
+          tags={'this': 'test'},
         ),
-        (
-         api.scheduler.GitilesTrigger(
-             repo='https://chromium.googlesource.com/chromium/src',
-             ref='refs/branch-heads/1235',
-             revision='2d2b87e5f9c872902d8508f6377470a4a6fa87e1',
-             title='advanced gitiles trigger'
-         ),
-         'proj3',
-         ['job1'],
+        'proj',
+        ['job1', 'job2'],
+      ),
+      (
+        api.scheduler.GitilesTrigger(
+          repo='https://chromium.googlesource.com/chromium/src',
+          ref='refs/branch-heads/1235',
+          revision='2d2b87e5f9c872902d8508f6377470a4a6fa87e1',
+          title='advanced gitiles trigger',
         ),
-      ],
-      timestamp_usec=int(api.time.time()*1e6),
-      step_name='custom-batch-step',
+        'proj3',
+        ['job1'],
+      ),
+    ],
+    timestamp_usec=int(api.time.time() * 1e6),
+    step_name='custom-batch-step',
   )
 
 

@@ -18,8 +18,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    raw_io,
-    step,
+  raw_io,
+  step,
 )
 
 
@@ -32,6 +32,7 @@ class DEPS(RecipeScriptApi):
 @dataclass
 class TEST_DEPS(RecipeTestApi):
   raw_io: raw_io.TEST_API
+
 
 from builtins import range
 
@@ -85,19 +86,17 @@ def RunSteps(api: DEPS) -> result_pb2.RawResult:
 
     with api.step.nest('logs'):
       result = named_step(api, 'logs')
-      result.presentation.logs['cool log'] = [
-        'cool %d' % i for i in range(10)
-      ]
-      result.presentation.logs['💩 log'] = [
-        '💩 %d' % i for i in range(10)
-      ]
+      result.presentation.logs['cool log'] = ['cool %d' % i for i in range(10)]
+      result.presentation.logs['💩 log'] = ['💩 %d' % i for i in range(10)]
 
   # Re-use stdout after redirect
   # TODO(iannucci): this is a bit dirty; once we drop @@@ see if we can do this
   # more cleanly.
-  result = api.step('capture stdout',
-                    ['python3', api.resource('capture_stdout.py')],
-                    stdout=api.raw_io.output_text())
+  result = api.step(
+    'capture stdout',
+    ['python3', api.resource('capture_stdout.py')],
+    stdout=api.raw_io.output_text(),
+  )
   result.presentation.logs['stdout'] = result.stdout.splitlines()
 
   with api.step.nest('properties'):
@@ -107,12 +106,11 @@ def RunSteps(api: DEPS) -> result_pb2.RawResult:
     result.presentation.properties['💩_prop'] = ['💩'] * 10
 
   return result_pb2.RawResult(
-      status=common_pb2.Status.SUCCESS,
-      summary_markdown=('HI THERE I AM A *SUMMARY*:\n\n'
-                        '* first\n'
-                        '* second\n'
-                        '* third\n'),
-    )
+    status=common_pb2.Status.SUCCESS,
+    summary_markdown=(
+      'HI THERE I AM A *SUMMARY*:\n\n* first\n* second\n* third\n'
+    ),
+  )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:

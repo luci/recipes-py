@@ -11,8 +11,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    file,
-    path,
+  file,
+  path,
 )
 
 
@@ -43,8 +43,9 @@ def RunSteps(api: DEPS) -> None:
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('basic')
   yield api.test(
-      'failure',
-      api.step_data('read_json',
-          api.file.read_json(errno_name='JSON READ FAILURE')),
-      status='FAILURE',
+    'failure',
+    api.step_data(
+      'read_json', api.file.read_json(errno_name='JSON READ FAILURE')
+    ),
+    status='FAILURE',
   )

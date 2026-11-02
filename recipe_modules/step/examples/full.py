@@ -14,12 +14,12 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    buildbucket,
-    context,
-    json,
-    path,
-    properties,
-    step,
+  buildbucket,
+  context,
+  json,
+  path,
+  properties,
+  step,
 )
 
 
@@ -36,6 +36,7 @@ class DEPS(RecipeScriptApi):
 @dataclass
 class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
+
 
 INLINE_PROPERTIES_PROTO = """
 message InputProperties {
@@ -85,20 +86,22 @@ def RunSteps(api: DEPS, props: full_pb.InputProperties) -> None:
 
   # You can modify the environment in terms of old environment. Environment
   # variables are substituted in for expressions of the form %(VARNAME)s.
-  with api.context(env={'PATH': api.path.pathsep.join(
-      [str(api.step.repo_resource()), '%(PATH)s'])}):
+  with api.context(
+    env={
+      'PATH': api.path.pathsep.join([str(api.step.repo_resource()), '%(PATH)s'])
+    }
+  ):
     api.step('recipes help', ['recipes.py', '--help'])
 
   # Finally, you can make your step accept any return code.
-  api.step('anything is cool', ['bash', '-c', 'exit 3'],
-           ok_ret='any')
+  api.step('anything is cool', ['bash', '-c', 'exit 3'], ok_ret='any')
 
   # We can manipulate the step presentation arbitrarily until we run
   # the next step.
   step_result = api.step('hello again', ['echo', 'hello'])
   step_result.presentation.status = api.step.EXCEPTION
   step_result.presentation.logs['the reason'] = ['The reason\nit failed']
-  step_result.presentation.tags[u'hello.step_classification'] = u'PRINT_MESSAGE'
+  step_result.presentation.tags['hello.step_classification'] = 'PRINT_MESSAGE'
 
   # Without a command, a step can be used to present some data from the recipe.
   step_result = api.step('Just print stuff', cmd=None)
@@ -118,8 +121,9 @@ def RunSteps(api: DEPS, props: full_pb.InputProperties) -> None:
   # Please do not do this :(
   step_result.presentation.logs.setdefault('weird', []).append('stuff')
   step_result.presentation.logs['weird'] += [bytes(b'\x1b[31mmore'), 'lines']
-  step_result.presentation.logs['weird'] = (
-    step_result.presentation.logs['weird'] + ['strange'])
+  step_result.presentation.logs['weird'] = step_result.presentation.logs[
+    'weird'
+  ] + ['strange']
   step_result.presentation.logs['weird'][0] = bytes(b'\x1b[31mmore')
 
   try:
@@ -145,8 +149,11 @@ def RunSteps(api: DEPS, props: full_pb.InputProperties) -> None:
     assert f.result.presentation.status == api.step.EXCEPTION
 
   # Run a step through a made-up wrapper program.
-  api.step('application', ['echo', 'main', 'application'],
-           wrapper=['python3', '-c', 'import sys; print(sys.argv)'])
+  api.step(
+    'application',
+    ['echo', 'main', 'application'],
+    wrapper=['python3', '-c', 'import sys; print(sys.argv)'],
+  )
 
   if props.access_invalid_data:
     result = api.step('no-op', ['echo', 'I', 'do', 'nothing'])
@@ -166,8 +173,8 @@ def RunSteps(api: DEPS, props: full_pb.InputProperties) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'basic',
-      api.step_data('anything is cool', retcode=3),
+    'basic',
+    api.step_data('anything is cool', retcode=3),
   )
 
   # If you don't have the expect_exception in this test, you will get something
@@ -184,77 +191,80 @@ def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   # ValueError: goodbye must exit 0!
 
   yield api.test(
-      'exceptional',
-      api.step_data('goodbye (2)', retcode=1),
-      api.expect_exception('ValueError'),
-      api.post_process(
-          post_process.SummaryMarkdownRE,
-          "goodbye must exit 0!"),
-      api.post_process(post_process.DropExpectation),
-      status='INFRA_FAILURE',
+    'exceptional',
+    api.step_data('goodbye (2)', retcode=1),
+    api.expect_exception('ValueError'),
+    api.post_process(post_process.SummaryMarkdownRE, "goodbye must exit 0!"),
+    api.post_process(post_process.DropExpectation),
+    status='INFRA_FAILURE',
   )
 
   yield api.test(
-      'warning',
-      api.step_data('warning', retcode=1),
-      status='FAILURE',
+    'warning',
+    api.step_data('warning', retcode=1),
+    status='FAILURE',
   )
 
   yield api.test(
-      'invalid_access',
-      api.properties(full_pb.InputProperties(access_invalid_data=True)),
-      api.expect_exception('AttributeError'),
-      api.post_process(post_process.StatusException),
-      api.post_process(
-          post_process.SummaryMarkdownRE,
-          "StepData from step 'no-op' has no attribute 'json'"),
-      api.post_process(post_process.DropExpectation),
+    'invalid_access',
+    api.properties(full_pb.InputProperties(access_invalid_data=True)),
+    api.expect_exception('AttributeError'),
+    api.post_process(post_process.StatusException),
+    api.post_process(
+      post_process.SummaryMarkdownRE,
+      "StepData from step 'no-op' has no attribute 'json'",
+    ),
+    api.post_process(post_process.DropExpectation),
   )
 
   yield api.test(
-      'deep_invalid_access',
-      api.properties(full_pb.InputProperties(access_deep_invalid_data=True)),
-      api.expect_exception('AttributeError'),
-      api.post_process(post_process.StatusException),
-      api.post_process(
-          post_process.SummaryMarkdownRE,
-          r"StepData\('no-op'\)\.json has no attribute 'outpurt'"),
-      api.post_process(post_process.DropExpectation),
+    'deep_invalid_access',
+    api.properties(full_pb.InputProperties(access_deep_invalid_data=True)),
+    api.expect_exception('AttributeError'),
+    api.post_process(post_process.StatusException),
+    api.post_process(
+      post_process.SummaryMarkdownRE,
+      r"StepData\('no-op'\)\.json has no attribute 'outpurt'",
+    ),
+    api.post_process(post_process.DropExpectation),
   )
 
   yield api.test(
-      'extra_junk',
-      api.properties(full_pb.InputProperties(assign_extra_junk=True)),
-      api.expect_exception('ValueError'),
-      api.post_process(post_process.StatusException),
-      api.post_process(
-          post_process.SummaryMarkdownRE,
-          "Cannot assign to 'json' on finalized StepData from step 'no-op'"),
-      api.post_process(post_process.DropExpectation),
+    'extra_junk',
+    api.properties(full_pb.InputProperties(assign_extra_junk=True)),
+    api.expect_exception('ValueError'),
+    api.post_process(post_process.StatusException),
+    api.post_process(
+      post_process.SummaryMarkdownRE,
+      "Cannot assign to 'json' on finalized StepData from step 'no-op'",
+    ),
+    api.post_process(post_process.DropExpectation),
   )
 
   yield api.test(
-      'infra_failure',
-      api.step_data('cleanup', retcode=1),
+    'infra_failure',
+    api.step_data('cleanup', retcode=1),
   )
 
   yield api.test(
-      'timeout',
-      api.properties(full_pb.InputProperties(timeout=1)),
-      api.step_data('timeout', times_out_after=20),
-      status='FAILURE',
+    'timeout',
+    api.properties(full_pb.InputProperties(timeout=1)),
+    api.step_data('timeout', times_out_after=20),
+    status='FAILURE',
   )
 
   yield api.test(
-      'catch_timeout',
-      api.properties(full_pb.InputProperties(timeout=2)),
-      api.step_data('caught timeout', times_out_after=20),
+    'catch_timeout',
+    api.properties(full_pb.InputProperties(timeout=2)),
+    api.step_data('caught timeout', times_out_after=20),
   )
 
   yield api.test(
-      'tagged-steps',
-      api.post_check(lambda check, steps: check(
-          steps['hello again']
-          .tags[u'hello.step_classification'] == u'PRINT_MESSAGE'
-      )),
+    'tagged-steps',
+    api.post_check(
+      lambda check, steps: check(
+        steps['hello again'].tags['hello.step_classification']
+        == 'PRINT_MESSAGE'
+      )
+    ),
   )

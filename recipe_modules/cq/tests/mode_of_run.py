@@ -13,9 +13,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    cq,
-    properties,
-    step,
+  cq,
+  properties,
+  step,
 )
 
 
@@ -44,9 +44,13 @@ def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('dry') + api.cq(run_mode=api.cq.DRY_RUN)
   yield api.test('quick-dry') + api.cq(run_mode=api.cq.QUICK_DRY_RUN)
   yield api.test('full') + api.cq(run_mode=api.cq.FULL_RUN)
-  yield api.test('legacy-full') + api.properties(**{
-    '$recipe_engine/cq': {'dry_run': False},
-  })
-  yield api.test('legacy-dry') + api.properties(**{
-    '$recipe_engine/cq': {'dry_run': True},
-  })
+  yield api.test('legacy-full') + api.properties(
+    **{
+      '$recipe_engine/cq': {'dry_run': False},
+    }
+  )
+  yield api.test('legacy-dry') + api.properties(
+    **{
+      '$recipe_engine/cq': {'dry_run': True},
+    }
+  )

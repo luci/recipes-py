@@ -40,28 +40,33 @@ def parse_warning_definitions(file_path: str) -> dict[str, Any]:
     raise ex
 
   from PB.recipe_engine import warning as warning_pb
+
   definition_collection = textpb.Parse(
-      raw_text, warning_pb.DefinitionCollection())
+    raw_text, warning_pb.DefinitionCollection()
+  )
   definitions = list(definition_collection.warning)
 
-  _populate_bug_issue_fields(definitions,
-                             definition_collection.monorail_bug_default,
-                             definition_collection.google_issue_default)
+  _populate_bug_issue_fields(
+    definitions,
+    definition_collection.monorail_bug_default,
+    definition_collection.google_issue_default,
+  )
 
   ret = {}
   for definition in definitions:
     if definition.name in ret:
       raise ValueError(
-        'Found warning definitions with duplicate name: %s' % definition.name)
+        'Found warning definitions with duplicate name: %s' % definition.name
+      )
     _validate(definition)
     ret[definition.name] = definition
   return ret
 
 
 def _populate_bug_issue_fields(
-    definitions: Sequence[Any],
-    monorail_bug_default: Any,
-    google_issue_default: Any,
+  definitions: Sequence[Any],
+  monorail_bug_default: Any,
+  google_issue_default: Any,
 ) -> None:
   """If default field value has been declared for bugs/issues, run through all
   bugs/issues declared in all warning definitions and assign default value to
@@ -91,16 +96,18 @@ def _validate(definition: Any) -> None:
   """
   if not re.match(r"^[A-Z][A-Z0-9]*(\_[A-Z0-9]+)*$", definition.name):
     raise ValueError(
-      'Expect warning name to be all CAPS or num snake case. Actual: %s' % (
-        definition.name))
+      'Expect warning name to be all CAPS or num snake case. Actual: %s'
+      % (definition.name)
+    )
 
   if definition.deadline:
     try:
       datetime.datetime.strptime(definition.deadline, '%Y-%m-%d')
     except ValueError:
       raise ValueError(
-        'The deadline should be in YYYY-MM-DD format. Actual: %s' % (
-          definition.deadline))
+        'The deadline should be in YYYY-MM-DD format. Actual: %s'
+        % (definition.deadline)
+      )
 
   for bug in definition.monorail_bug:
     err_msg_template = 'Field: %s is required; Got empty value'
@@ -115,7 +122,6 @@ def _validate(definition: Any) -> None:
 
 
 def _require_non_zero_value(value: Any, message: str) -> None:
-  """Raise ValueError with message if the supplied value is a zero value
-  """
+  """Raise ValueError with message if the supplied value is a zero value"""
   if not value:
     raise ValueError(message)

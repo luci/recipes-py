@@ -14,11 +14,11 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    futures,
-    json,
-    path,
-    raw_io,
-    step,
+  futures,
+  json,
+  path,
+  raw_io,
+  step,
 )
 
 if TYPE_CHECKING:
@@ -46,21 +46,23 @@ def manage_helper(api: DEPS, chn: gevent.queue.Channel) -> None:
   with api.step.nest('helper'):
     pid_file = api.path.cleanup_dir / 'pid_file'
     helper_future = api.futures.spawn_immediate(
-        api.step, 'helper loop',
-        ['python3', api.resource('helper.py'), pid_file],
-        cost=None, # always run this background thread.
-        __name='background process',
+      api.step,
+      'helper loop',
+      ['python3', api.resource('helper.py'), pid_file],
+      cost=None,  # always run this background thread.
+      __name='background process',
     )
     try:
       proc_data = api.step(
-          'wait for it', [
-            'python3',
-            api.resource('wait_for_helper.py'),
-            pid_file,
-            api.json.output(),
-          ],
-          timeout=30,
-          cost=None, # always run the checker.
+        'wait for it',
+        [
+          'python3',
+          api.resource('wait_for_helper.py'),
+          pid_file,
+          api.json.output(),
+        ],
+        timeout=30,
+        cost=None,  # always run the checker.
       ).json.output
       # show it as terminated immediately; otherwise this will show as running
       # until we exit the 'helper' nest context, due to the current recipe
@@ -95,7 +97,8 @@ def run_helper(api: DEPS) -> Iterator[None]:
   helper_manager = None
   try:
     helper_manager = api.futures.spawn(
-        manage_helper, api, management_channel, __name='background manager')
+      manage_helper, api, management_channel, __name='background manager'
+    )
     # block until the helper is ready.
     if management_channel.get() is HELPER_TIMEOUT:
       # This timed out, so the helper_manager won't be listening to
@@ -111,20 +114,26 @@ def run_helper(api: DEPS) -> Iterator[None]:
 def RunSteps(api: DEPS) -> None:
   with run_helper(api):
     api.step(
-        'do something with live helper',
-        ['python3', '-u', api.resource('do_something.py')])
+      'do something with live helper',
+      ['python3', '-u', api.resource('do_something.py')],
+    )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'basic',
-      api.step_data('helper.wait for it', api.json.output({
-        'pid': 12345,
-      })),
+    'basic',
+    api.step_data(
+      'helper.wait for it',
+      api.json.output(
+        {
+          'pid': 12345,
+        }
+      ),
+    ),
   )
 
   yield api.test(
-      'wait times out',
-      api.step_data('helper.wait for it', times_out_after=100),
-      status='FAILURE',
+    'wait times out',
+    api.step_data('helper.wait for it', times_out_after=100),
+    status='FAILURE',
   )

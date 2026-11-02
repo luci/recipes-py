@@ -11,6 +11,7 @@ import uuid
 
 from recipe_engine import recipe_api
 
+
 class UuidApi(recipe_api.RecipeApi):
   def __init__(self, **kwargs: Any) -> None:
     super().__init__(**kwargs)
@@ -25,4 +26,4 @@ class UuidApi(recipe_api.RecipeApi):
     if self._test_data.enabled:
       self._fake_uuid += self._fake_step
       return str(uuid.UUID(int=self._fake_uuid))
-    return str(uuid.uuid4()) # pragma: no cover
+    return str(uuid.uuid4())  # pragma: no cover

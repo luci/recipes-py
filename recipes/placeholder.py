@@ -11,7 +11,9 @@ from recipe_engine import post_process_inputs
 from recipe_engine import recipe_test_api
 
 from PB.turboci.graph.orchestrator.v1.check_kind import CheckKind
-from PB.turboci.graph.orchestrator.v1.write_nodes_request import WriteNodesRequest
+from PB.turboci.graph.orchestrator.v1.write_nodes_request import (
+  WriteNodesRequest,
+)
 from PB.turboci.graph.orchestrator.v1.workplan import WorkPlan
 from recipe_engine.turboci import get_check_by_short_id, get_option
 
@@ -19,8 +21,14 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 
-from RECIPE_MODULES.recipe_engine import (buildbucket, futures, properties,
-                                          step, swarming, time)
+from RECIPE_MODULES.recipe_engine import (
+  buildbucket,
+  futures,
+  properties,
+  step,
+  swarming,
+  time,
+)
 
 
 @dataclass
@@ -38,18 +46,32 @@ class TEST_DEPS(RecipeTestApi):
   buildbucket: buildbucket.TEST_API
   properties: properties.TEST_API
 
+
 from google.protobuf import json_format
 from google.protobuf.struct_pb2 import Struct
 
 from PB.recipe_engine import result as result_pb2
 from PB.recipes.recipe_engine.placeholder import (
-    InputProps, Step, FakeStep, CollectChildren, ChildBuild, Buildbucket,
-    LifeTime, TurboCIWrite as TurboCIWriteType,TurboCIQuery, TurboCIWrites)
+  InputProps,
+  Step,
+  FakeStep,
+  CollectChildren,
+  ChildBuild,
+  Buildbucket,
+  LifeTime,
+  TurboCIWrite as TurboCIWriteType,
+  TurboCIQuery,
+  TurboCIWrites,
+)
 from PB.go.chromium.org.luci.buildbucket.proto.builder_common import BuilderID
 from PB.go.chromium.org.luci.buildbucket.proto.common import Status
 
-from PB.turboci.data.gerrit.v1.gob_source_check_options import GobSourceCheckOptions
-from PB.turboci.data.gerrit.v1.gob_source_check_results import GobSourceCheckResults
+from PB.turboci.data.gerrit.v1.gob_source_check_options import (
+  GobSourceCheckOptions,
+)
+from PB.turboci.data.gerrit.v1.gob_source_check_results import (
+  GobSourceCheckResults,
+)
 from PB.turboci.data.gerrit.v1.gerrit_change_info import GerritChangeInfo
 from PB.turboci.graph.orchestrator.v1.query import Query
 
@@ -61,7 +83,9 @@ PROPERTIES = InputProps
 
 
 def RunSteps(api: DEPS, properties: InputProps) -> result_pb2.RawResult:
-  def handlePres(pres: engine_types.StepPresentation, step_pb: FakeStep) -> None:
+  def handlePres(
+    pres: engine_types.StepPresentation, step_pb: FakeStep
+  ) -> None:
     pres.step_text = step_pb.step_text
     for name, link in step_pb.links.items():
       pres.links[name] = link
@@ -105,7 +129,8 @@ def RunSteps(api: DEPS, properties: InputProps) -> result_pb2.RawResult:
 
         if fake_step.duration_secs > 0:
           api.time.sleep(
-              fake_step.duration_secs, with_step=False, step_result=pres)
+            fake_step.duration_secs, with_step=False, step_result=pres
+          )
 
         for child in fake_step.children:
           processStep(child)
@@ -114,10 +139,11 @@ def RunSteps(api: DEPS, properties: InputProps) -> result_pb2.RawResult:
       handlePres(result.presentation, fake_step)
       if fake_step.duration_secs > 0:
         api.time.sleep(
-            fake_step.duration_secs, with_step=False, step_result=result)
+          fake_step.duration_secs, with_step=False, step_result=result
+        )
 
   def scheduleChildBuild(
-      step_name: str, child_build: ChildBuild
+    step_name: str, child_build: ChildBuild
   ) -> build_pb2.Build:
     assert child_build.buildbucket
     builder = child_build.buildbucket.builder
@@ -128,24 +154,27 @@ def RunSteps(api: DEPS, properties: InputProps) -> result_pb2.RawResult:
     bounded_child = "False"
     if child_build.life_time == LifeTime.BUILD_BOUND:
       bounded_child = "True"
-      if ('luci.buildbucket.parent_tracking'
-          in api.buildbucket.build.input.experiments):
+      if (
+        'luci.buildbucket.parent_tracking'
+        in api.buildbucket.build.input.experiments
+      ):
         can_outlive_parent = False
       else:
         swarming_parent_run_id = api.swarming.task_id
         child_tracking_service = "swarming"
 
     req = api.buildbucket.schedule_request(
-        builder=builder.builder,
-        project=builder.project,
-        bucket=builder.bucket,
-        can_outlive_parent=can_outlive_parent,
-        swarming_parent_run_id=swarming_parent_run_id,
-        as_shadow_if_parent_is_led=True,
-        led_inherit_parent=True,
-        tags=api.buildbucket.tags(
-            bounded_child=bounded_child,
-            child_tracking_service=child_tracking_service),
+      builder=builder.builder,
+      project=builder.project,
+      bucket=builder.bucket,
+      can_outlive_parent=can_outlive_parent,
+      swarming_parent_run_id=swarming_parent_run_id,
+      as_shadow_if_parent_is_led=True,
+      led_inherit_parent=True,
+      tags=api.buildbucket.tags(
+        bounded_child=bounded_child,
+        child_tracking_service=child_tracking_service,
+      ),
     )
     return api.buildbucket.schedule([req], step_name=step_name)[0]
 
@@ -159,7 +188,7 @@ def RunSteps(api: DEPS, properties: InputProps) -> result_pb2.RawResult:
     api.buildbucket.collect_builds(build_ids_to_collect, step_name=step_name)
 
   def TurboCIWrite(
-      step_name: str, req: TurboCIWriteType, nest: bool = True
+    step_name: str, req: TurboCIWriteType, nest: bool = True
   ) -> None:
     reason = req.reason
     if not reason.message:
@@ -181,17 +210,22 @@ def RunSteps(api: DEPS, properties: InputProps) -> result_pb2.RawResult:
 
   def TurboCIWrites(step_name: str, req: TurboCIWrites) -> None:
     count = req.count or 1
+
     def _write_check(i: int) -> None:
       write_req = TurboCIWriteType(
-          check_writes=[
-              turboci.check(
-                  f'{step_name}_{i}',
-                  kind='CHECK_KIND_BUILD',
-                  realm='$from_container',
-              ),
-          ],)
+        check_writes=[
+          turboci.check(
+            f'{step_name}_{i}',
+            kind='CHECK_KIND_BUILD',
+            realm='$from_container',
+          ),
+        ],
+      )
       TurboCIWrite(f'write check {i}', write_req, nest=False)
-      api.step(f'subproc {i}', ['vpython3', '-c', f'import time; print("step {i}"); time.sleep(1)'])
+      api.step(
+        f'subproc {i}',
+        ['vpython3', '-c', f'import time; print("step {i}"); time.sleep(1)'],
+      )
       TurboCIWrite(f'update check {i}', write_req, nest=False)
 
     with api.step.nest(step_name):
@@ -205,19 +239,19 @@ def RunSteps(api: DEPS, properties: InputProps) -> result_pb2.RawResult:
       workplan_id = turboci.to_id(req.workplan_id).work_plan
     else:
       workplan_id = turboci.to_id(
-          api.buildbucket.build.infra.turboci.stage_attempt_id
+        api.buildbucket.build.infra.turboci.stage_attempt_id
       ).stage_attempt.stage.work_plan
     if not workplan_id:
       return  # pragma: no cover
 
     with api.step.nest(step_name) as pres:
       query = turboci.make_query(
-          Query.SelectChecks(),
-          Query.CollectChecks(
-              options=True,
-              result_data=True,
-          ),
-          node_set=workplan_id,
+        Query.SelectChecks(),
+        Query.CollectChecks(
+          options=True,
+          result_data=True,
+        ),
+        node_set=workplan_id,
       )
 
       try:
@@ -231,8 +265,10 @@ def RunSteps(api: DEPS, properties: InputProps) -> result_pb2.RawResult:
   if not (properties.status and properties.status & Status.ENDED_MASK):
     return result_pb2.RawResult(
       status=Status.FAILURE,
-      summary_markdown=('must provide a final status in input properties; '
-                        'got %s' % properties.status)
+      summary_markdown=(
+        'must provide a final status in input properties; '
+        'got %s' % properties.status
+      ),
     )
   child_map = {}
   if properties.steps:
@@ -242,9 +278,10 @@ def RunSteps(api: DEPS, properties: InputProps) -> result_pb2.RawResult:
         if step.child_build.id:
           if child_map.get(id, None) == 0:
             return result_pb2.RawResult(
-                status=Status.FAILURE,
-                summary_markdown=('multiple child_build steps have the same id:'
-                                  ' %s' % id)
+              status=Status.FAILURE,
+              summary_markdown=(
+                'multiple child_build steps have the same id: %s' % id
+              ),
             )
           child_map[id] = 0
 
@@ -257,242 +294,251 @@ def RunSteps(api: DEPS, properties: InputProps) -> result_pb2.RawResult:
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
-  yield api.test(
-      'basic',
-      api.properties(InputProps(status=Status.SUCCESS))
-  )
+  yield api.test('basic', api.properties(InputProps(status=Status.SUCCESS)))
 
   yield api.test(
-      'presentation',
-      api.properties(InputProps(
-          steps = [
-            Step(
-                name='cool',
-                fake_step=FakeStep(
-                    step_text='text',
-                    logs={'log': 'multiline\ndata'},
-                    links={'link': 'https://example.com'},
-                    status=Status.FAILURE,
-                    set_properties=json_format.ParseDict({
-                      "generic": "stuff",
-                      "key": 100,
-                    }, Struct()),
-                    canceled=True,
-                    timeout=True,
-                    tags={'tag_key': 'tag_value'}
-                ),
+    'presentation',
+    api.properties(
+      InputProps(
+        steps=[
+          Step(
+            name='cool',
+            fake_step=FakeStep(
+              step_text='text',
+              logs={'log': 'multiline\ndata'},
+              links={'link': 'https://example.com'},
+              status=Status.FAILURE,
+              set_properties=json_format.ParseDict(
+                {
+                  "generic": "stuff",
+                  "key": 100,
+                },
+                Struct(),
+              ),
+              canceled=True,
+              timeout=True,
+              tags={'tag_key': 'tag_value'},
             ),
-            Step(
-                name='parent',
-                fake_step=FakeStep(
-                    duration_secs=10,
-                    children=[
-                        Step(name='a', fake_step=FakeStep()),
-                        Step(name='b', fake_step=FakeStep()),
-                    ],
-                    tags={'tag_key': 'tag_value'}
-                ),
-            )
-          ],
-          status=Status.INFRA_FAILURE,
-      )),
-      status='INFRA_FAILURE',
+          ),
+          Step(
+            name='parent',
+            fake_step=FakeStep(
+              duration_secs=10,
+              children=[
+                Step(name='a', fake_step=FakeStep()),
+                Step(name='b', fake_step=FakeStep()),
+              ],
+              tags={'tag_key': 'tag_value'},
+            ),
+          ),
+        ],
+        status=Status.INFRA_FAILURE,
+      )
+    ),
+    status='INFRA_FAILURE',
   )
 
   yield api.test(
-      'missing final status',
-      api.properties(InputProps()),
-      api.post_process(
-          post_process.SummaryMarkdownRE,
-          "must provide a final status in input properties; got"),
-      api.post_process(post_process.DropExpectation),
-      status='FAILURE',
+    'missing final status',
+    api.properties(InputProps()),
+    api.post_process(
+      post_process.SummaryMarkdownRE,
+      "must provide a final status in input properties; got",
+    ),
+    api.post_process(post_process.DropExpectation),
+    status='FAILURE',
   )
 
   child_build_prop = InputProps(
-      steps = [
-          Step(
-              name='child bounded',
-              child_build=ChildBuild(
-                  life_time=LifeTime.BUILD_BOUND,
-                  buildbucket=Buildbucket(
-                      builder=BuilderID(
-                          project="project",
-                          bucket="bucket",
-                          builder="builder",
-                      ),
-                  ),
-              ),
+    steps=[
+      Step(
+        name='child bounded',
+        child_build=ChildBuild(
+          life_time=LifeTime.BUILD_BOUND,
+          buildbucket=Buildbucket(
+            builder=BuilderID(
+              project="project",
+              bucket="bucket",
+              builder="builder",
+            ),
           ),
-          Step(
-              name='child detached',
-              child_build=ChildBuild(
-                  life_time=LifeTime.DETACHED,
-                  buildbucket=Buildbucket(
-                      builder=BuilderID(
-                          project="project",
-                          bucket="bucket",
-                          builder="builder",
-                      ),
-                  ),
-              ),
-          ),
-          Step(
-              name='wait',
-              fake_step=FakeStep(
-                  duration_secs=10,
-                  tags={'child_tag_key': 'child_tag_value'}
-              ),
-          )
-      ],
-      status=Status.SUCCESS,
-  )
-
-  yield api.test(
-      'child_build_swarming',
-      api.properties(child_build_prop)
-  ) + api.properties(swarming_parent_run_id='1234')
-
-  yield api.test(
-      'child_build_buildbucket',
-      api.properties(child_build_prop)
-  ) + api.buildbucket.try_build(
-      project='proj',
-      builder='try-builder',
-      git_repo='https://chrome-internal.googlesource.com/a/repo.git',
-      revision='a' * 40,
-      build_number=123,
-      experiments=['luci.buildbucket.parent_tracking']
-  ) + api.properties(swarming_parent_run_id='1234')
-
-  yield api.test(
-      'collect_children',
-      api.properties(InputProps(
-          steps = [
-              Step(
-                  name='child bounded',
-                  child_build=ChildBuild(
-                      id='child bounded id',
-                      life_time=LifeTime.BUILD_BOUND,
-                      buildbucket=Buildbucket(
-                          builder=BuilderID(
-                              project="project",
-                              bucket="bucket",
-                              builder="builder",
-                          ),
-                      ),
-                  ),
-              ),
-              Step(
-                  name='collect children',
-                  collect_children=CollectChildren(
-                      child_build_step_ids=['child bounded id'],
-                  ),
-              ),
-          ],
-          status=Status.SUCCESS,
-      ))
-  ) + api.buildbucket.try_build(
-      project='proj',
-      builder='try-builder',
-      git_repo='https://chrome-internal.googlesource.com/a/repo.git',
-      revision='a' * 40,
-      build_number=123,
-      experiments=['luci.buildbucket.parent_tracking']
-  )
-
-  yield api.test(
-      'collect_children_duplicated_id',
-      api.properties(InputProps(
-          steps = [
-              Step(
-                  name='child bounded',
-                  child_build=ChildBuild(
-                      id='id',
-                      life_time=LifeTime.BUILD_BOUND,
-                      buildbucket=Buildbucket(
-                          builder=BuilderID(
-                              project="project",
-                              bucket="bucket",
-                              builder="builder",
-                          ),
-                      ),
-                  ),
-              ),
-              Step(
-                  name='child bounded another',
-                  child_build=ChildBuild(
-                      id='id',
-                      life_time=LifeTime.BUILD_BOUND,
-                      buildbucket=Buildbucket(
-                          builder=BuilderID(
-                              project="project",
-                              bucket="bucket",
-                              builder="builder",
-                          ),
-                      ),
-                  ),
-              ),
-              Step(
-                  name='collect children',
-                  collect_children=CollectChildren(
-                      child_build_step_ids=['id'],
-                  ),
-              ),
-          ],
-          status=Status.SUCCESS,
-      )),
-      status='FAILURE',
-  )
-
-  yield api.test(
-      'collect_children_wrong_id',
-      api.properties(InputProps(
-          steps = [
-              Step(
-                  name='child bounded',
-                  child_build=ChildBuild(
-                      id='child bounded id',
-                      life_time=LifeTime.BUILD_BOUND,
-                      buildbucket=Buildbucket(
-                          builder=BuilderID(
-                              project="project",
-                              bucket="bucket",
-                              builder="builder",
-                          ),
-                      ),
-                  ),
-              ),
-              Step(
-                  name='collect children',
-                  collect_children=CollectChildren(
-                      child_build_step_ids=['id'],
-                  ),
-              ),
-          ],
-          status=Status.SUCCESS,
-      )),
-      api.buildbucket.try_build(
-          project='proj',
-          builder='try-builder',
-          git_repo='https://chrome-internal.googlesource.com/a/repo.git',
-          revision='a' * 40,
-          build_number=123,
-          experiments=['luci.buildbucket.parent_tracking']
+        ),
       ),
-      status='INFRA_FAILURE',
+      Step(
+        name='child detached',
+        child_build=ChildBuild(
+          life_time=LifeTime.DETACHED,
+          buildbucket=Buildbucket(
+            builder=BuilderID(
+              project="project",
+              bucket="bucket",
+              builder="builder",
+            ),
+          ),
+        ),
+      ),
+      Step(
+        name='wait',
+        fake_step=FakeStep(
+          duration_secs=10, tags={'child_tag_key': 'child_tag_value'}
+        ),
+      ),
+    ],
+    status=Status.SUCCESS,
+  )
+
+  yield api.test(
+    'child_build_swarming', api.properties(child_build_prop)
+  ) + api.properties(swarming_parent_run_id='1234')
+
+  yield (
+    api.test('child_build_buildbucket', api.properties(child_build_prop))
+    + api.buildbucket.try_build(
+      project='proj',
+      builder='try-builder',
+      git_repo='https://chrome-internal.googlesource.com/a/repo.git',
+      revision='a' * 40,
+      build_number=123,
+      experiments=['luci.buildbucket.parent_tracking'],
+    )
+    + api.properties(swarming_parent_run_id='1234')
+  )
+
+  yield api.test(
+    'collect_children',
+    api.properties(
+      InputProps(
+        steps=[
+          Step(
+            name='child bounded',
+            child_build=ChildBuild(
+              id='child bounded id',
+              life_time=LifeTime.BUILD_BOUND,
+              buildbucket=Buildbucket(
+                builder=BuilderID(
+                  project="project",
+                  bucket="bucket",
+                  builder="builder",
+                ),
+              ),
+            ),
+          ),
+          Step(
+            name='collect children',
+            collect_children=CollectChildren(
+              child_build_step_ids=['child bounded id'],
+            ),
+          ),
+        ],
+        status=Status.SUCCESS,
+      )
+    ),
+  ) + api.buildbucket.try_build(
+    project='proj',
+    builder='try-builder',
+    git_repo='https://chrome-internal.googlesource.com/a/repo.git',
+    revision='a' * 40,
+    build_number=123,
+    experiments=['luci.buildbucket.parent_tracking'],
+  )
+
+  yield api.test(
+    'collect_children_duplicated_id',
+    api.properties(
+      InputProps(
+        steps=[
+          Step(
+            name='child bounded',
+            child_build=ChildBuild(
+              id='id',
+              life_time=LifeTime.BUILD_BOUND,
+              buildbucket=Buildbucket(
+                builder=BuilderID(
+                  project="project",
+                  bucket="bucket",
+                  builder="builder",
+                ),
+              ),
+            ),
+          ),
+          Step(
+            name='child bounded another',
+            child_build=ChildBuild(
+              id='id',
+              life_time=LifeTime.BUILD_BOUND,
+              buildbucket=Buildbucket(
+                builder=BuilderID(
+                  project="project",
+                  bucket="bucket",
+                  builder="builder",
+                ),
+              ),
+            ),
+          ),
+          Step(
+            name='collect children',
+            collect_children=CollectChildren(
+              child_build_step_ids=['id'],
+            ),
+          ),
+        ],
+        status=Status.SUCCESS,
+      )
+    ),
+    status='FAILURE',
+  )
+
+  yield api.test(
+    'collect_children_wrong_id',
+    api.properties(
+      InputProps(
+        steps=[
+          Step(
+            name='child bounded',
+            child_build=ChildBuild(
+              id='child bounded id',
+              life_time=LifeTime.BUILD_BOUND,
+              buildbucket=Buildbucket(
+                builder=BuilderID(
+                  project="project",
+                  bucket="bucket",
+                  builder="builder",
+                ),
+              ),
+            ),
+          ),
+          Step(
+            name='collect children',
+            collect_children=CollectChildren(
+              child_build_step_ids=['id'],
+            ),
+          ),
+        ],
+        status=Status.SUCCESS,
+      )
+    ),
+    api.buildbucket.try_build(
+      project='proj',
+      builder='try-builder',
+      git_repo='https://chrome-internal.googlesource.com/a/repo.git',
+      revision='a' * 40,
+      build_number=123,
+      experiments=['luci.buildbucket.parent_tracking'],
+    ),
+    status='INFRA_FAILURE',
   )
 
   write_checks_input = InputProps(status=Status.SUCCESS)
   step = write_checks_input.steps.add(name='write bob')
   step.turboci_write.check_writes.append(
-      turboci.check(
-          # Note - bob depends on charlie, which is written via turboci_write_nodes
-          # prior to RunSteps.
-          'bob',
-          kind='CHECK_KIND_TEST',
-          deps=turboci.dep_group('charlie'),
-      ))
+    turboci.check(
+      # Note - bob depends on charlie, which is written via turboci_write_nodes
+      # prior to RunSteps.
+      'bob',
+      kind='CHECK_KIND_TEST',
+      deps=turboci.dep_group('charlie'),
+    )
+  )
   step = write_checks_input.steps.add(name='add option to bob')
 
   options = GobSourceCheckOptions()
@@ -500,34 +546,38 @@ def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   gerrit.hostname = "cool-host.example.com"
 
   step.turboci_write.check_writes.append(
-      turboci.check(
-          'bob',
-          options=[options],
-          state='CHECK_STATE_PLANNED',
-      ))
+    turboci.check(
+      'bob',
+      options=[options],
+      state='CHECK_STATE_PLANNED',
+    )
+  )
   step = write_checks_input.steps.add(name='finalize charlie')
   step.turboci_write.check_writes.append(
-      turboci.check(
-          'charlie',
-          state='CHECK_STATE_FINAL',
-      ))
+    turboci.check(
+      'charlie',
+      state='CHECK_STATE_FINAL',
+    )
+  )
   step = write_checks_input.steps.add(name='add result to bob')
   step.turboci_write.check_writes.append(
-      turboci.check(
-          'bob',
-          results=[GobSourceCheckResults()],
-          state='CHECK_STATE_FINAL',
-      ))
+    turboci.check(
+      'bob',
+      results=[GobSourceCheckResults()],
+      state='CHECK_STATE_FINAL',
+    )
+  )
   step = write_checks_input.steps.add(name='fail to add late result to bob')
   step.turboci_write.check_writes.append(
-      turboci.check(
-          'bob',
-          results=[GerritChangeInfo()],
-          state='CHECK_STATE_FINAL',
-      ))
+    turboci.check(
+      'bob',
+      results=[GerritChangeInfo()],
+      state='CHECK_STATE_FINAL',
+    )
+  )
 
   def _assert_workplan(
-      assert_: post_process_inputs.Checker, workplan: WorkPlan
+    assert_: post_process_inputs.Checker, workplan: WorkPlan
   ) -> None:
     # TODO (b/483105203): get_check_by_short_id() is currently O(N), which readers
     # might not expect. Remove this comment when we optimize the function later.
@@ -549,20 +599,21 @@ def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
     assert_(opt.gerrit_changes[0].hostname == 'cool-host.example.com')
 
   yield api.test(
-      'write_checks',
-      api.properties(write_checks_input),
-      api.turboci_write_nodes(
-          turboci.check('charlie', kind='CHECK_KIND_BUILD'),),
-      api.assert_workplan(_assert_workplan),
+    'write_checks',
+    api.properties(write_checks_input),
+    api.turboci_write_nodes(
+      turboci.check('charlie', kind='CHECK_KIND_BUILD'),
+    ),
+    api.assert_workplan(_assert_workplan),
   )
 
   def _mock_turboci_build() -> recipe_test_api.TestData:
     b = api.buildbucket.try_build_message(
-        project='proj',
-        builder='try-builder',
-        git_repo='https://chrome-internal.googlesource.com/a/repo.git',
-        revision='a' * 40,
-        build_number=123,
+      project='proj',
+      builder='try-builder',
+      git_repo='https://chrome-internal.googlesource.com/a/repo.git',
+      revision='a' * 40,
+      build_number=123,
     )
     # Hack: currently TurboCI fake uses an empty string as its local workplan
     # ID. To test the query_by_current_workplan case, also set the current
@@ -571,44 +622,53 @@ def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
     return api.buildbucket.build(b)
 
   yield api.test(
-      'turboci_query_with_current_workplan', _mock_turboci_build(),
-      api.turboci_write_nodes(
-          turboci.check('charlie', kind='CHECK_KIND_BUILD'),),
-      api.properties(
-          InputProps(
-              steps=[Step(name='query it', turboci_query=TurboCIQuery())],
-              status=Status.SUCCESS,
-          )),
-      api.post_process(post_process.LogContains, 'query it', 'response',
-                       ['charlie']),
-      api.post_process(post_process.DropExpectation))
-
-  yield api.test(
-      'turboci_query_with_provided_workplan',
-      api.properties(
-          InputProps(
-              steps=[
-                  Step(
-                      name='query it',
-                      turboci_query=TurboCIQuery(workplan_id='L0000000001'))
-              ],
-              status=Status.SUCCESS,
-          )),
-      api.post_process(post_process.LogContains, 'query it', 'exception',
-                       ['NotImplementedError']),
-      api.post_process(post_process.DropExpectation),
+    'turboci_query_with_current_workplan',
+    _mock_turboci_build(),
+    api.turboci_write_nodes(
+      turboci.check('charlie', kind='CHECK_KIND_BUILD'),
+    ),
+    api.properties(
+      InputProps(
+        steps=[Step(name='query it', turboci_query=TurboCIQuery())],
+        status=Status.SUCCESS,
+      )
+    ),
+    api.post_process(
+      post_process.LogContains, 'query it', 'response', ['charlie']
+    ),
+    api.post_process(post_process.DropExpectation),
   )
 
   yield api.test(
-      'turboci_writes',
-      api.properties(
-          InputProps(
-              steps=[
-                  Step(
-                      name='concurrent writes',
-                      turboci_writes=TurboCIWrites(count=3),
-                  )
-              ],
-              status=Status.SUCCESS,
-          )),
+    'turboci_query_with_provided_workplan',
+    api.properties(
+      InputProps(
+        steps=[
+          Step(
+            name='query it',
+            turboci_query=TurboCIQuery(workplan_id='L0000000001'),
+          )
+        ],
+        status=Status.SUCCESS,
+      )
+    ),
+    api.post_process(
+      post_process.LogContains, 'query it', 'exception', ['NotImplementedError']
+    ),
+    api.post_process(post_process.DropExpectation),
+  )
+
+  yield api.test(
+    'turboci_writes',
+    api.properties(
+      InputProps(
+        steps=[
+          Step(
+            name='concurrent writes',
+            turboci_writes=TurboCIWrites(count=3),
+          )
+        ],
+        status=Status.SUCCESS,
+      )
+    ),
   )

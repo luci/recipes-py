@@ -15,14 +15,15 @@ from typing import TYPE_CHECKING
 from recipe_engine import recipe_api
 
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
-from PB.go.chromium.org.luci.common.proto.findings import findings as findings_pb
+from PB.go.chromium.org.luci.common.proto.findings import (
+  findings as findings_pb,
+)
 
 if TYPE_CHECKING:  # pragma: no cover
   from RECIPE_MODULES.recipe_engine import findings
 
 
 class FindingsAPI(recipe_api.RecipeApi):
-
   m: findings.DEPS
 
   def __init__(self, **kwargs: Any) -> None:
@@ -35,9 +36,9 @@ class FindingsAPI(recipe_api.RecipeApi):
   PATCHSET_LEVEL_FILE_PATH = '/PATCHSET_LEVEL'
 
   def upload_findings(
-      self,
-      findings: Sequence[findings_pb.Finding],
-      step_name: str | None = None,
+    self,
+    findings: Sequence[findings_pb.Finding],
+    step_name: str | None = None,
   ) -> None:
     """Uploads code findings to ResultDB.
 
@@ -57,31 +58,36 @@ class FindingsAPI(recipe_api.RecipeApi):
       self._validate_finding(f)
 
     with self.m.step.nest(
-        step_name or
-        f'upload {len(findings)} findings to ResultDB') as presentation:
+      step_name or f'upload {len(findings)} findings to ResultDB'
+    ) as presentation:
       # TODO - crbug/382600891: update the ResultDB invocation tag instead.
       if not self._tagged_current_build:
         self.m.buildbucket.add_tags_to_current_build(
-            [common_pb2.StringPair(
-                key='has_code_findings',
-                value='true',
-            )])
+          [
+            common_pb2.StringPair(
+              key='has_code_findings',
+              value='true',
+            )
+          ]
+        )
         self._tagged_current_build = True
       findings = findings_pb.Findings(findings=findings)
       artifact_id = f'findings-{self.m.uuid.random()}'
       presentation.step_text = f'artifact_id: {artifact_id}'
       presentation.logs['findings.json'] = self.m.proto.encode(
-          findings, 'JSONPB')
+        findings, 'JSONPB'
+      )
       # TODO: from Py 3.14 onwards, `mtime=0` becomes default and no longer
       # needs to be set explicitly. It's set to ensure reproducible output.
       contents = gzip.compress(self.m.proto.encode(findings, 'BINARY'), mtime=0)
       self.m.resultdb.upload_invocation_artifacts(
-          {
-              artifact_id: {
-                  'content_type': 'application/vnd.google.protobuf+gzip',
-                  'contents': contents,
-              }
-          },)
+        {
+          artifact_id: {
+            'content_type': 'application/vnd.google.protobuf+gzip',
+            'contents': contents,
+          }
+        },
+      )
 
   def _validate_finding(self, finding: findings_pb.Finding) -> None:
     # TODO: yiwzhang - use https://github.com/bufbuild/protovalidate to
@@ -94,8 +100,8 @@ class FindingsAPI(recipe_api.RecipeApi):
     if not finding.message:
       raise ValueError('finding message is required')
     if not finding.severity_level or (
-        finding.severity_level
-        == findings_pb.Finding.SEVERITY_LEVEL_UNSPECIFIED):
+      finding.severity_level == findings_pb.Finding.SEVERITY_LEVEL_UNSPECIFIED
+    ):
       raise ValueError('finding severity_level MUST be specified')
     for fix in finding.fixes or ():
       if not fix.replacements:
@@ -119,46 +125,61 @@ class FindingsAPI(recipe_api.RecipeApi):
     if not loc.file_path:
       raise ValueError('file path is required')
     if loc.file_path not in (
-        FindingsAPI.COMMIT_MESSAGE_FILE_PATH,
-        FindingsAPI.PATCHSET_LEVEL_FILE_PATH) and os.path.isabs(loc.file_path):
+      FindingsAPI.COMMIT_MESSAGE_FILE_PATH,
+      FindingsAPI.PATCHSET_LEVEL_FILE_PATH,
+    ) and os.path.isabs(loc.file_path):
       raise ValueError(f'file_path must be relative, got {loc.file_path}')
 
     if loc.HasField('range'):
       if not loc.range.start_line:
         if loc.range.end_line:
-          raise ValueError(f'start_line is empty, implying file level comment, '
-                           f'but end_line is {loc.range.end_line} instead of 0')
+          raise ValueError(
+            f'start_line is empty, implying file level comment, '
+            f'but end_line is {loc.range.end_line} instead of 0'
+          )
         if loc.range.start_column:
-          raise ValueError('start_line is empty, implying file level comment, '
-                           f'but start_column is {loc.range.start_column} '
-                           'instead of 0')
+          raise ValueError(
+            'start_line is empty, implying file level comment, '
+            f'but start_column is {loc.range.start_column} '
+            'instead of 0'
+          )
         if loc.range.end_column:
-          raise ValueError('start_line is empty, implying file level comment, '
-                           f'but end_column is {loc.range.end_column} '
-                           'instead of 0')
+          raise ValueError(
+            'start_line is empty, implying file level comment, '
+            f'but end_column is {loc.range.end_column} '
+            'instead of 0'
+          )
       elif loc.range.start_line < 0:
-        raise ValueError('start_line MUST not be negative, '
-                         f'got {loc.range.start_line}')
-      elif loc.range.end_line < 1:
-        raise ValueError('start_line is specified so end_line must be '
-                         f'positive, got {loc.range.end_line}')
-      elif loc.range.start_column < 0:
-        raise ValueError('start_column MUST not be negative, '
-                         f'got {loc.range.start_column}')
-      elif loc.range.end_column < 0:
-        raise ValueError('end_column MUST not be negative, '
-                         f'got {loc.range.end_column}')
-      elif loc.range.start_line > loc.range.end_line or (
-          loc.range.start_line == loc.range.end_line and
-          loc.range.start_column > loc.range.end_column and
-          loc.range.end_column > 0):
         raise ValueError(
-            '(start_line, start_column) must not be after (end_line, end_column'
-            f'), got ({loc.range.start_line}, {loc.range.start_column}) .. '
-            f'({loc.range.end_line}, {loc.range.end_column})')
+          f'start_line MUST not be negative, got {loc.range.start_line}'
+        )
+      elif loc.range.end_line < 1:
+        raise ValueError(
+          'start_line is specified so end_line must be '
+          f'positive, got {loc.range.end_line}'
+        )
+      elif loc.range.start_column < 0:
+        raise ValueError(
+          f'start_column MUST not be negative, got {loc.range.start_column}'
+        )
+      elif loc.range.end_column < 0:
+        raise ValueError(
+          f'end_column MUST not be negative, got {loc.range.end_column}'
+        )
+      elif loc.range.start_line > loc.range.end_line or (
+        loc.range.start_line == loc.range.end_line
+        and loc.range.start_column > loc.range.end_column
+        and loc.range.end_column > 0
+      ):
+        raise ValueError(
+          '(start_line, start_column) must not be after (end_line, end_column'
+          f'), got ({loc.range.start_line}, {loc.range.start_column}) .. '
+          f'({loc.range.end_line}, {loc.range.end_column})'
+        )
 
   def populate_source_from_current_build(
-      self, location: findings_pb.Location) -> None:
+    self, location: findings_pb.Location
+  ) -> None:
     """Set the location source based on the input of the current build.
 
     This can be used for finding.location or replacement.location. Currently,
@@ -173,8 +194,9 @@ class FindingsAPI(recipe_api.RecipeApi):
     if not gerrit_changes:
       raise ValueError('current build input does not contain a gerrit change')
     if len(gerrit_changes) > 1:
-      raise ValueError('current build input contains more than one gerrit '
-                       'changes')
+      raise ValueError(
+        'current build input contains more than one gerrit changes'
+      )
     cl = gerrit_changes[0]
     location.gerrit_change_ref.host = cl.host
     location.gerrit_change_ref.project = cl.project

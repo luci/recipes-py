@@ -34,9 +34,13 @@ class TEST_DEPS(RecipeTestApi):
 
 
 def RunSteps(api: DEPS) -> None:
-  api.step('Here\'s a step brah', ['echo', 'steppity', 'doo', 'dah'],
-           step_test_data=functools.partial(
-              lambda x: recipe_test_api.StepTestData(), None))
+  api.step(
+    'Here\'s a step brah',
+    ['echo', 'steppity', 'doo', 'dah'],
+    step_test_data=functools.partial(
+      lambda x: recipe_test_api.StepTestData(), None
+    ),
+  )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:

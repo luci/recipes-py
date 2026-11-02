@@ -11,11 +11,11 @@ import functools
 import json
 import operator
 from typing import (
-    Any,
-    ClassVar,
-    Literal,
-    TypeVar,
-    TYPE_CHECKING,
+  Any,
+  ClassVar,
+  Literal,
+  TypeVar,
+  TYPE_CHECKING,
 )
 
 import attr
@@ -28,6 +28,7 @@ from recipe_engine.internal import attr_util
 
 if TYPE_CHECKING:
   from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb
+
   LogDataType = common_pb.Log | str | bytes | Iterable[str | bytes]
   StoredLogDataType = common_pb.Log | str | _StringSequence
 
@@ -97,6 +98,7 @@ class FrozenDict(Mapping[K, V]):
 
   Modified From: http://stackoverflow.com/a/2704866
   """
+
   _d: collections.OrderedDict[K, V]
   on_missing: Callable[[K], Any]
   _hash: int
@@ -112,7 +114,8 @@ class FrozenDict(Mapping[K, V]):
     # Calculate the hash immediately so that we know all the items are
     # hashable too.
     self._hash = functools.reduce(
-        operator.xor, (hash(i) for i in enumerate(self._d.items())), 0)
+      operator.xor, (hash(i) for i in enumerate(self._d.items())), 0
+    )
 
   def __eq__(self, other: Any) -> bool:
     if not isinstance(other, Mapping):
@@ -161,7 +164,8 @@ def _fix_stringlike(value: str | bytes) -> str:
     return value.decode('utf-8', errors='backslashreplace')
 
   raise ValueError(
-      "Expected object of (str, bytes) but got %s" % (type(value),))
+    "Expected object of (str, bytes) but got %s" % (type(value),)
+  )
 
 
 class _StringSequence(collections.UserList[str]):
@@ -189,8 +193,7 @@ class _StringSequence(collections.UserList[str]):
   def __setitem__(self, i: int, item: str | bytes) -> None:
     self.data[i] = _fix_stringlike(item)
 
-  def __setslice__(self, i: int, j: int,
-                   other: Iterable[str | bytes]) -> None:
+  def __setslice__(self, i: int, j: int, other: Iterable[str | bytes]) -> None:
     i = max(i, 0)
     j = max(j, 0)
     if isinstance(other, _StringSequence):
@@ -222,6 +225,7 @@ class _OrderedDictString(collections.OrderedDict[str, 'StoredLogDataType']):
   def __setitem__(self, key: str, value: LogDataType) -> None:
     # late proto import
     from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb
+
     if isinstance(value, (common_pb.Log, str, _StringSequence)):
       # these values are fine
       pass
@@ -231,13 +235,15 @@ class _OrderedDictString(collections.OrderedDict[str, 'StoredLogDataType']):
       value = _StringSequence(value)
     else:
       raise ValueError(
-          "Attempted to assign non-(bytes/str or sequence(bytes/str)) "
-          "data as log value: %r" % (type(value),))
+        "Attempted to assign non-(bytes/str or sequence(bytes/str)) "
+        "data as log value: %r" % (type(value),)
+      )
 
     return super().__setitem__(key, value)
 
-  def setdefault(self, key: str,
-                 default: LogDataType | None) -> StoredLogDataType:
+  def setdefault(
+    self, key: str, default: LogDataType | None
+  ) -> StoredLogDataType:
     if key in self:
       return self[key]
     self[key] = default
@@ -375,24 +381,31 @@ class StepPresentation:
   as a bullet list.
   """
 
-  _RAW_STATUSES: tuple[str | None, ...] = (None, 'SUCCESS', 'WARNING', 'FAILURE',
-                                           'EXCEPTION', 'CANCELED')
+  _RAW_STATUSES: tuple[str | None, ...] = (
+    None,
+    'SUCCESS',
+    'WARNING',
+    'FAILURE',
+    'EXCEPTION',
+    'CANCELED',
+  )
   Status = Literal[*_RAW_STATUSES]
   STATUSES: frozenset[str] = frozenset(
-      status for status in _RAW_STATUSES if status)
+    status for status in _RAW_STATUSES if status
+  )
   STATUS_TO_BADNESS: ClassVar[FrozenDict[str | None, int]]
 
   # TODO(iannucci): use attr for this
 
   @classmethod
-  def status_worst(cls, status_a: str | None,
-                   status_b: str | None) -> str | None:
+  def status_worst(
+    cls, status_a: str | None, status_b: str | None
+  ) -> str | None:
     """Given two STATUS strings, return the worse of the two."""
     if not hasattr(cls, 'STATUS_TO_BADNESS'):
-      cls.STATUS_TO_BADNESS = freeze({
-          status: i
-          for i, status in enumerate(StepPresentation._RAW_STATUSES)
-      })
+      cls.STATUS_TO_BADNESS = freeze(
+        {status: i for i, status in enumerate(StepPresentation._RAW_STATUSES)}
+      )
 
     if cls.STATUS_TO_BADNESS[status_a] > cls.STATUS_TO_BADNESS[status_b]:
       return status_a
@@ -403,8 +416,7 @@ class StepPresentation:
     self._finalized: bool = False
 
     self._logs: _OrderedDictString | None = _OrderedDictString()
-    self._links: collections.OrderedDict[str,
-                                          str] = collections.OrderedDict()
+    self._links: collections.OrderedDict[str, str] = collections.OrderedDict()
     self._status: Status = None
     self._had_timeout: bool = False
     self._was_cancelled: bool = False
@@ -427,7 +439,8 @@ class StepPresentation:
     """Sets .status to this value if it's worse than the current status."""
     new_status = self.status_worst(self.status, status)
     assert new_status is not None, (
-        'internal error: set_worse_status should not result in None')
+      'internal error: set_worse_status should not result in None'
+    )
     self.status = new_status
 
   @property
@@ -470,8 +483,7 @@ class StepPresentation:
     return self._step_summary_text
 
   @step_summary_text.setter
-  def step_summary_text(
-      self, val: str | Sequence[str] | None) -> None:
+  def step_summary_text(self, val: str | Sequence[str] | None) -> None:
     assert not self._finalized, 'Changing finalized step %r' % self._name
     # str objects match collections.abc.Sequence, but items from a str are all
     # strs so this still works.
@@ -506,9 +518,7 @@ class StepPresentation:
     return copy.deepcopy(self._tags)
 
   @properties.setter
-  def properties(
-      self, val: Mapping[str, Any]
-  ) -> None:  # pylint: disable=E0202
+  def properties(self, val: Mapping[str, Any]) -> None:  # pylint: disable=E0202
     assert not self._finalized, 'Changing finalized step %r' % self._name
     assert isinstance(val, Mapping)
     self._properties = dict(val)
@@ -526,6 +536,7 @@ class StepPresentation:
       step_stream.add_step_summary_text(self.step_summary_text)
     # late proto import
     from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb
+
     for name, log in logs.items():
       if isinstance(log, common_pb.Log):
         step_stream.append_log(log)
@@ -537,8 +548,9 @@ class StepPresentation:
             for line in log:
               self.write_data(log_stream, line)
           else:
-            raise ValueError('log %r has unknown log type %s: %r' %
-                             (name, type(log), log))
+            raise ValueError(
+              'log %r has unknown log type %s: %r' % (name, type(log), log)
+            )
     for label, url in self._links.items():
       # We fix spaces in urls; It's an extremely common mistake to make, and
       # easy to remedy here.
@@ -590,6 +602,7 @@ class ResourceCost:
 
   See `api.step.ResourceCost` for full documentation.
   """
+
   cpu: int = attr.ib(validator=attr_util.attr_type(int), default=500)
   memory: int = attr.ib(validator=attr_util.attr_type(int), default=50)
   disk: int = attr.ib(validator=attr_util.attr_type(int), default=0)
@@ -616,7 +629,7 @@ class ResourceCost:
   def __str__(self) -> str:
     bits = []
     if self.cpu > 0:
-      cores = ('%0.2f' % (self.cpu / 1000.)).rstrip('0').rstrip('.')
+      cores = ('%0.2f' % (self.cpu / 1000.0)).rstrip('0').rstrip('.')
       bits.append('cpu=[%s cores]' % (cores,))
     if self.memory > 0:
       bits.append('memory=[%d MiB]' % (self.memory,))
@@ -629,10 +642,10 @@ class ResourceCost:
   def fits(self, cpu: int, memory: int, disk: int, net: int) -> bool:
     """Returns True if this Resources fits within the given constraints."""
     return (
-      self.cpu <= cpu and
-      self.memory <= memory and
-      self.disk <= disk and
-      self.net <= net
+      self.cpu <= cpu
+      and self.memory <= memory
+      and self.disk <= disk
+      and self.net <= net
     )
 
 
@@ -708,7 +721,6 @@ class PerGreenletState(gevent.local.local):
 #
 # Reset in between test runs by the simulator.
 class _PerGreentletStateRegistry(list['PerGreenletState']):
-
   def clear(self) -> None:
     """Clears the Registry."""
     self[:] = []

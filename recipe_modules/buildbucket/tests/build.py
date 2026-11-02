@@ -16,18 +16,19 @@ from google.protobuf import timestamp_pb2
 from recipe_engine import post_process
 
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
-from PB.go.chromium.org.luci.buildbucket.proto \
-  import builder_common as builder_common_pb2
+from PB.go.chromium.org.luci.buildbucket.proto import (
+  builder_common as builder_common_pb2,
+)
 
 
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    buildbucket,
-    properties,
-    step,
+  assertions,
+  buildbucket,
+  properties,
+  step,
 )
 
 
@@ -52,14 +53,14 @@ def RunSteps(api: DEPS) -> None:
   api.step('is_critical', ['echo', api.buildbucket.is_critical()])
 
   api.assertions.assertEqual(
-      api.buildbucket.bucket_v1,
-      api.properties.get('expected_bucket_v1'))
+    api.buildbucket.bucket_v1, api.properties.get('expected_bucket_v1')
+  )
   api.assertions.assertEqual(
-      api.buildbucket.builder_name,
-      api.buildbucket.build.builder.builder)
+    api.buildbucket.builder_name, api.buildbucket.build.builder.builder
+  )
   api.assertions.assertEqual(
-      api.buildbucket.gitiles_commit,
-      api.buildbucket.build.input.gitiles_commit)
+    api.buildbucket.gitiles_commit, api.buildbucket.build.input.gitiles_commit
+  )
 
   expected_realm = api.properties.get('expected_realm')
   if expected_realm:
@@ -70,8 +71,9 @@ def RunSteps(api: DEPS) -> None:
 
   expected_full_name = api.properties.get('expected_full_name')
   if expected_full_name:
-    api.assertions.assertEqual(api.buildbucket.builder_full_name,
-                               expected_full_name)
+    api.assertions.assertEqual(
+      api.buildbucket.builder_full_name, expected_full_name
+    )
   else:
     with api.assertions.assertRaises(api.step.InfraFailure):
       api.buildbucket.builder_full_name
@@ -84,116 +86,144 @@ def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
 
   yield case('empty')
 
-  yield case('hostname', **{
+  yield case(
+    'hostname',
+    **{
       '$recipe_engine/buildbucket': {
-          'hostname': 'buildbucket.example.com',
+        'hostname': 'buildbucket.example.com',
       },
-  })
+    },
+  )
 
-  yield case('legacy-master', **{
+  yield case(
+    'legacy-master',
+    **{
       'mastername': 'chromium.fyi',
       'branch': 'beta',
       'revision': 'a' * 40,
-  })
+    },
+  )
 
-  yield case('legacy-patch-props', **{
+  yield case(
+    'legacy-patch-props',
+    **{
       'patch_storage': 'gerrit',
       'patch_gerrit_url': 'https://example.googlesource.com/',
       'patch_project': 'a/b',
       'patch_issue': 1,
       'patch_set': 2,
-  })
-
-  yield (
-      case('ci',
-           expected_bucket_v1='luci.test.ci',
-           expected_realm='test:ci',
-           expected_full_name='test/ci/builder')
-      + api.buildbucket.ci_build(
-          project='test',
-          git_repo='git.example.com/test/repo',
-      )
-      + api.post_process(post_process.DropExpectation)
+    },
   )
 
   yield (
-      case('ci with experiment',
-           expected_bucket_v1='luci.test.ci',
-           expected_realm='test:ci',
-           expected_full_name='test/ci/builder')
-      + api.buildbucket.ci_build(
-          project='test',
-          git_repo='git.example.com/test/repo',
-          experiments=['fake.experiment'],
-          execution_timeout=12345,
-          start_time=datetime.datetime(2020, 1, 1),
-      )
-      + api.post_process(post_process.DropExpectation)
-  )
-
-  yield (
-      case('try',
-           expected_bucket_v1='luci.test.try',
-           expected_realm='test:try',
-           expected_full_name='test/try/builder')
-      + api.buildbucket.try_build(
+    case(
+      'ci',
+      expected_bucket_v1='luci.test.ci',
+      expected_realm='test:ci',
+      expected_full_name='test/ci/builder',
+    )
+    + api.buildbucket.ci_build(
       project='test',
       git_repo='git.example.com/test/repo',
-  )
-      + api.post_process(post_process.DropExpectation)
+    )
+    + api.post_process(post_process.DropExpectation)
   )
 
   yield (
-      case(
-          'try with experiment',
-          expected_bucket_v1='luci.test.try',
-          expected_realm='test:try',
-          expected_full_name='test/try/builder')
-      + api.buildbucket.try_build(
+    case(
+      'ci with experiment',
+      expected_bucket_v1='luci.test.ci',
+      expected_realm='test:ci',
+      expected_full_name='test/ci/builder',
+    )
+    + api.buildbucket.ci_build(
+      project='test',
+      git_repo='git.example.com/test/repo',
+      experiments=['fake.experiment'],
+      execution_timeout=12345,
+      start_time=datetime.datetime(2020, 1, 1),
+    )
+    + api.post_process(post_process.DropExpectation)
+  )
+
+  yield (
+    case(
+      'try',
+      expected_bucket_v1='luci.test.try',
+      expected_realm='test:try',
+      expected_full_name='test/try/builder',
+    )
+    + api.buildbucket.try_build(
+      project='test',
+      git_repo='git.example.com/test/repo',
+    )
+    + api.post_process(post_process.DropExpectation)
+  )
+
+  yield (
+    case(
+      'try with experiment',
+      expected_bucket_v1='luci.test.try',
+      expected_realm='test:try',
+      expected_full_name='test/try/builder',
+    )
+    + api.buildbucket.try_build(
+      project='test',
+      git_repo='git.example.com/test/repo',
+      experiments=['fake.experiment'],
+      execution_timeout=12345,
+      start_time=10000000,
+    )
+    + api.post_process(post_process.DropExpectation)
+  )
+
+  yield (
+    case(
+      'cron',
+      expected_bucket_v1='luci.test.cron',
+      expected_realm='test:cron',
+      expected_full_name='test/cron/scanner',
+    )
+    + api.buildbucket.build(
+      build_pb2.Build(
+        id=12484724,
+        tags=[],
+        builder=builder_common_pb2.BuilderID(
           project='test',
-          git_repo='git.example.com/test/repo',
-          experiments=['fake.experiment'],
-          execution_timeout=12345,
-          start_time=10000000,
+          bucket='cron',
+          builder='scanner',
+        ),
+        created_by='user:luci-scheduler@appspot.gserviceaccount.com',
+        create_time=timestamp_pb2.Timestamp(seconds=1527292217),
       )
-      + api.post_process(post_process.DropExpectation)
+    )
   )
 
-  yield(
-      case(
-          'cron',
-          expected_bucket_v1='luci.test.cron',
-          expected_realm='test:cron',
-          expected_full_name='test/cron/scanner'
-      )
-      + api.buildbucket.build(build_pb2.Build(
-          id=12484724,
-          tags=[],
-          builder=builder_common_pb2.BuilderID(
-              project='test',
-              bucket='cron',
-              builder='scanner',
-          ),
-          created_by='user:luci-scheduler@appspot.gserviceaccount.com',
-          create_time=timestamp_pb2.Timestamp(seconds=1527292217),
-      ))
-  )
-
-  yield (case(
+  yield (
+    case(
       'ci_on_backend',
       expected_bucket_v1='luci.project.ci',
       expected_realm='project:ci',
-      expected_full_name='project/ci/builder') +
-         api.buildbucket.ci_build(on_backend=True,) +
-         api.post_process(post_process.DropExpectation))
+      expected_full_name='project/ci/builder',
+    )
+    + api.buildbucket.ci_build(
+      on_backend=True,
+    )
+    + api.post_process(post_process.DropExpectation)
+  )
 
-  yield (case(
+  yield (
+    case(
       'try_on_backend',
       expected_bucket_v1='luci.project.try',
       expected_realm='project:try',
-      expected_full_name='project/try/builder') +
-         api.buildbucket.try_build(on_backend=True,) +
-         api.post_process(post_process.DropExpectation))
+      expected_full_name='project/try/builder',
+    )
+    + api.buildbucket.try_build(
+      on_backend=True,
+    )
+    + api.post_process(post_process.DropExpectation)
+  )
 
   try:
     api.buildbucket.ci_build(git_repo='https://just.hostname/')

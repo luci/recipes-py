@@ -45,18 +45,21 @@ LOG = logging.getLogger(__name__)
 _COMMANDS = [
   loader.find_module(module_name).load_module(module_name)
   for (loader, module_name, _) in pkgutil.walk_packages(
-      __path__, prefix=__name__+'.')
-  if '.' not in module_name[len(__name__)+1:]
+    __path__, prefix=__name__ + '.'
+  )
+  if '.' not in module_name[len(__name__) + 1 :]
 ]
 
 # Order all commands by an optional __cmd_priority__ field, and then by module
 # name.
 _COMMANDS.sort(
-    key=lambda mod: (
-      not hasattr(mod, '__cmd_priority__'),   # modules defining priority first
-      getattr(mod, '__cmd_priority__', None), # actual priority
-      mod.__name__                            # name
-    ))
+  key=lambda mod: (
+    not hasattr(mod, '__cmd_priority__'),  # modules defining priority first
+    getattr(mod, '__cmd_priority__', None),  # actual priority
+    mod.__name__,  # name
+  )
+)
+
 
 # Now actually set these commands on ourself so that 'mock' works correctly.
 #
@@ -65,14 +68,16 @@ _COMMANDS.sort(
 # fail to find the dependencies on this behavior).
 def _patch_our_attrs() -> None:
   self = sys.modules[__name__]
-  self.__all__ = [mod.__name__[len(__name__)+1:] for mod in _COMMANDS]
+  self.__all__ = [mod.__name__[len(__name__) + 1 :] for mod in _COMMANDS]
   for modname, mod in zip(self.__all__, _COMMANDS):
     setattr(self, modname, mod)
+
+
 _patch_our_attrs()
 
 
 def _check_recipes_cfg_consistency(
-    recipe_deps: recipe_deps_mod.RecipeDeps,
+  recipe_deps: recipe_deps_mod.RecipeDeps,
 ) -> None:
   """Checks all recipe.cfg files for the loaded recipe_deps and logs
   inconsistent dependencies.
@@ -90,7 +95,10 @@ def _check_recipes_cfg_consistency(
       if req_repo_name not in actual:
         LOG.error(
           '%r depends on %r, but your recipes.cfg is missing an '
-          'entry for this.', repo_name, req_repo_name)
+          'entry for this.',
+          repo_name,
+          req_repo_name,
+        )
         continue
 
       actual_spec = actual[req_repo_name]
@@ -100,7 +108,11 @@ def _check_recipes_cfg_consistency(
 
       LOG.warn(
         'recipes.cfg depends on %r @ %s, but %r depends on version %s.',
-        req_repo_name, actual_spec.revision, repo_name, req_spec.revision)
+        req_repo_name,
+        actual_spec.revision,
+        repo_name,
+        req_spec.revision,
+      )
 
 
 def _cleanup_pyc(recipe_deps: recipe_deps_mod.RecipeDeps) -> None:
@@ -144,10 +156,10 @@ def _common_post_process(args: argparse.Namespace) -> None:
       logging.exception("unable to write pidfile")
 
   args.recipe_deps = recipe_deps_mod.RecipeDeps.create(
-      args.main_repo_path,
-      {} if args.minimal_recipe_deps else args.repo_override,
-      args.proto_override,
-      minimal_protoc = args.minimal_recipe_deps,
+    args.main_repo_path,
+    {} if args.minimal_recipe_deps else args.repo_override,
+    args.proto_override,
+    minimal_protoc=args.minimal_recipe_deps,
   )
 
   _check_recipes_cfg_consistency(args.recipe_deps)
@@ -155,7 +167,7 @@ def _common_post_process(args: argparse.Namespace) -> None:
   # Allows:
   #   import RECIPE_MODULES.repo_name.module_name.submodule
   sys.meta_path = [
-      recipe_module_importer.RecipeModuleImporter(args.recipe_deps)
+    recipe_module_importer.RecipeModuleImporter(args.recipe_deps)
   ] + sys.meta_path
 
   _cleanup_pyc(args.recipe_deps)
@@ -171,11 +183,11 @@ def _common_post_process(args: argparse.Namespace) -> None:
 def _add_common_args(parser: argparse.ArgumentParser) -> None:
   class _RepoOverrideAction(argparse.Action):
     def __call__(
-        self,
-        parser: argparse.ArgumentParser,
-        namespace: argparse.Namespace,
-        values: str | Sequence[Any] | None,
-        option_string: str | None = None,
+      self,
+      parser: argparse.ArgumentParser,
+      namespace: argparse.Namespace,
+      values: str | Sequence[Any] | None,
+      option_string: str | None = None,
     ) -> None:
       assert isinstance(values, str)
       tokens = values.split('=', 2)
@@ -186,8 +198,10 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
       override_dict = getattr(namespace, self.dest)
 
       if repo_name in override_dict:
-        raise ValueError('An override is already defined for [%s] (%s)' % (
-                         repo_name, override_dict[repo_name]))
+        raise ValueError(
+          'An override is already defined for [%s] (%s)'
+          % (repo_name, override_dict[repo_name])
+        )
       path = os.path.abspath(os.path.expanduser(path))
       if not os.path.isdir(path):
         raise ValueError('Override path [%s] is not a directory' % (path,))
@@ -198,8 +212,12 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
       value = os.path.abspath(value)
     except Exception as ex:  # pylint: disable=broad-except
       parser.error(
-          '--package %r could not be converted to absolute path: %r' % (
-            value, ex,))
+        '--package %r could not be converted to absolute path: %r'
+        % (
+          value,
+          ex,
+        )
+      )
 
     recipes_cfg_rel = simple_cfg.RECIPES_CFG_LOCATION_REL
     if not value.endswith(recipes_cfg_rel):
@@ -220,8 +238,9 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
       'ERROR': logging.ERROR,
     }
     if val not in mapping:
-      parser.error('expect --log-level to be one of %s; got %r.' % (
-          list(mapping), val))
+      parser.error(
+        'expect --log-level to be one of %s; got %r.' % (list(mapping), val)
+      )
     return mapping[val]
 
   # TODO(iannucci): change --package to --repo-path and avoid having recipes.py
@@ -233,34 +252,57 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
   # allow it to be relocatable, the engine needs to be able to discover it, in
   # which case the minimal information is still 'repo root').
   parser.add_argument(
-      '--package',
-      dest='main_repo_path', type=_package_to_main_repo, required=True,
-      help='Path to recipes.cfg of the recipe repo to operate on.')
+    '--package',
+    dest='main_repo_path',
+    type=_package_to_main_repo,
+    required=True,
+    help='Path to recipes.cfg of the recipe repo to operate on.',
+  )
   group = parser.add_mutually_exclusive_group()
   group.add_argument(
-      '--verbose', '-v', action='count', default=0,
-      help='Increase logging verbosity. Mutually exclusive with --log-level.')
+    '--verbose',
+    '-v',
+    action='count',
+    default=0,
+    help='Increase logging verbosity. Mutually exclusive with --log-level.',
+  )
   group.add_argument(
-      '--log-level', dest='log_level', type=_to_log_level,
-      help=(
-        'Set the log level of this command. Accepted values: [DEBUG, INFO, '
-        'WARNING, ERROR]. Mutually exclusive with --verbose.'
-      ))
-  parser.add_argument('-O', '--repo-override', metavar='ID=PATH',
-      action=_RepoOverrideAction, default={},
-      help='Override a repo repository path with a local one.')
-  parser.add_argument('--pid-file', metavar='PATH',
-      help=(
-        'Absolute path to a file where the engine should write its pid. '
-        'Path must be absolute and not exist.'))
+    '--log-level',
+    dest='log_level',
+    type=_to_log_level,
+    help=(
+      'Set the log level of this command. Accepted values: [DEBUG, INFO, '
+      'WARNING, ERROR]. Mutually exclusive with --verbose.'
+    ),
+  )
+  parser.add_argument(
+    '-O',
+    '--repo-override',
+    metavar='ID=PATH',
+    action=_RepoOverrideAction,
+    default={},
+    help='Override a repo repository path with a local one.',
+  )
+  parser.add_argument(
+    '--pid-file',
+    metavar='PATH',
+    help=(
+      'Absolute path to a file where the engine should write its pid. '
+      'Path must be absolute and not exist.'
+    ),
+  )
 
   def _proto_override_abspath(value: str) -> str:
     try:
       value = os.path.abspath(value)
     except Exception as ex:  # pylint: disable=broad-except
       parser.error(
-          '--proto-override %r could not be converted to absolute path: %r' % (
-            value, ex,))
+        '--proto-override %r could not be converted to absolute path: %r'
+        % (
+          value,
+          ex,
+        )
+      )
 
     return value
 
@@ -268,17 +310,17 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
   # only be used for recipe bundles, so we don't bother giving it a shortform
   # option, and suppress the option's help to avoid confusing users.
   parser.add_argument(
-      '--proto-override', type=_proto_override_abspath, help=argparse.SUPPRESS)
+    '--proto-override', type=_proto_override_abspath, help=argparse.SUPPRESS
+  )
 
   parser.set_defaults(
-      # minimal_recipe_deps is an option for some subcommands to let them:
-      #   * ignore any recipe deps overrides
-      #   * skip protoc compilation
-      # This is used for subcommands like manual_roll which explicitly operate
-      # on the recipes.cfg and nothing else.
-      minimal_recipe_deps=False,
-
-      postprocess_func=(lambda error, args: None),
+    # minimal_recipe_deps is an option for some subcommands to let them:
+    #   * ignore any recipe deps overrides
+    #   * skip protoc compilation
+    # This is used for subcommands like manual_roll which explicitly operate
+    # on the recipes.cfg and nothing else.
+    minimal_recipe_deps=False,
+    postprocess_func=(lambda error, args: None),
   )
 
 
@@ -289,7 +331,8 @@ def parse_and_run() -> int | None:
   `os._exit`).
   """
   parser = argparse.ArgumentParser(
-      description='Interact with the recipe system.')
+    description='Interact with the recipe system.'
+  )
 
   _add_common_args(parser)
 
@@ -302,12 +345,14 @@ def parse_and_run() -> int | None:
       if not line:
         break
       helplines.append(line)
-    module.add_arguments(subp.add_parser(
+    module.add_arguments(
+      subp.add_parser(
         module.__name__.split('.')[-1],  # use module's short name
         formatter_class=argparse.RawDescriptionHelpFormatter,
         help=' '.join(helplines),
         description=description,
-    ))
+      )
+    )
 
   args = parser.parse_args()
   _common_post_process(args)

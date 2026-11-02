@@ -25,6 +25,7 @@ class DEPS(RecipeScriptApi):
 class TEST_DEPS(RecipeTestApi):
   pass
 
+
 def my_function() -> None:  # pragma: no cover
   raise TypeError("BAD DOGE")
 
@@ -34,7 +35,11 @@ def RunSteps(api: DEPS) -> None:
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
-  yield (api.test('basic') + api.expect_exception('TypeError') +
-         api.post_process(post_process.StatusException) +
-         api.post_process(post_process.SummaryMarkdown,
-                          "Uncaught Exception: TypeError('BAD DOGE')"))
+  yield (
+    api.test('basic')
+    + api.expect_exception('TypeError')
+    + api.post_process(post_process.StatusException)
+    + api.post_process(
+      post_process.SummaryMarkdown, "Uncaught Exception: TypeError('BAD DOGE')"
+    )
+  )

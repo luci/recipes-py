@@ -8,10 +8,12 @@ from builtins import int
 
 from recipe_engine import recipe_test_api
 
+
 class RandomTestApi(recipe_test_api.RecipeTestApi):
   def seed(self, seed: int) -> recipe_test_api.TestData:
-    assert isinstance(seed, int), (
-      'bad seed %s, expected (int, long)' % (type(seed),))
+    assert isinstance(seed, int), 'bad seed %s, expected (int, long)' % (
+      type(seed),
+    )
     ret = self.test(None)
     ret.properties = {'$recipe_engine/random': {'seed': seed}}
     return ret

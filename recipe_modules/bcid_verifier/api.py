@@ -22,6 +22,7 @@ _LATEST_STABLE_VERSION = 'git_revision:fd82201d36fb54f8623fe8cfdc43f1a5d7e55ca0'
 VERIFY_FOR_ENFORCEMENT = "VERIFY_FOR_ENFORCEMENT"
 VERIFY_FOR_LOGGING = "VERIFY_FOR_LOGGING"
 
+
 class BcidVerifierApi(recipe_api.RecipeApi):
   """API for interacting with Software Verifier"""
 
@@ -39,14 +40,15 @@ class BcidVerifierApi(recipe_api.RecipeApi):
     version of bcid_verifier will be installed using CIPD.
     """
     return self.m.cipd.ensure_tool(
-        "infra/tools/security/bcid_verifier/${platform}", _LATEST_STABLE_VERSION)
+      "infra/tools/security/bcid_verifier/${platform}", _LATEST_STABLE_VERSION
+    )
 
   def verify_provenance(
-      self,
-      bcid_policy: str,
-      artifact_path: str,
-      attestation_path: str,
-      log_only_mode: bool = False,
+    self,
+    bcid_policy: str,
+    artifact_path: str,
+    attestation_path: str,
+    log_only_mode: bool = False,
   ) -> None:
     """
     Calls the BCID Software Verifier API to verify provenance for an
@@ -79,15 +81,15 @@ class BcidVerifierApi(recipe_api.RecipeApi):
       self.verification_mode = VERIFY_FOR_LOGGING
 
     args = [
-        self.bcid_verifier_path,
-        '-bcid-policy',
-        bcid_policy,
-        '-artifact-path',
-        artifact_path,
-        '-attestation-path',
-        attestation_path,
-        'verification-mode',
-        self.verification_mode,
+      self.bcid_verifier_path,
+      '-bcid-policy',
+      bcid_policy,
+      '-artifact-path',
+      artifact_path,
+      '-attestation-path',
+      attestation_path,
+      'verification-mode',
+      self.verification_mode,
     ]
 
     self.m.step('bcid_verifier: verify provenance', args)

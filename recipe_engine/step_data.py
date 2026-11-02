@@ -25,8 +25,10 @@ class _AttributeRaiser:
   # `__getattr__`.
 
   def __getattr__(self, name: str) -> Any:
-    raise AttributeError('StepData(%r)%s has no attribute %r.' % (
-      self._step_name, self._namespace, name))
+    raise AttributeError(
+      'StepData(%r)%s has no attribute %r.'
+      % (self._step_name, self._namespace, name)
+    )
 
   def __setattr__(self, name: str, value: Any) -> None:
     # Directly access the instance's __dict__ since this logic is called during
@@ -37,8 +39,10 @@ class _AttributeRaiser:
     if not self.__dict__.get('_finalized', False):
       return object.__setattr__(self, name, value)
 
-    raise AttributeError('Cannot assign to StepData(%r)%s.%s' % (
-      self._step_name, self._namespace, name))
+    raise AttributeError(
+      'Cannot assign to StepData(%r)%s.%s'
+      % (self._step_name, self._namespace, name)
+    )
 
 
 @attr.s(frozen=True)
@@ -46,7 +50,8 @@ class ExecutionResult:
   # retcode is the integer returncode of the step, if the step ran and the
   # engine was able to wait() for it. Otherwise this is None.
   retcode: int | None = attr.ib(
-      validator=attr_util.attr_type((int, type(None))), default=None)
+    validator=attr_util.attr_type((int, type(None))), default=None
+  )
 
   # had_exception is set to True if this step had some exceptional circumstance
   # which prevented it from running, or a failure while evaluating the output
@@ -55,7 +60,8 @@ class ExecutionResult:
   #   * Input placeholders raised an exception prior to running the step
   #   * Output placeholders raised an exception after running the step
   had_exception: bool = attr.ib(
-      validator=attr_util.attr_type(bool), default=False)
+    validator=attr_util.attr_type(bool), default=False
+  )
 
   # had_timeout is only set to True if this specific step had a timeout
   # requested for it.
@@ -63,7 +69,8 @@ class ExecutionResult:
   # Steps killed due to e.g. LUCI_CONTEXT['deadline'] will have `was_cancelled`
   # set to True instead.
   had_timeout: bool = attr.ib(
-      validator=attr_util.attr_type(bool), default=False)
+    validator=attr_util.attr_type(bool), default=False
+  )
 
   # was_cancelled is set if the step was canceled by:
   #   * GLOBAL_SHUTDOWN due to an interrupt signal from outside
@@ -72,7 +79,8 @@ class ExecutionResult:
   #   * The step being part of a greenlet which is kill'd via
   #     Future.cancel().
   was_cancelled: bool = attr.ib(
-      validator=attr_util.attr_type(bool), default=False)
+    validator=attr_util.attr_type(bool), default=False
+  )
 
 
 @attr.s
@@ -168,6 +176,7 @@ class StepData:
         'charlie': json.output(name='charlie')
       }
   """
+
   # The name of this step as a tuple of strings.
   #
   # Each entry in the tuple represents a nesting namespace, and the final value
@@ -181,7 +190,8 @@ class StepData:
 
   # The execution result of the step.
   exc_result: ExecutionResult = attr.ib(
-      validator=attr_util.attr_type(ExecutionResult))
+    validator=attr_util.attr_type(ExecutionResult)
+  )
 
   # The result of the `stdout` Placeholder, if the step had one.
   #
@@ -207,7 +217,7 @@ class StepData:
   #   multiple `json.output()`).
   # result: Anything the OutputPlaceholder.result() method returned.
   _staged_placeholders: dict[tuple[str, ...], dict[str | None, Any]] | None = (
-      attr.ib(validator=attr_util.attr_type(dict, type(None)), factory=dict)
+    attr.ib(validator=attr_util.attr_type(dict, type(None)), factory=dict)
   )
 
   # When set to True, all future assignments to this object are prevented.
@@ -226,8 +236,7 @@ class StepData:
     return self.exc_result.retcode
 
   def _populate_placeholders(self) -> None:
-    """
-    """
+    """ """
     if self._finalized:
       return
 
@@ -265,10 +274,9 @@ class StepData:
 
       setattr(obj, last_token, value)
 
-
     # A singleton object used in the loop below to indicate that a data item was
     # not set. Pylint is dumb and doesn't like uppercase function variables.
-    UNSET = object()   # pylint: disable=invalid-name
+    UNSET = object()  # pylint: disable=invalid-name
 
     # For every staged placeholder namespace.
     for namespace, name_to_result in staged.items():
@@ -295,7 +303,7 @@ class StepData:
       if not isinstance(obj, _AttributeRaiser):
         continue
       objs.extend(obj.__dict__.values())
-      obj._finalized = True   # pylint: disable=protected-access
+      obj._finalized = True  # pylint: disable=protected-access
 
   def finalize(self) -> None:
     """Fills all user-accessible placeholder results, and prevents accidental
@@ -310,7 +318,7 @@ class StepData:
     self._finalized = True
 
   def assign_placeholder(
-      self, placeholder: util.Placeholder, result: Any
+    self, placeholder: util.Placeholder, result: Any
   ) -> None:
     """Used by the Recipe Engine to stage placeholder data in this StepData.
 
@@ -325,10 +333,12 @@ class StepData:
     """
     if self._finalized or self._staged_placeholders is None:
       raise ValueError(
-          'Cannot assign placeholder %r (%r) on finalized StepData from step %r'
-          % (placeholder.namespaces, placeholder.name, self.name))
-    self._staged_placeholders.setdefault(
-        placeholder.namespaces, {})[placeholder.name] = result
+        'Cannot assign placeholder %r (%r) on finalized StepData from step %r'
+        % (placeholder.namespaces, placeholder.name, self.name)
+      )
+    self._staged_placeholders.setdefault(placeholder.namespaces, {})[
+      placeholder.name
+    ] = result
 
   def __setattr__(self, name: str, value: Any) -> None:
     # Directly access the instance's __dict__ since this logic is called during
@@ -336,8 +346,10 @@ class StepData:
     # hasattr/getattr will result in __getattr__ being called which will fail
     # because it accesses `self.name` which ALSO might not exist yet.
     if self.__dict__.get('_finalized', False):
-      raise ValueError('Cannot assign to %r on finalized StepData from step %r'
-                       % (name, self.name))
+      raise ValueError(
+        'Cannot assign to %r on finalized StepData from step %r'
+        % (name, self.name)
+      )
     return object.__setattr__(self, name, value)
 
   def __getattr__(self, name: str) -> Any:
@@ -345,4 +357,5 @@ class StepData:
       return object.__getattribute__(self, name)
     except AttributeError:
       raise AttributeError(
-          'StepData from step %r has no attribute %r.' % (self.name, name))
+        'StepData from step %r has no attribute %r.' % (self.name, name)
+      )

@@ -14,7 +14,7 @@ from PB.turboci.graph.orchestrator.v1 import edge as edge_pb
 from PB.turboci.graph.orchestrator.v1 import revision as revision_pb
 from PB.turboci.graph.orchestrator.v1 import stage as stage_pb
 from PB.turboci.graph.orchestrator.v1 import (
-    write_nodes_request as write_nodes_request_pb,
+  write_nodes_request as write_nodes_request_pb,
 )
 
 from recipe_engine import turboci
@@ -24,33 +24,35 @@ from recipe_engine.internal.turboci import edge
 class TestExtractDependencies(test_env.RecipeEngineUnitTest):
   def test_ok(self) -> None:
     deps = edge.extract_dependencies(
-        turboci.dep_group(
-            turboci.dep_group('a', 'b'),
-            turboci.dep_group('b', 'c'),
-            threshold=1,
-        ))
+      turboci.dep_group(
+        turboci.dep_group('a', 'b'),
+        turboci.dep_group('b', 'c'),
+        threshold=1,
+      )
+    )
     self.assertEqual(
-        deps,
-        dependencies_pb.Dependencies(
-            edges=[
-                edge_pb.Edge(
-                    check=edge_pb.Edge.Check(
-                        identifier=turboci.check_id('a'))),
-                edge_pb.Edge(
-                    check=edge_pb.Edge.Check(
-                        identifier=turboci.check_id('b'))),
-                edge_pb.Edge(
-                    check=edge_pb.Edge.Check(
-                        identifier=turboci.check_id('c'))),
-            ],
-            predicate=dependencies_pb.Dependencies.Group(
-                groups=[
-                    dependencies_pb.Dependencies.Group(edges=[0, 1]),
-                    dependencies_pb.Dependencies.Group(edges=[1, 2]),
-                ],
-                threshold=1,
-            ),
-        ))
+      deps,
+      dependencies_pb.Dependencies(
+        edges=[
+          edge_pb.Edge(
+            check=edge_pb.Edge.Check(identifier=turboci.check_id('a'))
+          ),
+          edge_pb.Edge(
+            check=edge_pb.Edge.Check(identifier=turboci.check_id('b'))
+          ),
+          edge_pb.Edge(
+            check=edge_pb.Edge.Check(identifier=turboci.check_id('c'))
+          ),
+        ],
+        predicate=dependencies_pb.Dependencies.Group(
+          groups=[
+            dependencies_pb.Dependencies.Group(edges=[0, 1]),
+            dependencies_pb.Dependencies.Group(edges=[1, 2]),
+          ],
+          threshold=1,
+        ),
+      ),
+    )
 
   def test_check_cannot_depend_on_stage(self) -> None:
     with self.assertRaises(turboci.InvalidArgumentException):
@@ -68,52 +70,66 @@ class TestExtractDependencies(test_env.RecipeEngineUnitTest):
       edge.extract_dependencies(dg)
 
   def test_normalizes_threshold(self) -> None:
-    dg = (turboci.dep_group('foo'))
+    dg = turboci.dep_group('foo')
     dg.threshold = 1
     deps = edge.extract_dependencies(dg)
     self.assertEqual(deps.predicate.threshold, 0)
 
   def test_absorb(self) -> None:
     deps = edge.extract_dependencies(
+      turboci.dep_group(
         turboci.dep_group(
-            turboci.dep_group(turboci.dep_group(
-                'a',
-                'b',
-            ),),
-            threshold=1,
-        ))
+          turboci.dep_group(
+            'a',
+            'b',
+          ),
+        ),
+        threshold=1,
+      )
+    )
     self.assertEqual(
-        deps,
-        dependencies_pb.Dependencies(
-            edges=[
-                edge_pb.Edge(
-                    check=edge_pb.Edge.Check(
-                        identifier=turboci.check_id('a'))),
-                edge_pb.Edge(
-                    check=edge_pb.Edge.Check(
-                        identifier=turboci.check_id('b'))),
-            ],
-            predicate=dependencies_pb.Dependencies.Group(edges=[0, 1],)))
+      deps,
+      dependencies_pb.Dependencies(
+        edges=[
+          edge_pb.Edge(
+            check=edge_pb.Edge.Check(identifier=turboci.check_id('a'))
+          ),
+          edge_pb.Edge(
+            check=edge_pb.Edge.Check(identifier=turboci.check_id('b'))
+          ),
+        ],
+        predicate=dependencies_pb.Dependencies.Group(
+          edges=[0, 1],
+        ),
+      ),
+    )
 
   def test_empty(self) -> None:
     deps = edge.extract_dependencies(turboci.dep_group())
     self.assertEqual(
-        deps,
-        dependencies_pb.Dependencies(
-            predicate=dependencies_pb.Dependencies.Group(),))
+      deps,
+      dependencies_pb.Dependencies(
+        predicate=dependencies_pb.Dependencies.Group(),
+      ),
+    )
 
   def test_empty_subgroup(self) -> None:
     with self.assertRaises(turboci.InvalidArgumentException):
       edge.extract_dependencies(
-          turboci.dep_group(turboci.dep_group(turboci.dep_group(),),))
+        turboci.dep_group(
+          turboci.dep_group(
+            turboci.dep_group(),
+          ),
+        )
+      )
 
 
 class TestDependencyIndex(test_env.RecipeEngineUnitTest):
-
   def setUp(self) -> None:
     self.di = edge.DependencyIndex()
     self.ccri = edge.CheckCondition(
-        check_state_pb.CheckState.CHECK_STATE_FINAL, "true")
+      check_state_pb.CheckState.CHECK_STATE_FINAL, "true"
+    )
     self.nodes: dict[str, check_pb.Check | stage_pb.Stage] = {}
     self.now = revision_pb.Revision()
     self.now.ts.seconds = 12345
@@ -140,11 +156,11 @@ class TestDependencyIndex(test_env.RecipeEngineUnitTest):
     raise AssertionError(f'{ident_str!r} is not a Check: {type(ret).__name__}')
 
   def set_dependencies(
-      self,
-      name: str,
-      deps: write_nodes_request_pb.WriteNodesRequest.DependencyGroup,
-      *,
-      do_index: bool = True,
+    self,
+    name: str,
+    deps: write_nodes_request_pb.WriteNodesRequest.DependencyGroup,
+    *,
+    do_index: bool = True,
   ) -> None:
     """Writes dependencies for check `name`.
 
@@ -156,12 +172,13 @@ class TestDependencyIndex(test_env.RecipeEngineUnitTest):
     if do_index:
       self.di.ensure_conditions(node.dependencies.edges, self.nodes.get)
       self.di.index_predicate(
-          turboci.from_id(node.identifier),
-          node.dependencies,
-          self.now,
-          mark_immutable=(
-              node.state != check_state_pb.CheckState.CHECK_STATE_PLANNING
-          ))
+        turboci.from_id(node.identifier),
+        node.dependencies,
+        self.now,
+        mark_immutable=(
+          node.state != check_state_pb.CheckState.CHECK_STATE_PLANNING
+        ),
+      )
       self.di.index_node_write(node)
 
   def test_add_remove(self) -> None:
@@ -175,36 +192,39 @@ class TestDependencyIndex(test_env.RecipeEngineUnitTest):
     self.set_dependencies('A', turboci.dep_group('B', 'C'))
 
     self.assertEqual(
-        self.di._data, {
-            a_id:
-                edge.DependencyIndex._Entry(edges_flat={b_id, c_id},),
-            b_id:
-                edge.DependencyIndex._Entry(
-                    conditions={self.ccri: edge_pb.RESOLUTION_UNKNOWN},
-                    dependents={a_id},
-                ),
-            c_id:
-                edge.DependencyIndex._Entry(
-                    conditions={self.ccri: edge_pb.RESOLUTION_UNKNOWN},
-                    dependents={a_id},
-                ),
-        })
+      self.di._data,
+      {
+        a_id: edge.DependencyIndex._Entry(
+          edges_flat={b_id, c_id},
+        ),
+        b_id: edge.DependencyIndex._Entry(
+          conditions={self.ccri: edge_pb.RESOLUTION_UNKNOWN},
+          dependents={a_id},
+        ),
+        c_id: edge.DependencyIndex._Entry(
+          conditions={self.ccri: edge_pb.RESOLUTION_UNKNOWN},
+          dependents={a_id},
+        ),
+      },
+    )
 
     self.set_dependencies('A', turboci.dep_group('B'))
 
     self.assertEqual(
-        self.di._data, {
-            a_id:
-                edge.DependencyIndex._Entry(edges_flat={b_id},),
-            b_id:
-                edge.DependencyIndex._Entry(
-                    conditions={self.ccri: edge_pb.RESOLUTION_UNKNOWN},
-                    dependents={a_id},
-                ),
-            c_id:
-                edge.DependencyIndex._Entry(
-                    conditions={self.ccri: edge_pb.RESOLUTION_UNKNOWN},),
-        })
+      self.di._data,
+      {
+        a_id: edge.DependencyIndex._Entry(
+          edges_flat={b_id},
+        ),
+        b_id: edge.DependencyIndex._Entry(
+          conditions={self.ccri: edge_pb.RESOLUTION_UNKNOWN},
+          dependents={a_id},
+        ),
+        c_id: edge.DependencyIndex._Entry(
+          conditions={self.ccri: edge_pb.RESOLUTION_UNKNOWN},
+        ),
+      },
+    )
 
   def test_evaluate_conditions(self) -> None:
     b = self.get_check('B')
@@ -212,15 +232,18 @@ class TestDependencyIndex(test_env.RecipeEngineUnitTest):
 
     self.set_dependencies('A', turboci.dep_group('B'))
 
-    self.assertEqual(self.di._data[b_id].conditions, {
+    self.assertEqual(
+      self.di._data[b_id].conditions,
+      {
         self.ccri: edge_pb.RESOLUTION_UNKNOWN,
-    })
+      },
+    )
 
     self.di.index_node_write(b)
 
     self.assertEqual(
-        self.di._data[b_id].conditions,
-        {self.ccri: edge_pb.RESOLUTION_UNKNOWN})
+      self.di._data[b_id].conditions, {self.ccri: edge_pb.RESOLUTION_UNKNOWN}
+    )
     self.assertFalse(self.di.has_events())
 
     b.state = check_state_pb.CheckState.CHECK_STATE_FINAL
@@ -228,23 +251,31 @@ class TestDependencyIndex(test_env.RecipeEngineUnitTest):
     self.di.index_node_write(b)  # resolves default conditions
 
     self.assertEqual(
-        self.di._data[b_id].conditions,
-        {self.ccri: edge_pb.RESOLUTION_SATISFIED})
-    self.assertEqual(self.di._resolution_events, {
+      self.di._data[b_id].conditions, {self.ccri: edge_pb.RESOLUTION_SATISFIED}
+    )
+    self.assertEqual(
+      self.di._resolution_events,
+      {
         edge.DependencyIndex._ResolutionEvent(
-            b_id, self.ccri, edge_pb.RESOLUTION_SATISFIED),
-    })
+          b_id, self.ccri, edge_pb.RESOLUTION_SATISFIED
+        ),
+      },
+    )
     self.assertTrue(self.di.has_events())
 
     self.di.index_node_write(b)  # no-op
 
     self.assertEqual(
-        self.di._data[b_id].conditions,
-        {self.ccri: edge_pb.RESOLUTION_SATISFIED})
-    self.assertEqual(self.di._resolution_events, {
+      self.di._data[b_id].conditions, {self.ccri: edge_pb.RESOLUTION_SATISFIED}
+    )
+    self.assertEqual(
+      self.di._resolution_events,
+      {
         edge.DependencyIndex._ResolutionEvent(
-            b_id, self.ccri, edge_pb.RESOLUTION_SATISFIED),
-    })
+          b_id, self.ccri, edge_pb.RESOLUTION_SATISFIED
+        ),
+      },
+    )
 
   def test_process_queue(self) -> None:
     a = self.get_check('A')
@@ -260,20 +291,20 @@ class TestDependencyIndex(test_env.RecipeEngineUnitTest):
     write = self.di.process_queue(self.must_get_existing_check, self.now)
 
     self.assertEqual(
-        write, {
-            a_id:
-                dependencies_pb.Dependencies(
-                    edges=a.dependencies.edges,
-                    predicate=a.dependencies.predicate,
-                    resolution_events={
-                        0:
-                            dependencies_pb.Dependencies.ResolutionEvent(
-                                version=self.now,
-                                resolution=edge_pb.RESOLUTION_SATISFIED),
-                    },
-                    resolution=edge_pb.RESOLUTION_SATISFIED,
-                )
-        })
+      write,
+      {
+        a_id: dependencies_pb.Dependencies(
+          edges=a.dependencies.edges,
+          predicate=a.dependencies.predicate,
+          resolution_events={
+            0: dependencies_pb.Dependencies.ResolutionEvent(
+              version=self.now, resolution=edge_pb.RESOLUTION_SATISFIED
+            ),
+          },
+          resolution=edge_pb.RESOLUTION_SATISFIED,
+        )
+      },
+    )
 
     self.assertFalse(self.di.has_events())
 
@@ -285,20 +316,18 @@ class TestDependencyIndex(test_env.RecipeEngineUnitTest):
     self.set_dependencies('C', turboci.dep_group('B'))
 
     self.assertEqual(
-        c.dependencies,
-        dependencies_pb.Dependencies(
-            edges=[
-                edge_pb.Edge(check=edge_pb.Edge.Check(identifier=b.identifier))
-            ],
-            predicate=dependencies_pb.Dependencies.Group(edges=[0]),
-            resolution_events={
-                0:
-                    dependencies_pb.Dependencies.ResolutionEvent(
-                        version=self.now,
-                        resolution=edge_pb.RESOLUTION_SATISFIED),
-            },
-            resolution=edge_pb.RESOLUTION_SATISFIED,
-        ))
+      c.dependencies,
+      dependencies_pb.Dependencies(
+        edges=[edge_pb.Edge(check=edge_pb.Edge.Check(identifier=b.identifier))],
+        predicate=dependencies_pb.Dependencies.Group(edges=[0]),
+        resolution_events={
+          0: dependencies_pb.Dependencies.ResolutionEvent(
+            version=self.now, resolution=edge_pb.RESOLUTION_SATISFIED
+          ),
+        },
+        resolution=edge_pb.RESOLUTION_SATISFIED,
+      ),
+    )
 
   def test_two_nodes(self) -> None:
     a = self.get_check('A')
@@ -310,18 +339,18 @@ class TestDependencyIndex(test_env.RecipeEngineUnitTest):
     self.set_dependencies('A', turboci.dep_group('B'))
 
     self.assertEqual(
-        self.di._data, {
-            a_id:
-                edge.DependencyIndex._Entry(
-                    edges_flat={b_id},
-                    state=edge._DepsState.RECEIVING_EVENTS,
-                ),
-            b_id:
-                edge.DependencyIndex._Entry(
-                    conditions={self.ccri: edge_pb.RESOLUTION_UNKNOWN},
-                    dependents={a_id},
-                ),
-        })
+      self.di._data,
+      {
+        a_id: edge.DependencyIndex._Entry(
+          edges_flat={b_id},
+          state=edge._DepsState.RECEIVING_EVENTS,
+        ),
+        b_id: edge.DependencyIndex._Entry(
+          conditions={self.ccri: edge_pb.RESOLUTION_UNKNOWN},
+          dependents={a_id},
+        ),
+      },
+    )
     # We have new conditions for B, but nothing is resolved yet, so don't need
     # to propagate anything.
     self.assertFalse(self.di.has_events())
@@ -332,49 +361,50 @@ class TestDependencyIndex(test_env.RecipeEngineUnitTest):
 
     # we have an event waiting to process
     self.assertEqual(
-        self.di._data, {
-            a_id:
-                edge.DependencyIndex._Entry(
-                    edges_flat={b_id},
-                    state=edge._DepsState.RECEIVING_EVENTS,
-                ),
-            b_id:
-                edge.DependencyIndex._Entry(
-                    conditions={self.ccri: edge_pb.RESOLUTION_SATISFIED},
-                    dependents={a_id},
-                    state=edge._DepsState.RECEIVING_EVENTS,
-                ),
-        })
+      self.di._data,
+      {
+        a_id: edge.DependencyIndex._Entry(
+          edges_flat={b_id},
+          state=edge._DepsState.RECEIVING_EVENTS,
+        ),
+        b_id: edge.DependencyIndex._Entry(
+          conditions={self.ccri: edge_pb.RESOLUTION_SATISFIED},
+          dependents={a_id},
+          state=edge._DepsState.RECEIVING_EVENTS,
+        ),
+      },
+    )
 
     self.assertEqual(
-        self.di._resolution_events, {
-            edge.DependencyIndex._ResolutionEvent(
-                node_ident_str=b_id,
-                condition=self.ccri,
-                resolution=edge_pb.RESOLUTION_SATISFIED,
-            )
-        })
+      self.di._resolution_events,
+      {
+        edge.DependencyIndex._ResolutionEvent(
+          node_ident_str=b_id,
+          condition=self.ccri,
+          resolution=edge_pb.RESOLUTION_SATISFIED,
+        )
+      },
+    )
 
     # When we process the queue, we'll see that `a` needs to be written
     to_write = self.di.process_queue(self.must_get_existing_check, self.now)
     self.assertEqual(
-        to_write, {
-            a_id:
-                dependencies_pb.Dependencies(
-                    edges=[
-                        edge_pb.Edge(
-                            check=edge_pb.Edge.Check(identifier=b.identifier))
-                    ],
-                    predicate=dependencies_pb.Dependencies.Group(edges=[0]),
-                    resolution_events={
-                        0:
-                            dependencies_pb.Dependencies.ResolutionEvent(
-                                version=self.now,
-                                resolution=edge_pb.RESOLUTION_SATISFIED),
-                    },
-                    resolution=edge_pb.RESOLUTION_SATISFIED,
-                )
-        })
+      to_write,
+      {
+        a_id: dependencies_pb.Dependencies(
+          edges=[
+            edge_pb.Edge(check=edge_pb.Edge.Check(identifier=b.identifier))
+          ],
+          predicate=dependencies_pb.Dependencies.Group(edges=[0]),
+          resolution_events={
+            0: dependencies_pb.Dependencies.ResolutionEvent(
+              version=self.now, resolution=edge_pb.RESOLUTION_SATISFIED
+            ),
+          },
+          resolution=edge_pb.RESOLUTION_SATISFIED,
+        )
+      },
+    )
 
   def test_one_nodes_no_deps(self) -> None:
     a = self.get_check('A')
@@ -382,13 +412,17 @@ class TestDependencyIndex(test_env.RecipeEngineUnitTest):
 
     self.set_dependencies('A', turboci.dep_group())
 
-    self.assertEqual(self.di._data, {
+    self.assertEqual(
+      self.di._data,
+      {
         a_id: edge.DependencyIndex._Entry(),
-    })
+      },
+    )
 
     # we can process the queue, but this won't do any propagation.
     self.assertEqual(
-        self.di.process_queue(self.must_get_existing_check, self.now), {})
+      self.di.process_queue(self.must_get_existing_check, self.now), {}
+    )
     self.assertFalse(self.di.has_events())
 
     # now resolve a

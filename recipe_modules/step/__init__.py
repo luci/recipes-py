@@ -11,11 +11,11 @@ PROPERTIES = properties_pb.InputProperties
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from RECIPE_MODULES.recipe_engine import (
-    context,
-    path,
-    platform,
-    proto,
-    warning,
+  context,
+  path,
+  platform,
+  proto,
+  warning,
 )
 
 
@@ -26,6 +26,7 @@ class DEPS(RecipeScriptApi):
   platform: platform.API
   proto: proto.API
   warning: warning.API
+
 
 from .api import StepApi as API
 from .test_api import StepTestApi as TEST_API

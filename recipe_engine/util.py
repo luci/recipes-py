@@ -30,11 +30,13 @@ def sentinel(name: str, **attrs: Any) -> Any:
   associate metadata with the sentinel object.
   """
   all_attrs = dict(attrs)
-  all_attrs.update({
+  all_attrs.update(
+    {
       '__repr__': lambda _: name,
       '__copy__': lambda self: self,
       '__deepcopy__': lambda self, _: self,
-  })
+    }
+  )
   return type(name, (), all_attrs)()
 
 
@@ -57,15 +59,18 @@ class ModuleInjectionSite:
   def __getattr__(self, key: str) -> Any:
     raise ModuleInjectionError(
       "Recipe Module %r has no dependency %r. (Add it to __init__.py:DEPS?)"
-      % (module_name(self.owner_module), key))
+      % (module_name(self.owner_module), key)
+    )
 
 
 class Placeholder:
   """Base class for command line argument placeholders. Do not use directly."""
+
   def __init__(self, name: str | None = None) -> None:
     if name is not None:
       assert isinstance(name, str), (
-          'Expect a string name for a placeholder, but got %r' % name)
+        'Expect a string name for a placeholder, but got %r' % name
+      )
     self.name = name
     self.namespaces: tuple[str, str] | None = None
 
@@ -92,6 +97,7 @@ class Placeholder:
 
 class InputPlaceholder(Placeholder):
   """Base class for json/raw_io input placeholders. Do not use directly."""
+
   def cleanup(self, test_enabled: bool) -> None:
     """Called after step completion.
 
@@ -103,6 +109,7 @@ class InputPlaceholder(Placeholder):
 
 class OutputPlaceholder(Placeholder):
   """Base class for json/raw_io output placeholders. Do not use directly."""
+
   def result(self, presentation: Any, test: Any) -> Any:
     """Called after step completion.
 
@@ -117,7 +124,7 @@ class OutputPlaceholder(Placeholder):
 
 
 def static_wraps(
-    func: Callable[..., Any] | staticmethod,
+  func: Callable[..., Any] | staticmethod,
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
   wrapped_fn = func
   if isinstance(func, staticmethod):
@@ -130,10 +137,10 @@ def static_wraps(
 
 
 def static_call(
-    obj: Any,
-    func: Callable[..., Any] | staticmethod,
-    *args: Any,
-    **kwargs: Any,
+  obj: Any,
+  func: Callable[..., Any] | staticmethod,
+  *args: Any,
+  **kwargs: Any,
 ) -> Any:
   if isinstance(func, staticmethod):
     return func.__get__(obj)(*args, **kwargs)
@@ -150,6 +157,7 @@ def static_name(obj: Any, func: Callable[..., Any] | staticmethod) -> str:
 
 _modname_re = re.compile(r'RECIPE_MODULES\.[^.]*\.([^.]*)\..*')
 
+
 def module_name(api_subclass_instance: object) -> str:
   py_mod_name = api_subclass_instance.__class__.__module__
   if m := _modname_re.match(py_mod_name):
@@ -158,8 +166,8 @@ def module_name(api_subclass_instance: object) -> str:
 
 
 def _returns_placeholder(
-    func: Callable[..., Any] | staticmethod,
-    alternate_name: str | None = None,
+  func: Callable[..., Any] | staticmethod,
+  alternate_name: str | None = None,
 ) -> Callable[..., Placeholder]:
   @static_wraps(func)
   def inner(self: Any, *args: Any, **kwargs: Any) -> Placeholder:
@@ -168,11 +176,13 @@ def _returns_placeholder(
     selfname = module_name(self)
     ret.namespaces = (selfname, alternate_name or static_name(self, func))
     return ret
+
   # prevent this placeholder-returning function from becoming a composite_step.
   return inner
 
+
 def returns_placeholder(
-    func: Callable[..., Any] | staticmethod | str,
+  func: Callable[..., Any] | staticmethod | str,
 ) -> Callable[..., Any]:
   """Decorates a RecipeApi placeholder-returning method to set the namespace
   of the returned PlaceHolder.
@@ -184,13 +194,16 @@ def returns_placeholder(
   if callable(func) or isinstance(func, staticmethod):
     return _returns_placeholder(func)
   elif isinstance(func, str) and func:
+
     def decorator(
-        f: Callable[..., Any] | staticmethod,
+      f: Callable[..., Any] | staticmethod,
     ) -> Callable[..., Placeholder]:
       return _returns_placeholder(f, func)
+
     return decorator
   else:
     raise ValueError('Expected either a function or string; got %r' % func)
+
 
 class StringListIO:
   def __init__(self) -> None:
@@ -207,7 +220,7 @@ class StringListIO:
       last.write(str(s[:i]))
       self.lines[-1] = last.getvalue()
       self.lines.append(io.StringIO())
-      s = s[i+1:]
+      s = s[i + 1 :]
 
   def close(self) -> None:
     if isinstance(self.lines[-1], io.StringIO):
@@ -224,10 +237,10 @@ class exponential_retry:
   """
 
   def __init__(
-      self,
-      retries: int | None = None,
-      delay: datetime.timedelta | None = None,
-      condition: Callable[[Exception], bool] | None = None,
+    self,
+    retries: int | None = None,
+    delay: datetime.timedelta | None = None,
+    condition: Callable[[Exception], bool] | None = None,
   ) -> None:
     """Creates a new exponential retry decorator.
 
@@ -251,19 +264,23 @@ class exponential_retry:
         try:
           return f(*args, **kwargs)
         except Exception as e:
-          if (i+1) >= self.retries or not self.condition(e):
+          if (i + 1) >= self.retries or not self.condition(e):
             raise
-          logging.exception('Exception encountered, retrying in %s',
-                            retry_delay)
+          logging.exception(
+            'Exception encountered, retrying in %s', retry_delay
+          )
           gevent.wait(
-              [global_shutdown.GLOBAL_SHUTDOWN],
-              timeout=retry_delay.total_seconds())
+            [global_shutdown.GLOBAL_SHUTDOWN],
+            timeout=retry_delay.total_seconds(),
+          )
           retry_delay *= 2
+
     return wrapper
 
 
 MIN_SAFE_INTEGER = -((2**53) - 1)
 MAX_SAFE_INTEGER = (2**53) - 1
+
 
 def fix_json_object(obj: Any) -> Any:
   """Recursively:
@@ -284,7 +301,8 @@ def fix_json_object(obj: Any) -> Any:
 
   if isinstance(obj, dict):
     new_obj = type(obj)(
-        (fix_json_object(k), fix_json_object(v)) for k, v in obj.items())
+      (fix_json_object(k), fix_json_object(v)) for k, v in obj.items()
+    )
     return new_obj
 
   return obj

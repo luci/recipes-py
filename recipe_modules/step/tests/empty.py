@@ -8,14 +8,14 @@ from collections.abc import Iterator
 from recipe_engine import recipe_test_api
 
 from recipe_engine.post_process import (
-    DropExpectation,
-    HasLog,
-    LogEquals,
-    StepCommandEmpty,
-    StepException,
-    StepFailure,
-    StepSuccess,
-    StepTextEquals
+  DropExpectation,
+  HasLog,
+  LogEquals,
+  StepCommandEmpty,
+  StepException,
+  StepFailure,
+  StepSuccess,
+  StepTextEquals,
 )
 
 from dataclasses import dataclass
@@ -40,7 +40,8 @@ def RunSteps(api: DEPS) -> None:
   api.step.empty('multi hello', log_text=['multi', 'line'])
 
   api.step.empty(
-      'alternate log', log_name='details', log_text='some\nlog\ncontent')
+    'alternate log', log_name='details', log_text='some\nlog\ncontent'
+  )
 
   try:
     api.step.empty('bye', status=api.step.FAILURE)
@@ -59,23 +60,19 @@ def RunSteps(api: DEPS) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'basic',
-      api.post_process(StepSuccess, 'hello'),
-      api.post_process(HasLog, 'hello', 'stdout'),
-      api.post_process(LogEquals, 'hello', 'stdout', 'other\nstuff'),
-      api.post_process(StepTextEquals, 'hello', 'stuff'),
-      api.post_process(StepCommandEmpty, 'hello'),
-
-      api.post_process(StepSuccess, 'multi hello'),
-      api.post_process(LogEquals, 'multi hello', 'stdout', 'multi\nline'),
-
-      api.post_process(StepSuccess, 'alternate log'),
-      api.post_process(LogEquals, 'alternate log', 'details',
-                       'some\nlog\ncontent'),
-
-      api.post_process(StepException, 'bigfail'),
-
-      api.post_process(StepFailure, 'quiet fail'),
-
-      api.post_process(DropExpectation),
+    'basic',
+    api.post_process(StepSuccess, 'hello'),
+    api.post_process(HasLog, 'hello', 'stdout'),
+    api.post_process(LogEquals, 'hello', 'stdout', 'other\nstuff'),
+    api.post_process(StepTextEquals, 'hello', 'stuff'),
+    api.post_process(StepCommandEmpty, 'hello'),
+    api.post_process(StepSuccess, 'multi hello'),
+    api.post_process(LogEquals, 'multi hello', 'stdout', 'multi\nline'),
+    api.post_process(StepSuccess, 'alternate log'),
+    api.post_process(
+      LogEquals, 'alternate log', 'details', 'some\nlog\ncontent'
+    ),
+    api.post_process(StepException, 'bigfail'),
+    api.post_process(StepFailure, 'quiet fail'),
+    api.post_process(DropExpectation),
   )

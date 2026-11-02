@@ -35,7 +35,8 @@ to execute, but it should correlate pretty closely. You can sort the file with
 def add_arguments(parser: argparse.ArgumentParser) -> None:
 
   subp = parser.add_subparsers(
-      dest='subcommand', metavar='{run, train, list}', required=True)
+    dest='subcommand', metavar='{run, train, list}', required=True
+  )
 
   status_info = textwrap.dedent('''
     Key for non-verbose symbols (no-emoji equivalent in parens):
@@ -67,102 +68,158 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
 
   helpstr = 'Run the tests.'
   run_p = subp.add_parser(
-      'run', help=helpstr, description=helpstr + '\n' + status_info,
-      formatter_class=argparse.RawDescriptionHelpFormatter)
+    'run',
+    help=helpstr,
+    description=helpstr + '\n' + status_info,
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+  )
   run_p.add_argument(
-      '--jobs',
-      metavar='N',
-      type=int,
-      default=default_jobs,
-      help='run N jobs in parallel (default %(default)s)')
+    '--jobs',
+    metavar='N',
+    type=int,
+    default=default_jobs,
+    help='run N jobs in parallel (default %(default)s)',
+  )
   run_p.add_argument(
-      '--filter', dest='test_filter', action='append', default=test_name.Filter(),
-      help=glob_helpstr)
+    '--filter',
+    dest='test_filter',
+    action='append',
+    default=test_name.Filter(),
+    help=glob_helpstr,
+  )
   run_p.add_argument(
-      '--json', type=argparse.FileType('w'), help=argparse.SUPPRESS)
+    '--json', type=argparse.FileType('w'), help=argparse.SUPPRESS
+  )
   run_p.add_argument(
-      '--dump-timing-info', type=argparse.FileType('w'), help=TIMING_INFO_HELP)
+    '--dump-timing-info', type=argparse.FileType('w'), help=TIMING_INFO_HELP
+  )
   run_p.add_argument(
-      '--no-emoji', dest='use_emoji', action='store_false', default=True,
-      help='Use text symbols instead of emoji.')
+    '--no-emoji',
+    dest='use_emoji',
+    action='store_false',
+    default=True,
+    help='Use text symbols instead of emoji.',
+  )
   run_p.add_argument(
-      '--stop',
-      '-x',
-      action='store_true',
-      help=('Stop running tests after first error or failure.'))
+    '--stop',
+    '-x',
+    action='store_true',
+    help=('Stop running tests after first error or failure.'),
+  )
   run_p.add_argument(
-      '--no-docs',
-      action='store_false', default=True, dest='docs',
-      help='Disable the check for readme file change.')
+    '--no-docs',
+    action='store_false',
+    default=True,
+    dest='docs',
+    help='Disable the check for readme file change.',
+  )
   run_p.add_argument(
-      '--show-warnings',
-      action='store_true', default=False, dest='show_warnings',
-      help='Show detailed warnings even on test failures.')
+    '--show-warnings',
+    action='store_true',
+    default=False,
+    dest='show_warnings',
+    help='Show detailed warnings even on test failures.',
+  )
   run_p.add_argument(
-      '--show-durations',
-      action='store_true', default=False, dest='show_durations',
-      help='Show long-running tests even on test failures.')
+    '--show-durations',
+    action='store_true',
+    default=False,
+    dest='show_durations',
+    help='Show long-running tests even on test failures.',
+  )
 
   helpstr = 'Re-train recipe expectations.'
   train_p = subp.add_parser(
-      'train', help=helpstr, description=helpstr + '\n' + status_info,
-      formatter_class=argparse.RawDescriptionHelpFormatter)
+    'train',
+    help=helpstr,
+    description=helpstr + '\n' + status_info,
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+  )
   train_p.add_argument(
-      '--jobs',
-      metavar='N',
-      type=int,
-      default=default_jobs,
-      help='run N jobs in parallel (default %(default)s)')
+    '--jobs',
+    metavar='N',
+    type=int,
+    default=default_jobs,
+    help='run N jobs in parallel (default %(default)s)',
+  )
   train_p.add_argument(
-      '--filter', dest='test_filter', action='append', default=test_name.Filter(),
-      help=glob_helpstr)
+    '--filter',
+    dest='test_filter',
+    action='append',
+    default=test_name.Filter(),
+    help=glob_helpstr,
+  )
   train_p.add_argument(
-      '--no-docs', action='store_false', default=True, dest='docs',
-      help='Disable automatic documentation generation.')
+    '--no-docs',
+    action='store_false',
+    default=True,
+    dest='docs',
+    help='Disable automatic documentation generation.',
+  )
   train_p.add_argument(
-      '--json', type=argparse.FileType('w'), help=argparse.SUPPRESS)
+    '--json', type=argparse.FileType('w'), help=argparse.SUPPRESS
+  )
   train_p.add_argument(
-      '--dump-timing-info', type=argparse.FileType('w'), help=TIMING_INFO_HELP)
+    '--dump-timing-info', type=argparse.FileType('w'), help=TIMING_INFO_HELP
+  )
   train_p.add_argument(
-      '--no-emoji', dest='use_emoji', action='store_false', default=True,
-      help='Use text symbols instead of emoji.')
+    '--no-emoji',
+    dest='use_emoji',
+    action='store_false',
+    default=True,
+    help='Use text symbols instead of emoji.',
+  )
   train_p.add_argument(
-      '--stop',
-      '-x',
-      action='store_true',
-      help=('Stop running tests after first error or failure.'))
+    '--stop',
+    '-x',
+    action='store_true',
+    help=('Stop running tests after first error or failure.'),
+  )
   train_p.add_argument(
-      '--show-warnings',
-      action='store_true', default=False, dest='show_warnings',
-      help='Show detailed warnings even on test failures.')
+    '--show-warnings',
+    action='store_true',
+    default=False,
+    dest='show_warnings',
+    help='Show detailed warnings even on test failures.',
+  )
   train_p.add_argument(
-      '--show-durations',
-      action='store_true', default=False, dest='show_durations',
-      help='Show long-running tests even on test failures.')
+    '--show-durations',
+    action='store_true',
+    default=False,
+    dest='show_durations',
+    help='Show long-running tests even on test failures.',
+  )
 
   helpstr = 'Print all test names.'
-  list_p = subp.add_parser(
-      'list', help=helpstr, description=helpstr)
+  list_p = subp.add_parser('list', help=helpstr, description=helpstr)
   list_p.add_argument(
-      '--filter', dest='test_filter', action='append', default=test_name.Filter(),
-      help=glob_helpstr)
+    '--filter',
+    dest='test_filter',
+    action='append',
+    default=test_name.Filter(),
+    help=glob_helpstr,
+  )
   list_p.add_argument(
-      '--json', metavar='FILE', type=argparse.FileType('w'),
-      help='path to JSON output file')
+    '--json',
+    metavar='FILE',
+    type=argparse.FileType('w'),
+    help='path to JSON output file',
+  )
 
   # The _runner subcommand is hidden from users, but is used in subprocesses
   # to actually run tests.
   runner_p = subp.add_parser('_runner')
   runner_p.add_argument('--cov-file')
   runner_p.add_argument('--train', action='store_true', default=False)
-  runner_p.add_argument('--cover-module-imports', action='store_true',
-                        default=False)
+  runner_p.add_argument(
+    '--cover-module-imports', action='store_true', default=False
+  )
 
   def _launch(args: argparse.Namespace) -> int | None:
     if debugger.PROTOCOL == "pdb" and args.subcommand in {'run', 'train'}:
       parser.error(
-          f'Cannot use `recipes.py test {args.subcommand}` with '
-          'RECIPE_DEBUGGER=pdb.'
+        f'Cannot use `recipes.py test {args.subcommand}` with '
+        'RECIPE_DEBUGGER=pdb.'
       )
 
     if 'jobs' in args and debugging_enabled and args.jobs != 1:
@@ -173,21 +230,25 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
 
     if args.subcommand == '_runner':
       from .runner import main
+
       try:
-        return main(args.recipe_deps, args.cov_file, args.train,
-                    args.cover_module_imports)
+        return main(
+          args.recipe_deps, args.cov_file, args.train, args.cover_module_imports
+        )
       except KeyboardInterrupt:
         return 0
 
     from .run_train import main
+
     return main(args)
+
   parser.set_defaults(func=_launch)
 
 
 def run_list(
-    recipe_deps: recipe_deps_mod.RecipeDeps,
-    json_file: TextIO | None,
-    test_filter: test_name.Filter,
+  recipe_deps: recipe_deps_mod.RecipeDeps,
+  json_file: TextIO | None,
+  test_filter: test_name.Filter,
 ) -> int:
   """Runs the `test list` subcommand.
 
@@ -205,7 +266,6 @@ def run_list(
     f'{recipe.name}.{tc.name}'
     for recipe in recipe_deps.main_repo.recipes.values()
     if test_filter.recipe_name(recipe.name)
-
     for tc in recipe.gen_tests()
   ]
   tests.sort()

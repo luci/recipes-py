@@ -37,17 +37,17 @@ def RunSteps(api: DEPS) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'default',
-      api.post_check(
-          lambda check, steps: check([..., 'production'] in steps['echo'].cmd)
-      ),
-      api.post_process(DropExpectation),
+    'default',
+    api.post_check(
+      lambda check, steps: check([..., 'production'] in steps['echo'].cmd)
+    ),
+    api.post_process(DropExpectation),
   )
   yield api.test(
-      'override',
-      api.recipe_test_data(target='override'),
-      api.post_check(
-          lambda check, steps: check([..., 'override'] in steps['echo'].cmd)
-      ),
-      api.post_process(DropExpectation),
+    'override',
+    api.recipe_test_data(target='override'),
+    api.post_check(
+      lambda check, steps: check([..., 'override'] in steps['echo'].cmd)
+    ),
+    api.post_process(DropExpectation),
   )

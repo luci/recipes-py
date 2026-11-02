@@ -51,28 +51,27 @@ class TEST_DEPS(RecipeTestApi):
 
 
 def RunSteps(
-    api: DEPS,
-    env_properties: grpc_fork_support.EnvProperties,
+  api: DEPS,
+  env_properties: grpc_fork_support.EnvProperties,
 ) -> None:
   if env_properties.GRPC_ENABLE_FORK_SUPPORT != '0':
     raise StepFailure(
-        'GRPC_ENABLE_FORK_SUPPORT is %r, expected "0". recipe_engine/main.py '
-        'must set it to "0" before grpc is imported to disable gRPC C-core '
-        'fork support. See b/537839459.'
-        % (env_properties.GRPC_ENABLE_FORK_SUPPORT,))
+      'GRPC_ENABLE_FORK_SUPPORT is %r, expected "0". recipe_engine/main.py '
+      'must set it to "0" before grpc is imported to disable gRPC C-core '
+      'fork support. See b/537839459.'
+      % (env_properties.GRPC_ENABLE_FORK_SUPPORT,)
+    )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'basic',
-      api.properties.environ(
-          ENV_PROPERTIES(GRPC_ENABLE_FORK_SUPPORT="0")
-      ),
-      api.post_process(DropExpectation),
+    'basic',
+    api.properties.environ(ENV_PROPERTIES(GRPC_ENABLE_FORK_SUPPORT="0")),
+    api.post_process(DropExpectation),
   )
 
   yield api.test(
-      'fail',
-      api.post_process(DropExpectation),
-      status='FAILURE',
+    'fail',
+    api.post_process(DropExpectation),
+    status='FAILURE',
   )

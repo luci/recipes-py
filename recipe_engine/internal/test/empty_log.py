@@ -12,6 +12,7 @@ class _EmptyLog(str):
   """A special string object equal to the empty string that can be used to
   distinguish logs with no lines and logs containing a single empty line.
   """
+
   def __new__(cls) -> Self:
     return super().__new__(cls, '')
 

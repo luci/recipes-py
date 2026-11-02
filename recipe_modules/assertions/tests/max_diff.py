@@ -13,9 +13,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    properties,
-    step,
+  assertions,
+  properties,
+  step,
 )
 
 
@@ -39,30 +39,32 @@ def RunSteps(api: DEPS) -> None:
   except AssertionError as e:
     api.step('AssertionError', [])
     assert 'Set self.maxDiff to None to see it.' not in str(e), (
-        'Did not expect self.maxDiff to appear in exception message:\n' +
-        str(e))
+      'Did not expect self.maxDiff to appear in exception message:\n' + str(e)
+    )
     modified_message = 'Set assertions.maxDiff to None to see it.'
     if api.properties.get('diff_omitted', False):
       assert modified_message in str(e), (
-          'Expected diff to be omitted. Exception message:\n' + str(e))
+        'Expected diff to be omitted. Exception message:\n' + str(e)
+      )
     else:
       assert modified_message not in str(e), (
-          'Expected diff not to be omitted. Exception message:\n' + str(e))
+        'Expected diff not to be omitted. Exception message:\n' + str(e)
+      )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'basic',
-      api.properties(maxDiff=None),
-      api.post_process(post_process.MustRun, 'AssertionError'),
-      api.post_process(post_process.StatusSuccess),
-      api.post_process(post_process.DropExpectation),
+    'basic',
+    api.properties(maxDiff=None),
+    api.post_process(post_process.MustRun, 'AssertionError'),
+    api.post_process(post_process.StatusSuccess),
+    api.post_process(post_process.DropExpectation),
   )
 
   yield api.test(
-      'diff-omitted',
-      api.properties(diff_omitted=True),
-      api.post_process(post_process.MustRun, 'AssertionError'),
-      api.post_process(post_process.StatusSuccess),
-      api.post_process(post_process.DropExpectation),
+    'diff-omitted',
+    api.properties(diff_omitted=True),
+    api.post_process(post_process.MustRun, 'AssertionError'),
+    api.post_process(post_process.StatusSuccess),
+    api.post_process(post_process.DropExpectation),
   )

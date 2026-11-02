@@ -27,8 +27,9 @@ BBID = 881234567890
 
 def RunSteps(api: DEPS) -> None:
   bld = api.buildbucket.get(
-      BBID,
-      test_data=build_pb2.Build(id=BBID, builder_info={'description': 'foo'}))
+    BBID,
+    test_data=build_pb2.Build(id=BBID, builder_info={'description': 'foo'}),
+  )
   assert bld.builder_info.description == 'foo', repr(bld)
 
 

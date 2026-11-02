@@ -39,21 +39,22 @@ from . import doc_markdown
 
 LOGGER = logging.getLogger(__name__)
 
-RECIPE_ENGINE_BASE = os.path.dirname(
-    os.path.abspath(recipe_engine.__path__[0]))
+RECIPE_ENGINE_BASE = os.path.dirname(os.path.abspath(recipe_engine.__path__[0]))
 
 join = posixpath.join
 if sys.platform == 'win32':
+
   def _to_posix(native_path: str) -> str:
     return native_path.replace(os.path.sep, os.path.altsep)
 else:
+
   def _to_posix(native_path: str) -> str:
     return native_path
 
 
 def _grab_ast(
-    repo: recipe_deps_mod.RecipeRepo,
-    abspath: str,
+  repo: recipe_deps_mod.RecipeRepo,
+  abspath: str,
 ) -> ast.Module | None:
   """Parses the Python file indicated by `abspath`.
 
@@ -93,8 +94,8 @@ def _unparse(node: ast.AST) -> str:
 
 
 def _find_value_of(
-    mod_ast: ast.Module,
-    target: str,
+  mod_ast: ast.Module,
+  target: str,
 ) -> tuple[ast.AST | None, int | None]:
   """Looks for an assignment or class definition named `target`, returning the
   AST node and its line number.
@@ -115,9 +116,11 @@ def _find_value_of(
   assert isinstance(mod_ast, ast.Module), type(mod_ast)
   for node in mod_ast.body:
     if isinstance(node, ast.Assign):
-      if (len(node.targets) == 1 and
-          isinstance(node.targets[0], ast.Name) and
-          node.targets[0].id == target):
+      if (
+        len(node.targets) == 1
+        and isinstance(node.targets[0], ast.Name)
+        and node.targets[0].id == target
+      ):
         return node.value, node.lineno
     elif isinstance(node, ast.ClassDef) and node.name == target:
       return node, node.lineno
@@ -162,15 +165,16 @@ def _expand_mock_imports(*mock_imports: Mapping[str, Any]) -> dict[str, Any]:
     expanded_imports[dotted_name] = obj
     if isinstance(obj, types.ModuleType):
       for name in (n for n in dir(obj) if not n.startswith('_')):
-        expanded_imports[dotted_name+'.'+name] = getattr(obj, name)
-    for i in range(len(toks)-1, 0, -1):
+        expanded_imports[dotted_name + '.' + name] = getattr(obj, name)
+    for i in range(len(toks) - 1, 0, -1):
       partial = '.'.join(toks[:i])
       cur_obj = expanded_imports.setdefault(partial, expando())
       if not isinstance(cur_obj, expando):
         raise ValueError('nested mock imports! %r', partial)
-      setattr(cur_obj, toks[i], expanded_imports[partial+'.'+toks[i]])
+      setattr(cur_obj, toks[i], expanded_imports[partial + '.' + toks[i]])
 
   return expanded_imports
+
 
 # used in doc_test to ensure everything is actually importable
 ALL_IMPORTS: dict[str, Any] = {}
@@ -217,8 +221,8 @@ KNOWN_OBJECTS.update(_recipe_api_class_imports)
 
 
 def _parse_mock_imports(
-    mod_ast: ast.Module,
-    expanded_imports: Mapping[str, Any],
+  mod_ast: ast.Module,
+  expanded_imports: Mapping[str, Any],
 ) -> dict[str, Any]:
   """Parses a module AST node for import statements and resolves them against
   expanded_imports (such as you might get from _expand_mock_imports).
@@ -239,7 +243,7 @@ def _parse_mock_imports(
     elif isinstance(node, ast.ImportFrom):
       if node.level == 0:
         for alias in node.names:
-          fullname ='%s.%s' % (node.module, alias.name)
+          fullname = '%s.%s' % (node.module, alias.name)
           if fullname in expanded_imports:
             ret[alias.asname or alias.name] = expanded_imports[fullname]
 
@@ -247,8 +251,8 @@ def _parse_mock_imports(
 
 
 def _apply_imports_to_unparsed_expression(
-    exp_ast: ast.AST,
-    imports: dict[str, Any],
+  exp_ast: ast.AST,
+  imports: dict[str, Any],
 ) -> Any:
   """Attempts to evaluate the code equivalent of `exp_ast`, with `imports`
   as available symbols. If it's successful, it returns the evaluated object.
@@ -274,10 +278,10 @@ def _apply_imports_to_unparsed_expression(
 
 
 def _extract_classes_funcs(
-    body_ast: ast.ClassDef | ast.Module,
-    relpath: str,
-    imports: dict[str, Any],
-    do_fixup: bool = True,
+  body_ast: ast.ClassDef | ast.Module,
+  relpath: str,
+  imports: dict[str, Any],
+  do_fixup: bool = True,
 ) -> tuple[dict[str, doc_pb.Doc.Class], dict[str, doc_pb.Doc.Func]]:
   """Extracts the classes and functions from the AST suite.
 
@@ -307,9 +311,8 @@ def _extract_classes_funcs(
       if not node.name.startswith('_'):
         classes[node.name] = parse_class(node, relpath, imports)
     elif isinstance(node, ast.FunctionDef):
-      ok = (
-        not node.name.startswith('_') or
-        (node.name.startswith('__') and node.name.endswith('__'))
+      ok = not node.name.startswith('_') or (
+        node.name.startswith('__') and node.name.endswith('__')
       )
       if ok:
         funcs[node.name] = parse_func(node, relpath, imports)
@@ -327,9 +330,9 @@ def _extract_classes_funcs(
 
 
 def parse_class(
-    class_ast: ast.ClassDef,
-    relpath: str,
-    imports: dict[str, Any],
+  class_ast: ast.ClassDef,
+  relpath: str,
+  imports: dict[str, Any],
 ) -> doc_pb.Doc.Class:
   """Parses a class AST object.
 
@@ -360,15 +363,15 @@ def parse_class(
     if isinstance(item, str):
       ret.bases.add(generic=item)
     else:
-      ret.bases.add(known=item.__module__+'.'+item.__name__)
+      ret.bases.add(known=item.__module__ + '.' + item.__name__)
 
   return ret
 
 
 def parse_deps(
-    spec: Mapping[str, tuple[str, str]],
-    mod_ast: ast.Module,
-    relpath: str,
+  spec: Mapping[str, tuple[str, str]],
+  mod_ast: ast.Module,
+  relpath: str,
 ) -> doc_pb.Doc.Deps | None:
   """Finds the `DEPS` line number in `mod_ast` and builds Doc.Deps from `spec`.
 
@@ -387,8 +390,8 @@ def parse_deps(
 
   _, lineno = _find_value_of(mod_ast, 'DEPS')
   ret = doc_pb.Doc.Deps(
-      relpath=relpath,
-      lineno=lineno or 1,
+    relpath=relpath,
+    lineno=lineno or 1,
   )
   for dep_repo_name, mod_name in sorted(spec.values()):
     ret.module_links.add(repo_name=dep_repo_name, name=mod_name)
@@ -440,17 +443,19 @@ def parse_parameter(param: recipe_api.Property) -> doc_pb.Doc.Parameter:
   return doc_pb.Doc.Parameter(
     docstring=param.help,
     kind=param.kind.schema_proto() if param.kind else None,
-    default_json=default)
+    default_json=default,
+  )
 
 
 MOCK_IMPORTS_PARAMETERS = _expand_mock_imports(
-  _property_imports, _config_imports)
+  _property_imports, _config_imports
+)
 ALL_IMPORTS.update(MOCK_IMPORTS_PARAMETERS)
 
 
 def parse_parameters(
-    mod_ast: ast.Module,
-    relpath: str,
+  mod_ast: ast.Module,
+  relpath: str,
 ) -> doc_pb.Doc.Parameters | None:
   """Parses a set of recipe parameters from the PROPERTIES variable.
 
@@ -473,9 +478,8 @@ def parse_parameters(
   imports = _parse_mock_imports(mod_ast, MOCK_IMPORTS_PARAMETERS)
   imports.update(extract_jsonish_assignments(mod_ast))
   data = eval(
-      _unparse(parameters),
-      imports,
-      {'basestring': past.builtins.basestring})
+    _unparse(parameters), imports, {'basestring': past.builtins.basestring}
+  )
   if not data:
     return None
 
@@ -486,9 +490,9 @@ def parse_parameters(
 
 
 def parse_func(
-    func_ast: ast.FunctionDef,
-    relpath: str,
-    imports: dict[str, Any],
+  func_ast: ast.FunctionDef,
+  relpath: str,
+  imports: dict[str, Any],
 ) -> doc_pb.Doc.Func:
   """Parses a function into a Doc.Func.
 
@@ -523,14 +527,15 @@ def parse_func(
     if isinstance(item, str):
       ret.decorators.add(generic=item)
     else:
-      ret.decorators.add(known=item.__module__+'.'+item.__name__)
+      ret.decorators.add(known=item.__module__ + '.' + item.__name__)
 
   ret.signature = _unparse(func_ast.args).strip()
   return ret
 
 
 MOCK_IMPORTS_RECIPE = _expand_mock_imports(
- _util_imports, _decorator_imports, _placeholder_imports)
+  _util_imports, _decorator_imports, _placeholder_imports
+)
 ALL_IMPORTS.update(MOCK_IMPORTS_RECIPE)
 
 
@@ -548,28 +553,30 @@ def parse_recipe(recipe: recipe_deps_mod.Recipe) -> doc_pb.Doc.Recipe | None:
   recipe_ast = _grab_ast(recipe.repo, recipe.path)
   if not recipe_ast:
     return None
-  classes, funcs = _extract_classes_funcs(recipe_ast, relpath,
-                                          MOCK_IMPORTS_RECIPE)
+  classes, funcs = _extract_classes_funcs(
+    recipe_ast, relpath, MOCK_IMPORTS_RECIPE
+  )
   funcs.pop('GenTests', None)
 
   return doc_pb.Doc.Recipe(
-      name=recipe.name,
-      relpath=relpath,
-      docstring=ast.get_docstring(recipe_ast) or '',
-      deps=parse_deps(recipe.normalized_DEPS, recipe_ast, relpath),
-      parameters=parse_parameters(recipe_ast, relpath),
-      classes=classes,
-      funcs=funcs,
+    name=recipe.name,
+    relpath=relpath,
+    docstring=ast.get_docstring(recipe_ast) or '',
+    deps=parse_deps(recipe.normalized_DEPS, recipe_ast, relpath),
+    parameters=parse_parameters(recipe_ast, relpath),
+    classes=classes,
+    funcs=funcs,
   )
 
 
 MOCK_IMPORTS_MODULE = _expand_mock_imports(
-  _recipe_api_class_imports, _decorator_imports, _placeholder_imports)
+  _recipe_api_class_imports, _decorator_imports, _placeholder_imports
+)
 ALL_IMPORTS.update(MOCK_IMPORTS_MODULE)
 
 
 def parse_module(
-    module: recipe_deps_mod.RecipeModule,
+  module: recipe_deps_mod.RecipeModule,
 ) -> doc_pb.Doc.Module | None:
   """Parses a recipe module object into a Doc.Module.
 
@@ -591,7 +598,8 @@ def parse_module(
 
   imports = _parse_mock_imports(api, MOCK_IMPORTS_MODULE)
   classes, funcs = _extract_classes_funcs(
-    api, posixpath.join(relpath, 'api.py'), imports)
+    api, posixpath.join(relpath, 'api.py'), imports
+  )
 
   api_class = None
   for name, val in sorted(classes.items()):
@@ -605,14 +613,14 @@ def parse_module(
   init_relpath = posixpath.join(relpath, '__init__.py')
 
   return doc_pb.Doc.Module(
-      name=module.name,
-      relpath=relpath,
-      docstring=ast.get_docstring(api) or '',
-      api_class=api_class,
-      classes=classes,
-      funcs=funcs,
-      deps=parse_deps(module.normalized_DEPS, init, init_relpath),
-      parameters=parse_parameters(init, init_relpath),
+    name=module.name,
+    relpath=relpath,
+    docstring=ast.get_docstring(api) or '',
+    api_class=api_class,
+    classes=classes,
+    funcs=funcs,
+    deps=parse_deps(module.normalized_DEPS, init, init_relpath),
+    parameters=parse_parameters(init, init_relpath),
   )
 
 
@@ -629,7 +637,8 @@ def parse_repo(repo: recipe_deps_mod.RecipeRepo) -> doc_pb.Doc.Repo:
   ret.specs[repo.name].CopyFrom(repo.recipes_cfg_pb2)
   for dep_repo_name in repo.recipes_cfg_pb2.deps:
     ret.specs[dep_repo_name].CopyFrom(
-        repo.recipe_deps.repos[dep_repo_name].recipes_cfg_pb2)
+      repo.recipe_deps.repos[dep_repo_name].recipes_cfg_pb2
+    )
 
   readme = join(repo.recipes_root_path, 'README.recipes.intro.md')
   if os.path.isfile(readme):
@@ -698,8 +707,8 @@ def _set_known_objects(base: doc_pb.Doc.Repo) -> None:
 
 
 def regenerate_doc(
-    repo: recipe_deps_mod.RecipeRepo,
-    output_file: TextIO,
+  repo: recipe_deps_mod.RecipeRepo,
+  output_file: TextIO,
 ) -> None:
   """Rewrites `README.recipes.md` for the given recipe repo to the given output
   file.
@@ -736,9 +745,11 @@ def doc_diff(repo: recipe_deps_mod.RecipeRepo) -> list[str]:
   else:
     old_lines = []
 
-  return list(difflib.unified_diff(
-      old_lines, new_lines,
-      fromfile='current', tofile='actual'))
+  return list(
+    difflib.unified_diff(
+      old_lines, new_lines, fromfile='current', tofile='actual'
+    )
+  )
 
 
 def main(args: argparse.Namespace) -> int | None:
@@ -758,7 +769,9 @@ def main(args: argparse.Namespace) -> int | None:
     if not diff:
       return 0
 
-    print('Found diff in README.recipes.md. Run `recipes.py doc` to regenerate.')
+    print(
+      'Found diff in README.recipes.md. Run `recipes.py doc` to regenerate.'
+    )
     for line in diff:
       print(line, end='')
     return 1
@@ -772,10 +785,12 @@ def main(args: argparse.Namespace) -> int | None:
 
   if args.kind == 'jsonpb':
     sys.stdout.write(
-        jsonpb.MessageToJson(
-            node,
-            always_print_fields_with_no_presence=True,
-            preserving_proto_field_name=True))
+      jsonpb.MessageToJson(
+        node,
+        always_print_fields_with_no_presence=True,
+        preserving_proto_field_name=True,
+      )
+    )
   elif args.kind == 'binarypb':
     sys.stdout.write(node.SerializeToString())
   elif args.kind == 'textpb':

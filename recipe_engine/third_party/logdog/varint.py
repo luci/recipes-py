@@ -26,7 +26,7 @@ def write_uvarint(w, val):
 
   count = 0
   while val > 0 or count == 0:
-    byte = (val & 0b01111111)
+    byte = val & 0b01111111
     val >>= 7
     if val > 0:
       byte |= 0b10000000
@@ -59,7 +59,7 @@ def read_uvarint(r):
       raise ValueError('UVarint was not terminated')
 
     byte = struct.unpack('B', byte)[0]
-    result |= ((byte & 0b01111111) << (7 * count))
+    result |= (byte & 0b01111111) << (7 * count)
     count += 1
     if byte & 0b10000000 == 0:
       break

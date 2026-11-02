@@ -35,6 +35,7 @@ os.environ.setdefault('GRPC_ENABLE_FORK_SUPPORT', '0')
 # parameters works... go figure.
 if sys.platform == 'darwin':
   _REAL_OS_READ = os.read
+
   def _hacked_read(fileno: int, bufsiz: int) -> bytes:
     tries = 3
     while True:
@@ -46,6 +47,7 @@ if sys.platform == 'darwin':
           time.sleep(0.1)
           continue
         raise
+
   os.read = _hacked_read
 
 # Hack 2; Bump the recursion limit as well; because of step nesting and gevent
@@ -67,6 +69,7 @@ sys.path = sys.path[1:]
 
 try:
   import urllib3.contrib.pyopenssl
+
   urllib3.contrib.pyopenssl.inject_into_urllib3()
 except ImportError:
   pass
@@ -104,10 +107,13 @@ def _strip_virtualenv() -> None:
   # Look for "activate_this.py" in this path, which is installed by VirtualEnv.
   # This mechanism is used by vpython as well to sanitize VirtualEnvs from
   # $PATH.
-  os.environ['PATH'] = os.pathsep.join([
-    p for p in os.environ.get('PATH', '').split(os.pathsep)
-    if not os.path.isfile(os.path.join(p, 'activate_this.py'))
-  ])
+  os.environ['PATH'] = os.pathsep.join(
+    [
+      p
+      for p in os.environ.get('PATH', '').split(os.pathsep)
+      if not os.path.isfile(os.path.join(p, 'activate_this.py'))
+    ]
+  )
 
 
 def _main() -> NoReturn:
@@ -118,10 +124,11 @@ def _main() -> NoReturn:
   if 'RECIPES_DEBUG_SLEEP' in os.environ:
     sleep_duration = float(os.environ.pop('RECIPES_DEBUG_SLEEP'))
     sys.stderr.write(
-        '[engine will sleep for %f seconds after execution]\n' % sleep_duration)
+      '[engine will sleep for %f seconds after execution]\n' % sleep_duration
+    )
+
     def exit_fn(code: int) -> NoReturn:
-      sys.stderr.write(
-          '[engine sleeping for %f seconds]\n' % sleep_duration)
+      sys.stderr.write('[engine sleeping for %f seconds]\n' % sleep_duration)
       time.sleep(sleep_duration)
       os_exit(code)
   else:
@@ -140,8 +147,9 @@ def _main() -> NoReturn:
     ret = commands.parse_and_run()
   except Exception as exc:  # pylint: disable=broad-except
     traceback.print_exc(file=sys.stderr)
-    print('Uncaught exception (%s): %s' % (
-      type(exc).__name__, exc), file=sys.stderr)
+    print(
+      'Uncaught exception (%s): %s' % (type(exc).__name__, exc), file=sys.stderr
+    )
     exit_fn(1)
   except SystemExit as exc:
     # funnel all 'exit' methods through flush&&os._exit

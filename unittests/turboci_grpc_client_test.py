@@ -11,16 +11,16 @@ import test_env
 
 from PB.turboci.graph.ids.v1 import identifier as identifier_pb
 from PB.turboci.graph.orchestrator.v1 import (
-    query_nodes_request as query_nodes_request_pb,
+  query_nodes_request as query_nodes_request_pb,
 )
 from PB.turboci.graph.orchestrator.v1 import (
-    read_workplan_response as read_workplan_response_pb,
+  read_workplan_response as read_workplan_response_pb,
 )
 from PB.turboci.graph.orchestrator.v1 import (
-    write_nodes_request as write_nodes_request_pb,
+  write_nodes_request as write_nodes_request_pb,
 )
 from PB.turboci.graph.orchestrator.v1 import (
-    write_nodes_response as write_nodes_response_pb,
+  write_nodes_response as write_nodes_response_pb,
 )
 from turboci.utils import ids
 from turboci.utils.client import errors
@@ -29,15 +29,16 @@ from recipe_engine.internal.turboci import grpc_client
 
 
 class TurboCIGRPCClientTest(test_env.RecipeEngineUnitTest):
-
   def setUp(self) -> None:
     super().setUp()
     self.client = grpc_client.TurboCIGRPCClient(
-        'localhost:12345', wpid=identifier_pb.WorkPlan(id='123'))
+      'localhost:12345', wpid=identifier_pb.WorkPlan(id='123')
+    )
     self.mock_read_work_plan = mock.patch.object(
-        self.client.transport, '_read_work_plan', autospec=True).start()
+      self.client.transport, '_read_work_plan', autospec=True
+    ).start()
     self.mock_read_work_plan.return_value = (
-        read_workplan_response_pb.ReadWorkPlanResponse()
+      read_workplan_response_pb.ReadWorkPlanResponse()
     )
     self.addCleanup(mock.patch.stopall)
 
@@ -45,18 +46,24 @@ class TurboCIGRPCClientTest(test_env.RecipeEngineUnitTest):
     """Tests that QueryNodes can select checks by their ID over gRPC client."""
     mock_response = read_workplan_response_pb.ReadWorkPlanResponse()
     mock_response.workplan.checks.add(
-        identifier=identifier_pb.Check(
-            work_plan=identifier_pb.WorkPlan(id="123"), id='check1'))
+      identifier=identifier_pb.Check(
+        work_plan=identifier_pb.WorkPlan(id="123"), id='check1'
+      )
+    )
     mock_response.workplan.checks.add(
-        identifier=identifier_pb.Check(
-            work_plan=identifier_pb.WorkPlan(id="123"), id='check2'))
+      identifier=identifier_pb.Check(
+        work_plan=identifier_pb.WorkPlan(id="123"), id='check2'
+      )
+    )
     self.mock_read_work_plan.return_value = mock_response
 
     req = query_nodes_request_pb.QueryNodesRequest()
     query = req.query.add()
     query.nodes_by_id.nodes.add(
-        check=identifier_pb.Check(
-            work_plan=identifier_pb.WorkPlan(id="123"), id='check1'))
+      check=identifier_pb.Check(
+        work_plan=identifier_pb.WorkPlan(id="123"), id='check1'
+      )
+    )
 
     response = self.client.QueryNodes(req)
 
@@ -69,8 +76,8 @@ class TurboCIGRPCClientTest(test_env.RecipeEngineUnitTest):
     req = write_nodes_request_pb.WriteNodesRequest()
     mock_resp = write_nodes_response_pb.WriteNodesResponse()
     with mock.patch.object(
-        self.client.transport, 'call_unary',
-        return_value=mock_resp) as mock_call:
+      self.client.transport, 'call_unary', return_value=mock_resp
+    ) as mock_call:
       res = self.client.WriteNodes(req)
       self.assertEqual(res, mock_resp)
       mock_call.assert_called_once()
@@ -93,15 +100,18 @@ class TurboCIGRPCClientTest(test_env.RecipeEngineUnitTest):
     err = errors.RetryableRPCError.make('Server temporarily unavailable')
 
     with mock.patch.object(
-        self.client.transport, 'call_unary',
-        side_effect=[err, mock_resp]) as mock_call:
+      self.client.transport, 'call_unary', side_effect=[err, mock_resp]
+    ) as mock_call:
       with self.assertLogs(level='WARNING') as cm:
         res = self.client.WriteNodes(req)
         self.assertEqual(res, mock_resp)
         self.assertEqual(mock_call.call_count, 2)
         self.assertTrue(
-            any('Transient error in RPC WriteNodes' in output
-                for output in cm.output))
+          any(
+            'Transient error in RPC WriteNodes' in output
+            for output in cm.output
+          )
+        )
 
 
 if __name__ == '__main__':

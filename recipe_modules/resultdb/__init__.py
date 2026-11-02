@@ -7,13 +7,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from RECIPE_MODULES.recipe_engine import (
-    context,
-    futures,
-    json,
-    raw_io,
-    step,
-    time,
-    uuid,
+  context,
+  futures,
+  json,
+  raw_io,
+  step,
+  time,
+  uuid,
 )
 
 
@@ -26,6 +26,7 @@ class DEPS(RecipeScriptApi):
   step: step.API
   time: time.API
   uuid: uuid.API
+
 
 from .api import ResultDBAPI as API
 from .test_api import ResultDBTestApi as TEST_API

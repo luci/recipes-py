@@ -22,7 +22,8 @@ if sys.platform == "win32":
 
 
 _StreamParamsBase = collections.namedtuple(
-    '_StreamParamsBase', ('name', 'type', 'content_type', 'tags'))
+  '_StreamParamsBase', ('name', 'type', 'content_type', 'tags')
+)
 
 
 # Magic number at the beginning of a Butler stream
@@ -77,8 +78,8 @@ class StreamParams(_StreamParamsBase):
     self.validate()
 
     obj = {
-        'name': self.name,
-        'type': self.type,
+      'name': self.name,
+      'type': self.type,
     }
 
     def _maybe_add(key, value):
@@ -93,8 +94,7 @@ class StreamParams(_StreamParamsBase):
 
 
 class StreamProtocolRegistry:
-  """Registry of streamserver URI protocols and their client classes.
-  """
+  """Registry of streamserver URI protocols and their client classes."""
 
   def __init__(self):
     self._registry = {}
@@ -137,8 +137,7 @@ create = _default_registry.create
 
 
 class StreamClient:
-  """Abstract base class for a streamserver client.
-  """
+  """Abstract base class for a streamserver client."""
 
   class _StreamBase:
     """ABC for StreamClient streams."""
@@ -172,7 +171,6 @@ class StreamClient:
       """
       return self._stream_client.get_viewer_url(self._params.name)
 
-
   class _BasicStream(_StreamBase):
     """Wraps a basic file descriptor, offering "write" and "close"."""
 
@@ -193,7 +191,6 @@ class StreamClient:
     def close(self):
       return self._fd.close()
 
-
   class _TextStream(_BasicStream):
     """Extends _BasicStream, ensuring data written is UTF-8 text."""
 
@@ -204,11 +201,13 @@ class StreamClient:
     def write(self, data):
       if isinstance(data, str):
         return self._fd.write(data.encode('utf-8'))
-      raise ValueError('expect str, got %r that is type %s' % (
+      raise ValueError(
+        'expect str, got %r that is type %s'
+        % (
           data,
           type(data),
-      ))
-
+        )
+      )
 
   class _DatagramStream(_StreamBase):
     """Wraps a stream object to write length-prefixed datagrams."""
@@ -224,9 +223,9 @@ class StreamClient:
     def close(self):
       return self._fd.close()
 
-
-  def __init__(self, project=None, prefix=None, coordinator_host=None,
-               namespace=''):
+  def __init__(
+    self, project=None, prefix=None, coordinator_host=None, namespace=''
+  ):
     """Constructs a new base StreamClient instance.
 
     Args:
@@ -257,8 +256,7 @@ class StreamClient:
 
   @property
   def coordinator_host(self):
-    """Returns (str or None): The coordinator host, or None if not configured.
-    """
+    """Returns (str or None): The coordinator host, or None if not configured."""
     return self._coordinator_host
 
   @property
@@ -300,9 +298,8 @@ class StreamClient:
       raise KeyError('Stream project is not configured')
 
     return streamname.get_logdog_viewer_url(
-        self._coordinator_host,
-        self._project,
-        self.get_stream_path(name))
+      self._coordinator_host, self._project, self.get_stream_path(name)
+    )
 
   def _register_new_stream(self, name):
     """Registers a new stream name.
@@ -413,10 +410,11 @@ class StreamClient:
         be closed when finished using its `close` method.
     """
     params = StreamParams.make(
-        name=posixpath.join(self._namespace, name),
-        type=StreamParams.TEXT,
-        content_type=content_type,
-        tags=tags)
+      name=posixpath.join(self._namespace, name),
+      type=StreamParams.TEXT,
+      content_type=content_type,
+      tags=tags,
+    )
     return self._TextStream(self, params, self.new_connection(params))
 
   @contextlib.contextmanager
@@ -458,10 +456,11 @@ class StreamClient:
         be closed when finished using its `close` method.
     """
     params = StreamParams.make(
-        name=posixpath.join(self._namespace, name),
-        type=StreamParams.BINARY,
-        content_type=content_type,
-        tags=tags)
+      name=posixpath.join(self._namespace, name),
+      type=StreamParams.BINARY,
+      content_type=content_type,
+      tags=tags,
+    )
     return self._BasicStream(self, params, self.new_connection(params))
 
   @contextlib.contextmanager
@@ -501,16 +500,16 @@ class StreamClient:
         finished by using its `close` method.
     """
     params = StreamParams.make(
-        name=posixpath.join(self._namespace, name),
-        type=StreamParams.DATAGRAM,
-        content_type=content_type,
-        tags=tags)
+      name=posixpath.join(self._namespace, name),
+      type=StreamParams.DATAGRAM,
+      content_type=content_type,
+      tags=tags,
+    )
     return self._DatagramStream(self, params, self.new_connection(params))
 
 
 class _NamedPipeStreamClient(StreamClient):
-  """A StreamClient implementation that connects to a Windows named pipe.
-  """
+  """A StreamClient implementation that connects to a Windows named pipe."""
 
   def __init__(self, name, **kwargs):
     r"""Initializes a new Windows named pipe stream client.
@@ -543,8 +542,7 @@ _default_registry.register_protocol('net.pipe', _NamedPipeStreamClient)
 
 
 class _UnixDomainSocketStreamClient(StreamClient):
-  """A StreamClient implementation that uses a UNIX domain socket.
-  """
+  """A StreamClient implementation that uses a UNIX domain socket."""
 
   class SocketFile:
     """A write-only file-like object that writes to a UNIX socket."""
@@ -583,5 +581,6 @@ class _UnixDomainSocketStreamClient(StreamClient):
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     sock.connect(self._path)
     return self.SocketFile(sock)
+
 
 _default_registry.register_protocol('unix', _UnixDomainSocketStreamClient)

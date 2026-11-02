@@ -16,7 +16,9 @@ from recipe_engine import recipe_test_api
 from PB.go.chromium.org.luci.analysis.proto.v1 import clusters as clusters_pb
 from PB.go.chromium.org.luci.analysis.proto.v1 import common as common_pb
 from PB.go.chromium.org.luci.analysis.proto.v1 import predicate as predicate_pb
-from PB.go.chromium.org.luci.analysis.proto.v1 import test_verdict as test_verdict_pb
+from PB.go.chromium.org.luci.analysis.proto.v1 import (
+  test_verdict as test_verdict_pb,
+)
 
 from RECIPE_MODULES.recipe_engine import luci_analysis
 
@@ -27,86 +29,103 @@ from google.protobuf import json_format
 from recipe_engine import recipe_api
 from recipe_engine.recipe_api import StepFailure
 
-from PB.go.chromium.org.luci.analysis.proto.v1.predicate import TestVerdictPredicate
+from PB.go.chromium.org.luci.analysis.proto.v1.predicate import (
+  TestVerdictPredicate,
+)
 from PB.go.chromium.org.luci.analysis.proto.v1.test_history import (
-    QueryTestHistoryRequest, QueryTestHistoryResponse, QueryVariantsRequest,
-    QueryVariantsResponse)
+  QueryTestHistoryRequest,
+  QueryTestHistoryResponse,
+  QueryVariantsRequest,
+  QueryVariantsResponse,
+)
 from PB.go.chromium.org.luci.analysis.proto.v1.test_variants import (
-    TestVariantFailureRateAnalysis, TestVariantStabilityAnalysis,
-    TestStabilityCriteria)
-from PB.go.chromium.org.luci.analysis.proto.v1.clusters import QueryClusterFailuresResponse
+  TestVariantFailureRateAnalysis,
+  TestVariantStabilityAnalysis,
+  TestStabilityCriteria,
+)
+from PB.go.chromium.org.luci.analysis.proto.v1.clusters import (
+  QueryClusterFailuresResponse,
+)
 
 CLUSTER_STEP_NAME = 'cluster failing test results with luci analysis'
 
 
 class LuciAnalysisApi(recipe_api.RecipeApi):
-
   m: luci_analysis.DEPS
 
   def _run(
-      self,
-      step_name: str,
-      rpc_endpoint: str,
-      request_input: Mapping[str, Any],
-      step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
+    self,
+    step_name: str,
+    rpc_endpoint: str,
+    request_input: Mapping[str, Any],
+    step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
   ) -> Any:
     args = [
-        'prpc',
-        'call',
-        'analysis.api.luci.app',
-        rpc_endpoint,
+      'prpc',
+      'call',
+      'analysis.api.luci.app',
+      rpc_endpoint,
     ]
     result = self.m.step(
-        step_name,
-        args,
-        stdin=self.m.json.input(request_input),
-        stdout=self.m.json.output(add_json_log=True),
-        step_test_data=step_test_data,
+      step_name,
+      args,
+      stdin=self.m.json.input(request_input),
+      stdout=self.m.json.output(add_json_log=True),
+      step_test_data=step_test_data,
     )
     result.presentation.logs['input'] = self.m.json.dumps(
-        request_input, indent=2)
+      request_input, indent=2
+    )
     return result.stdout
 
   def _query_failure_rate_step_test_data(
-      self, test_ids: Sequence[str]
+    self, test_ids: Sequence[str]
   ) -> recipe_test_api.StepTestData:
     analysis_by_test_id = self._test_data.get('query_failure_rate_results', {})
-    intervals = [{
+    intervals = [
+      {
         "endTime": "2022-12-01T18:49:23.160302198Z",
         "intervalAge": 1,
-        "startTime": "2022-11-30T18:49:23.160302198Z"
-    }, {
+        "startTime": "2022-11-30T18:49:23.160302198Z",
+      },
+      {
         "endTime": "2022-11-30T18:49:23.160302198Z",
         "intervalAge": 2,
-        "startTime": "2022-11-29T18:49:23.160302198Z"
-    }, {
+        "startTime": "2022-11-29T18:49:23.160302198Z",
+      },
+      {
         "endTime": "2022-11-29T18:49:23.160302198Z",
         "intervalAge": 3,
-        "startTime": "2022-11-28T18:49:23.160302198Z"
-    }, {
+        "startTime": "2022-11-28T18:49:23.160302198Z",
+      },
+      {
         "endTime": "2022-11-28T18:49:23.160302198Z",
         "intervalAge": 4,
-        "startTime": "2022-11-25T18:49:23.160302198Z"
-    }, {
+        "startTime": "2022-11-25T18:49:23.160302198Z",
+      },
+      {
         "endTime": "2022-11-25T18:49:23.160302198Z",
         "intervalAge": 5,
-        "startTime": "2022-11-24T18:49:23.160302198Z"
-    }]
+        "startTime": "2022-11-24T18:49:23.160302198Z",
+      },
+    ]
 
     def _create_individual_test_variant(test_id: str) -> dict[str, Any]:
       if test_id not in analysis_by_test_id:
         return self.test_api.generate_analysis(test_id=test_id)
       return analysis_by_test_id[test_id]
 
-    return self.m.json.test_api.output_stream({
+    return self.m.json.test_api.output_stream(
+      {
         'intervals': intervals,
         'testVariants': [_create_individual_test_variant(t) for t in test_ids],
-    })
+      }
+    )
 
   def query_failure_rate(
-      self,
-      test_and_variant_list: Sequence[Mapping[str, str]],
-      project: str = 'chromium',
+    self,
+    test_and_variant_list: Sequence[Mapping[str, str]],
+    project: str = 'chromium',
   ) -> list[TestVariantFailureRateAnalysis] | dict[Any, Any]:
     """Queries LUCI Analysis for failure rates
 
@@ -118,16 +137,16 @@ class LuciAnalysisApi(recipe_api.RecipeApi):
       List of TestVariantFailureRateAnalysis protos
     """
     with self.m.step.nest('query LUCI Analysis for failure rates'):
-
       failure_analysis_dicts = self._run(
-          'rpc call',
-          'luci.analysis.v1.TestVariants.QueryFailureRate',
-          {
-              'project': project,
-              'testVariants': test_and_variant_list,
-          },
-          step_test_data=lambda: self._query_failure_rate_step_test_data(
-              [t['testId'] for t in test_and_variant_list]),
+        'rpc call',
+        'luci.analysis.v1.TestVariants.QueryFailureRate',
+        {
+          'project': project,
+          'testVariants': test_and_variant_list,
+        },
+        step_test_data=lambda: self._query_failure_rate_step_test_data(
+          [t['testId'] for t in test_and_variant_list]
+        ),
       ).get('testVariants')
 
       # Should not happen unless there's a server issue with the RPC
@@ -135,15 +154,16 @@ class LuciAnalysisApi(recipe_api.RecipeApi):
         return {}
 
       return [
-          json_format.ParseDict(
-              d, TestVariantFailureRateAnalysis(), ignore_unknown_fields=True)
-          for d in failure_analysis_dicts
+        json_format.ParseDict(
+          d, TestVariantFailureRateAnalysis(), ignore_unknown_fields=True
+        )
+        for d in failure_analysis_dicts
       ]
 
   def query_stability(
-      self,
-      test_variant_position_list: Sequence[Mapping[str, Any]],
-      project: str = 'chromium',
+    self,
+    test_variant_position_list: Sequence[Mapping[str, Any]],
+    project: str = 'chromium',
   ) -> tuple[list[TestVariantStabilityAnalysis], TestStabilityCriteria]:
     """Queries LUCI Analysis for test stability.
 
@@ -158,38 +178,44 @@ class LuciAnalysisApi(recipe_api.RecipeApi):
     """
     with self.m.step.nest('query LUCI Analysis for stability'):
       response_dicts = self._run(
-          'rpc call',
-          'luci.analysis.v1.TestVariants.QueryStability',
-          {
-              'project': project,
-              'testVariants': test_variant_position_list,
-          },
+        'rpc call',
+        'luci.analysis.v1.TestVariants.QueryStability',
+        {
+          'project': project,
+          'testVariants': test_variant_position_list,
+        },
       )
       # This is not likely to happen, although invalid request may result in a
       # StepFailure directly raised from the above step.
-      if not response_dicts or not response_dicts.get(
-          'testVariants') or not response_dicts.get('criteria'):
+      if (
+        not response_dicts
+        or not response_dicts.get('testVariants')
+        or not response_dicts.get('criteria')
+      ):
         raise StepFailure(
-            'Unexpected failure: unexpected response from RPC call')
+          'Unexpected failure: unexpected response from RPC call'
+        )
       return [
-          json_format.ParseDict(
-              d, TestVariantStabilityAnalysis(), ignore_unknown_fields=True)
-          for d in response_dicts.get('testVariants')
+        json_format.ParseDict(
+          d, TestVariantStabilityAnalysis(), ignore_unknown_fields=True
+        )
+        for d in response_dicts.get('testVariants')
       ], json_format.ParseDict(
-          response_dicts.get('criteria'),
-          TestStabilityCriteria(),
-          ignore_unknown_fields=True)
+        response_dicts.get('criteria'),
+        TestStabilityCriteria(),
+        ignore_unknown_fields=True,
+      )
 
   def query_test_history(
-      self,
-      test_id: str,
-      project: str = 'chromium',
-      sub_realm: str | None = None,
-      variant_predicate: predicate_pb.VariantPredicate | None = None,
-      partition_time_range: common_pb.TimeRange | None = None,
-      submitted_filter: common_pb.SubmittedFilter | int | None = None,
-      page_size: int = 1000,
-      page_token: str | None = None,
+    self,
+    test_id: str,
+    project: str = 'chromium',
+    sub_realm: str | None = None,
+    variant_predicate: predicate_pb.VariantPredicate | None = None,
+    partition_time_range: common_pb.TimeRange | None = None,
+    submitted_filter: common_pb.SubmittedFilter | int | None = None,
+    page_size: int = 1000,
+    page_token: str | None = None,
   ) -> tuple[Sequence[test_verdict_pb.TestVerdict], str]:
     """A wrapper method to use `luci.analysis.v1.TestHistory` `Query` API.
 
@@ -221,36 +247,39 @@ class LuciAnalysisApi(recipe_api.RecipeApi):
       (list of parsed luci.analysis.v1.TestVerdict objects, next page token)
     """
     predicate = TestVerdictPredicate(
-        sub_realm=sub_realm,
-        variant_predicate=variant_predicate,
-        submitted_filter=submitted_filter,
-        partition_time_range=partition_time_range,
+      sub_realm=sub_realm,
+      variant_predicate=variant_predicate,
+      submitted_filter=submitted_filter,
+      partition_time_range=partition_time_range,
     )
 
     request = QueryTestHistoryRequest(
-        project=project,
-        test_id=test_id,
-        predicate=predicate,
-        page_size=page_size,
+      project=project,
+      test_id=test_id,
+      predicate=predicate,
+      page_size=page_size,
     )
     if page_token:
       request.page_token = page_token
 
-    response_json = self._run('Test history query rpc call for %s' % test_id,
-                              'luci.analysis.v1.TestHistory.Query',
-                              json_format.MessageToDict(request))
+    response_json = self._run(
+      'Test history query rpc call for %s' % test_id,
+      'luci.analysis.v1.TestHistory.Query',
+      json_format.MessageToDict(request),
+    )
     response = json_format.ParseDict(
-        response_json, QueryTestHistoryResponse(), ignore_unknown_fields=True)
+      response_json, QueryTestHistoryResponse(), ignore_unknown_fields=True
+    )
     return response.verdicts, response.next_page_token
 
   def query_variants(
-      self,
-      test_id: str,
-      project: str = 'chromium',
-      sub_realm: str | None = None,
-      variant_predicate: predicate_pb.VariantPredicate | None = None,
-      page_size: int = 1000,
-      page_token: str | None = None,
+    self,
+    test_id: str,
+    project: str = 'chromium',
+    sub_realm: str | None = None,
+    variant_predicate: predicate_pb.VariantPredicate | None = None,
+    page_size: int = 1000,
+    page_token: str | None = None,
   ) -> tuple[Sequence[QueryVariantsResponse.VariantInfo], str]:
     """A wrapper method to use `luci.analysis.v1.TestHistory` `QueryVariants`
     API.
@@ -278,20 +307,22 @@ class LuciAnalysisApi(recipe_api.RecipeApi):
        next page token)
     """
     request = QueryVariantsRequest(
-        project=project,
-        test_id=test_id,
-        sub_realm=sub_realm,
-        variant_predicate=variant_predicate,
-        page_size=page_size,
-        page_token=page_token,
+      project=project,
+      test_id=test_id,
+      sub_realm=sub_realm,
+      variant_predicate=variant_predicate,
+      page_size=page_size,
+      page_token=page_token,
     )
 
     response_json = self._run(
-        'Test history query_variants rpc call for %s' % test_id,
-        'luci.analysis.v1.TestHistory.QueryVariants',
-        json_format.MessageToDict(request))
+      'Test history query_variants rpc call for %s' % test_id,
+      'luci.analysis.v1.TestHistory.QueryVariants',
+      json_format.MessageToDict(request),
+    )
     response = json_format.ParseDict(
-        response_json, QueryVariantsResponse(), ignore_unknown_fields=True)
+      response_json, QueryVariantsResponse(), ignore_unknown_fields=True
+    )
     return response.variants, response.next_page_token
 
   def lookup_bug(self, bug_id: str, system: str = 'monorail') -> list[str]:
@@ -310,12 +341,14 @@ class LuciAnalysisApi(recipe_api.RecipeApi):
       list of rules (str), Format: projects/{project}/rules/{rule_id}
     """
     response_json = self._run(
-        'Lookup Bug %s:%s' % (system, bug_id),
-        'luci.analysis.v1.Rules.LookupBug', {
-            'system': system,
-            'id': bug_id,
-        },
-        step_test_data=lambda: self.m.json.test_api.output_stream({}))
+      'Lookup Bug %s:%s' % (system, bug_id),
+      'luci.analysis.v1.Rules.LookupBug',
+      {
+        'system': system,
+        'id': bug_id,
+      },
+      step_test_data=lambda: self.m.json.test_api.output_stream({}),
+    )
     return response_json.get('rules', [])
 
   def rule_name_to_cluster_name(self, rule: str) -> str:
@@ -326,11 +359,12 @@ class LuciAnalysisApi(recipe_api.RecipeApi):
       cluster (str): Format:
         projects/{project}/clusters/{cluster_algorithm}/{cluster_id}.
     """
-    return re.sub(r'projects/(\w+)/rules/(\w+)',
-                  'projects/\\1/clusters/rules/\\2', rule)
+    return re.sub(
+      r'projects/(\w+)/rules/(\w+)', 'projects/\\1/clusters/rules/\\2', rule
+    )
 
   def query_cluster_failures(
-      self, cluster_name: str
+    self, cluster_name: str
   ) -> Sequence[clusters_pb.DistinctClusterFailure]:
     """Queries examples of failures in the given cluster.
 
@@ -350,14 +384,16 @@ class LuciAnalysisApi(recipe_api.RecipeApi):
     cluster_failure_name = cluster_name + '/failures'
 
     response_json = self._run(
-        'Query Cluster Failure %s' % cluster_name,
-        'luci.analysis.v1.Clusters.QueryClusterFailures', {
-            'parent': cluster_failure_name,
-        },
-        step_test_data=(
-            lambda: self.m.json.test_api.output_stream({'failures': []})))
+      'Query Cluster Failure %s' % cluster_name,
+      'luci.analysis.v1.Clusters.QueryClusterFailures',
+      {
+        'parent': cluster_failure_name,
+      },
+      step_test_data=(
+        lambda: self.m.json.test_api.output_stream({'failures': []})
+      ),
+    )
     response = json_format.ParseDict(
-        response_json,
-        QueryClusterFailuresResponse(),
-        ignore_unknown_fields=True)
+      response_json, QueryClusterFailuresResponse(), ignore_unknown_fields=True
+    )
     return response.failures

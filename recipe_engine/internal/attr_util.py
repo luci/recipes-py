@@ -11,8 +11,8 @@ from typing import Any
 
 
 def attr_type(
-    type_: Any,
-    subname: str = '',
+  type_: Any,
+  subname: str = '',
 ) -> Callable[[Any, Any, Any], None]:
   """An `attr.s` validator for asserting the type of a value.
 
@@ -34,7 +34,7 @@ def attr_type(
       raise TypeError(
         "'{name}' must be {type!r} (got {value!r} that is a "
         "{actual!r}).".format(
-          name=attrib.name+subname,
+          name=attrib.name + subname,
           type=type_,
           actual=value.__class__,
           value=value,
@@ -44,12 +44,13 @@ def attr_type(
         type_,
         subname,
       )
+
   return inner
 
 
 def attr_superclass(
-    type_: Any,
-    subname: str = '',
+  type_: Any,
+  subname: str = '',
 ) -> Callable[[Any, Any, Any], None]:
   """An `attr.s` validator for asserting the superclass of a value.
 
@@ -68,7 +69,7 @@ def attr_superclass(
       raise TypeError(
         "'{name}' must be a subclass of {type!r} (got {value!r} that is a "
         "{actual!r}).".format(
-          name=attrib.name+subname,
+          name=attrib.name + subname,
           type=type_,
           actual=value.__class__,
           value=value,
@@ -78,13 +79,14 @@ def attr_superclass(
         type_,
         subname,
       )
+
   return inner
 
 
 def attr_dict_type(
-    key_type: Any,
-    val_type: Any,
-    value_seq: bool = False,
+  key_type: Any,
+  val_type: Any,
+  value_seq: bool = False,
 ) -> Callable[[Any, Any, Any], None]:
   """Helper function for writing attr.s validators for dictionary types.
 
@@ -117,8 +119,8 @@ def attr_dict_type(
 
 
 def attr_seq_type(
-    val_type: Any,
-    subname: str = '',
+  val_type: Any,
+  subname: str = '',
 ) -> Callable[[Any, Any, Any], None]:
   """Helper function for writing attr.s validators for list types.
 
@@ -158,9 +160,9 @@ def attr_list_type(val_type: Any) -> Callable[[Any, Any, Any], None]:
 
 
 def attr_value_is(
-    msg: str,
-    check_fn: Callable[[Any], bool],
-    subname: str = '',
+  msg: str,
+  check_fn: Callable[[Any], bool],
+  subname: str = '',
 ) -> Callable[[Any, Any, Any], None]:
   """Helper function for writing attr.s validators.
 
@@ -175,11 +177,12 @@ def attr_value_is(
   Returns a validator function which raises TypeError if the value doesn't match
   the value.
   """
+
   def inner(_self: Any, attrib: Any, value: Any) -> None:
     if not check_fn(value):
       raise ValueError(
         "'{name}' is not {msg} (got {value!r})".format(
-          name=attrib.name+subname,
+          name=attrib.name + subname,
           msg=msg,
           value=value,
         ),
@@ -188,4 +191,5 @@ def attr_value_is(
         msg,
         subname,
       )
+
   return inner

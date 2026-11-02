@@ -15,10 +15,10 @@ from .. import stream as stream_mod
 
 class AnnotatorStreamEngine(stream_mod.StreamEngine):
   def __init__(
-      self,
-      outstream: TextIO,
-      emit_timestamps: bool = False,
-      time_fn: Callable[[], float] | None = None,
+    self,
+    outstream: TextIO,
+    emit_timestamps: bool = False,
+    time_fn: Callable[[], float] | None = None,
   ) -> None:
     self._current_step: str | None = None
     self._opened: set[str] = set()
@@ -54,7 +54,8 @@ class AnnotatorStreamEngine(stream_mod.StreamEngine):
     # change which step we are talking about and this matters to buildbot.
     outstream.flush()
     outstream.write(
-        '@@@' + '@'.join(map(stream_mod.encode_str, args)) + '@@@\n')
+      '@@@' + '@'.join(map(stream_mod.encode_str, args)) + '@@@\n'
+    )
     outstream.flush()
 
   def output_root_annotation(self, *args: Any) -> None:
@@ -71,10 +72,10 @@ class AnnotatorStreamEngine(stream_mod.StreamEngine):
 
   class StepStream(stream_mod.StreamEngine.StepStream):
     def __init__(
-        self,
-        engine: AnnotatorStreamEngine,
-        outstream: TextIO,
-        step_name: str,
+      self,
+      engine: AnnotatorStreamEngine,
+      outstream: TextIO,
+      step_name: str,
     ) -> None:
       super().__init__()
 
@@ -101,7 +102,7 @@ class AnnotatorStreamEngine(stream_mod.StreamEngine):
         self.basic_write(line + '\n')
 
     def open_std_handles(
-        self, stdout: bool = False, stderr: bool = False
+      self, stdout: bool = False, stderr: bool = False
     ) -> dict[str, stream_mod.StreamEngine.Stream]:
       ret: dict[str, stream_mod.StreamEngine.Stream] = {}
       if stdout:
@@ -111,7 +112,7 @@ class AnnotatorStreamEngine(stream_mod.StreamEngine):
       return ret
 
     def new_log_stream(
-        self, log_name: str
+      self, log_name: str
     ) -> AnnotatorStreamEngine.StepLogStream:
       return self._engine.StepLogStream(self, log_name)
 
@@ -145,7 +146,7 @@ class AnnotatorStreamEngine(stream_mod.StreamEngine):
 
   class StepLogStream(stream_mod.StreamEngine.Stream):
     def __init__(
-        self, step_stream: AnnotatorStreamEngine.StepStream, log_name: str
+      self, step_stream: AnnotatorStreamEngine.StepStream, log_name: str
     ) -> None:
       self._step_stream = step_stream
       self._log_name = log_name.replace('/', '&#x2f;')
@@ -155,7 +156,6 @@ class AnnotatorStreamEngine(stream_mod.StreamEngine):
 
     def close(self) -> None:
       self._step_stream.output_annotation('STEP_LOG_END', self._log_name)
-
 
   class AllowSubannotationsStepStream(StepStream):
     def write_line(self, line: str) -> None:
@@ -169,27 +169,29 @@ class AnnotatorStreamEngine(stream_mod.StreamEngine):
       self._engine._current_step = None
 
   def new_step_stream(
-      self,
-      name_tokens: Sequence[str],
-      allow_subannotations: bool,
-      merge_step: bool | Literal['legacy'] = False,
-      merge_output_properties_to: Sequence[str] | None = None,
+    self,
+    name_tokens: Sequence[str],
+    allow_subannotations: bool,
+    merge_step: bool | Literal['legacy'] = False,
+    merge_output_properties_to: Sequence[str] | None = None,
   ) -> StepStream:
     assert not merge_step, 'Merge step is not supported in annotation mode'
     assert not merge_output_properties_to, (
-        'Merge step is not supported in annotation mode')
+      'Merge step is not supported in annotation mode'
+    )
     # TODO(iannucci): make this use '|' separators instead
     name = '.'.join(name_tokens)
     self.output_root_annotation('SEED_STEP', name)
     return self._create_step_stream(
-        name, name_tokens, allow_subannotations, self._outstream)
+      name, name_tokens, allow_subannotations, self._outstream
+    )
 
   def _create_step_stream(
-      self,
-      name: str,
-      name_tokens: Sequence[str],
-      allow_subannotations: bool,
-      outstream: TextIO,
+    self,
+    name: str,
+    name_tokens: Sequence[str],
+    allow_subannotations: bool,
+    outstream: TextIO,
   ) -> StepStream:
     if allow_subannotations:
       stream = self.AllowSubannotationsStepStream(self, outstream, name)
@@ -198,5 +200,5 @@ class AnnotatorStreamEngine(stream_mod.StreamEngine):
 
     if len(name_tokens) > 1:
       # Emit our current nest level, if we are nested.
-      stream.output_annotation('STEP_NEST_LEVEL', str(len(name_tokens)-1))
+      stream.output_annotation('STEP_NEST_LEVEL', str(len(name_tokens) - 1))
     return stream

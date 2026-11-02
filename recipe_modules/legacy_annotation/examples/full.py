@@ -11,9 +11,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    legacy_annotation,
-    raw_io,
-    step,
+  legacy_annotation,
+  raw_io,
+  step,
 )
 
 
@@ -29,6 +29,7 @@ class TEST_DEPS(RecipeTestApi):
   legacy_annotation: legacy_annotation.TEST_API
   step: step.TEST_API
 
+
 from recipe_engine import post_process
 
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
@@ -37,7 +38,8 @@ from PB.go.chromium.org.luci.buildbucket.proto import step as step_pb2
 
 
 def RunSteps(api: DEPS) -> None:
-  api.legacy_annotation('run annotation script',
+  api.legacy_annotation(
+    'run annotation script',
     cmd=['python', '-u', api.resource('anno.py')],
     step_test_data=lambda: api.legacy_annotation.test_api.success_step,
   )
@@ -53,44 +55,44 @@ def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   props.get_or_create_struct('obj_prop')['hello'] = 'dict'
   props.get_or_create_list('list_prop').extend(['hello', 'list'])
   yield api.test(
-      'basic',
-      api.step_data('run annotation script', api.step.sub_build(sub_build)),
+    'basic',
+    api.step_data('run annotation script', api.step.sub_build(sub_build)),
   )
 
   yield api.test(
-      'default step_test_data',
-      api.post_process(post_process.StepSuccess, 'run annotation script'),
-      api.post_process(post_process.DropExpectation),
+    'default step_test_data',
+    api.post_process(post_process.StepSuccess, 'run annotation script'),
+    api.post_process(post_process.DropExpectation),
   )
 
   yield api.test(
-      'failure',
-      api.step_data('run annotation script',
-                    api.legacy_annotation.failure_step),
-      api.post_process(post_process.StepFailure, 'run annotation script'),
-      api.post_process(post_process.DropExpectation),
-      status = 'FAILURE',
+    'failure',
+    api.step_data('run annotation script', api.legacy_annotation.failure_step),
+    api.post_process(post_process.StepFailure, 'run annotation script'),
+    api.post_process(post_process.DropExpectation),
+    status='FAILURE',
   )
 
   yield api.test(
-      'infra failure',
-      api.step_data('run annotation script',
-                    api.legacy_annotation.infra_failure_step),
-      api.post_process(post_process.StepException, 'run annotation script'),
-      api.post_process(post_process.DropExpectation),
-      status = 'INFRA_FAILURE',
+    'infra failure',
+    api.step_data(
+      'run annotation script', api.legacy_annotation.infra_failure_step
+    ),
+    api.post_process(post_process.StepException, 'run annotation script'),
+    api.post_process(post_process.DropExpectation),
+    status='INFRA_FAILURE',
   )
 
   yield api.test(
-      'kitchen basic',
-      api.legacy_annotation.simulate_kitchen(),
+    'kitchen basic',
+    api.legacy_annotation.simulate_kitchen(),
   )
 
   yield api.test(
-      'kitchen failure',
-      api.legacy_annotation.simulate_kitchen(),
-      api.step_data('run annotation script', retcode=1),
-      api.post_process(post_process.StepFailure, 'run annotation script'),
-      api.post_process(post_process.DropExpectation),
-      status='FAILURE',
+    'kitchen failure',
+    api.legacy_annotation.simulate_kitchen(),
+    api.step_data('run annotation script', retcode=1),
+    api.post_process(post_process.StepFailure, 'run annotation script'),
+    api.post_process(post_process.DropExpectation),
+    status='FAILURE',
   )

@@ -11,9 +11,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    file,
-    json,
-    path,
+  file,
+  json,
+  path,
 )
 
 
@@ -36,10 +36,10 @@ def RunSteps(api: DEPS) -> None:
   api.file.write_text('write a file', src, data)
   api.file.symlink('symlink it', src, api.path.start_dir / 'new path')
   read_data = api.file.read_text(
-    'read it', api.path.start_dir / 'new path', test_data=data)
+    'read it', api.path.start_dir / 'new path', test_data=data
+  )
 
   assert read_data == data, (read_data, data)
-
 
   # Also create a tree of symlinks.
   root = api.path.cleanup_dir / 'root'

@@ -61,6 +61,7 @@ class SimpleDep:
 
   Equivalent to the recipes_cfg_pb2.DepSpec message.
   """
+
   # The git URL for this dependency.
   url: str = attr.ib(validator=attr_util.attr_type(str))
 
@@ -68,7 +69,7 @@ class SimpleDep:
   # Automatically converts non-absolute refs to 'refs/heads/...'.
   # TODO(iannucci): Require absolute refs.
   branch: str = attr.ib(
-      converter=_branch_converter, validator=attr_util.attr_type(str)
+    converter=_branch_converter, validator=attr_util.attr_type(str)
   )
 
   # The git commit we depend on.
@@ -82,6 +83,7 @@ class SimpleRecipesCfg:
   A subset of the recipes_cfg_pb2.RepoSpec message, just enough to load the
   dependencies for this recipe repo (i.e. good enough for RecipeDeps' purposes).
   """
+
   # The "name" of this recipe repo. This is the name that other recipe repos
   # will use to import modules from this repo. Currently this name must be
   # globally unique amongst recipe repos (d'oh). In practice, global uniqueness
@@ -91,20 +93,24 @@ class SimpleRecipesCfg:
   # The mapping of other recipe repo id's that we depend on to their dependency
   # pin information.
   deps: dict[str, SimpleDep] = attr.ib(
-      converter=engine_types.freeze,
-      validator=attr_util.attr_dict_type(str, SimpleDep),
+    converter=engine_types.freeze,
+    validator=attr_util.attr_dict_type(str, SimpleDep),
   )
 
   # The repo-root-relative path to where 'recipes/' and/or 'recipe_modules/'
   # directories live.
-  recipes_path: str = attr.ib(validator=[
-    attr_util.attr_type(str),
-    attr_util.attr_value_is('a relative path', lambda v: not os.path.isabs(v)),
-    attr_util.attr_value_is(
-      'free of "." and ".."',
-      lambda v: not any(x in ('.', '..') for x in v.split(os.path.sep))
-    ),
-  ])
+  recipes_path: str = attr.ib(
+    validator=[
+      attr_util.attr_type(str),
+      attr_util.attr_value_is(
+        'a relative path', lambda v: not os.path.isabs(v)
+      ),
+      attr_util.attr_value_is(
+        'free of "." and ".."',
+        lambda v: not any(x in ('.', '..') for x in v.split(os.path.sep)),
+      ),
+    ]
+  )
 
   @classmethod
   def from_dict(cls, dct: Mapping[str, Any]) -> SimpleRecipesCfg:
@@ -128,7 +134,8 @@ class SimpleRecipesCfg:
             str(v['url']),
             str(v['branch']),
             str(v['revision']),
-          ) for k, v in dct.get('deps', {}).items()
+          )
+          for k, v in dct.get('deps', {}).items()
         },
         str(dct.get('recipes_path', '')),
       )
@@ -142,7 +149,7 @@ class SimpleRecipesCfg:
     deal with the fact that SimpleRecipesCfg.deps is a FrozenDict."""
     ret = attr.asdict(self)
     ret['deps'] = {k: attr.asdict(v) for k, v in ret['deps'].items()}
-    ret['project_id'] = ret['repo_name']   # Alias repo_name<->project_id
+    ret['project_id'] = ret['repo_name']  # Alias repo_name<->project_id
     return ret
 
   @classmethod

@@ -29,39 +29,39 @@ class TEST_DEPS(RecipeTestApi):
 
 
 def RunSteps(api: DEPS) -> None:
-  api.resultdb.upload_invocation_artifacts({
-      'a': {
-          'content_type': 'text/plain',
-          'contents': b'foobar'
-      },
+  api.resultdb.upload_invocation_artifacts(
+    {
+      'a': {'content_type': 'text/plain', 'contents': b'foobar'},
       'b': {
-          'content_type': 'text/plain',
-          'gcs_uri': 'gs://test-bucket/artifact/b.txt'
+        'content_type': 'text/plain',
+        'gcs_uri': 'gs://test-bucket/artifact/b.txt',
       },
-      'c': {
-          'content_type': 'text/plain',
-          'contents': 'string_foobar'
-      },
-  })
+      'c': {'content_type': 'text/plain', 'contents': 'string_foobar'},
+    }
+  )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'basic',
-      api.resultdb.upload_invocation_artifacts(
-          recorder.BatchCreateArtifactsResponse(artifacts=[
-              artifact.Artifact(
-                  artifact_id='a',
-                  content_type='text/plain',
-                  contents=b'foobar'),
-              artifact.Artifact(
-                  artifact_id='b',
-                  content_type='text/plain',
-                  gcs_uri='gs://test-bucket/artifact/b.txt'),
-              artifact.Artifact(
-                  artifact_id='c',
-                  content_type='text/plain',
-                  contents=b'string_foobar')
-          ])),
-      api.post_process(DropExpectation),
+    'basic',
+    api.resultdb.upload_invocation_artifacts(
+      recorder.BatchCreateArtifactsResponse(
+        artifacts=[
+          artifact.Artifact(
+            artifact_id='a', content_type='text/plain', contents=b'foobar'
+          ),
+          artifact.Artifact(
+            artifact_id='b',
+            content_type='text/plain',
+            gcs_uri='gs://test-bucket/artifact/b.txt',
+          ),
+          artifact.Artifact(
+            artifact_id='c',
+            content_type='text/plain',
+            contents=b'string_foobar',
+          ),
+        ]
+      )
+    ),
+    api.post_process(DropExpectation),
   )

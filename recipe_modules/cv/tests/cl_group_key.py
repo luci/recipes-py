@@ -13,8 +13,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    buildbucket,
-    cv,
+  buildbucket,
+  cv,
 )
 
 
@@ -29,24 +29,27 @@ class TEST_DEPS(RecipeTestApi):
   buildbucket: buildbucket.TEST_API
   cv: cv.TEST_API
 
+
 from PB.go.chromium.org.luci.buildbucket.proto.build import Build
 
 
 def RunSteps(api: DEPS) -> None:
   assert api.cv.cl_group_key == 'changes-on-trivial-rebase', api.cv.cl_group_key
   assert api.cv.equivalent_cl_group_key == 'sticky-on-trivial-rebase', (
-      api.cv.equivalent_cl_group_key)
+    api.cv.equivalent_cl_group_key
+  )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'simple',
-      api.cv(run_mode=api.cv.DRY_RUN),
-      api.buildbucket.try_build(
-          change_number=123,
-          tags=api.buildbucket.tags(
-              cq_cl_group_key='changes-on-trivial-rebase',
-              cq_equivalent_cl_group_key='sticky-on-trivial-rebase'),
+    'simple',
+    api.cv(run_mode=api.cv.DRY_RUN),
+    api.buildbucket.try_build(
+      change_number=123,
+      tags=api.buildbucket.tags(
+        cq_cl_group_key='changes-on-trivial-rebase',
+        cq_equivalent_cl_group_key='sticky-on-trivial-rebase',
       ),
-      api.post_process(post_process.DropExpectation),
+    ),
+    api.post_process(post_process.DropExpectation),
   )

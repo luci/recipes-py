@@ -19,7 +19,7 @@ from recipe_engine import recipe_api, recipe_test_api
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb
 from PB.go.chromium.org.luci.led.job import job
 from PB.go.chromium.org.luci.swarming.proto.api_v2 import (
-    swarming as swarming_pb
+  swarming as swarming_pb,
 )
 from PB.recipe_modules.recipe_engine.led import properties
 
@@ -57,7 +57,7 @@ class LedApi(recipe_api.RecipeApi):
     """Holds the result of a led operation. Can be chained using |then|."""
 
     def __init__(
-        self, result: LedLaunchData | job.Definition, module: LedApi
+      self, result: LedLaunchData | job.Definition, module: LedApi
     ) -> None:
       if isinstance(result, LedApi.LedLaunchData):
         self._launch_result = result
@@ -95,15 +95,18 @@ class LedApi(recipe_api.RecipeApi):
         agent = r.buildbucket.bbagent_args.build.infra.buildbucket.agent
         if agent:
           for d, purpose in agent.purposes.items():
-            if (purpose ==
-                build_pb.BuildInfra.Buildbucket.Agent.PURPOSE_EXE_PAYLOAD):
+            if (
+              purpose
+              == build_pb.BuildInfra.Buildbucket.Agent.PURPOSE_EXE_PAYLOAD
+            ):
               if agent.input.data.get(d):
                 cas = agent.input.data[d].cas
                 if cas:
                   return "%s/%d" % (cas.digest.hash, cas.digest.size_bytes)
 
-    def with_injected_input_recipes(self,
-                                    use_payload: bool = False) -> LedResult:
+    def with_injected_input_recipes(
+      self, use_payload: bool = False
+    ) -> LedResult:
       """Sets the version of recipes used by led to correspond to the version
       currently being used.
 
@@ -118,19 +121,32 @@ class LedApi(recipe_api.RecipeApi):
       if self._module.rbe_cas_input:
         if use_payload:
           return self.then(
-              'edit-payload', '-cas-ref',
-              '%s/%s' % (self._module.rbe_cas_input.digest.hash,
-                         self._module.rbe_cas_input.digest.size_bytes))
+            'edit-payload',
+            '-cas-ref',
+            '%s/%s'
+            % (
+              self._module.rbe_cas_input.digest.hash,
+              self._module.rbe_cas_input.digest.size_bytes,
+            ),
+          )
         else:
           return self.then(
-              'edit', '-rbh',
-              '%s/%s' % (self._module.rbe_cas_input.digest.hash,
-                         self._module.rbe_cas_input.digest.size_bytes))
+            'edit',
+            '-rbh',
+            '%s/%s'
+            % (
+              self._module.rbe_cas_input.digest.hash,
+              self._module.rbe_cas_input.digest.size_bytes,
+            ),
+          )
       if self._module.cipd_input:
         return self.then(
           'edit',
-          '-rpkg', self._module.cipd_input.package,
-          '-rver', self._module.cipd_input.version)
+          '-rpkg',
+          self._module.cipd_input.package,
+          '-rver',
+          self._module.cipd_input.version,
+        )
       # TODO(iannucci): Check for/inject buildbucket exe package/version
       return self
 
@@ -139,15 +155,14 @@ class LedApi(recipe_api.RecipeApi):
 
       Returns another LedResult object with the output of the command.
       """
-      if self._module is None: # pragma: no cover
+      if self._module is None:  # pragma: no cover
         raise ValueError(
-            'Cannot call LedResult.then on the result of `led launch`')
+          'Cannot call LedResult.then on the result of `led launch`'
+        )
       res = self._module._run_command(self._result, *cmd)
       return self.__class__(res, self._module)
 
-  def __init__(
-      self, props: properties.InputProperties, **kwargs: Any
-  ) -> None:
+  def __init__(self, props: properties.InputProperties, **kwargs: Any) -> None:
     super().__init__(**kwargs)
     self._run_id = props.led_run_id
     self._shadowed_bucket = props.shadowed_bucket
@@ -165,17 +180,19 @@ class LedApi(recipe_api.RecipeApi):
   def initialize(self) -> None:
     if self._test_data.enabled:
       self._get_mocks = {
-        key[len('get:'):]: value
+        key[len('get:') :]: value
         for key, value in self._test_data.items()
         if key.startswith('get:')
       }
 
       self._mock_edits = self.test_api.standard_mock_functions()
-      sorted_edits = sorted([
-        (int(key[len('edit:'):]), value)
-        for key, value in self._test_data.items()
-        if key.startswith('edit:')
-      ])
+      sorted_edits = sorted(
+        [
+          (int(key[len('edit:') :]), value)
+          for key, value in self._test_data.items()
+          if key.startswith('edit:')
+        ]
+      )
       self._mock_edits.extend(value for _, value in sorted_edits)
 
   @property
@@ -242,12 +259,12 @@ class LedApi(recipe_api.RecipeApi):
     return led_result.with_injected_input_recipes()
 
   def trigger_builder(
-      self,
-      project_name: str,
-      bucket_name: str,
-      builder_name: str,
-      properties: Mapping[str, Any],
-      use_payload: bool = False,
+    self,
+    project_name: str,
+    bucket_name: str,
+    builder_name: str,
+    properties: Mapping[str, Any],
+    use_payload: bool = False,
   ) -> None:
     """Trigger a builder using led.
 
@@ -309,7 +326,7 @@ class LedApi(recipe_api.RecipeApi):
         bucket = parts[0]
         builder = parts[1]
         if bucket.startswith('luci.'):
-          project, bucket = bucket[len('luci.'):].split('.', 1)
+          project, bucket = bucket[len('luci.') :].split('.', 1)
         else:
           project, bucket = bucket.split('/', 1)
       else:
@@ -317,8 +334,8 @@ class LedApi(recipe_api.RecipeApi):
         project, bucket, builder = cmd[-1].split('/')
 
       mocked = _pick_mock(
-          'buildbucket/builder',
-          '%s/%s/%s' % (project, bucket, builder))
+        'buildbucket/builder', '%s/%s/%s' % (project, bucket, builder)
+      )
 
       if mocked is not None:
         job_def = job.Definition()
@@ -352,9 +369,9 @@ class LedApi(recipe_api.RecipeApi):
     ret.retcode = 1
     return ret
 
-
-  def _run_command(self, previous: LedResult,
-                   *cmd: str) -> job.Definition | LedLaunchData:
+  def _run_command(
+    self, previous: LedResult, *cmd: str
+  ) -> job.Definition | LedLaunchData:
     """Runs led with a given command and arguments.
 
     Args:
@@ -380,12 +397,14 @@ class LedApi(recipe_api.RecipeApi):
         build_id = previous.buildbucket.bbagent_args.build.id
         if not build_id:
           build_id = 87654321
-        kwargs['step_test_data'] = lambda: self.test_api.m.json.output_stream({
+        kwargs['step_test_data'] = lambda: self.test_api.m.json.output_stream(
+          {
             'buildbucket': {
-                'host_name': 'buildbucket.appspot.com',
-                'build_id': build_id,
+              'host_name': 'buildbucket.appspot.com',
+              'build_id': build_id,
             }
-        })
+          }
+        )
     else:
       kwargs = {
         'stdout': self.m.proto.output(job.Definition, 'JSONPB'),
@@ -397,23 +416,27 @@ class LedApi(recipe_api.RecipeApi):
           # We run this outside of the step_test_data callback to make the stack
           # trace a bit more obvious.
           build = self.test_api._transform_build(
-              previous, cmd, self._mock_edits,
-              str(self.m.context.cwd or self.m.path.start_dir))
-          kwargs['step_test_data'] = (
-            lambda: self.test_api.m.proto.output_stream(build))
+            previous,
+            cmd,
+            self._mock_edits,
+            str(self.m.context.cwd or self.m.path.start_dir),
+          )
+          kwargs['step_test_data'] = lambda: (
+            self.test_api.m.proto.output_stream(build)
+          )
 
     if previous is not None:
       kwargs['stdin'] = self.m.proto.input(previous, 'JSONPB')
 
-    result = self.m.step(
-        'led %s' % cmd[0], ['led'] + list(cmd), **kwargs)
+    result = self.m.step('led %s' % cmd[0], ['led'] + list(cmd), **kwargs)
 
     if is_launch:
       # If we launched a task, add a link to the swarming task.
       retval = self.LedLaunchData(
-          buildbucket_hostname=result.stdout.get('buildbucket',
-                                                 {}).get('host_name'),
-          build_id=result.stdout.get('buildbucket', {}).get('build_id'),
+        buildbucket_hostname=result.stdout.get('buildbucket', {}).get(
+          'host_name'
+        ),
+        build_id=result.stdout.get('buildbucket', {}).get('build_id'),
       )
       result.presentation.links['Build'] = retval.build_url
     else:

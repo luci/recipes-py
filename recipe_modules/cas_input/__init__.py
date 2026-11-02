@@ -9,8 +9,8 @@ from PB.recipe_modules.recipe_engine.cas_input import properties
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from RECIPE_MODULES.recipe_engine import (
-    cas,
-    path,
+  cas,
+  path,
 )
 
 
@@ -18,6 +18,7 @@ from RECIPE_MODULES.recipe_engine import (
 class DEPS(RecipeScriptApi):
   cas: cas.API
   path: path.API
+
 
 PROPERTIES = properties.InputProperties
 

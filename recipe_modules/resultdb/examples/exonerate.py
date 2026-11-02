@@ -7,22 +7,25 @@ from __future__ import annotations
 from collections.abc import Iterator
 from recipe_engine import recipe_test_api
 
-from recipe_engine.post_process import (DropExpectation, StepSuccess,
-                                        DoesNotRun)
+from recipe_engine.post_process import DropExpectation, StepSuccess, DoesNotRun
 
 from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
-from PB.go.chromium.org.luci.resultdb.proto.v1 import test_exoneration as test_exoneration_pb2
-from PB.go.chromium.org.luci.resultdb.proto.v1 import test_result as test_result_pb2
+from PB.go.chromium.org.luci.resultdb.proto.v1 import (
+  test_exoneration as test_exoneration_pb2,
+)
+from PB.go.chromium.org.luci.resultdb.proto.v1 import (
+  test_result as test_result_pb2,
+)
 
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    context,
-    json,
-    properties,
-    resultdb,
-    step,
+  context,
+  json,
+  properties,
+  resultdb,
+  step,
 )
 
 
@@ -40,69 +43,71 @@ class TEST_DEPS(RecipeTestApi):
   context: context.TEST_API
   properties: properties.TEST_API
 
+
 test_exonerations = [
-    test_exoneration_pb2.TestExoneration(
-        test_id='ninja://chromium/tests:browser_tests/t1',
-        variant={'def': {
-            'key1': 'value1'
-        }},
-        explanation_html='Failed in without patch step',
-        reason=test_exoneration_pb2.ExonerationReason.OCCURS_ON_MAINLINE,
-    ),
-    test_exoneration_pb2.TestExoneration(
-        test_id='ninja://chromium/tests:browser_tests/t2',
-        variant={'def': {
-            'key2': 'value2'
-        }},
-        explanation_html='Failed in without patch step',
-        reason=test_exoneration_pb2.ExonerationReason.OCCURS_ON_MAINLINE,
-    )
+  test_exoneration_pb2.TestExoneration(
+    test_id='ninja://chromium/tests:browser_tests/t1',
+    variant={'def': {'key1': 'value1'}},
+    explanation_html='Failed in without patch step',
+    reason=test_exoneration_pb2.ExonerationReason.OCCURS_ON_MAINLINE,
+  ),
+  test_exoneration_pb2.TestExoneration(
+    test_id='ninja://chromium/tests:browser_tests/t2',
+    variant={'def': {'key2': 'value2'}},
+    explanation_html='Failed in without patch step',
+    reason=test_exoneration_pb2.ExonerationReason.OCCURS_ON_MAINLINE,
+  ),
 ]
 
 
 def RunSteps(api: DEPS) -> None:
   api.resultdb._BATCH_SIZE = api.properties.get('batch_size', 500)
   api.resultdb.exonerate(
-      test_exonerations=api.properties.get('test_exonerations',
-                                           test_exonerations),
-      step_name='exonerate without patch failures')
+    test_exonerations=api.properties.get(
+      'test_exonerations', test_exonerations
+    ),
+    step_name='exonerate without patch failures',
+  )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   rdb_luci_context = sections_pb2.ResultDB(
-      current_invocation=sections_pb2.ResultDBInvocation(
-          name='invocations/build:8945511751514863184',
-          update_token='token',
-      ),
-      hostname='rdbhost',
+    current_invocation=sections_pb2.ResultDBInvocation(
+      name='invocations/build:8945511751514863184',
+      update_token='token',
+    ),
+    hostname='rdbhost',
   )
   yield api.test(
-      'exonerate',
-      api.context.luci_context(
-          realm=sections_pb2.Realm(name='chromium:ci'),
-          resultdb=rdb_luci_context,
-      ),
-      api.post_process(StepSuccess, 'exonerate without patch failures'),
-      api.post_process(DropExpectation))
+    'exonerate',
+    api.context.luci_context(
+      realm=sections_pb2.Realm(name='chromium:ci'),
+      resultdb=rdb_luci_context,
+    ),
+    api.post_process(StepSuccess, 'exonerate without patch failures'),
+    api.post_process(DropExpectation),
+  )
 
   yield api.test(
-      'exonerate in multiple batches', api.properties(batch_size=1),
-      api.context.luci_context(
-          realm=sections_pb2.Realm(name='chromium:ci'),
-          resultdb=rdb_luci_context,
-      ),
-      api.post_process(StepSuccess, 'exonerate without patch failures'),
-      api.post_process(StepSuccess,
-                       'exonerate without patch failures.batch (0)'),
-      api.post_process(StepSuccess,
-                       'exonerate without patch failures.batch (1)'),
-      api.post_process(DropExpectation))
+    'exonerate in multiple batches',
+    api.properties(batch_size=1),
+    api.context.luci_context(
+      realm=sections_pb2.Realm(name='chromium:ci'),
+      resultdb=rdb_luci_context,
+    ),
+    api.post_process(StepSuccess, 'exonerate without patch failures'),
+    api.post_process(StepSuccess, 'exonerate without patch failures.batch (0)'),
+    api.post_process(StepSuccess, 'exonerate without patch failures.batch (1)'),
+    api.post_process(DropExpectation),
+  )
 
   yield api.test(
-      'no-op', api.properties(test_exonerations=[]),
-      api.context.luci_context(
-          realm=sections_pb2.Realm(name='chromium:ci'),
-          resultdb=rdb_luci_context,
-      ),
-      api.post_process(DoesNotRun, 'exonerate without patch failures'),
-      api.post_process(DropExpectation))
+    'no-op',
+    api.properties(test_exonerations=[]),
+    api.context.luci_context(
+      realm=sections_pb2.Realm(name='chromium:ci'),
+      resultdb=rdb_luci_context,
+    ),
+    api.post_process(DoesNotRun, 'exonerate without patch failures'),
+    api.post_process(DropExpectation),
+  )

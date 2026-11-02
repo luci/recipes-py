@@ -16,11 +16,11 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    buildbucket,
-    cv,
-    properties,
-    step,
+  assertions,
+  buildbucket,
+  cv,
+  properties,
+  step,
 )
 
 
@@ -47,17 +47,23 @@ def RunSteps(api: DEPS) -> None:
     return
 
   api.assertions.assertEqual(
-      ' '.join(str(g.change) for g in api.cv.ordered_gerrit_changes),
-      api.properties['expected_cls'])
+    ' '.join(str(g.change) for g in api.cv.ordered_gerrit_changes),
+    api.properties['expected_cls'],
+  )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (
-      api.test('cq-run') + api.cv(run_mode=api.cv.FULL_RUN)
-      # api.buildbucket.gerrit_changes must be simulated
-      # to use api.cv.ordered_gerrit_changes.
-      + api.buildbucket.try_build(change_number=123) +
-      api.properties(expected_cls='123') +
-      api.post_process(post_process.DropExpectation))
-  yield (api.test('not-a-cq-run') + api.properties(raises=True) +
-         api.post_process(post_process.DropExpectation))
+    api.test('cq-run')
+    + api.cv(run_mode=api.cv.FULL_RUN)
+    # api.buildbucket.gerrit_changes must be simulated
+    # to use api.cv.ordered_gerrit_changes.
+    + api.buildbucket.try_build(change_number=123)
+    + api.properties(expected_cls='123')
+    + api.post_process(post_process.DropExpectation)
+  )
+  yield (
+    api.test('not-a-cq-run')
+    + api.properties(raises=True)
+    + api.post_process(post_process.DropExpectation)
+  )

@@ -7,18 +7,20 @@ from __future__ import annotations
 from collections.abc import Iterator
 from recipe_engine import recipe_test_api
 
-from PB.recipe_modules.recipe_engine.generator_script.examples import full as full_pb
+from PB.recipe_modules.recipe_engine.generator_script.examples import (
+  full as full_pb,
+)
 from recipe_engine.post_process import DropExpectation
 
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    generator_script,
-    json,
-    path,
-    properties,
-    step,
+  generator_script,
+  json,
+  path,
+  properties,
+  step,
 )
 
 
@@ -37,6 +39,7 @@ class TEST_DEPS(RecipeTestApi):
   json: json.TEST_API
   properties: properties.TEST_API
 
+
 INLINE_PROPERTIES_PROTO = """
 message InputProperties {
   string script_name = 1;
@@ -48,130 +51,140 @@ PROPERTIES = full_pb.InputProperties
 
 def RunSteps(api: DEPS, props: full_pb.InputProperties) -> None:
   api.generator_script(
-      path_to_script=props.script_name,
-      checkout_dir=api.path.tmp_base_dir)
+    path_to_script=props.script_name, checkout_dir=api.path.tmp_base_dir
+  )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'basic',
-      api.properties(full_pb.InputProperties(script_name="bogus")),
-      api.generator_script(
-          'bogus',
-          {'name': 'mock.step.binary', 'cmd': ['echo', 'mock step binary']}
-      ),
-      api.post_check(lambda check, steps: check(
-          'bogus' in steps['gen step(bogus)'].cmd
-      )),
-      api.post_check(lambda check, steps: check(
-          'echo' in steps['mock.step.binary'].cmd
-      )),
-      api.post_process(DropExpectation),
+    'basic',
+    api.properties(full_pb.InputProperties(script_name="bogus")),
+    api.generator_script(
+      'bogus', {'name': 'mock.step.binary', 'cmd': ['echo', 'mock step binary']}
+    ),
+    api.post_check(
+      lambda check, steps: check('bogus' in steps['gen step(bogus)'].cmd)
+    ),
+    api.post_check(
+      lambda check, steps: check('echo' in steps['mock.step.binary'].cmd)
+    ),
+    api.post_process(DropExpectation),
   )
 
   yield api.test(
-      'basic_python',
-      api.properties(full_pb.InputProperties(script_name="bogus.py")),
-      api.generator_script(
-          'bogus.py',
-          {'name': 'mock.step.python', 'cmd': ['echo', 'mock step python']},
-      ),
-      api.post_check(lambda check, steps: check(
-          ['vpython3', ..., 'bogus.py'] in steps['gen step(bogus.py)'].cmd
-      )),
-      api.post_check(lambda check, steps: check(
-          'echo' in steps['mock.step.python'].cmd
-      )),
-      api.post_process(DropExpectation),
+    'basic_python',
+    api.properties(full_pb.InputProperties(script_name="bogus.py")),
+    api.generator_script(
+      'bogus.py',
+      {'name': 'mock.step.python', 'cmd': ['echo', 'mock step python']},
+    ),
+    api.post_check(
+      lambda check, steps: check(
+        ['vpython3', ..., 'bogus.py'] in steps['gen step(bogus.py)'].cmd
+      )
+    ),
+    api.post_check(
+      lambda check, steps: check('echo' in steps['mock.step.python'].cmd)
+    ),
+    api.post_process(DropExpectation),
   )
 
   yield api.test(
-      'presentation',
-      api.properties(full_pb.InputProperties(script_name='presentation.py')),
-      api.generator_script(
-          'presentation.py', {
-            'name': 'mock.step.presentation',
-            'cmd': ['echo', 'mock step presentation'],
-            'outputs_presentation_json': True
-          }
-      ),
-      api.step_data(
-          'mock.step.presentation',
-          api.json.output({'step_text': 'mock step text'})
-      ),
-      api.post_check(lambda check, steps: check(
-          steps['mock.step.presentation'].step_text == 'mock step text'
-      )),
-      api.post_process(DropExpectation),
+    'presentation',
+    api.properties(full_pb.InputProperties(script_name='presentation.py')),
+    api.generator_script(
+      'presentation.py',
+      {
+        'name': 'mock.step.presentation',
+        'cmd': ['echo', 'mock step presentation'],
+        'outputs_presentation_json': True,
+      },
+    ),
+    api.step_data(
+      'mock.step.presentation', api.json.output({'step_text': 'mock step text'})
+    ),
+    api.post_check(
+      lambda check, steps: check(
+        steps['mock.step.presentation'].step_text == 'mock step text'
+      )
+    ),
+    api.post_process(DropExpectation),
   )
 
   yield api.test(
-      'always_run',
-      api.properties(full_pb.InputProperties(script_name='always_run.py')),
-      api.generator_script(
-          'always_run.py',
-          {'name': 'runs', 'cmd': ['echo', 'runs succeeds']},
-          {'name': 'fails', 'cmd': ['echo', 'fails fails!']},
-          {'name': 'skipped', 'cmd': ['echo', 'absent']},
-          {'name': 'always_runs', 'cmd': ['echo', 'runs anyway'],
-           'always_run': True},
-      ),
-      api.step_data('fails', retcode=1),
-      api.post_check(lambda check, steps: check(
-          ['echo', 'runs anyway'] in steps['always_runs'].cmd
-      )),
-      api.expect_status('FAILURE'),
-      api.post_process(DropExpectation),
+    'always_run',
+    api.properties(full_pb.InputProperties(script_name='always_run.py')),
+    api.generator_script(
+      'always_run.py',
+      {'name': 'runs', 'cmd': ['echo', 'runs succeeds']},
+      {'name': 'fails', 'cmd': ['echo', 'fails fails!']},
+      {'name': 'skipped', 'cmd': ['echo', 'absent']},
+      {
+        'name': 'always_runs',
+        'cmd': ['echo', 'runs anyway'],
+        'always_run': True,
+      },
+    ),
+    api.step_data('fails', retcode=1),
+    api.post_check(
+      lambda check, steps: check(
+        ['echo', 'runs anyway'] in steps['always_runs'].cmd
+      )
+    ),
+    api.expect_status('FAILURE'),
+    api.post_process(DropExpectation),
   )
 
   yield api.test(
-      'malformed_list',
-      api.properties(full_pb.InputProperties(script_name='not_list.py')),
-      api.step_data(
-          'gen step(not_list.py)',
-          api.json.output({'not': 'a list'})),
-      api.post_check(lambda check, steps: check(
-          steps['gen step(not_list.py)'].status == 'EXCEPTION'
-      )),
-      api.expect_status('FAILURE'),
-      api.post_process(DropExpectation),
+    'malformed_list',
+    api.properties(full_pb.InputProperties(script_name='not_list.py')),
+    api.step_data('gen step(not_list.py)', api.json.output({'not': 'a list'})),
+    api.post_check(
+      lambda check, steps: check(
+        steps['gen step(not_list.py)'].status == 'EXCEPTION'
+      )
+    ),
+    api.expect_status('FAILURE'),
+    api.post_process(DropExpectation),
   )
 
   yield api.test(
-      'malformed_command',
-      api.properties(full_pb.InputProperties(script_name='malformed.py')),
-      api.generator_script(
-          'malformed.py',
-          {'name': 'run', 'cmd': ['echo', 'there are', 4, 'cows']}),
-      api.post_check(lambda check, steps: check(
-          steps['gen step(malformed.py)'].status == 'EXCEPTION'
-      )),
-      api.expect_status('FAILURE'),
-      api.post_process(DropExpectation),
+    'malformed_command',
+    api.properties(full_pb.InputProperties(script_name='malformed.py')),
+    api.generator_script(
+      'malformed.py', {'name': 'run', 'cmd': ['echo', 'there are', 4, 'cows']}
+    ),
+    api.post_check(
+      lambda check, steps: check(
+        steps['gen step(malformed.py)'].status == 'EXCEPTION'
+      )
+    ),
+    api.expect_status('FAILURE'),
+    api.post_process(DropExpectation),
   )
 
   yield api.test(
-      'missing_name',
-      api.properties(full_pb.InputProperties(script_name='missing_name.py')),
-      api.generator_script(
-          'missing_name.py',
-          {'cmd': ['echo', 'hey']}),
-      api.post_check(lambda check, steps: check(
-          steps['gen step(missing_name.py)'].status == 'EXCEPTION'
-      )),
-      api.expect_status('FAILURE'),
-      api.post_process(DropExpectation),
+    'missing_name',
+    api.properties(full_pb.InputProperties(script_name='missing_name.py')),
+    api.generator_script('missing_name.py', {'cmd': ['echo', 'hey']}),
+    api.post_check(
+      lambda check, steps: check(
+        steps['gen step(missing_name.py)'].status == 'EXCEPTION'
+      )
+    ),
+    api.expect_status('FAILURE'),
+    api.post_process(DropExpectation),
   )
 
   yield api.test(
-      'bad_key',
-      api.properties(full_pb.InputProperties(script_name='bad_key.py')),
-      api.generator_script(
-          'bad_key.py',
-          {'name': 'whatever', 'bad': 'key'}),
-      api.post_check(lambda check, steps: check(
-          steps['gen step(bad_key.py)'].status == 'EXCEPTION'
-      )),
-      api.expect_status('FAILURE'),
-      api.post_process(DropExpectation),
+    'bad_key',
+    api.properties(full_pb.InputProperties(script_name='bad_key.py')),
+    api.generator_script('bad_key.py', {'name': 'whatever', 'bad': 'key'}),
+    api.post_check(
+      lambda check, steps: check(
+        steps['gen step(bad_key.py)'].status == 'EXCEPTION'
+      )
+    ),
+    api.expect_status('FAILURE'),
+    api.post_process(DropExpectation),
   )

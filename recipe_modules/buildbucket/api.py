@@ -10,7 +10,9 @@ https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 
 from __future__ import annotations
 from typing import TypeVar
-from PB.go.chromium.org.luci.buildbucket.proto import builder_common as builder_common_pb
+from PB.go.chromium.org.luci.buildbucket.proto import (
+  builder_common as builder_common_pb,
+)
 
 from RECIPE_MODULES.recipe_engine import buildbucket
 
@@ -26,10 +28,10 @@ from google.protobuf import field_mask_pb2
 from google.protobuf import json_format
 from recipe_engine import config_types, engine_types, recipe_api
 from PB.go.chromium.org.luci.buildbucket.proto import (
-    build as build_pb2,
-    builds_service as builds_service_pb2,
-    common as common_pb2,
-    task as task_pb2,
+  build as build_pb2,
+  builds_service as builds_service_pb2,
+  common as common_pb2,
+  task as task_pb2,
 )
 from PB.recipe_modules.recipe_engine.buildbucket import properties
 
@@ -37,6 +39,7 @@ from . import util
 
 # Returns a link title or None. If None, no link is reported.
 UrlTitleFunction = Callable[[build_pb2.Build], str | None]
+
 
 # Sentinel to indicate that a child build launched by `schedule_request()`
 # should use the same value as its parent for a specific attribute.
@@ -56,7 +59,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   # The Build message fields that will be requested by default in buildbucket
   # rpc requests.
-  DEFAULT_FIELDS = frozenset({
+  DEFAULT_FIELDS = frozenset(
+    {
       'builder',
       'create_time',
       'created_by',
@@ -70,14 +74,15 @@ class BuildbucketApi(recipe_api.RecipeApi):
       'status',
       'update_time',
       'infra',
-  })
+    }
+  )
 
   def __init__(
-      self,
-      props: properties.InputProperties,
-      glob_props: properties.LegacyInputProperties,
-      *args: Any,
-      **kwargs: Any,
+    self,
+    props: properties.InputProperties,
+    glob_props: properties.LegacyInputProperties,
+    *args: Any,
+    **kwargs: Any,
   ) -> None:
     super().__init__(*args, **kwargs)
     self._service_account_key = None
@@ -88,7 +93,9 @@ class BuildbucketApi(recipe_api.RecipeApi):
     if props.HasField('build'):
       self._build = props.build
       self._bucket_v1 = 'luci.%s.%s' % (
-          self._build.builder.project, self._build.builder.bucket)
+        self._build.builder.project,
+        self._build.builder.bucket,
+      )
     else:
       # Legacy mode.
       self._bucket_v1 = None
@@ -96,16 +103,21 @@ class BuildbucketApi(recipe_api.RecipeApi):
       self.build.created_by = ''
 
       _legacy_builder_id(
-          glob_props.mastername, glob_props.buildername, self._build.builder)
+        glob_props.mastername, glob_props.buildername, self._build.builder
+      )
       _legacy_input_gerrit_changes(
-          self._build.input.gerrit_changes, glob_props.patch_storage,
-          glob_props.patch_gerrit_url, glob_props.patch_project,
-          glob_props.patch_issue or glob_props.issue,
-          glob_props.patch_set)
+        self._build.input.gerrit_changes,
+        glob_props.patch_storage,
+        glob_props.patch_gerrit_url,
+        glob_props.patch_project,
+        glob_props.patch_issue or glob_props.issue,
+        glob_props.patch_set,
+      )
       _legacy_input_gitiles_commit(
-          self._build.input.gitiles_commit,
-          glob_props.revision or glob_props.parent_got_revision,
-          glob_props.branch)
+        self._build.input.gitiles_commit,
+        glob_props.revision or glob_props.parent_got_revision,
+        glob_props.branch,
+      )
 
     self._next_test_build_id = 8922054662172514000
 
@@ -165,7 +177,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return self._build
 
   @property
-  def builder_name(self) ->  str:
+  def builder_name(self) -> str:
     """Returns builder name. Shortcut for `.build.builder.builder`."""
     return self.build.builder.builder
 
@@ -193,13 +205,13 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return '%s:%s' % (self._build.builder.project, self._build.builder.bucket)
 
   def builder_url(
-      self,
-      *,
-      host: str | None = None,
-      project: str | None = None,
-      bucket: str | None = None,
-      builder: str | None = None,
-      build: build_pb2.Build | None = None,
+    self,
+    *,
+    host: str | None = None,
+    project: str | None = None,
+    bucket: str | None = None,
+    builder: str | None = None,
+    build: build_pb2.Build | None = None,
   ) -> str:
     """Returns url to a builder. Defaults to current builder."""
     build = build or self.build
@@ -209,9 +221,13 @@ class BuildbucketApi(recipe_api.RecipeApi):
     builder = builder or build.builder.builder
     return f'https://{host}/builder/{project}/{bucket}/{builder}'
 
-  def build_url(self, *, host: str | None = None,
-                build_id: int | str | None = None,
-                build: build_pb2.Build | None = None) -> str:
+  def build_url(
+    self,
+    *,
+    host: str | None = None,
+    build_id: int | str | None = None,
+    build: build_pb2.Build | None = None,
+  ) -> str:
     """Returns url to a build. Defaults to current build."""
     host = host or self._host
     build = build or self._build
@@ -233,13 +249,13 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return self.build.input.gitiles_commit
 
   def is_critical(self, build: build_pb2.Build | None = None) -> bool:
-    """Returns True if the build is critical. Build defaults to the current one.
-    """
+    """Returns True if the build is critical. Build defaults to the current one."""
     build = build or self.build
     return build.critical in (common_pb2.UNSET, common_pb2.YES)
 
   def set_output_gitiles_commit(
-      self, gitiles_commit: common_pb2.GitilesCommit) -> None:
+    self, gitiles_commit: common_pb2.GitilesCommit
+  ) -> None:
     """Sets `buildbucket.v2.Build.output.gitiles_commit` field.
 
     This will tell other systems, consuming the build, what version of the code
@@ -274,7 +290,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     # We allow non-sha1 commits in test mode because it's convenient to set
     # commits like "branchname-HEAD-SHA" rather than inventing something which
     # looks like a git commit.
-    if not self._test_data.enabled: # pragma: no cover
+    if not self._test_data.enabled:  # pragma: no cover
       assert util.is_sha1_hex(c.id), c.id
 
     # position is uint32
@@ -286,7 +302,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
     res = self.m.step('set_output_gitiles_commit', cmd=None)
     prop_name = '$recipe_engine/buildbucket/output_gitiles_commit'
     res.presentation.properties[prop_name] = json_format.MessageToDict(
-        gitiles_commit)
+      gitiles_commit
+    )
 
   @staticmethod
   def tags(**tags: Sequence[str] | str) -> list[common_pb2.StringPair]:
@@ -294,7 +311,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return util.tags(**tags)
 
   def add_tags_to_current_build(
-      self, tags: Sequence[common_pb2.StringPair]
+    self, tags: Sequence[common_pb2.StringPair]
   ) -> None:
     """Adds arbitrary tags during the runtime of a build.
 
@@ -303,9 +320,11 @@ class BuildbucketApi(recipe_api.RecipeApi):
       existing tags with matching keys, since tags can only be added.
     """
     assert isinstance(tags, list), (
-      'Expected type for tags is list; got %s' % type(tags))
+      'Expected type for tags is list; got %s' % type(tags)
+    )
     assert all(isinstance(tag, common_pb2.StringPair) for tag in tags), list(
-        map(type, tags))
+      map(type, tags)
+    )
 
     # Multiple values for the same key are allowed in tags.
     for tag in tags:
@@ -313,13 +332,12 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     res = self.m.step('buildbucket.add_tags_to_current_build', cmd=None)
     res.presentation.properties['$recipe_engine/buildbucket/runtime-tags'] = (
-      self._runtime_tags)
+      self._runtime_tags
+    )
 
   def hide_current_build_in_gerrit(self) -> None:
     """Hides the build in UI"""
-    self.add_tags_to_current_build(
-        self.tags(**{'hide-in-gerrit': 'pointless'})
-    )
+    self.add_tags_to_current_build(self.tags(**{'hide-in-gerrit': 'pointless'}))
 
   @property
   def builder_cache_path(self) -> config_types.Path:
@@ -335,24 +353,25 @@ class BuildbucketApi(recipe_api.RecipeApi):
   # RPCs.
 
   def _make_field_mask(
-      self, paths: Set[str] = DEFAULT_FIELDS, path_prefix: str = ''
+    self, paths: Set[str] = DEFAULT_FIELDS, path_prefix: str = ''
   ) -> field_mask_pb2.FieldMask:
     """Returns a FieldMask message to use in requests."""
     paths = set(paths)
     if 'id' not in paths:
       paths.add('id')
     return field_mask_pb2.FieldMask(
-        paths=[path_prefix + p for p in sorted(paths)])
+      paths=[path_prefix + p for p in sorted(paths)]
+    )
 
   def run(
-      self,
-      schedule_build_requests: Sequence[builds_service_pb2.ScheduleBuildRequest],
-      collect_interval: int | None = None,
-      timeout: int | None= None,
-      url_title_fn: UrlTitleFunction | None = None,
-      step_name: str | None = None,
-      raise_if_unsuccessful: bool = False,
-      eager: bool = False,
+    self,
+    schedule_build_requests: Sequence[builds_service_pb2.ScheduleBuildRequest],
+    collect_interval: int | None = None,
+    timeout: int | None = None,
+    url_title_fn: UrlTitleFunction | None = None,
+    step_name: str | None = None,
+    raise_if_unsuccessful: bool = False,
+    eager: bool = False,
   ) -> list[build_pb2.Build]:
     """Runs builds and returns results.
 
@@ -366,41 +385,41 @@ class BuildbucketApi(recipe_api.RecipeApi):
     """
     with self.m.step.nest(step_name or 'buildbucket.run'):
       builds = self.schedule(
-          schedule_build_requests, step_name='schedule',
-           url_title_fn=url_title_fn)
+        schedule_build_requests, step_name='schedule', url_title_fn=url_title_fn
+      )
       build_dict = self.collect_builds(
-          [b.id for b in builds],
-          interval=collect_interval,
-          timeout=timeout,
-          step_name='collect',
-          raise_if_unsuccessful=raise_if_unsuccessful,
-          # Do not print links. self.schedule printed them already.
-          url_title_fn=lambda b: None,
-          eager=eager,
+        [b.id for b in builds],
+        interval=collect_interval,
+        timeout=timeout,
+        step_name='collect',
+        raise_if_unsuccessful=raise_if_unsuccessful,
+        # Do not print links. self.schedule printed them already.
+        url_title_fn=lambda b: None,
+        eager=eager,
       )
       return [build_dict[b.id] for b in builds]
 
   def schedule_request(
-      self,
-      builder: str,
-      project: str | Inherit = INHERIT,
-      bucket: str | Inherit = INHERIT,
-      properties: Mapping[str, Any] = None,
-      experimental: bool | common_pb2.Trinary | Inherit = INHERIT,
-      experiments: Mapping[str, bool] | None = None,
-      gitiles_commit: common_pb2.GitilesCommit | Inherit = INHERIT,
-      gerrit_changes: Sequence[common_pb2.GerritChange] | Inherit = INHERIT,
-      tags: Sequence[common_pb2.StringPair] | None = None,
-      inherit_buildsets: bool = True,
-      swarming_parent_run_id: str | None = None,
-      dimensions: Sequence[common_pb2.RequestedDimension] | None = None,
-      priority: int | None | Inherit = INHERIT,
-      critical: bool | common_pb2.Trinary | Inherit = INHERIT,
-      exe_cipd_version: str | Inherit | None = None,
-      fields: Set[str] = DEFAULT_FIELDS,
-      can_outlive_parent: bool | None = None,
-      as_shadow_if_parent_is_led: bool = False,
-      led_inherit_parent: bool = False,
+    self,
+    builder: str,
+    project: str | Inherit = INHERIT,
+    bucket: str | Inherit = INHERIT,
+    properties: Mapping[str, Any] = None,
+    experimental: bool | common_pb2.Trinary | Inherit = INHERIT,
+    experiments: Mapping[str, bool] | None = None,
+    gitiles_commit: common_pb2.GitilesCommit | Inherit = INHERIT,
+    gerrit_changes: Sequence[common_pb2.GerritChange] | Inherit = INHERIT,
+    tags: Sequence[common_pb2.StringPair] | None = None,
+    inherit_buildsets: bool = True,
+    swarming_parent_run_id: str | None = None,
+    dimensions: Sequence[common_pb2.RequestedDimension] | None = None,
+    priority: int | None | Inherit = INHERIT,
+    critical: bool | common_pb2.Trinary | Inherit = INHERIT,
+    exe_cipd_version: str | Inherit | None = None,
+    fields: Set[str] = DEFAULT_FIELDS,
+    can_outlive_parent: bool | None = None,
+    as_shadow_if_parent_is_led: bool = False,
+    led_inherit_parent: bool = False,
   ) -> builds_service_pb2.ScheduleBuildRequest:
     """Creates a new `ScheduleBuildRequest` message with reasonable defaults.
 
@@ -498,13 +517,13 @@ class BuildbucketApi(recipe_api.RecipeApi):
       return value
 
     def copy_msg(
-        src: Mapping[str, Any] | protobuf.message.Message,
-        dest: protobuf.message.Message,
+      src: Mapping[str, Any] | protobuf.message.Message,
+      dest: protobuf.message.Message,
     ) -> None:
       dest.CopyFrom(as_msg(src, type(dest)))
 
     def as_trinary(
-        value: bool | common_pb2.Trinary,
+      value: bool | common_pb2.Trinary,
     ) -> common_pb2.Trinary:
       assert isinstance(value, (bool, int))
       if isinstance(value, bool):
@@ -520,37 +539,43 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     b = self.build
 
-    if (can_outlive_parent is None and
-        'luci.buildbucket.parent_tracking' in b.input.experiments):
+    if (
+      can_outlive_parent is None
+      and 'luci.buildbucket.parent_tracking' in b.input.experiments
+    ):
       can_outlive_parent = True if swarming_parent_run_id is None else False
 
     # Child build and parent build should have the same value of
     # 'luci.buildbucket.parent_tracking'.
     experiments = dict(experiments) if experiments else {}
-    experiments.setdefault('luci.buildbucket.parent_tracking',
-        'luci.buildbucket.parent_tracking' in b.input.experiments)
+    experiments.setdefault(
+      'luci.buildbucket.parent_tracking',
+      'luci.buildbucket.parent_tracking' in b.input.experiments,
+    )
 
     req = builds_service_pb2.ScheduleBuildRequest(
-        request_id='%d-%s' % (b.id, self.m.uuid.random()),
-        builder=dict(
-            project=if_inherit(project, b.builder.project),
-            bucket=if_inherit(bucket, b.builder.bucket),
-            builder=builder,
-        ),
-        priority=if_inherit(priority, self.swarming_priority),
-        critical=as_trinary(if_inherit(critical, b.critical)),
-        # If not `INHERIT`, `experimental` must be trinary already, so only
-        # pass the parent (boolean) value through `as_trinary`.
-        experimental=if_inherit(experimental, as_trinary(b.input.experimental)),
-        experiments=experiments,
-        fields=self._make_field_mask(paths=fields))
+      request_id='%d-%s' % (b.id, self.m.uuid.random()),
+      builder=dict(
+        project=if_inherit(project, b.builder.project),
+        bucket=if_inherit(bucket, b.builder.bucket),
+        builder=builder,
+      ),
+      priority=if_inherit(priority, self.swarming_priority),
+      critical=as_trinary(if_inherit(critical, b.critical)),
+      # If not `INHERIT`, `experimental` must be trinary already, so only
+      # pass the parent (boolean) value through `as_trinary`.
+      experimental=if_inherit(experimental, as_trinary(b.input.experimental)),
+      experiments=experiments,
+      fields=self._make_field_mask(paths=fields),
+    )
 
     if swarming_parent_run_id:
       req.swarming.parent_run_id = swarming_parent_run_id
 
     if can_outlive_parent is not None:
       req.can_outlive_parent = (
-          common_pb2.YES if can_outlive_parent else common_pb2.NO)
+        common_pb2.YES if can_outlive_parent else common_pb2.NO
+      )
 
     exe_cipd_version = if_inherit(exe_cipd_version, b.exe.cipd_version)
     if exe_cipd_version:
@@ -560,8 +585,9 @@ class BuildbucketApi(recipe_api.RecipeApi):
     # field populated, but with all empty sub-fields. So only populate it if
     # the parent build has the field.
     gitiles_commit = if_inherit(
-        gitiles_commit,
-        b.input.gitiles_commit if b.input.HasField('gitiles_commit') else None)
+      gitiles_commit,
+      b.input.gitiles_commit if b.input.HasField('gitiles_commit') else None,
+    )
     if gitiles_commit:
       copy_msg(gitiles_commit, req.gitiles_commit)
 
@@ -572,8 +598,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     # Populate tags.
     tag_set = {
-        ('user_agent', 'recipe'),
-        ('parent_buildbucket_id', str(self.build.id)),
+      ('user_agent', 'recipe'),
+      ('parent_buildbucket_id', str(self.build.id)),
     }
     for t in tags or []:
       t = as_msg(t, common_pb2.StringPair)
@@ -608,11 +634,12 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return req
 
   def schedule(
-      self,
-      schedule_build_requests: Sequence[builds_service_pb2.ScheduleBuildRequest],
-      url_title_fn: UrlTitleFunction | None = None,
-      step_name: str | None = None,
-      include_sub_invs: bool = True) -> list[build_pb2.Build]:
+    self,
+    schedule_build_requests: Sequence[builds_service_pb2.ScheduleBuildRequest],
+    url_title_fn: UrlTitleFunction | None = None,
+    step_name: str | None = None,
+    include_sub_invs: bool = True,
+  ) -> list[build_pb2.Build]:
     """Schedules a batch of builds.
 
     Example:
@@ -655,13 +682,14 @@ class BuildbucketApi(recipe_api.RecipeApi):
         r.resultdb.is_export_root_override = True
 
     batch_req = builds_service_pb2.BatchRequest(
-        requests=[dict(schedule_build=r) for r in schedule_build_requests])
+      requests=[dict(schedule_build=r) for r in schedule_build_requests]
+    )
 
     test_res = builds_service_pb2.BatchResponse()
     for r in schedule_build_requests:
       build_args = {
-          'id': self._next_test_build_id,
-          'builder': r.builder,
+        'id': self._next_test_build_id,
+        'builder': r.builder,
       }
       input_obj = {}
 
@@ -673,7 +701,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
       if r.experiments:
         input_obj['experiments'] = sorted(
-            [k for k, v in r.experiments.items() if v])
+          [k for k, v in r.experiments.items() if v]
+        )
 
       if r.properties.fields:
         input_obj['properties'] = r.properties
@@ -684,20 +713,20 @@ class BuildbucketApi(recipe_api.RecipeApi):
       if r.tags:
         build_args['tags'] = r.tags
 
-      test_res.responses.add(
-          schedule_build=dict(**build_args)
-      )
+      test_res.responses.add(schedule_build=dict(**build_args))
       self._next_test_build_id += 1
 
     step_res, batch_res, has_errors = self._batch_request(
-        step_name or 'buildbucket.schedule', batch_req, test_res)
+      step_name or 'buildbucket.schedule', batch_req, test_res
+    )
 
     sub_invocation_names = []
     # Append build links regardless of errors.
     for r in batch_res.responses:
       if not r.HasField('error'):
         self._report_build_maybe(
-            step_res, r.schedule_build, url_title_fn=url_title_fn)
+          step_res, r.schedule_build, url_title_fn=url_title_fn
+        )
 
         inv = r.schedule_build.infra.resultdb.invocation
         if inv:
@@ -707,8 +736,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
     # of errors.
     if include_sub_invs and self.m.resultdb.enabled and sub_invocation_names:
       self.m.resultdb.include_invocations(
-          invocations=self.m.resultdb.invocation_ids(sub_invocation_names),
-          step_name="include sub resultdb invocations"
+        invocations=self.m.resultdb.invocation_ids(sub_invocation_names),
+        step_name="include sub resultdb invocations",
       )
 
     if has_errors:
@@ -718,10 +747,10 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return [r.schedule_build for r in batch_res.responses]
 
   def _report_build_maybe(
-      self,
-      step_result: step_data.StepData,
-      build: build_pb2.Build,
-      url_title_fn: UrlTitleFunction | None = None,
+    self,
+    step_result: step_data.StepData,
+    build: build_pb2.Build,
+    url_title_fn: UrlTitleFunction | None = None,
   ) -> None:
     """Reports a build in the step presentation.
 
@@ -734,8 +763,9 @@ class BuildbucketApi(recipe_api.RecipeApi):
       pres = step_result.presentation
       pres.links[str(build_title)] = self.build_url(build_id=build.id)
 
-  def list_builders(self, project: str, bucket: str,
-                    step_name: str | None = None) -> list[str]:
+  def list_builders(
+    self, project: str, bucket: str, step_name: str | None = None
+  ) -> list[str]:
     """Lists configured builders in a bucket.
 
     Args:
@@ -750,10 +780,11 @@ class BuildbucketApi(recipe_api.RecipeApi):
     args = ['-nopage', '-n', 0, '{}/{}'.format(project, bucket)]
 
     step_result = self._run_bb(
-        subcommand='builders',
-        step_name=step_name or 'buildbucket.builders',
-        args=args,
-        stdout=self.m.raw_io.output_text(add_output_log=True))
+      subcommand='builders',
+      step_name=step_name or 'buildbucket.builders',
+      args=args,
+      stdout=self.m.raw_io.output_text(add_output_log=True),
+    )
 
     ret = []
     for line in step_result.stdout.splitlines():
@@ -762,15 +793,15 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return ret
 
   def search(
-      self,
-      predicate: builds_service_pb2.BuildPredicate,
-      limit: int | None = None,
-      url_title_fn: UrlTitleFunction | None = None,
-      report_build: bool = True,
-      step_name: str | None = None,
-      fields: Set[str] = DEFAULT_FIELDS,
-      timeout: int | None= None,
-      test_data: Callable[[], Sequence[build_pb2.Build]] | None= None,
+    self,
+    predicate: builds_service_pb2.BuildPredicate,
+    limit: int | None = None,
+    url_title_fn: UrlTitleFunction | None = None,
+    report_build: bool = True,
+    step_name: str | None = None,
+    fields: Set[str] = DEFAULT_FIELDS,
+    timeout: int | None = None,
+    test_data: Callable[[], Sequence[build_pb2.Build]] | None = None,
   ) -> list[build_pb2.Build]:
     """Searches builds with one predicate.
 
@@ -792,8 +823,9 @@ class BuildbucketApi(recipe_api.RecipeApi):
     SearchBuildsRequest.
     """
     assert isinstance(predicate, builds_service_pb2.BuildPredicate), (
-      'For searching with a list of predicates, '\
-      'use search_with_multiple_predicates() instead')
+      'For searching with a list of predicates, '
+      'use search_with_multiple_predicates() instead'
+    )
 
     query = builds_service_pb2.SearchBuildsRequest()
     query.predicate.CopyFrom(predicate)
@@ -802,24 +834,27 @@ class BuildbucketApi(recipe_api.RecipeApi):
       query.page_size = limit  # pragma: no cover
 
     batch_req = builds_service_pb2.BatchRequest(
-        requests=[dict(search_builds=query)],
+      requests=[dict(search_builds=query)],
     )
 
     if test_data:
       test_res = builds_service_pb2.BatchResponse(
-          responses=[dict(search_builds=dict(builds=[x for x in test_data]))])
+        responses=[dict(search_builds=dict(builds=[x for x in test_data]))]
+      )
     else:
       test_res = builds_service_pb2.BatchResponse(
-          responses=[dict(search_builds=dict())])
+        responses=[dict(search_builds=dict())]
+      )
     step_res, batch_res, has_errors = self._batch_request(
-        step_name or 'buildbucket.search', batch_req, test_res, timeout=timeout)
+      step_name or 'buildbucket.search', batch_req, test_res, timeout=timeout
+    )
 
     encoded_query = urllib.parse.urlencode(
-        {'request': json.dumps(json_format.MessageToDict(query))},
+      {'request': json.dumps(json_format.MessageToDict(query))},
     )
     step_res.presentation.links['rpc-explorer'] = (
-        f'https://{self.host}/rpcexplorer/services/buildbucket.v2.Builds/'
-        f'SearchBuilds?{encoded_query}'
+      f'https://{self.host}/rpcexplorer/services/buildbucket.v2.Builds/'
+      f'SearchBuilds?{encoded_query}'
     )
 
     ret = []
@@ -835,15 +870,15 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return ret
 
   def search_with_multiple_predicates(
-      self,
-      predicate: Sequence[builds_service_pb2.BuildPredicate],
-      limit: int | None = None,
-      url_title_fn: UrlTitleFunction | None = None,
-      report_build: bool = True,
-      step_name: str | None = None,
-      fields: Set[str] = DEFAULT_FIELDS,
-      timeout: int | None= None,
-      test_data: Callable[[], Sequence[build_pb2.Build]] | None= None,
+    self,
+    predicate: Sequence[builds_service_pb2.BuildPredicate],
+    limit: int | None = None,
+    url_title_fn: UrlTitleFunction | None = None,
+    report_build: bool = True,
+    step_name: str | None = None,
+    fields: Set[str] = DEFAULT_FIELDS,
+    timeout: int | None = None,
+    test_data: Callable[[], Sequence[build_pb2.Build]] | None = None,
   ) -> list[build_pb2.Build]:
     """Searches for builds with multiple predicates.
 
@@ -884,15 +919,20 @@ class BuildbucketApi(recipe_api.RecipeApi):
     """
     assert isinstance(predicate, Sequence), predicate
     assert all(
-        isinstance(p, builds_service_pb2.BuildPredicate) for p in predicate)
+      isinstance(p, builds_service_pb2.BuildPredicate) for p in predicate
+    )
     assert isinstance(limit, (type(None), int))
     assert limit is None or limit >= 0
 
     limit = limit or 1000
 
     args = [
-        '-json', '-nopage', '-n', limit, '-fields',
-        ','.join(sorted(set(fields)))
+      '-json',
+      '-nopage',
+      '-n',
+      limit,
+      '-fields',
+      ','.join(sorted(set(fields))),
     ]
 
     for p in predicate:
@@ -902,37 +942,42 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     step_test_data = None
     if test_data:
-      step_test_data = (lambda: self.m.buildbucket.test_api.
-                        simulated_search_result_data(test_data))
+      step_test_data = lambda: (
+        self.m.buildbucket.test_api.simulated_search_result_data(test_data)
+      )
 
     step_result = self._run_bb(
-        subcommand='ls',
-        step_name=step_name or 'buildbucket.search',
-        args=args,
-        stdout=self.m.raw_io.output_text(add_output_log=True),
-        timeout=timeout,
-        step_test_data=step_test_data)
+      subcommand='ls',
+      step_name=step_name or 'buildbucket.search',
+      args=args,
+      stdout=self.m.raw_io.output_text(add_output_log=True),
+      timeout=timeout,
+      step_test_data=step_test_data,
+    )
 
     ret = []
     # Every line is a build serialized in JSON format
     for line in step_result.stdout.splitlines():
       build = json_format.Parse(
-        line, build_pb2.Build(),
+        line,
+        build_pb2.Build(),
         # Do not fail because recipe's proto copy is stale.
-        ignore_unknown_fields=True)
+        ignore_unknown_fields=True,
+      )
       if report_build:
         self._report_build_maybe(step_result, build, url_title_fn=url_title_fn)
       ret.append(build)
 
       assert len(ret) <= limit, (
-        'bb ls returns %d builds when limit set to %d' % (len(ret), limit))
+        'bb ls returns %d builds when limit set to %d' % (len(ret), limit)
+      )
     return ret
 
   def cancel_build(
-      self,
-      build_id: int | str,
-      reason: str | None = None,
-      step_name: str | None = None,
+    self,
+    build_id: int | str,
+    reason: str | None = None,
+    step_name: str | None = None,
   ) -> None:
     """Cancel the build associated with the provided build ID.
 
@@ -946,37 +991,42 @@ class BuildbucketApi(recipe_api.RecipeApi):
       be raised
     """
     self._check_build_id(build_id)
-    cancel_req = builds_service_pb2.BatchRequest(requests=[
+    cancel_req = builds_service_pb2.BatchRequest(
+      requests=[
         dict(
-            cancel_build=dict(
-                # Expecting `id` to be of type int64 according to the proto
-                # definition.
-                id=int(build_id),
-                summary_markdown=str(reason or ' ')))
-    ])
+          cancel_build=dict(
+            # Expecting `id` to be of type int64 according to the proto
+            # definition.
+            id=int(build_id),
+            summary_markdown=str(reason or ' '),
+          )
+        )
+      ]
+    )
     test_res = builds_service_pb2.BatchResponse(
       responses=[
-        dict(cancel_build=dict(
-          id=int(build_id),
-          status=common_pb2.CANCELED
-        ))])
+        dict(cancel_build=dict(id=int(build_id), status=common_pb2.CANCELED))
+      ]
+    )
     _, batch_res, has_errors = self._batch_request(
-      step_name or 'buildbucket.cancel', cancel_req, test_res)
+      step_name or 'buildbucket.cancel', cancel_req, test_res
+    )
 
     if has_errors:
       raise self.m.step.InfraFailure(
-        'Failed to cancel build [%s]. Message: %s' %(
-          build_id, batch_res.responses[0].error.message))
+        'Failed to cancel build [%s]. Message: %s'
+        % (build_id, batch_res.responses[0].error.message)
+      )
 
     return
 
   def get_multi(
-      self,
-      build_ids: Sequence[int | str],
-      url_title_fn: UrlTitleFunction | None = None,
-      step_name: str | None = None,
-      fields: Set[str] = DEFAULT_FIELDS,
-      test_data: Sequence[build_pb2.Build] | None = None,
+    self,
+    build_ids: Sequence[int | str],
+    url_title_fn: UrlTitleFunction | None = None,
+    step_name: str | None = None,
+    fields: Set[str] = DEFAULT_FIELDS,
+    test_data: Sequence[build_pb2.Build] | None = None,
   ) -> tuple[step_data.StepData, dict[int, build_pb2.Build]]:
     """Gets multiple builds.
 
@@ -991,39 +1041,42 @@ class BuildbucketApi(recipe_api.RecipeApi):
     Returns:
       A dict {build_id: build_pb2.Build}.
     """
-    return self._get_multi(build_ids, url_title_fn, step_name, fields,
-                           test_data)[1]
+    return self._get_multi(
+      build_ids, url_title_fn, step_name, fields, test_data
+    )[1]
 
   def _get_multi(
-      self,
-      build_ids: Sequence[int | str],
-      url_title_fn: UrlTitleFunction | None,
-      step_name: str | None,
-      fields: Set[str],
-      test_data: Sequence[build_pb2.Build] | None = None,
+    self,
+    build_ids: Sequence[int | str],
+    url_title_fn: UrlTitleFunction | None,
+    step_name: str | None,
+    fields: Set[str],
+    test_data: Sequence[build_pb2.Build] | None = None,
   ) -> tuple[step_data.StepData, dict[int, build_pb2.Build]]:
     """Implements get_multi, but also returns StepData."""
     batch_req = builds_service_pb2.BatchRequest(
-        requests=[
-            dict(
-                get_build=dict(
-                    id=int(id), fields=self._make_field_mask(paths=fields)))
-            for id in build_ids
-        ],)
+      requests=[
+        dict(
+          get_build=dict(id=int(id), fields=self._make_field_mask(paths=fields))
+        )
+        for id in build_ids
+      ],
+    )
 
     if test_data:
       test_res = builds_service_pb2.BatchResponse(
-          responses=[dict(get_build=x) for x in test_data]
+        responses=[dict(get_build=x) for x in test_data]
       )
     else:
       test_res = builds_service_pb2.BatchResponse(
-          responses=[
-              dict(get_build=dict(id=int(id), status=common_pb2.SUCCESS))
-              for id in build_ids
-          ]
+        responses=[
+          dict(get_build=dict(id=int(id), status=common_pb2.SUCCESS))
+          for id in build_ids
+        ]
       )
     step_res, batch_res, has_errors = self._batch_request(
-        step_name or 'buildbucket.get_multi', batch_req, test_res)
+      step_name or 'buildbucket.get_multi', batch_req, test_res
+    )
     ret = {}
     for res in batch_res.responses:
       if res.HasField('get_build'):
@@ -1035,12 +1088,12 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return step_res, ret
 
   def get(
-      self,
-      build_id: int | str,
-      url_title_fn: UrlTitleFunction | None = None,
-      step_name: str | None = None,
-      fields: Set[str] = DEFAULT_FIELDS,
-      test_data: build_pb2.Build | None = None,
+    self,
+    build_id: int | str,
+    url_title_fn: UrlTitleFunction | None = None,
+    step_name: str | None = None,
+    fields: Set[str] = DEFAULT_FIELDS,
+    test_data: build_pb2.Build | None = None,
   ) -> build_pb2.Build | None:
     """Gets a build.
 
@@ -1056,15 +1109,17 @@ class BuildbucketApi(recipe_api.RecipeApi):
       A build_pb2.Build.
     """
     builds = self.get_multi(
-        [build_id],
-        url_title_fn=url_title_fn,
-        step_name=step_name or 'buildbucket.get',
-        fields=fields,
-        test_data=[test_data] if test_data else None)
+      [build_id],
+      url_title_fn=url_title_fn,
+      step_name=step_name or 'buildbucket.get',
+      fields=fields,
+      test_data=[test_data] if test_data else None,
+    )
     return builds[build_id]
 
-  def collect_build(self, build_id: str,
-                    **kwargs: Any) -> dict[int, build_pb2.Build]:
+  def collect_build(
+    self, build_id: str, **kwargs: Any
+  ) -> dict[int, build_pb2.Build]:
     """Shorthand for `collect_builds` below, but for a single build only.
 
     Args:
@@ -1078,17 +1133,17 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return self.collect_builds([build_id], **kwargs)[build_id]
 
   def collect_builds(
-      self,
-      build_ids: Sequence[int | str],
-      interval: int | None = None,
-      timeout: int | None = None,
-      step_name: str | None = None,
-      raise_if_unsuccessful: bool = False,
-      url_title_fn: UrlTitleFunction | None = None,
-      mirror_status: bool = False,
-      fields: Set[str] = DEFAULT_FIELDS,
-      cost: engine_types.ResourceCost | None = None,
-      eager: bool = False,
+    self,
+    build_ids: Sequence[int | str],
+    interval: int | None = None,
+    timeout: int | None = None,
+    step_name: str | None = None,
+    raise_if_unsuccessful: bool = False,
+    url_title_fn: UrlTitleFunction | None = None,
+    mirror_status: bool = False,
+    fields: Set[str] = DEFAULT_FIELDS,
+    cost: engine_types.ResourceCost | None = None,
+    eager: bool = False,
   ) -> dict[int, build_pb2.Build]:
     """Waits for a set of builds to end and returns their details.
 
@@ -1128,11 +1183,11 @@ class BuildbucketApi(recipe_api.RecipeApi):
       args += build_ids
 
       self._run_bb(
-          step_name='wait',
-          subcommand='collect',
-          args=args,
-          timeout=timeout,
-          cost=cost,
+        step_name='wait',
+        subcommand='collect',
+        args=args,
+        timeout=timeout,
+        cost=cost,
       )
 
       # Fetch build details.
@@ -1141,19 +1196,21 @@ class BuildbucketApi(recipe_api.RecipeApi):
           fields = fields[:]
           fields.append('status')
       step_res, builds = self._get_multi(
-          build_ids, url_title_fn=url_title_fn, step_name='get', fields=fields)
+        build_ids, url_title_fn=url_title_fn, step_name='get', fields=fields
+      )
 
       if raise_if_unsuccessful:
         unsuccessful_builds = sorted(
-            b.id for b in builds.values()
-            if b.status != common_pb2.SUCCESS
+          b.id for b in builds.values() if b.status != common_pb2.SUCCESS
         )
         if unsuccessful_builds:
           step_res.presentation.status = self.m.step.FAILURE
           step_res.presentation.logs['unsuccessful_builds'] = [
-              str(b) for b in unsuccessful_builds]
+            str(b) for b in unsuccessful_builds
+          ]
           raise self.m.step.InfraFailure(
-              'Triggered build(s) did not succeed, unexpectedly')
+            'Triggered build(s) did not succeed, unexpectedly'
+          )
       elif mirror_status:
         bs = list(builds.values())
         if any(b.status == common_pb2.INFRA_FAILURE for b in bs):
@@ -1166,11 +1223,11 @@ class BuildbucketApi(recipe_api.RecipeApi):
   # Internal.
 
   def _batch_request(
-      self,
-      step_name: str,
-      request: builds_service_pb2.BatchRequest,
-      test_response: builds_service_pb2.BatchResponse,
-      timeout: int | None = None,
+    self,
+    step_name: str,
+    request: builds_service_pb2.BatchRequest,
+    test_response: builds_service_pb2.BatchResponse,
+    timeout: int | None = None,
   ) -> tuple[step_data.StepData, builds_service_pb2.BatchResponse, bool]:
     """Makes a Builds.Batch request.
 
@@ -1179,14 +1236,14 @@ class BuildbucketApi(recipe_api.RecipeApi):
     request_dict = json_format.MessageToDict(request)
     try:
       self._run_bb(
-          step_name=step_name,
-          subcommand='batch',
-          stdin=self.m.json.input(request_dict),
-          stdout=self.m.json.output(),
-          timeout=timeout,
-          step_test_data=lambda: self.m.json.test_api.output_stream(
-              json_format.MessageToDict(test_response)
-          ),
+        step_name=step_name,
+        subcommand='batch',
+        stdin=self.m.json.input(request_dict),
+        stdout=self.m.json.output(),
+        timeout=timeout,
+        step_test_data=lambda: self.m.json.test_api.output_stream(
+          json_format.MessageToDict(test_response)
+        ),
       )
     except self.m.step.StepFailure as ex:  # pragma: no cover
       if ex.was_cancelled:
@@ -1200,16 +1257,19 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     # Log the request.
     step_res.presentation.logs['request'] = self.m.json.dumps(
-        request_dict, indent=2, sort_keys=True).splitlines()
+      request_dict, indent=2, sort_keys=True
+    ).splitlines()
 
     # Parse the response.
     if step_res.stdout is None:
       raise self.m.step.InfraFailure('Buildbucket Internal Error')
     batch_res = builds_service_pb2.BatchResponse()
     json_format.ParseDict(
-        step_res.stdout, batch_res,
-        # Do not fail the build because recipe's proto copy is stale.
-        ignore_unknown_fields=True)
+      step_res.stdout,
+      batch_res,
+      # Do not fail the build because recipe's proto copy is stale.
+      ignore_unknown_fields=True,
+    )
 
     # Print response errors in step text.
     step_text = []
@@ -1217,30 +1277,34 @@ class BuildbucketApi(recipe_api.RecipeApi):
     for i, r in enumerate(batch_res.responses):
       if r.HasField('error'):
         has_errors = True
-        step_text.extend([
+        step_text.extend(
+          [
             'Request #%d' % i,
             'Status code: %s' % r.error.code,
             'Message: %s' % r.error.message,
             '',  # Blank line.
-        ])
+          ]
+        )
     step_res.presentation.step_text = '<br>'.join(step_text)
 
     return (step_res, batch_res, has_errors)
 
   def _run_bb(
-      self,
-      subcommand: str,
-      step_name: str | None = None,
-      args: Sequence[str] | None = None,
-      stdin: config_types.Path | recipe_api.Placeholder | None = None,
-      stdout: config_types.Path | recipe_api.Placeholder | None = None,
-      step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
-      timeout: int | None = None,
-      cost: engine_types.ResourceCost | None = None,
+    self,
+    subcommand: str,
+    step_name: str | None = None,
+    args: Sequence[str] | None = None,
+    stdin: config_types.Path | recipe_api.Placeholder | None = None,
+    stdout: config_types.Path | recipe_api.Placeholder | None = None,
+    step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
+    timeout: int | None = None,
+    cost: engine_types.ResourceCost | None = None,
   ) -> step_data.StepData:
     cmdline = [
-      'bb', subcommand,
-      '-host', self._host,
+      'bb',
+      subcommand,
+      '-host',
+      self._host,
     ]
     # Do not pass -service-account-json. It is not needed on LUCI.
     # TODO(nodir): change api.runtime.is_luci default to True and assert
@@ -1254,14 +1318,14 @@ class BuildbucketApi(recipe_api.RecipeApi):
       kwargs['cost'] = cost
 
     return self.m.step(
-        step_name or ('bb ' + subcommand),
-        cmdline,
-        infra_step=True,
-        stdin=stdin,
-        stdout=stdout,
-        step_test_data=step_test_data,
-        timeout=timeout,
-        **kwargs,
+      step_name or ('bb ' + subcommand),
+      cmdline,
+      infra_step=True,
+      stdin=stdin,
+      stdout=stdout,
+      step_test_data=step_test_data,
+      timeout=timeout,
+      **kwargs,
     )
 
   def _check_build_id(self, build_id: int | str) -> None:
@@ -1302,13 +1366,12 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   @property
   def backend_task_dimensions(self) -> build_pb2.RequestedDimension:
-    """Returns the task dimensions used by the task for the build.
-    """
+    """Returns the task dimensions used by the task for the build."""
     return self.backend_task_dimensions_from_build()
 
   def backend_task_dimensions_from_build(
-      self,
-      build: build_pb2.Build | None = None,
+    self,
+    build: build_pb2.Build | None = None,
   ) -> build_pb2.RequestedDimension:
     """Returns the task dimensions for the provided build.
     If no build is provided, then self.build will be used.
@@ -1321,13 +1384,12 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   @property
   def backend_task_id(self) -> str:
-    """Returns the task id of the task for the build.
-    """
+    """Returns the task id of the task for the build."""
     return self.backend_task_id_from_build()
 
   def backend_task_id_from_build(
-      self,
-      build: build_pb2.Build | None = None,
+    self,
+    build: build_pb2.Build | None = None,
   ) -> str:
     """Returns the task id of the task for the provided build.
     If no build is provided, then self.build will be used.
@@ -1340,13 +1402,12 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   @property
   def swarming_bot_dimensions(self) -> list[common_pb2.StringPair] | None:
-    """Returns the swarming bot dimensions for the build.
-    """
+    """Returns the swarming bot dimensions for the build."""
     return self.swarming_bot_dimensions_from_build()
 
   def swarming_bot_dimensions_from_build(
-      self,
-      build: build_pb2.Build | None = None,
+    self,
+    build: build_pb2.Build | None = None,
   ) -> list[common_pb2.StringPair] | None:
     """Returns the swarming bot dimensions for the provided build.
     If no build is provided, then self.build will be used.
@@ -1355,8 +1416,10 @@ class BuildbucketApi(recipe_api.RecipeApi):
       build = self.build
     if build.infra.swarming.bot_dimensions:
       return build.infra.swarming.bot_dimensions
-    if ("swarming" not in build.infra.backend.task.id.target
-        or not build.infra.backend.task.details):
+    if (
+      "swarming" not in build.infra.backend.task.id.target
+      or not build.infra.backend.task.details
+    ):
       return None
     task_details = build.infra.backend.task.details
     if "bot_dimensions" not in task_details:
@@ -1369,8 +1432,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   @property
   def swarming_parent_run_id(self) -> str | None:
-    """Returns the parent_run_id (swarming specific) used in the task.
-    """
+    """Returns the parent_run_id (swarming specific) used in the task."""
     # A "parent_task_id" tag should be populated for both builds on swarming and
     # backend, check there first.
     for tag in self.build.tags:
@@ -1378,8 +1440,10 @@ class BuildbucketApi(recipe_api.RecipeApi):
         return tag.value
     if self.build.infra.swarming.parent_run_id:
       return self.build.infra.swarming.parent_run_id
-    if ("swarming" not in self.build.infra.backend.task.id.target or
-        not self.build.infra.backend.config):
+    if (
+      "swarming" not in self.build.infra.backend.task.id.target
+      or not self.build.infra.backend.config
+    ):
       return None
     backend_config = self.build.infra.backend.config
     if 'parent_run_id' not in backend_config:
@@ -1388,12 +1452,13 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   @property
   def swarming_priority(self) -> int | None:
-    """Returns the priority (swarming specific) of the task.
-    """
+    """Returns the priority (swarming specific) of the task."""
     if self.build.infra.swarming.priority:
       return self.build.infra.swarming.priority
-    if ("swarming" not in self.build.infra.backend.task.id.target or
-        not self.build.infra.backend.config):
+    if (
+      "swarming" not in self.build.infra.backend.task.id.target
+      or not self.build.infra.backend.config
+    ):
       return None
     backend_config = self.build.infra.backend.config
     if 'priority' not in backend_config:
@@ -1402,8 +1467,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   @property
   def swarming_task_service_account(self) -> str | None:
-    """Returns the swarming specific service account used in the task.
-    """
+    """Returns the swarming specific service account used in the task."""
     if self.build.infra.swarming.task_service_account:
       return self.build.infra.swarming.task_service_account
     if "swarming" not in self.build.infra.backend.task.id.target:
@@ -1430,12 +1494,12 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
 
 def _legacy_input_gerrit_changes(
-    dest_repeated: Any,
-    patch_storage: str,
-    patch_gerrit_url: str,
-    patch_project: str,
-    patch_issue: int | str,
-    patch_set: int | str,
+  dest_repeated: Any,
+  patch_storage: str,
+  patch_gerrit_url: str,
+  patch_project: str,
+  patch_issue: int | str,
+  patch_set: int | str,
 ) -> None:
   if patch_storage == 'gerrit' and patch_project:
     host, path = util.parse_http_host_and_path(patch_gerrit_url)
@@ -1448,15 +1512,16 @@ def _legacy_input_gerrit_changes(
       else:
         if patch_issue and patch_set:
           dest_repeated.add(
-              host=host,
-              project=patch_project,
-              change=patch_issue,
-              patchset=patch_set)
+            host=host,
+            project=patch_project,
+            change=patch_issue,
+            patchset=patch_set,
+          )
           return
 
 
 def _legacy_input_gitiles_commit(
-    dest: common_pb2.GitilesCommit, revision: str, branch: str
+  dest: common_pb2.GitilesCommit, revision: str, branch: str
 ) -> None:
   if util.is_sha1_hex(revision):
     dest.id = revision
@@ -1465,9 +1530,9 @@ def _legacy_input_gitiles_commit(
 
 
 def _legacy_builder_id(
-    mastername: str,
-    buildername: str,
-    builder_id: builder_common_pb.BuilderID,
+  mastername: str,
+  buildername: str,
+  builder_id: builder_common_pb.BuilderID,
 ) -> None:
   if mastername:
     builder_id.bucket = 'master.%s' % mastername

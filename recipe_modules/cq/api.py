@@ -13,12 +13,12 @@ from RECIPE_MODULES.recipe_engine import cq
 from recipe_engine import recipe_api
 
 _INPUT_PROPERTY_KEYS = (
-    'active',
-    'dry_run',
-    'experimental',
-    'top_level',
-    'run_mode',
-    'owner_is_googler',
+  'active',
+  'dry_run',
+  'experimental',
+  'top_level',
+  'run_mode',
+  'owner_is_googler',
 )
 
 
@@ -27,9 +27,7 @@ class CQApi(recipe_api.RecipeApi):
 
   m: cq.DEPS
 
-  def __init__(
-      self, props: cq_pb.Input, *args: Any, **kwargs: Any
-  ) -> None:
+  def __init__(self, props: cq_pb.Input, *args: Any, **kwargs: Any) -> None:
     super().__init__(*args, **kwargs)
     self._input = props
 

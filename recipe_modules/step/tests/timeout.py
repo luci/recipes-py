@@ -13,8 +13,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    properties,
-    step,
+  properties,
+  step,
 )
 
 
@@ -27,6 +27,7 @@ class DEPS(RecipeScriptApi):
 @dataclass
 class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
+
 
 INLINE_PROPERTIES_PROTO = """
 message InputProperties {
@@ -57,8 +58,8 @@ def RunSteps(api: DEPS, props: timeout_pb.InputProperties) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (
-      api.test('timeout') +
-      api.properties(timeout_pb.InputProperties(timeout=1)) +
-      api.step_data('timeout', times_out_after=20) +
-      api.step_data('timeout (2)', times_out_after=20)
-    )
+    api.test('timeout')
+    + api.properties(timeout_pb.InputProperties(timeout=1))
+    + api.step_data('timeout', times_out_after=20)
+    + api.step_data('timeout (2)', times_out_after=20)
+  )

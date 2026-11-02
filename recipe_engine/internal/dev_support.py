@@ -63,10 +63,10 @@ def ensure_venv(deps: recipe_deps.RecipeDeps) -> None:
   elif importlib.util.find_spec('pydevd'):
     name = 'pycharm'
 
-  venvDir = pathlib.Path(deps.recipe_deps_path)/"_venv"
+  venvDir = pathlib.Path(deps.recipe_deps_path) / "_venv"
   venvDir.mkdir(parents=True, exist_ok=True)
 
-  _tryEnsureSymlink(venvDir/name, sys.prefix)
+  _tryEnsureSymlink(venvDir / name, sys.prefix)
 
 
 def ensure_pathdir(deps: recipe_deps.RecipeDeps) -> None:
@@ -75,16 +75,17 @@ def ensure_pathdir(deps: recipe_deps.RecipeDeps) -> None:
   This directory will contain RECIPE_MODULES, PB, recipe_engine, and can be
   added to pythonpath for tools like pylint.
   """
-  pathDir = pathlib.Path(deps.recipe_deps_path)/"_path"
+  pathDir = pathlib.Path(deps.recipe_deps_path) / "_path"
   pathDir.mkdir(parents=True, exist_ok=True)
 
-  _tryEnsureSymlink(pathDir/'PB', pathlib.Path(deps.protos_path)/'PB')
+  _tryEnsureSymlink(pathDir / 'PB', pathlib.Path(deps.protos_path) / 'PB')
   _tryEnsureSymlink(
-      pathDir/'recipe_engine',
-      pathlib.Path(deps.repos['recipe_engine'].path)/'recipe_engine')
+    pathDir / 'recipe_engine',
+    pathlib.Path(deps.repos['recipe_engine'].path) / 'recipe_engine',
+  )
 
-  modsDir = pathlib.Path(pathDir/'RECIPE_MODULES')
+  modsDir = pathlib.Path(pathDir / 'RECIPE_MODULES')
   modsDir.mkdir(parents=True, exist_ok=True)
 
   for reponame, repo in deps.repos.items():
-    _tryEnsureSymlink(modsDir/reponame, repo.modules_dir)
+    _tryEnsureSymlink(modsDir / reponame, repo.modules_dir)

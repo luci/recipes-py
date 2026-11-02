@@ -11,8 +11,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    raw_io,
-    step,
+  raw_io,
+  step,
 )
 
 
@@ -29,9 +29,12 @@ class TEST_DEPS(RecipeTestApi):
 
 def RunSteps(api: DEPS) -> None:
   # Read command's stdout and stderr.
-  step_result = api.step('echo', ['echo', 'Hello World'],
-      stdout=api.raw_io.output_text(),
-      stderr=api.raw_io.output_text())
+  step_result = api.step(
+    'echo',
+    ['echo', 'Hello World'],
+    stdout=api.raw_io.output_text(),
+    stderr=api.raw_io.output_text(),
+  )
 
   if step_result.stdout == "stdout":
     api.step.empty('mocked stdout')
@@ -39,17 +42,20 @@ def RunSteps(api: DEPS) -> None:
     api.step.empty('mocked stderr')
 
   # Pass stuff to command's stdin, read it from stdout.
-  step_result = api.step('cat', ['cat'],
-      stdin=api.raw_io.input_text(data='hello'),
-      stdout=api.raw_io.output('out'))
+  step_result = api.step(
+    'cat',
+    ['cat'],
+    stdin=api.raw_io.input_text(data='hello'),
+    stdout=api.raw_io.output('out'),
+  )
 
   # Example of auto-mocking stdout. '\n' appended to mock 'echo' behavior.
   step_result = api.step(
-      'automock',
-      ['echo', 'huh'],
-      stdout=api.raw_io.output_text('out'),
-      step_test_data=(
-          lambda: api.raw_io.test_api.stream_output_text('huh\n')))
+    'automock',
+    ['echo', 'huh'],
+    stdout=api.raw_io.output_text('out'),
+    step_test_data=(lambda: api.raw_io.test_api.stream_output_text('huh\n')),
+  )
   if step_result.stdout == 'huh\n':
     api.step.empty('inline mock')
   else:
@@ -58,26 +64,26 @@ def RunSteps(api: DEPS) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'basic',
-      api.post_check(lambda check, steps: check('mocked stdout') not in steps),
-      api.post_check(lambda check, steps: check('mocked stderr') not in steps),
-      api.post_check(lambda check, steps: check('inline mock') in steps),
-      api.post_check(lambda check, steps: check('test mock') not in steps),
+    'basic',
+    api.post_check(lambda check, steps: check('mocked stdout') not in steps),
+    api.post_check(lambda check, steps: check('mocked stderr') not in steps),
+    api.post_check(lambda check, steps: check('inline mock') in steps),
+    api.post_check(lambda check, steps: check('test mock') not in steps),
   )
 
   yield api.test(
-      'mocking',
-      api.step_data(
-          'echo',
-          stdout=api.raw_io.output_text('stdout'),
-          stderr=api.raw_io.output_text('stderr'),
-      ),
-      api.override_step_data(
-          'automock',
-          stdout=api.raw_io.output_text('OVERRIDE'),
-      ),
-      api.post_check(lambda check, steps: check('mocked stdout') in steps),
-      api.post_check(lambda check, steps: check('mocked stderr') in steps),
-      api.post_check(lambda check, steps: check('inline mock') not in steps),
-      api.post_check(lambda check, steps: check('test mock') in steps),
+    'mocking',
+    api.step_data(
+      'echo',
+      stdout=api.raw_io.output_text('stdout'),
+      stderr=api.raw_io.output_text('stderr'),
+    ),
+    api.override_step_data(
+      'automock',
+      stdout=api.raw_io.output_text('OVERRIDE'),
+    ),
+    api.post_check(lambda check, steps: check('mocked stdout') in steps),
+    api.post_check(lambda check, steps: check('mocked stderr') in steps),
+    api.post_check(lambda check, steps: check('inline mock') not in steps),
+    api.post_check(lambda check, steps: check('test mock') in steps),
   )

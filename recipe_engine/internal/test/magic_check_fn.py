@@ -30,73 +30,77 @@ from ... import turboci
 
 
 class CheckFrame(
-    collections.namedtuple('CheckFrame', 'fname line function code varmap')
+  collections.namedtuple('CheckFrame', 'fname line function code varmap')
 ):
   def format(self, indent: int) -> list[str]:
     lines = [
-      '%s%s:%s - %s()' % ((' '*indent), self.fname, self.line, self.function)
+      '%s%s:%s - %s()' % ((' ' * indent), self.fname, self.line, self.function)
     ]
     indent += 2
-    lines.append('%s`%s`' % ((' '*indent), self.code))
+    lines.append('%s`%s`' % ((' ' * indent), self.code))
     indent += 2
     if self.varmap:
-      lines.extend('%s%s: %s' % ((' '*indent), k, v)
-                   for k, v in self.varmap.items())
+      lines.extend(
+        '%s%s: %s' % ((' ' * indent), k, v) for k, v in self.varmap.items()
+      )
     return lines
 
 
 class Check(
-    collections.namedtuple(
-        'Check',
-        (
-            'name ctx_filename ctx_lineno ctx_func ctx_args ctx_kwargs '
-            'frames passed'
-        ),
-    )
+  collections.namedtuple(
+    'Check',
+    ('name ctx_filename ctx_lineno ctx_func ctx_args ctx_kwargs frames passed'),
+  )
 ):
   # filename -> {lineno -> [statements]}
   _PARSED_FILE_CACHE: dict[str, dict[int, list[ast.AST]]] = (
-      collections.defaultdict(lambda: collections.defaultdict(list))
+    collections.defaultdict(lambda: collections.defaultdict(list))
   )
   _LAMBDA_CACHE: dict[str, dict[int, list[ast.Lambda]]] = (
-      collections.defaultdict(lambda: collections.defaultdict(list))
+    collections.defaultdict(lambda: collections.defaultdict(list))
   )
 
   @classmethod
   def create(
-      cls,
-      name: str | None,
-      hook_context: recipe_test_api.PostprocessHookContext,
-      frames: Sequence[inspect.FrameInfo],
-      passed: bool,
-      ignore_set: set[int],
-      additional_varmap: Mapping[str, str] | None = None,
+    cls,
+    name: str | None,
+    hook_context: recipe_test_api.PostprocessHookContext,
+    frames: Sequence[inspect.FrameInfo],
+    passed: bool,
+    ignore_set: set[int],
+    additional_varmap: Mapping[str, str] | None = None,
   ) -> Self:
     try:
-      keep_frames = [cls._process_frame(f, ignore_set, with_vars=False)
-                     for f in frames[:-1]]
-      keep_frames.append(cls._process_frame(
-          frames[-1], ignore_set, with_vars=True,
-          additional_varmap=additional_varmap))
+      keep_frames = [
+        cls._process_frame(f, ignore_set, with_vars=False) for f in frames[:-1]
+      ]
+      keep_frames.append(
+        cls._process_frame(
+          frames[-1],
+          ignore_set,
+          with_vars=True,
+          additional_varmap=additional_varmap,
+        )
+      )
     finally:
       # avoid reference cycle as suggested by inspect docs.
       del frames
 
     return cls(
-        name,
-        hook_context.filename,
-        hook_context.lineno,
-        cls._get_name_of_callable(hook_context.func),
-        [repr(arg) for arg in hook_context.args],
-        {k: repr(v) for k, v in hook_context.kwargs.items()},
-        keep_frames,
-        passed,
+      name,
+      hook_context.filename,
+      hook_context.lineno,
+      cls._get_name_of_callable(hook_context.func),
+      [repr(arg) for arg in hook_context.args],
+      {k: repr(v) for k, v in hook_context.kwargs.items()},
+      keep_frames,
+      passed,
     )
 
   @classmethod
   def _get_name_of_callable(cls, c: Callable[..., Any]) -> str:
     if inspect.ismethod(c):
-      return c.__self__.__class__.__name__+'.'+c.__name__
+      return c.__self__.__class__.__name__ + '.' + c.__name__
     if inspect.isfunction(c):
       if c.__name__ == (lambda: None).__name__:
         filename = c.__code__.co_filename
@@ -110,13 +114,11 @@ class Check(
           return astunparse.unparse(definitions[0]).strip()
       return c.__name__
     if hasattr(c, '__call__'):
-      return c.__class__.__name__+'.__call__'
+      return c.__class__.__name__ + '.__call__'
     return repr(c)
 
   @classmethod
-  def _get_statements_for_frame(
-      cls, frame: inspect.FrameInfo
-  ) -> list[ast.AST]:
+  def _get_statements_for_frame(cls, frame: inspect.FrameInfo) -> list[ast.AST]:
     raw_frame, filename, lineno, _, _, _ = frame
     cls._ensure_file_in_cache(filename, raw_frame)
     return cls._PARSED_FILE_CACHE[filename][lineno]
@@ -143,7 +145,7 @@ class Check(
       lines, _ = inspect.findsource(obj_with_code)
       # Start with the entire parsed document (probably ast.Module).
       queue: collections.deque[ast.AST] = collections.deque(
-          [ast.parse(''.join(lines), filename)]
+        [ast.parse(''.join(lines), filename)]
       )
       while queue:
         node = queue.pop()
@@ -192,11 +194,11 @@ class Check(
 
   @classmethod
   def _process_frame(
-      cls,
-      frame: inspect.FrameInfo,
-      ignore_set: set[int],
-      with_vars: bool,
-      additional_varmap: Mapping[str, str] | None = None,
+    cls,
+    frame: inspect.FrameInfo,
+    ignore_set: set[int],
+    with_vars: bool,
+    additional_varmap: Mapping[str, str] | None = None,
   ) -> CheckFrame:
     """This processes a stack frame into an expect_tests.CheckFrame, which
     includes file name, line number, function name (of the function containing
@@ -236,7 +238,7 @@ class Check(
       lineno,
       func_name,
       '; '.join(astunparse.unparse(n).strip() for n in nodes),
-      varmap
+      varmap,
     )
 
   def format(self) -> list[str]:
@@ -252,10 +254,13 @@ class Check(
         MustRun('fakiestep')
     '''
 
-    ret = ['CHECK%(name)s(%(passed)s):' % {
-      'name': ' %r ' % self.name if self.name else '',
-      'passed': 'PASS' if self.passed else 'FAIL',
-    }]
+    ret = [
+      'CHECK%(name)s(%(passed)s):'
+      % {
+        'name': ' %r ' % self.name if self.name else '',
+        'passed': 'PASS' if self.passed else 'FAIL',
+      }
+    ]
     for frame in self.frames:
       ret.extend(frame.format(indent=2))
 
@@ -268,7 +273,7 @@ class Check(
         func += ', '
       func += ', '.join(['%s=%s' % i for i in self.ctx_kwargs.items()])
     func += ')'
-    ret.append('    '+func)
+    ret.append('    ' + func)
     return ret
 
 
@@ -280,8 +285,9 @@ class _resolved(ast.AST):
   Otherwise, attempting to execute operations present in the source may cause
   errors e.g. a dictionary value replaced with its keys because the values
   aren't relevant to the check failure."""
+
   def __init__(
-      self, representation: str, value: Any, valid: bool = True
+    self, representation: str, value: Any, valid: bool = True
   ) -> None:
     super().__init__()
     self.representation = representation
@@ -313,7 +319,7 @@ class _checkTransformer(ast.NodeTransformer):
   """
 
   def __init__(
-      self, lvars: Mapping[str, Any], gvars: Mapping[str, Any]
+    self, lvars: Mapping[str, Any], gvars: Mapping[str, Any]
   ) -> None:
     self.lvars = lvars
     self.gvars = gvars
@@ -340,9 +346,14 @@ class _checkTransformer(ast.NodeTransformer):
           node = ast.Compare(
             node.left,
             node.ops,
-            [_resolved(rslvd.representation+".keys()",
-                       sorted(rslvd.value.keys()),
-                       valid=False)])
+            [
+              _resolved(
+                rslvd.representation + ".keys()",
+                sorted(rslvd.value.keys()),
+                valid=False,
+              )
+            ],
+          )
 
     return node
 
@@ -353,9 +364,11 @@ class _checkTransformer(ast.NodeTransformer):
     """
     node = cast(ast.Attribute, self.generic_visit(node))
 
-    if (rslvd := self._is_valid_resolved(node.value)):
-      return _resolved('%s.%s' % (rslvd.representation, node.attr),
-                       getattr(rslvd.value, node.attr))
+    if rslvd := self._is_valid_resolved(node.value):
+      return _resolved(
+        '%s.%s' % (rslvd.representation, node.attr),
+        getattr(rslvd.value, node.attr),
+      )
 
     return node
 
@@ -373,7 +386,7 @@ class _checkTransformer(ast.NodeTransformer):
     sliceVal: Any = MISSING
     sliceRepr = ''
 
-    if (rslvd := self._is_valid_resolved(node.slice)):
+    if rslvd := self._is_valid_resolved(node.slice):
       # (a[b])[c]
       # will include `a[b]` in the extras.
       self.extras.append(rslvd)
@@ -386,17 +399,19 @@ class _checkTransformer(ast.NodeTransformer):
     if sliceVal is not MISSING:
       try:
         return _resolved(
-            '%s[%s]' % (node_value_resolved.representation, sliceRepr),
-            node_value_resolved.value[sliceVal])
+          '%s[%s]' % (node_value_resolved.representation, sliceRepr),
+          node_value_resolved.value[sliceVal],
+        )
       except KeyError:
         if not isinstance(
-            node_value_resolved.value, (dict, collections.OrderedDict)
+          node_value_resolved.value, (dict, collections.OrderedDict)
         ):
           raise
         return _resolved(
-            node_value_resolved.representation + ".keys()",
-            sorted(node_value_resolved.value.keys()),
-            valid=False)
+          node_value_resolved.representation + ".keys()",
+          sorted(node_value_resolved.value.keys()),
+          valid=False,
+        )
 
     return node
 
@@ -409,9 +424,8 @@ class _checkTransformer(ast.NodeTransformer):
     """
     consts = {'True': True, 'False': False, 'None': None}
     val = consts.get(
-      node.id, self.lvars.get(
-        node.id, self.gvars.get(
-          node.id, MISSING)))
+      node.id, self.lvars.get(node.id, self.gvars.get(node.id, MISSING))
+    )
     if val is not MISSING:
       return _resolved(node.id, val)
     return node
@@ -458,16 +472,16 @@ MISSING = object()
 
 class Checker:
   def __init__(
-      self,
-      hook_context: recipe_test_api.PostprocessHookContext,
-      *ignores: Any,
+    self,
+    hook_context: recipe_test_api.PostprocessHookContext,
+    *ignores: Any,
   ) -> None:
     self.failed_checks: list[Check] = []
 
     # _ignore_set is the set of objects that we should never print as local
     # variables. We start this set off by including the actual Checker object,
     # since there's no value to printing that.
-    self._ignore_set = {id(x) for x in ignores+(self,)}
+    self._ignore_set = {id(x) for x in ignores + (self,)}
 
     self._hook_context = hook_context
 
@@ -505,18 +519,20 @@ class Checker:
           # __eq__ method.
           if any(self is obj for obj in f[0].f_locals.values()):
             break
-        frames = frames[i+1:]
+        frames = frames[i + 1 :]
 
       finally:
         del f
 
-      self.failed_checks.append(Check.create(
+      self.failed_checks.append(
+        Check.create(
           hint,
           self._hook_context,
           frames,
           False,
           self._ignore_set,
-      ))
+        )
+      )
     finally:
       # avoid reference cycle as suggested by inspect docs.
       del frames
@@ -570,7 +586,7 @@ def VerifySubset(a: Any, b: Any) -> str | None:
   if isinstance(a, collections.OrderedDict):
     last_idx = 0
     b_reverse_index: dict[Any, tuple[int, Any]] = {
-        k: (i, v) for i, (k, v) in enumerate(b.items())
+      k: (i, v) for i, (k, v) in enumerate(b.items())
     }
     for k, v in a.items():
       item = b_reverse_index.get(k)
@@ -611,7 +627,7 @@ def VerifySubset(a: Any, b: Any) -> str | None:
         ai += 1
       bi += 1
     if ai != len(a) - 1:
-      return ': added %d elements' % (len(a)-1-ai)
+      return ': added %d elements' % (len(a) - 1 - ai)
 
   elif isinstance(a, (str, int, bool, type(None))):
     if a != b:
@@ -625,13 +641,14 @@ def VerifySubset(a: Any, b: Any) -> str | None:
 
 class PostProcessError(ValueError):
   """Exception raised when any of the post-process hooks fails."""
+
   pass
 
 
 def post_process(
-    test_failures: runner_pb.Outcome.Results,
-    raw_expectations: Mapping[str, dict[str, Any]],
-    test_data: recipe_test_api.TestData,
+  test_failures: runner_pb.Outcome.Results,
+  raw_expectations: Mapping[str, dict[str, Any]],
+  test_data: recipe_test_api.TestData,
 ) -> list[dict[str, Any]] | None:
   """Run post processing hooks against the expectations generated by a test.
 
@@ -666,15 +683,16 @@ def post_process(
       assert exc_type is not None
       assert exc_traceback is not None
       try:
-        failed_checks.append(Check.create(
+        failed_checks.append(
+          Check.create(
             '',
             context,
             inspect.getinnerframes(exc_traceback)[1:],
             False,
             check._ignore_set,
-            {'raised exception':
-             '%s: %s' % (exc_type.__name__, exc_value)},
-        ))
+            {'raised exception': '%s: %s' % (exc_type.__name__, exc_value)},
+          )
+        )
       finally:
         # avoid reference cycle as suggested by inspect docs.
         del exc_traceback
@@ -699,14 +717,15 @@ def post_process(
 
   if test_data.assert_workplan_hooks:
     workplan = turboci.query_nodes(
-        turboci.make_query(
-            query_pb.Query.SelectChecks(),
-            query_pb.Query.CollectChecks(
-                options=True,
-                result_data=True,
-            ),
+      turboci.make_query(
+        query_pb.Query.SelectChecks(),
+        query_pb.Query.CollectChecks(
+          options=True,
+          result_data=True,
         ),
-        types=('*',)).workplans[0]
+      ),
+      types=('*',),
+    ).workplans[0]
     for hook, args, kwargs, context in test_data.assert_workplan_hooks:
       workplan_copy = copy.deepcopy(workplan)
       assert_ = Checker(context, workplan_copy)

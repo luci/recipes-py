@@ -10,23 +10,24 @@ from recipe_engine import recipe_test_api
 from google.protobuf import json_format
 
 from PB.go.chromium.org.luci.buildbucket.proto import (
-    build as build_pb2,
-    builder_common as builder_common_pb2,
-    builds_service as builds_service_pb2,
-    common as common_pb2,
+  build as build_pb2,
+  builder_common as builder_common_pb2,
+  builds_service as builds_service_pb2,
+  common as common_pb2,
 )
-from PB.recipe_modules.recipe_engine.buildbucket.tests import (search as
-                                                               search_pb2)
+from PB.recipe_modules.recipe_engine.buildbucket.tests import (
+  search as search_pb2,
+)
 
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    buildbucket,
-    properties,
-    raw_io,
-    runtime,
-    step,
+  buildbucket,
+  properties,
+  raw_io,
+  runtime,
+  step,
 )
 
 
@@ -44,6 +45,7 @@ class TEST_DEPS(RecipeTestApi):
   buildbucket: buildbucket.TEST_API
   properties: properties.TEST_API
   raw_io: raw_io.TEST_API
+
 
 INLINE_PROPERTIES_PROTO = """
 import "go.chromium.org/luci/buildbucket/proto/build.proto";
@@ -66,32 +68,35 @@ def RunSteps(api: DEPS, props: search_pb2.SearchInputProps) -> None:
 
   if props.dup_predicate:
     predicate = [
-        builds_service_pb2.BuildPredicate(
-            gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),),
-        builds_service_pb2.BuildPredicate(
-            gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),)
+      builds_service_pb2.BuildPredicate(
+        gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),
+      ),
+      builds_service_pb2.BuildPredicate(
+        gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),
+      ),
     ]
     builds = api.buildbucket.search_with_multiple_predicates(
-        predicate,
-        limit=limit,
-        fields=['builder', 'id', 'status', 'create_time'],
-        test_data=test_data,
+      predicate,
+      limit=limit,
+      fields=['builder', 'id', 'status', 'create_time'],
+      test_data=test_data,
     )
   else:
     predicate = builds_service_pb2.BuildPredicate(
-        gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),)
+      gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),
+    )
     builds = api.buildbucket.search(
-        predicate,
-        limit=limit,
-        fields=['builder', 'id', 'status', 'create_time'],
-        test_data=test_data,
+      predicate,
+      limit=limit,
+      fields=['builder', 'id', 'status', 'create_time'],
+      test_data=test_data,
     )
   assert limit is None or len(builds) <= limit
   pres = api.step.active_result.presentation
   for b in builds:
     pres.logs['build %s' % b.id] = [
-      l.rstrip() for l in
-      json_format.MessageToJson(b, sort_keys=True).splitlines()
+      l.rstrip()
+      for l in json_format.MessageToJson(b, sort_keys=True).splitlines()
     ]
 
 
@@ -99,97 +104,119 @@ def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
 
   def build() -> recipe_test_api.TestData:
     return api.buildbucket.try_build(
-        project='chromium',
-        builder='Builder',
-        git_repo='https://chromium.googlesource.com/chromium/src',
-        summary_markdown='Summary!',
+      project='chromium',
+      builder='Builder',
+      git_repo='https://chromium.googlesource.com/chromium/src',
+      summary_markdown='Summary!',
     )
 
   yield api.test(
-      'basic',
-      build(),
+    'basic',
+    build(),
   )
 
   def build_status(
-      id: int,
-      status: common_pb2.Status = common_pb2.SUCCESS,
-      builder: str = 'chromium/try/test',
+    id: int,
+    status: common_pb2.Status = common_pb2.SUCCESS,
+    builder: str = 'chromium/try/test',
   ) -> build_pb2.Build:
     project, bucket, builder = builder.split('/')
     return build_pb2.Build(
-        id=id,
-        status=status,
-        builder=builder_common_pb2.BuilderID(
-            project=project,
-            bucket=bucket,
-            builder=builder,
-        ),
+      id=id,
+      status=status,
+      builder=builder_common_pb2.BuilderID(
+        project=project,
+        bucket=bucket,
+        builder=builder,
+      ),
     )
 
   yield api.test(
-      'props',
-      build(),
-      api.properties(
-          search_pb2.SearchInputProps(
-              builds=[
-                  build_status(id=3, builder='chromium/try/foo'),
-                  build_status(id=4, builder='chromium/try/bar'),
-              ],),),
+    'props',
+    build(),
+    api.properties(
+      search_pb2.SearchInputProps(
+        builds=[
+          build_status(id=3, builder='chromium/try/foo'),
+          build_status(id=4, builder='chromium/try/bar'),
+        ],
+      ),
+    ),
   )
 
   yield api.test(
-      'two builds',
-      build(),
-      api.buildbucket.simulated_search_results([
-          build_status(id=1),
-          build_status(id=2, status=common_pb2.FAILURE),
-      ]),
+    'two builds',
+    build(),
+    api.buildbucket.simulated_search_results(
+      [
+        build_status(id=1),
+        build_status(id=2, status=common_pb2.FAILURE),
+      ]
+    ),
   )
 
   yield api.test(
-      'search failed',
-      build(),
-      api.step_data(
-          'buildbucket.search',
-          api.raw_io.stream_output_text('there was a problem'),
-          retcode=1),
-      status='INFRA_FAILURE',
+    'search failed',
+    build(),
+    api.step_data(
+      'buildbucket.search',
+      api.raw_io.stream_output_text('there was a problem'),
+      retcode=1,
+    ),
+    status='INFRA_FAILURE',
   )
 
   yield api.test(
-      'two builds two predicates, simulated',
-      build(),
-      api.properties(dup_predicate=True),
-      api.properties(search_pb2.SearchInputProps(dup_predicate=True,),),
-      api.buildbucket.simulated_multi_predicates_search_results([
-          build_status(id=1),
-          build_status(id=2, status=common_pb2.FAILURE),
-      ],),
+    'two builds two predicates, simulated',
+    build(),
+    api.properties(dup_predicate=True),
+    api.properties(
+      search_pb2.SearchInputProps(
+        dup_predicate=True,
+      ),
+    ),
+    api.buildbucket.simulated_multi_predicates_search_results(
+      [
+        build_status(id=1),
+        build_status(id=2, status=common_pb2.FAILURE),
+      ],
+    ),
   )
 
   yield api.test(
-      'two builds two predicates with test data prop',
-      build(),
-      api.properties(
-          search_pb2.SearchInputProps(
-              builds=[
-                  build_status(id=3, builder='chromium/try/foo'),
-                  build_status(id=4, builder='chromium/try/bar'),
-              ],
-              dup_predicate=True),),
-      api.buildbucket.simulated_multi_predicates_search_results([
-          build_status(id=1),
-          build_status(id=2, status=common_pb2.FAILURE),
-      ],),
+    'two builds two predicates with test data prop',
+    build(),
+    api.properties(
+      search_pb2.SearchInputProps(
+        builds=[
+          build_status(id=3, builder='chromium/try/foo'),
+          build_status(id=4, builder='chromium/try/bar'),
+        ],
+        dup_predicate=True,
+      ),
+    ),
+    api.buildbucket.simulated_multi_predicates_search_results(
+      [
+        build_status(id=1),
+        build_status(id=2, status=common_pb2.FAILURE),
+      ],
+    ),
   )
 
   yield api.test(
-      'error', build(),
-      api.buildbucket.simulated_batch_search_output(
-          builds_service_pb2.BatchResponse(
-              responses=[
-                  dict(error=dict(
-                      code=1,
-                      message='bad',
-                  ),),
-              ],)) + api.expect_status('INFRA_FAILURE'))
+    'error',
+    build(),
+    api.buildbucket.simulated_batch_search_output(
+      builds_service_pb2.BatchResponse(
+        responses=[
+          dict(
+            error=dict(
+              code=1,
+              message='bad',
+            ),
+          ),
+        ],
+      )
+    )
+    + api.expect_status('INFRA_FAILURE'),
+  )

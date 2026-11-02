@@ -15,10 +15,10 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    context,
-    path,
-    step,
+  assertions,
+  context,
+  path,
+  step,
 )
 
 
@@ -37,18 +37,20 @@ class TEST_DEPS(RecipeTestApi):
 
 def RunSteps(api: DEPS) -> None:
   def assert_msg_equal(
-      expected: message.Message, actual: message.Message
+    expected: message.Message, actual: message.Message
   ) -> None:
     api.assertions.assertEqual(
       expected.SerializeToString(deterministic=True),
-      actual.SerializeToString(deterministic=True)
+      actual.SerializeToString(deterministic=True),
     )
 
   api.step('start', ['echo', 'hello'])
-  assert_msg_equal(sections_pb2.LUCIExe(cache_dir='/path/to/cache'),
-                   api.context.luciexe)
+  assert_msg_equal(
+    sections_pb2.LUCIExe(cache_dir='/path/to/cache'), api.context.luciexe
+  )
   api.assertions.assertEqual(
-      'invocations/inv', api.context.resultdb_invocation_name)
+    'invocations/inv', api.context.resultdb_invocation_name
+  )
 
   api.assertions.assertEqual('proj:realm', api.context.realm)
   with api.context(env={'UNRELATED_CHANGE': 1}):
@@ -59,14 +61,17 @@ def RunSteps(api: DEPS) -> None:
     api.assertions.assertEqual(None, api.context.realm)
 
   with api.context(
-    luciexe=sections_pb2.LUCIExe(cache_dir='/path/to/new_cache')):
+    luciexe=sections_pb2.LUCIExe(cache_dir='/path/to/new_cache')
+  ):
     api.step('new luciexe', ['echo', 'new', 'luciexe'])
-    assert_msg_equal(sections_pb2.LUCIExe(cache_dir='/path/to/new_cache'),
-                     api.context.luciexe)
+    assert_msg_equal(
+      sections_pb2.LUCIExe(cache_dir='/path/to/new_cache'), api.context.luciexe
+    )
 
   api.step('end', ['echo', 'bye'])
-  assert_msg_equal(sections_pb2.LUCIExe(cache_dir='/path/to/cache'),
-                   api.context.luciexe)
+  assert_msg_equal(
+    sections_pb2.LUCIExe(cache_dir='/path/to/cache'), api.context.luciexe
+  )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
@@ -76,12 +81,12 @@ def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
       luciexe=sections_pb2.LUCIExe(cache_dir='/path/to/cache'),
       realm=sections_pb2.Realm(name='proj:realm'),
       resultdb=sections_pb2.ResultDB(
-          current_invocation=sections_pb2.ResultDBInvocation(
-              name='invocations/inv',
-              update_token='token',
-          ),
-          hostname='rdbhost',
-      )
+        current_invocation=sections_pb2.ResultDBInvocation(
+          name='invocations/inv',
+          update_token='token',
+        ),
+        hostname='rdbhost',
+      ),
     )
   )
 

@@ -13,8 +13,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    resultdb,
+  assertions,
+  resultdb,
 )
 
 
@@ -31,7 +31,8 @@ class TEST_DEPS(RecipeTestApi):
 
 def RunSteps(api: DEPS) -> None:
   sub_invs = api.resultdb.get_included_invocations(
-      inv_name='invocations/build-8831400474790691137')
+    inv_name='invocations/build-8831400474790691137'
+  )
   api.assertions.assertIn('inv1', sub_invs)
   api.assertions.assertIn('inv2', sub_invs)
   api.assertions.assertEqual(2, len(sub_invs))
@@ -39,7 +40,7 @@ def RunSteps(api: DEPS) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'basic',
-      api.resultdb.get_included_invocations(['inv1', 'inv2']),
-      api.post_process(DropExpectation),
+    'basic',
+    api.resultdb.get_included_invocations(['inv1', 'inv2']),
+    api.post_process(DropExpectation),
   )

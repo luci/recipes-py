@@ -4,7 +4,6 @@
 
 """Step is the primary API for running steps (external programs, etc.)"""
 
-
 from __future__ import annotations
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from typing import Any, Literal, TypeVar
@@ -41,7 +40,7 @@ class StepApi(recipe_api.RecipeApi):
   step_client = recipe_api.RequireClient('step')
 
   def __init__(
-      self, step_properties: properties_pb.InputProperties, **kwargs: Any
+    self, step_properties: properties_pb.InputProperties, **kwargs: Any
   ) -> None:
     super().__init__(**kwargs)
     self._prefix_path = list(step_properties.prefix_path)
@@ -64,11 +63,11 @@ class StepApi(recipe_api.RecipeApi):
   }
 
   def ResourceCost(
-      self,
-      cpu: int = 500,
-      memory: int = 50,
-      disk: int = 0,
-      net: int = 0,
+    self,
+    cpu: int = 500,
+    memory: int = 50,
+    disk: int = 0,
+    net: int = 0,
   ) -> _ResourceCost:
     """A structure defining the resources that a given step may need.
 
@@ -128,10 +127,8 @@ class StepApi(recipe_api.RecipeApi):
       `ResourceCost(0, 0, 0, 0)`.
     """
     return _ResourceCost(
-        min(cpu, self.MAX_CPU),
-        min(memory, self.MAX_MEMORY),
-        disk,
-        net)
+      min(cpu, self.MAX_CPU), min(memory, self.MAX_MEMORY), disk, net
+    )
 
   # The number of millicores in a single CPU core.
   CPU_CORE = 1000
@@ -219,7 +216,7 @@ class StepApi(recipe_api.RecipeApi):
 
   @contextlib.contextmanager
   def nest(
-      self, name: str, status: Literal['worst', 'last'] = 'worst'
+    self, name: str, status: Literal['worst', 'last'] = 'worst'
   ) -> Iterator[StepPresentation]:
     """Nest allows you to nest steps hierarchically on the build UI.
 
@@ -320,13 +317,13 @@ class StepApi(recipe_api.RecipeApi):
 
   # pylint: disable=too-many-arguments
   def empty(
-      self,
-      name: str,
-      status: str = 'SUCCESS',
-      step_text: str | None = None,
-      log_text: str | Sequence[str] | None = None,
-      log_name: str = 'stdout',
-      raise_on_failure: bool = True,
+    self,
+    name: str,
+    status: str = 'SUCCESS',
+    step_text: str | None = None,
+    log_text: str | Sequence[str] | None = None,
+    log_name: str = 'stdout',
+    raise_on_failure: bool = True,
   ) -> step_data.StepData:
     """Runs an "empty" step (one without any command).
 
@@ -363,15 +360,16 @@ class StepApi(recipe_api.RecipeApi):
 
   @staticmethod
   def _validate_cmd_list(
-      cmd: Sequence[int | str | Placeholder | Path],
+    cmd: Sequence[int | str | Placeholder | Path],
   ) -> None:
     """Validates cmd is a list and all args in the list have valid types."""
     if not isinstance(cmd, list):
       raise ValueError('cmd must be a list, got %r' % (cmd,))
     for arg in cmd:
       if not isinstance(arg, (int, basestring, Path, Placeholder)):
-        raise ValueError('Type %s is not permitted. '
-                         'cmd is %r' % (type(arg), cmd))
+        raise ValueError(
+          'Type %s is not permitted. cmd is %r' % (type(arg), cmd)
+        )
 
   @staticmethod
   def _normalize_cost(cost: _ResourceCost | None) -> _ResourceCost:
@@ -392,14 +390,12 @@ class StepApi(recipe_api.RecipeApi):
     path separator from `path` module.
     """
     return self.step_client.EnvAffix(
-        mapping={k: [str(v) for v in vs] for k, vs in affix.items()},
-        pathsep=self.m.path.pathsep,
+      mapping={k: [str(v) for v in vs] for k, vs in affix.items()},
+      pathsep=self.m.path.pathsep,
     )
 
   @returns_placeholder('sub_build')
-  def _sub_build_output(
-      self, output_path: str | Path | None
-  ) -> Placeholder:
+  def _sub_build_output(self, output_path: str | Path | None) -> Placeholder:
     """Give an output path, returns a build proto output placeholder. The
     encoding format is dictated by the extension of the path.
 
@@ -412,53 +408,68 @@ class StepApi(recipe_api.RecipeApi):
       * The extension of output path is not valid (
         i.e. none of [.pb, .json, .textpb])
     """
-    if not isinstance(output_path, (type(None), str, Path)): # pragma: no cover
+    if not isinstance(output_path, (type(None), str, Path)):  # pragma: no cover
       raise ValueError('expected None, str or Path; got %r' % (output_path,))
     ext = '.pb'
     if output_path is None:
       output_path = self.m.path.mkdtemp() / f'sub_build{ext}'
     else:
       if self.m.path.exists(output_path):
-        raise ValueError('expected non-existent output path; '
-                         'got path %s' % (output_path,))
+        raise ValueError(
+          'expected non-existent output path; got path %s' % (output_path,)
+        )
       _, ext = self.m.path.splitext(output_path)
       if ext not in self.EXT_TO_CODEC:
-        raise ValueError('expected extension of output path to be '
-                         'one of %s; got %s' % (tuple(self.EXT_TO_CODEC), ext))
+        raise ValueError(
+          'expected extension of output path to be '
+          'one of %s; got %s' % (tuple(self.EXT_TO_CODEC), ext)
+        )
       dir_name = self.m.path.dirname(output_path)
       self.m.path.mock_add_paths(dir_name)
-      if not self.m.path.exists(dir_name): # pragma: no cover
-        raise ValueError('expected directory of output path exists; '
-                         'got dir: %s' % (dir_name,))
+      if not self.m.path.exists(dir_name):  # pragma: no cover
+        raise ValueError(
+          'expected directory of output path exists; got dir: %s' % (dir_name,)
+        )
 
-    return self.m.proto.output(build_pb2.Build, self.EXT_TO_CODEC[ext],
-                              leak_to=output_path,
-                              add_json_log=True)
+    return self.m.proto.output(
+      build_pb2.Build,
+      self.EXT_TO_CODEC[ext],
+      leak_to=output_path,
+      add_json_log=True,
+    )
 
   def _make_initial_build(
-      self, input_build: build_pb2.Build
+    self, input_build: build_pb2.Build
   ) -> build_pb2.Build:
     build = build_pb2.Build()
     build.CopyFrom(input_build)
     build.status = common_pb2.STARTED
     if self._test_data.enabled:
       build.create_time.FromSeconds(
-          self._test_data.get('initial_build_create_time', 1577836800))
+        self._test_data.get('initial_build_create_time', 1577836800)
+      )
       build.start_time.FromSeconds(
-          self._test_data.get('initial_build_start_time', 1577836801))
+        self._test_data.get('initial_build_start_time', 1577836801)
+      )
     else:  # pragma: no cover
       build.create_time.GetCurrentTime()
       build.start_time.GetCurrentTime()
-    for f in ('end_time', 'output', 'status_details', 'steps',
-              'summary_markdown', 'update_time'):
+    for f in (
+      'end_time',
+      'output',
+      'status_details',
+      'steps',
+      'summary_markdown',
+      'update_time',
+    ):
       build.ClearField(f)
     return build
 
   def _raise_on_disallowed_statuses(
-      self,
-      result: step_data.StepData,
-      allowed_statuses: Sequence[str],
-      status_override: str | None = None,
+    self,
+    result: step_data.StepData,
+    allowed_statuses: Sequence[str],
+    status_override: str | None = None,
   ) -> step_data.StepData:
     status = status_override or result.presentation.status
     if status in allowed_statuses:
@@ -466,15 +477,15 @@ class StepApi(recipe_api.RecipeApi):
 
     # Otherwise we raise an appropriate error based on ret.presentation.status.
     exc = {
-        'FAILURE': self.StepFailure,
-        'WARNING': self.StepWarning,
-        'EXCEPTION': self.InfraFailure,
-        'CANCELED': self.InfraFailure,
+      'FAILURE': self.StepFailure,
+      'WARNING': self.StepWarning,
+      'EXCEPTION': self.InfraFailure,
+      'CANCELED': self.InfraFailure,
     }[status]
 
     # This inline function is tested in the runtime module tests.
     def cancelled_build_wrapper(
-        name: str, result: step_data.StepData
+      name: str, result: step_data.StepData
     ) -> None:  # pragma: no cover
       raise recipe_api.CancelledBuild(f"Step('{name}')")
 
@@ -486,9 +497,9 @@ class StepApi(recipe_api.RecipeApi):
     raise exc('.'.join(result.name_tokens), result)
 
   def raise_on_failure(
-      self,
-      result: step_data.StepData,
-      status_override: str | None = None,
+    self,
+    result: step_data.StepData,
+    status_override: str | None = None,
   ) -> step_data.StepData:
     """Raise an appropriate exception if a step is not successful.
 
@@ -511,7 +522,8 @@ class StepApi(recipe_api.RecipeApi):
       * InfraFailure if the step's status is EXCEPTION or CANCELED
     """
     return self._raise_on_disallowed_statuses(
-        result, [self.SUCCESS], status_override=status_override)
+      result, [self.SUCCESS], status_override=status_override
+    )
 
   def _run_or_raise_step(self, step_config: Any) -> step_data.StepData:
     ret: step_data.StepData = self.step_client.run_step(step_config)
@@ -529,17 +541,17 @@ class StepApi(recipe_api.RecipeApi):
   RootOutputProperties = [""]
 
   def sub_build(
-      self,
-      name: str,
-      cmd: Sequence[int | str | Placeholder | Path],
-      build: build_pb2.Build,
-      raise_on_failure: bool = True,
-      output_path: str | Path | None = None,
-      legacy_global_namespace: bool = False,
-      merge_output_properties_to: Sequence[str] | None = None,
-      timeout: int | float | timedelta | None = None,
-      step_test_data: Callable[[], StepTestData] | None = None,
-      cost: _ResourceCost | None = _ResourceCost(),
+    self,
+    name: str,
+    cmd: Sequence[int | str | Placeholder | Path],
+    build: build_pb2.Build,
+    raise_on_failure: bool = True,
+    output_path: str | Path | None = None,
+    legacy_global_namespace: bool = False,
+    merge_output_properties_to: Sequence[str] | None = None,
+    timeout: int | float | timedelta | None = None,
+    step_test_data: Callable[[], StepTestData] | None = None,
+    cost: _ResourceCost | None = _ResourceCost(),
   ) -> step_data.StepData:
     """Launch a sub-build by invoking a LUCI executable. All steps in the
     sub-build will appear as child steps of this step (Merge Step).
@@ -641,49 +653,52 @@ class StepApi(recipe_api.RecipeApi):
 
     new_tmp_dir = str(self.m.path.mkdtemp())
     with self.m.context(
-        env={
-          var: new_tmp_dir for var in (
-           'TEMPDIR', 'TMPDIR', 'TEMP', 'TMP', 'MAC_CHROMIUM_TMPDIR')
-        },
-        env_prefixes={'PATH': self._prefix_path}
-      ):
+      env={
+        var: new_tmp_dir
+        for var in ('TEMPDIR', 'TMPDIR', 'TEMP', 'TMP', 'MAC_CHROMIUM_TMPDIR')
+      },
+      env_prefixes={'PATH': self._prefix_path},
+    ):
       env = self.m.context.env
       env_prefixes = self.m.context.env_prefixes
 
     return self._run_or_raise_step(
-        self.step_client.StepConfig(
-            name=name,
-            cmd=cmd,
-            cost=self._normalize_cost(cost),
-            cwd=self._normalize_cwd(self.m.context.cwd),
-            env=env,
-            env_prefixes=self._to_env_affix(env_prefixes),
-            env_suffixes=self._to_env_affix(self.m.context.env_suffixes),
-            timeout=timeout,
-            luci_context=self.m.context.luci_context,
-            stdin=self.m.proto.input(self._make_initial_build(build), 'BINARY'),
-            infra_step=self.m.context.infra_step or False,
-            raise_on_failure=raise_on_failure,
-            merge_step='legacy' if legacy_global_namespace else True,
-            merge_output_properties_to=merge_output_properties_to,
-            # The return code of LUCI executable should be omitted
-            ok_ret=self.step_client.StepConfig.ALL_OK,
-            step_test_data=step_test_data,
-        ))
+      self.step_client.StepConfig(
+        name=name,
+        cmd=cmd,
+        cost=self._normalize_cost(cost),
+        cwd=self._normalize_cwd(self.m.context.cwd),
+        env=env,
+        env_prefixes=self._to_env_affix(env_prefixes),
+        env_suffixes=self._to_env_affix(self.m.context.env_suffixes),
+        timeout=timeout,
+        luci_context=self.m.context.luci_context,
+        stdin=self.m.proto.input(self._make_initial_build(build), 'BINARY'),
+        infra_step=self.m.context.infra_step or False,
+        raise_on_failure=raise_on_failure,
+        merge_step='legacy' if legacy_global_namespace else True,
+        merge_output_properties_to=merge_output_properties_to,
+        # The return code of LUCI executable should be omitted
+        ok_ret=self.step_client.StepConfig.ALL_OK,
+        step_test_data=step_test_data,
+      )
+    )
 
-  def __call__(self,
-               name: str,
-               cmd: Sequence[int | str | Placeholder | Path] | None,
-               ok_ret: Sequence[int] | Literal['any'] | Literal['all'] = (0,),
-               infra_step: bool = False,
-               raise_on_failure: bool = True,
-               wrapper: Sequence[int | str | Placeholder | Path] = (),
-               timeout: int | timedelta | None = None,
-               stdout: Placeholder | None = None,
-               stderr: Placeholder | None = None,
-               stdin: Placeholder | None = None,
-               step_test_data: Callable[[], StepTestData] | None = None,
-               cost: _ResourceCost = _ResourceCost()) -> step_data.StepData:
+  def __call__(
+    self,
+    name: str,
+    cmd: Sequence[int | str | Placeholder | Path] | None,
+    ok_ret: Sequence[int] | Literal['any'] | Literal['all'] = (0,),
+    infra_step: bool = False,
+    raise_on_failure: bool = True,
+    wrapper: Sequence[int | str | Placeholder | Path] = (),
+    timeout: int | timedelta | None = None,
+    stdout: Placeholder | None = None,
+    stderr: Placeholder | None = None,
+    stdin: Placeholder | None = None,
+    step_test_data: Callable[[], StepTestData] | None = None,
+    cost: _ResourceCost = _ResourceCost(),
+  ) -> step_data.StepData:
     """Runs a step (subprocess).
 
     Args:
@@ -747,16 +762,18 @@ class StepApi(recipe_api.RecipeApi):
     cmd = [] if cmd is None else cmd
     self._validate_cmd_list(cmd)
 
-    if cmd and isinstance(
-        cmd[0], str) and cmd[0] in ('python', 'vpython'):  # pragma: no cover
+    if (
+      cmd and isinstance(cmd[0], str) and cmd[0] in ('python', 'vpython')
+    ):  # pragma: no cover
       self.m.warning.issue("PYTHON2_DEPRECATED")
 
     if cmd and wrapper:
       wrapper = list(wrapper)
       self._validate_cmd_list(wrapper)
-      if isinstance(
-          wrapper[0],
-          str) and wrapper[0] in ('python', 'vpython'):  # pragma: no cover
+      if isinstance(wrapper[0], str) and wrapper[0] in (
+        'python',
+        'vpython',
+      ):  # pragma: no cover
         self.m.warning.issue("PYTHON2_DEPRECATED")
       cmd = wrapper + cmd
 
@@ -767,33 +784,34 @@ class StepApi(recipe_api.RecipeApi):
       ok_ret = self.step_client.StepConfig.ALL_OK
 
     return self._run_or_raise_step(
-        self.step_client.StepConfig(
-            name=name,
-            cmd=cmd,
-            cost=self._normalize_cost(cost),
-            cwd=self._normalize_cwd(self.m.context.cwd),
-            env=self.m.context.env,
-            env_prefixes=self._to_env_affix(env_prefixes),
-            env_suffixes=self._to_env_affix(self.m.context.env_suffixes),
-            timeout=timeout,
-            luci_context=self.m.context.luci_context,
-            infra_step=self.m.context.infra_step or bool(infra_step),
-            raise_on_failure=raise_on_failure,
-            stdout=stdout,
-            stderr=stderr,
-            stdin=stdin,
-            ok_ret=ok_ret,
-            step_test_data=step_test_data,
-        ))
+      self.step_client.StepConfig(
+        name=name,
+        cmd=cmd,
+        cost=self._normalize_cost(cost),
+        cwd=self._normalize_cwd(self.m.context.cwd),
+        env=self.m.context.env,
+        env_prefixes=self._to_env_affix(env_prefixes),
+        env_suffixes=self._to_env_affix(self.m.context.env_suffixes),
+        timeout=timeout,
+        luci_context=self.m.context.luci_context,
+        infra_step=self.m.context.infra_step or bool(infra_step),
+        raise_on_failure=raise_on_failure,
+        stdout=stdout,
+        stderr=stderr,
+        stdin=stdin,
+        ok_ret=ok_ret,
+        step_test_data=step_test_data,
+      )
+    )
 
   _T = TypeVar('_T')
 
   def funcall(
-      self,
-      name: str | None,
-      func: Callable[..., _T],
-      *args: Any,
-      **kwargs: Any,
+    self,
+    name: str | None,
+    func: Callable[..., _T],
+    *args: Any,
+    **kwargs: Any,
   ) -> _T:
     """Call a function and store the results and exception in a step.
 

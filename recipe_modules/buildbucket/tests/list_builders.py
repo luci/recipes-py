@@ -9,8 +9,9 @@ from recipe_engine import recipe_test_api
 
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
-from PB.go.chromium.org.luci.buildbucket.proto \
-  import builds_service as builds_service_pb2
+from PB.go.chromium.org.luci.buildbucket.proto import (
+  builds_service as builds_service_pb2,
+)
 
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
@@ -29,14 +30,13 @@ class TEST_DEPS(RecipeTestApi):
 
 
 def RunSteps(api: DEPS) -> None:
-  api.buildbucket.list_builders(
-      'project', 'bucket', step_name='a step')
+  api.buildbucket.list_builders('project', 'bucket', step_name='a step')
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (
-      api.test('basic') +
-      api.buildbucket.simulated_list_builders(
-          ['builder-1', 'builder-2'],
-          step_name='a step')
+    api.test('basic')
+    + api.buildbucket.simulated_list_builders(
+      ['builder-1', 'builder-2'], step_name='a step'
+    )
   )

@@ -49,17 +49,20 @@ class ResourceWaiter:
   potentially waste time waiting for small tasks to finish in order to schedule
   a heavy task earlier.
   """
+
   # Required for __init__
   _millicores_available: int = attr.ib()
   _memory_available: int = attr.ib()
 
   # Attrs with defaults.
   _millicores_max: int = attr.ib()
+
   @_millicores_max.default
   def _millicores_max_default(self) -> int:
     return self._millicores_available
 
   _memory_max: int = attr.ib()
+
   @_memory_max.default
   def _memory_max_default(self) -> int:
     return self._memory_available
@@ -77,13 +80,17 @@ class ResourceWaiter:
   # The `uid` is used to ensure that Channel is never used when sorting
   # this list.
   _waiters: list[
-      tuple[engine_types.ResourceCost, int, gevent.queue.Channel]
+    tuple[engine_types.ResourceCost, int, gevent.queue.Channel]
   ] = attr.ib(factory=list)
 
   def _fits(self, resources: engine_types.ResourceCost) -> bool:
     assert isinstance(resources, engine_types.ResourceCost)
-    return resources.fits(self._millicores_available, self._memory_available,
-                          self._disk_available, self._net_available)
+    return resources.fits(
+      self._millicores_available,
+      self._memory_available,
+      self._disk_available,
+      self._net_available,
+    )
 
   def _decr(self, resources: engine_types.ResourceCost) -> None:
     assert isinstance(resources, engine_types.ResourceCost)
@@ -101,9 +108,9 @@ class ResourceWaiter:
 
   @contextlib.contextmanager
   def wait_for(
-      self,
-      resources: engine_types.ResourceCost | None,
-      call_if_blocking: Callable[[], None] | None,
+    self,
+    resources: engine_types.ResourceCost | None,
+    call_if_blocking: Callable[[], None] | None,
   ) -> Iterator[None]:
     """Block until `resources` are available.
 

@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from recipe_engine import recipe_test_api
 
+
 class TimeTestApi(recipe_test_api.RecipeTestApi):
   @recipe_test_api.mod_test_data
   @staticmethod

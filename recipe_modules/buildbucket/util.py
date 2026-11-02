@@ -21,10 +21,12 @@ def parse_http_host_and_path(url: str) -> tuple[str | None, str | None]:
   parsed = urlparse(url)
   if not parsed.scheme:
     parsed = urlparse('https://' + url)
-  if (parsed.scheme in ('http', 'https') and
-      not parsed.params and
-      not parsed.query and
-      not parsed.fragment):
+  if (
+    parsed.scheme in ('http', 'https')
+    and not parsed.params
+    and not parsed.query
+    and not parsed.fragment
+  ):
     return parsed.netloc, parsed.path
   return None, None
 
@@ -35,9 +37,9 @@ def parse_gitiles_repo_url(repo_url: str) -> tuple[str, str]:
     raise ValueError('invalid repo_url %s' % (repo_url,))
   project = project.strip('/')
   if project.startswith('a/'):
-    project = project[len('a/'):]
+    project = project[len('a/') :]
   if project.endswith('.git'):
-    project = project[:-len('.git')]
+    project = project[: -len('.git')]
   return host, project
 
 

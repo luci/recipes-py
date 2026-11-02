@@ -23,7 +23,6 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class ServiceAccountApi(recipe_api.RecipeApi):
-
   m: service_account.DEPS
 
   class ServiceAccount:
@@ -33,14 +32,14 @@ class ServiceAccountApi(recipe_api.RecipeApi):
     """
 
     def __init__(
-        self,
-        api: ServiceAccountApi,
-        title: str,
-        key_path: config_types.Path | str | None,
+      self,
+      api: ServiceAccountApi,
+      title: str,
+      key_path: config_types.Path | str | None,
     ) -> None:
       self._api = api
       self._title = title
-      self._key_path = key_path   # or None to use default LUCI account
+      self._key_path = key_path  # or None to use default LUCI account
 
     @property
     def key_path(self) -> config_types.Path | str | None:
@@ -50,9 +49,7 @@ class ServiceAccountApi(recipe_api.RecipeApi):
       """
       return self._key_path
 
-    def get_access_token(
-        self, scopes: Iterable[str] | None = None
-    ) -> str:
+    def get_access_token(self, scopes: Iterable[str] | None = None) -> str:
       """Returns an access token for this service account.
 
       Token's lifetime is guaranteed to be at least 3 minutes and at most 45.
@@ -86,7 +83,6 @@ class ServiceAccountApi(recipe_api.RecipeApi):
       # TODO(crbug.com/1275620): Implement this.
       raise NotImplementedError()  # pragma: no cover
 
-
   def default(self) -> ServiceAccountApi.ServiceAccount:
     """Returns an account associated with the task.
 
@@ -97,7 +93,7 @@ class ServiceAccountApi(recipe_api.RecipeApi):
     return self.ServiceAccount(self, 'default account', None)
 
   def from_credentials_json(
-      self, key_path: config_types.Path | str
+    self, key_path: config_types.Path | str
   ) -> ServiceAccountApi.ServiceAccount:
     """Returns a service account based on a JSON credentials file.
 
@@ -109,12 +105,11 @@ class ServiceAccountApi(recipe_api.RecipeApi):
     """
     return self.ServiceAccount(self, self.m.path.basename(key_path), key_path)
 
-
   def _get_token(
-      self,
-      full_step_title: str,
-      extra_args: Sequence[str | config_types.Path],
-      scopes: Iterable[str] | None,
+    self,
+    full_step_title: str,
+    extra_args: Sequence[str | config_types.Path],
+    scopes: Iterable[str] | None,
   ) -> str:
     cmd = ['luci-auth', 'token'] + extra_args
     if scopes:
@@ -122,10 +117,12 @@ class ServiceAccountApi(recipe_api.RecipeApi):
     # Due to Swarming, 5 min is the hard upper limit.
     cmd += ['-lifetime', '3m']
     step_result = self.m.step(
-        full_step_title,
-        cmd,
-        infra_step=True,
-        stdout=self.m.raw_io.output_text(),
-        step_test_data=lambda: self.m.raw_io.test_api.stream_output_text(
-            'extra.secret.token.should.not.be.logged', stream='stdout'))
+      full_step_title,
+      cmd,
+      infra_step=True,
+      stdout=self.m.raw_io.output_text(),
+      step_test_data=lambda: self.m.raw_io.test_api.stream_output_text(
+        'extra.secret.token.should.not.be.logged', stream='stdout'
+      ),
+    )
     return step_result.stdout.strip()

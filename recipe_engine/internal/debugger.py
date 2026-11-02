@@ -31,9 +31,9 @@ def should_set_implicit_breakpoints() -> bool:
 
 
 def set_implicit_pdb_breakpoint(
-    filename: str,
-    lineno: int,
-    funcname: str | None = None,
+  filename: str,
+  lineno: int,
+  funcname: str | None = None,
 ) -> None:
   """
   Sets an implicit breakpoint with pdb, if pdb debugging and implicit
@@ -46,9 +46,7 @@ def set_implicit_pdb_breakpoint(
   _PDB.set_break(_PDB.canonic(filename), lineno, funcname=funcname)
 
 
-def parse_remote_debugger() -> (
-    tuple[str, str, int] | tuple[None, None, None]
-):
+def parse_remote_debugger() -> tuple[str, str, int] | tuple[None, None, None]:
   """Parses the RECIPE_DEBUGGER environment variable.
 
   This will also return (None, None, None) if sys.argv doesn't include `debug`.
@@ -87,14 +85,15 @@ def parse_remote_debugger() -> (
     proto_data.append('')
   elif len(proto_data) != 2:
     sys.exit(
-        f'${_DEBUGGER_ENVVAR} must be protocol[://host[:port]] - got '
-        f'{debugger!r}'
+      f'${_DEBUGGER_ENVVAR} must be protocol[://host[:port]] - got {debugger!r}'
     )
 
   protocol = proto_data[0]
   if protocol not in {'vscode', 'pycharm', 'pdb'}:
-    sys.exit('$RECIPE_DEBUGGER scheme not valid '
-             f'(must be in {{pycharm, vscode, pdb}}) - got {protocol!r}')
+    sys.exit(
+      '$RECIPE_DEBUGGER scheme not valid '
+      f'(must be in {{pycharm, vscode, pdb}}) - got {protocol!r}'
+    )
 
   host = 'localhost'
   port = 5678
@@ -145,9 +144,9 @@ def engage_debugger() -> None:
     debugger = pdb.Pdb()
 
     def dispatch_thunk(
-        frame: types.FrameType,
-        event: str,
-        arg: Any,
+      frame: types.FrameType,
+      event: str,
+      arg: Any,
     ) -> None:
       """Triggers 'continue' command when debugger starts."""
       debugger.trace_dispatch(frame, event, arg)
@@ -160,26 +159,29 @@ def engage_debugger() -> None:
     return
 
   print(
-      f'Waiting to connect to {protocol}://{host}:{port}... ',
-      file=sys.stderr,
-      end='')
+    f'Waiting to connect to {protocol}://{host}:{port}... ',
+    file=sys.stderr,
+    end='',
+  )
   sys.stderr.flush()
 
   # pylint: disable=import-error, import-outside-toplevel
   if protocol == 'pycharm':
     import pydevd
+
     pydevd.settrace(
-        host=host,
-        port=port,
-        stdoutToServer=True,
-        stderrToServer=True,
-        suspend=False,  # we will use `breakpoint` later.
+      host=host,
+      port=port,
+      stdoutToServer=True,
+      stderrToServer=True,
+      suspend=False,  # we will use `breakpoint` later.
     )
     print('OK', file=sys.stderr)
     return
 
   if protocol == 'vscode':
     import debugpy
+
     debugpy.listen((host, port))
     debugpy.wait_for_client()
     print('OK', file=sys.stderr)

@@ -13,8 +13,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    step,
+  assertions,
+  step,
 )
 
 
@@ -32,14 +32,15 @@ def RunSteps(api: DEPS) -> None:
     api.step('AssertionError', [])
     expected_message = '0 != 1 : custom message'
     assert str(e) == expected_message, (
-        'Expected AssertionError with message: %r\nactual message: %r' %
-        (expected_message, str(e)))
+      'Expected AssertionError with message: %r\nactual message: %r'
+      % (expected_message, str(e))
+    )
 
 
 def GenTests(api: RecipeTestApi) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'basic',
-      api.post_process(post_process.MustRun, 'AssertionError'),
-      api.post_process(post_process.StatusSuccess),
-      api.post_process(post_process.DropExpectation),
+    'basic',
+    api.post_process(post_process.MustRun, 'AssertionError'),
+    api.post_process(post_process.StatusSuccess),
+    api.post_process(post_process.DropExpectation),
   )

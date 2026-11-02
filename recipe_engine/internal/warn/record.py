@@ -35,9 +35,9 @@ class NULL_WARNING_RECORDER:
     pass
 
   def record_import_warning(
-      self,
-      name: str,
-      importer: recipe_deps_module.Recipe | recipe_deps_module.RecipeModule,
+    self,
+    name: str,
+    importer: recipe_deps_module.Recipe | recipe_deps_module.RecipeModule,
   ) -> None:
     pass
 
@@ -54,16 +54,19 @@ class _AnnotatedFrame:
   """A wrapper class over built-in frame which associates additional attributes
   with the wrapped frame.
   """
+
   # The wrapped frame
   frame: types.FrameType = attr.ib(
-      validator=attr_util.attr_type(types.FrameType))
+    validator=attr_util.attr_type(types.FrameType)
+  )
 
   # If set, the human-readable reason why the wrapped frame is skipped for the
   # purposes of warning attribution. Examples:
   #   * 'user escape at /path/to/file:123
   #   * 'python built-in'
   skip_reason: str | None = attr.ib(
-      validator=attr.validators.optional(attr_util.attr_type(str)))
+    validator=attr.validators.optional(attr_util.attr_type(str))
+  )
 
 
 @attr.s
@@ -76,9 +79,11 @@ class WarningRecorder:
     * Import Warning: issued during dependency resolution (DEPS), when a recipe
       or recipe module depends on a module with warning declared.
   """
+
   # The RecipeDeps object for current recipe execution.
   recipe_deps: recipe_deps_module.RecipeDeps = attr.ib(
-      validator=attr_util.attr_type(recipe_deps_module.RecipeDeps))
+    validator=attr_util.attr_type(recipe_deps_module.RecipeDeps)
+  )
 
   # Filter function that all execution warnings will be filtered through
   # before storing. If the function returns False, the warning will be
@@ -86,18 +91,20 @@ class WarningRecorder:
   #   * name (str) - Fully qualified warning name e.g. 'repo/WARNING_NAME'
   #   * cause (warning_pb.Cause) - Cause of the warning
   call_site_filter: Callable[[str, Any], bool] = attr.ib(
-      default=lambda name, cause: True)
+    default=lambda name, cause: True
+  )
 
   # Same functionality and function signature as call_site_filter but applies
   # to import warnings.
   import_site_filter: Callable[[str, Any], bool] = attr.ib(
-      default=lambda name, cause: True)
+    default=lambda name, cause: True
+  )
 
   # Internal holder for recorded warnings.
   # key: fully qualified warning name (str)
   # value: Set[CallSite|ImportSite] (defined in cause.py, not the proto message)
   _recorded_warnings: dict[
-      str, set[cause_module.CallSite | cause_module.ImportSite]
+    str, set[cause_module.CallSite | cause_module.ImportSite]
   ] = attr.ib(init=False, factory=lambda: collections.defaultdict(set))
 
   # Internal, resettable, set of warning names encountered.
@@ -177,8 +184,9 @@ class WarningRecorder:
     if call_site_frame is escape.IGNORE:
       return
     call_site = cause_module.CallSite(
-      site=cause_module.Frame.from_built_in_frame(call_site_frame) if (
-        call_site_frame) else cause_module.Frame(),
+      site=cause_module.Frame.from_built_in_frame(call_site_frame)
+      if (call_site_frame)
+      else cause_module.Frame(),
     )
 
     # return if call_site_frame isn't in the main repo; We don't want to report
@@ -193,17 +201,18 @@ class WarningRecorder:
       # Capture call stack if attributing call site fails
       call_site = attr.evolve(
         call_site,
-        call_stack=[cause_module.Frame.from_built_in_frame(f) for f in frames]
+        call_stack=[cause_module.Frame.from_built_in_frame(f) for f in frames],
       )
     if (call_site not in self._recorded_warnings[name]) and (
-      self.call_site_filter(name, call_site.cause_pb)):
+      self.call_site_filter(name, call_site.cause_pb)
+    ):
       self._recorded_warnings[name].add(call_site)
       self._recorded_warning_names.add(name)
 
   def record_import_warning(
-      self,
-      name: str,
-      importer: recipe_deps_module.Recipe | recipe_deps_module.RecipeModule,
+    self,
+    name: str,
+    importer: recipe_deps_module.Recipe | recipe_deps_module.RecipeModule,
   ) -> None:
     """Record the warning issued during DEPS resolution and its cause (
     warning_pb.ImportSite).
@@ -217,13 +226,16 @@ class WarningRecorder:
     """
     self._validate_warning_name(name)
     if not isinstance(
-        importer, (recipe_deps_module.Recipe, recipe_deps_module.RecipeModule)
+      importer, (recipe_deps_module.Recipe, recipe_deps_module.RecipeModule)
     ):
       raise ValueError(
-        "Expect importer to be either type %s or %s. Got %s" % (
+        "Expect importer to be either type %s or %s. Got %s"
+        % (
           recipe_deps_module.RecipeModule.__name__,
           recipe_deps_module.Recipe.__name__,
-          type(importer)))
+          type(importer),
+        )
+      )
 
     # return if the import isn't from the main repo; We don't want to report
     # warnings from other repos.
@@ -233,18 +245,19 @@ class WarningRecorder:
     import_site = cause_module.ImportSite(
       repo=importer.repo.name,
       module=(
-          importer.name
-          if isinstance(importer, recipe_deps_module.RecipeModule)
-          else None
+        importer.name
+        if isinstance(importer, recipe_deps_module.RecipeModule)
+        else None
       ),
       recipe=(
-          importer.name
-          if isinstance(importer, recipe_deps_module.Recipe)
-          else None
+        importer.name
+        if isinstance(importer, recipe_deps_module.Recipe)
+        else None
       ),
     )
     if (import_site not in self._recorded_warnings[name]) and (
-        self.import_site_filter(name, import_site.cause_pb)):
+      self.import_site_filter(name, import_site.cause_pb)
+    ):
       self._recorded_warnings[name].add(import_site)
       self._recorded_warning_names.add(name)
 
@@ -272,9 +285,11 @@ class WarningRecorder:
         name = '/'.join((repo_name, name))
         self._validate_warning_name(name)
         return name
-    raise ValueError('Failed to resolve warning: %r issued in %s. To '
-        'disambiguate, please provide fully-qualified warning name '
-        '(i.e. $repo_name/WARNING_NAME)' % (name, abs_issuer_path))
+    raise ValueError(
+      'Failed to resolve warning: %r issued in %s. To '
+      'disambiguate, please provide fully-qualified warning name '
+      '(i.e. $repo_name/WARNING_NAME)' % (name, abs_issuer_path)
+    )
 
   @staticmethod
   def _ensure_caller_escaped(name: str, frame: types.FrameType) -> None:
@@ -302,7 +317,8 @@ class WarningRecorder:
     if name not in self.recipe_deps.warning_definitions:
       repo, warning = name.split('/', 1)
       raise ValueError(
-          'warning "%s" is not defined in recipe repo %s' % (warning, repo))
+        'warning "%s" is not defined in recipe repo %s' % (warning, repo)
+      )
 
   @functools.cached_property
   def _repo_paths(self) -> list[tuple[str, str]]:
@@ -313,15 +329,17 @@ class WarningRecorder:
     path to decide which repo contains the issuer file.
     """
     return sorted(
-        ((repo_name, repo.path)
-        for repo_name, repo in self.recipe_deps.repos.items()),
-        key=lambda r: r[1],
-        reverse=True,
+      (
+        (repo_name, repo.path)
+        for repo_name, repo in self.recipe_deps.repos.items()
+      ),
+      key=lambda r: r[1],
+      reverse=True,
     )
 
   @functools.cached_property
   def _skip_frame_predicates(
-      self,
+    self,
   ) -> tuple[Callable[[str, types.FrameType], Any], ...]:
     """A tuple of predicate functions to decide whether or not to skip a given
     frame for warning attribution. The predicates are connected with logic OR,
@@ -337,13 +355,10 @@ class WarningRecorder:
     Returns None if the warning can be attributed to the given frame.
     Returns escape.IGNORE if the warning should be ignored.
     """
-    return (
-      self._non_recipe_code_predicate,
-      escape.escape_warning_predicate
-    )
+    return (self._non_recipe_code_predicate, escape.escape_warning_predicate)
 
   def _attribute_call_site(
-      self, name: str, frames: Sequence[types.FrameType]
+    self, name: str, frames: Sequence[types.FrameType]
   ) -> tuple[Any, Any]:
     """Walk up the given stack frames and attribute the first non-skipped frame
     as call site. self._skip_frame_predicates is used to decide whether to skip
@@ -369,8 +384,7 @@ class WarningRecorder:
 
   @functools.cached_property
   def _main_repo_paths(self) -> tuple[str, str]:
-    """A tuple of root paths of all recipe code in the current recipe repo.
-    """
+    """A tuple of root paths of all recipe code in the current recipe repo."""
     return (
       self.recipe_deps.main_repo.recipes_dir,
       self.recipe_deps.main_repo.modules_dir,
@@ -388,7 +402,7 @@ class WarningRecorder:
     return tuple(ret)
 
   def _non_recipe_code_predicate(
-      self, _name: str, frame: types.FrameType
+    self, _name: str, frame: types.FrameType
   ) -> str | None:
     """A predicate that skips a frame when it is executing a code object whose
     source is not in any of the recipe repos in the currently executing

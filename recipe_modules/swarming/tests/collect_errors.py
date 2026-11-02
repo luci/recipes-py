@@ -13,9 +13,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    path,
-    swarming,
+  assertions,
+  path,
+  swarming,
 )
 
 
@@ -37,9 +37,12 @@ def RunSteps(api: DEPS) -> None:
 
   with api.assertions.assertRaises(ValueError):
     # Two Paths in task_output_stdout are not allowed.
-    api.swarming.collect('collect', ['1234'],
-                         output_dir=output_dir,
-                         task_output_stdout=[output_dir, text_dir])
+    api.swarming.collect(
+      'collect',
+      ['1234'],
+      output_dir=output_dir,
+      task_output_stdout=[output_dir, text_dir],
+    )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:

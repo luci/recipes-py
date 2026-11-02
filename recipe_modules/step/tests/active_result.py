@@ -32,7 +32,7 @@ def RunSteps(api: DEPS) -> None:
   api.step.close_non_nest_step()
   try:
     api.step.active_result
-    assert False, "active_result didn't an exception?" # pragma: no cover
+    assert False, "active_result didn't an exception?"  # pragma: no cover
   except ValueError:
     pass
 

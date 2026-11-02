@@ -13,9 +13,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    properties,
-    step,
+  assertions,
+  properties,
+  step,
 )
 
 
@@ -29,6 +29,7 @@ class DEPS(RecipeScriptApi):
 @dataclass
 class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
+
 
 class TestException(Exception):
   pass
@@ -45,23 +46,24 @@ def RunSteps(api: DEPS) -> None:
   else:
     api.step('No AssertionError', [])
     assert str(caught.exception) == exception_message, (
-        'Context manager not working, '
-        'expected TestException with message: %r\n actual message %r' %
-        (exception_message, str(caught.exception)))
+      'Context manager not working, '
+      'expected TestException with message: %r\n actual message %r'
+      % (exception_message, str(caught.exception))
+    )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'no-exception',
-      api.post_process(post_process.MustRun, 'AssertionError'),
-      api.post_process(post_process.StatusSuccess),
-      api.post_process(post_process.DropExpectation),
+    'no-exception',
+    api.post_process(post_process.MustRun, 'AssertionError'),
+    api.post_process(post_process.StatusSuccess),
+    api.post_process(post_process.DropExpectation),
   )
 
   yield api.test(
-      'exception',
-      api.properties(exception_message='fake exception message'),
-      api.post_process(post_process.StatusSuccess),
-      api.post_process(post_process.MustRun, 'No AssertionError'),
-      api.post_process(post_process.DropExpectation),
+    'exception',
+    api.properties(exception_message='fake exception message'),
+    api.post_process(post_process.StatusSuccess),
+    api.post_process(post_process.MustRun, 'No AssertionError'),
+    api.post_process(post_process.DropExpectation),
   )

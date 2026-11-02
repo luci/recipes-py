@@ -13,8 +13,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    platform,
-    step,
+  platform,
+  step,
 )
 
 
@@ -31,9 +31,9 @@ class TEST_DEPS(RecipeTestApi):
 
 def RunSteps(api: DEPS) -> None:
   api.step(
-      'bad daemon',
-      ['python3',
-       api.resource('win.py' if api.platform.is_win else 'unix.py')])
+    'bad daemon',
+    ['python3', api.resource('win.py' if api.platform.is_win else 'unix.py')],
+  )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:

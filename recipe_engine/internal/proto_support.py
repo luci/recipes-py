@@ -35,10 +35,12 @@ PROTOC_VERSION = google.protobuf.__version__.encode('utf-8')
 
 if sys.platform.startswith('win'):
   _BAT = '.bat'
+
   def _to_posix(path: str) -> str:
     return path.replace('\\', '/')
 else:
   _BAT = ''
+
   def _to_posix(path: str) -> str:
     return path
 
@@ -66,8 +68,8 @@ def _file_checksum(path: str | os.PathLike[str]) -> str:
 
 @attr.s(frozen=True)
 class _ProtoInfo:
-  """_ProtoInfo holds information about the proto files found in a recipe repo.
-  """
+  """_ProtoInfo holds information about the proto files found in a recipe repo."""
+
   # Native-slash-delimited path to the source file
   src_abspath: str = attr.ib(validator=attr_util.attr_type(str))
 
@@ -84,7 +86,8 @@ class _ProtoInfo:
   # If not-None, this _ProtoInfo refers to synthesized file content which
   # needs to be written to disk at generation-time.
   synthetic_content: str | None = attr.ib(
-      validator=attr_util.attr_type((str, type(None))))
+    validator=attr_util.attr_type((str, type(None)))
+  )
 
   # The git blob hash of this file.
   #
@@ -95,9 +98,13 @@ class _ProtoInfo:
 
   @classmethod
   def create(
-      cls, repo: recipe_deps.RecipeRepo, scan_relpath: str,
-      dest_namespace: str, relpath: str, synthetic_content: str | None = None,
-    ) -> _ProtoInfo:
+    cls,
+    repo: recipe_deps.RecipeRepo,
+    scan_relpath: str,
+    dest_namespace: str,
+    relpath: str,
+    synthetic_content: str | None = None,
+  ) -> _ProtoInfo:
     """Creates a _ProtoInfo.
 
     This will convert `relpath` into a global relpath for the output PB folder,
@@ -123,13 +130,16 @@ class _ProtoInfo:
     Returns a fully populated _ProtoInfo.
     """
     assert '\\' not in scan_relpath, (
-      'scan_relpath must be fwd-slash-delimited: %r' % scan_relpath)
+      'scan_relpath must be fwd-slash-delimited: %r' % scan_relpath
+    )
     assert '\\' not in dest_namespace, (
-      'dest_namespace must be fwd-slash-delimited: %r' % dest_namespace)
+      'dest_namespace must be fwd-slash-delimited: %r' % dest_namespace
+    )
     assert '\\' not in relpath, (
-      'relpath must be fwd-slash-delimited: %r' % relpath)
+      'relpath must be fwd-slash-delimited: %r' % relpath
+    )
 
-    subpath = relpath[len(scan_relpath):]
+    subpath = relpath[len(scan_relpath) :]
     reserved = False
     if not dest_namespace:
       first_tok = subpath.split('/')[0]
@@ -144,31 +154,44 @@ class _ProtoInfo:
     else:
       blobhash = _file_checksum(src_abspath)
 
-    return cls(src_abspath, relpath, dest_relpath, reserved,
-               synthetic_content, blobhash)
+    return cls(
+      src_abspath, relpath, dest_relpath, reserved, synthetic_content, blobhash
+    )
 
   @classmethod
   def _find_inline_properties_proto(cls, path: str) -> str | None:
     with open(path, 'r') as ins:
       for entry in ast.parse(ins.read()).body:
         match entry:
-          case (ast.Assign(
+          case (
+            ast.Assign(
               targets=[ast.Name(id='INLINE_PROPERTIES_PROTO')],
-              value=ast.Constant(value=str(x))) | ast.AnnAssign(
-                  target=ast.Name(id='INLINE_PROPERTIES_PROTO'),
-                  value=ast.Constant(value=str(x)))):
+              value=ast.Constant(value=str(x)),
+            )
+            | ast.AnnAssign(
+              target=ast.Name(id='INLINE_PROPERTIES_PROTO'),
+              value=ast.Constant(value=str(x)),
+            )
+          ):
             return x
 
-          case (ast.Assign(targets=[ast.Name(id='INLINE_PROPERTIES_PROTO')])
-                | ast.AnnAssign(target=ast.Name(id='INLINE_PROPERTIES_PROTO'))
-                | ast.AugAssign(target=ast.Name(id='INLINE_PROPERTIES_PROTO'))):
+          case (
+            ast.Assign(targets=[ast.Name(id='INLINE_PROPERTIES_PROTO')])
+            | ast.AnnAssign(target=ast.Name(id='INLINE_PROPERTIES_PROTO'))
+            | ast.AugAssign(target=ast.Name(id='INLINE_PROPERTIES_PROTO'))
+          ):
             raise ValueError(f'bad use of INLINE_PROPERTIES_PROTO in {path}')
 
     return None
 
   @classmethod
-  def inline_create(cls, repo: recipe_deps.RecipeRepo, scan_relpath: str,
-                    dest_namespace: str, relpath: str) -> _ProtoInfo:
+  def inline_create(
+    cls,
+    repo: recipe_deps.RecipeRepo,
+    scan_relpath: str,
+    dest_namespace: str,
+    relpath: str,
+  ) -> _ProtoInfo:
     """Creates a _ProtoInfo from a Python file containing an inline proto."""
 
     inline_properties_proto: str | None = None
@@ -179,15 +202,16 @@ class _ProtoInfo:
     inline_properties_proto = cls._find_inline_properties_proto(path)
 
     assert inline_properties_proto, (
-        f'Expected but could not find proto in {path}')
+      f'Expected but could not find proto in {path}'
+    )
 
-    subpath = relpath[len(scan_relpath):]
+    subpath = relpath[len(scan_relpath) :]
 
     proto_path = posixpath.join(
-        repo.recipe_deps.recipe_deps_path,
-        'inline_proto',
-        repo.name,
-        f'{posixpath.splitext(subpath)[0]}.proto',
+      repo.recipe_deps.recipe_deps_path,
+      'inline_proto',
+      repo.name,
+      f'{posixpath.splitext(subpath)[0]}.proto',
     )
     proto_relpath = _to_posix(os.path.relpath(proto_path, repo.path))
 
@@ -201,25 +225,29 @@ class _ProtoInfo:
         namespace.append(part)
 
     split_relpath = relpath.split('/')
-    if (split_relpath[0] == 'recipe_modules' and
-        split_relpath[2] in ('tests', 'examples') or
-        split_relpath[0] == 'recipes'):
+    if (
+      split_relpath[0] == 'recipe_modules'
+      and split_relpath[2] in ('tests', 'examples')
+      or split_relpath[0] == 'recipes'
+    ):
       namespace.append(posixpath.splitext(split_relpath[-1])[0])
 
     print(f'package {".".join(namespace)};', file=buf)
     print(inline_properties_proto, file=buf)
 
     scan_relpath = posixpath.join(
-        _to_posix(
-            os.path.relpath(repo.recipe_deps.recipe_deps_path, repo.path)),
-        'inline_proto', repo.name)
+      _to_posix(os.path.relpath(repo.recipe_deps.recipe_deps_path, repo.path)),
+      'inline_proto',
+      repo.name,
+    )
 
-    return cls.create(repo, scan_relpath, dest_namespace, proto_relpath,
-                      buf.getvalue())
+    return cls.create(
+      repo, scan_relpath, dest_namespace, proto_relpath, buf.getvalue()
+    )
 
 
 def _gather_proto_info_from_repo(
-    repo: recipe_deps.RecipeRepo,
+  repo: recipe_deps.RecipeRepo,
 ) -> list[_ProtoInfo]:
   """Gathers all protos from the given repo.
 
@@ -236,12 +264,12 @@ def _gather_proto_info_from_repo(
   if pre and not pre.endswith('/'):
     pre += '/'
   scan_path = [
-    (pre+'recipes/', 'recipes/%s/' % repo.name),
-    (pre+'recipe_modules/', 'recipe_modules/%s/' % repo.name),
-    (pre+'recipe_proto/', ''),
+    (pre + 'recipes/', 'recipes/%s/' % repo.name),
+    (pre + 'recipe_modules/', 'recipe_modules/%s/' % repo.name),
+    (pre + 'recipe_proto/', ''),
   ]
   if repo.name == 'recipe_engine':
-    scan_path.append((pre+'recipe_engine/', 'recipe_engine/'))
+    scan_path.append((pre + 'recipe_engine/', 'recipe_engine/'))
 
   ret = []
   for scan_relpath, dest_namespace in scan_path:
@@ -262,7 +290,8 @@ def _gather_proto_info_from_repo(
 
         if suffix == '.proto':
           ret.append(
-              _ProtoInfo.create(repo, scan_relpath, dest_namespace, relpath))
+            _ProtoInfo.create(repo, scan_relpath, dest_namespace, relpath)
+          )
           continue
 
         if suffix == '.py' and not os.path.isfile(f'{relname}.proto'):
@@ -270,15 +299,17 @@ def _gather_proto_info_from_repo(
             contents = ins.read()
           if re.search(r'^INLINE_PROPERTIES_PROTO\s*=', contents, re.MULTILINE):
             ret.append(
-                _ProtoInfo.inline_create(repo, scan_relpath, dest_namespace,
-                                         relpath))
+              _ProtoInfo.inline_create(
+                repo, scan_relpath, dest_namespace, relpath
+              )
+            )
           continue
 
   return sorted(ret)
 
 
 def _gather_protos(
-    deps: recipe_deps.RecipeDeps,
+  deps: recipe_deps.RecipeDeps,
 ) -> tuple[str, list[tuple[str, str]], list[tuple[pathlib.Path, str]]]:
   """Gathers all .proto files from all repos, and calculates their collective
   hash.
@@ -335,7 +366,8 @@ def _gather_protos(
       proto_files.append((info.src_abspath, info.dest_relpath))
       if info.synthetic_content is not None:
         synthetic_files.append(
-            (pathlib.Path(info.src_abspath), info.synthetic_content))
+          (pathlib.Path(info.src_abspath), info.synthetic_content)
+        )
 
       csum.update(info.relpath.encode('utf-8'))
       csum.update(b'\0')
@@ -348,18 +380,18 @@ def _gather_protos(
     msg = ''
 
     if dups:
-      msg += (
-        'Multiple repos have the same .proto file:\n' + '\n'.join(
-            '  %r in %s' % (relpath, ', '.join(rel_to_projs[relpath]))
-            for relpath in sorted(dups)))
+      msg += 'Multiple repos have the same .proto file:\n' + '\n'.join(
+        '  %r in %s' % (relpath, ', '.join(rel_to_projs[relpath]))
+        for relpath in sorted(dups)
+      )
 
     if reserved:
       if msg:
         msg += '\n'
-      msg += (
-        'Repos have reserved .proto files:\n' + '\n'.join(
-            '  %r in %s' % (relpath, ', '.join(rel_to_projs[relpath]))
-            for relpath in sorted(reserved)))
+      msg += 'Repos have reserved .proto files:\n' + '\n'.join(
+        '  %r in %s' % (relpath, ', '.join(rel_to_projs[relpath]))
+        for relpath in sorted(reserved)
+      )
 
     raise exceptions.BadProtoDefinitions(msg)
 
@@ -370,6 +402,7 @@ def _gather_protos(
 class _DirMaker:
   """Helper class to make directories on disk, handling errors for directories
   which exist and only making a given directory once."""
+
   made_dirs: set[str] = attr.ib(factory=set)
 
   def __call__(self, dirname: str) -> None:
@@ -419,7 +452,8 @@ def _check_package(modulebody: str, relpath_base: str) -> str | None:
     assert isinstance(assignment.value, ast.Call)
     assert isinstance(assignment.value.args[0], ast.Constant)
     desc = descriptor_pb2.FileDescriptorProto.FromString(
-        assignment.value.args[0].value)
+      assignment.value.args[0].value
+    )
     pkg = desc.package
     break
   else:
@@ -428,15 +462,15 @@ def _check_package(modulebody: str, relpath_base: str) -> str | None:
   relpath_toks = relpath_base.split(os.path.sep)
   toplevel_namespace = relpath_toks[0]
 
-  is_reserved_namespace = (
-    lambda tok: tok == 'recipes' or tok.startswith('recipe_')
+  is_reserved_namespace = lambda tok: (
+    tok == 'recipes' or tok.startswith('recipe_')
   )
   is_global = not is_reserved_namespace(toplevel_namespace)
 
   is_module_test = lambda toks: (
-      toks[0] == 'recipe_modules'
-      and len(toks) > 3
-      and toks[3] in ('examples', 'tests')
+    toks[0] == 'recipe_modules'
+    and len(toks) > 3
+    and toks[3] in ('examples', 'tests')
   )
 
   err = None
@@ -473,8 +507,9 @@ def _check_package(modulebody: str, relpath_base: str) -> str | None:
 # We find all import lines which aren't importing from the special
 # `google.protobuf` namespace, and rewrite them.
 _REWRITE_IMPORT_RE = re.compile(
-    r'^from (?!google\.protobuf|typing)(\S*) import (\S*)_pb2 as (.*)$',
-    re.MULTILINE)
+  r'^from (?!google\.protobuf|typing)(\S*) import (\S*)_pb2 as (.*)$',
+  re.MULTILINE,
+)
 
 
 def _rewrite_and_rename(root: str, base_proto_path: str) -> str | None:
@@ -493,7 +528,7 @@ def _rewrite_and_rename(root: str, base_proto_path: str) -> str | None:
   """
   assert base_proto_path.endswith('_pb2.py'), base_proto_path
 
-  target = base_proto_path[:-len('_pb2.py')]+'.py'
+  target = base_proto_path[: -len('_pb2.py')] + '.py'
   with open(base_proto_path, 'r', encoding='utf-8') as ifile:
     content = ifile.read()
 
@@ -505,18 +540,16 @@ def _rewrite_and_rename(root: str, base_proto_path: str) -> str | None:
   err = _check_package(content, expected_package)
 
   with open(target, 'w', encoding='utf-8') as ofile:
-    ofile.write(
-        _REWRITE_IMPORT_RE.sub(r'from PB.\1 import \2 as \3', content))
+    ofile.write(_REWRITE_IMPORT_RE.sub(r'from PB.\1 import \2 as \3', content))
   os.remove(base_proto_path)
 
   # Next, we process the .pyi file
   base_pyi_path = base_proto_path + 'i'
-  pyi_target = base_proto_path[:-len('_pb2.py')]+'.pyi'
+  pyi_target = base_proto_path[: -len('_pb2.py')] + '.pyi'
   with open(base_pyi_path, 'r', encoding='utf-8') as ifile:
     content = ifile.read()
   with open(pyi_target, 'w', encoding='utf-8') as ofile:
-    ofile.write(
-        _REWRITE_IMPORT_RE.sub(r'from PB.\1 import \2 as \3', content))
+    ofile.write(_REWRITE_IMPORT_RE.sub(r'from PB.\1 import \2 as \3', content))
   os.remove(base_pyi_path)
 
   return err
@@ -532,7 +565,7 @@ def _try_rename(src: str, dest: str) -> None:
 
 
 def _rel_to_abs_replacer(
-    proto_files: Sequence[tuple[str, str]],
+  proto_files: Sequence[tuple[str, str]],
 ) -> Callable[[str], str]:
   """Returns a function which will replace directories relative to the
   destination `PB` directory (at the beginning of a line) with their original
@@ -551,24 +584,31 @@ def _rel_to_abs_replacer(
     dest_dirname = os.path.dirname(dest_relpath)
     if dest_dirname not in rel_to_abs:
       src_base = os.path.dirname(src_abspath)
-      if not dest_dirname: # a root path; needs a slash on replacement
+      if not dest_dirname:  # a root path; needs a slash on replacement
         src_base += os.path.sep
       rel_to_abs[dest_dirname] = src_base
 
   # Sort all relative paths by length from longest to shortest
-  finder = re.compile('^(%s)' % ('|'.join(
-      re.escape(rel) for rel in sorted(rel_to_abs, key=len, reverse=True)),))
+  finder = re.compile(
+    '^(%s)'
+    % (
+      '|'.join(
+        re.escape(rel) for rel in sorted(rel_to_abs, key=len, reverse=True)
+      ),
+    )
+  )
 
   # For every match of some relpath, look up the original source path in
   # rel_to_abs and substitute that.
   return lambda to_replace: finder.sub(
-      lambda match: rel_to_abs[match.group(0)], to_replace)
+    lambda match: rel_to_abs[match.group(0)], to_replace
+  )
 
 
 def _collect_protos(
-    argfile_fd: int,
-    proto_files: Sequence[tuple[str, str]],
-    dest: str,
+  argfile_fd: int,
+  proto_files: Sequence[tuple[str, str]],
+  dest: str,
 ) -> None:
   """Copies all proto_files into dest.
 
@@ -596,8 +636,13 @@ def _collect_protos(
     os.close(argfile_fd)  # for windows
 
 
-def _compile_protos(proto_files: Sequence[tuple[str, str]], proto_tree: str,
-                    protoc: str, argfile: str, dest: str) -> None:
+def _compile_protos(
+  proto_files: Sequence[tuple[str, str]],
+  proto_tree: str,
+  protoc: str,
+  argfile: str,
+  dest: str,
+) -> None:
   """Runs protoc over the collected protos, renames them and rewrites their
   imports to make them import from `PB`.
 
@@ -611,10 +656,11 @@ def _compile_protos(proto_files: Sequence[tuple[str, str]], proto_tree: str,
     * dest: Path to the destination where the compiled protos should go.
   """
   protoc_proc = gevent.subprocess.Popen(
-      [protoc, '--python_out', dest, '--pyi_out', dest, '@'+argfile],
-      cwd=proto_tree,
-      stdout=gevent.subprocess.PIPE,
-      stderr=gevent.subprocess.STDOUT)
+    [protoc, '--python_out', dest, '--pyi_out', dest, '@' + argfile],
+    cwd=proto_tree,
+    stdout=gevent.subprocess.PIPE,
+    stderr=gevent.subprocess.STDOUT,
+  )
   output, _ = protoc_proc.communicate()
   try:
     os.remove(argfile)
@@ -647,8 +693,9 @@ def _compile_protos(proto_files: Sequence[tuple[str, str]], proto_tree: str,
     sys.exit(1)
 
 
-def _install_protos(proto_package_path: str, dgst: str,
-                    proto_files: Sequence[tuple[str, str]]) -> None:
+def _install_protos(
+  proto_package_path: str, dgst: str, proto_files: Sequence[tuple[str, str]]
+) -> None:
   """Installs protos to `{proto_package_path}/PB`.
 
   Args:
@@ -666,15 +713,25 @@ def _install_protos(proto_package_path: str, dgst: str,
     * Ensures that `{proto_package_path}/protoc` contains the correct
       `protoc` compiler from CIPD.
   """
-  cipd_proc = gevent.subprocess.Popen([
-    'cipd'+_BAT, 'ensure', '-root', os.path.join(proto_package_path, 'protoc'),
-    '-ensure-file', '-'], stdin=gevent.subprocess.PIPE)
+  cipd_proc = gevent.subprocess.Popen(
+    [
+      'cipd' + _BAT,
+      'ensure',
+      '-root',
+      os.path.join(proto_package_path, 'protoc'),
+      '-ensure-file',
+      '-',
+    ],
+    stdin=gevent.subprocess.PIPE,
+  )
   protoc_version = PROTOC_VERSION.split(b'.', 1)[1]
-  cipd_proc.communicate(b'infra/3pp/tools/protoc/${platform} version:3@' +
-                        protoc_version)
+  cipd_proc.communicate(
+    b'infra/3pp/tools/protoc/${platform} version:3@' + protoc_version
+  )
   if cipd_proc.returncode != 0:
     raise ValueError(
-        'failed to install protoc: retcode %d' % cipd_proc.returncode)
+      'failed to install protoc: retcode %d' % cipd_proc.returncode
+    )
 
   # This tmp folder is where all the temporary garbage goes. Future recipe
   # engine invocations will attempt to clean this up as long as PB is
@@ -725,8 +782,9 @@ def _check_digest(proto_package: str, dgst: str) -> bool:
       raise
 
 
-def ensure_compiled(deps: recipe_deps.RecipeDeps,
-                    proto_override: str | None) -> str:
+def ensure_compiled(
+  deps: recipe_deps.RecipeDeps, proto_override: str | None
+) -> str:
   """Ensures protos are compiled.
 
   Gathers protos from all repos and compiles them into
@@ -775,9 +833,11 @@ def ensure_compiled(deps: recipe_deps.RecipeDeps,
     # python-version-specific _pb directories.
     # Also remove _pb2 since recipes no longer support python2.
     shutil.rmtree(
-        os.path.join(deps.recipe_deps_path, '_pb'), ignore_errors=True)
+      os.path.join(deps.recipe_deps_path, '_pb'), ignore_errors=True
+    )
     shutil.rmtree(
-        os.path.join(deps.recipe_deps_path, '_pb2'), ignore_errors=True)
+      os.path.join(deps.recipe_deps_path, '_pb2'), ignore_errors=True
+    )
   return proto_package
 
 
@@ -794,5 +854,6 @@ def append_to_syspath(proto_package: str) -> None:
 
 def is_message_class(obj: object) -> bool:
   """Returns True if |obj| is a subclass of google.protobuf.message.Message."""
-  return (inspect.isclass(obj) and
-          issubclass(obj, google.protobuf.message.Message))
+  return inspect.isclass(obj) and issubclass(
+    obj, google.protobuf.message.Message
+  )

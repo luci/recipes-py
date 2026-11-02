@@ -18,14 +18,21 @@ import sys
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
   parser.add_argument(
-    'input', type=argparse.FileType('r'),
+    'input',
+    type=argparse.FileType('r'),
     help='Path to a JSON object. Valid fields: "files", "recipes". See'
-         ' analyze.proto file for more information')
+    ' analyze.proto file for more information',
+  )
   parser.add_argument(
-    'output', type=argparse.FileType('w'), default=sys.stdout,
-    help='The file to write output to. See analyze.proto for more information.')
+    'output',
+    type=argparse.FileType('w'),
+    default=sys.stdout,
+    help='The file to write output to. See analyze.proto for more information.',
+  )
 
   def _launch(args: argparse.Namespace) -> int:
     from . import cmd
+
     return cmd.main(args)
+
   parser.set_defaults(func=_launch)

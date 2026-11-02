@@ -17,13 +17,15 @@ from typing import Any
 # Give this a high priority so it shows first in help.
 __cmd_priority__ = 0
 
+
 def add_arguments(parser: argparse.ArgumentParser) -> None:
   def _properties_file_type(filename: str) -> dict[str, Any]:
-    with (sys.stdin if filename == '-' else open(filename)) as fil:
+    with sys.stdin if filename == '-' else open(filename) as fil:
       obj = json.load(fil)
       if not isinstance(obj, dict):
         raise argparse.ArgumentTypeError(
-          'must contain a JSON object, i.e. `{}`.')
+          'must contain a JSON object, i.e. `{}`.'
+        )
       return obj
 
   def _parse_prop(prop: str) -> dict[str, Any]:
@@ -43,29 +45,31 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
   parser.add_argument(
     '--workdir',
     type=os.path.abspath,
-    help='The working directory of recipe execution')
+    help='The working directory of recipe execution',
+  )
   parser.add_argument(
     '--output-result-json',
     type=os.path.abspath,
     help=(
-      'The file to write the JSON serialized returned value '
-      ' of the recipe to'))
+      'The file to write the JSON serialized returned value  of the recipe to'
+    ),
+  )
   prop_group = parser.add_mutually_exclusive_group()
   prop_group.add_argument(
     '--properties-file',
     dest='properties',
     type=_properties_file_type,
     help=(
-      'A file containing a json blob of properties. '
-      'Pass "-" to read from stdin'))
+      'A file containing a json blob of properties. Pass "-" to read from stdin'
+    ),
+  )
   prop_group.add_argument(
     '--properties',
     type=_properties_type,
-    help='A json string containing the properties')
+    help='A json string containing the properties',
+  )
 
-  parser.add_argument(
-    'recipe',
-    help='The recipe to execute')
+  parser.add_argument('recipe', help='The recipe to execute')
   parser.add_argument(
     'props',
     nargs=argparse.REMAINDER,
@@ -73,9 +77,13 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     help=(
       'A list of property pairs; e.g. shards=5 gn_args=["json", "decoded"] '
       'prefix="foobar", but if this decoding fails the value will be '
-      'interpreted as a string, e.g. prop=implicit_string.'))
+      'interpreted as a string, e.g. prop=implicit_string.'
+    ),
+  )
 
   def _launch(args: argparse.Namespace) -> int:
     from . import cmd
+
     return cmd.main(args)
+
   parser.set_defaults(properties={}, func=_launch)

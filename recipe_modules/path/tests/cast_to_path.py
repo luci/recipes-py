@@ -14,8 +14,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    path,
-    platform,
+  path,
+  platform,
 )
 
 
@@ -35,8 +35,9 @@ def RunSteps(api: DEPS) -> None:
   if api.platform.is_win:
     arbitrary = api.path.cast_to_path(r'c:\some\random/path')
     assert arbitrary.base == ResolvedBasePath(r'c:'), f'"{arbitrary.base!r}"'
-    assert arbitrary.pieces == ('some', 'random',
-                                'path'), f'{arbitrary.pieces!r}'
+    assert arbitrary.pieces == ('some', 'random', 'path'), (
+      f'{arbitrary.pieces!r}'
+    )
     assert str(arbitrary) == r'c:\some\random\path'
 
     arbitrary2 = api.path.cast_to_path(r'c:\\\\\hey/there')
@@ -54,8 +55,9 @@ def RunSteps(api: DEPS) -> None:
   else:
     arbitrary = api.path.cast_to_path('/some/random/path')
     assert arbitrary.base == ResolvedBasePath(''), f'"{arbitrary.base!r}"'
-    assert arbitrary.pieces == ('some', 'random',
-                                'path'), f'{arbitrary.pieces!r}'
+    assert arbitrary.pieces == ('some', 'random', 'path'), (
+      f'{arbitrary.pieces!r}'
+    )
     assert str(arbitrary) == '/some/random/path'
 
     try:
@@ -71,17 +73,17 @@ def RunSteps(api: DEPS) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'win',
-      api.platform.name('win'),
-      api.path.exists(api.path.cast_to_path(r'd:\legit\file')),
-      api.post_process(DropExpectation),
+    'win',
+    api.platform.name('win'),
+    api.path.exists(api.path.cast_to_path(r'd:\legit\file')),
+    api.post_process(DropExpectation),
   )
 
   base = api.path.cast_to_path('/legit/dir')
 
   yield api.test(
-      'linux',
-      api.platform.name('linux'),
-      api.path.dirs_exist(base.join('etc')),
-      api.post_process(DropExpectation),
+    'linux',
+    api.platform.name('linux'),
+    api.path.dirs_exist(base.join('etc')),
+    api.post_process(DropExpectation),
   )

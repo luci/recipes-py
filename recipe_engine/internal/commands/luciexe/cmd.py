@@ -40,7 +40,8 @@ LOG = logging.getLogger(__name__)
 def _contract_in_env(key: str) -> str:
   if key not in os.environ:
     raise luciexe.RunBuildContractViolation(
-        'Expected $%s in environment.' % key)
+      'Expected $%s in environment.' % key
+    )
   return os.environ[key]
 
 
@@ -48,13 +49,14 @@ def _contract_in_luci_context(section_name: str, key: str) -> Any:
   section = luci_context.read(section_name)
   if section is None or key not in section:
     raise luciexe.RunBuildContractViolation(
-        'Expected %r in $LUCI_CONTEXT[%r].' % (key, section_name))
+      'Expected %r in $LUCI_CONTEXT[%r].' % (key, section_name)
+    )
   return section[key]
 
 
 def _synth_properties(
-    build: build_pb.Build,
-    current_properties: Mapping[str, Any],
+  build: build_pb.Build,
+  current_properties: Mapping[str, Any],
 ) -> dict[str, Any]:
   # TODO(iannucci): expose this data natively as a Build message.
   synth_props: dict[str, Any] = {
@@ -83,6 +85,7 @@ def _synth_properties(
   LOG.info('Synthesized properties: %r', synth_props)
   return synth_props
 
+
 def _tweak_env() -> None:
   # These tweaks are recipe-engine-specific tweaks to be compatible with the
   # behavior of `recipes.py run`.
@@ -105,8 +108,9 @@ def _main_impl(args: argparse.Namespace) -> int:
   turboci_experiment = (
     "luci.buildbucket.run_in_turboci" in build.input.experiments
   )
-  turboci_grpc_experiment = ("luci.buildbucket.run_in_turboci.grpc_client"
-                             in build.input.experiments)
+  turboci_grpc_experiment = (
+    "luci.buildbucket.run_in_turboci.grpc_client" in build.input.experiments
+  )
   turboci_endpoint = build.infra.turboci.hostname
   turboci_stage_attempt_id = build.infra.turboci.stage_attempt_id
   wpid = None
@@ -118,13 +122,15 @@ def _main_impl(args: argparse.Namespace) -> int:
     if turboci_grpc_experiment:
       LOG.info('TurboCI: Initializing gRPC client.')
       turboci_common.CLIENT = turboci_grpc.TurboCIGRPCClient(
-          turboci_endpoint, wpid=wpid, token=turboci_token)
+        turboci_endpoint, wpid=wpid, token=turboci_token
+      )
     else:
       LOG.info('TurboCI: Initializing CLI subprocess client.')
       turboci_common.CLIENT = turboci_real.TurboCIOrchestrator(turboci_endpoint)
   else:
     turboci_common.CLIENT = turboci_fake.FakeTurboCIOrchestrator(
-        test_mode=False)
+      test_mode=False
+    )
 
   properties = jsonpb.MessageToDict(build.input.properties)
   properties.update(_synth_properties(build, properties))
@@ -138,10 +144,16 @@ def _main_impl(args: argparse.Namespace) -> int:
   with invariants.StreamEngineInvariants.wrap(luciexe_engine) as stream_engine:
     try:
       raw_result, _ = engine.RecipeEngine.run_steps(
-        args.recipe_deps, properties, stream_engine,
-        subproc.SubprocessStepRunner(), os.environ, os.getcwd(),
-        luci_context.read_full(), psutil.cpu_count(),
-        psutil.virtual_memory().total)
+        args.recipe_deps,
+        properties,
+        stream_engine,
+        subproc.SubprocessStepRunner(),
+        os.environ,
+        os.getcwd(),
+        luci_context.read_full(),
+        psutil.cpu_count(),
+        psutil.virtual_memory().total,
+      )
       stream_engine.write_result(raw_result)
     except:
       LOG.exception("RecipeEngine.run_steps uncaught exception.")
@@ -150,14 +162,15 @@ def _main_impl(args: argparse.Namespace) -> int:
   if args.output:
     try:
       final_build = luciexe_engine.current_build_proto
-      if args.output.endswith('.pb') :
+      if args.output.endswith('.pb'):
         out = final_build.SerializeToString(deterministic=True)
       elif args.output.endswith('.json'):
         out = jsonpb.MessageToJson(
-            final_build,
-            preserving_proto_field_name=True,
-            sort_keys=True,
-            indent=2).encode('utf-8')
+          final_build,
+          preserving_proto_field_name=True,
+          sort_keys=True,
+          indent=2,
+        ).encode('utf-8')
       elif args.output.endswith('.textpb'):
         out = textpb.MessageToString(final_build).encode('utf-8')
       else:

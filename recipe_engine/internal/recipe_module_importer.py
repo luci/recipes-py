@@ -58,7 +58,7 @@ class RecipeModuleImporter:
     self._recipe_deps = recipe_deps
 
   def find_module(
-      self, fullname: str, path: Sequence[str] | None = None
+    self, fullname: str, path: Sequence[str] | None = None
   ) -> RecipeModuleImporter | None:  # pylint: disable=unused-argument
     if fullname == self.PREFIX or fullname.startswith(self.PREFIX + '.'):
       toks = fullname.split('.')
@@ -82,8 +82,9 @@ class RecipeModuleImporter:
         module_name = toks[2]
         mod_dir = self._recipe_deps.repos[repo_name].modules[module_name].path
         target = os.path.join(mod_dir, *toks[3:])
-        if (os.path.isdir(target) and
-            os.path.isfile(os.path.join(target, '__init__.py'))):
+        if os.path.isdir(target) and os.path.isfile(
+          os.path.join(target, '__init__.py')
+        ):
           # This is a module in the recipe package.
           return self
         elif os.path.isfile(target + '.py'):
@@ -97,16 +98,15 @@ class RecipeModuleImporter:
   def load_module(self, fullname: str) -> types.ModuleType:
     """Returns:
 
-      * `RECIPE_MODULES` module. This is an empty placeholder module.
-      * `RECIPE_MODULES.repo_name` module. This is an empty placeholder module,
-        but it has __path__ set to the `recipe_modules` path of the given repo.
-      * `RECIPE_MODULES.repo_name.mod_name` module. This is the real python
-        module (i.e. whatever is in this modules' __init__.py). Additionally
-        this adds extra attributes (see _patchup_module).
-      * `RECIPE_MODULES.repo_name.mod_name...` modules. These are the real
-        python modules contained within 'repo_name/mod_name' without any tweaks.
+    * `RECIPE_MODULES` module. This is an empty placeholder module.
+    * `RECIPE_MODULES.repo_name` module. This is an empty placeholder module,
+      but it has __path__ set to the `recipe_modules` path of the given repo.
+    * `RECIPE_MODULES.repo_name.mod_name` module. This is the real python
+      module (i.e. whatever is in this modules' __init__.py). Additionally
+      this adds extra attributes (see _patchup_module).
+    * `RECIPE_MODULES.repo_name.mod_name...` modules. These are the real
+      python modules contained within 'repo_name/mod_name' without any tweaks.
     """
-
 
     # fullname is RECIPE_MODULES[.<repo_name>[.<mod_name>[.etc.etc]]]
     mod = sys.modules.setdefault(fullname, imp.new_module(fullname))

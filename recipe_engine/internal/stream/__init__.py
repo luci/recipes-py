@@ -34,7 +34,7 @@ class StreamEngine:
     def write_split(self, string: str) -> None:
       """Write a string (which may contain newlines) to the stream.  It will
       be terminated by a newline."""
-      for actual_line in string.splitlines() or ['']: # preserve empty lines
+      for actual_line in string.splitlines() or ['']:  # preserve empty lines
         self.write_line(actual_line)
 
     # TODO(iannucci): Having a phantom method as part of the API is weird.
@@ -48,10 +48,10 @@ class StreamEngine:
 
     # TODO(iannucci): make handle_exception unnecessary
     def handle_exception(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: types.TracebackType | None,
+      self,
+      exc_type: type[BaseException] | None,
+      exc_val: BaseException | None,
+      exc_tb: types.TracebackType | None,
     ) -> bool | None:
       pass
 
@@ -59,10 +59,10 @@ class StreamEngine:
       return self
 
     def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: types.TracebackType | None,
+      self,
+      exc_type: type[BaseException] | None,
+      exc_val: BaseException | None,
+      exc_tb: types.TracebackType | None,
     ) -> bool | None:
       ret = self.handle_exception(exc_type, exc_val, exc_tb)
       self.close()
@@ -107,7 +107,7 @@ class StreamEngine:
       pass
 
     def open_std_handles(
-        self, stdout: bool = False, stderr: bool = False
+      self, stdout: bool = False, stderr: bool = False
     ) -> dict[str, StreamEngine.Stream] | None:
       """Opens one or two standard handles.
 
@@ -131,11 +131,11 @@ class StreamEngine:
       return None
 
   def new_step_stream(
-      self,
-      name_tokens: Sequence[str],
-      allow_subannotations: bool,
-      merge_step: bool | Literal['legacy'] = False,
-      merge_output_properties_to: Sequence[str] | None = None,
+    self,
+    name_tokens: Sequence[str],
+    allow_subannotations: bool,
+    merge_step: bool | Literal['legacy'] = False,
+    merge_output_properties_to: Sequence[str] | None = None,
   ) -> StepStream:
     """Creates a new StepStream in this engine.
 
@@ -184,10 +184,10 @@ class StreamEngine:
     return self
 
   def __exit__(
-      self,
-      exc_type: type[BaseException] | None,
-      exc_val: BaseException | None,
-      exc_tb: types.TracebackType | None,
+    self,
+    exc_type: type[BaseException] | None,
+    exc_val: BaseException | None,
+    exc_tb: types.TracebackType | None,
   ) -> bool:
     self.close()
     return True

@@ -11,8 +11,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    led,
-    step,
+  led,
+  step,
 )
 
 
@@ -49,8 +49,8 @@ def RunSteps(api: DEPS) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'find nothing',
-      api.led.mock_get_builder(None, 'fake', 'bucket', 'no-exist'),
-      api.led.mock_get_build(None, 123456789),
-      api.led.mock_get_swarm(None, 'deadbeef'),
+    'find nothing',
+    api.led.mock_get_builder(None, 'fake', 'bucket', 'no-exist'),
+    api.led.mock_get_build(None, 123456789),
+    api.led.mock_get_swarm(None, 'deadbeef'),
   )

@@ -50,8 +50,8 @@ from . import pipe
 
 
 def _merge_presentation_updates(
-    steps_ran: Mapping[str, dict[str, Any]],
-    presentation_steps: Mapping[str | None, dict[str, Any]],
+  steps_ran: Mapping[str, dict[str, Any]],
+  presentation_steps: Mapping[str | None, dict[str, Any]],
 ) -> collections.OrderedDict[str, dict[str, Any]]:
   """Merges the steps ran (from the SimulationStepRunner) with the steps
   presented (from the SimulationAnnotatorStreamEngine).
@@ -72,12 +72,15 @@ def _merge_presentation_updates(
     # root annotations
     if step_name is None:
       continue
-    ret[step_name] = steps_ran.get(step_name, {
-      'name': step_name,
-      # TODO(iannucci): Drop 'cmd' field for presentation-only steps.
-      'cmd': [],
-      'cost': None,
-    })
+    ret[step_name] = steps_ran.get(
+      step_name,
+      {
+        'name': step_name,
+        # TODO(iannucci): Drop 'cmd' field for presentation-only steps.
+        'cmd': [],
+        'cost': None,
+      },
+    )
     debug_logs = step_presented.get('logs', {}).get('$debug', None)
     # wowo hacks!
     # We only want to see $debug if it's got a crash in it.
@@ -90,10 +93,10 @@ def _merge_presentation_updates(
 
 
 def _check_bad_test(
-    test_results: runner_pb.Outcome.Results,
-    test_data: recipe_test_api.TestData,
-    steps_ran: Sequence[str],
-    presentation_steps: Sequence[str],
+  test_results: runner_pb.Outcome.Results,
+  test_data: recipe_test_api.TestData,
+  steps_ran: Sequence[str],
+  presentation_steps: Sequence[str],
 ) -> None:
   """Check to see if the user-provided test was malformed in some way.
 
@@ -123,25 +126,31 @@ def _check_bad_test(
       # If the step is unconsumed but present in presentation_steps it means
       # that the step was really a presentation-only step (like a parent nesting
       # step) and not eligble for test data.
-      test_results.bad_test.extend([
-        'Mock data provided for presentation only step %r.' % step,
-        'Presentation-only steps (like parent nesting steps) have no',
-        'subprocess associated with them and so cannot have mock data.',
-        'Please change your test so that it provides mock data for one of',
-        'the real steps.',
-      ])
+      test_results.bad_test.extend(
+        [
+          'Mock data provided for presentation only step %r.' % step,
+          'Presentation-only steps (like parent nesting steps) have no',
+          'subprocess associated with them and so cannot have mock data.',
+          'Please change your test so that it provides mock data for one of',
+          'the real steps.',
+        ]
+      )
 
     else:
       test_results.bad_test.append(
-          'Mock data provided for non-existent step %r.' % step)
+        'Mock data provided for non-existent step %r.' % step
+      )
 
   if test_results.bad_test:
-    test_results.bad_test.extend([
+    test_results.bad_test.extend(
+      [
         '',
         'For reference, this test ran the following steps:',
-    ])
+      ]
+    )
     test_results.bad_test.extend(
-        '  ' + repr(s) for s in presentation_steps if s in steps_ran)
+      '  ' + repr(s) for s in presentation_steps if s in steps_ran
+    )
 
 
 def _exception_class_names(exception: BaseException) -> set[str]:
@@ -155,11 +164,11 @@ def _exception_class_names(exception: BaseException) -> set[str]:
 
 
 def _check_exception(
-    test_results: runner_pb.Outcome.Results,
-    expected_exceptions: Iterable[str],
-    uncaught_exception_info: (
-        tuple[type[BaseException], BaseException, TracebackType | None] | None
-    ),
+  test_results: runner_pb.Outcome.Results,
+  expected_exceptions: Iterable[str],
+  uncaught_exception_info: (
+    tuple[type[BaseException], BaseException, TracebackType | None] | None
+  ),
 ) -> None:
   """Check to see if the test run failed with an exception from RunSteps.
 
@@ -194,8 +203,8 @@ def _check_exception(
 
       if uncaught_exception_types != expected_exception_types:
         test_results.crash_mismatch.append(
-            'Expected exception mismatch in RunSteps. The test expected '
-            f'{expected_exception_types} but saw {uncaught_exception_types}'
+          'Expected exception mismatch in RunSteps. The test expected '
+          f'{expected_exception_types} but saw {uncaught_exception_types}'
         )
 
   elif exc:
@@ -209,17 +218,16 @@ def _check_exception(
         msg_lines.append(part)
 
     msg_lines += [
-      l.rstrip('\n')
-      for l in traceback.format_exception_only(exc_type, exc)
+      l.rstrip('\n') for l in traceback.format_exception_only(exc_type, exc)
     ]
     test_results.crash_mismatch.extend(msg_lines)
 
 
 def _check_status(
-    raw_result: result_pb.RawResult,
-    test_data: recipe_test_api.TestData,
-    test_results: runner_pb.Outcome.Results,
-    enforce_status_check: bool,
+  raw_result: result_pb.RawResult,
+  test_data: recipe_test_api.TestData,
+  test_results: runner_pb.Outcome.Results,
+  enforce_status_check: bool,
 ) -> None:
   """Check the status of the test against the expected status.
 
@@ -246,28 +254,36 @@ def _check_status(
       # be useful if the recipe passed, since it probably won't indicate where
       # the recipe was expected to fail but didn't.
       if (
-          raw_result.summary_markdown
-          and raw_result.status != common_pb.Status.SUCCESS
+        raw_result.summary_markdown
+        and raw_result.status != common_pb.Status.SUCCESS
       ):
         summary_info = '\nsummary_markdown:\n%s' % textwrap.indent(
-            raw_result.summary_markdown, '  ')
+          raw_result.summary_markdown, '  '
+        )
       test_results.crash_mismatch.append(
-          'Status mismatch in RunSteps. The test expected %r but '
-          'the status was %r.%s' % (common_pb.Status.Name(expected_status),
-                                    common_pb.Status.Name(build_status),
-                                    summary_info))
+        'Status mismatch in RunSteps. The test expected %r but '
+        'the status was %r.%s'
+        % (
+          common_pb.Status.Name(expected_status),
+          common_pb.Status.Name(build_status),
+          summary_info,
+        )
+      )
     else:
       test_results.global_warnings.append(
-          'expected %s, got %s' % (common_pb.Status.Name(expected_status),
-                                   common_pb.Status.Name(build_status))
+        'expected %s, got %s'
+        % (
+          common_pb.Status.Name(expected_status),
+          common_pb.Status.Name(build_status),
+        )
       )
 
 
 def _diff_test(
-    test_results: runner_pb.Outcome.Results,
-    expect_file: str,
-    new_expect: Sequence[dict[str, Any]] | None,
-    is_train: bool,
+  test_results: runner_pb.Outcome.Results,
+  expect_file: str,
+  new_expect: Sequence[dict[str, Any]] | None,
+  is_train: bool,
 ) -> None:
   """Compares the actual and expected results.
 
@@ -293,8 +309,9 @@ def _diff_test(
   except Exception as ex:  # pylint: disable=broad-except
     if not is_train:
       test_results.internal_error.append(
-          'Unexpected exception reading test expectation %r: %r' % (
-            expect_file, ex))
+        'Unexpected exception reading test expectation %r: %r'
+        % (expect_file, ex)
+      )
       return
 
   # Occurs if the expectation is not on disk and the test case dropped the
@@ -305,7 +322,8 @@ def _diff_test(
     return
 
   new_expect_text = json.dumps(
-      _encode_decode(new_expect), sort_keys=True, indent=2)
+    _encode_decode(new_expect), sort_keys=True, indent=2
+  )
 
   if new_expect_text == cur_expect_text:
     return
@@ -332,35 +350,41 @@ def _diff_test(
       test_results.written = True
     except Exception as ex:  # pylint: disable=broad-except
       test_results.internal_error.append(
-          'Unexpected exception writing test expectation %r: %r' % (
-            expect_file, ex))
+        'Unexpected exception writing test expectation %r: %r'
+        % (expect_file, ex)
+      )
     return
 
   if new_expect is None:
-    test_results.diff.lines.extend([
-      'Test expectation exists on disk at %r.' % (expect_file,),
-      'However, the test case dropped all expectation information (i.e. with a'
-      ' `post_process` function). Please re-run `recipes.py test train` or '
-      'delete this expectation file.',
-    ])
+    test_results.diff.lines.extend(
+      [
+        'Test expectation exists on disk at %r.' % (expect_file,),
+        'However, the test case dropped all expectation information (i.e. with a'
+        ' `post_process` function). Please re-run `recipes.py test train` or '
+        'delete this expectation file.',
+      ]
+    )
     return
 
   test_results.diff.lines.extend(
-      difflib.unified_diff(
-          str(cur_expect_text).splitlines(),
-          str(new_expect_text).splitlines(),
-          fromfile='current expectation file',
-          tofile='actual test result',
-          n=4, lineterm=''))
+    difflib.unified_diff(
+      str(cur_expect_text).splitlines(),
+      str(new_expect_text).splitlines(),
+      fromfile='current expectation file',
+      tofile='actual test result',
+      n=4,
+      lineterm='',
+    )
+  )
 
 
 def _run_test(
-    path_cleaner: Callable[[list[str]], list[str]],
-    test_results: runner_pb.Outcome.Results,
-    recipe_deps: recipe_deps_mod.RecipeDeps,
-    test_desc: runner_pb.Description,
-    test_data: recipe_test_api.TestData,
-    is_train: bool,
+  path_cleaner: Callable[[list[str]], list[str]],
+  test_results: runner_pb.Outcome.Results,
+  recipe_deps: recipe_deps_mod.RecipeDeps,
+  test_desc: runner_pb.Description,
+  test_data: recipe_test_api.TestData,
+  is_train: bool,
 ) -> None:
   """This is the main 'function' run by the worker. It executes the test in the
   recipe, compares/diffs/writes the expectation file and updates `test_results`
@@ -377,55 +401,71 @@ def _run_test(
 
   record.GLOBAL.reset_recorded_warning_names()
   test_case_result = execute_test_case_mod.execute_test_case(
-      recipe_deps, test_desc.recipe_name, test_data)
+    recipe_deps, test_desc.recipe_name, test_data
+  )
 
   duration = time.time() - start_time
   test_results.duration.CopyFrom(
-      duration_pb2.Duration(
-          seconds=int(duration), nanos=int((duration % 1) * (10**9))))
+    duration_pb2.Duration(
+      seconds=int(duration), nanos=int((duration % 1) * (10**9))
+    )
+  )
 
   test_results.warnings.extend(record.GLOBAL.recorded_warning_names)
 
-  raw_expectations = _merge_presentation_updates(test_case_result.ran_steps,
-                                                 test_case_result.annotations)
-  _check_bad_test(test_results, test_data,
-                  list(test_case_result.ran_steps),
-                  list(raw_expectations))
-  _check_exception(test_results, test_data.expected_exceptions,
-                   test_case_result.uncaught_exception)
+  raw_expectations = _merge_presentation_updates(
+    test_case_result.ran_steps, test_case_result.annotations
+  )
+  _check_bad_test(
+    test_results,
+    test_data,
+    list(test_case_result.ran_steps),
+    list(raw_expectations),
+  )
+  _check_exception(
+    test_results,
+    test_data.expected_exceptions,
+    test_case_result.uncaught_exception,
+  )
 
   _check_status(
-      test_case_result.raw_result, test_data, test_results,
-      recipe_deps.main_repo.recipes_cfg_pb2.enforce_test_expected_status)
+    test_case_result.raw_result,
+    test_data,
+    test_results,
+    recipe_deps.main_repo.recipes_cfg_pb2.enforce_test_expected_status,
+  )
 
   # Convert the result to a json object by dumping to json, and then parsing.
   # TODO(iannucci): Use real objects so this only needs to be serialized once.
   raw_expectations['$result'] = json.loads(
-      jsonpb.MessageToJson(
-          legacy.to_legacy_result(test_case_result.raw_result),
-          always_print_fields_with_no_presence=True,
-      ))
+    jsonpb.MessageToJson(
+      legacy.to_legacy_result(test_case_result.raw_result),
+      always_print_fields_with_no_presence=True,
+    )
+  )
 
   if not raw_expectations['$result'].get('failure'):  # on success
     if test_case_result.raw_result.summary_markdown:  # has markdown populated
       raw_expectations['$result']['summaryMarkdown'] = (
-          test_case_result.raw_result.summary_markdown
+        test_case_result.raw_result.summary_markdown
       )
 
   raw_expectations['$result']['name'] = '$result'
 
   result_expectations = magic_check_fn.post_process(
-      test_results, raw_expectations, test_data)
+    test_results, raw_expectations, test_data
+  )
 
   expectation_conversion.transform_expectations(
-      path_cleaner, result_expectations)
+    path_cleaner, result_expectations
+  )
 
   assert test_data.expect_file is not None
   _diff_test(test_results, test_data.expect_file, result_expectations, is_train)
 
 
 def _cover_all_imports(
-    main_repo: recipe_deps_mod.RecipeRepo,
+  main_repo: recipe_deps_mod.RecipeRepo,
 ) -> coverage.CoverageData:
   # If our process is supposed to collect coverage for all recipe module
   # imports, do that after we receive the first Description. This way we can
@@ -438,9 +478,10 @@ def _cover_all_imports(
     return coverage.CoverageData(no_disk=True)
 
   cov = coverage.Coverage(
-      config_file=False,
-      data_file=None,
-      include=[os.path.join(main_repo.modules_dir, '*', '*.py')])
+    config_file=False,
+    data_file=None,
+    include=[os.path.join(main_repo.modules_dir, '*', '*.py')],
+  )
   cov.start()
   for module in main_repo.modules.values():
     # Allow exceptions to raise here; they'll be reported as a 'global'
@@ -456,10 +497,10 @@ def _cover_all_imports(
 
 
 def main(
-    recipe_deps: recipe_deps_mod.RecipeDeps,
-    cov_file: str | None,
-    is_train: bool,
-    cover_module_imports: bool,
+  recipe_deps: recipe_deps_mod.RecipeDeps,
+  cov_file: str | None,
+  is_train: bool,
+  cover_module_imports: bool,
 ) -> None:
   gevent.get_hub().exception_stream = None
 
@@ -522,15 +563,19 @@ def main(
       if cov_file:
         # We have to start coverage now because we want to cover the importation
         # of the covered recipe and/or covered recipe modules.
-        cov = coverage.Coverage(config_file=False, concurrency='gevent',
-                                data_file=None,
-                                include=recipe.coverage_patterns)
+        cov = coverage.Coverage(
+          config_file=False,
+          concurrency='gevent',
+          data_file=None,
+          include=recipe.coverage_patterns,
+        )
         cov.start()  # to cover execfile of recipe/module.__init__
 
       test_data = _get_test_data(test_data_cache, recipe, test_desc.test_name)
       try:
-        _run_test(path_cleaner, test_result, recipe_deps, test_desc, test_data,
-                  is_train)
+        _run_test(
+          path_cleaner, test_result, recipe_deps, test_desc, test_data, is_train
+        )
       except Exception as ex:  # pylint: disable=broad-except
         test_result.internal_error.append('Uncaught exception: %r' % (ex,))
         test_result.internal_error.extend(traceback.format_exc().splitlines())
@@ -543,8 +588,7 @@ def main(
       result.internal_error.extend(traceback.format_exc().splitlines())
       fatal = True
 
-    if (not pipe.write_message(sys.stdout.buffer, result)
-        or fatal):
+    if not pipe.write_message(sys.stdout.buffer, result) or fatal:
       break  # EOF
 
   if cov_file:
@@ -556,16 +600,20 @@ def _read_test_desc() -> runner_pb.Description | None:
   try:
     return pipe.read_message(sys.stdin.buffer, runner_pb.Description)
   except Exception as ex:  # pylint: disable=broad-except
-    pipe.write_message(sys.stdout.buffer, runner_pb.Outcome(internal_error=[
-          'while reading: %r' % (ex,)
-        ]+traceback.format_exc().splitlines()))
+    pipe.write_message(
+      sys.stdout.buffer,
+      runner_pb.Outcome(
+        internal_error=['while reading: %r' % (ex,)]
+        + traceback.format_exc().splitlines()
+      ),
+    )
     return None
 
 
 def _get_test_data(
-    cache: dict[tuple[str, str], recipe_test_api.TestData],
-    recipe: recipe_deps_mod.Recipe,
-    test_name: str,
+  cache: dict[tuple[str, str], recipe_test_api.TestData],
+  recipe: recipe_deps_mod.Recipe,
+  test_name: str,
 ) -> recipe_test_api.TestData:
   key = (recipe.name, test_name)
   if key not in cache:
@@ -595,7 +643,7 @@ def _encode_decode(obj: Any) -> Any:
 
 
 def _make_path_cleaner(
-    recipe_deps: recipe_deps_mod.RecipeDeps,
+  recipe_deps: recipe_deps_mod.RecipeDeps,
 ) -> Callable[[list[str]], list[str]]:
   """Returns a filtering function which substitutes real paths-on-disk with
   expectation-compatible `RECIPE_REPO[repo name]` mock paths. This only works
@@ -630,8 +678,9 @@ def _make_path_cleaner(
   roots[os.path.abspath(dirn(dirn(dirn(io.__file__))))] = 'PYTHON'
   # coverage is in the local site-packages in the vpython root
   assert coverage.__file__ is not None
-  roots[os.path.abspath(dirn(dirn(coverage.__file__)))] = \
-      'PYTHON(site-packages)'
+  roots[os.path.abspath(dirn(dirn(coverage.__file__)))] = (
+    'PYTHON(site-packages)'
+  )
 
   def _root_subber(match: re.Match[str]) -> str:
     root = roots[match.group(1)]
@@ -651,20 +700,21 @@ def _make_path_cleaner(
 
   # Look for paths in double quotes (as we might see in a stack trace)
   replacer = re.compile(
-      r'"(%s)([^"]*)", line (\d+)' % ('|'.join(map(re.escape, paths)),))
+    r'"(%s)([^"]*)", line (\d+)' % ('|'.join(map(re.escape, paths)),)
+  )
 
   return lambda lines: [replacer.sub(_root_subber, line) for line in lines]
 
 
 class RunnerThread(gevent.Greenlet):
   def __init__(
-      self,
-      recipe_deps: recipe_deps_mod.RecipeDeps,
-      description_queue: gevent.queue.UnboundQueue,
-      outcome_queue: gevent.queue.UnboundQueue,
-      is_train: bool,
-      cov_file: str | None,
-      cover_module_imports: bool,
+    self,
+    recipe_deps: recipe_deps_mod.RecipeDeps,
+    description_queue: gevent.queue.UnboundQueue,
+    outcome_queue: gevent.queue.UnboundQueue,
+    is_train: bool,
+    cov_file: str | None,
+    cover_module_imports: bool,
   ) -> None:
     super().__init__()
 
@@ -674,26 +724,26 @@ class RunnerThread(gevent.Greenlet):
     engine_path = recipe_deps.repos['recipe_engine'].path
 
     cmd = [
-        # NOTE: We use sys.executable to play nice with pydevd's os.exec
-        # patching. If we re-invoke vpython3 here, it will be confused and
-        # won't do it's awful dark magic on the runners.
-        #
-        # If they ever introduce python4 (heaven help us all), you'll probably
-        # need to generate the virtualenv for python4 here and then directly use
-        # the interpreter here, rather than invoking, say `vpython4`.
-        #
-        # Assuming ANY of those things are still a thing at that point :).
-        sys.executable,
-        '-u',
-        os.path.join(engine_path, 'recipe_engine', 'main.py'),
-        '--package',
-        os.path.join(
-            recipe_deps.main_repo.path, simple_cfg.RECIPES_CFG_LOCATION_REL
-        ),
-        '--proto-override',
-        os.path.dirname(PB.__path__[0]),
-        '--log-level',
-        'ERROR',
+      # NOTE: We use sys.executable to play nice with pydevd's os.exec
+      # patching. If we re-invoke vpython3 here, it will be confused and
+      # won't do it's awful dark magic on the runners.
+      #
+      # If they ever introduce python4 (heaven help us all), you'll probably
+      # need to generate the virtualenv for python4 here and then directly use
+      # the interpreter here, rather than invoking, say `vpython4`.
+      #
+      # Assuming ANY of those things are still a thing at that point :).
+      sys.executable,
+      '-u',
+      os.path.join(engine_path, 'recipe_engine', 'main.py'),
+      '--package',
+      os.path.join(
+        recipe_deps.main_repo.path, simple_cfg.RECIPES_CFG_LOCATION_REL
+      ),
+      '--proto-override',
+      os.path.dirname(PB.__path__[0]),
+      '--log-level',
+      'ERROR',
     ]
     # Carry through all repos explicitly via overrides
     for repo_name, repo in recipe_deps.repos.items():
@@ -709,20 +759,21 @@ class RunnerThread(gevent.Greenlet):
       if cover_module_imports:
         cmd.append('--cover-module-imports')
 
-    self._runner_proc = subprocess.Popen(cmd, bufsize=0, stdin=subprocess.PIPE,
-                                         stdout=subprocess.PIPE, stderr=None)
+    self._runner_proc = subprocess.Popen(
+      cmd, bufsize=0, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=None
+    )
     self._description_queue = description_queue
     self._outcome_queue = outcome_queue
 
   @classmethod
   def make_pool(
-      cls,
-      recipe_deps: recipe_deps_mod.RecipeDeps,
-      description_queue: gevent.queue.UnboundQueue,
-      outcome_queue: gevent.queue.UnboundQueue,
-      is_train: bool,
-      collect_coverage: bool,
-      jobs: int,
+    cls,
+    recipe_deps: recipe_deps_mod.RecipeDeps,
+    description_queue: gevent.queue.UnboundQueue,
+    outcome_queue: gevent.queue.UnboundQueue,
+    is_train: bool,
+    collect_coverage: bool,
+    jobs: int,
   ) -> tuple[str | None, list[RunnerThread]]:
     """Returns a pool (list) of started RunnerThread instances.
 
@@ -749,8 +800,8 @@ class RunnerThread(gevent.Greenlet):
     """
     if collect_coverage:
       cov_dir = tempfile.mkdtemp('.recipe_test_coverage')
-      cov_file: Callable[[int], str | None] = (
-          lambda tid: os.path.join(cov_dir, 'thread-%d.coverage' % tid)
+      cov_file: Callable[[int], str | None] = lambda tid: os.path.join(
+        cov_dir, 'thread-%d.coverage' % tid
       )
     else:
       cov_dir = None
@@ -759,12 +810,15 @@ class RunnerThread(gevent.Greenlet):
     # We assign import coverage to (only) the first runner subprocess; there's
     # no need to duplicate this work to all runners.
     pool = [
-        cls(recipe_deps,
-            description_queue,
-            outcome_queue,
-            is_train,
-            cov_file(i),
-            cover_module_imports=(i == 0)) for i in range(jobs)
+      cls(
+        recipe_deps,
+        description_queue,
+        outcome_queue,
+        is_train,
+        cov_file(i),
+        cover_module_imports=(i == 0),
+      )
+      for i in range(jobs)
     ]
     for thread in pool:
       thread.start()
@@ -780,19 +834,22 @@ class RunnerThread(gevent.Greenlet):
           # Signal to the process that no more test Descriptions will be coming.
           # The runner should dump all global warning state and quit now.
           if not pipe.write_message(
-              self._runner_proc.stdin, runner_pb.Description()
+            self._runner_proc.stdin, runner_pb.Description()
           ):
-            self._outcome_queue.put(runner_pb.Outcome(internal_error=[
-              'Unable to send final empty test description from %r' % (
-                test_desc.recipe_name, test_desc.test_name, self.name
+            self._outcome_queue.put(
+              runner_pb.Outcome(
+                internal_error=[
+                  'Unable to send final empty test description from %r'
+                  % (test_desc.recipe_name, test_desc.test_name, self.name)
+                ]
               )
-            ]))
+            )
             return
 
           # Read back the very last Outcome which will have all our warning
           # causes.
           result = pipe.read_message(
-              self._runner_proc.stdout, runner_pb.Outcome
+            self._runner_proc.stdout, runner_pb.Outcome
           )
           if result is not None:
             self._outcome_queue.put(result)
@@ -809,11 +866,14 @@ class RunnerThread(gevent.Greenlet):
           return
 
         if not pipe.write_message(self._runner_proc.stdin, test_desc):
-          self._outcome_queue.put(runner_pb.Outcome(internal_error=[
-            'Unable to send test description for (%s.%s) from %r' % (
-              test_desc.recipe_name, test_desc.test_name, self.name
+          self._outcome_queue.put(
+            runner_pb.Outcome(
+              internal_error=[
+                'Unable to send test description for (%s.%s) from %r'
+                % (test_desc.recipe_name, test_desc.test_name, self.name)
+              ]
             )
-          ]))
+          )
           return
 
         result = pipe.read_message(self._runner_proc.stdout, runner_pb.Outcome)
@@ -826,9 +886,12 @@ class RunnerThread(gevent.Greenlet):
     except gevent.GreenletExit:
       pass
     except Exception as ex:  # pylint: disable=broad-except
-      self._outcome_queue.put(runner_pb.Outcome(internal_error=[
-        'Uncaught exception in %r: %s' % (self.name, ex)
-      ]+traceback.format_exc().splitlines()))
+      self._outcome_queue.put(
+        runner_pb.Outcome(
+          internal_error=['Uncaught exception in %r: %s' % (self.name, ex)]
+          + traceback.format_exc().splitlines()
+        )
+      )
     finally:
       try:
         self._runner_proc.kill()

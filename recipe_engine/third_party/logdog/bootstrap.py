@@ -11,13 +11,13 @@ from . import stream, streamname
 
 
 class NotBootstrappedError(RuntimeError):
-  """Raised when the current environment is missing Butler bootstrap variables.
-  """
+  """Raised when the current environment is missing Butler bootstrap variables."""
 
 
-_ButlerBootstrapBase = collections.namedtuple('_ButlerBootstrapBase',
-    ('project', 'prefix', 'streamserver_uri', 'coordinator_host',
-     'namespace'))
+_ButlerBootstrapBase = collections.namedtuple(
+  '_ButlerBootstrapBase',
+  ('project', 'prefix', 'streamserver_uri', 'coordinator_host', 'namespace'),
+)
 
 
 class ButlerBootstrap(_ButlerBootstrapBase):
@@ -62,11 +62,12 @@ class ButlerBootstrap(_ButlerBootstrapBase):
       raise NotBootstrappedError('No streamserver in bootstrap environment.')
 
     return cls(
-        project=env.get(cls._ENV_PROJECT, ''),
-        prefix=_check("Prefix", env.get(cls._ENV_PREFIX, '')),
-        streamserver_uri=streamserver_uri,
-        coordinator_host=env.get(cls._ENV_COORDINATOR_HOST, ''),
-        namespace=_check("Namespace", env.get(cls._ENV_NAMESPACE, '')))
+      project=env.get(cls._ENV_PROJECT, ''),
+      prefix=_check("Prefix", env.get(cls._ENV_PREFIX, '')),
+      streamserver_uri=streamserver_uri,
+      coordinator_host=env.get(cls._ENV_COORDINATOR_HOST, ''),
+      namespace=_check("Namespace", env.get(cls._ENV_NAMESPACE, '')),
+    )
 
   def stream_client(self, reg=None):
     """Returns: (StreamClient) stream client for the bootstrap streamserver URI.
@@ -85,8 +86,9 @@ class ButlerBootstrap(_ButlerBootstrapBase):
     """
     reg = reg or stream._default_registry
     return reg.create(
-        self.streamserver_uri,
-        project=self.project,
-        prefix=self.prefix,
-        coordinator_host=self.coordinator_host,
-        namespace=self.namespace)
+      self.streamserver_uri,
+      project=self.project,
+      prefix=self.prefix,
+      coordinator_host=self.coordinator_host,
+      namespace=self.namespace,
+    )

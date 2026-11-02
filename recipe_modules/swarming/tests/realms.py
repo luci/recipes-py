@@ -14,11 +14,11 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    buildbucket,
-    context,
-    step,
-    swarming,
+  assertions,
+  buildbucket,
+  context,
+  step,
+  swarming,
 )
 
 
@@ -39,9 +39,12 @@ class TEST_DEPS(RecipeTestApi):
 def RunSteps(api: DEPS) -> None:
   def basic_request() -> swarming_api.TaskRequest:
     request = api.swarming.task_request()
-    return request.with_slice(0, request[0].
-        with_command(['echo', 'hi']).
-        with_dimensions(pool='example.pool', os='Debian'))
+    return request.with_slice(
+      0,
+      request[0]
+      .with_command(['echo', 'hi'])
+      .with_dimensions(pool='example.pool', os='Debian'),
+    )
 
   with api.context(realm='some:realm'):
     request = basic_request().with_resultdb()
@@ -58,6 +61,7 @@ def RunSteps(api: DEPS) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (
-      api.test('basic') +
-      api.buildbucket.ci_build(project='proj', bucket='buck') +
-      api.post_process(DropExpectation))
+    api.test('basic')
+    + api.buildbucket.ci_build(project='proj', bucket='buck')
+    + api.post_process(DropExpectation)
+  )

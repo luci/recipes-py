@@ -13,9 +13,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    cq,
-    step,
+  assertions,
+  cq,
+  step,
 )
 
 
@@ -33,11 +33,16 @@ def RunSteps(api: DEPS) -> None:
   with api.assertions.assertRaises(ValueError):
     api.cq.allow_reuse_for()  # must provide at least one modes
   api.cq.allow_reuse_for(api.cq.QUICK_DRY_RUN)
-  api.assertions.assertListEqual(api.cq.allowed_reuse_modes,
-                                 [api.cq.QUICK_DRY_RUN,])
+  api.assertions.assertListEqual(
+    api.cq.allowed_reuse_modes,
+    [
+      api.cq.QUICK_DRY_RUN,
+    ],
+  )
   api.cq.allow_reuse_for(api.cq.DRY_RUN, api.cq.FULL_RUN)
-  api.assertions.assertListEqual(api.cq.allowed_reuse_modes,
-                                 [api.cq.DRY_RUN, api.cq.FULL_RUN])
+  api.assertions.assertListEqual(
+    api.cq.allowed_reuse_modes, [api.cq.DRY_RUN, api.cq.FULL_RUN]
+  )
 
 
 def GenTests(api: RecipeTestApi) -> Iterator[recipe_test_api.TestData]:

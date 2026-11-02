@@ -9,13 +9,13 @@ from PB.recipe_modules.recipe_engine.led import properties
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from RECIPE_MODULES.recipe_engine import (
-    cipd,
-    context,
-    json,
-    path,
-    proto,
-    step,
-    swarming,
+  cipd,
+  context,
+  json,
+  path,
+  proto,
+  step,
+  swarming,
 )
 
 
@@ -28,6 +28,7 @@ class DEPS(RecipeScriptApi):
   proto: proto.API
   step: step.API
   swarming: swarming.API
+
 
 PROPERTIES = properties.InputProperties
 

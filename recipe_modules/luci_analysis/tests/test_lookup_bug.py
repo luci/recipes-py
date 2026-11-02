@@ -12,10 +12,10 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    json,
-    luci_analysis,
-    step,
+  assertions,
+  json,
+  luci_analysis,
+  step,
 )
 
 
@@ -45,15 +45,21 @@ from recipe_engine import post_process
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'base',
-      api.luci_analysis.lookup_bug([
-          'projects/chromium/rules/00000000000000000000ffffffffffff',
+    'base',
+    api.luci_analysis.lookup_bug(
+      [
+        'projects/chromium/rules/00000000000000000000ffffffffffff',
       ],
-                                   'chromium/123',
-                                   parent_step_name='nest_parent'),
-      api.post_check(lambda check, steps: check(
-          api.json.loads(steps['nest_parent'].logs['rules']) == [
-              'projects/chromium/rules/00000000000000000000ffffffffffff',
-          ])),
-      api.post_process(post_process.DropExpectation),
+      'chromium/123',
+      parent_step_name='nest_parent',
+    ),
+    api.post_check(
+      lambda check, steps: check(
+        api.json.loads(steps['nest_parent'].logs['rules'])
+        == [
+          'projects/chromium/rules/00000000000000000000ffffffffffff',
+        ]
+      )
+    ),
+    api.post_process(post_process.DropExpectation),
   )

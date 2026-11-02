@@ -40,11 +40,9 @@ def RunSteps(api: DEPS) -> None:
     api.step('bad cost', None, cost='I\'m a str cost')
   except ValueError as e:
     assert str(e) == (
-      'cost must be a None or ResourceCost , got "I\'m a str cost"'), e
+      'cost must be a None or ResourceCost , got "I\'m a str cost"'
+    ), e
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
-  yield (
-    api.test('basic') +
-    api.post_process(post_process.DropExpectation)
-  )
+  yield (api.test('basic') + api.post_process(post_process.DropExpectation))

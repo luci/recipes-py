@@ -37,14 +37,17 @@ LOG = logging.getLogger(__name__)
 @attr.s
 class LUCIStepMarkdownWriter:
   _step_text: str = attr.ib(default='')
+
   def add_step_text(self, text: str) -> None:
     self._step_text += text
 
   _step_summary_text: str = attr.ib(default='')
+
   def add_step_summary_text(self, text: str) -> None:
     self._step_summary_text += text
 
   _step_links: list[tuple[str, str]] = attr.ib(factory=list)
+
   def add_step_link(self, linkname: str, link: str) -> None:
     self._step_links.append((linkname, link))
 
@@ -61,9 +64,11 @@ class LUCIStepMarkdownWriter:
 
     if self._step_links:
       paragraphs.append(
-          '\n'.join(
-              '  * [%s](%s)' % (name, escape_parens(link))
-              for name, link in self._step_links))
+        '\n'.join(
+          '  * [%s](%s)' % (name, escape_parens(link))
+          for name, link in self._step_links
+        )
+      )
 
     return '\n\n'.join(paragraphs)
 
@@ -76,8 +81,10 @@ class LUCILogStream(stream_mod.StreamEngine.Stream):
 
   # pylint: disable=protected-access
   _stream: logdog_stream.StreamClient._BasicStream | None = attr.ib(
-      validator=attr_util.attr_type(
-          (type(None), logdog_stream.StreamClient._BasicStream)))
+    validator=attr_util.attr_type(
+      (type(None), logdog_stream.StreamClient._BasicStream)
+    )
+  )
 
   def fileno(self) -> int:
     """Returns underlying logdog file descriptor.
@@ -119,15 +126,20 @@ class LUCIStepStream(stream_mod.StreamEngine.StepStream):
 
   Handles uniqification of all logdog stream names in this process.
   """
+
   _step: step_pb.Step = attr.ib(validator=attr_util.attr_type(step_pb.Step))
   _properties: struct_pb2.Struct = attr.ib(
-      validator=attr_util.attr_type(struct_pb2.Struct))
+    validator=attr_util.attr_type(struct_pb2.Struct)
+  )
   _build_tags: containers.RepeatedCompositeFieldContainer = attr.ib(
-      validator=attr_util.attr_type(containers.RepeatedCompositeFieldContainer))
+    validator=attr_util.attr_type(containers.RepeatedCompositeFieldContainer)
+  )
   _tags: containers.RepeatedCompositeFieldContainer = attr.ib(
-      validator=attr_util.attr_type(containers.RepeatedCompositeFieldContainer))
+    validator=attr_util.attr_type(containers.RepeatedCompositeFieldContainer)
+  )
   _output_gitiles_commit: common_pb.GitilesCommit = attr.ib(
-      validator=attr_util.attr_type(common_pb.GitilesCommit))
+    validator=attr_util.attr_type(common_pb.GitilesCommit)
+  )
   # change_cb is a void function which causes the LUCIStreamEngine to emit the
   # current Build proto message. This must be called after any changes to:
   #   * self._step
@@ -140,7 +152,8 @@ class LUCIStepStream(stream_mod.StreamEngine.StepStream):
 
   # The Butler StreamClient. Used to generate logs for individual steps.
   _bsc: logdog_stream.StreamClient = attr.ib(
-      validator=attr_util.attr_type(logdog_stream.StreamClient))
+    validator=attr_util.attr_type(logdog_stream.StreamClient)
+  )
 
   # If True, after initialization, allocate a log stream '$build.proto' that
   # points to the 'build.proto' stream of the luciexe this step launches and
@@ -152,10 +165,12 @@ class LUCIStepStream(stream_mod.StreamEngine.StepStream):
   #
   # See: [luciexe recursive invocation](https://pkg.go.dev/go.chromium.org/luci/luciexe?tab=doc#hdr-Recursive_Invocation)
   _merge_step: bool | Literal['legacy'] = attr.ib(
-      validator=attr.validators.in_((False, True, 'legacy')))
+    validator=attr.validators.in_((False, True, 'legacy'))
+  )
 
   _merge_output_properties_to: Sequence[str] | None = attr.ib(
-      validator=attr_util.attr_type((list, type(None))))
+    validator=attr_util.attr_type((list, type(None)))
+  )
 
   # File-like objects for stdout/stderr (logdog streams).
   #
@@ -169,9 +184,9 @@ class LUCIStepStream(stream_mod.StreamEngine.StepStream):
   _std_handle: LUCILogStream | None = attr.ib(default=None)
   _logging: LUCILogStream | None = attr.ib(default=None)
 
-
   _back_compat_markdown: LUCIStepMarkdownWriter = attr.ib(
-      factory=LUCIStepMarkdownWriter)
+    factory=LUCIStepMarkdownWriter
+  )
 
   # A global set of created logdog stream names for all steps. Used to
   # deduplicate log stream names, since the logdog stream name alphabet is
@@ -224,7 +239,8 @@ class LUCIStepStream(stream_mod.StreamEngine.StepStream):
         self._step.merge_build.legacy_global_namespace = True
       if self._merge_output_properties_to:
         self._step.merge_build.merge_output_properties_to.extend(
-            self._merge_output_properties_to)
+          self._merge_output_properties_to
+        )
       self._change_cb()
 
   def new_log_stream(self, log_name: str) -> LUCILogStream:
@@ -249,14 +265,17 @@ class LUCIStepStream(stream_mod.StreamEngine.StepStream):
 
   def _new_log_stream(self, log_name: str) -> LUCILogStream:
     dedup_idx = 0
-    base_flattened_name = '/'.join((
+    base_flattened_name = '/'.join(
+      (
         self._stream_namespace,
-        logdog_streamname.normalize_segment(log_name, 'l')
-    ))
+        logdog_streamname.normalize_segment(log_name, 'l'),
+      )
+    )
     flat_name = base_flattened_name
     while flat_name in self._CREATED_LOGS:
       flat_name = logdog_streamname.normalize(
-          base_flattened_name + ('_%d' % dedup_idx), 'l')
+        base_flattened_name + ('_%d' % dedup_idx), 'l'
+      )
       dedup_idx += 1
 
     logdog_streamname.validate_stream_name(flat_name)
@@ -298,7 +317,7 @@ class LUCIStepStream(stream_mod.StreamEngine.StepStream):
     self._step.status = {
       'SUCCESS': common_pb.SUCCESS,
       'FAILURE': common_pb.FAILURE,
-      'WARNING': common_pb.SUCCESS, # TODO(crbug.com/854099): support WARNING
+      'WARNING': common_pb.SUCCESS,  # TODO(crbug.com/854099): support WARNING
       'EXCEPTION': common_pb.INFRA_FAILURE,
       'CANCELED': common_pb.CANCELED,
     }[status]
@@ -313,11 +332,16 @@ class LUCIStepStream(stream_mod.StreamEngine.StepStream):
     if key == '$recipe_engine/buildbucket/runtime-tags':
       for k, vals in json.loads(value).items():
         self._build_tags.extend(
-          [common_pb.StringPair(key=k, value=v) for v in set(vals)
-          if common_pb.StringPair(key=k, value=v) not in self._build_tags])
+          [
+            common_pb.StringPair(key=k, value=v)
+            for v in set(vals)
+            if common_pb.StringPair(key=k, value=v) not in self._build_tags
+          ]
+        )
     elif key == '$recipe_engine/buildbucket/output_gitiles_commit':
       self._output_gitiles_commit.CopyFrom(
-          jsonpb.Parse(value, common_pb.GitilesCommit()))
+        jsonpb.Parse(value, common_pb.GitilesCommit())
+      )
     else:
       self._properties[key] = json.loads(value)
 
@@ -335,12 +359,13 @@ class LUCIStepStream(stream_mod.StreamEngine.StepStream):
     return self._logging
 
   def open_std_handles(
-      self, stdout: bool = False, stderr: bool = False
+    self, stdout: bool = False, stderr: bool = False
   ) -> dict[str, stream_mod.StreamEngine.Stream]:
     if self._std_handle is not None:
       LOG.exception('open_std_handles called twice: %r', self._step.name)
       raise ValueError(
-          'open_std_handles may only be called once: %r', self._step.name)
+        'open_std_handles may only be called once: %r', self._step.name
+      )
 
     ret: dict[str, stream_mod.StreamEngine.Stream] = {}
     if not stdout and not stderr:
@@ -410,24 +435,28 @@ class LUCIStreamEngine(stream_mod.StreamEngine):
 
   # The current Build message. This is mutated and then sent with the _send
   # function (seen as _change_cb in other classes in this file).
-  _build_proto: build_pb.Build = attr.ib(factory=lambda: build_pb.Build(
+  _build_proto: build_pb.Build = attr.ib(
+    factory=lambda: build_pb.Build(
       status=common_pb.STARTED,
       output=dict(status=common_pb.STARTED),
-  ))
+    )
+  )
 
   # The Butler StreamClient. Used to generate logs for individual steps.
   _bsc: logdog_stream.StreamClient = attr.ib(
-      validator=attr_util.attr_type(logdog_stream.StreamClient),
-      factory=lambda: logdog_bootstrap.ButlerBootstrap.probe().stream_client(),
+    validator=attr_util.attr_type(logdog_stream.StreamClient),
+    factory=lambda: logdog_bootstrap.ButlerBootstrap.probe().stream_client(),
   )
 
   # The Build message datagram stream.
   _build_stream: Any = attr.ib()
+
   @_build_stream.default
   def _build_stream_default(self) -> Any:
     content_enc = 'jsonpb' if self._export_build_as_json else 'proto'
     content_type = 'application/luci+%s; message=buildbucket.v2.Build' % (
-          content_enc,)
+      content_enc,
+    )
     if content_enc == 'proto':
       content_type += '; encoding=zlib'
     return self._bsc.open_datagram('build.proto', content_type=content_type)
@@ -436,14 +465,16 @@ class LUCIStreamEngine(stream_mod.StreamEngine):
   _sender_die: bool = attr.ib(default=False)
 
   _sender: gevent.Greenlet = attr.ib()
+
   @_sender.default
   def _sender_default(self) -> gevent.Greenlet:
     def _do_send() -> None:
       self._build_stream.send(
-          jsonpb.MessageToJson(self._build_proto,
-                               preserving_proto_field_name=True).encode('utf-8')
-          if self._export_build_as_json else
-          zlib.compress(self._build_proto.SerializeToString())
+        jsonpb.MessageToJson(
+          self._build_proto, preserving_proto_field_name=True
+        ).encode('utf-8')
+        if self._export_build_as_json
+        else zlib.compress(self._build_proto.SerializeToString())
       )
 
     def _send_fn() -> None:
@@ -473,28 +504,30 @@ class LUCIStreamEngine(stream_mod.StreamEngine):
     self._send_event.set()
 
   def new_step_stream(
-      self,
-      name_tokens: Sequence[str],
-      allow_subannotations: bool,
-      merge_step: bool | Literal['legacy'] = False,
-      merge_output_properties_to: Sequence[str] | None = None,
+    self,
+    name_tokens: Sequence[str],
+    allow_subannotations: bool,
+    merge_step: bool | Literal['legacy'] = False,
+    merge_output_properties_to: Sequence[str] | None = None,
   ) -> LUCIStepStream:
     assert not allow_subannotations, (
-        'Subannotations not currently supported in build.proto mode')
+      'Subannotations not currently supported in build.proto mode'
+    )
     step_pb_msg = self._build_proto.steps.add(
-        name='|'.join(name_tokens),
-        status=common_pb.SCHEDULED)
+      name='|'.join(name_tokens), status=common_pb.SCHEDULED
+    )
 
     ret = LUCIStepStream(
-        step_pb_msg,
-        self._build_proto.output.properties,
-        self._build_proto.tags,
-        step_pb_msg.tags,
-        self._build_proto.output.gitiles_commit,
-        self._send,
-        self._bsc,
-        merge_step,
-        merge_output_properties_to)
+      step_pb_msg,
+      self._build_proto.output.properties,
+      self._build_proto.tags,
+      step_pb_msg.tags,
+      self._build_proto.output.gitiles_commit,
+      self._send,
+      self._bsc,
+      merge_step,
+      merge_output_properties_to,
+    )
     self._send()
     return ret
 

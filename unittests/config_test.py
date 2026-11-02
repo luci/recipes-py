@@ -53,21 +53,32 @@ class TestSchemaProto(test_env.RecipeEngineUnitTest):
 
     self.assertEqual(
       cg.schema_proto(),
-      d.Schema(struct=d.Schema.Struct(type_map={
-        'combo': d.Schema(single=d.Schema.Single(
-          inner_type=[d.Schema.NUMBER],
-          required=True,
-          default_json='20',
-        )),
-        'other': d.Schema(list=d.Schema.List(
-          inner_type=[d.Schema.STRING],
-        )),
-        'field': d.Schema(single=d.Schema.Single(
-          inner_type=[d.Schema.STRING, d.Schema.NULL],
-          required=True,
-          default_json='null',
-        )),
-      })))
+      d.Schema(
+        struct=d.Schema.Struct(
+          type_map={
+            'combo': d.Schema(
+              single=d.Schema.Single(
+                inner_type=[d.Schema.NUMBER],
+                required=True,
+                default_json='20',
+              )
+            ),
+            'other': d.Schema(
+              list=d.Schema.List(
+                inner_type=[d.Schema.STRING],
+              )
+            ),
+            'field': d.Schema(
+              single=d.Schema.Single(
+                inner_type=[d.Schema.STRING, d.Schema.NULL],
+                required=True,
+                default_json='null',
+              )
+            ),
+          }
+        )
+      ),
+    )
 
   def test_config_group_schema(self) -> None:
     cg = config.ConfigGroupSchema(
@@ -78,93 +89,126 @@ class TestSchemaProto(test_env.RecipeEngineUnitTest):
 
     self.assertEqual(
       cg.schema_proto(),
-      d.Schema(struct=d.Schema.Struct(type_map={
-        'combo': d.Schema(single=d.Schema.Single(
-          inner_type=[d.Schema.NUMBER],
-          required=True,
-          default_json='20',
-        )),
-        'other': d.Schema(list=d.Schema.List(
-          inner_type=[d.Schema.STRING],
-        )),
-        'field': d.Schema(single=d.Schema.Single(
-          inner_type=[d.Schema.STRING, d.Schema.NULL],
-          required=True,
-          default_json='null',
-        )),
-      })))
+      d.Schema(
+        struct=d.Schema.Struct(
+          type_map={
+            'combo': d.Schema(
+              single=d.Schema.Single(
+                inner_type=[d.Schema.NUMBER],
+                required=True,
+                default_json='20',
+              )
+            ),
+            'other': d.Schema(
+              list=d.Schema.List(
+                inner_type=[d.Schema.STRING],
+              )
+            ),
+            'field': d.Schema(
+              single=d.Schema.Single(
+                inner_type=[d.Schema.STRING, d.Schema.NULL],
+                required=True,
+                default_json='null',
+              )
+            ),
+          }
+        )
+      ),
+    )
 
   def test_config_list(self) -> None:
-    cl = config.ConfigList(lambda: config.ConfigGroup(
-      a = config.Single(bool),
-      b = config.Single(dict),
-    ))
+    cl = config.ConfigList(
+      lambda: config.ConfigGroup(
+        a=config.Single(bool),
+        b=config.Single(dict),
+      )
+    )
 
     self.assertEqual(
       cl.schema_proto(),
-      d.Schema(sequence=d.Schema.Sequence(
-        inner_type=d.Schema(struct=d.Schema.Struct(type_map={
-          'a': d.Schema(single=d.Schema.Single(
-            inner_type=[d.Schema.BOOLEAN],
-            required=True,
-            default_json='null',
-          )),
-          'b': d.Schema(single=d.Schema.Single(
-            inner_type=[d.Schema.OBJECT],
-            required=True,
-            default_json='null',
-          ))
-        }))
-      ))
+      d.Schema(
+        sequence=d.Schema.Sequence(
+          inner_type=d.Schema(
+            struct=d.Schema.Struct(
+              type_map={
+                'a': d.Schema(
+                  single=d.Schema.Single(
+                    inner_type=[d.Schema.BOOLEAN],
+                    required=True,
+                    default_json='null',
+                  )
+                ),
+                'b': d.Schema(
+                  single=d.Schema.Single(
+                    inner_type=[d.Schema.OBJECT],
+                    required=True,
+                    default_json='null',
+                  )
+                ),
+              }
+            )
+          )
+        )
+      ),
     )
 
   def test_dict(self) -> None:
     cd = config.Dict(value_type=list)
     self.assertEqual(
       cd.schema_proto(),
-      d.Schema(dict=d.Schema.Dict(
-        value_type=[d.Schema.ARRAY],
-      ))
+      d.Schema(
+        dict=d.Schema.Dict(
+          value_type=[d.Schema.ARRAY],
+        )
+      ),
     )
 
   def test_set(self) -> None:
     cd = config.Set(str)
     self.assertEqual(
       cd.schema_proto(),
-      d.Schema(set=d.Schema.Set(
-        inner_type=[d.Schema.STRING],
-      ))
+      d.Schema(
+        set=d.Schema.Set(
+          inner_type=[d.Schema.STRING],
+        )
+      ),
     )
 
   def test_list(self) -> None:
     cd = config.List((int, type(None)))
     self.assertEqual(
       cd.schema_proto(),
-      d.Schema(list=d.Schema.List(
-        inner_type=[d.Schema.NUMBER, d.Schema.NULL],
-      ))
+      d.Schema(
+        list=d.Schema.List(
+          inner_type=[d.Schema.NUMBER, d.Schema.NULL],
+        )
+      ),
     )
 
   def test_static(self) -> None:
     cd = config.Static("hello")
     self.assertEqual(
       cd.schema_proto(),
-      d.Schema(static=d.Schema.Static(
-        default_json='"hello"',
-      ))
+      d.Schema(
+        static=d.Schema.Static(
+          default_json='"hello"',
+        )
+      ),
     )
 
   def test_enum(self) -> None:
     cd = config.Enum("hello", "world")
     self.assertEqual(
       cd.schema_proto(),
-      d.Schema(enum=d.Schema.Enum(
-        values_json=[
-          '"hello"',
-          '"world"',
-        ],
-        required=True,
-      ))
+      d.Schema(
+        enum=d.Schema.Enum(
+          values_json=[
+            '"hello"',
+            '"world"',
+          ],
+          required=True,
+        )
+      ),
     )
 
 

@@ -11,8 +11,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    file,
-    path,
+  file,
+  path,
 )
 
 
@@ -36,8 +36,9 @@ def RunSteps(api: DEPS) -> None:
 
   api.file.truncate('truncate a file', filepath, size_mb)
   filesizes = api.file.filesizes(
-      'size of some_file', [filepath], test_data=[MBtoB(size_mb)])
-  assert filesizes[0] == MBtoB(size_mb), ("size is %sMB" % BtoMB(filesizes[0]))
+    'size of some_file', [filepath], test_data=[MBtoB(size_mb)]
+  )
+  assert filesizes[0] == MBtoB(size_mb), "size is %sMB" % BtoMB(filesizes[0])
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:

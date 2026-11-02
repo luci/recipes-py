@@ -14,8 +14,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    path,
-    raw_io,
+  path,
+  raw_io,
 )
 
 
@@ -57,11 +57,11 @@ def RunSteps(api: DEPS) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'basic',
-      api.path.files_exist(
-          api.path.start_dir / 'a file',
-          api.path.checkout_dir / 'somefile',
-      ),
-      api.path.dirs_exist(api.path.start_dir / 'a dir'),
-      api.post_process(DropExpectation),
+    'basic',
+    api.path.files_exist(
+      api.path.start_dir / 'a file',
+      api.path.checkout_dir / 'somefile',
+    ),
+    api.path.dirs_exist(api.path.start_dir / 'a dir'),
+    api.post_process(DropExpectation),
   )

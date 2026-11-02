@@ -42,8 +42,9 @@ class TestSimulation(test_env.RecipeEngineUnitTest):
     output, retcode = deps.main_repo.recipes_py('test', 'train')
     self.assertEqual(retcode, 1)
     self.assertIn(
-        'The following modules lack any form of test coverage:\n   modname',
-        output)
+      'The following modules lack any form of test coverage:\n   modname',
+      output,
+    )
 
   def test_no_coverage_allowlisted(self) -> None:
     deps = self.FakeRecipeDeps()

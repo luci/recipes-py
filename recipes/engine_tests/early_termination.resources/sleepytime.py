@@ -19,12 +19,14 @@ install_hadler = '--no-handler' not in sys.argv
 
 
 if install_hadler:
+
   def _handle(signum: int, _: Any) -> None:
     if always_ignore:
       print("I GOT", signum)
     else:
       print("quitquitquit")
       os._exit(0)
+
   signal.signal(signal.SIGTERM, _handle)
 
 begin = time.time()

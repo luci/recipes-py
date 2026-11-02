@@ -17,7 +17,10 @@ def main(args: argparse.Namespace) -> int:
   for name, dep in args.recipe_deps.repos.items():
     specs.repo_specs[name].CopyFrom(dep.recipes_cfg_pb2)
 
-  print(jsonpb.MessageToJson(
-      specs, preserving_proto_field_name=True, indent=2, sort_keys=True))
+  print(
+    jsonpb.MessageToJson(
+      specs, preserving_proto_field_name=True, indent=2, sort_keys=True
+    )
+  )
 
   return 0

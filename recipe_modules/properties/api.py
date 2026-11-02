@@ -46,8 +46,7 @@ class PropertiesApi(recipe_api.RecipeApi, collections.abc.Mapping):
   @property
   def _properties(self) -> Mapping[str, Any]:
     if self._frozen_properties is None:
-      self._frozen_properties = freeze(
-          self.properties_client.get_properties())
+      self._frozen_properties = freeze(self.properties_client.get_properties())
     return self._frozen_properties
 
   def __getitem__(self, key: str) -> Any:

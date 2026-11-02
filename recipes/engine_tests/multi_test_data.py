@@ -13,8 +13,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    raw_io,
-    step,
+  raw_io,
+  step,
 )
 
 
@@ -30,15 +30,19 @@ class TEST_DEPS(RecipeTestApi):
 
 
 def RunSteps(api: DEPS) -> None:
-  doge = api.step('doge',
-      ['doge'], stdout=api.raw_io.output(), stderr=api.raw_io.output())
+  doge = api.step(
+    'doge', ['doge'], stdout=api.raw_io.output(), stderr=api.raw_io.output()
+  )
   assert doge.stdout == b'such stdout'
   assert doge.stderr == b'so stderring'
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (
-    api.test('basic') +
-    api.step_data('doge',
+    api.test('basic')
+    + api.step_data(
+      'doge',
       api.raw_io.stream_output('such stdout', stream='stdout'),
-      api.raw_io.stream_output('so stderring', stream='stderr')))
+      api.raw_io.stream_output('so stderring', stream='stderr'),
+    )
+  )

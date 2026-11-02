@@ -6,12 +6,14 @@ from __future__ import annotations
 
 from enum import Enum
 
+
 class TaskState(Enum):
   r"""Enum representing Swarming task states.
   States must be kept in sync with
   https://crsrc.org/i/luci/appengine/swarming/server/task_result.py;drc=733d5d3b5299408cbc6a5e5b33b1a461ea9e0acd
   See the above link for documentation.
   """
+
   # TODO(INVALID) state is actually not used anywhere. We should delete it from
   # protos.
   INVALID = 0x00

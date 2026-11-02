@@ -30,30 +30,29 @@ class UrlApi(recipe_api.RecipeApi):
   GERRIT_JSON_PREFIX = ")]}'\n"
 
   class HTTPError(recipe_api.StepFailure):
-
     def __init__(self, msg: str, response: UrlApi.Response) -> None:
       super().__init__(msg)
       self.response = response
 
   class InfraHTTPError(recipe_api.InfraFailure):
-
     def __init__(self, msg: str, response: UrlApi.Response) -> None:
       super().__init__(msg)
       self.response = response
 
   # Status JSON output from "pycurl.py" resource.
   _PyCurlStatus = collections.namedtuple(
-      '_PyCurlStatus', ('status_code', 'success', 'size', 'error_body'))
+    '_PyCurlStatus', ('status_code', 'success', 'size', 'error_body')
+  )
 
   class Response:
     """Response is an HTTP response object."""
 
     def __init__(
-        self,
-        method: str,
-        output: Any,
-        status: UrlApi._PyCurlStatus,
-        infra_step: bool | None,
+      self,
+      method: str,
+      output: Any,
+      status: UrlApi._PyCurlStatus,
+      infra_step: bool | None,
     ) -> None:
       self._method = method
       self._status = status
@@ -138,19 +137,20 @@ class UrlApi(recipe_api.RecipeApi):
     u = urlparse(v)
     if u.scheme.lower() not in ('http', 'https'):
       raise ValueError(
-          'URL scheme must be either http:// or https:// ({!r})'.format(v))
+        'URL scheme must be either http:// or https:// ({!r})'.format(v)
+      )
     if not u.netloc:
       raise ValueError('URL must specify a network location ({!r})'.format(v))
     return u.scheme.lower() == 'https'
 
   def get_file(
-      self,
-      url: str,
-      path: config_types.Path | str,
-      step_name: str | None = None,
-      headers: Mapping[str, str] | None = None,
-      transient_retry: bool | int = True,
-      strip_prefix: str | None = None,
+    self,
+    url: str,
+    path: config_types.Path | str,
+    step_name: str | None = None,
+    headers: Mapping[str, str] | None = None,
+    transient_retry: bool | int = True,
+    strip_prefix: str | None = None,
   ) -> UrlApi.Response:
     """GET data at given URL and writes it to file.
 
@@ -176,21 +176,22 @@ class UrlApi(recipe_api.RecipeApi):
       * ValueError: If the request was invalid.
     """
     return self._get_step(
-        url=url,
-        path=path,
-        step_name=step_name,
-        headers=headers,
-        transient_retry=transient_retry,
-        strip_prefix=strip_prefix,
-        default_test_data='')
+      url=url,
+      path=path,
+      step_name=step_name,
+      headers=headers,
+      transient_retry=transient_retry,
+      strip_prefix=strip_prefix,
+      default_test_data='',
+    )
 
   def get_text(
-      self,
-      url: str,
-      step_name: str | None = None,
-      headers: Mapping[str, str] | None = None,
-      transient_retry: bool | int = True,
-      default_test_data: str | None = None,
+    self,
+    url: str,
+    step_name: str | None = None,
+    headers: Mapping[str, str] | None = None,
+    transient_retry: bool | int = True,
+    default_test_data: str | None = None,
   ) -> UrlApi.Response:
     """GET data at given URL and writes it to file.
 
@@ -214,19 +215,20 @@ class UrlApi(recipe_api.RecipeApi):
     """
     assert isinstance(default_test_data, (type(None), str))
     return self._get_step(
-        url=url,
-        step_name=step_name,
-        headers=headers,
-        transient_retry=transient_retry,
-        default_test_data=default_test_data)
+      url=url,
+      step_name=step_name,
+      headers=headers,
+      transient_retry=transient_retry,
+      default_test_data=default_test_data,
+    )
 
   def get_raw(
-      self,
-      url: str,
-      step_name: str | None = None,
-      headers: Mapping[str, str] | None = None,
-      transient_retry: bool | int = True,
-      default_test_data: bytes | None = None,
+    self,
+    url: str,
+    step_name: str | None = None,
+    headers: Mapping[str, str] | None = None,
+    transient_retry: bool | int = True,
+    default_test_data: bytes | None = None,
   ) -> UrlApi.Response:
     """GET data at given URL and writes it to file.
 
@@ -250,22 +252,23 @@ class UrlApi(recipe_api.RecipeApi):
     """
     assert isinstance(default_test_data, (type(None), bytes))
     return self._get_step(
-        url=url,
-        step_name=step_name,
-        headers=headers,
-        transient_retry=transient_retry,
-        default_test_data=default_test_data,
-        as_bytes=True)
+      url=url,
+      step_name=step_name,
+      headers=headers,
+      transient_retry=transient_retry,
+      default_test_data=default_test_data,
+      as_bytes=True,
+    )
 
   def get_json(
-      self,
-      url: str,
-      step_name: str | None = None,
-      headers: Mapping[str, str] | None = None,
-      transient_retry: bool | int = True,
-      strip_prefix: str | None = None,
-      log: bool = False,
-      default_test_data: Any = None,
+    self,
+    url: str,
+    step_name: str | None = None,
+    headers: Mapping[str, str] | None = None,
+    transient_retry: bool | int = True,
+    strip_prefix: str | None = None,
+    log: bool = False,
+    default_test_data: Any = None,
   ) -> UrlApi.Response:
     """GET data at given URL and writes it to file.
 
@@ -292,35 +295,36 @@ class UrlApi(recipe_api.RecipeApi):
       * ValueError: If the request was invalid.
     """
     return self._get_step(
-        url=url,
-        step_name=step_name,
-        headers=headers,
-        transient_retry=transient_retry,
-        strip_prefix=strip_prefix,
-        as_json='log' if log else True,
-        default_test_data=default_test_data)
+      url=url,
+      step_name=step_name,
+      headers=headers,
+      transient_retry=transient_retry,
+      strip_prefix=strip_prefix,
+      as_json='log' if log else True,
+      default_test_data=default_test_data,
+    )
 
   def _get_step(
-      self,
-      url: str,
-      step_name: str | None,
-      headers: Mapping[str, str] | None,
-      transient_retry: bool | int,
-      path: config_types.Path | str | None = None,
-      strip_prefix: str | None = None,
-      as_json: bool | str = False,
-      as_bytes: bool = False,
-      default_test_data: Any = None,
+    self,
+    url: str,
+    step_name: str | None,
+    headers: Mapping[str, str] | None,
+    transient_retry: bool | int,
+    path: config_types.Path | str | None = None,
+    strip_prefix: str | None = None,
+    as_json: bool | str = False,
+    as_bytes: bool = False,
+    default_test_data: Any = None,
   ) -> UrlApi.Response:
 
     step_name = step_name or 'GET %s' % url
     is_secure = self.validate_url(url)
 
     args = [
-        '--url',
-        url,
-        '--status-json',
-        self.m.json.output(add_json_log=False, name='status_json'),
+      '--url',
+      url,
+      '--status-json',
+      self.m.json.output(add_json_log=False, name='status_json'),
     ]
 
     if as_json:
@@ -334,17 +338,18 @@ class UrlApi(recipe_api.RecipeApi):
       args += ['--outfile', self.m.raw_io.output(leak_to=path, name='output')]
     else:
       args += [
-          '--outfile',
-          self.m.raw_io.output_text(leak_to=path, name='output')
+        '--outfile',
+        self.m.raw_io.output_text(leak_to=path, name='output'),
       ]
 
     if headers:
       has_authorization_header = any(
-          k.lower() == 'authorization' for k in headers)
+        k.lower() == 'authorization' for k in headers
+      )
       if has_authorization_header and not is_secure:
         raise ValueError(
-            'Refusing to send authorization header to insecure URL: %s' %
-            (url,))
+          'Refusing to send authorization header to insecure URL: %s' % (url,)
+        )
 
       args += ['--headers-json', self.m.json.input(headers)]
     if strip_prefix:
@@ -357,19 +362,25 @@ class UrlApi(recipe_api.RecipeApi):
       args += ['--transient-retry', str(transient_retry)]
 
     result = self.m.step(
-        step_name,
-        ['vpython3', '-u', self.resource('pycurl.py')] + args,
-        step_test_data=self.test_api._get_step_test_data(
-            status_cls=self._PyCurlStatus,
-            is_json=as_json,
-            is_bytes=as_bytes,
-            test_data=default_test_data))
+      step_name,
+      ['vpython3', '-u', self.resource('pycurl.py')] + args,
+      step_test_data=self.test_api._get_step_test_data(
+        status_cls=self._PyCurlStatus,
+        is_json=as_json,
+        is_bytes=as_bytes,
+        test_data=default_test_data,
+      ),
+    )
 
     output = path
     if not output:
       output_placeholder = (
-          result.json.outputs if as_json else
-          result.raw_io.outputs if as_bytes else result.raw_io.output_texts)
+        result.json.outputs
+        if as_json
+        else result.raw_io.outputs
+        if as_bytes
+        else result.raw_io.output_texts
+      )
       output = output_placeholder['output']
 
     status = self._PyCurlStatus(**result.json.outputs['status_json'])

@@ -11,8 +11,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    file,
-    path,
+  file,
+  path,
 )
 
 
@@ -29,8 +29,7 @@ class TEST_DEPS(RecipeTestApi):
 
 def RunSteps(api: DEPS) -> None:
   try:
-    api.file.read_text(
-      'does not exist', api.path.start_dir / 'not_there')
+    api.file.read_text('does not exist', api.path.start_dir / 'not_there')
     assert False, "never reached"  # pragma: no cover
   except api.file.Error as e:
     assert e.errno_name == 'ENOENT'

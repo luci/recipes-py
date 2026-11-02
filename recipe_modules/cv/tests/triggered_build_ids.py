@@ -13,9 +13,9 @@ from recipe_engine import post_process
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    buildbucket,
-    cv,
-    step,
+  buildbucket,
+  cv,
+  step,
 )
 
 
@@ -47,38 +47,38 @@ def RunSteps(api: DEPS) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'example',
-      api.cv.check_triggered_build_ids(1, 2, 22, 11),
+    'example',
+    api.cv.check_triggered_build_ids(1, 2, 22, 11),
   )
 
   yield api.test(
-      'with_post_check',
-      api.post_check(api.cv.check_triggered_build_ids, 1, 2, 22, 11),
-      api.post_process(post_process.DropExpectation),
+    'with_post_check',
+    api.post_check(api.cv.check_triggered_build_ids, 1, 2, 22, 11),
+    api.post_process(post_process.DropExpectation),
   )
 
   yield api.test(
-      'with_post_process',
-      api.post_process(api.cv.check_triggered_build_ids, 1, 2, 22, 11),
-      api.post_process(post_process.DropExpectation),
+    'with_post_process',
+    api.post_process(api.cv.check_triggered_build_ids, 1, 2, 22, 11),
+    api.post_process(post_process.DropExpectation),
   )
 
   yield api.test(
-      'with_sequence',
-      api.cv.check_triggered_build_ids([1, 2, 22, 11]),
-      api.post_process(post_process.DropExpectation),
+    'with_sequence',
+    api.cv.check_triggered_build_ids([1, 2, 22, 11]),
+    api.post_process(post_process.DropExpectation),
   )
 
   yield api.test(
-      'step_check',
-      api.cv.check_triggered_build_ids(
-          1, 2, 22, 11, step_name='triggered some builds'),
-      api.post_process(post_process.DropExpectation),
+    'step_check',
+    api.cv.check_triggered_build_ids(
+      1, 2, 22, 11, step_name='triggered some builds'
+    ),
+    api.post_process(post_process.DropExpectation),
   )
 
   yield api.test(
-      'empty_step_check',
-      api.cv.check_triggered_build_ids(
-          step_name='no builds actually triggered'),
-      api.post_process(post_process.DropExpectation),
+    'empty_step_check',
+    api.cv.check_triggered_build_ids(step_name='no builds actually triggered'),
+    api.post_process(post_process.DropExpectation),
   )

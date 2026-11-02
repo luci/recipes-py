@@ -11,8 +11,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    futures,
-    step,
+  futures,
+  step,
 )
 
 
@@ -30,11 +30,19 @@ class TEST_DEPS(RecipeTestApi):
 def RunSteps(api: DEPS) -> None:
   futures = []
   for _ in range(10):
-    futures.append(api.futures.spawn(
-        api.step('sleep loop', [
-          'python3', '-u', api.resource('sleep_loop.py'),
-        ], cost=api.step.ResourceCost(cpu=2*api.step.CPU_CORE))
-    ))
+    futures.append(
+      api.futures.spawn(
+        api.step(
+          'sleep loop',
+          [
+            'python3',
+            '-u',
+            api.resource('sleep_loop.py'),
+          ],
+          cost=api.step.ResourceCost(cpu=2 * api.step.CPU_CORE),
+        )
+      )
+    )
 
   assert len(api.futures.wait(futures)) == 10, "All done"
 
@@ -42,7 +50,7 @@ def RunSteps(api: DEPS) -> None:
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (
     api.test('basic')
-    + api.post_check(lambda check, steps: check(
-        steps['sleep loop'].cost.cpu == 2000
-    ))
+    + api.post_check(
+      lambda check, steps: check(steps['sleep loop'].cost.cpu == 2000)
+    )
   )

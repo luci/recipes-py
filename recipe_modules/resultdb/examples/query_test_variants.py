@@ -7,7 +7,9 @@ from __future__ import annotations
 from collections.abc import Iterator
 from recipe_engine import recipe_test_api
 
-from PB.recipe_modules.recipe_engine.resultdb.examples import query_test_variants as query_test_variants_pb
+from PB.recipe_modules.recipe_engine.resultdb.examples import (
+  query_test_variants as query_test_variants_pb,
+)
 from PB.go.chromium.org.luci.resultdb.proto.v1 import resultdb
 from recipe_engine.post_process import DropExpectation
 
@@ -15,8 +17,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    properties,
-    resultdb as resultdb_rm,
+  properties,
+  resultdb as resultdb_rm,
 )
 
 
@@ -31,6 +33,7 @@ class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
   resultdb: resultdb_rm.TEST_API
 
+
 INLINE_PROPERTIES_PROTO = """
 message InputProperties {
   string invocation = 1;
@@ -44,30 +47,33 @@ PROPERTIES = query_test_variants_pb.InputProperties
 
 def RunSteps(api: DEPS, props: query_test_variants_pb.InputProperties) -> None:
   api.resultdb.query_test_variants(
-      [props.invocation],
-      test_variant_status=props.test_variant_status,
-      page_size=10,
-      field_mask_paths=props.field_mask_paths,
+    [props.invocation],
+    test_variant_status=props.test_variant_status,
+    page_size=10,
+    field_mask_paths=props.field_mask_paths,
   )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'basic',
-      api.properties(
-          query_test_variants_pb.InputProperties(
-              invocation='invocations/build-8761170341278523313')),
-      api.resultdb.query_test_variants(resultdb.QueryTestVariantsResponse()),
-      api.post_process(DropExpectation),
+    'basic',
+    api.properties(
+      query_test_variants_pb.InputProperties(
+        invocation='invocations/build-8761170341278523313'
+      )
+    ),
+    api.resultdb.query_test_variants(resultdb.QueryTestVariantsResponse()),
+    api.post_process(DropExpectation),
   )
   yield api.test(
-      'status_and_fields',
-      api.properties(
-          query_test_variants_pb.InputProperties(
-              invocation='invocations/build-8761170341278523313',
-              test_variant_status='UNEXPECTED',
-              field_mask_paths=['results', 'sources_id'],
-          )),
-      api.resultdb.query_test_variants(resultdb.QueryTestVariantsResponse()),
-      api.post_process(DropExpectation),
+    'status_and_fields',
+    api.properties(
+      query_test_variants_pb.InputProperties(
+        invocation='invocations/build-8761170341278523313',
+        test_variant_status='UNEXPECTED',
+        field_mask_paths=['results', 'sources_id'],
+      )
+    ),
+    api.resultdb.query_test_variants(resultdb.QueryTestVariantsResponse()),
+    api.post_process(DropExpectation),
   )

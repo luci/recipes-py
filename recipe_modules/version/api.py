@@ -13,9 +13,12 @@ from recipe_engine.recipe_api import RecipeApi
 
 
 class VersionApi(RecipeApi):
-
   @staticmethod
-  def parse(version: str) -> packaging_legacy.version.LegacyVersion | packaging_legacy.version.Version:
+  def parse(
+    version: str,
+  ) -> (
+    packaging_legacy.version.LegacyVersion | packaging_legacy.version.Version
+  ):
     """Parse implements PEP 440 parsing for semvers.
 
     If `version` is strictly parseable as PEP 440, this returns a Version

@@ -7,11 +7,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from RECIPE_MODULES.recipe_engine import (
-    buildbucket,
-    proto,
-    resultdb,
-    step,
-    uuid,
+  buildbucket,
+  proto,
+  resultdb,
+  step,
+  uuid,
 )
 
 
@@ -22,5 +22,6 @@ class DEPS(RecipeScriptApi):
   resultdb: resultdb.API
   step: step.API
   uuid: uuid.API
+
 
 from .api import FindingsAPI as API

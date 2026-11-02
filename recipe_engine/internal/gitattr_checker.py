@@ -39,10 +39,10 @@ def _pattern2re(pattern: str) -> str:
       to_add = '[^/]'
     elif pattern[i] == '*' and charclass_start is None:
       # '*' shouldn't be replaced inside character classes.
-      if pattern[i:i+3] == '**/':
+      if pattern[i : i + 3] == '**/':
         to_add = '((.+/)?)'
         to_skip = 3
-      elif pattern[i:i+2] == '**':
+      elif pattern[i : i + 2] == '**':
         to_add = '.+'
         to_skip = 2
       else:
@@ -94,7 +94,7 @@ def _parse_gitattr_line(line: str) -> tuple[str, bool] | None:
       elif c == '\\':
         is_escaped = True
       elif c == '"':
-        attributes = line[i+1:].strip().split()
+        attributes = line[i + 1 :].strip().split()
         break
       else:
         pattern += c
@@ -136,15 +136,17 @@ class AttrChecker:
   def _git(self, cmd: Sequence[str], stdin: str | None = None) -> list[str]:
     """Executes a git command and returns the standard output."""
     p = subprocess.Popen(
-        ['git'] + list(cmd),
-        cwd=self._repo,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        text=True)
+      ['git'] + list(cmd),
+      cwd=self._repo,
+      stdin=subprocess.PIPE,
+      stdout=subprocess.PIPE,
+      text=True,
+    )
     stdout, _ = p.communicate(stdin if stdin else None)
     if p.returncode != 0:
       raise subprocess.CalledProcessError(
-          p.returncode, ['git'] + list(cmd), None)
+        p.returncode, ['git'] + list(cmd), None
+      )
     return stdout.strip().splitlines()
 
   def _get_directories(self, files: Iterable[str]) -> set[str]:
@@ -158,9 +160,9 @@ class AttrChecker:
     return dirs
 
   def _ensure_gitattributes_files_loaded(
-      self,
-      revision: str,
-      files: Iterable[str],
+    self,
+    revision: str,
+    files: Iterable[str],
   ) -> None:
     """Loads and parses all the .gitattributes files in the given revision."""
     self._gitattr_files = []
@@ -169,15 +171,16 @@ class AttrChecker:
     # search for .gitattributes files in them.
     touched_dirs = self._get_directories(files)
     possible_gitattr_paths = '\n'.join(
-        '%s:%s' % (revision, os.path.join(d, '.gitattributes'))
-        for d in touched_dirs)
+      '%s:%s' % (revision, os.path.join(d, '.gitattributes'))
+      for d in touched_dirs
+    )
 
     # We ask git to list the hashes for all the .gitattributes files we listed
     # above. If the file doesn't exist, git returns '<object> missing', where
     # object is the revision and .gitattribute file we asked for.
     possible_gitattr_blobs = self._git(
-        ['cat-file', '--batch-check=%(objectname)'],
-        possible_gitattr_paths)
+      ['cat-file', '--batch-check=%(objectname)'], possible_gitattr_paths
+    )
     for line, d in zip(possible_gitattr_blobs, touched_dirs):
       if line.endswith(' missing'):
         continue
@@ -253,9 +256,9 @@ class AttrChecker:
     return False
 
   def check_files(
-      self,
-      revision: str,
-      files: Iterable[str],
+    self,
+    revision: str,
+    files: Iterable[str],
   ) -> bool | list[bool]:
     """Checks the 'recipes' attribute for the |files| at the given |revision|.
 

@@ -51,13 +51,13 @@ class ArchiveApi(recipe_api.RecipeApi):
     return Package(self._archive_impl, root)
 
   def extract(
-      self,
-      step_name: str,
-      archive_file: config_types.Path | str,
-      output: config_types.Path | str,
-      mode: str = 'safe',
-      include_files: Sequence[str] = (),
-      archive_type: str | None = None,
+    self,
+    step_name: str,
+    archive_file: config_types.Path | str,
+    output: config_types.Path | str,
+    mode: str = 'safe',
+    include_files: Sequence[str] = (),
+    archive_type: str | None = None,
   ) -> None:
     """Step to uncompress |archive_file| into |output| directory.
 
@@ -92,43 +92,50 @@ class ArchiveApi(recipe_api.RecipeApi):
     assert mode in ('safe', 'unsafe'), 'Unknown mode %r' % (mode,)
 
     script_input = {
-        'output': str(output),
-        'archive_file': str(archive_file),
-        'safe_mode': mode == 'safe',
-        'include_files': list(include_files),
+      'output': str(output),
+      'archive_file': str(archive_file),
+      'safe_mode': mode == 'safe',
+      'include_files': list(include_files),
     }
     if archive_type:
-      assert archive_type in ('zip', 'tar'), ('Unknown archive_type %s' %
-                                              archive_type)
+      assert archive_type in ('zip', 'tar'), (
+        'Unknown archive_type %s' % archive_type
+      )
       script_input['archive_type'] = archive_type
     step_result = self.m.step(
-        step_name, [
-            'vpython3',
-            '-u',
-            self.resource('extract.py'),
-            '--json-input',
-            self.m.json.input(script_input),
-            '--json-output',
-            self.m.json.output(),
-        ],
-        step_test_data=lambda: self.m.json.test_api.output({
-            'extracted': {
-                'filecount': 1337,
-                'bytes': 0xbadc0ffee,
-            },
-        }))
+      step_name,
+      [
+        'vpython3',
+        '-u',
+        self.resource('extract.py'),
+        '--json-input',
+        self.m.json.input(script_input),
+        '--json-output',
+        self.m.json.output(),
+      ],
+      step_test_data=lambda: self.m.json.test_api.output(
+        {
+          'extracted': {
+            'filecount': 1337,
+            'bytes': 0xBADC0FFEE,
+          },
+        }
+      ),
+    )
     self.m.path.mock_add_paths(output)
     j = step_result.json.output
     if j.get('extracted', {}).get('filecount'):
       stat = j['extracted']
       step_result.presentation.step_text += (
-        '<br/>extracted %s files - %.02f MB' % (
-          stat['filecount'], stat['bytes'] / (1000.0**2)))
+        '<br/>extracted %s files - %.02f MB'
+        % (stat['filecount'], stat['bytes'] / (1000.0**2))
+      )
     if j.get('skipped', {}).get('filecount'):
       stat = j['skipped']
       step_result.presentation.step_text += (
-        '<br/>SKIPPED %s files - %.02f MB' % (
-          stat['filecount'], stat['bytes'] / (1000.0**2)))
+        '<br/>SKIPPED %s files - %.02f MB'
+        % (stat['filecount'], stat['bytes'] / (1000.0**2))
+      )
       step_result.presentation.logs['skipped files'] = stat['names']
       step_result.presentation.status = self.m.step.FAILURE
       ex = self.m.step.StepFailure(step_name)
@@ -136,12 +143,12 @@ class ArchiveApi(recipe_api.RecipeApi):
       raise ex
 
   def _archive_impl(
-      self,
-      root: config_types.Path,
-      entries: Sequence[dict[str, str]],
-      step_name: str,
-      output: config_types.Path,
-      archive_type: str | None,
+    self,
+    root: config_types.Path,
+    entries: Sequence[dict[str, str]],
+    step_name: str,
+    output: config_types.Path,
+    archive_type: str | None,
   ) -> None:
     assert entries, 'entries is empty!'
 
@@ -150,22 +157,24 @@ class ArchiveApi(recipe_api.RecipeApi):
       if self.m.path.splitext(base)[1] == '.tar':
         ext = '.tar' + ext
       archive_type = {
-          '.tbz': 'tbz',
-          '.tbz2': 'tbz',
-          '.tb2': 'tbz',
-          '.tar.bz2': 'tbz',
-          '.tgz': 'tgz',
-          '.tar.gz': 'tgz',
-          '.tzst': 'tzst',
-          '.tar.zst': 'tzst',
-          '.tar': 'tar',
-          '.zip': 'zip',
+        '.tbz': 'tbz',
+        '.tbz2': 'tbz',
+        '.tb2': 'tbz',
+        '.tar.bz2': 'tbz',
+        '.tgz': 'tgz',
+        '.tar.gz': 'tgz',
+        '.tzst': 'tzst',
+        '.tar.zst': 'tzst',
+        '.tar': 'tar',
+        '.zip': 'zip',
       }.get(ext)
       assert archive_type is not None, (
-        'Unable to infer archive_type from extension: %r' % (ext,))
+        'Unable to infer archive_type from extension: %r' % (ext,)
+      )
 
-    assert archive_type in self.ARCHIVE_TYPES, (
-      'Unsupported archive_type %r' % (archive_type,))
+    assert archive_type in self.ARCHIVE_TYPES, 'Unsupported archive_type %r' % (
+      archive_type,
+    )
 
     script_input = {
       'entries': entries,
@@ -174,12 +183,14 @@ class ArchiveApi(recipe_api.RecipeApi):
       'root': str(root),
     }
     self.m.step(
-        step_name, [
-            'vpython3',
-            '-u',
-            self.resource('archive.py'),
-        ],
-        stdin=self.m.json.input(script_input))
+      step_name,
+      [
+        'vpython3',
+        '-u',
+        self.resource('archive.py'),
+      ],
+      stdin=self.m.json.input(script_input),
+    )
     self.m.path.mock_add_paths(output)
 
 
@@ -193,18 +204,18 @@ class Package:
   """
 
   def __init__(
-      self,
-      archive_callback: Callable[
-          [
-              config_types.Path,
-              Sequence[dict[str, str]],
-              str,
-              config_types.Path,
-              str | None,
-          ],
-          None,
+    self,
+    archive_callback: Callable[
+      [
+        config_types.Path,
+        Sequence[dict[str, str]],
+        str,
+        config_types.Path,
+        str | None,
       ],
-      root: config_types.Path,
+      None,
+    ],
+    root: config_types.Path,
   ) -> None:
     self._archive_callback = archive_callback
     self._root = root
@@ -223,12 +234,16 @@ class Package:
     Returns:
       `self` to allow chaining.
     """
-    assert self._root in path.parents, (
-      '%r is not a parent of %r' % (self._root, path))
-    self._entries.append({
-      'type': 'file',
-      'path': str(path),
-    })
+    assert self._root in path.parents, '%r is not a parent of %r' % (
+      self._root,
+      path,
+    )
+    self._entries.append(
+      {
+        'type': 'file',
+        'path': str(path),
+      }
+    )
     return self
 
   def with_dir(self, path: config_types.Path) -> Package:
@@ -240,19 +255,23 @@ class Package:
     Returns:
       `self` to allow chaining.
     """
-    assert self._root in (path, *path.parents), (
-      '%r is not a parent of %r' % (self._root, path))
-    self._entries.append({
-      'type': 'dir',
-      'path': str(path),
-    })
+    assert self._root in (path, *path.parents), '%r is not a parent of %r' % (
+      self._root,
+      path,
+    )
+    self._entries.append(
+      {
+        'type': 'dir',
+        'path': str(path),
+      }
+    )
     return self
 
   def archive(
-      self,
-      step_name: str,
-      output: config_types.Path,
-      archive_type: str | None = None,
+    self,
+    step_name: str,
+    output: config_types.Path,
+    archive_type: str | None = None,
   ) -> config_types.Path:
     """Archives all staged files to an archive file indicated by `output`.
 
@@ -268,9 +287,6 @@ class Package:
     Returns:
       `output`, for convenience.
     """
-    entries = self._entries or [
-      {'type': 'dir', 'path': str(self._root)}
-    ]
-    self._archive_callback(self._root, entries, step_name, output,
-                           archive_type)
+    entries = self._entries or [{'type': 'dir', 'path': str(self._root)}]
+    self._archive_callback(self._root, entries, step_name, output, archive_type)
     return output

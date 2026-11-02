@@ -7,15 +7,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from RECIPE_MODULES.recipe_engine import (
-    buildbucket,
-    json,
-    path,
-    platform,
-    raw_io,
-    resultdb,
-    runtime,
-    step,
-    uuid,
+  buildbucket,
+  json,
+  path,
+  platform,
+  raw_io,
+  resultdb,
+  runtime,
+  step,
+  uuid,
 )
 
 
@@ -30,5 +30,6 @@ class DEPS(RecipeScriptApi):
   runtime: runtime.API
   step: step.API
   uuid: uuid.API
+
 
 from .api import MiloApi as API

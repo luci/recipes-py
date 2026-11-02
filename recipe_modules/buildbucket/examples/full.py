@@ -21,13 +21,13 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    buildbucket,
-    json,
-    platform,
-    properties,
-    raw_io,
-    runtime,
-    step,
+  buildbucket,
+  json,
+  platform,
+  properties,
+  raw_io,
+  runtime,
+  step,
 )
 
 
@@ -58,8 +58,10 @@ def RunSteps(api: DEPS) -> None:
     assert build.builder.builder == 'try-builder'
     assert '-review' in build.input.gerrit_changes[0].host
     assert build.input.gitiles_commit.id == 'a' * 40
-    assert (build.input.gitiles_commit.project ==
-            build.input.gerrit_changes[0].project)
+    assert (
+      build.input.gitiles_commit.project
+      == build.input.gerrit_changes[0].project
+    )
   elif build.builder.bucket == 'ci':
     assert build.builder.project == 'proj-internal'
     assert build.builder.builder == 'ci-builder'
@@ -80,28 +82,30 @@ def RunSteps(api: DEPS) -> None:
 
   example_bucket = 'main.user.username'
   linux_req = api.buildbucket.schedule_request(
-      builder='linux_perf_bisect',
-      bucket=example_bucket,
-      swarming_parent_run_id=api.properties.get('swarming_parent_run_id'),
-      properties={
-        'bisect_config': {
-          'bad_revision': '351054',
-          'bug_id': 537649,
-          'command': ('src/tools/perf/run_benchmark -v '
-                      '--browser=release --output-format=chartjson '
-                      '--also-run-disabled-tests speedometer'),
-          'good_revision': '351045',
-          'gs_bucket': 'chrome-perf',
-          'max_time_minutes': '20',
-          'metric': 'Total/Total',
-          'recipe_tester_name': 'linux_perf_bisect',
-          'repeat_count': '10',
-          'test_type': 'perf'
-        },
-      })
+    builder='linux_perf_bisect',
+    bucket=example_bucket,
+    swarming_parent_run_id=api.properties.get('swarming_parent_run_id'),
+    properties={
+      'bisect_config': {
+        'bad_revision': '351054',
+        'bug_id': 537649,
+        'command': (
+          'src/tools/perf/run_benchmark -v '
+          '--browser=release --output-format=chartjson '
+          '--also-run-disabled-tests speedometer'
+        ),
+        'good_revision': '351045',
+        'gs_bucket': 'chrome-perf',
+        'max_time_minutes': '20',
+        'metric': 'Total/Total',
+        'recipe_tester_name': 'linux_perf_bisect',
+        'repeat_count': '10',
+        'test_type': 'perf',
+      },
+    },
+  )
 
-  build_tags = {'main': 'overriden.main.url',
-                'builder': 'overriden_builder'}
+  build_tags = {'main': 'overriden.main.url', 'builder': 'overriden_builder'}
   build_tags2 = {'main': 'someother.main.url', 'builder': 'some_builder'}
   mac_req = copy.deepcopy(linux_req)
   mac_req.builder.builder = 'mac_perf_bisect'
@@ -120,92 +124,102 @@ def RunSteps(api: DEPS) -> None:
 
   assert not api.buildbucket.build.output.HasField('gitiles_commit')
   c = common_pb2.GitilesCommit(
-        host='chromium.googlesource.com',
-        project='infra/infra',
-        ref='refs/heads/main',
-        id='a' * 40,
-        position=42,
+    host='chromium.googlesource.com',
+    project='infra/infra',
+    ref='refs/heads/main',
+    id='a' * 40,
+    position=42,
   )
   api.buildbucket.set_output_gitiles_commit(c)
   assert api.buildbucket.build.output.gitiles_commit == c
 
   api.step(
-      'builder_url', cmd=None).presentation.step_text = (
-          api.buildbucket.builder_url())
+    'builder_url', cmd=None
+  ).presentation.step_text = api.buildbucket.builder_url()
 
   api.step(
-      'build_url', cmd=None).presentation.step_text = (
-          api.buildbucket.build_url())
+    'build_url', cmd=None
+  ).presentation.step_text = api.buildbucket.build_url()
 
-  api.step('builder_cache', cmd=None).presentation.step_text = (
-      str(api.buildbucket.builder_cache_path)
+  api.step('builder_cache', cmd=None).presentation.step_text = str(
+    api.buildbucket.builder_cache_path
   )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'basic-try',
-      api.buildbucket.try_build(
-          project='proj',
-          builder='try-builder',
-          git_repo='https://chrome-internal.googlesource.com/a/repo.git',
-          revision='a' * 40,
-          build_number=123),
-      api.buildbucket.simulated_get(build_pb2.Build(id=8922054662172514000))
+    'basic-try',
+    api.buildbucket.try_build(
+      project='proj',
+      builder='try-builder',
+      git_repo='https://chrome-internal.googlesource.com/a/repo.git',
+      revision='a' * 40,
+      build_number=123,
+    ),
+    api.buildbucket.simulated_get(build_pb2.Build(id=8922054662172514000)),
   )
 
   yield api.test(
-      'basic-ci-win',
-      api.platform('win', 32),
-      api.buildbucket.ci_build(
-          project='proj-internal',
-          bucket='ci',
-          builder='ci-builder',
-          git_repo='https://chrome-internal.googlesource.com/a/repo.git',
-          build_number=0,
-          tags=api.buildbucket.tags(user_agent=['cq', 'recipe']),
-          exe=api.buildbucket.exe(cipd_pkg='path/to/cipd/pkg')),
-      api.buildbucket.simulated_get(build_pb2.Build(id=8922054662172514000)),
+    'basic-ci-win',
+    api.platform('win', 32),
+    api.buildbucket.ci_build(
+      project='proj-internal',
+      bucket='ci',
+      builder='ci-builder',
+      git_repo='https://chrome-internal.googlesource.com/a/repo.git',
+      build_number=0,
+      tags=api.buildbucket.tags(user_agent=['cq', 'recipe']),
+      exe=api.buildbucket.exe(cipd_pkg='path/to/cipd/pkg'),
+    ),
+    api.buildbucket.simulated_get(build_pb2.Build(id=8922054662172514000)),
   )
 
   yield api.test(
-      'basic-try-bad-get',
-      api.buildbucket.try_build(
-          project='proj',
-          builder='try-builder',
-          git_repo='https://chrome-internal.googlesource.com/a/repo.git',
-          revision='a' * 40,
-          build_number=123),
-      api.step_data('buildbucket.get', api.json.output_stream({
-        'responses': [{'error': {'code': 7}}],
-      }, retcode=1)),
-      api.post_process(DropExpectation),
-      status = 'INFRA_FAILURE',
+    'basic-try-bad-get',
+    api.buildbucket.try_build(
+      project='proj',
+      builder='try-builder',
+      git_repo='https://chrome-internal.googlesource.com/a/repo.git',
+      revision='a' * 40,
+      build_number=123,
+    ),
+    api.step_data(
+      'buildbucket.get',
+      api.json.output_stream(
+        {
+          'responses': [{'error': {'code': 7}}],
+        },
+        retcode=1,
+      ),
+    ),
+    api.post_process(DropExpectation),
+    status='INFRA_FAILURE',
   )
 
   yield api.test(
-      'basic-generic',
-      api.buildbucket.generic_build(
-          project='project',
-          bucket='cron',
-          builder='cron-builder',
-          execution_timeout=100),
-      api.post_process(DropExpectation),
+    'basic-generic',
+    api.buildbucket.generic_build(
+      project='project',
+      bucket='cron',
+      builder='cron-builder',
+      execution_timeout=100,
+    ),
+    api.post_process(DropExpectation),
   )
 
   yield api.test('no_properties')
 
   yield api.test(
-      'cancel_step',
-      api.runtime.global_shutdown_on_step('buildbucket.get', 'before'),
-      api.buildbucket.try_build(
-          project='proj',
-          builder='try-builder',
-          git_repo='https://chrome-internal.googlesource.com/a/repo.git',
-          revision='a' * 40,
-          build_number=123,
-          experiments=['luci.buildbucket.parent_tracking']
-      ),
-      api.properties(swarming_parent_run_id='1234'),
-      status='CANCELED',
+    'cancel_step',
+    api.runtime.global_shutdown_on_step('buildbucket.get', 'before'),
+    api.buildbucket.try_build(
+      project='proj',
+      builder='try-builder',
+      git_repo='https://chrome-internal.googlesource.com/a/repo.git',
+      revision='a' * 40,
+      build_number=123,
+      experiments=['luci.buildbucket.parent_tracking'],
+    ),
+    api.properties(swarming_parent_run_id='1234'),
+    status='CANCELED',
   )

@@ -1,0 +1,22 @@
+# Copyright 2026 The LUCI Authors
+# Use of this source code is governed under the Apache License, Version 2.0
+# that can be found in the LICENSE file.
+
+line-length = 80
+indent-width = 2
+extend-exclude = [
+    "*_pb2.py",
+    "*_pb2.pyi",
+    "*_pb2_grpc.py",
+    "recipe_modules/futures/examples/lazy_fan_out_in_early_abort.resources/sleep_loop.py",
+    "recipes.py",
+    "turboci",
+]
+
+[format]
+quote-style = "preserve"
+
+[lint]
+# Enable the legacy Ruff 0.15 default ruleset.
+select = ["E4", "E7", "E9", "F"]
+unfixable = ["F401"]

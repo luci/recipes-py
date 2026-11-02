@@ -23,11 +23,13 @@ from RECIPE_MODULES.recipe_engine.time.api import exponential_retry
 # of the tool here. Upstream changes are intentionally left out.
 _LATEST_STABLE_VERSION = 'git_revision:ca2431ca47b3f9ee4af25e48ff0c48b508a3382b'
 
+
 # Spike is failing intermittently due to issues calling the swarming API, this
 # retry can decorate each report method.
 def retry(raise_on_failure: bool = True) -> exponential_retry:
   return exponential_retry(
-      3, datetime.timedelta(seconds=5), raise_on_failure=raise_on_failure)
+    3, datetime.timedelta(seconds=5), raise_on_failure=raise_on_failure
+  )
 
 
 class BcidReporterApi(recipe_api.RecipeApi):
@@ -51,9 +53,9 @@ class BcidReporterApi(recipe_api.RecipeApi):
     broker will be installed using cipd.
     """
     return self.m.cipd.ensure_tool(
-        'infra/tools/security/provenance_broker/${platform}',
-        _LATEST_STABLE_VERSION,
-        executable_path='snoopy_broker',
+      'infra/tools/security/provenance_broker/${platform}',
+      _LATEST_STABLE_VERSION,
+      executable_path='snoopy_broker',
     )
 
   @contextlib.contextmanager
@@ -69,7 +71,7 @@ class BcidReporterApi(recipe_api.RecipeApi):
     "upload-complete" stage when leaving it, even if the wrapped block raised.
     """
     with self.m.context(
-        env_prefixes={'PATH': [self.bcid_reporter_path.parent]}
+      env_prefixes={'PATH': [self.bcid_reporter_path.parent]}
     ):
       self.report_stage('start')
       try:
@@ -78,9 +80,7 @@ class BcidReporterApi(recipe_api.RecipeApi):
         self.report_stage('upload-complete')
 
   @retry(raise_on_failure=False)
-  def report_stage(
-      self, stage: str, server_url: str | None = None
-  ) -> None:
+  def report_stage(self, stage: str, server_url: str | None = None) -> None:
     """Reports task stage to local provenance server. This is best-effort and
     won't abort the execution on errors.
 
@@ -114,12 +114,12 @@ class BcidReporterApi(recipe_api.RecipeApi):
 
   @retry()
   def report_cipd(
-      self,
-      digest: str,
-      pkg: str,
-      iid: str,
-      attestation: config_types.Path | str,
-      server_url: str | None = None,
+    self,
+    digest: str,
+    pkg: str,
+    iid: str,
+    attestation: config_types.Path | str,
+    server_url: str | None = None,
   ) -> None:
     """Reports cipd digest to local provenance server.
 
@@ -154,7 +154,7 @@ class BcidReporterApi(recipe_api.RecipeApi):
 
   @retry()
   def report_gcs(
-      self, digest: str, guri: str, server_url: str | None = None
+    self, digest: str, guri: str, server_url: str | None = None
   ) -> None:
     """Reports gcs digest to local provenance server.
 
@@ -184,11 +184,11 @@ class BcidReporterApi(recipe_api.RecipeApi):
 
   @retry()
   def report_sbom(
-      self,
-      digest: str,
-      guri: str,
-      sbom_subjects: list[str] | str | None = None,
-      server_url: str | None = None,
+    self,
+    digest: str,
+    guri: str,
+    sbom_subjects: list[str] | str | None = None,
+    server_url: str | None = None,
   ) -> None:
     """Reports SBOM gcs digest to local provenance server.
 
@@ -206,12 +206,12 @@ class BcidReporterApi(recipe_api.RecipeApi):
         broker tool will use default if not specified.
     """
     args = [
-        self.bcid_reporter_path,
-        '-report-gcs',
-        '-digest',
-        digest,
-        '-gcs-uri',
-        guri,
+      self.bcid_reporter_path,
+      '-report-gcs',
+      '-digest',
+      digest,
+      '-gcs-uri',
+      guri,
     ]
 
     if isinstance(sbom_subjects, list):
@@ -226,14 +226,14 @@ class BcidReporterApi(recipe_api.RecipeApi):
     self.m.step('snoop: report_sbom', args)
 
   def create_from_yaml(
-      self,
-      pkg_def: config_types.Path,
-      refs: Sequence[str] | None = None,
-      tags: Mapping[str, str] | None = None,
-      metadata: Sequence[cipd_api.CIPDApi.Metadata] | None = None,
-      pkg_vars: Mapping[str, str] | None = None,
-      compression_level: cipd_api.CIPDApi.CompressionLevel | None = None,
-      verification_timeout: str | None = None,
+    self,
+    pkg_def: config_types.Path,
+    refs: Sequence[str] | None = None,
+    tags: Mapping[str, str] | None = None,
+    metadata: Sequence[cipd_api.CIPDApi.Metadata] | None = None,
+    pkg_vars: Mapping[str, str] | None = None,
+    compression_level: cipd_api.CIPDApi.CompressionLevel | None = None,
+    verification_timeout: str | None = None,
   ) -> cipd_api.CIPDApi.Pin:
     """Builds and uploads a package based on on-disk YAML package definition
     file and reports cipd digest to local provenance server.
@@ -257,32 +257,35 @@ class BcidReporterApi(recipe_api.RecipeApi):
     """
     package_path = self.m.path.mkstemp(prefix="bcid_cipd_")
     attestation_path = self.m.path.mkstemp(prefix="bcid_cipd_attestation_")
-    pin = self.m.cipd.build_from_yaml(pkg_def, package_path, pkg_vars,
-                                      compression_level)
+    pin = self.m.cipd.build_from_yaml(
+      pkg_def, package_path, pkg_vars, compression_level
+    )
 
     package_hash = self.m.file.file_hash(package_path, test_data='deadbeef')
-    self.report_cipd(package_hash, pin.package, pin.instance_id, attestation_path)
+    self.report_cipd(
+      package_hash, pin.package, pin.instance_id, attestation_path
+    )
 
     pin = self.m.cipd.register(
-        pin.package,
-        package_path,
-        refs,
-        tags,
-        metadata,
-        verification_timeout,
-        attestation_path
+      pin.package,
+      package_path,
+      refs,
+      tags,
+      metadata,
+      verification_timeout,
+      attestation_path,
     )
 
     return pin
 
   def create_from_pkg(
-      self,
-      pkg_def: cipd_api.CIPDApi.PackageDefinition,
-      refs: Sequence[str] | None = None,
-      tags: Mapping[str, str] | None = None,
-      metadata: Sequence[cipd_api.CIPDApi.Metadata] | None = None,
-      compression_level: cipd_api.CIPDApi.CompressionLevel | None = None,
-      verification_timeout: str | None = None,
+    self,
+    pkg_def: cipd_api.CIPDApi.PackageDefinition,
+    refs: Sequence[str] | None = None,
+    tags: Mapping[str, str] | None = None,
+    metadata: Sequence[cipd_api.CIPDApi.Metadata] | None = None,
+    compression_level: cipd_api.CIPDApi.CompressionLevel | None = None,
+    verification_timeout: str | None = None,
   ) -> cipd_api.CIPDApi.Pin:
     """Builds and uploads a package based on a PackageDefinition object and
     reports cipd digest to local provenance server.
@@ -307,16 +310,18 @@ class BcidReporterApi(recipe_api.RecipeApi):
     pin = self.m.cipd.build_from_pkg(pkg_def, package_path, compression_level)
 
     package_hash = self.m.file.file_hash(package_path, test_data='deadbeef')
-    self.report_cipd(package_hash, pin.package, pin.instance_id, attestation_path)
+    self.report_cipd(
+      package_hash, pin.package, pin.instance_id, attestation_path
+    )
 
     pin = self.m.cipd.register(
-        pin.package,
-        package_path,
-        refs,
-        tags,
-        metadata,
-        verification_timeout,
-        attestation_path
+      pin.package,
+      package_path,
+      refs,
+      tags,
+      metadata,
+      verification_timeout,
+      attestation_path,
     )
 
     return pin

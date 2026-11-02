@@ -11,9 +11,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    cv,
-    properties,
-    step,
+  cv,
+  properties,
+  step,
 )
 
 
@@ -33,7 +33,7 @@ class TEST_DEPS(RecipeTestApi):
 def RunSteps(api: DEPS) -> None:
   api.step('show properties', [])
   api.step.active_result.presentation.logs['result'] = [
-      'mode: %s' % (api.cv.run_mode,),
+    'mode: %s' % (api.cv.run_mode,),
   ]
 
 
@@ -41,13 +41,13 @@ def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('dry') + api.cv(run_mode=api.cv.DRY_RUN)
   yield api.test('quick-dry') + api.cv(run_mode=api.cv.QUICK_DRY_RUN)
   yield api.test('full') + api.cv(run_mode=api.cv.FULL_RUN)
-  yield api.test('legacy-full') + api.properties(**{
-      '$recipe_engine/cq': {
-          'dry_run': False
-      },
-  })
-  yield api.test('legacy-dry') + api.properties(**{
-      '$recipe_engine/cq': {
-          'dry_run': True
-      },
-  })
+  yield api.test('legacy-full') + api.properties(
+    **{
+      '$recipe_engine/cq': {'dry_run': False},
+    }
+  )
+  yield api.test('legacy-dry') + api.properties(
+    **{
+      '$recipe_engine/cq': {'dry_run': True},
+    }
+  )

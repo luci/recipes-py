@@ -10,7 +10,6 @@ from recipe_engine import recipe_utils
 
 
 class TestUtils(test_env.RecipeEngineUnitTest):
-
   def test_check_type_good(self) -> None:
     recipe_utils.check_type("4", 4, int)
 

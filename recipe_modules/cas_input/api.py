@@ -18,7 +18,9 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from typing import Any
-from PB.recipe_modules.recipe_engine.cas_input import properties as properties_pb
+from PB.recipe_modules.recipe_engine.cas_input import (
+  properties as properties_pb,
+)
 from recipe_engine import config_types
 
 from RECIPE_MODULES.recipe_engine import cas_input
@@ -31,7 +33,9 @@ class CasInputApi(recipe_api.RecipeApi):
 
   m: cas_input.DEPS
 
-  def __init__(self, props: properties_pb.InputProperties, **kwargs: Any) -> None:
+  def __init__(
+    self, props: properties_pb.InputProperties, **kwargs: Any
+  ) -> None:
     super().__init__(**kwargs)
 
     self._module_props = props
@@ -41,9 +45,9 @@ class CasInputApi(recipe_api.RecipeApi):
     return self._module_props.caches
 
   def download_caches(
-      self,
-      output_dir: config_types.Path,
-      caches: Sequence[properties_pb.CasCache] | None = None,
+    self,
+    output_dir: config_types.Path,
+    caches: Sequence[properties_pb.CasCache] | None = None,
   ) -> None:
     """Downloads RBE-CAS caches and puts them in a given directory.
 

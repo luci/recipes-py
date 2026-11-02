@@ -14,8 +14,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    change_verifier,
-    proto,
+  change_verifier,
+  proto,
 )
 
 
@@ -33,23 +33,27 @@ class TEST_DEPS(RecipeTestApi):
 def RunSteps(api: DEPS) -> None:
   # Lookup Runs by CL.
   runs = api.change_verifier.search_runs(
-      'prj', cls=('x-review.googlesource.com', 123), step_name='search1cl')
+    'prj', cls=('x-review.googlesource.com', 123), step_name='search1cl'
+  )
   assert len(runs) > 0
 
   # Search for Runs that contain 2 particular CLs (and may contain others).
   runs = api.change_verifier.search_runs(
-      'prj',
-      cls=[
-          ('x-review.googlesource.com', 123),
-          run_pb.GerritChange(
-              host="x-review.googlesource.com", change=222, patchset=2),
-      ],
-      step_name='search2cls')
+    'prj',
+    cls=[
+      ('x-review.googlesource.com', 123),
+      run_pb.GerritChange(
+        host="x-review.googlesource.com", change=222, patchset=2
+      ),
+    ],
+    step_name='search2cls',
+  )
   assert len(runs) > 0
 
   # We can lookup Runs by project, and specify a limit.
   runs = api.change_verifier.search_runs(
-      'prj', limit=50, step_name='search-project')
+    'prj', limit=50, step_name='search-project'
+  )
   assert len(runs) == 50
 
 
@@ -63,26 +67,37 @@ def make_runs(count: int = 1) -> list[run_pb.Run]:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'basic',
-      api.step_data('search1cl.request page 1',
-                    stdout=api.proto.output(
-                        service_runs_pb.SearchRunsResponse(runs=make_runs()))),
-      api.step_data('search2cls.request page 1',
-                    stdout=api.proto.output(
-                        service_runs_pb.SearchRunsResponse(runs=make_runs()))),
-      api.step_data('search-project.request page 1',
-                    stdout=api.proto.output(
-                        service_runs_pb.SearchRunsResponse(
-                            runs=make_runs(32),
-                            next_page_token='abcd'))),
-      api.step_data('search-project.request page 2',
-                    stdout=api.proto.output(
-                        service_runs_pb.SearchRunsResponse(
-                            runs=make_runs(32)))),
+    'basic',
+    api.step_data(
+      'search1cl.request page 1',
+      stdout=api.proto.output(
+        service_runs_pb.SearchRunsResponse(runs=make_runs())
+      ),
+    ),
+    api.step_data(
+      'search2cls.request page 1',
+      stdout=api.proto.output(
+        service_runs_pb.SearchRunsResponse(runs=make_runs())
+      ),
+    ),
+    api.step_data(
+      'search-project.request page 1',
+      stdout=api.proto.output(
+        service_runs_pb.SearchRunsResponse(
+          runs=make_runs(32), next_page_token='abcd'
+        )
+      ),
+    ),
+    api.step_data(
+      'search-project.request page 2',
+      stdout=api.proto.output(
+        service_runs_pb.SearchRunsResponse(runs=make_runs(32))
+      ),
+    ),
   )
 
   yield api.test(
-      'error',
-      api.step_data('search1cl.request page 1', retcode=1),
-      status='INFRA_FAILURE',
+    'error',
+    api.step_data('search1cl.request page 1', retcode=1),
+    status='INFRA_FAILURE',
   )

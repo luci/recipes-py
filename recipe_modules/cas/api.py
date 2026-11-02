@@ -24,7 +24,7 @@ class CasApi(recipe_api.RecipeApi):
   m: cas.DEPS
 
   def __init__(
-      self, env_properties: properties_pb.EnvProperties, **kwargs: Any
+    self, env_properties: properties_pb.EnvProperties, **kwargs: Any
   ) -> None:
     super().__init__(**kwargs)
 
@@ -38,9 +38,10 @@ class CasApi(recipe_api.RecipeApi):
       return self._instance
 
     swarming_server = (
-      self._env_properties.SWARMING_SERVER or
-      'https://example-cas-server.appspot.com')
-    project = swarming_server[len('https://'):-len('.appspot.com')]
+      self._env_properties.SWARMING_SERVER
+      or 'https://example-cas-server.appspot.com'
+    )
+    project = swarming_server[len('https://') : -len('.appspot.com')]
 
     # Set full instance name if only project ID is given.
     self._instance = 'projects/%s/instances/default_instance' % project
@@ -64,19 +65,20 @@ class CasApi(recipe_api.RecipeApi):
 
     if self._cached_version is None:
       self._cached_version = self.m.file.read_text(
-          "read infra revision",
-          # This has revision of https://chromium.googlesource.com/infra/infra/.
-          self.resource("infra.sha1"),
-          test_data='git_revision:mock_infra_git_revision').strip()
+        "read infra revision",
+        # This has revision of https://chromium.googlesource.com/infra/infra/.
+        self.resource("infra.sha1"),
+        test_data='git_revision:mock_infra_git_revision',
+      ).strip()
 
     return self._cached_version
 
   def _run(
-      self,
-      name: str,
-      cmd: Sequence[str | config_types.Path | util.Placeholder],
-      step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
-      **kwargs: Any,
+    self,
+    name: str,
+    cmd: Sequence[str | config_types.Path | util.Placeholder],
+    step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
+    **kwargs: Any,
   ) -> step_data.StepData:
     """Returns a cas command step.
 
@@ -87,19 +89,22 @@ class CasApi(recipe_api.RecipeApi):
     """
     kwargs.setdefault('infra_step', True)
     return self.m.step(
-        name,
-        [
-            self.m.cipd.ensure_tool('infra/tools/luci/cas/${platform}',
-                                    self._version)
-        ] + list(cmd),
-        step_test_data=step_test_data,
-        **kwargs)
+      name,
+      [
+        self.m.cipd.ensure_tool(
+          'infra/tools/luci/cas/${platform}', self._version
+        )
+      ]
+      + list(cmd),
+      step_test_data=step_test_data,
+      **kwargs,
+    )
 
   def download(
-      self,
-      step_name: str,
-      digest: str,
-      output_dir: config_types.Path,
+    self,
+    step_name: str,
+    digest: str,
+    output_dir: config_types.Path,
   ) -> step_data.StepData:
     """Downloads a directory tree from a cas server.
 
@@ -110,13 +115,13 @@ class CasApi(recipe_api.RecipeApi):
       * output_dir (Path): path to an output directory.
     """
     cmd = [
-        'download',
-        '-cas-instance',
-        self.instance,
-        '-digest',
-        digest,
-        '-dir',
-        output_dir,
+      'download',
+      '-cas-instance',
+      self.instance,
+      '-digest',
+      digest,
+      '-dir',
+      output_dir,
     ]
     return self._run(step_name, cmd)
 
@@ -127,15 +132,16 @@ class CasApi(recipe_api.RecipeApi):
     if self.instance.split('/')[1] != 'chromium-swarm-dev':
       viewer_host = 'cas-viewer.appspot.com'
     return 'https://{0}/{1}/blobs/{2}/tree'.format(
-      viewer_host, self.instance, digest)
+      viewer_host, self.instance, digest
+    )
 
   def archive(
-      self,
-      step_name: str,
-      root: str | config_types.Path,
-      *paths: str | config_types.Path,
-      log_level: str = 'info',
-      **kwargs: Any,
+    self,
+    step_name: str,
+    root: str | config_types.Path,
+    *paths: str | config_types.Path,
+    log_level: str = 'info',
+    **kwargs: Any,
   ) -> str:
     """Archives given paths to a cas server.
 
@@ -160,30 +166,28 @@ class CasApi(recipe_api.RecipeApi):
       self.m.path.assert_absolute(p)
 
     cmd = [
-        'archive',
-        '-log-level',
-        log_level,
-        '-cas-instance',
-        self.instance,
-        '-dump-digest',
-        self.m.raw_io.output_text(),
-        '-paths-json',
-        self.m.json.input(
-          [
-            [str(root), str(self.m.path.relpath(p, root))]
-            for p in paths
-          ]
-        ),
+      'archive',
+      '-log-level',
+      log_level,
+      '-cas-instance',
+      self.instance,
+      '-dump-digest',
+      self.m.raw_io.output_text(),
+      '-paths-json',
+      self.m.json.input(
+        [[str(root), str(self.m.path.relpath(p, root))] for p in paths]
+      ),
     ]
 
     # TODO(tikuta): support multiple tree upload.
     step = self._run(
-        step_name,
-        cmd,
-        step_test_data=lambda: self.m.raw_io.test_api.output_text(
-            'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855/0'
-        ),
-        **kwargs)
+      step_name,
+      cmd,
+      step_test_data=lambda: self.m.raw_io.test_api.output_text(
+        'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855/0'
+      ),
+      **kwargs,
+    )
     digest = step.raw_io.output_text
     step.presentation.links["CAS UI"] = self.viewer_url(digest)
     return digest

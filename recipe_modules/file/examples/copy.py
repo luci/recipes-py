@@ -11,9 +11,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    file,
-    json,
-    path,
+  file,
+  json,
+  path,
 )
 
 
@@ -36,22 +36,24 @@ def RunSteps(api: DEPS) -> None:
   api.file.write_text('write a file', dest, data)
   api.file.copy('copy it', dest, api.path.start_dir / 'new path')
   read_data = api.file.read_text(
-    'read it', api.path.start_dir / 'new path', test_data=data)
+    'read it', api.path.start_dir / 'new path', test_data=data
+  )
 
   assert read_data == data, (read_data, data)
 
-  api.file.move('move it', api.path.start_dir / 'new path',
-                api.path.start_dir / 'new new path')
+  api.file.move(
+    'move it',
+    api.path.start_dir / 'new path',
+    api.path.start_dir / 'new new path',
+  )
 
   read_data = api.file.read_text(
-    'read it', api.path.start_dir / 'new new path', test_data=data)
+    'read it', api.path.start_dir / 'new new path', test_data=data
+  )
 
   assert read_data == data, (read_data, data)
 
-  api.file.copy(
-    'Copy some JSON data',
-    api.json.input({"hello": "world"}),
-    dest)
+  api.file.copy('Copy some JSON data', api.json.input({"hello": "world"}), dest)
 
   data = '{"hello": "world"}'
   read_data = api.file.read_text('read json back', dest, test_data=data)

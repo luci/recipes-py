@@ -14,9 +14,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    raw_io,
-    step,
+  assertions,
+  raw_io,
+  step,
 )
 
 
@@ -35,24 +35,30 @@ class TEST_DEPS(RecipeTestApi):
 def RunSteps(api: DEPS) -> None:
   with api.assertions.assertRaises(TypeError) as caught:
     api.step(
-        'step requiring text data', ['cat', 'foo'],
-        stdout=api.raw_io.output_text('out'),
-        step_test_data=lambda: api.raw_io.test_api.stream_output(b'blah\n'))
+      'step requiring text data',
+      ['cat', 'foo'],
+      stdout=api.raw_io.output_text('out'),
+      step_test_data=lambda: api.raw_io.test_api.stream_output(b'blah\n'),
+    )
   api.assertions.assertTrue(
-      str(caught.exception).startswith('test data must be text data'))
+    str(caught.exception).startswith('test data must be text data')
+  )
 
   with api.assertions.assertRaises(TypeError) as caught:
     api.step(
-        'step requiring binary data', ['cat', 'foo'],
-        stdout=api.raw_io.output('out'),
-        step_test_data=lambda: api.raw_io.test_api.stream_output_text('blah\n'))
+      'step requiring binary data',
+      ['cat', 'foo'],
+      stdout=api.raw_io.output('out'),
+      step_test_data=lambda: api.raw_io.test_api.stream_output_text('blah\n'),
+    )
   api.assertions.assertTrue(
-      str(caught.exception).startswith('test data must be binary data'))
+    str(caught.exception).startswith('test data must be binary data')
+  )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'basic',
-      api.post_check(post_process.StatusSuccess),
-      api.post_process(post_process.DropExpectation),
+    'basic',
+    api.post_check(post_process.StatusSuccess),
+    api.post_process(post_process.DropExpectation),
   )

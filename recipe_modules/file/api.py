@@ -18,14 +18,15 @@ import google.protobuf
 from recipe_engine import config_types, recipe_api, recipe_test_api, step_data
 from RECIPE_MODULES.recipe_engine.proto import api as proto_api
 
+
 class SymlinkTree:
   """A representation of a tree of symlinks."""
 
   def __init__(
-      self,
-      root: config_types.Path,
-      api: recipe_api.RecipeApi,
-      symlink_resource: config_types.Path | str,
+    self,
+    root: config_types.Path,
+    api: recipe_api.RecipeApi,
+    symlink_resource: config_types.Path | str,
   ) -> None:
     """See FileApi.symlink_tree for the public constructor."""
     assert root and isinstance(root, config_types.Path)
@@ -43,9 +44,9 @@ class SymlinkTree:
     return self._root
 
   def register_link(
-      self,
-      target: config_types.Path,
-      linkname: config_types.Path,
+    self,
+    target: config_types.Path,
+    linkname: config_types.Path,
   ) -> None:
     """Registers a pair of paths to symlink.
 
@@ -55,17 +56,20 @@ class SymlinkTree:
           SymlinkTree's `root`. It is an error to register two links with the
           same linkname.
     """
-    assert (isinstance(target, config_types.Path) and
-            isinstance(linkname, config_types.Path))
+    assert isinstance(target, config_types.Path) and isinstance(
+      linkname, config_types.Path
+    )
     if linkname in self._link_map.get(target, ()):
       return
     else:
-      assert linkname not in self._reverse_map, (
-          '%s is already linked to %s' %
-          (linkname, self._reverse_map[linkname]))
+      assert linkname not in self._reverse_map, '%s is already linked to %s' % (
+        linkname,
+        self._reverse_map[linkname],
+      )
 
     assert self.root in linkname.parents, (
-        '%s is not within the root directory %s' % (linkname, self.root))
+      '%s is not within the root directory %s' % (linkname, self.root)
+    )
     self._link_map.setdefault(target, []).append(linkname)
     self._reverse_map[linkname] = target
 
@@ -79,14 +83,13 @@ class SymlinkTree:
       for linkname in linknames:
         self._api.path.mock_copy_paths(target, linkname)
     args = [
-        'python3',
-        '-u',
-        self._resource,
-        '--link-json',
-        self._api.json.input({
-            str(target): linkname
-            for target, linkname in self._link_map.items()
-        }),
+      'python3',
+      '-u',
+      self._resource,
+      '--link-json',
+      self._api.json.input(
+        {str(target): linkname for target, linkname in self._link_map.items()}
+      ),
     ]
     return self._api.step(name, args, infra_step=True)
 
@@ -97,7 +100,6 @@ class SymlinkTree:
 
 
 class FileApi(recipe_api.RecipeApi):
-
   m: file.DEPS
 
   ProtoCodec = proto_api.Codec
@@ -108,18 +110,18 @@ class FileApi(recipe_api.RecipeApi):
     """
 
     def __init__(
-        self,
-        step_name: str,
-        errno_name: str,
-        message: str,
+      self,
+      step_name: str,
+      errno_name: str,
+      message: str,
     ) -> None:
       reason = 'Step(%r) failed %r with: %s' % (step_name, errno_name, message)
       super().__init__(reason)
       self.errno_name = errno_name
 
   def _assert_absolute_path_or_placeholder(
-      self,
-      path_or_placeholder: config_types.Path | str | recipe_api.Placeholder,
+    self,
+    path_or_placeholder: config_types.Path | str | recipe_api.Placeholder,
   ) -> None:
     if isinstance(path_or_placeholder, recipe_api.Placeholder):
       # We assume that all Placeholder classes will render to an absolute path,
@@ -128,24 +130,24 @@ class FileApi(recipe_api.RecipeApi):
     return self.m.path.assert_absolute(path_or_placeholder)
 
   def _run(
-      self,
-      name: str,
-      args: Sequence[config_types.Path | str | recipe_api.Placeholder],
-      step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
-      stdout: config_types.Path | recipe_api.Placeholder | None = None,
+    self,
+    name: str,
+    args: Sequence[config_types.Path | str | recipe_api.Placeholder],
+    step_test_data: Callable[[], recipe_test_api.StepTestData] | None = None,
+    stdout: config_types.Path | recipe_api.Placeholder | None = None,
   ) -> step_data.StepData:
     if not step_test_data:
       step_test_data = self.test_api.errno
     args = [
-      'vpython3', '-u',
+      'vpython3',
+      '-u',
       self.resource('fileutil.py'),
-      '--json-output', self.m.json.output(add_json_log=False),
+      '--json-output',
+      self.m.json.output(add_json_log=False),
     ] + args
     result = self.m.step(
-        name, args,
-        step_test_data=step_test_data,
-        stdout=stdout,
-        infra_step=True)
+      name, args, step_test_data=step_test_data, stdout=stdout, infra_step=True
+    )
     j = result.json.output
     if not j['ok']:
       result.presentation.status = self.m.step.FAILURE
@@ -156,10 +158,10 @@ class FileApi(recipe_api.RecipeApi):
     return result
 
   def copy(
-      self,
-      name: str,
-      source: config_types.Path | str | recipe_api.Placeholder,
-      dest: config_types.Path | str | recipe_api.Placeholder,
+    self,
+    name: str,
+    source: config_types.Path | str | recipe_api.Placeholder,
+    dest: config_types.Path | str | recipe_api.Placeholder,
   ) -> step_data.StepData:
     """Copies a file (including mode bits) from source to destination on the
     local filesystem.
@@ -182,13 +184,13 @@ class FileApi(recipe_api.RecipeApi):
     return result
 
   def copytree(
-      self,
-      name: str,
-      source: config_types.Path | str,
-      dest: config_types.Path | str,
-      symlinks: bool = False,
-      hardlink: bool = False,
-      allow_override: bool = False,
+    self,
+    name: str,
+    source: config_types.Path | str,
+    dest: config_types.Path | str,
+    symlinks: bool = False,
+    hardlink: bool = False,
+    allow_override: bool = False,
   ) -> step_data.StepData:
     """Recursively copies a directory tree.
 
@@ -223,11 +225,11 @@ class FileApi(recipe_api.RecipeApi):
     return result
 
   def chmod(
-      self,
-      name: str,
-      path: config_types.Path | str,
-      mode: str,
-      recursive: bool = False,
+    self,
+    name: str,
+    path: config_types.Path | str,
+    mode: str,
+    recursive: bool = False,
   ) -> step_data.StepData:
     """Set the access mode for a file or directory.
 
@@ -247,10 +249,10 @@ class FileApi(recipe_api.RecipeApi):
     return self._run(name, cmd)
 
   def move(
-      self,
-      name: str,
-      source: config_types.Path | str,
-      dest: config_types.Path | str,
+    self,
+    name: str,
+    source: config_types.Path | str,
+    dest: config_types.Path | str,
   ) -> step_data.StepData:
     """Moves a file or directory.
 
@@ -271,9 +273,9 @@ class FileApi(recipe_api.RecipeApi):
     return result
 
   def file_hash(
-      self,
-      file_path: config_types.Path | str,
-      test_data: str = '',
+    self,
+    file_path: config_types.Path | str,
+    test_data: str = '',
   ) -> str:
     """Computes hash of contents of a single file.
 
@@ -296,19 +298,21 @@ class FileApi(recipe_api.RecipeApi):
     if not test_data:
       test_data = hashlib.sha256(str(file_path).encode('utf-8')).hexdigest()
     result = self._run(
-        'Compute file hash', ['file_hash', file_path],
-        step_test_data=lambda: self.test_api.file_hash(test_data),
-        stdout=self.m.raw_io.output_text())
+      'Compute file hash',
+      ['file_hash', file_path],
+      step_test_data=lambda: self.test_api.file_hash(test_data),
+      stdout=self.m.raw_io.output_text(),
+    )
     sha = result.stdout.strip()
     result.presentation.step_text = 'Hash calculated: %s' % sha
     return sha
 
   def compute_hash(
-      self,
-      name: str,
-      paths: Sequence[config_types.Path | str],
-      base_path: config_types.Path | str,
-      test_data: str = '',
+    self,
+    name: str,
+    paths: Sequence[config_types.Path | str],
+    base_path: config_types.Path | str,
+    test_data: str = '',
   ) -> str:
     """Computes hash of contents of a directory/file.
 
@@ -350,21 +354,24 @@ class FileApi(recipe_api.RecipeApi):
     # TODO(iannucci): recipe engine needs an actual virtual file system.
     rel_paths = [self.m.path.relpath(str(p), str(base_path)) for p in paths]
     if not test_data:
-      test_data = hashlib.sha256(b'\n'.join(str(p).encode('utf-8')
-                                            for p in rel_paths)).hexdigest()
+      test_data = hashlib.sha256(
+        b'\n'.join(str(p).encode('utf-8') for p in rel_paths)
+      ).hexdigest()
     result = self._run(
-        name, ['compute_hash', base_path] + rel_paths,
-        step_test_data=lambda: self.test_api.compute_hash(test_data),
-        stdout=self.m.raw_io.output_text())
+      name,
+      ['compute_hash', base_path] + rel_paths,
+      step_test_data=lambda: self.test_api.compute_hash(test_data),
+      stdout=self.m.raw_io.output_text(),
+    )
     sha = result.stdout.strip()
     result.presentation.step_text = 'Hash calculated: %s' % sha
     return sha
 
   def read_raw(
-      self,
-      name: str,
-      source: config_types.Path | str,
-      test_data: bytes = '',
+    self,
+    name: str,
+    source: config_types.Path | str,
+    test_data: bytes = '',
   ) -> bytes:
     """Reads a file as raw data.
 
@@ -381,15 +388,17 @@ class FileApi(recipe_api.RecipeApi):
     self.m.path.assert_absolute(source)
     step_test_data = lambda: self.test_api.read_raw(test_data)
     result = self._run(
-        name, ['copy', source, self.m.raw_io.output()],
-        step_test_data=step_test_data)
+      name,
+      ['copy', source, self.m.raw_io.output()],
+      step_test_data=step_test_data,
+    )
     return result.raw_io.output
 
   def write_raw(
-      self,
-      name: str,
-      dest: config_types.Path | str,
-      data: bytes,
+    self,
+    name: str,
+    dest: config_types.Path | str,
+    data: bytes,
   ) -> step_data.StepData:
     """Write the given `data` to `dest`.
 
@@ -406,11 +415,11 @@ class FileApi(recipe_api.RecipeApi):
     return result
 
   def read_text(
-      self,
-      name: str,
-      source: config_types.Path | str,
-      test_data: str = '',
-      include_log: bool = True,
+    self,
+    name: str,
+    source: config_types.Path | str,
+    test_data: str = '',
+    include_log: bool = True,
   ) -> str:
     """Reads a file as UTF-8 encoded text.
 
@@ -428,19 +437,21 @@ class FileApi(recipe_api.RecipeApi):
     self.m.path.assert_absolute(source)
     step_test_data = lambda: self.test_api.read_text(test_data)
     result = self._run(
-        name, ['copy', source, self.m.raw_io.output_text()],
-        step_test_data=step_test_data)
+      name,
+      ['copy', source, self.m.raw_io.output_text()],
+      step_test_data=step_test_data,
+    )
     text = result.raw_io.output_text
     if include_log:
       result.presentation.logs[self.m.path.basename(source)] = text.splitlines()
     return text
 
   def write_text(
-      self,
-      name: str,
-      dest: config_types.Path | str,
-      text_data: str,
-      include_log: bool = True,
+    self,
+    name: str,
+    dest: config_types.Path | str,
+    text_data: str,
+    include_log: bool = True,
   ) -> step_data.StepData:
     """Write the given UTF-8 encoded `text_data` to `dest`.
 
@@ -455,17 +466,18 @@ class FileApi(recipe_api.RecipeApi):
     self.m.path.assert_absolute(dest)
     step = self._run(name, ['copy', self.m.raw_io.input_text(text_data), dest])
     if include_log:
-      step.presentation.logs[self.m.path.basename(
-          dest)] = text_data.splitlines()
+      step.presentation.logs[self.m.path.basename(dest)] = (
+        text_data.splitlines()
+      )
     self.m.path.mock_add_paths(dest)
     return step
 
   def read_json(
-      self,
-      name: str,
-      source: config_types.Path | str,
-      test_data: Any = '',
-      include_log: bool = True,
+    self,
+    name: str,
+    source: config_types.Path | str,
+    test_data: Any = '',
+    include_log: bool = True,
   ) -> Any:
     """Reads a file as UTF-8 encoded json.
 
@@ -482,17 +494,18 @@ class FileApi(recipe_api.RecipeApi):
     """
     test_data_text = self.m.json.dumps(test_data, indent=2)
     text = self.read_text(
-        name, source, test_data=test_data_text, include_log=include_log)
+      name, source, test_data=test_data_text, include_log=include_log
+    )
     return self.m.json.loads(text)
 
   def write_json(
-      self,
-      name: str,
-      dest: config_types.Path | str,
-      data: Any,
-      indent: int | str | None = None,
-      include_log: bool = True,
-      sort_keys: bool = True,
+    self,
+    name: str,
+    dest: config_types.Path | str,
+    data: Any,
+    indent: int | str | None = None,
+    include_log: bool = True,
+    sort_keys: bool = True,
   ) -> step_data.StepData:
     """Write the given json serializable `data` to `dest`.
 
@@ -513,14 +526,14 @@ class FileApi(recipe_api.RecipeApi):
   ProtoMessage = TypeVar('ProtoMessage', bound=google.protobuf.message.Message)
 
   def read_proto(
-      self,
-      name: str,
-      source: config_types.Path | str,
-      msg_class: type[ProtoMessage],
-      codec: ProtoCodec,
-      test_proto: Any = None,
-      include_log: bool = True,
-      decoding_kwargs: Mapping[str, Any] | None = None,
+    self,
+    name: str,
+    source: config_types.Path | str,
+    msg_class: type[ProtoMessage],
+    codec: ProtoCodec,
+    test_proto: Any = None,
+    include_log: bool = True,
+    decoding_kwargs: Mapping[str, Any] | None = None,
   ) -> ProtoMessage:
     """Reads a file into a proto message.
 
@@ -542,26 +555,32 @@ class FileApi(recipe_api.RecipeApi):
     assert type(test_proto) == msg_class
     step_test_data = lambda: self.test_api.read_proto(test_proto)
     result = self._run(
-        name, [
-            'copy', source,
-            self.m.proto.output(
-                msg_class, codec, add_json_log=False, **decoding_kwargs)
-        ],
-        step_test_data=step_test_data)
+      name,
+      [
+        'copy',
+        source,
+        self.m.proto.output(
+          msg_class, codec, add_json_log=False, **decoding_kwargs
+        ),
+      ],
+      step_test_data=step_test_data,
+    )
     if include_log:
-      result.presentation.logs[self.m.path.basename(
-          source)] = self.m.proto.encode(
-              result.proto.output, 'TEXTPB' if codec == 'BINARY' else codec)
+      result.presentation.logs[self.m.path.basename(source)] = (
+        self.m.proto.encode(
+          result.proto.output, 'TEXTPB' if codec == 'BINARY' else codec
+        )
+      )
     return result.proto.output
 
   def write_proto(
-      self,
-      name: str,
-      dest: config_types.Path | str,
-      proto_msg: google.protobuf.message,
-      codec: ProtoCodec,
-      include_log: bool = True,
-      encoding_kwargs: Mapping[str, Any] | None = None,
+    self,
+    name: str,
+    dest: config_types.Path | str,
+    proto_msg: google.protobuf.message,
+    codec: ProtoCodec,
+    include_log: bool = True,
+    encoding_kwargs: Mapping[str, Any] | None = None,
   ) -> step_data.StepData:
     """Writes the given proto message to `dest`.
 
@@ -577,24 +596,24 @@ class FileApi(recipe_api.RecipeApi):
     self.m.path.assert_absolute(dest)
     encoding_kwargs = encoding_kwargs or {}
     step = self._run(
-        name,
-        ['copy',
-         self.m.proto.input(proto_msg, codec, **encoding_kwargs), dest])
+      name,
+      ['copy', self.m.proto.input(proto_msg, codec, **encoding_kwargs), dest],
+    )
     if include_log:
       proto_lines = self.m.proto.encode(
-          proto_msg, 'TEXTPB' if codec == 'BINARY' else codec,
-          **encoding_kwargs).splitlines()
+        proto_msg, 'TEXTPB' if codec == 'BINARY' else codec, **encoding_kwargs
+      ).splitlines()
       step.presentation.logs[self.m.path.basename(dest)] = proto_lines
     self.m.path.mock_add_paths(dest)
     return step
 
   def glob_paths(
-      self,
-      name: str,
-      source: config_types.Path | str,
-      pattern: str,
-      include_hidden: bool = False,
-      test_data: Sequence[str] = (),
+    self,
+    name: str,
+    source: config_types.Path | str,
+    pattern: str,
+    include_hidden: bool = False,
+    test_data: Sequence[str] = (),
   ) -> list[config_types.Path]:
     """Performs glob expansion on `pattern`.
 
@@ -628,17 +647,21 @@ class FileApi(recipe_api.RecipeApi):
     cmd = ['glob', source, pattern]
     if include_hidden:
       cmd.append('--hidden')
-    result = self._run(name, cmd, lambda: self.test_api.glob_paths(test_data),
-                       self.m.raw_io.output_text())
+    result = self._run(
+      name,
+      cmd,
+      lambda: self.test_api.glob_paths(test_data),
+      self.m.raw_io.output_text(),
+    )
     ret = [source / x for x in result.stdout.splitlines()]
     result.presentation.logs["glob"] = [str(x) for x in ret]
     return ret
 
   def is_executable(
-      self,
-      name: str,
-      path: config_types.Path | str,
-      test_data: bool = True,
+    self,
+    name: str,
+    path: config_types.Path | str,
+    test_data: bool = True,
   ) -> bool:
     """Checks if a file is executable.
 
@@ -651,15 +674,17 @@ class FileApi(recipe_api.RecipeApi):
     """
     self.m.path.assert_absolute(path)
     result = self._run(
-        name, ['is_executable', path],
-        step_test_data=lambda: self.test_api.is_executable(test_data),
-        stdout=self.m.raw_io.output_text())
+      name,
+      ['is_executable', path],
+      step_test_data=lambda: self.test_api.is_executable(test_data),
+      stdout=self.m.raw_io.output_text(),
+    )
     return result.stdout.strip() == 'True'
 
   def remove(
-      self,
-      name: str,
-      source: config_types.Path | str,
+    self,
+    name: str,
+    source: config_types.Path | str,
   ) -> step_data.StepData:
     """Removes a file.
 
@@ -677,12 +702,12 @@ class FileApi(recipe_api.RecipeApi):
     return step
 
   def listdir(
-      self,
-      name: str,
-      source: config_types.Path | str,
-      recursive: bool = False,
-      test_data: Sequence[str] = (),
-      include_log: bool = True,
+    self,
+    name: str,
+    source: config_types.Path | str,
+    recursive: bool = False,
+    test_data: Sequence[str] = (),
+    include_log: bool = True,
   ) -> list[config_types.Path]:
     """Lists all files inside a directory.
 
@@ -706,20 +731,22 @@ class FileApi(recipe_api.RecipeApi):
     """
     assert isinstance(source, config_types.Path)
     self.m.path.assert_absolute(source)
-    result = self._run(name, ['listdir', source] +
-                       (['--recursive'] if recursive else
-                        []), lambda: self.test_api.listdir(test_data),
-                       self.m.raw_io.output_text())
+    result = self._run(
+      name,
+      ['listdir', source] + (['--recursive'] if recursive else []),
+      lambda: self.test_api.listdir(test_data),
+      self.m.raw_io.output_text(),
+    )
     ret = [source / x for x in result.stdout.splitlines()]
     if include_log:
       result.presentation.logs['listdir'] = [str(x) for x in ret]
     return ret
 
   def ensure_directory(
-      self,
-      name: str,
-      dest: config_types.Path | str,
-      mode: int = 0o777,
+    self,
+    name: str,
+    dest: config_types.Path | str,
+    mode: int = 0o777,
   ) -> step_data.StepData:
     """Ensures that `dest` exists and is a directory.
 
@@ -738,10 +765,10 @@ class FileApi(recipe_api.RecipeApi):
     return step
 
   def filesizes(
-      self,
-      name: str,
-      files: Sequence[config_types.Path | str],
-      test_data: Sequence[int] | None = None,
+    self,
+    name: str,
+    files: Sequence[config_types.Path | str],
+    test_data: Sequence[int] | None = None,
   ) -> list[int]:
     """Returns list of filesizes for the given files.
 
@@ -756,19 +783,22 @@ class FileApi(recipe_api.RecipeApi):
       test_data = [111 * (i + 1) + (i % 3 - 2) * i for i, _ in enumerate(files)]
     for f in files:
       self.m.path.assert_absolute(f)
-    result = self._run(name, ['filesizes'] +
-                       list(files), lambda: self.test_api.filesizes(test_data),
-                       self.m.raw_io.output_text())
+    result = self._run(
+      name,
+      ['filesizes'] + list(files),
+      lambda: self.test_api.filesizes(test_data),
+      self.m.raw_io.output_text(),
+    )
     ret = [int(x) for x in result.stdout.strip().splitlines()]
     result.presentation.logs['filesizes'] = [
-        '%s: \t%d' % fs for fs in zip(files, ret)
+      '%s: \t%d' % fs for fs in zip(files, ret)
     ]
     return ret
 
   def rmtree(
-      self,
-      name: str,
-      source: config_types.Path | str,
+    self,
+    name: str,
+    source: config_types.Path | str,
   ) -> step_data.StepData:
     """Recursively removes a directory.
 
@@ -788,9 +818,9 @@ class FileApi(recipe_api.RecipeApi):
     return step
 
   def rmcontents(
-      self,
-      name: str,
-      source: config_types.Path | str,
+    self,
+    name: str,
+    source: config_types.Path | str,
   ) -> step_data.StepData:
     """Similar to rmtree, but removes only contents not the directory.
 
@@ -811,12 +841,12 @@ class FileApi(recipe_api.RecipeApi):
     return step
 
   def rmglob(
-      self,
-      name: str,
-      source: config_types.Path | str,
-      pattern: str,
-      recursive: bool = True,
-      include_hidden: bool = True,
+    self,
+    name: str,
+    source: config_types.Path | str,
+    pattern: str,
+    recursive: bool = True,
+    include_hidden: bool = True,
   ) -> step_data.StepData:
     """Removes all entries in `source` matching the glob `pattern`.
 
@@ -857,16 +887,16 @@ class FileApi(recipe_api.RecipeApi):
 
     def filt(p: str) -> bool:
       assert p.startswith(src), (src, p)
-      return fnmatch.fnmatch(p[len(src) + 1:].split(os.path.sep)[0], pattern)
+      return fnmatch.fnmatch(p[len(src) + 1 :].split(os.path.sep)[0], pattern)
 
     self.m.path.mock_remove_paths(str(source), filt)
     return step
 
   def symlink(
-      self,
-      name: str,
-      source: config_types.Path | str | recipe_api.Placeholder,
-      linkname: config_types.Path | str | recipe_api.Placeholder,
+    self,
+    name: str,
+    source: config_types.Path | str | recipe_api.Placeholder,
+    linkname: config_types.Path | str | recipe_api.Placeholder,
   ) -> step_data.StepData:
     """Creates a symlink on the local filesystem.
 
@@ -894,10 +924,10 @@ class FileApi(recipe_api.RecipeApi):
     return SymlinkTree(root, self.m, self.resource('symlink.py'))
 
   def truncate(
-      self,
-      name: str,
-      path: config_types.Path | str,
-      size_mb: int = 100,
+    self,
+    name: str,
+    path: config_types.Path | str,
+    size_mb: int = 100,
   ) -> step_data.StepData:
     """Creates an empty file with path and size_mb on the local filesystem.
 
@@ -912,9 +942,9 @@ class FileApi(recipe_api.RecipeApi):
     return self._run(name, ['truncate', path, size_mb])
 
   def flatten_single_directories(
-      self,
-      name: str,
-      path: config_types.Path | str,
+    self,
+    name: str,
+    path: config_types.Path | str,
   ) -> step_data.StepData:
     """Flattens singular directories, starting at path.
 

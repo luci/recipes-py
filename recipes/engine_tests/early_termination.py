@@ -14,11 +14,11 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    file,
-    futures,
-    path,
-    platform,
-    step,
+  file,
+  futures,
+  path,
+  platform,
+  step,
 )
 
 
@@ -35,6 +35,7 @@ class DEPS(RecipeScriptApi):
 class TEST_DEPS(RecipeTestApi):
   pass
 
+
 from PB.recipes.recipe_engine.engine_tests import early_termination
 
 PROPERTIES = early_termination.InputProperties
@@ -50,8 +51,9 @@ def RunSteps(api: DEPS, props: early_termination.InputProperties) -> None:
   if not running_touchfile:
     running_touchfile = api.path.cleanup_dir.joinpath('running_touchfile')
   # make sure touchfile is there
-  api.file.write_text("ensure output_touchfile", output_touchfile,
-                      "meep".encode('utf-8'))
+  api.file.write_text(
+    "ensure output_touchfile", output_touchfile, "meep".encode('utf-8')
+  )
 
   # note that our helper script
   #  * Looks for the output touchfile as the first arg
@@ -63,46 +65,72 @@ def RunSteps(api: DEPS, props: early_termination.InputProperties) -> None:
 
   # This one tries its darndest to stay alive
   work.append(
-      api.futures.spawn_immediate(api.step, 'ignore always', [
-          'python3',
-          api.resource('sleepytime.py'), output_touchfile, '--always-ignore',
-          'ignore always'
-      ]))
+    api.futures.spawn_immediate(
+      api.step,
+      'ignore always',
+      [
+        'python3',
+        api.resource('sleepytime.py'),
+        output_touchfile,
+        '--always-ignore',
+        'ignore always',
+      ],
+    )
+  )
 
   # This one nicely quits on TERM
   work.append(
-      api.futures.spawn_immediate(api.step, 'nice shutdown', [
-          'python3',
-          api.resource('sleepytime.py'), output_touchfile, 'nice shutdown'
-      ]))
+    api.futures.spawn_immediate(
+      api.step,
+      'nice shutdown',
+      [
+        'python3',
+        api.resource('sleepytime.py'),
+        output_touchfile,
+        'nice shutdown',
+      ],
+    )
+  )
 
   # This one is self-timed-out
   work.append(
-      api.futures.spawn_immediate(
-          api.step,
-          'self timeout', [
-              'python3',
-              api.resource('sleepytime.py'), output_touchfile,
-              '--always-ignore', 'self timeout'
-          ],
-          timeout=5))
+    api.futures.spawn_immediate(
+      api.step,
+      'self timeout',
+      [
+        'python3',
+        api.resource('sleepytime.py'),
+        output_touchfile,
+        '--always-ignore',
+        'self timeout',
+      ],
+      timeout=5,
+    )
+  )
 
   def _pure_sleep() -> None:
     # This one is totally oblivious
     try:
-      api.step('sleep', [
+      api.step(
+        'sleep',
+        [
           'python3',
-          api.resource('sleepytime.py'), output_touchfile, '--no-handler',
-          'sleep'
-      ])
+          api.resource('sleepytime.py'),
+          output_touchfile,
+          '--no-handler',
+          'sleep',
+        ],
+      )
     except Exception:  # pragma: no cover
       # BAD! don't do bare exceptions... however...
       api.step('no run', None).presentation.step_text = "I don't run"
+
   work.append(api.futures.spawn_immediate(_pure_sleep))
 
   # all greenlets running, write our running file
-  api.file.write_text("ensure running_touchfile", running_touchfile,
-                      "meep".encode('utf-8'))
+  api.file.write_text(
+    "ensure running_touchfile", running_touchfile, "meep".encode('utf-8')
+  )
 
   for w in work:
     w.exception()  # mark exception as handled.

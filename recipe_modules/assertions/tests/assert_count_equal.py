@@ -26,7 +26,7 @@ def RunSteps(api: DEPS) -> None:
 
 def GenTests(api: RecipeTestApi) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'basic',
-      api.post_process(post_process.StatusSuccess),
-      api.post_process(post_process.DropExpectation),
+    'basic',
+    api.post_process(post_process.StatusSuccess),
+    api.post_process(post_process.DropExpectation),
   )

@@ -31,7 +31,8 @@ LOGGER = logging.getLogger(__name__)
 #   and/or modifications to recipes.cfg)
 CommitMetadata = collections.namedtuple(
   '_CommitMetadata',
-  'revision author_email commit_timestamp message_lines spec roll_candidate')
+  'revision author_email commit_timestamp message_lines spec roll_candidate',
+)
 
 
 class Backend:
@@ -146,14 +147,13 @@ class Backend:
     """
     raise NotImplementedError()
 
-
   ### private overrides. Override these in the implementations, but don't call
   ### externally.
 
   def _updates_impl(
-      self,
-      revision: str,
-      other_revision: str,
+    self,
+    revision: str,
+    other_revision: str,
   ) -> list[CommitMetadata]:
     """Returns a list of revisions |revision| through |other_revision|. This
     includes |revision| and |other_revision|.
@@ -223,8 +223,10 @@ class GitBackend(Backend):
 
     cmd = [
       self.GIT_BINARY,
-      '-c', 'advice.detachedHead=false',  # to avoid spamming logs
-      '-C', self.checkout_dir,
+      '-c',
+      'advice.detachedHead=false',  # to avoid spamming logs
+      '-C',
+      self.checkout_dir,
     ] + cmd_args
 
     try:
@@ -237,7 +239,8 @@ class GitBackend(Backend):
     LOGGER.info('Running: %s', args)
 
     process = subprocess.Popen(
-      args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+      args, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
     output, stderr = process.communicate()
     retcode = process.poll()
     if retcode:
@@ -245,8 +248,7 @@ class GitBackend(Backend):
         new_output = 'STDOUT\n%s\nSTDERR\n%s' % (output, stderr)
       else:
         new_output = output or stderr
-      raise subprocess.CalledProcessError(
-        retcode, args, new_output)
+      raise subprocess.CalledProcessError(retcode, args, new_output)
     return output.decode('utf-8')
 
   def _ensure_local_repo_exists(self) -> None:
@@ -280,7 +282,6 @@ class GitBackend(Backend):
     except exceptions.GitFetchError:
       return False
 
-
   ### Backend implementations
 
   def fetch(self, refspec: str) -> None:
@@ -299,8 +300,9 @@ class GitBackend(Backend):
     if not revision:
       revision = self.resolve_refspec(refspec)
 
-    LOGGER.info('Checking out %r in %s (%s)',
-                revision, self.checkout_dir, self.repo_url)
+    LOGGER.info(
+      'Checking out %r in %s (%s)', revision, self.checkout_dir, self.repo_url
+    )
     self._ensure_local_repo_exists()
 
     if not self._has_rev(revision):
@@ -332,8 +334,9 @@ class GitBackend(Backend):
         os.remove(index_lock)
       except OSError as exc:
         if exc.errno != errno.ENOENT:
-          LOGGER.warn('failed to remove %r, reset will fail: %s', index_lock,
-                      exc)
+          LOGGER.warn(
+            'failed to remove %r, reset will fail: %s', index_lock, exc
+          )
       self._git('reset', '-q', '--hard', revision)
 
   def cat_file(self, revision: str, file_path: str) -> str:
@@ -348,10 +351,10 @@ class GitBackend(Backend):
     if not self._has_rev(other_revision):
       self.fetch(refspec)
     args = [
-        'rev-list',
-        '--reverse',
-        '--topo-order',
-        '%s..%s' % (revision, other_revision),
+      'rev-list',
+      '--reverse',
+      '--topo-order',
+      '%s..%s' % (revision, other_revision),
     ]
     return [
       self.commit_metadata(rev)
@@ -371,8 +374,11 @@ class GitBackend(Backend):
       # So we need the 'splitlines' bit too.
       source = self.repo_url if self.repo_url is not None else '.'
       mapping = {
-          ref: csum for csum, ref in (l.split() for l in self._git(
-              'ls-remote', source, refspec).splitlines())
+        ref: csum
+        for csum, ref in (
+          l.split()
+          for l in self._git('ls-remote', source, refspec).splitlines()
+        )
       }
       rslt = mapping[refspec]
       assert self.is_resolved_revision(rslt), repr(rslt)
@@ -394,30 +400,42 @@ class GitBackend(Backend):
     #   %`commit time`
     #   %`newline`
     #   %`Body`
-    meta = self._git(
-      'show', '-s', '--format=%aE%n%ct%n%B', revision).rstrip('\n').splitlines()
+    meta = (
+      self._git('show', '-s', '--format=%aE%n%ct%n%B', revision)
+      .rstrip('\n')
+      .splitlines()
+    )
 
     try:
       spec = simple_cfg.SimpleRecipesCfg.from_json_string(
-        self.cat_file(revision, simple_cfg.RECIPES_CFG_LOCATION_REL))
+        self.cat_file(revision, simple_cfg.RECIPES_CFG_LOCATION_REL)
+      )
     except exceptions.GitFetchError:
       spec = None
     except ValueError:  # commit with unparsable recipes.cfg
       spec = None
 
     # check diff to see if it touches anything interesting.
-    changed_files = set(self._git(
-      'diff-tree', '-r', '--no-commit-id', '--name-only', '%s^!' % revision)
-      .splitlines())
+    changed_files = set(
+      self._git(
+        'diff-tree', '-r', '--no-commit-id', '--name-only', '%s^!' % revision
+      ).splitlines()
+    )
 
     recipes_path = spec.recipes_path if spec else ''
 
     has_interesting_changes = (
-        simple_cfg.RECIPES_CFG_LOCATION_REL in changed_files or
-        any(f.startswith(recipes_path) for f in changed_files) or
-        any(f.split('/')[-1] == '.gitattributes' for f in changed_files) or
-        self._gitattr_checker.check_files(revision, changed_files))
+      simple_cfg.RECIPES_CFG_LOCATION_REL in changed_files
+      or any(f.startswith(recipes_path) for f in changed_files)
+      or any(f.split('/')[-1] == '.gitattributes' for f in changed_files)
+      or self._gitattr_checker.check_files(revision, changed_files)
+    )
 
-    return CommitMetadata(revision, meta[0],
-                          int(meta[1]), tuple(meta[2:]),
-                          spec, has_interesting_changes)
+    return CommitMetadata(
+      revision,
+      meta[0],
+      int(meta[1]),
+      tuple(meta[2:]),
+      spec,
+      has_interesting_changes,
+    )

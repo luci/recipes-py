@@ -26,12 +26,15 @@ import os
 from google.protobuf import json_format
 from recipe_engine import recipe_api
 
-from PB.go.chromium.org.luci.common.proto.findings import findings as findings_pb
+from PB.go.chromium.org.luci.common.proto.findings import (
+  findings as findings_pb,
+)
 from PB.tricium.data import Data
 
 from . import legacy_analyzers
 
 BINARY_FILE_EXTENSIONS = ['.png']
+
 
 class TriciumApi(recipe_api.RecipeApi):
   """TriciumApi provides basic support for Tricium."""
@@ -58,15 +61,15 @@ class TriciumApi(recipe_api.RecipeApi):
     self._findings = []
 
   def add_comment(
-      self,
-      category: str,
-      message: str,
-      path: str,
-      start_line: int = 0,
-      end_line: int = 0,
-      start_char: int = 0,
-      end_char: int = 0,
-      suggestions: Sequence[Mapping[str, Any]] = (),
+    self,
+    category: str,
+    message: str,
+    path: str,
+    start_line: int = 0,
+    end_line: int = 0,
+    start_char: int = 0,
+    end_char: int = 0,
+    suggestions: Sequence[Mapping[str, Any]] = (),
   ) -> None:
     """Adds one comment to accumulate.
 
@@ -89,14 +92,14 @@ class TriciumApi(recipe_api.RecipeApi):
 
     cl = self.m.buildbucket.build.input.gerrit_changes[0]
     gerrit_change_ref = findings_pb.Location.GerritChangeReference(
-        host=cl.host,
-        project=cl.project,
-        change=cl.change,
-        patchset=cl.patchset,
+      host=cl.host,
+      project=cl.project,
+      change=cl.change,
+      patchset=cl.patchset,
     )
     loc = findings_pb.Location(
-        gerrit_change_ref=gerrit_change_ref,
-        file_path=(path or '/COMMIT_MSG'),
+      gerrit_change_ref=gerrit_change_ref,
+      file_path=(path or '/COMMIT_MSG'),
     )
     if start_line:
       loc.range.start_line = start_line
@@ -109,10 +112,10 @@ class TriciumApi(recipe_api.RecipeApi):
       loc.range.end_line = end_line or start_line
       loc.range.end_column = end_char
     finding = findings_pb.Finding(
-        category=category,
-        location=loc,
-        message = message,
-        severity_level=findings_pb.Finding.SEVERITY_LEVEL_WARNING,
+      category=category,
+      location=loc,
+      message=message,
+      severity_level=findings_pb.Finding.SEVERITY_LEVEL_WARNING,
     )
 
     for s in suggestions:
@@ -122,8 +125,8 @@ class TriciumApi(recipe_api.RecipeApi):
       fix = finding.fixes.add(description=s.get('description', ''))
       for tr_rep in s.get('replacements', []):
         loc = findings_pb.Location(
-            gerrit_change_ref=gerrit_change_ref,
-            file_path=(tr_rep.get('path', None) or '/COMMIT_MSG'),
+          gerrit_change_ref=gerrit_change_ref,
+          file_path=(tr_rep.get('path', None) or '/COMMIT_MSG'),
         )
         if tr_rep.get('start_line', 0):
           loc.range.start_line = tr_rep.get('start_line', 0)
@@ -131,8 +134,8 @@ class TriciumApi(recipe_api.RecipeApi):
           loc.range.end_line = tr_rep.get('end_line', 0)
           loc.range.end_column = tr_rep.get('end_char', 0)
         fix.replacements.add(
-            location=loc,
-            new_content=tr_rep.get('replacement', ''),
+          location=loc,
+          new_content=tr_rep.get('replacement', ''),
         )
 
     self.validate_comment(comment)
@@ -145,43 +148,57 @@ class TriciumApi(recipe_api.RecipeApi):
     Raise ValueError on the first detected problem.
     """
     if comment.start_line < 0:
-      raise ValueError('start_line must be 1-based, but %d given' %
-                       (comment.start_line,))
+      raise ValueError(
+        'start_line must be 1-based, but %d given' % (comment.start_line,)
+      )
     if comment.start_line == 0:
       for attr in ('end_line', 'start_char', 'end_char'):
         value = getattr(comment, attr)
         if value:
-          raise ValueError('start_line is 0, implying file level comment, '
-                           'but %s is %d instead of 0' % (attr, value))
+          raise ValueError(
+            'start_line is 0, implying file level comment, '
+            'but %s is %d instead of 0' % (attr, value)
+          )
       return
     if comment.start_line > comment.end_line and comment.end_line != 0:
       # TODO(tandrii): it's probably better to require end_line always set.
-      raise ValueError('start_line must be <= end_line, but %d..%d given' %
-                       (comment.start_line, comment.end_line))
-    if comment.start_char < 0:
-      raise ValueError('start_char must be 0-based, but %d given' %
-                       (comment.start_char,))
-    if comment.end_char < 0:
-      raise ValueError('end_char must be 0-based, but %d given' %
-                       (comment.end_char,))
-    if (comment.start_line == comment.end_line and
-        comment.start_char >= comment.end_char and comment.end_char > 0):
       raise ValueError(
-          '(start_line, start_char) must be before (end_line, end_char), '
-          'but (%d,%d) .. (%d,%d) given' % (
-              comment.start_line,
-              comment.start_char,
-              comment.end_line,
-              comment.end_char,
-          ))
+        'start_line must be <= end_line, but %d..%d given'
+        % (comment.start_line, comment.end_line)
+      )
+    if comment.start_char < 0:
+      raise ValueError(
+        'start_char must be 0-based, but %d given' % (comment.start_char,)
+      )
+    if comment.end_char < 0:
+      raise ValueError(
+        'end_char must be 0-based, but %d given' % (comment.end_char,)
+      )
+    if (
+      comment.start_line == comment.end_line
+      and comment.start_char >= comment.end_char
+      and comment.end_char > 0
+    ):
+      raise ValueError(
+        '(start_line, start_char) must be before (end_line, end_char), '
+        'but (%d,%d) .. (%d,%d) given'
+        % (
+          comment.start_line,
+          comment.start_char,
+          comment.end_line,
+          comment.end_char,
+        )
+      )
     if os.path.isabs(comment.path):
-      raise ValueError('path must be relative to the input directory, but '
-                       'got absolute path %s' % (comment.path))
+      raise ValueError(
+        'path must be relative to the input directory, but '
+        'got absolute path %s' % (comment.path)
+      )
 
   def _add_comment(
-      self,
-      comment: Data.Comment,
-      finding: findings_pb.Finding | None = None,
+    self,
+    comment: Data.Comment,
+    finding: findings_pb.Finding | None = None,
   ) -> None:
     if comment not in self._comments:
       self._comments.append(comment)
@@ -189,9 +206,7 @@ class TriciumApi(recipe_api.RecipeApi):
     if finding and finding not in self._findings:
       self._findings.append(finding)
 
-  def write_comments(
-      self, upload_findings: bool = True
-  ) -> step_data.StepData:
+  def write_comments(self, upload_findings: bool = True) -> step_data.StepData:
     """Emit the results accumulated by `add_comment` and `run_legacy`."""
     results = Data.Results()
     results.comments.extend(self._comments)
@@ -202,16 +217,18 @@ class TriciumApi(recipe_api.RecipeApi):
       # clarification in the case that Tricium unexpectedly emits no comments.
       step.presentation.status = self.m.step.WARNING
       step.presentation.step_text = (
-          '%s comments created, Tricium may refuse to post comments if there '
-          'are too many in changed lines. This build sends only the first %s '
-          'comments.' % (len(results.comments), self._comments_num_limit))
-      comments = results.comments[:self._comments_num_limit]
+        '%s comments created, Tricium may refuse to post comments if there '
+        'are too many in changed lines. This build sends only the first %s '
+        'comments.' % (len(results.comments), self._comments_num_limit)
+      )
+      comments = results.comments[: self._comments_num_limit]
       del results.comments[:]
       results.comments.extend(comments)
 
     # The "tricium" output property is read by the Tricium service.
     step.presentation.properties['tricium'] = self.m.proto.encode(
-        results, 'JSONPB', indent=0, preserving_proto_field_name=False)
+      results, 'JSONPB', indent=0, preserving_proto_field_name=False
+    )
 
     if self.m.resultdb.enabled and upload_findings and self._findings:
       self.m.findings.upload_findings(self._findings)
@@ -219,12 +236,12 @@ class TriciumApi(recipe_api.RecipeApi):
     return step
 
   def run_legacy(
-      self,
-      analyzers: Sequence[legacy_analyzers.LegacyAnalyzer],
-      input_base: config_types.Path,
-      affected_files: Sequence[str],
-      commit_message: str,
-      emit: bool = True,
+    self,
+    analyzers: Sequence[legacy_analyzers.LegacyAnalyzer],
+    input_base: config_types.Path,
+    affected_files: Sequence[str],
+    commit_message: str,
+    emit: bool = True,
   ) -> None:
     """Runs legacy analyzers.
 
@@ -261,30 +278,27 @@ class TriciumApi(recipe_api.RecipeApi):
           package_dir = analyzer_dir / 'package'
           self._fetch_legacy_analyzer(package_dir, analyzer)
           results = self._run_legacy_analyzer(
-              package_dir,
-              analyzer,
-              input_dir=input_base,
-              output_dir=output_base)
+            package_dir, analyzer, input_dir=input_base, output_dir=output_base
+          )
           # Show step results. If there are too many comments, don't include
           # them. If one analyzer fails, continue running the rest.
           for comment in results.comments:
             suggestions = [
-              json_format.MessageToDict(s)
-              for s in comment.suggestions or ()
+              json_format.MessageToDict(s) for s in comment.suggestions or ()
             ]
             self.add_comment(
-                comment.category,
-                comment.message,
-                comment.path,
-                start_line=comment.start_line,
-                end_line=comment.end_line,
-                start_char=comment.start_char,
-                end_char=comment.end_char,
-                suggestions=suggestions)
+              comment.category,
+              comment.message,
+              comment.path,
+              start_line=comment.start_line,
+              end_line=comment.end_line,
+              start_char=comment.start_char,
+              end_char=comment.end_char,
+              suggestions=suggestions,
+            )
           num_comments = len(results.comments)
           presentation.step_text = '%s comment(s)' % num_comments
-          presentation.logs['result'] = self.m.proto.encode(
-              results, 'JSONPB')
+          presentation.logs['result'] = self.m.proto.encode(results, 'JSONPB')
         except self.m.step.StepFailure:
           presentation.step_text = 'failed'
     # The tricium data dir with files.json is written in the checkout cache
@@ -299,10 +313,10 @@ class TriciumApi(recipe_api.RecipeApi):
     return ext in BINARY_FILE_EXTENSIONS
 
   def _write_files_data(
-      self,
-      affected_files: Sequence[str],
-      commit_message: str,
-      base_dir: config_types.Path,
+    self,
+    affected_files: Sequence[str],
+    commit_message: str,
+    base_dir: config_types.Path,
   ) -> None:
     """Writes a Files input message to a file.
 
@@ -322,12 +336,13 @@ class TriciumApi(recipe_api.RecipeApi):
       f.is_binary = self.is_binary(path)
     data_dir = self._ensure_data_dir(base_dir)
     self.m.file.write_proto(
-        'write files.json',
-        data_dir / 'files.json',
-        files,
-        'JSONPB',
-        # Tricium analyzers expect camelCase field names.
-        encoding_kwargs={'preserving_proto_field_name': False})
+      'write files.json',
+      data_dir / 'files.json',
+      files,
+      'JSONPB',
+      # Tricium analyzers expect camelCase field names.
+      encoding_kwargs={'preserving_proto_field_name': False},
+    )
 
   def _read_results(self, base_dir: config_types.Path) -> Data.Results:
     """Reads a Tricium Results message from a file.
@@ -340,14 +355,11 @@ class TriciumApi(recipe_api.RecipeApi):
     """
     data_dir = self._ensure_data_dir(base_dir)
     results_json = self.m.file.read_text(
-        'read results',
-        data_dir / 'results.json',
-        test_data='{"comments":[]}')
+      'read results', data_dir / 'results.json', test_data='{"comments":[]}'
+    )
     return json_format.Parse(results_json, Data.Results())
 
-  def _ensure_data_dir(
-      self, base_dir: config_types.Path
-  ) -> config_types.Path:
+  def _ensure_data_dir(self, base_dir: config_types.Path) -> config_types.Path:
     """Creates the Tricium data directory if it doesn't exist.
 
     Simple Tricium analyzers assume that data is input/output from a
@@ -364,9 +376,9 @@ class TriciumApi(recipe_api.RecipeApi):
     return data_dir
 
   def _fetch_legacy_analyzer(
-      self,
-      package_dir: config_types.Path,
-      analyzer: legacy_analyzers.LegacyAnalyzer,
+    self,
+    package_dir: config_types.Path,
+    analyzer: legacy_analyzers.LegacyAnalyzer,
   ) -> None:
     """Fetches an analyzer package from CIPD.
 
@@ -379,11 +391,11 @@ class TriciumApi(recipe_api.RecipeApi):
     self.m.cipd.ensure(package_dir, ensure_file)
 
   def _run_legacy_analyzer(
-      self,
-      package_dir: config_types.Path,
-      analyzer: legacy_analyzers.LegacyAnalyzer,
-      input_dir: config_types.Path,
-      output_dir: config_types.Path,
+    self,
+    package_dir: config_types.Path,
+    analyzer: legacy_analyzers.LegacyAnalyzer,
+    input_dir: config_types.Path,
+    output_dir: config_types.Path,
   ) -> Data.Results:
     """Runs a simple legacy analyzer executable and returns the results.
 
@@ -399,16 +411,20 @@ class TriciumApi(recipe_api.RecipeApi):
     # expected to be the directory with the analyzer.
     with self.m.context(cwd=package_dir):
       cmd = [
-          package_dir / analyzer.executable, '-input', input_dir, '-output',
-          output_dir
+        package_dir / analyzer.executable,
+        '-input',
+        input_dir,
+        '-output',
+        output_dir,
       ] + analyzer.extra_args
-      self.m.step('run analyzer',
-                  cmd).presentation.logs['cmd'] = ' '.join(str(c) for c in cmd)
+      self.m.step('run analyzer', cmd).presentation.logs['cmd'] = ' '.join(
+        str(c) for c in cmd
+      )
     return self._read_results(output_dir)
 
 
 def _matches_path_filters(
-    files: Sequence[str], patterns: Sequence[str]
+  files: Sequence[str], patterns: Sequence[str]
 ) -> bool:
   if len(patterns) == 0:
     return True

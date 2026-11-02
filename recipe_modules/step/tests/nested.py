@@ -10,14 +10,19 @@ from recipe_engine import recipe_test_api
 import datetime
 
 from recipe_engine import recipe_api
-from recipe_engine.post_process import StepSuccess, StepFailure, StepException, StepCanceled
+from recipe_engine.post_process import (
+  StepSuccess,
+  StepFailure,
+  StepException,
+  StepCanceled,
+)
 
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    context,
-    step,
+  context,
+  step,
 )
 
 
@@ -74,7 +79,8 @@ def RunSteps(api: DEPS) -> None:
   try:
     with api.step.nest('timeout status'):
       api.step(
-          'I fail', ['echo', 'fail'], timeout=datetime.timedelta(seconds=1))
+        'I fail', ['echo', 'fail'], timeout=datetime.timedelta(seconds=1)
+      )
   except api.step.StepFailure as ex:
     assert ex.had_timeout
 
@@ -129,27 +135,22 @@ def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
     api.test('basic')
     + api.post_process(StepException, 'inherit status')
     + api.post_process(StepSuccess, 'last status')
-
     + api.post_process(StepException, 'exception status')
-
     # TODO(iannucci): switch to build.proto so these can actually be
     # differentiated: annotator protocol only has a subset of the possible
     # statuses.
     + api.step_data('failure status.I fail', retcode=1)
     + api.post_process(StepFailure, 'failure status')
-
     # TODO(iannucci): switch to build.proto so these can actually be
     # differentiated: annotator protocol only has a subset of the possible
     # statuses.
     + api.step_data('infra failure status.I infra-fail', retcode=1)
     + api.post_process(StepException, 'infra failure status')
-
     # TODO(iannucci): switch to build.proto so these can actually be
     # differentiated: annotator protocol only has a subset of the possible
     # statuses.
     + api.step_data('timeout status.I fail', times_out_after=20)
     + api.post_process(StepFailure, 'timeout status')
-
     + api.step_data('canceled status.I get canceled', cancel=True)
     + api.post_process(StepCanceled, 'canceled status')
   )

@@ -57,15 +57,19 @@ class FileType(enum.Enum):
   FILE = 1
   DIRECTORY = 2
 
+
 CheckoutPathName = 'checkout'
 CheckoutPathNameType = Literal['checkout']
-NamedBasePathsType = CheckoutPathNameType | Literal[
+NamedBasePathsType = (
+  CheckoutPathNameType
+  | Literal[
     'cache',
     'cleanup',
     'home',
     'start_dir',
     'tmp_base',
-]
+  ]
+)
 
 
 def _cast_to_path_impl(path_mod: Any, strpath: str) -> config_types.Path:
@@ -94,11 +98,13 @@ def _cast_to_path_impl(path_mod: Any, strpath: str) -> config_types.Path:
   if path_mod.sep == '\\':
     if not drive:
       raise ValueError(
-          f'Cannot use {strpath!r} with cast_to_path - not absolute.')
+        f'Cannot use {strpath!r} with cast_to_path - not absolute.'
+      )
   else:
     if not strpath.startswith('/'):
       raise ValueError(
-          f'Cannot use {strpath!r} with cast_to_path - not absolute.')
+        f'Cannot use {strpath!r} with cast_to_path - not absolute.'
+      )
   return config_types.Path(config_types.ResolvedBasePath(drive), path)
 
 
@@ -126,9 +132,9 @@ class path_set:
   # BUG(crbug.com/40890779): Expand this to be a full fakey filesystem,
   # including file contents and file types. Coordinate with the `file` module.
   def __init__(
-      self,
-      path_mod: fake_path,
-      test_data: recipe_test_api.ModuleTestData,
+    self,
+    path_mod: fake_path,
+    test_data: recipe_test_api.ModuleTestData,
   ) -> None:
 
     # path_set is only ever used in the testing paths, so we know _path_mod is
@@ -143,20 +149,21 @@ class path_set:
     initial_paths: list[tuple[config_types.Path, FileType]] = []
     for filepath in test_data.get('files_exist', ()):
       if isinstance(filepath, test_api.UnvalidatedPath):
-        filepath = _cast_to_path_impl(path_mod,
-                                      filepath.base).joinpath(*filepath.pieces)
+        filepath = _cast_to_path_impl(path_mod, filepath.base).joinpath(
+          *filepath.pieces
+        )
       assert isinstance(filepath, config_types.Path), (
-          'path.files_exist module test data contains non-Path '
-          f'{type(filepath)}'
+        f'path.files_exist module test data contains non-Path {type(filepath)}'
       )
       initial_paths.append((filepath, FileType.FILE))
 
     for dirpath in test_data.get('dirs_exist', ()):
       if isinstance(dirpath, test_api.UnvalidatedPath):
-        dirpath = _cast_to_path_impl(path_mod,
-                                     dirpath.base).joinpath(*dirpath.pieces)
+        dirpath = _cast_to_path_impl(path_mod, dirpath.base).joinpath(
+          *dirpath.pieces
+        )
       assert isinstance(dirpath, config_types.Path), (
-          f'path.files_exist module test data contains non-Path {type(dirpath)}'
+        f'path.files_exist module test data contains non-Path {type(dirpath)}'
       )
       initial_paths.append((dirpath, FileType.DIRECTORY))
 
@@ -166,9 +173,10 @@ class path_set:
     for path, kind in initial_paths:
       if not isinstance(path, config_types.Path):  # pragma: no cover
         raise ValueError(
-            'String paths to `api.path.exists` in GenTests are not allowed.'
-            ' Use one of the _dir properties on `api.path` to get a Path, or '
-            ' use `api.path.cast_to_path`.')
+          'String paths to `api.path.exists` in GenTests are not allowed.'
+          ' Use one of the _dir properties on `api.path` to get a Path, or '
+          ' use `api.path.cast_to_path`.'
+        )
 
       if isinstance(path.base, config_types.CheckoutBasePath):
         self._checkout_paths.append((path, kind))
@@ -207,14 +215,15 @@ class path_set:
     (as type DIRECTORY).
     """
     sPath: str = str(path)
-    prev_path: str|None = None
+    prev_path: str | None = None
     while sPath != prev_path:
       self._paths[sPath] = kind
       prev_path, sPath = sPath, self._path_mod.dirname(sPath)
       kind = FileType.DIRECTORY
 
-  def copy(self, source: str | config_types.Path,
-           dest: str | config_types.Path) -> None:
+  def copy(
+    self, source: str | config_types.Path, dest: str | config_types.Path
+  ) -> None:
     """Copies the existence criteria of all known paths contained in `source` to `dest`.
 
     This also implicitly marks all parent directories of `path` to also exist
@@ -228,8 +237,9 @@ class path_set:
     for path, kind in to_add.items():
       self.add(path, kind)
 
-  def remove(self, path: str | config_types.Path, filt: Callable[[str],
-                                                                 bool]) -> None:
+  def remove(
+    self, path: str | config_types.Path, filt: Callable[[str], bool]
+  ) -> None:
     """Removes existence criteria for `path`, and any other paths it contains.
 
     `filt` is a required filter function. It will be called for each path
@@ -242,8 +252,10 @@ class path_set:
       match_root = False
       path = path.rstrip(self._path_mod.sep)
     kill_set: set[str] = set(
-        p for p in self._paths
-        if self._is_contained_in(p, path, match_root) and filt(p))
+      p
+      for p in self._paths
+      if self._is_contained_in(p, path, match_root) and filt(p)
+    )
     for entry in kill_set:
       del self._paths[entry]
 
@@ -264,9 +276,9 @@ class fake_path:
   """
 
   def __init__(
-      self,
-      is_windows: bool,
-      test_data: recipe_test_api.ModuleTestData,
+    self,
+    is_windows: bool,
+    test_data: recipe_test_api.ModuleTestData,
   ) -> None:
     self._pth = ntpath if is_windows else posixpath
     self._mock_path_exists = path_set(self, test_data)
@@ -298,12 +310,15 @@ class fake_path:
     return self._mock_path_exists.contains(path)
 
   def isdir(self, path: str) -> bool:
-    return self.exists(path) and self._mock_path_exists.kind(
-        path) == FileType.DIRECTORY
+    return (
+      self.exists(path)
+      and self._mock_path_exists.kind(path) == FileType.DIRECTORY
+    )
 
   def isfile(self, path: str) -> bool:
-    return self.exists(path) and self._mock_path_exists.kind(
-        path) == FileType.FILE
+    return (
+      self.exists(path) and self._mock_path_exists.kind(path) == FileType.FILE
+    )
 
   # This matches:
   #   [START_DIR]
@@ -322,7 +337,7 @@ class fake_path:
     m = self.ROOT_MATCHER.match(path)
     if m:
       prefix = m.group(0)
-      rest = path[len(prefix):]
+      rest = path[len(prefix) :]
       if rest == '':
         # normpath turns '' into '.'
         return prefix
@@ -341,8 +356,9 @@ class fake_path:
 class PathApi(recipe_api.RecipeApi):
   m: path.DEPS
 
-  _paths_client: recipe_api.PathsClient | recipe_api.UnresolvedRequirement = recipe_api.RequireClient(
-      'paths')
+  _paths_client: recipe_api.PathsClient | recipe_api.UnresolvedRequirement = (
+    recipe_api.RequireClient('paths')
+  )
 
   # This is the literal string 'checkout'.
   #
@@ -355,17 +371,20 @@ class PathApi(recipe_api.RecipeApi):
 
   # This is a frozenset of all the named base paths that this module knows
   # about.
-  NamedBasePaths = frozenset([
+  NamedBasePaths = frozenset(
+    [
       CheckoutPathName,
       'cache',
       'cleanup',
       'home',
       'start_dir',
       'tmp_base',
-  ])
+    ]
+  )
 
-  def __init__(self, path_properties: properties_pb.InputProperties,
-               **kwargs: Any) -> None:
+  def __init__(
+    self, path_properties: properties_pb.InputProperties, **kwargs: Any
+  ) -> None:
     super().__init__(**kwargs)
 
     self._start_dir: str
@@ -378,7 +397,7 @@ class PathApi(recipe_api.RecipeApi):
     self._cache_dir: str = ""
 
     # checkout_dir can be set at most once per recipe run.
-    self._checkout_dir: config_types.Path|None = None
+    self._checkout_dir: config_types.Path | None = None
 
     # Used in mkdtemp and mkstemp when generating and checking expectations.
     self._test_counter: collections.Counter = collections.Counter()
@@ -394,7 +413,8 @@ class PathApi(recipe_api.RecipeApi):
         value = getattr(path_properties, key)
         if value and not os.path.isabs(value):
           raise ValueError(
-              f'Path {value!r} in path module property {key!r} is not absolute')
+            f'Path {value!r} in path module property {key!r} is not absolute'
+          )
 
       # These we can compute without _paths_client.
       self._home_dir: str = self._path_mod.expanduser('~')
@@ -413,7 +433,8 @@ class PathApi(recipe_api.RecipeApi):
       for key in ('temp_dir', 'cache_dir', 'cleanup_dir'):
         if value := getattr(path_properties, key):  # pragma: no cover
           raise ValueError(
-              f'Base path mocking is not supported - got {key} = {value!r}')
+            f'Base path mocking is not supported - got {key} = {value!r}'
+          )
 
       # HACK: The platform test_api sets platform.name specifically for the
       # path module when users use api.platform.name(...) in their tests.
@@ -489,8 +510,9 @@ class PathApi(recipe_api.RecipeApi):
       cleanup_dir = str(self.cleanup_dir) + self.sep
       new_path = tempfile.mkdtemp(prefix=prefix, dir=cleanup_dir)
       assert new_path.startswith(cleanup_dir), (
-          f'{new_path=!r} -- {cleanup_dir=!r}')
-      temp_name = new_path[len(cleanup_dir):]
+        f'{new_path=!r} -- {cleanup_dir=!r}'
+      )
+      temp_name = new_path[len(cleanup_dir) :]
     else:
       self._test_counter[prefix] += 1
       temp_name = f'{prefix}_tmp_{self._test_counter[prefix]}'
@@ -518,13 +540,15 @@ class PathApi(recipe_api.RecipeApi):
       cleanup_dir = str(self.cleanup_dir) + self.sep
       fd, new_path = tempfile.mkstemp(prefix=prefix, dir=cleanup_dir)
       assert new_path.startswith(cleanup_dir), (
-          f'{new_path=!r} -- {cleanup_dir=!r}')
-      temp_file = self.cleanup_dir / new_path[len(cleanup_dir):]
+        f'{new_path=!r} -- {cleanup_dir=!r}'
+      )
+      temp_file = self.cleanup_dir / new_path[len(cleanup_dir) :]
       os.close(fd)
     else:
       self._test_counter[prefix] += 1
       temp_file = self.cleanup_dir.joinpath(
-          f'{prefix}_tmp_{self._test_counter[prefix]}')
+        f'{prefix}_tmp_{self._test_counter[prefix]}'
+      )
     self.mock_add_paths(temp_file, FileType.FILE)
     return temp_file
 
@@ -565,14 +589,15 @@ class PathApi(recipe_api.RecipeApi):
 
     # try module/recipe/repo resource paths first
     sPath, path = self._paths_client.find_longest_prefix(
-        abs_string_path, self.sep)
+      abs_string_path, self.sep
+    )
     if path is None:
       to_try = [
-          self.cache_dir,
-          self.cleanup_dir,
-          self.home_dir,
-          self.start_dir,
-          self.tmp_base_dir,
+        self.cache_dir,
+        self.cleanup_dir,
+        self.home_dir,
+        self.start_dir,
+        self.tmp_base_dir,
       ]
       for path in to_try:
         # checkout_dir can be None, skip it
@@ -584,10 +609,11 @@ class PathApi(recipe_api.RecipeApi):
         path = None
 
     if path is None or sPath is None:
-      raise ValueError("could not figure out a base path for %r" %
-                       abs_string_path)
+      raise ValueError(
+        "could not figure out a base path for %r" % abs_string_path
+      )
 
-    sub_path = abs_string_path[len(sPath):].strip(self.sep)
+    sub_path = abs_string_path[len(sPath) :].strip(self.sep)
     return path.joinpath(*sub_path.split(self.sep))
 
   @recipe_api.ignore_warnings('recipe_engine/CHECKOUT_DIR_DEPRECATED')
@@ -610,7 +636,7 @@ class PathApi(recipe_api.RecipeApi):
     return pathname in self.NamedBasePaths
 
   @property
-  def checkout_dir(self) -> config_types.Path|None:
+  def checkout_dir(self) -> config_types.Path | None:
     """Returns the Path which was assigned to this checkout_dir property."""
     self.m.warning.issue('CHECKOUT_DIR_DEPRECATED')
     if cdir := self._checkout_dir:
@@ -621,25 +647,26 @@ class PathApi(recipe_api.RecipeApi):
 
   @checkout_dir.setter
   def checkout_dir(self, path: config_types.Path) -> None:
-    """Sets the global variable `api.path.checkout_dir` to the given path.
-
-    """
+    """Sets the global variable `api.path.checkout_dir` to the given path."""
     self.m.warning.issue('CHECKOUT_DIR_DEPRECATED')
 
     if not isinstance(path, config_types.Path):
       raise ValueError(
-          f'api.path.checkout_dir called with bad type: {path!r} ({type(path)})')
+        f'api.path.checkout_dir called with bad type: {path!r} ({type(path)})'
+      )
 
     if isinstance(path.base, config_types.CheckoutBasePath):
       raise ValueError(
-          f'api.path.checkout_dir cannot be rooted in checkout_dir: {path!r}')
+        f'api.path.checkout_dir cannot be rooted in checkout_dir: {path!r}'
+      )
 
     if (current := self._checkout_dir) is not None:
       if current == path:
         return
 
       raise ValueError(
-          f'api.path.checkout_dir can only be set once. old:{current!r} new:{path!r}')
+        f'api.path.checkout_dir can only be set once. old:{current!r} new:{path!r}'
+      )
 
     self._checkout_dir = path
     # HACK: config_types.CheckoutBasePath._resolved is a global variable.
@@ -773,9 +800,9 @@ class PathApi(recipe_api.RecipeApi):
     return self._path_mod.dirname(str(path))
 
   def join(
-      self,
-      path: config_types.Path | str,
-      *paths: config_types.Path | str,
+    self,
+    path: config_types.Path | str,
+    *paths: config_types.Path | str,
   ) -> str:
     """Equivalent to os.path.join.
 
@@ -792,8 +819,8 @@ class PathApi(recipe_api.RecipeApi):
     return self._path_mod.join(str(path), *[str(p) for p in paths])
 
   def split(
-      self,
-      path: config_types.Path | str) -> tuple[config_types.Path | str, str]:
+    self, path: config_types.Path | str
+  ) -> tuple[config_types.Path | str, str]:
     """For "foo/bar/baz", return ("foo/bar", "baz").
 
     This corresponds to os.path.split().
@@ -815,7 +842,7 @@ class PathApi(recipe_api.RecipeApi):
     return (dirname, basename)
 
   def splitext(
-      self, path: config_types.Path | str
+    self, path: config_types.Path | str
   ) -> tuple[config_types.Path | str, str]:
     """For "foo/bar.baz", return ("foo/bar", ".baz").
 
@@ -842,8 +869,9 @@ class PathApi(recipe_api.RecipeApi):
     """Equivalent to os.path.realpath."""
     return self._path_mod.realpath(str(path))
 
-  def relpath(self, path: config_types.Path | str,
-              start: config_types.Path | str) -> str:
+  def relpath(
+    self, path: config_types.Path | str, start: config_types.Path | str
+  ) -> str:
     """Roughly equivalent to os.path.relpath.
 
     Unlike os.path.relpath, `start` is _required_. If you want the 'current
@@ -882,8 +910,8 @@ class PathApi(recipe_api.RecipeApi):
     return path
 
   def exists(
-      self,
-      path: config_types.Path | str | util.InputPlaceholder,
+    self,
+    path: config_types.Path | str | util.InputPlaceholder,
   ) -> bool:
     """Equivalent to os.path.exists.
 
@@ -895,8 +923,8 @@ class PathApi(recipe_api.RecipeApi):
     return self._path_mod.exists(str(path))
 
   def isdir(
-      self,
-      path: config_types.Path | str | util.InputPlaceholder,
+    self,
+    path: config_types.Path | str | util.InputPlaceholder,
   ) -> bool:
     """Equivalent to os.path.isdir.
 
@@ -908,8 +936,8 @@ class PathApi(recipe_api.RecipeApi):
     return self._path_mod.isdir(str(path))
 
   def isfile(
-      self,
-      path: config_types.Path | str | util.InputPlaceholder,
+    self,
+    path: config_types.Path | str | util.InputPlaceholder,
   ) -> bool:
     """Equivalent to os.path.isfile.
 
@@ -920,8 +948,9 @@ class PathApi(recipe_api.RecipeApi):
       return True
     return self._path_mod.isfile(str(path))
 
-  def mock_add_paths(self, path: config_types.Path,
-                     kind: FileType = FileType.FILE) -> None:
+  def mock_add_paths(
+    self, path: config_types.Path, kind: FileType = FileType.FILE
+  ) -> None:
     """For testing purposes, mark that |path| exists."""
     if self._test_data.enabled:
       assert isinstance(self._path_mod, fake_path)
@@ -935,17 +964,19 @@ class PathApi(recipe_api.RecipeApi):
     """For testing purposes, mark that file |path| exists."""
     self.mock_add_paths(path, FileType.DIRECTORY)
 
-  def mock_copy_paths(self, source: config_types.Path,
-                      dest: config_types.Path) -> None:
+  def mock_copy_paths(
+    self, source: config_types.Path, dest: config_types.Path
+  ) -> None:
     """For testing purposes, copy |source| to |dest|."""
     if self._test_data.enabled:
       assert isinstance(self._path_mod, fake_path)
       self._path_mod.mock_copy_paths(source, dest)
 
   def mock_remove_paths(
-      self,
-      path: config_types.Path,
-      should_remove: Callable[[str], bool] = lambda p: True) -> None:
+    self,
+    path: config_types.Path,
+    should_remove: Callable[[str], bool] = lambda p: True,
+  ) -> None:
     """For testing purposes, mark that |path| doesn't exist.
 
     Args:

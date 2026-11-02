@@ -19,7 +19,7 @@ class RuntimeApi(recipe_api.RecipeApi):
   """
 
   def __init__(
-      self, properties: properties_pb.InputProperties, **kwargs: Any
+    self, properties: properties_pb.InputProperties, **kwargs: Any
   ) -> None:
     super().__init__(**kwargs)
     self._properties = properties

@@ -71,13 +71,13 @@ derivatives for more info.
 from __future__ import annotations
 
 from collections.abc import (
-    Callable,
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    MutableSet,
+  Callable,
+  Iterable,
+  Iterator,
+  Mapping,
+  MutableMapping,
+  MutableSequence,
+  MutableSet,
 )
 import functools
 import json
@@ -113,11 +113,11 @@ class ConfigContext:
     self.ROOT_CONFIG_ITEM: Callable[..., ConfigGroup] | None = None
 
   def __call__(
-      self,
-      group: str | None = None,
-      includes: Iterable[str] | None = None,
-      deps: Iterable[str] | None = None,
-      is_root: bool = False,
+    self,
+    group: str | None = None,
+    includes: Iterable[str] | None = None,
+    deps: Iterable[str] | None = None,
+    is_root: bool = False,
   ) -> Callable[[Callable[..., None]], Callable[..., ConfigGroup]]:
     """
     A decorator for functions which modify a given schema of configs.
@@ -172,14 +172,16 @@ class ConfigContext:
 
     Returns a new decorated version of this function (see inner()).
     """
+
     def decorator(f: Callable[..., None]) -> Callable[..., ConfigGroup]:
       name = f.__name__
+
       @functools.wraps(f)
       def inner(
-          config: ConfigGroup | None = None,
-          final: bool = True,
-          optional: bool = False,
-          **kwargs: Any,
+        config: ConfigGroup | None = None,
+        final: bool = True,
+        optional: bool = False,
+        **kwargs: Any,
       ) -> ConfigGroup:
         """This is the function which is returned from the config_ctx
         decorator.
@@ -218,15 +220,20 @@ class ConfigContext:
         inclusions = config._inclusions  # pylint: disable=W0212
 
         # inner.IS_ROOT will be True or False at the time of invocation.
-        if (self.ROOT_CONFIG_ITEM and not inner.IS_ROOT and
-            self.ROOT_CONFIG_ITEM.__name__ not in inclusions):
+        if (
+          self.ROOT_CONFIG_ITEM
+          and not inner.IS_ROOT
+          and self.ROOT_CONFIG_ITEM.__name__ not in inclusions
+        ):
           self.ROOT_CONFIG_ITEM(config)
 
         if name in inclusions:
           if optional:
             return config
-          raise BadConf('config_ctx "%s" is already in this config "%s"' %
-                        (name, config.as_jsonish(include_hidden=True)))
+          raise BadConf(
+            'config_ctx "%s" is already in this config "%s"'
+            % (name, config.as_jsonish(include_hidden=True))
+          )
         if final:
           inclusions.add(name)
 
@@ -236,47 +243,53 @@ class ConfigContext:
           try:
             self.CONFIG_ITEMS[include](config)
           except BadConf as e:
-            raise BadConf('config "%s" includes "%s", but [%s]' %
-                          (name, include, e))
+            raise BadConf(
+              'config "%s" includes "%s", but [%s]' % (name, include, e)
+            )
 
         # deps are a list of group names. All groups must be represented
         # in config already.
         for dep_group in deps or []:
           if not inclusions & self.MUTEX_GROUPS[dep_group]:
-            raise BadConf('dep group "%s" is unfulfilled for "%s"' %
-                          (dep_group, name))
+            raise BadConf(
+              'dep group "%s" is unfulfilled for "%s"' % (dep_group, name)
+            )
 
         if group:
           overlap = inclusions & self.MUTEX_GROUPS[group]
           overlap.discard(name)
           if overlap:
-            raise BadConf('"%s" is a member of group "%s", but %s already ran' %
-                          (name, group, tuple(overlap)))
+            raise BadConf(
+              '"%s" is a member of group "%s", but %s already ran'
+              % (name, group, tuple(overlap))
+            )
 
         ret = f(config, **kwargs)
         assert ret is None, 'Got return value (%s) from "%s"?' % (ret, name)
 
         return config
+
       inner.WRAPPED = f  # type: ignore[attr-defined]
       inner.INCLUDES = includes or []  # type: ignore[attr-defined]
 
       assert name not in self.CONFIG_ITEMS, (
-          '%s is already in CONFIG_ITEMS' % name)
+        '%s is already in CONFIG_ITEMS' % name
+      )
       self.CONFIG_ITEMS[name] = inner
       if group:
         self.MUTEX_GROUPS.setdefault(group, set()).add(name)
       inner.IS_ROOT = is_root  # type: ignore[attr-defined]
       if is_root:
-        assert not self.ROOT_CONFIG_ITEM, (
-          'may only have one root config_ctx!')
+        assert not self.ROOT_CONFIG_ITEM, 'may only have one root config_ctx!'
         self.ROOT_CONFIG_ITEM = inner
         inner.IS_ROOT = True  # type: ignore[attr-defined]
       return inner
+
     return decorator
 
 
 def config_item_context(
-    CONFIG_SCHEMA: Callable[..., ConfigBase],
+  CONFIG_SCHEMA: Callable[..., ConfigBase],
 ) -> ConfigContext:
   """Create a configuration context.
 
@@ -351,6 +364,7 @@ class ConfigBase:
     """Returns a doc.Doc.Schema proto message for this config type."""
     raise NotImplementedError
 
+
 # TODO(crbug.com/1147793): Remove basestring mapping after we drop
 # Single(basestring) support in all downstream repos.
 _SIMPLE_TYPE_LOOKUP = {
@@ -367,15 +381,17 @@ _SIMPLE_TYPE_LOOKUP = {
 
 
 def _inner_type_schema(
-    inner_type: Any,
+  inner_type: Any,
 ) -> list[doc_pb.Doc.Schema.SimpleType]:
   ret: list[doc_pb.Doc.Schema.SimpleType] = []
+
   def _flatten(typ: Any) -> None:
     if isinstance(typ, Iterable):
       for subtyp in typ:
         _flatten(subtyp)
     else:
       ret.append(_SIMPLE_TYPE_LOOKUP[typ])
+
   _flatten(inner_type)
   return sorted(set(ret))
 
@@ -387,6 +403,7 @@ class ConfigSchemaBase:
   It generates a mutable, bound version of the schema it represents, using the
   mutable config objects such as ConfigGroup.
   """
+
   def bind(self, value: Any) -> Any:
     """
     Type check the value, and generate a resulting mutable object representation
@@ -410,9 +427,9 @@ class ConfigGroup(ConfigBase):
   """
 
   def __init__(
-      self,
-      hidden: bool | _AutoHide = AutoHide,
-      **type_map: ConfigBase,
+    self,
+    hidden: bool | _AutoHide = AutoHide,
+    **type_map: ConfigBase,
   ) -> None:
     """Expects type_map to be {python_name -> ConfigBase} instance."""
     super().__init__(hidden)
@@ -458,8 +475,10 @@ class ConfigGroup(ConfigBase):
 
   def as_jsonish(self, include_hidden: bool = False) -> dict[str, Any]:
     return dict(
-      (n, v.as_jsonish(include_hidden)) for n, v in self._type_map.items()
-        if include_hidden or not v._hidden)  # pylint: disable=W0212
+      (n, v.as_jsonish(include_hidden))
+      for n, v in self._type_map.items()
+      if include_hidden or not v._hidden
+    )  # pylint: disable=W0212
 
   def reset(self) -> None:
     for v in self._type_map.values():
@@ -533,9 +552,9 @@ class ConfigList(ConfigBase, MutableSequence[Any]):
   """
 
   def __init__(
-      self,
-      item_schema: Callable[[], ConfigGroup],
-      hidden: bool | _AutoHide = AutoHide,
+    self,
+    item_schema: Callable[[], ConfigGroup],
+    hidden: bool | _AutoHide = AutoHide,
   ) -> None:
     """
     Args:
@@ -587,8 +606,11 @@ class ConfigList(ConfigBase, MutableSequence[Any]):
       self.append(item)
 
   def as_jsonish(self, include_hidden: bool = False) -> list[dict[str, Any]]:
-    return [i.as_jsonish(include_hidden) for i in self.data
-            if include_hidden or not i._hidden]  # pylint: disable=W0212
+    return [
+      i.as_jsonish(include_hidden)
+      for i in self.data
+      if include_hidden or not i._hidden
+    ]  # pylint: disable=W0212
 
   def _is_default(self) -> bool:
     # pylint: disable=W0212
@@ -604,11 +626,11 @@ class Dict(ConfigBase, MutableMapping[Any, Any]):
   """Provides a semi-homogenous dict()-like configuration object."""
 
   def __init__(
-      self,
-      item_fn: Callable[[tuple[Any, Any]], Any] = lambda i: i,
-      jsonish_fn: Callable[[list[Any]], Any] = dict,
-      value_type: type | tuple[type, ...] | None = None,
-      hidden: bool | _AutoHide = AutoHide,
+    self,
+    item_fn: Callable[[tuple[Any, Any]], Any] = lambda i: i,
+    jsonish_fn: Callable[[list[Any]], Any] = dict,
+    value_type: type | tuple[type, ...] | None = None,
+    hidden: bool | _AutoHide = AutoHide,
   ) -> None:
     """
     Args:
@@ -659,10 +681,12 @@ class Dict(ConfigBase, MutableMapping[Any, Any]):
     self.data = dict(val)
 
   def as_jsonish(self, _include_hidden: bool | None = None) -> Any:
-    return self.jsonish_fn([
-      self.item_fn(item)
-      for item in sorted(self.data.items(), key=lambda x: x[0])
-    ])
+    return self.jsonish_fn(
+      [
+        self.item_fn(item)
+        for item in sorted(self.data.items(), key=lambda x: x[0])
+      ]
+    )
 
   def reset(self) -> None:
     self.data.clear()
@@ -684,10 +708,10 @@ class List(ConfigBase, MutableSequence[Any]):
   """Provides a semi-homogenous list()-like configuration object."""
 
   def __init__(
-      self,
-      inner_type: type | tuple[type, ...],
-      jsonish_fn: Callable[[list[Any]], Any] = list,
-      hidden: bool | _AutoHide = AutoHide,
+    self,
+    inner_type: type | tuple[type, ...],
+    jsonish_fn: Callable[[list[Any]], Any] = list,
+    hidden: bool | _AutoHide = AutoHide,
   ) -> None:
     """
     Args:
@@ -751,10 +775,10 @@ class Set(ConfigBase, MutableSet[Any]):
   """Provides a semi-homogenous set()-like configuration object."""
 
   def __init__(
-      self,
-      inner_type: type | tuple[type, ...],
-      jsonish_fn: Callable[[list[Any]], Any] = list,
-      hidden: bool | _AutoHide = AutoHide,
+    self,
+    inner_type: type | tuple[type, ...],
+    jsonish_fn: Callable[[list[Any]], Any] = list,
+    hidden: bool | _AutoHide = AutoHide,
   ) -> None:
     """
     Args:
@@ -817,12 +841,12 @@ class Single(ConfigBase):
   """Provides a configuration object which holds a single 'simple' type."""
 
   def __init__(
-      self,
-      inner_type: type | tuple[type, ...],
-      jsonish_fn: Callable[[Any], Any] = lambda x: x,
-      empty_val: Any = None,
-      required: bool = True,
-      hidden: bool | _AutoHide = AutoHide,
+    self,
+    inner_type: type | tuple[type, ...],
+    jsonish_fn: Callable[[Any], Any] = lambda x: x,
+    empty_val: Any = None,
+    required: bool = True,
+    hidden: bool | _AutoHide = AutoHide,
   ) -> None:
     """
     Args:
@@ -880,9 +904,9 @@ class Static(ConfigBase):
   """
 
   def __init__(
-      self,
-      value: Any,
-      hidden: bool | _AutoHide = AutoHide,
+    self,
+    value: Any,
+    hidden: bool | _AutoHide = AutoHide,
   ) -> None:
     super().__init__(hidden=hidden)
     # HACK: Paths are functionally immutable, but cannot have their __hash__
@@ -957,8 +981,9 @@ class Enum(ConfigBase):
       val = val.data
     typeAssert(val, self.inner_type)
     if not val in self.values:
-      raise ValueError("Expected %r to be one of %r" %
-                       (val, ', '.join(self.values)))
+      raise ValueError(
+        "Expected %r to be one of %r" % (val, ', '.join(self.values))
+      )
     self.data = val
 
   def as_jsonish(self, _include_hidden: bool | None = None) -> Any:
@@ -975,7 +1000,8 @@ class Enum(ConfigBase):
 
   def schema_proto(self) -> doc_pb.Doc.Schema:
     ret = doc_pb.Doc.Schema()
-    ret.enum.values_json.extend(json.dumps(self.jsonish_fn(v))
-                                for v in self.values)
+    ret.enum.values_json.extend(
+      json.dumps(self.jsonish_fn(v)) for v in self.values
+    )
     ret.enum.required = self.required
     return ret

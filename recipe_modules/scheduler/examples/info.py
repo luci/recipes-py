@@ -13,8 +13,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    scheduler,
-    step,
+  scheduler,
+  step,
 )
 
 
@@ -32,19 +32,17 @@ class TEST_DEPS(RecipeTestApi):
 def RunSteps(api: DEPS) -> None:
   step_res = api.step(name='host', cmd=None)
   step_res.presentation.logs['info'] = [
-      api.scheduler.host,
-      '%s' % api.scheduler.job_id,
-      '%s' % api.scheduler.invocation_id
+    api.scheduler.host,
+    '%s' % api.scheduler.job_id,
+    '%s' % api.scheduler.invocation_id,
   ]
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
+  yield (api.test('unset'))
   yield (
-    api.test('unset')
-  )
-  yield (
-    api.test('set') +
-    api.scheduler(
+    api.test('set')
+    + api.scheduler(
       hostname='scheduler.example.com',
       job_id='some/job',
       invocation_id=12345,

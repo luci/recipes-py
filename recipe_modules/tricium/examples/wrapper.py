@@ -18,10 +18,10 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    buildbucket,
-    file,
-    path,
-    tricium,
+  buildbucket,
+  file,
+  path,
+  tricium,
 )
 
 
@@ -46,41 +46,56 @@ def RunSteps(api: DEPS) -> None:
   api.file.write_text('png', checkout_base / 'image.png', 'png')
 
   analyzers = [
-      api.tricium.analyzers.SPACEY,
-      api.tricium.analyzers.PYLINT,
-      api.tricium.analyzers.CPPLINT,
-      api.tricium.analyzers.COMMITCHECK,
+    api.tricium.analyzers.SPACEY,
+    api.tricium.analyzers.PYLINT,
+    api.tricium.analyzers.CPPLINT,
+    api.tricium.analyzers.COMMITCHECK,
   ]
   # Analyzers can also be added via their names:
   analyzers.append(api.tricium.analyzers.by_name()['Eslint'])
 
   api.tricium.run_legacy(
-      analyzers, checkout_base, ['one.py', 'foo/two.py', 'image.png'], commit_message='msg')
+    analyzers,
+    checkout_base,
+    ['one.py', 'foo/two.py', 'image.png'],
+    commit_message='msg',
+  )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
 
   def results_json(num_comments: int) -> str:
     results = Data.Results()
-    results.comments.extend([
+    results.comments.extend(
+      [
         Data.Comment(category='X', message=str(i), path='x')
         for i in range(num_comments)
-    ])
+      ]
+    )
     return json_format.MessageToJson(results)
 
-  yield (api.test('success') + api.buildbucket.try_build(project='chrome') +
-         api.step_data('Spacey.read results',
-                       api.file.read_text(results_json(num_comments=1))) +
-         api.post_check(post_process.StatusSuccess) +
-         api.post_process(post_process.DropExpectation))
+  yield (
+    api.test('success')
+    + api.buildbucket.try_build(project='chrome')
+    + api.step_data(
+      'Spacey.read results', api.file.read_text(results_json(num_comments=1))
+    )
+    + api.post_check(post_process.StatusSuccess)
+    + api.post_process(post_process.DropExpectation)
+  )
 
-  yield (api.test('with_failure') +
-         api.buildbucket.try_build(project='chrome') +
-         api.step_data('Spacey.run analyzer', retcode=1) +
-         api.post_process(post_process.DropExpectation))
+  yield (
+    api.test('with_failure')
+    + api.buildbucket.try_build(project='chrome')
+    + api.step_data('Spacey.run analyzer', retcode=1)
+    + api.post_process(post_process.DropExpectation)
+  )
 
-  yield (api.test('many_comments') +
-         api.buildbucket.try_build(project='chrome') +
-         api.step_data('Pylint.read results',
-                       api.file.read_text(results_json(num_comments=51))) +
-         api.post_process(post_process.DropExpectation))
+  yield (
+    api.test('many_comments')
+    + api.buildbucket.try_build(project='chrome')
+    + api.step_data(
+      'Pylint.read results', api.file.read_text(results_json(num_comments=51))
+    )
+    + api.post_process(post_process.DropExpectation)
+  )

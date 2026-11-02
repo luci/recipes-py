@@ -12,8 +12,10 @@ DETACHED_PROCESS = 0x00000008
 
 print("parent")
 sys.stdout.flush()
-child = subprocess.Popen(['python3.exe', '-c', 'import time; time.sleep(30)'],
-                         creationflags=DETACHED_PROCESS)
+child = subprocess.Popen(
+  ['python3.exe', '-c', 'import time; time.sleep(30)'],
+  creationflags=DETACHED_PROCESS,
+)
 sys.stdout.flush()
 print("parent leaves", child._handle, child.pid)
 sys.exit(0)

@@ -53,8 +53,9 @@ def _main_impl(args: argparse.Namespace) -> int:
   # TODO(iannucci): this is horrible; why do we want to set a workdir anyway?
   # Shouldn't the caller of recipes just CD somewhere if they want a different
   # workdir?
-  workdir = (args.workdir or
-      os.path.join(recipe_engine.__path__[0], os.path.pardir, 'workdir'))
+  workdir = args.workdir or os.path.join(
+    recipe_engine.__path__[0], os.path.pardir, 'workdir'
+  )
   logging.info('Using %s as work directory' % workdir)
   if not os.path.exists(workdir):
     os.makedirs(workdir)
@@ -63,23 +64,27 @@ def _main_impl(args: argparse.Namespace) -> int:
 
   # Have a top-level set of invariants to enforce StreamEngine expectations.
   raw_result, _ = engine.RecipeEngine.run_steps(
-      args.recipe_deps,
-      properties,
-      invariants.StreamEngineInvariants.wrap(stream_engine),
-      subproc.SubprocessStepRunner(),
-      os.environ,
-      os.path.abspath(workdir),
-      luci_context.read_full(),
-      psutil.cpu_count(),
-      psutil.virtual_memory().total,
-      emit_initial_properties=True)
+    args.recipe_deps,
+    properties,
+    invariants.StreamEngineInvariants.wrap(stream_engine),
+    subproc.SubprocessStepRunner(),
+    os.environ,
+    os.path.abspath(workdir),
+    luci_context.read_full(),
+    psutil.cpu_count(),
+    psutil.virtual_memory().total,
+    emit_initial_properties=True,
+  )
   result = legacy.to_legacy_result(raw_result)
 
   if args.output_result_json:
     with open(args.output_result_json, 'w') as fil:
       fil.write(
-          str(
-              jsonpb.MessageToJson(
-                  result, always_print_fields_with_no_presence=True)))
+        str(
+          jsonpb.MessageToJson(
+            result, always_print_fields_with_no_presence=True
+          )
+        )
+      )
 
   return 1 if result.HasField("failure") else 0

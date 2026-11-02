@@ -24,9 +24,9 @@ class ProductStreamEngine(stream_mod.StreamEngine):
   """
 
   def __init__(
-      self,
-      engine_a: stream_mod.StreamEngine,
-      engine_b: stream_mod.StreamEngine,
+    self,
+    engine_a: stream_mod.StreamEngine,
+    engine_b: stream_mod.StreamEngine,
   ) -> None:
     assert engine_a and engine_b
     self._engine_a = engine_a
@@ -34,9 +34,9 @@ class ProductStreamEngine(stream_mod.StreamEngine):
 
   class Stream(stream_mod.StreamEngine.Stream):
     def __init__(
-        self,
-        stream_a: stream_mod.StreamEngine.Stream,
-        stream_b: stream_mod.StreamEngine.Stream,
+      self,
+      stream_a: stream_mod.StreamEngine.Stream,
+      stream_b: stream_mod.StreamEngine.Stream,
     ) -> None:
       assert stream_a and stream_b
       self._stream_a = stream_a
@@ -47,10 +47,10 @@ class ProductStreamEngine(stream_mod.StreamEngine):
       self._stream_b.write_line(line)
 
     def handle_exception(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: types.TracebackType | None,
+      self,
+      exc_type: type[BaseException] | None,
+      exc_val: BaseException | None,
+      exc_tb: types.TracebackType | None,
     ) -> bool | None:
       ret = self._stream_a.handle_exception(exc_type, exc_val, exc_tb)
       ret = ret or self._stream_b.handle_exception(exc_type, exc_val, exc_tb)
@@ -75,19 +75,21 @@ class ProductStreamEngine(stream_mod.StreamEngine):
     # pylint: disable=no-self-argument
     def _void_product(method_name: str) -> Callable[..., None]:
       def inner(
-          self: ProductStreamEngine.StepStream, *args: Any, **kwargs: Any
+        self: ProductStreamEngine.StepStream, *args: Any, **kwargs: Any
       ) -> None:
         getattr(self._stream_a, method_name)(*args, **kwargs)
         getattr(self._stream_b, method_name)(*args, **kwargs)
+
       return inner
 
     def new_log_stream(self, log_name: str) -> ProductStreamEngine.Stream:
       return ProductStreamEngine.Stream(
-          self._stream_a.new_log_stream(log_name),
-          self._stream_b.new_log_stream(log_name))
+        self._stream_a.new_log_stream(log_name),
+        self._stream_b.new_log_stream(log_name),
+      )
 
     def open_std_handles(
-        self, stdout: bool = False, stderr: bool = False
+      self, stdout: bool = False, stderr: bool = False
     ) -> dict[str, stream_mod.StreamEngine.Stream] | None:
       ret = self._stream_a.open_std_handles(stdout, stderr)
       if ret is None:
@@ -114,10 +116,10 @@ class ProductStreamEngine(stream_mod.StreamEngine):
       return self._stream_a.user_namespace
 
     def handle_exception(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: types.TracebackType | None,
+      self,
+      exc_type: type[BaseException] | None,
+      exc_val: BaseException | None,
+      exc_tb: types.TracebackType | None,
     ) -> bool | None:
       ret = self._stream_a.handle_exception(exc_type, exc_val, exc_tb)
       ret = ret or self._stream_b.handle_exception(exc_type, exc_val, exc_tb)
@@ -135,23 +137,25 @@ class ProductStreamEngine(stream_mod.StreamEngine):
     set_step_tag = _void_product('set_step_tag')
 
   def new_step_stream(
-      self,
-      name_tokens: Sequence[str],
-      allow_subannotations: bool,
-      merge_step: bool | Literal['legacy'] = False,
-      merge_output_properties_to: Sequence[str] | None = None,
+    self,
+    name_tokens: Sequence[str],
+    allow_subannotations: bool,
+    merge_step: bool | Literal['legacy'] = False,
+    merge_output_properties_to: Sequence[str] | None = None,
   ) -> StepStream:
     return self.StepStream(
-        self._engine_a.new_step_stream(
-            name_tokens,
-            allow_subannotations,
-            merge_step=merge_step,
-            merge_output_properties_to=merge_output_properties_to),
-        self._engine_b.new_step_stream(
-            name_tokens,
-            allow_subannotations,
-            merge_step=merge_step,
-            merge_output_properties_to=merge_output_properties_to),
+      self._engine_a.new_step_stream(
+        name_tokens,
+        allow_subannotations,
+        merge_step=merge_step,
+        merge_output_properties_to=merge_output_properties_to,
+      ),
+      self._engine_b.new_step_stream(
+        name_tokens,
+        allow_subannotations,
+        merge_step=merge_step,
+        merge_output_properties_to=merge_output_properties_to,
+      ),
     )
 
   def open(self) -> None:
@@ -159,10 +163,10 @@ class ProductStreamEngine(stream_mod.StreamEngine):
     self._engine_b.open()
 
   def handle_exception(
-      self,
-      exc_type: type[BaseException] | None,
-      exc_val: BaseException | None,
-      exc_tb: types.TracebackType | None,
+    self,
+    exc_type: type[BaseException] | None,
+    exc_val: BaseException | None,
+    exc_tb: types.TracebackType | None,
   ) -> bool | None:
     ret = self._engine_a.handle_exception(exc_type, exc_val, exc_tb)
     ret = ret or self._engine_b.handle_exception(exc_type, exc_val, exc_tb)
@@ -175,8 +179,9 @@ class ProductStreamEngine(stream_mod.StreamEngine):
   @property
   def supports_concurrency(self) -> bool:
     return (
-      self._engine_a.supports_concurrency and
-      self._engine_b.supports_concurrency)
+      self._engine_a.supports_concurrency
+      and self._engine_b.supports_concurrency
+    )
 
   def write_result(self, result: Any) -> None:
     self._engine_a.write_result(result)

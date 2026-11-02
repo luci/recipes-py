@@ -13,10 +13,10 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    cq,
-    properties,
-    step,
+  assertions,
+  cq,
+  properties,
+  step,
 )
 
 
@@ -44,9 +44,11 @@ def RunSteps(api: DEPS) -> None:
     return
 
   api.assertions.assertEqual(
-      api.cq.experimental, 'expected_experimental' in api.properties)
+    api.cq.experimental, 'expected_experimental' in api.properties
+  )
   api.assertions.assertEqual(
-      api.cq.top_level, 'expected_top_level' in api.properties)
+    api.cq.top_level, 'expected_top_level' in api.properties
+  )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:

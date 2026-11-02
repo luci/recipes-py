@@ -11,9 +11,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    file,
-    path,
+  assertions,
+  file,
+  path,
 )
 
 
@@ -37,16 +37,14 @@ def RunSteps(api: DEPS) -> None:
 
   api.file.write_text('write some file', some_file, 'some data')
 
-  result = api.file.file_hash(some_file,
-                              test_data='deadbeef')
+  result = api.file.file_hash(some_file, test_data='deadbeef')
   expected = 'deadbeef'
   api.assertions.assertEqual(result, expected)
 
   another_file = api.path.start_dir / 'another_file'
   api.file.write_text('write another file', another_file, 'some data')
 
-  result = api.file.file_hash(another_file,
-                              test_data='beefdead')
+  result = api.file.file_hash(another_file, test_data='beefdead')
   expected = 'beefdead'
   api.assertions.assertEqual(result, expected)
 

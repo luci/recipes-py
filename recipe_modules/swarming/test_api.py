@@ -26,11 +26,11 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
     self._saved_task_for_show_request = None
 
   def check_triggered_request(
-      self,
-      check: Callable[..., bool],
-      step_odict: Mapping[str, post_process_inputs.Step],
-      step: str,
-      *checkers: Callable[[Callable[..., bool], TaskRequest], Any],
+    self,
+    check: Callable[..., bool],
+    step_odict: Mapping[str, post_process_inputs.Step],
+    step: str,
+    *checkers: Callable[[Callable[..., bool], TaskRequest], Any],
   ) -> None:
     """Check the input request of a swarming trigger call.
 
@@ -57,67 +57,65 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
   def example_task_request_jsonish(self) -> dict[str, Any]:
     """Returns a dict that can be parsed by task_request_from_jsonish()."""
     return {
-        'name': 'QEMU',
-        'priority': 20,
-        'service_account': 'foo@example.com',
-        'task_slices': [{
-            'expiration_secs': '18000',
-            'properties': {
-                'cipd_input': {
-                    'packages': [],
-                    'server': ''
-                },
-                'command': ['/bin/true'],
-                'relative_cwd': 'some/dir',
-                'containment': {
-                    'containment_type': 'NONE',
-                    'limit_processes': False,
-                    'limit_total_committed_memory': False,
-                    'lower_priority': False,
-                },
-                'dimensions': [{
-                    'key': 'pool',
-                    'value': 'swarming-pool',
-                }],
-                'env': [],
-                'env_prefixes': [],
-                'execution_timeout_secs': '2400',
-                'grace_period_secs': '30',
-                'cas_input_root': {
-                    'cas_instance':
-                        'projects/example-project/instances/default_instance',
-                    'digest': {
-                        'hash':
-                            '24b2420bc49d8b8fdc1d011a163708927532b37dc9f91d7d8d6877e3a86559ca',
-                        'size_bytes':
-                            '73',
-                    },
-                },
-                'idempotent': False,
-                'io_timeout_secs': '430',
-                'outputs': []
-            }
-        }],
-        'realm': 'project:bucket',
-        'resultdb': {
-            'enable': True,
-        },
+      'name': 'QEMU',
+      'priority': 20,
+      'service_account': 'foo@example.com',
+      'task_slices': [
+        {
+          'expiration_secs': '18000',
+          'properties': {
+            'cipd_input': {'packages': [], 'server': ''},
+            'command': ['/bin/true'],
+            'relative_cwd': 'some/dir',
+            'containment': {
+              'containment_type': 'NONE',
+              'limit_processes': False,
+              'limit_total_committed_memory': False,
+              'lower_priority': False,
+            },
+            'dimensions': [
+              {
+                'key': 'pool',
+                'value': 'swarming-pool',
+              }
+            ],
+            'env': [],
+            'env_prefixes': [],
+            'execution_timeout_secs': '2400',
+            'grace_period_secs': '30',
+            'cas_input_root': {
+              'cas_instance': 'projects/example-project/instances/default_instance',
+              'digest': {
+                'hash': '24b2420bc49d8b8fdc1d011a163708927532b37dc9f91d7d8d6877e3a86559ca',
+                'size_bytes': '73',
+              },
+            },
+            'idempotent': False,
+            'io_timeout_secs': '430',
+            'outputs': [],
+          },
+        }
+      ],
+      'realm': 'project:bucket',
+      'resultdb': {
+        'enable': True,
+      },
     }
 
   def properties(
-      self,
-      task_id: str = 'fake-task-id',
-      bot_id: str = 'fake-bot-id',
+    self,
+    task_id: str = 'fake-task-id',
+    bot_id: str = 'fake-bot-id',
   ) -> recipe_test_api.TestData:
     return self.m.properties.environ(
-        properties.EnvProperties(
-            SWARMING_TASK_ID=task_id, SWARMING_BOT_ID=bot_id))
+      properties.EnvProperties(SWARMING_TASK_ID=task_id, SWARMING_BOT_ID=bot_id)
+    )
 
   def trigger(
-      self,
-      task_names: Sequence[str],
-      initial_id: int | None = None,
-      resultdb: bool | Sequence[bool] = True,
+    self,
+    task_names: Sequence[str],
+    initial_id: int | None = None,
+    resultdb: bool | Sequence[bool] = True,
   ) -> recipe_test_api.StepTestData:
     """Generates step test data intended to mock api.swarming.trigger()
 
@@ -136,7 +134,8 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
     assert len(resultdb) == len(task_names)
     trigger_output = {'tasks': []}
     for idx, (name, add_invocation) in enumerate(
-        zip(task_names, resultdb), start=start):
+      zip(task_names, resultdb), start=start
+    ):
       task_output = {
         'task_id': '%d' % idx,
         'request': {
@@ -155,14 +154,14 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
 
   @staticmethod
   def task_result(
-      id: str,
-      name: str,
-      state: TaskState | None = TaskState.COMPLETED,
-      duration: float = 62.35,
-      failure: bool = False,
-      output: str | None = 'hello world!',
-      outputs: Sequence[str] = (),
-      bot_id: str = 'vm-123',
+    id: str,
+    name: str,
+    state: TaskState | None = TaskState.COMPLETED,
+    duration: float = 62.35,
+    failure: bool = False,
+    output: str | None = 'hello world!',
+    outputs: Sequence[str] = (),
+    bot_id: str = 'vm-123',
   ) -> dict[str, Any]:
     """
     Returns the raw results of a Swarming task.
@@ -180,42 +179,41 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
     """
     assert isinstance(state, TaskState) or state == None
     assert state not in [
-        TaskState.INVALID,
-        TaskState.PENDING,
-        TaskState.RUNNING,
+      TaskState.INVALID,
+      TaskState.PENDING,
+      TaskState.RUNNING,
     ], 'state %s invalid or not final' % state.name
     if state == None:
       return {
-          'error': 'Bot could not be contacted',
-          'results': {
-              'task_id': id
-          },
+        'error': 'Bot could not be contacted',
+        'results': {'task_id': id},
       }
-    cas_hash = '24b2420bc49d8b8fdc1d011a163708927532b37dc9f91d7d8d6877e3a86559ca'
+    cas_hash = (
+      '24b2420bc49d8b8fdc1d011a163708927532b37dc9f91d7d8d6877e3a86559ca'
+    )
     raw_results = {
-        'output': output,
-        'outputs': outputs,
-        'results': {
-            'bot_id': bot_id,
-            'name': name,
-            'task_id': id,
-            'state': state.name,
-            'duration': duration,
-            'created_ts': '2025-04-23T19:10:21.951949Z',
-            'started_ts': '2025-04-23T19:13:55.431522Z',
-            'completed_ts': '2025-04-23T20:01:13.072079Z',
-            'cas_output_root': {
-                'cas_instance':
-                    'projects/example-project/instances/default_instance',
-                'digest': {
-                    'hash': cas_hash,
-                    'size_bytes': '73',
-                },
-            },
-            'resultdb_info': {
-                'invocation': 'invocations/some-inv-name',
-            },
+      'output': output,
+      'outputs': outputs,
+      'results': {
+        'bot_id': bot_id,
+        'name': name,
+        'task_id': id,
+        'state': state.name,
+        'duration': duration,
+        'created_ts': '2025-04-23T19:10:21.951949Z',
+        'started_ts': '2025-04-23T19:13:55.431522Z',
+        'completed_ts': '2025-04-23T20:01:13.072079Z',
+        'cas_output_root': {
+          'cas_instance': 'projects/example-project/instances/default_instance',
+          'digest': {
+            'hash': cas_hash,
+            'size_bytes': '73',
+          },
         },
+        'resultdb_info': {
+          'invocation': 'invocations/some-inv-name',
+        },
+      },
     }
 
     if state == TaskState.COMPLETED:
@@ -224,7 +222,7 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
     return raw_results
 
   def collect(
-      self, task_results: Sequence[Mapping[str, Any]]
+    self, task_results: Sequence[Mapping[str, Any]]
   ) -> recipe_test_api.StepTestData:
     """Generates test step data for the swarming API collect method.
 
@@ -237,12 +235,12 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
       collect method call.
     """
     id_to_result = {
-        result['results']['task_id']: result for result in task_results
+      result['results']['task_id']: result for result in task_results
     }
     return self.m.json.output(id_to_result)
 
   def set_task_for_show_request(
-      self, task: TaskRequest | Mapping[str, Any] | None
+    self, task: TaskRequest | Mapping[str, Any] | None
   ) -> None:
     self._saved_task_for_show_request = task
 
@@ -260,13 +258,13 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
     return self.m.json.output_stream(task)
 
   def generate_bot_json(
-      self,
-      bot_id: str,
-      is_dead: bool = False,
-      quarantined: bool = False,
-      maintenance_msg: str | None = None,
-      dimensions: Mapping[str, Any] | None = None,
-      state: Mapping[str, Any] | None = None,
+    self,
+    bot_id: str,
+    is_dead: bool = False,
+    quarantined: bool = False,
+    maintenance_msg: str | None = None,
+    dimensions: Mapping[str, Any] | None = None,
+    state: Mapping[str, Any] | None = None,
   ) -> dict[str, Any]:
     bot = {'bot_id': bot_id}
     if is_dead:
@@ -276,16 +274,15 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
     if maintenance_msg:
       bot['maintenance_msg'] = maintenance_msg
     if dimensions:
-      bot['dimensions'] = [{
-          'key': k,
-          'value': v
-      } for k, v in dimensions.items()]
+      bot['dimensions'] = [
+        {'key': k, 'value': v} for k, v in dimensions.items()
+      ]
     if state:
       bot['state'] = self.m.json.dumps(state)
     return bot
 
   def list_bots(
-      self, dimensions: Mapping[str, Any] | None = None
+    self, dimensions: Mapping[str, Any] | None = None
   ) -> recipe_test_api.StepTestData:
     """Generates step test data intended to mock api.swarming.list_bots()
 
@@ -294,25 +291,27 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
         dimensions.
     """
     raw_results = [
-        self.generate_bot_json(
-            'build11-dead--device1',
-            is_dead=True,
-            dimensions=dimensions),
-        self.generate_bot_json(
-            'build12-quarantined--device1',
-            quarantined=True,
-            dimensions=dimensions),
-        self.generate_bot_json(
-            'build13-maintenance--device1',
-            maintenance_msg='In maintenance mode',
-            dimensions=dimensions),
-        self.generate_bot_json(
-            'build14-alive--device1',
-            dimensions=dimensions,
-            state={'devices': {
-                'build13-alive-1-serial': {
-                    'max_uid': 19999,
-                }
-            }}),
+      self.generate_bot_json(
+        'build11-dead--device1', is_dead=True, dimensions=dimensions
+      ),
+      self.generate_bot_json(
+        'build12-quarantined--device1', quarantined=True, dimensions=dimensions
+      ),
+      self.generate_bot_json(
+        'build13-maintenance--device1',
+        maintenance_msg='In maintenance mode',
+        dimensions=dimensions,
+      ),
+      self.generate_bot_json(
+        'build14-alive--device1',
+        dimensions=dimensions,
+        state={
+          'devices': {
+            'build13-alive-1-serial': {
+              'max_uid': 19999,
+            }
+          }
+        },
+      ),
     ]
     return self.m.json.output(raw_results)

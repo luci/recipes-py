@@ -12,8 +12,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    futures,
-    step,
+  futures,
+  step,
 )
 
 if TYPE_CHECKING:
@@ -31,12 +31,13 @@ class TEST_DEPS(RecipeTestApi):
   pass
 
 
-def worker(api: DEPS, sem: gevent.lock.BoundedSemaphore, i: int,
-           N: int) -> None:
+def worker(
+  api: DEPS, sem: gevent.lock.BoundedSemaphore, i: int, N: int
+) -> None:
   with api.step.nest('worker %d' % i):
     with sem:
       api.step('serialized work', ['python3', api.resource('sleep.py'), 5])
-    api.step('parallel work', ['python3', api.resource('sleep.py'), 5*N])
+    api.step('parallel work', ['python3', api.resource('sleep.py'), 5 * N])
 
 
 def RunSteps(api: DEPS) -> None:

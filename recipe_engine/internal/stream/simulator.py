@@ -20,10 +20,11 @@ from ..test import empty_log
 
 def _ignoreable(f: Callable[..., None]) -> Callable[..., None]:
   def check_annotations(
-      self: _SimulationStepStream, *args: Any, **kwargs: Any
+    self: _SimulationStepStream, *args: Any, **kwargs: Any
   ) -> None:
     if self._annotations is not None:
       f(self, *args, **kwargs)
+
   return check_annotations
 
 
@@ -48,7 +49,7 @@ class _SimulationStepStream(stream_mod.StreamEngine.StepStream):
     self._annotations.setdefault('raw_annotations', []).append(line)
 
   def open_std_handles(
-      self, stdout: bool = False, stderr: bool = False
+    self, stdout: bool = False, stderr: bool = False
   ) -> dict[str, stream_mod.StreamEngine.Stream]:
     ret: dict[str, stream_mod.StreamEngine.Stream] = {}
     if stdout:
@@ -95,8 +96,9 @@ class _SimulationStepStream(stream_mod.StreamEngine.StepStream):
     # log). We should improve this once we remove annotator mode and make
     # simulation speak build.proto natively.
     log_stream = self.new_log_stream(log.name)
-    jsonify = jsonpb.MessageToJson(log,
-        preserving_proto_field_name=True, sort_keys=True)
+    jsonify = jsonpb.MessageToJson(
+      log, preserving_proto_field_name=True, sort_keys=True
+    )
     for line in jsonify.splitlines():
       log_stream.write_line(line.rstrip())
     log_stream.close()
@@ -118,7 +120,8 @@ class _SimulationStepStream(stream_mod.StreamEngine.StepStream):
   @_ignoreable
   def set_step_status(self, status: str, had_timeout: bool) -> None:
     assert status in engine_types.StepPresentation.STATUSES, (
-        'Impossible status %s' % status)
+      'Impossible status %s' % status
+    )
     del had_timeout
     if status != 'SUCCESS':
       assert self._annotations is not None
@@ -142,7 +145,7 @@ class SimulationStreamEngine(stream_mod.StreamEngine):
 
   def __init__(self) -> None:
     self._annotations_map: collections.OrderedDict[str, dict[str, Any]] = (
-        collections.OrderedDict()
+      collections.OrderedDict()
     )
     super().__init__()
 
@@ -155,18 +158,18 @@ class SimulationStreamEngine(stream_mod.StreamEngine):
     return True
 
   def new_step_stream(
-      self,
-      name_tokens: Sequence[str],
-      allow_subannotations: bool,
-      merge_step: bool | Literal['legacy'] = False,
-      merge_output_properties_to: Sequence[str] | None = None,
+    self,
+    name_tokens: Sequence[str],
+    allow_subannotations: bool,
+    merge_step: bool | Literal['legacy'] = False,
+    merge_output_properties_to: Sequence[str] | None = None,
   ) -> _SimulationStepStream:
     del allow_subannotations, merge_step, merge_output_properties_to
 
     # TODO(iannucci): don't skip these. Omitting them for now to reduce the
     # amount of test expectation changes.
     steps_to_skip = (
-      'recipe result',   # explicitly covered by '$result'
+      'recipe result',  # explicitly covered by '$result'
     )
     # TODO(iannucci): use '|' separator instead of '.'
     name = '.'.join(name_tokens)

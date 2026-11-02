@@ -15,11 +15,11 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    buildbucket,
-    platform,
-    properties,
-    raw_io,
-    step,
+  buildbucket,
+  platform,
+  properties,
+  raw_io,
+  step,
 )
 
 
@@ -35,11 +35,11 @@ class DEPS(RecipeScriptApi):
 def RunSteps(api: DEPS) -> None:
   api.buildbucket.set_output_gitiles_commit(
     common_pb2.GitilesCommit(
-        host='chromium.googlesource.com',
-        project='infra/infra',
-        ref='refs/heads/main',
-        id='a' * 40,
-        position=42,
+      host='chromium.googlesource.com',
+      project='infra/infra',
+      ref='refs/heads/main',
+      id='a' * 40,
+      position=42,
     ),
   )
 

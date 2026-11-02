@@ -16,8 +16,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    context,
-    resultdb as resultdb_rm,
+  context,
+  resultdb as resultdb_rm,
 )
 
 
@@ -39,16 +39,17 @@ def RunSteps(api: DEPS) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'basic',
-      api.context.luci_context(
-          resultdb=sections_pb2.ResultDB(
-              current_invocation=sections_pb2.ResultDBInvocation(
-                  name='invocations/inv',
-                  update_token='token',
-              ),
-          )
-      ),
-      api.resultdb.query_test_result_statistics(
-          resultdb.QueryTestResultStatisticsResponse(total_test_results=5)),
-      api.post_process(DropExpectation),
+    'basic',
+    api.context.luci_context(
+      resultdb=sections_pb2.ResultDB(
+        current_invocation=sections_pb2.ResultDBInvocation(
+          name='invocations/inv',
+          update_token='token',
+        ),
+      )
+    ),
+    api.resultdb.query_test_result_statistics(
+      resultdb.QueryTestResultStatisticsResponse(total_test_results=5)
+    ),
+    api.post_process(DropExpectation),
   )

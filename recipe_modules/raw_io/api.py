@@ -29,7 +29,7 @@ from recipe_engine import util as recipe_util
 
 
 def _rmfile(
-    p: str, _win_read_only_unset: bool = False
+  p: str, _win_read_only_unset: bool = False
 ) -> None:  # pragma: no cover
   """Deletes a file, even a read-only one on Windows."""
   try:
@@ -51,7 +51,7 @@ def _rmtree(d: str) -> None:  # pragma: no cover
   if sys.platform == 'win32':
     # Tested manually.
     def unset_ro_and_remove_again(
-        fn: Callable[..., Any], p: str, excinfo: tuple[Any, Any, Any]
+      fn: Callable[..., Any], p: str, excinfo: tuple[Any, Any, Any]
     ) -> None:
       """Removes file even if it has the READ_ONLY file attribute.
 
@@ -74,14 +74,14 @@ def _rmtree(d: str) -> None:  # pragma: no cover
     # On Windows, some paths exceed MAX_PATH. Work around this by prepending
     # the UNC magic prefix '\\?\' which allows the Windows API file calls to
     # ignore the MAX_PATH limit.
-    shutil.rmtree(u'\\\\?\\%s' % (d,), onerror=unset_ro_and_remove_again)
+    shutil.rmtree('\\\\?\\%s' % (d,), onerror=unset_ro_and_remove_again)
   else:
     shutil.rmtree(d)
 
 
 class InputDataPlaceholder(recipe_util.InputPlaceholder):
   def __init__(
-      self, data: bytes | str, suffix: str, name: str | None = None
+    self, data: bytes | str, suffix: str, name: str | None = None
   ) -> None:
     self.data = data
     self.suffix = suffix
@@ -125,9 +125,7 @@ class InputDataPlaceholder(recipe_util.InputPlaceholder):
 class InputTextPlaceholder(InputDataPlaceholder):
   """A input placeholder which expects to write out text."""
 
-  def __init__(
-      self, data: str, suffix: str, name: str | None = None
-  ) -> None:
+  def __init__(self, data: str, suffix: str, name: str | None = None) -> None:
     super().__init__(data, suffix, name=name)
     assert isinstance(data, str)
 
@@ -141,16 +139,16 @@ class InputTextPlaceholder(InputDataPlaceholder):
 
 
 class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
-
   def __init__(
-      self,
-      suffix: str,
-      leak_to: config_types.Path | str | None,
-      name: str | None = None,
-      add_output_log: bool | Literal['on_failure'] = False,
+    self,
+    suffix: str,
+    leak_to: config_types.Path | str | None,
+    name: str | None = None,
+    add_output_log: bool | Literal['on_failure'] = False,
   ) -> None:
     assert add_output_log in (True, False, 'on_failure'), (
-        'add_output_log=%r' % add_output_log)
+      'add_output_log=%r' % add_output_log
+    )
     self.suffix = suffix
     self.leak_to = leak_to
     self.add_output_log = add_output_log
@@ -174,9 +172,9 @@ class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
     return [self._backing_file]
 
   def result(
-      self,
-      presentation: engine_types.StepPresentation,
-      test: recipe_util.PlaceholderTestData,
+    self,
+    presentation: engine_types.StepPresentation,
+    test: recipe_util.PlaceholderTestData,
   ) -> bytes | str | None:
     assert self._backing_file
     ret = None
@@ -202,9 +200,11 @@ class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
         self._backing_file = None
 
     if ret is not None and (
-        self.add_output_log is True or
-        (self.add_output_log == 'on_failure' and
-         presentation.status != 'SUCCESS')):
+      self.add_output_log is True
+      or (
+        self.add_output_log == 'on_failure' and presentation.status != 'SUCCESS'
+      )
+    ):
       presentation.logs[self.label] = ret.splitlines()
 
     return ret
@@ -214,12 +214,13 @@ class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
       return f.read()
 
   def read_test_data(
-      self, test: recipe_util.PlaceholderTestData
+    self, test: recipe_util.PlaceholderTestData
   ) -> bytes | str:
     test_data = test.data or b''
     if not isinstance(test_data, bytes):
       raise TypeError(
-          'test data must be binary data, got {!r}'.format(test_data))
+        'test data must be binary data, got {!r}'.format(test_data)
+      )
     return test_data
 
 
@@ -229,15 +230,15 @@ class OutputTextPlaceholder(OutputDataPlaceholder):
   def read_data(self) -> str:  # pragma: no cover
     # This ensures that the raw result bytes we got are, in fact, valid utf-8,
     # replacing invalid bytes with �.
-    with io.open(self._backing_file,
-                 mode='r', encoding='utf-8', errors='replace') as f:
+    with io.open(
+      self._backing_file, mode='r', encoding='utf-8', errors='replace'
+    ) as f:
       return f.read()
 
   def read_test_data(self, test: recipe_util.PlaceholderTestData) -> str:
     test_data = test.data or ''
     if not isinstance(test_data, str):
-      raise TypeError(
-          'test data must be text data, got {!r}'.format(test_data))
+      raise TypeError('test data must be text data, got {!r}'.format(test_data))
     return test_data
 
 
@@ -245,7 +246,7 @@ class _LazyDirectoryReader(collections.abc.Mapping):
   UNSET = object()
 
   def __init__(
-      self, paths: Iterable[str], read_fn: Callable[[str], bytes]
+    self, paths: Iterable[str], read_fn: Callable[[str], bytes]
   ) -> None:
     self._paths = set(paths)
     self._data = {}
@@ -261,10 +262,11 @@ class _LazyDirectoryReader(collections.abc.Mapping):
     return ret
 
   def __setitem__(
-      self, rel_path: str, newvalue: Any
+    self, rel_path: str, newvalue: Any
   ) -> None:  # pragma: no cover
     raise NotImplementedError(
-        '_LazyDirectoryReader is not supposed to set directly')
+      '_LazyDirectoryReader is not supposed to set directly'
+    )
 
   def __delitem__(self, rel_path: str) -> None:
     self._paths.discard(rel_path)
@@ -279,10 +281,10 @@ class _LazyDirectoryReader(collections.abc.Mapping):
 
 class OutputDataDirPlaceholder(recipe_util.OutputPlaceholder):
   def __init__(
-      self,
-      path_api: Any,
-      backing_dir: config_types.Path | str | None,
-      name: str | None = None,
+    self,
+    path_api: Any,
+    backing_dir: config_types.Path | str | None,
+    name: str | None = None,
   ) -> None:
     self._path_api = path_api
     self._backing_dir = backing_dir
@@ -293,7 +295,8 @@ class OutputDataDirPlaceholder(recipe_util.OutputPlaceholder):
   @property
   def backing_file(self) -> str:  # pragma: no cover
     raise ValueError(
-        'Output dir placeholders cannot be used for std{in,out,err}.')
+      'Output dir placeholders cannot be used for std{in,out,err}.'
+    )
 
   def render(self, test: recipe_util.PlaceholderTestData) -> list[str]:
     if self._used:  # pragma: no cover
@@ -301,9 +304,8 @@ class OutputDataDirPlaceholder(recipe_util.OutputPlaceholder):
     self._used = True
 
     self._backing_dir = str(
-        self._path_api.mkdtemp()
-        if not self._backing_dir
-        else self._backing_dir)
+      self._path_api.mkdtemp() if not self._backing_dir else self._backing_dir
+    )
 
     if not test.enabled:  # pragma: no cover
       if not os.path.exists(self._backing_dir):
@@ -312,13 +314,14 @@ class OutputDataDirPlaceholder(recipe_util.OutputPlaceholder):
     return [self._backing_dir]
 
   def result(
-      self,
-      presentation: engine_types.StepPresentation,
-      test: recipe_util.PlaceholderTestData,
+    self,
+    presentation: engine_types.StepPresentation,
+    test: recipe_util.PlaceholderTestData,
   ) -> _LazyDirectoryReader:
     if not self._used:  # pragma: no cover
       raise AssertionError(
-          'Placeholder was not yet rendered as part of a step.')
+        'Placeholder was not yet rendered as part of a step.'
+      )
 
     if test.enabled:
       data = test.data or {}
@@ -330,6 +333,7 @@ class OutputDataDirPlaceholder(recipe_util.OutputPlaceholder):
           abs_path = os.path.join(dir_path, filename)
           rel_path = os.path.relpath(abs_path, self._backing_dir)
           all_paths.add(rel_path)
+
       def _read_fn(rel_path: str) -> bytes:
         abspath = self._path_api.join(self._backing_dir, rel_path)
         if self._path_api.sep == '\\':
@@ -339,6 +343,7 @@ class OutputDataDirPlaceholder(recipe_util.OutputPlaceholder):
           abspath = r'\\?\%s' % abspath
         with open(abspath, 'rb') as fil:
           return fil.read()
+
       return _LazyDirectoryReader(all_paths, _read_fn)
 
 
@@ -348,7 +353,7 @@ class RawIOApi(recipe_api.RecipeApi):
   @recipe_util.returns_placeholder
   @staticmethod
   def input(
-      data: bytes | str, suffix: str = '', name: str | None = None
+    data: bytes | str, suffix: str = '', name: str | None = None
   ) -> InputDataPlaceholder:
     """Returns a Placeholder for use as a step argument.
 
@@ -377,7 +382,7 @@ class RawIOApi(recipe_api.RecipeApi):
   @recipe_util.returns_placeholder
   @staticmethod
   def input_text(
-      data: bytes | str, suffix: str = '', name: str | None = None
+    data: bytes | str, suffix: str = '', name: str | None = None
   ) -> InputTextPlaceholder:
     """Returns a Placeholder for use as a step argument.
 
@@ -402,10 +407,10 @@ class RawIOApi(recipe_api.RecipeApi):
   @recipe_util.returns_placeholder
   @staticmethod
   def output(
-      suffix: str = '',
-      leak_to: config_types.Path | str | None = None,
-      name: str | None = None,
-      add_output_log: bool | Literal['on_failure'] = False,
+    suffix: str = '',
+    leak_to: config_types.Path | str | None = None,
+    name: str | None = None,
+    add_output_log: bool | Literal['on_failure'] = False,
   ) -> OutputDataPlaceholder:
     """Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -421,16 +426,17 @@ class RawIOApi(recipe_api.RecipeApi):
          to a step link named `name`. If this is 'on_failure', only create this
          log when the step has a non-SUCCESS status.
     """
-    return OutputDataPlaceholder(suffix, leak_to, name=name,
-                                 add_output_log=add_output_log)
+    return OutputDataPlaceholder(
+      suffix, leak_to, name=name, add_output_log=add_output_log
+    )
 
   @recipe_util.returns_placeholder
   @staticmethod
   def output_text(
-      suffix: str = '',
-      leak_to: config_types.Path | str | None = None,
-      name: str | None = None,
-      add_output_log: bool | Literal['on_failure'] = False,
+    suffix: str = '',
+    leak_to: config_types.Path | str | None = None,
+    name: str | None = None,
+    add_output_log: bool | Literal['on_failure'] = False,
   ) -> OutputTextPlaceholder:
     """Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -444,14 +450,15 @@ class RawIOApi(recipe_api.RecipeApi):
          to a step link named `name`. If this is 'on_failure', only create this
          log when the step has a non-SUCCESS status.
     """
-    return OutputTextPlaceholder(suffix, leak_to, name=name,
-                                 add_output_log=add_output_log)
+    return OutputTextPlaceholder(
+      suffix, leak_to, name=name, add_output_log=add_output_log
+    )
 
   @recipe_util.returns_placeholder
   def output_dir(
-      self,
-      leak_to: config_types.Path | str | None = None,
-      name: str | None = None,
+    self,
+    leak_to: config_types.Path | str | None = None,
+    name: str | None = None,
   ) -> OutputDataDirPlaceholder:
     """Returns a directory Placeholder for use as a step argument.
 

@@ -32,17 +32,22 @@ def main(args: argparse.Namespace) -> int:
     repo.backend.fetch(original_spec.deps[repo.name].branch)
 
   candidates, rejected, repos = candidate_algorithm.get_roll_candidates(
-      args.recipe_deps)
+    args.recipe_deps
+  )
 
   if not candidates:
     print(
-      'No roll found. Rejected %d invalid roll candidates.' %
-      (len(rejected),), file=sys.stderr)
+      'No roll found. Rejected %d invalid roll candidates.' % (len(rejected),),
+      file=sys.stderr,
+    )
     return 1
 
   print(file=sys.stderr)
-  print('recipes.cfg has been rolled, use `recipes.py test train` to train '
-        'expectations.', file=sys.stderr)
+  print(
+    'recipes.cfg has been rolled, use `recipes.py test train` to train '
+    'expectations.',
+    file=sys.stderr,
+  )
   print(file=sys.stderr)
   print('Changelog:', file=sys.stderr)
 
@@ -50,11 +55,12 @@ def main(args: argparse.Namespace) -> int:
 
   for pid, clist in candidate.changelist(repos).items():
     print()
-    print(pid+':')
+    print(pid + ':')
     for commit in clist:
-      print('  https://crrev.com/%s %s (%s)' % (
-        commit.revision, commit.message_lines[0], commit.author_email
-      ))
+      print(
+        '  https://crrev.com/%s %s (%s)'
+        % (commit.revision, commit.message_lines[0], commit.author_email)
+      )
 
   cmd.write_global_files_to_main_repo(args.recipe_deps, candidate.repo_spec)
 

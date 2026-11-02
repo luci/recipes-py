@@ -11,18 +11,18 @@ from google.protobuf import message, text_format as textpb
 from recipe_engine import recipe_test_api
 
 from PB.go.chromium.org.luci.config_service.proto import (
-    config_service as config_service_pb2,)
+  config_service as config_service_pb2,
+)
 
 
 class LuciConfigTestApi(recipe_test_api.RecipeTestApi):
-
   def mock_config(
-      self,
-      project: str,
-      config_name: str,
-      data: message.Message | str,
-      nesting: str | None = None,
-      iteration: int = 0,
+    self,
+    project: str,
+    config_name: str,
+    data: message.Message | str,
+    nesting: str | None = None,
+    iteration: int = 0,
   ) -> recipe_test_api.TestData:
     """Mock a config returned by the luci-config API.
 
@@ -44,18 +44,21 @@ class LuciConfigTestApi(recipe_test_api.RecipeTestApi):
       step_name = f"{step_name} ({iteration})"
     step_name = f"{step_name}.get"
     return self.step_data(
-        step_name,
-        self.m.proto.output_stream(
-            config_service_pb2.Config(raw_content=data.encode(),)),
+      step_name,
+      self.m.proto.output_stream(
+        config_service_pb2.Config(
+          raw_content=data.encode(),
+        )
+      ),
     )
 
   def mock_local_config(
-      self,
-      project: str,
-      config_name: str,
-      data: message.Message | str,
-      nesting: str | None = None,
-      iteration: int = 0,
+    self,
+    project: str,
+    config_name: str,
+    data: message.Message | str,
+    nesting: str | None = None,
+    iteration: int = 0,
   ) -> recipe_test_api.TestData:
     """Mock a config read from disk.
 
@@ -78,13 +81,13 @@ class LuciConfigTestApi(recipe_test_api.RecipeTestApi):
     return self.step_data(step_name, self.m.file.read_text(data))
 
   def mock_config_signed_url(
-      self,
-      project: str,
-      config_name: str,
-      data: message.Message | str,
-      signed_url: str = "https://example.com/config",
-      nesting: str | None = None,
-      iteration: int = 0,
+    self,
+    project: str,
+    config_name: str,
+    data: message.Message | str,
+    signed_url: str = "https://example.com/config",
+    nesting: str | None = None,
+    iteration: int = 0,
   ) -> recipe_test_api.TestData:
     """Mock a config returned by the luci-config API via signed URL.
 
@@ -107,8 +110,9 @@ class LuciConfigTestApi(recipe_test_api.RecipeTestApi):
       step_name = f"{step_name} ({iteration})"
     prpc_step_name = f"{step_name}.get"
     url_step_name = f"{step_name}.fetch {config_name} via signed URL"
-    return (self.step_data(
-        prpc_step_name,
-        self.m.proto.output_stream(
-            config_service_pb2.Config(signed_url=signed_url)),
-    ) + self.m.url.raw(url_step_name, data.encode()))
+    return self.step_data(
+      prpc_step_name,
+      self.m.proto.output_stream(
+        config_service_pb2.Config(signed_url=signed_url)
+      ),
+    ) + self.m.url.raw(url_step_name, data.encode())

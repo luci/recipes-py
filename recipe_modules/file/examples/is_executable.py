@@ -11,8 +11,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    file,
-    path,
+  file,
+  path,
 )
 
 
@@ -37,7 +37,8 @@ def RunSteps(api: DEPS) -> None:
 
   # Check with false test data
   is_exe_false = api.file.is_executable(
-      'check non-executable', filepath, test_data=False)
+    'check non-executable', filepath, test_data=False
+  )
   assert is_exe_false is False
 
 

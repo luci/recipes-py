@@ -48,10 +48,12 @@ from recipe_engine.engine_types import PerGreenletState, freeze
 
 from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
 
+
 def check_type(name: str, var: Any, expect: type) -> None:
   if not isinstance(var, expect):  # pragma: no cover
-    raise TypeError('%s is not %s: %r (%s)' % (
-      name, expect.__name__, var, type(var).__name__))
+    raise TypeError(
+      '%s is not %s: %r (%s)' % (name, expect.__name__, var, type(var).__name__)
+    )
 
 
 class State(PerGreenletState):
@@ -112,22 +114,21 @@ class ContextApi(recipe_api.RecipeApi):
       self._state.luci_context = {}
       for section_key, section_msg_class in init_sections.items():
         if section_key in ctx:
-          self._state.luci_context[section_key] = (
-              jsonpb.ParseDict(ctx[section_key],
-                               section_msg_class(),
-                               ignore_unknown_fields=True))
+          self._state.luci_context[section_key] = jsonpb.ParseDict(
+            ctx[section_key], section_msg_class(), ignore_unknown_fields=True
+          )
 
   @contextlib.contextmanager
   def __call__(
-      self,
-      cwd: config_types.Path | None = None,
-      env_prefixes: Mapping[str, Sequence[str | Path]] | None = None,
-      env_suffixes: Mapping[str, Sequence[str | Path]] | None = None,
-      env: Mapping[str, str | None] | None = None,
-      infra_steps: bool | None = None,
-      luciexe: sections_pb2.LUCIExe | None = None,
-      realm: str | None = None,
-      deadline: sections_pb2.Deadline | None = None,
+    self,
+    cwd: config_types.Path | None = None,
+    env_prefixes: Mapping[str, Sequence[str | Path]] | None = None,
+    env_suffixes: Mapping[str, Sequence[str | Path]] | None = None,
+    env: Mapping[str, str | None] | None = None,
+    infra_steps: bool | None = None,
+    luciexe: sections_pb2.LUCIExe | None = None,
+    realm: str | None = None,
+    deadline: sections_pb2.Deadline | None = None,
   ) -> Iterator[None]:
     """Allows adjustment of multiple context values in a single call.
 
@@ -188,9 +189,9 @@ class ContextApi(recipe_api.RecipeApi):
       return getattr(self._state, state_member)
 
     def _add_to_context(
-        state_member: str,
-        to_add: Mapping[str, Any] | None,
-        adder_func: Callable[[str, Any, dict[str, Any]], None],
+      state_member: str,
+      to_add: Mapping[str, Any] | None,
+      adder_func: Callable[[str, Any, dict[str, Any]], None],
     ) -> None:
       if to_add is not None and to_add:
         check_type(state_member, to_add, dict)
@@ -200,13 +201,13 @@ class ContextApi(recipe_api.RecipeApi):
         _push(state_member, new)
 
     def _as_env_prefixes(
-        key: str, val: Sequence[str | Path], new: dict[str, Any]
+      key: str, val: Sequence[str | Path], new: dict[str, Any]
     ) -> None:
       if val:
         new[key] = tuple(val) + new.get(key, ())
 
     def _as_env_suffixes(
-        key: str, val: Sequence[str | Path], new: dict[str, Any]
+      key: str, val: Sequence[str | Path], new: dict[str, Any]
     ) -> None:
       if val:
         new[key] = new.get(key, ()) + tuple(val)
@@ -226,8 +227,13 @@ class ContextApi(recipe_api.RecipeApi):
           # string.
           ('%(foo)s' + val) % collections.defaultdict(str)
         except Exception:
-          raise ValueError(('Invalid %%-formatting parameter in envvar, '
-                            'only %%(ENVVAR)s allowed: %r') % (val,))
+          raise ValueError(
+            (
+              'Invalid %%-formatting parameter in envvar, '
+              'only %%(ENVVAR)s allowed: %r'
+            )
+            % (val,)
+          )
       new[key] = val
 
     def _override(key: str, val: Any, new: dict[str, Any]) -> None:
@@ -248,19 +254,24 @@ class ContextApi(recipe_api.RecipeApi):
         section_pb_values['luciexe'] = copy.deepcopy(luciexe)
       if realm is not None:
         section_pb_values['realm'] = (
-            sections_pb2.Realm(name=realm) if realm else None)
+          sections_pb2.Realm(name=realm) if realm else None
+        )
       if deadline is not None:
         check_type('deadline', deadline, sections_pb2.Deadline)
         cur_deadline = self.deadline
-        if (cur_deadline.soft_deadline and
-            cur_deadline.soft_deadline < deadline.soft_deadline):
+        if (
+          cur_deadline.soft_deadline
+          and cur_deadline.soft_deadline < deadline.soft_deadline
+        ):
           raise ValueError(
-              "Deadline.soft_deadline being increased: %f->%f" % (
-                cur_deadline.soft_deadline, deadline.soft_deadline))
+            "Deadline.soft_deadline being increased: %f->%f"
+            % (cur_deadline.soft_deadline, deadline.soft_deadline)
+          )
         if cur_deadline.grace_period < deadline.grace_period:
           raise ValueError(
-              "Deadline.grace_period being increased: %f->%f" % (
-                cur_deadline.grace_period, deadline.grace_period))
+            "Deadline.grace_period being increased: %f->%f"
+            % (cur_deadline.grace_period, deadline.grace_period)
+          )
         section_pb_values['deadline'] = copy.deepcopy(deadline)
       if section_pb_values:
         _add_to_context('luci_context', section_pb_values, _override)
@@ -387,5 +398,8 @@ class ContextApi(recipe_api.RecipeApi):
     Returns None if resultdb is not defined.
     """
     resultdb = self._state.luci_context.get('resultdb')
-    return (resultdb.current_invocation.name if
-            resultdb and resultdb.current_invocation else '')
+    return (
+      resultdb.current_invocation.name
+      if resultdb and resultdb.current_invocation
+      else ''
+    )

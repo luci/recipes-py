@@ -9,7 +9,7 @@ from typing import Any
 from collections.abc import Iterator
 
 from PB.recipe_modules.recipe_engine.defer.tests import (
-    properties as properties_pb2
+  properties as properties_pb2,
 )
 from recipe_engine import post_process, recipe_test_api, step_data
 
@@ -17,10 +17,10 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    context,
-    defer,
-    properties,
-    step,
+  context,
+  defer,
+  properties,
+  step,
 )
 
 
@@ -35,6 +35,7 @@ class DEPS(RecipeScriptApi):
 @dataclass
 class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
+
 
 PROPERTIES = properties_pb2.ResultInputProps
 
@@ -62,12 +63,12 @@ def RunSteps(api: DEPS, props: properties_pb2.ResultInputProps) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   def test(
-      name: str,
-      *args: recipe_test_api.TestData,
-      status: str,
-      step_name: str | None = 'result',
-      retcode: int = 0,
-      **kwargs: Any,
+    name: str,
+    *args: recipe_test_api.TestData,
+    status: str,
+    step_name: str | None = 'result',
+    retcode: int = 0,
+    **kwargs: Any,
   ) -> recipe_test_api.TestData:
     res = api.test(name, *args, status=status, **kwargs)
 
@@ -82,7 +83,8 @@ def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
 
     res += api.step_data('step', retcode=retcode)
     res += api.properties(
-        properties_pb2.ResultInputProps(step_name=step_name, **kwargs))
+      properties_pb2.ResultInputProps(step_name=step_name, **kwargs)
+    )
 
     if kwargs.get('exception', False):
       res += api.expect_exception('ResultTestError')

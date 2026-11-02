@@ -7,17 +7,17 @@ from __future__ import annotations
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from RECIPE_MODULES.recipe_engine import (
-    buildbucket,
-    context,
-    file,
-    futures,
-    json,
-    path,
-    platform,
-    properties,
-    raw_io,
-    step,
-    url,
+  buildbucket,
+  context,
+  file,
+  futures,
+  json,
+  path,
+  platform,
+  properties,
+  raw_io,
+  step,
+  url,
 )
 
 
@@ -34,6 +34,7 @@ class DEPS(RecipeScriptApi):
   raw_io: raw_io.API
   step: step.API
   url: url.API
+
 
 from .api import CIPDApi as API
 from .test_api import CIPDTestApi as TEST_API

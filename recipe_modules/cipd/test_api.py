@@ -14,7 +14,6 @@ from . import api as cipd_api
 
 
 class CIPDTestApi(recipe_test_api.RecipeTestApi):
-
   EnsureFile = cipd_api.EnsureFile
   ParanoidMode = cipd_api.ParanoidMode
 
@@ -29,22 +28,22 @@ class CIPDTestApi(recipe_test_api.RecipeTestApi):
     # Truncate or pad to 40 chars.
     prefix = 'resolved-instance_id-of-'
     if len(v) + len(prefix) >= 40:
-      return '%s%s' % (prefix, v[:40-len(prefix)])
+      return '%s%s' % (prefix, v[: 40 - len(prefix)])
     return '%s%s%s' % (prefix, v, '-' * (40 - len(prefix) - len(v)))
 
   def make_pin(
-      self, package_name: str, version: str | None = None
+    self, package_name: str, version: str | None = None
   ) -> dict[str, str]:
     return {
-        'package': self.make_resolved_package(package_name),
-        'instance_id': self.make_resolved_version(version),
+      'package': self.make_resolved_package(package_name),
+      'instance_id': self.make_resolved_version(version),
     }
 
   def _resultify(
-      self,
-      result: Any,
-      error: str | None = None,
-      retcode: int | None = None,
+    self,
+    result: Any,
+    error: str | None = None,
+    retcode: int | None = None,
   ) -> recipe_test_api.StepTestData:
     dic = {'result': result}
     if error:
@@ -52,20 +51,19 @@ class CIPDTestApi(recipe_test_api.RecipeTestApi):
     return self.m.json.output(dic, retcode=retcode)
 
   def example_error(
-      self, error: str, retcode: int | None = None
+    self, error: str, retcode: int | None = None
   ) -> recipe_test_api.StepTestData:
     return self._resultify(
-        result=None,
-        error=error,
-        retcode=1 if retcode is None else retcode)
+      result=None, error=error, retcode=1 if retcode is None else retcode
+    )
 
   def example_acl_check(
-      self, package_path: str, check: bool = True
+    self, package_path: str, check: bool = True
   ) -> recipe_test_api.StepTestData:
     return self._resultify(check)
 
   def example_build(
-      self, package_name: str, version: str | None = None
+    self, package_name: str, version: str | None = None
   ) -> recipe_test_api.StepTestData:
     return self._resultify(self.make_pin(package_name, version))
 
@@ -74,80 +72,94 @@ class CIPDTestApi(recipe_test_api.RecipeTestApi):
   example_pkg_deploy = example_build
 
   def example_ensure(
-      self, ensure_file: cipd_api.EnsureFile
+    self, ensure_file: cipd_api.EnsureFile
   ) -> recipe_test_api.StepTestData:
-    return self._resultify({
-        subdir or '': [self.make_pin(name, version)
-                       for name, version in sorted(packages)]
+    return self._resultify(
+      {
+        subdir or '': [
+          self.make_pin(name, version) for name, version in sorted(packages)
+        ]
         for subdir, packages in ensure_file.packages.items()
-    })
+      }
+    )
 
   def example_ensure_file_resolve(
-      self, ensure_file: cipd_api.EnsureFile
+    self, ensure_file: cipd_api.EnsureFile
   ) -> recipe_test_api.StepTestData:
-    return self._resultify({
-        subdir or '': [{
+    return self._resultify(
+      {
+        subdir or '': [
+          {
             'package': self.make_resolved_package(name),
-            'pin': self.make_pin(name, version)}
-            for name, version in sorted(packages)]
+            'pin': self.make_pin(name, version),
+          }
+          for name, version in sorted(packages)
+        ]
         for subdir, packages in ensure_file.packages.items()
-    })
+      }
+    )
 
   def example_set_tag(
-      self, package_name: str, version: str
+    self, package_name: str, version: str
   ) -> recipe_test_api.StepTestData:
-    return self._resultify([{
-        'package': package_name,
-        'pin': self.make_pin(package_name, version)
-    }])
+    return self._resultify(
+      [{'package': package_name, 'pin': self.make_pin(package_name, version)}]
+    )
 
   def example_set_metadata(
-      self, package_name: str, version: str
+    self, package_name: str, version: str
   ) -> recipe_test_api.StepTestData:
-    return self._resultify([{
-        'package': package_name,
-        'pin': self.make_pin(package_name, version)
-    }])
+    return self._resultify(
+      [{'package': package_name, 'pin': self.make_pin(package_name, version)}]
+    )
 
   def example_set_ref(
-      self, package_name: str, version: str
+    self, package_name: str, version: str
   ) -> recipe_test_api.StepTestData:
-    return self._resultify({'': [{
-        'package': package_name,
-        'pin': self.make_pin(package_name, version)
-    }]})
+    return self._resultify(
+      {
+        '': [
+          {'package': package_name, 'pin': self.make_pin(package_name, version)}
+        ]
+      }
+    )
 
   def example_resolve(
-      self, package_name: str, version: str | None = None
+    self, package_name: str, version: str | None = None
   ) -> recipe_test_api.StepTestData:
-    return self._resultify({
-        '': [{
+    return self._resultify(
+      {
+        '': [
+          {
             'package': package_name,
             'pin': self.make_pin(package_name, version),
-        }]
-    })
+          }
+        ]
+      }
+    )
 
   def example_search(
-      self,
-      package_name: str,
-      instances: Sequence[str] | int | None = None,
+    self,
+    package_name: str,
+    instances: Sequence[str] | int | None = None,
   ) -> recipe_test_api.StepTestData:
     if instances is None:
       # Return one instance by default.
       return self._resultify([self.make_pin(package_name)])
     if isinstance(instances, int):
-      instances = ['instance_id_%i' % (i+1) for i in range(instances)]
-    return self._resultify([self.make_pin(package_name, instance)
-                           for instance in instances])
+      instances = ['instance_id_%i' % (i + 1) for i in range(instances)]
+    return self._resultify(
+      [self.make_pin(package_name, instance) for instance in instances]
+    )
 
   def example_describe(
-      self,
-      package_name: str,
-      version: str | None = None,
-      test_data_refs: Sequence[str] | None = None,
-      test_data_tags: Sequence[str] | None = None,
-      user: str = 'user:44-blablbla@developer.gserviceaccount.com',
-      tstamp: int = 1446574210,
+    self,
+    package_name: str,
+    version: str | None = None,
+    test_data_refs: Sequence[str] | None = None,
+    test_data_tags: Sequence[str] | None = None,
+    user: str = 'user:44-blablbla@developer.gserviceaccount.com',
+    tstamp: int = 1446574210,
   ) -> recipe_test_api.StepTestData:
     assert not test_data_tags or all(':' in tag for tag in test_data_tags)
 
@@ -170,7 +182,8 @@ class CIPDTestApi(recipe_test_api.RecipeTestApi):
         return self._resultify(None, error='no such instance', retcode=1)
       return self._resultify(None, error='no such ref', retcode=1)
 
-    return self._resultify({
+    return self._resultify(
+      {
         'pin': self.make_pin(package_name, version),
         'registered_by': user,
         'registered_ts': tstamp,
@@ -191,23 +204,24 @@ class CIPDTestApi(recipe_test_api.RecipeTestApi):
           }
           for tag in test_data_tags
         ],
-    })
+      }
+    )
 
   def example_instances(
-      self,
-      package_name: str,
-      limit: int | None = None,
-      user: str = 'user:44-blablbla@developer.gserviceaccount.com',
-      tstamp: int = 1446574210,
+    self,
+    package_name: str,
+    limit: int | None = None,
+    user: str = 'user:44-blablbla@developer.gserviceaccount.com',
+    tstamp: int = 1446574210,
   ) -> recipe_test_api.StepTestData:
     # Return two instances by default.
     limit = limit or 2
-    instances =[]
+    instances = []
     for i in range(limit):
       instance = {
-          'pin': self.make_pin(package_name, 'instance_id_%i' % (i+1)),
-          'registered_by': user,
-          'registered_ts': tstamp-i-1,
+        'pin': self.make_pin(package_name, 'instance_id_%i' % (i + 1)),
+        'registered_by': user,
+        'registered_ts': tstamp - i - 1,
       }
       # Add "latest" ref to the first instance
       if i == 0:

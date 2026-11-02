@@ -4,7 +4,6 @@
 
 """Tests that step_data can accept multiple specs at once."""
 
-
 from __future__ import annotations
 
 from collections.abc import Iterator
@@ -13,7 +12,7 @@ from recipe_engine import post_process_inputs
 from recipe_engine import recipe_test_api
 
 from PB.recipes.recipe_engine.engine_tests import (
-    allowlist_steps as allowlist_steps_pb,
+  allowlist_steps as allowlist_steps_pb,
 )
 
 from recipe_engine import post_process
@@ -24,9 +23,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    context,
-    properties,
-    step,
+  context,
+  properties,
+  step,
 )
 
 
@@ -40,6 +39,7 @@ class DEPS(RecipeScriptApi):
 @dataclass
 class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
+
 
 INLINE_PROPERTIES_PROTO = """
 message InputProperties {
@@ -65,17 +65,19 @@ def RunSteps(api: DEPS, props: allowlist_steps_pb.InputProperties) -> None:
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('all_steps') + api.post_process(MustRun, 'fakestep')
 
-  yield (api.test('single_step')
-    + api.post_process(Filter('something important'))
+  yield (
+    api.test('single_step') + api.post_process(Filter('something important'))
   )
 
-  yield (api.test('two_steps')
+  yield (
+    api.test('two_steps')
     + api.post_process(Filter('something important', 'another important'))
   )
 
   f = Filter()
   f = f.include_re(r'.*\bimportant', ['cmd', 'env'], at_least=2, at_most=2)
-  yield (api.test('selection')
+  yield (
+    api.test('selection')
     + api.properties(dontfakeit=True)
     + api.post_process(DoesNotRun, 'fakestep')
     + api.post_process(f)
@@ -84,8 +86,8 @@ def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('result') + api.post_process(Filter('$result'))
 
   def assert_stuff(
-      check: post_process_inputs.Checker,
-      results: post_process_inputs.Stepodict,
+    check: post_process_inputs.Checker,
+    results: post_process_inputs.Stepodict,
   ) -> dict[str, Any]:
     check('something important' in results)
     if check('another important' in results):
@@ -96,10 +98,10 @@ def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('custom_func') + api.post_process(assert_stuff)
 
   yield (
-      api.test('set_build_properties') +
-      api.post_process(post_process.PropertyEquals,
-                       'test_build_property', True) +
-      api.post_process(post_process.PropertiesDoNotContain,
-                       'build_property_not_present') +
-      api.post_process(post_process.DropExpectation)
+    api.test('set_build_properties')
+    + api.post_process(post_process.PropertyEquals, 'test_build_property', True)
+    + api.post_process(
+      post_process.PropertiesDoNotContain, 'build_property_not_present'
+    )
+    + api.post_process(post_process.DropExpectation)
   )

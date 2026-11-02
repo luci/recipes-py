@@ -16,11 +16,11 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    buildbucket,
-    cq,
-    properties,
-    step,
+  assertions,
+  buildbucket,
+  cq,
+  properties,
+  step,
 )
 
 
@@ -48,8 +48,9 @@ def RunSteps(api: DEPS) -> None:
     return
 
   api.assertions.assertEqual(
-      ' '.join(str(g.change) for g in api.cq.ordered_gerrit_changes),
-      api.properties['expected_cls'])
+    ' '.join(str(g.change) for g in api.cq.ordered_gerrit_changes),
+    api.properties['expected_cls'],
+  )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:

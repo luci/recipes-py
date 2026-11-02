@@ -14,9 +14,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    led,
-    properties,
-    step,
+  led,
+  properties,
+  step,
 )
 
 
@@ -34,29 +34,30 @@ class TEST_DEPS(RecipeTestApi):
 
 def RunSteps(api: DEPS) -> None:
   api.led.trigger_builder(
-      'chromium',
-      'ci',
-      'Foo Tester', {'swarm_hashes': {
-          'bar': 'deadbeef'
-      }},
-      use_payload=True)
+    'chromium',
+    'ci',
+    'Foo Tester',
+    {'swarm_hashes': {'bar': 'deadbeef'}},
+    use_payload=True,
+  )
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   led_run_id = 'led/user_example.com/deadbeef'
   yield api.test(
-      'trigger',
-      api.properties(
-          **{
-              '$recipe_engine/led':
-                  InputProperties(
-                      led_run_id=led_run_id,
-                      rbe_cas_input=swarming.CASReference(
-                          cas_instance='projects/example/'
-                          'instances/default_instance',
-                          digest=swarming.Digest(
-                              hash='examplehash',
-                              size_bytes=71,
-                          ),
-                      ))
-          }))
+    'trigger',
+    api.properties(
+      **{
+        '$recipe_engine/led': InputProperties(
+          led_run_id=led_run_id,
+          rbe_cas_input=swarming.CASReference(
+            cas_instance='projects/example/instances/default_instance',
+            digest=swarming.Digest(
+              hash='examplehash',
+              size_bytes=71,
+            ),
+          ),
+        )
+      }
+    ),
+  )

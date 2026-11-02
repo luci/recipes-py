@@ -42,7 +42,8 @@ class PlatformApi(recipe_api.RecipeApi):
     if self._test_data.enabled:
       # Default to linux/64, unless test case says otherwise.
       self._name = PlatformApi.normalize_platform_name(
-        self._test_data.get('name', 'linux'))
+        self._test_data.get('name', 'linux')
+      )
       self._bits = norm_bits(self._test_data.get('bits', 64))
       self._arch = self._test_data.get('arch', 'intel')
 
@@ -55,15 +56,19 @@ class PlatformApi(recipe_api.RecipeApi):
       # kernel with 32-bit userland, e.g. to give linker slightly more memory.
       # Distinguish between different userland bitness by querying
       # the python binary.
-      if (self._name == 'linux' and
-          self._bits == 64 and
-          platform.architecture()[0] == '32bit'):
+      if (
+        self._name == 'linux'
+        and self._bits == 64
+        and platform.architecture()[0] == '32bit'
+      ):
         self._bits = 32
       # On Mac, the inverse of the above is true: the kernel is 32-bit but the
       # CPU and userspace both are capable of running 64-bit programs.
-      elif (self._name == 'mac' and
-            self._bits == 32 and
-            platform.architecture()[0] == '64bit'):
+      elif (
+        self._name == 'mac'
+        and self._bits == 32
+        and platform.architecture()[0] == '64bit'
+      ):
         self._bits = 64
 
       self._num_logical_cores = psutil.cpu_count(True)
@@ -87,9 +92,9 @@ class PlatformApi(recipe_api.RecipeApi):
   @property
   def name(self) -> str:
     """Returns the current platform name which will be in:
-      * win
-      * mac
-      * linux
+    * win
+    * mac
+    * linux
     """
     return self._name
 
@@ -118,7 +123,7 @@ class PlatformApi(recipe_api.RecipeApi):
     Return type is int.
     This is equivalent to `psutil.virtual_memory().total / (1024 ** 2)`.
     """
-    return self._memory_bytes // (1024 ** 2)
+    return self._memory_bytes // (1024**2)
 
   @property
   def cpu_count(self) -> int:

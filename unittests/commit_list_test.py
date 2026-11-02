@@ -31,14 +31,14 @@ class BaseCommitTest(test_env.RecipeEngineUnitTest):
     self.cm_timestamp = 1501807893
 
   def cm(
-      self,
-      repo: str = 'repo',
-      deps: Sequence[fetch.CommitMetadata] = (),
-      revision: str | None = None,
-      author_email: str = 'author@example.com',
-      commit_timestamp: int | None = None,
-      message_lines: Sequence[str] = ('message', 'lines'),
-      roll_candidate: bool = False,
+    self,
+    repo: str = 'repo',
+    deps: Sequence[fetch.CommitMetadata] = (),
+    revision: str | None = None,
+    author_email: str = 'author@example.com',
+    commit_timestamp: int | None = None,
+    message_lines: Sequence[str] = ('message', 'lines'),
+    roll_candidate: bool = False,
   ) -> fetch.CommitMetadata:
     spec = recipes_cfg_pb.RepoSpec(
       api_version=2,
@@ -58,14 +58,21 @@ class BaseCommitTest(test_env.RecipeEngineUnitTest):
       # Increase the commit timestamp by a non-fixed, yet deterministic, amount
       # so that commit timestamps are monotonically increasing.
       commit_timestamp = self.cm_timestamp
-      self.cm_timestamp += 60 * (int(revision[:2], 16)+1)
+      self.cm_timestamp += 60 * (int(revision[:2], 16) + 1)
 
-    return fetch.CommitMetadata(revision, author_email, commit_timestamp,
-                                message_lines, spec, roll_candidate)
+    return fetch.CommitMetadata(
+      revision,
+      author_email,
+      commit_timestamp,
+      message_lines,
+      spec,
+      roll_candidate,
+    )
 
   def cl(self, count: int) -> commit_list.CommitList:
     return commit_list.CommitList(
-        'fake-repo', 'fake-branch', [self.cm() for _ in range(count)])
+      'fake-repo', 'fake-branch', [self.cm() for _ in range(count)]
+    )
 
 
 class TestCommitList(BaseCommitTest):
@@ -125,13 +132,13 @@ class TestCommitList(BaseCommitTest):
   def test_compatibility(self) -> None:
     cs1 = [self.cm('1') for _ in range(5)]
     cs2 = [
-        self.cm('2', [cs1[3]]),  # simulates an out-of-order dependency (revert)
-        self.cm('2', [cs1[0]]),
-        self.cm('2', [cs1[0]]),
-        self.cm('2', [cs1[1]]),
-        self.cm('2', [cs1[3]]),
-        self.cm('2'),  # simulates a dep being removed
-        self.cm('2', [cs1[3]]),  # simulates a dep being added
+      self.cm('2', [cs1[3]]),  # simulates an out-of-order dependency (revert)
+      self.cm('2', [cs1[0]]),
+      self.cm('2', [cs1[0]]),
+      self.cm('2', [cs1[1]]),
+      self.cm('2', [cs1[3]]),
+      self.cm('2'),  # simulates a dep being removed
+      self.cm('2', [cs1[3]]),  # simulates a dep being added
     ]
     cs3 = [self.cm('3') for _ in range(3)]
 
@@ -146,10 +153,9 @@ class TestCommitList(BaseCommitTest):
     self.assertTrue(cl3.is_compatible(cs3[0].revision, {'2': cs2[0].revision}))
 
     self.assertEqual(
-        cl2.compatible_commits({
-            '1': cs1[3].revision,
-            '3': cs3[0].revision
-        }), [cs2[0], cs2[4], cs2[5], cs2[6]])
+      cl2.compatible_commits({'1': cs1[3].revision, '3': cs3[0].revision}),
+      [cs2[0], cs2[4], cs2[5], cs2[6]],
+    )
 
 
 if __name__ == '__main__':

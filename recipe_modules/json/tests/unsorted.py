@@ -20,8 +20,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    json,
-    step,
+  json,
+  step,
 )
 
 
@@ -50,17 +50,17 @@ def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   # reverse order. If python is randomizing dictionary order (which it does not
   # after python 3.7), then this test should catch it.
   def check_order(
-      check: post_process.Checker,
-      steps: post_process_inputs.StepOrderedDict,
-      stepname: str,
-      alphabet: str,
+    check: post_process.Checker,
+    steps: post_process_inputs.StepOrderedDict,
+    stepname: str,
+    alphabet: str,
   ) -> None:
     step = steps[stepname]
     filtered = ''.join(letter for letter in step.cmd[1] if letter in alphabet)
     check(filtered == alphabet)
 
   yield api.test(
-      'basic',
-      api.post_process(check_order, 'sorted', string.ascii_lowercase),
-      api.post_process(check_order, 'unsorted', BACKWARDS),
+    'basic',
+    api.post_process(check_order, 'sorted', string.ascii_lowercase),
+    api.post_process(check_order, 'unsorted', BACKWARDS),
   )

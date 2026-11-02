@@ -13,8 +13,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    properties,
+  assertions,
+  properties,
 )
 
 
@@ -28,14 +28,15 @@ class DEPS(RecipeScriptApi):
 class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
 
+
 PROPERTIES = proto_properties.TestProperties
 ENV_PROPERTIES = proto_properties.EnvProperties
 
 
 def RunSteps(
-    api: DEPS,
-    properties: proto_properties.TestProperties,
-    env_props: proto_properties.EnvProperties,
+  api: DEPS,
+  properties: proto_properties.TestProperties,
+  env_props: proto_properties.EnvProperties,
 ) -> None:
   api.assertions.assertEqual(properties.an_int, 100)
   api.assertions.assertEqual(properties.some_string, 'hey there')
@@ -48,14 +49,17 @@ def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield (
     api.test('full')
     + api.properties(
-        proto_properties.TestProperties(
-            an_int=100,
-            some_string='hey there',
-        ),
-        ignored_prop='yo')
+      proto_properties.TestProperties(
+        an_int=100,
+        some_string='hey there',
+      ),
+      ignored_prop='yo',
+    )
     + api.properties.environ(
-        proto_properties.EnvProperties(
-            STR_ENV="sup",
-            INT_ENV=9000,
-        ))
-    + api.post_process(lambda _check, _steps: {}))
+      proto_properties.EnvProperties(
+        STR_ENV="sup",
+        INT_ENV=9000,
+      )
+    )
+    + api.post_process(lambda _check, _steps: {})
+  )

@@ -45,8 +45,9 @@ class Command(list):
     # Get a function that can be used for matching against an element
     # Command's elements will always be strings, so we'll only try to match
     # against strings or regexes
-    def get_matcher(obj: str | re.Pattern
-                    | type(Ellipsis)) -> Callable | type(Ellipsis) | None:
+    def get_matcher(
+      obj: str | re.Pattern | type(Ellipsis),
+    ) -> Callable | type(Ellipsis) | None:
       if isinstance(obj, basestring):
         return lambda other: obj == other
       if isinstance(obj, re.Pattern):
@@ -95,7 +96,7 @@ class Command(list):
     for i, matcher in enumerate(reversed(matchers)):
       if matcher is not Ellipsis:
         min_slots_count += 1
-      min_slots[len(min_slots)-1-i] = min_slots_count
+      min_slots[len(min_slots) - 1 - i] = min_slots_count
     # If matchers looked like ['a', 'b', ..., 'c'], min_slots now looks like:
     # [3, 2, 1, 1]
 
@@ -112,8 +113,8 @@ class Command(list):
           # If this is Ellipsis we consume it, and try matching the rest of the
           # matchers against the rest of the sequence at every offset.
           if matcher is Ellipsis:
-            for start_idx in range(self_offset+num_matched, len(self)):
-              if _cached_matches_seq(matchers_idx+1, start_idx):
+            for start_idx in range(self_offset + num_matched, len(self)):
+              if _cached_matches_seq(matchers_idx + 1, start_idx):
                 return True
             return False
 
@@ -157,6 +158,7 @@ class Step:
   See field definitions and comments for descriptions of the field meanings and
   default values.
   """
+
   # **************************** Expectation fields ****************************
   # These fields appear directly in the expectations file for a test.
 
@@ -184,7 +186,7 @@ class Step:
 
   # The resource cost of this Step. Will be None for no-command steps.
   cost: engine_types.ResourceCost | None = attr.ib(
-      default=engine_types.ResourceCost()
+    default=engine_types.ResourceCost()
   )
 
   # See //recipe_modules/context/api.py for information on the precise meaning
@@ -251,9 +253,11 @@ class Step:
   # A string containing the resulting status of the step, one of: 'SUCCESS',
   # 'EXCEPTION', 'FAILURE', 'WARNING', 'CANCELED'.
   status: str = attr.ib(
-      default='SUCCESS',
-      validator=attr.validators.in_(
-          ('SUCCESS', 'EXCEPTION', 'FAILURE', 'WARNING', 'CANCELED')))
+    default='SUCCESS',
+    validator=attr.validators.in_(
+      ('SUCCESS', 'EXCEPTION', 'FAILURE', 'WARNING', 'CANCELED')
+    ),
+  )
 
   # A dictionary containing step tags.
   # Tag keys SHOULD indicate the domain/system that interprets them, e.g.:
@@ -289,8 +293,9 @@ class Step:
       matches the item's key is set to the item's value.
     """
     if 'name' not in step_dict:
-      raise ValueError("step dict must have 'name' key, step dict keys: %r" %
-                       sorted(step_dict))
+      raise ValueError(
+        "step dict must have 'name' key, step dict keys: %r" % sorted(step_dict)
+      )
     if 'cmd' in step_dict or 'cost' in step_dict:
       step_dict = dict(step_dict)
       if 'cmd' in step_dict:
@@ -303,8 +308,11 @@ class Step:
     return attr.asdict(self, recurse=False)
 
   def to_step_dict(self) -> dict[str, Any]:
-    step_dict = {k: v for k, v in self._as_dict().items()
-                 if k == 'name' or v != PROTOTYPE_STEP[k]}
+    step_dict = {
+      k: v
+      for k, v in self._as_dict().items()
+      if k == 'name' or v != PROTOTYPE_STEP[k]
+    }
     if step_dict.get('cmd', None) is not None:
       step_dict['cmd'] = list(step_dict['cmd'])
     if step_dict.get('cost', None) is not None:

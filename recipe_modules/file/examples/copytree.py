@@ -13,9 +13,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    file,
-    path,
-    properties,
+  file,
+  path,
+  properties,
 )
 
 
@@ -29,6 +29,7 @@ class DEPS(RecipeScriptApi):
 @dataclass
 class TEST_DEPS(RecipeTestApi):
   properties: properties.TEST_API
+
 
 PROPERTIES = Properties
 
@@ -49,18 +50,20 @@ def RunSteps(api: DEPS, properties: Properties) -> None:
   api.file.rmtree('make sure dest is gone', dest2)
   if properties.allow_override:
     api.file.ensure_directory('ensure "some other dir"', dest2)
-    api.file.write_text('write subdir/a', dest2 / 'a',
-                        'This text should be overridden.')
+    api.file.write_text(
+      'write subdir/a', dest2 / 'a', 'This text should be overridden.'
+    )
 
   # Note: on test, actual copying is done by the mock method, so that the
   # arguments don't matter.
   api.file.copytree(
-      'copy it',
-      dest,
-      dest2,
-      symlinks=properties.symlinks,
-      hardlink=properties.hardlink,
-      allow_override=properties.allow_override)
+    'copy it',
+    dest,
+    dest2,
+    symlinks=properties.symlinks,
+    hardlink=properties.hardlink,
+    allow_override=properties.allow_override,
+  )
 
   dest_file_names = file_names + ['symlink_bb']
   paths = api.file.listdir('list new dir', dest2, test_data=dest_file_names)
@@ -92,6 +95,6 @@ def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test('symlinks', api.properties(Properties(symlinks=True)))
 
   yield api.test(
-      'existing-dirs',
-      api.properties(Properties(hardlink=False, allow_override=True)),
+    'existing-dirs',
+    api.properties(Properties(hardlink=False, allow_override=True)),
   )

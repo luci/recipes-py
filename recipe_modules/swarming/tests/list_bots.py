@@ -14,8 +14,8 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    assertions,
-    swarming,
+  assertions,
+  swarming,
 )
 
 
@@ -34,7 +34,8 @@ def RunSteps(api: DEPS) -> None:
   # list_bots from test_api returns 4 bots which is dead, quarantined,
   # in_maintenance, and alive respectively.
   bots = api.swarming.list_bots(
-      'List Bots', dimensions={'os': 'Android'}, fields=['items/external_ip'])
+    'List Bots', dimensions={'os': 'Android'}, fields=['items/external_ip']
+  )
   api.assertions.assertEqual(len(bots), 4)
 
   bot_dead = bots[0]
@@ -59,12 +60,21 @@ def RunSteps(api: DEPS) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   yield api.test(
-      'basic',
-      api.post_process(post_process.StepCommandContains, 'List Bots',
-                       ['-dimension', 'os=Android']),
-      api.post_process(post_process.StepCommandContains, 'List Bots',
-                       ['-field', LIST_BOTS_MANDATORY_FIELDS]),
-      api.post_process(post_process.StepCommandContains, 'List Bots',
-                       ['-field', 'items/external_ip']),
-      api.post_process(post_process.DropExpectation),
+    'basic',
+    api.post_process(
+      post_process.StepCommandContains,
+      'List Bots',
+      ['-dimension', 'os=Android'],
+    ),
+    api.post_process(
+      post_process.StepCommandContains,
+      'List Bots',
+      ['-field', LIST_BOTS_MANDATORY_FIELDS],
+    ),
+    api.post_process(
+      post_process.StepCommandContains,
+      'List Bots',
+      ['-field', 'items/external_ip'],
+    ),
+    api.post_process(post_process.DropExpectation),
   )

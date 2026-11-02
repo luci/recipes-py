@@ -29,10 +29,10 @@ class CommitList:
   """
 
   def __init__(
-      self,
-      url: str,
-      branch: str,
-      commit_list: Sequence[fetch.CommitMetadata],
+    self,
+    url: str,
+    branch: str,
+    commit_list: Sequence[fetch.CommitMetadata],
   ) -> None:
     """
     Args:
@@ -73,9 +73,9 @@ class CommitList:
 
   @classmethod
   def from_backend(
-      cls,
-      dep: simple_cfg.SimpleRecipeDep,
-      git_backend: fetch.GitBackend,
+    cls,
+    dep: simple_cfg.SimpleRecipeDep,
+    git_backend: fetch.GitBackend,
   ) -> CommitList:
     """Returns a CommitList given the main repo's recipes.cfg and the repo
     itself.
@@ -89,14 +89,15 @@ class CommitList:
     Returns CommitList
     """
     return CommitList(
-        git_backend.repo_url,
-        dep.branch,
-        ([git_backend.commit_metadata(dep.revision)] +
-         git_backend.updates(dep.branch, dep.revision)),
+      git_backend.repo_url,
+      dep.branch,
+      (
+        [git_backend.commit_metadata(dep.revision)]
+        + git_backend.updates(dep.branch, dep.revision)
+      ),
     )
 
   class _Cursor:
-
     def __init__(self, commit_list: CommitList) -> None:
       self._commit_list = commit_list
       self._cur_idx = 0
@@ -120,7 +121,7 @@ class CommitList:
         The CommitMetadata of the next roll candidate, or None if there
         is no next roll candidate.
       """
-      for commit in self._commit_list._commits[self._cur_idx + 1:]:
+      for commit in self._commit_list._commits[self._cur_idx + 1 :]:
         if commit.roll_candidate:
           return commit
       return None
@@ -144,8 +145,7 @@ class CommitList:
       self._cur_idx = idx
 
   def cursor(self) -> _Cursor:
-    """Returns a cursor for maintaining a position within the commits.
-    """
+    """Returns a cursor for maintaining a position within the commits."""
     return self._Cursor(self)
 
   def dist(self, revision1: str, revision2: str | None = None) -> int | None:
@@ -199,9 +199,9 @@ class CommitList:
     return self._commits[self._idx_of(revision)]
 
   def _compatible_indexes(
-      self,
-      config: Mapping[str, str],
-      limited_to: Iterable[int] | None = None,
+    self,
+    config: Mapping[str, str],
+    limited_to: Iterable[int] | None = None,
   ) -> set[int]:
     """Finds the indexes of commits that are compatible with the config.
 
@@ -227,8 +227,9 @@ class CommitList:
       # idx_table.get(None, set()) is the indexes of commits that do not have a
       # dependency on the repo in question, so they are compatible with any
       # revision
-      compatible_indexes &= (
-          idx_table.get(revision, set()) | idx_table.get(None, set()))
+      compatible_indexes &= idx_table.get(revision, set()) | idx_table.get(
+        None, set()
+      )
       if not compatible_indexes:
         break
 
@@ -246,12 +247,13 @@ class CommitList:
       the dependencies of the commit with revision have the same
       associated revisions.
     """
-    compatible_indexes = self._compatible_indexes(config,
-                                                  [self._idx_of(revision)])
+    compatible_indexes = self._compatible_indexes(
+      config, [self._idx_of(revision)]
+    )
     return bool(compatible_indexes)
 
   def compatible_commits(
-      self, config: Mapping[str, str]
+    self, config: Mapping[str, str]
   ) -> list[fetch.CommitMetadata]:
     """Returns the revisions that are compatible with the config.
 
@@ -278,4 +280,4 @@ class CommitList:
     Raises:
       UnknownCommit if target_commit is not found.
     """
-    return list(self._commits[:self._idx_of(revision) + 1])
+    return list(self._commits[: self._idx_of(revision) + 1])

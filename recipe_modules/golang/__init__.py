@@ -7,10 +7,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from RECIPE_MODULES.recipe_engine import (
-    cipd,
-    context,
-    path,
-    platform,
+  cipd,
+  context,
+  path,
+  platform,
 )
 
 
@@ -20,5 +20,6 @@ class DEPS(RecipeScriptApi):
   context: context.API
   path: path.API
   platform: platform.API
+
 
 from .api import GolangApi as API

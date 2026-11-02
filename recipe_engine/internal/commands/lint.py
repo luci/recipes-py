@@ -23,46 +23,43 @@ from .. import recipe_deps
 
 
 ALLOWED_MODULES = [
-    r'ast',
-    r'base64',
-    r'collections',
-    r'contextlib',
-    r'copy',
-    r'dataclasses',
-    r'datetime',
-    r'difflib',
-    r'enum',
-    r'fnmatch',
-    r'functools',
-    r'hashlib',
-    r'itertools',
-    r'json',
-    r'math',
-    r'plistlib',
-    r're',
-    r'shlex',
-    r'string',
-    r'textwrap',
-    r'typing',
-    r'urllib\.parse',
-    r'zlib',
-
-    # non stdlib
-    r'attr',
-    r'google\.protobuf',
-
-    # Turbo CI utils
-    r'turboci\.utils',
-
-    # From recipe ecosystem
-    r'PB',
-    r'RECIPE_MODULES',
+  r'ast',
+  r'base64',
+  r'collections',
+  r'contextlib',
+  r'copy',
+  r'dataclasses',
+  r'datetime',
+  r'difflib',
+  r'enum',
+  r'fnmatch',
+  r'functools',
+  r'hashlib',
+  r'itertools',
+  r'json',
+  r'math',
+  r'plistlib',
+  r're',
+  r'shlex',
+  r'string',
+  r'textwrap',
+  r'typing',
+  r'urllib\.parse',
+  r'zlib',
+  # non stdlib
+  r'attr',
+  r'google\.protobuf',
+  # Turbo CI utils
+  r'turboci\.utils',
+  # From recipe ecosystem
+  r'PB',
+  r'RECIPE_MODULES',
 ]
 
 
 def ImportsTest(
-    recipe: recipe_deps.Recipe,
-    allowed_modules: Sequence[re.Pattern[str]],
+  recipe: recipe_deps.Recipe,
+  allowed_modules: Sequence[re.Pattern[str]],
 ) -> Iterator[str]:
   """Tests that recipe_name only uses allowed imports.
 
@@ -85,20 +82,22 @@ def ImportsTest(
         if pattern.match(module_name):
           break
       else:
-        yield ('In %s:\n'
-               '  Disallowed import of %s' % (recipe.path, module_name))
+        yield ('In %s:\n  Disallowed import of %s' % (recipe.path, module_name))
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
   # TODO(iannucci): merge this with the test command, doesn't need to be top
   # level.
   parser.add_argument(
-      '--allowlist',
-      '-a',
-      action='append',
-      default=[],
-      help=('A regexp matching module names to add to the default allowlist. '
-            'Use multiple times to add multiple patterns,'))
+    '--allowlist',
+    '-a',
+    action='append',
+    default=[],
+    help=(
+      'A regexp matching module names to add to the default allowlist. '
+      'Use multiple times to add multiple patterns,'
+    ),
+  )
 
   parser.set_defaults(func=main, skip_deps=True)
 

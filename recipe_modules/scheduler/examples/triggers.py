@@ -14,15 +14,16 @@ import json
 from google.protobuf import json_format
 
 from PB.go.chromium.org.luci.scheduler.api.scheduler.v1 import (
-    triggers as triggers_pb2)
+  triggers as triggers_pb2,
+)
 
 from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    json as json_rm,
-    scheduler,
-    step,
+  json as json_rm,
+  scheduler,
+  step,
 )
 
 
@@ -41,9 +42,9 @@ class TEST_DEPS(RecipeTestApi):
 def RunSteps(api: DEPS) -> None:
   pres = api.step(name='triggers', cmd=None).presentation
   pres.logs['triggers'] = api.json.dumps(
-      [json_format.MessageToDict(t) for t in api.scheduler.triggers],
-      sort_keys=True,
-      indent=2,
+    [json_format.MessageToDict(t) for t in api.scheduler.triggers],
+    sort_keys=True,
+    indent=2,
   ).splitlines()
 
   if api.scheduler.triggers and api.scheduler.triggers[0].gitiles.repo:
@@ -51,12 +52,10 @@ def RunSteps(api: DEPS) -> None:
 
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
+  yield (api.test('unset'))
   yield (
-    api.test('unset')
-  )
-  yield (
-    api.test('gitiles') +
-    api.scheduler(
+    api.test('gitiles')
+    + api.scheduler(
       triggers=[
         triggers_pb2.Trigger(
           id='a',
@@ -81,8 +80,8 @@ def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   bb_trigger = triggers_pb2.BuildbucketTrigger(tags=['a:b'])
   bb_trigger.properties.update({'foo': 'bar'})
   yield (
-    api.test('various') +
-    api.scheduler(
+    api.test('various')
+    + api.scheduler(
       triggers=[
         triggers_pb2.Trigger(id='a', cron=dict(generation=123)),
         triggers_pb2.Trigger(id='b', webui=dict()),

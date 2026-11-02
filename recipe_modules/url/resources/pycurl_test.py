@@ -20,7 +20,6 @@ import pycurl
 
 
 class PyCurlTest(unittest.TestCase):
-
   def setUp(self):
     mock.patch('requests.Session').start()
     self.addCleanup(mock.patch.stopall)
@@ -77,8 +76,9 @@ class PyCurlTest(unittest.TestCase):
     r.iter_content.return_value = r.raw
 
     outfile = tempfile.NamedTemporaryFile()
-    code, total = pycurl._download('https://test/', outfile.name, None, 0,
-                                   ")]}'\n")
+    code, total = pycurl._download(
+      'https://test/', outfile.name, None, 0, ")]}'\n"
+    )
     self.assertTrue(outfile.read(), b'ok')
 
 

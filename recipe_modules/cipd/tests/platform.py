@@ -15,9 +15,9 @@ from dataclasses import dataclass
 from recipe_engine.recipe_api import RecipeScriptApi
 from recipe_engine.recipe_test_api import RecipeTestApi
 from RECIPE_MODULES.recipe_engine import (
-    cipd,
-    platform,
-    step,
+  cipd,
+  platform,
+  step,
 )
 
 
@@ -39,14 +39,14 @@ def RunSteps(api: DEPS) -> None:
 
 def GenTests(api: TEST_DEPS) -> Iterator[recipe_test_api.TestData]:
   def test(
-      cipd_platform: str, os: str, bits: int, arch: str = 'intel'
+    cipd_platform: str, os: str, bits: int, arch: str = 'intel'
   ) -> recipe_test_api.TestData:
     return api.test(
-        cipd_platform,
-        api.platform(os, bits, arch),
-        api.post_process(post_process.MustRun, f'platform {cipd_platform}'),
-        api.post_process(post_process.DropExpectation),
-        status='SUCCESS',
+      cipd_platform,
+      api.platform(os, bits, arch),
+      api.post_process(post_process.MustRun, f'platform {cipd_platform}'),
+      api.post_process(post_process.DropExpectation),
+      status='SUCCESS',
     )
 
   yield test('linux-amd64', 'linux', 64)
